@@ -1,4 +1,4 @@
-FROM openjdk:18-jdk-alpine as build
+FROM openjdk:17-jdk-alpine as build
 WORKDIR /workspace/app
 
 COPY mvnw .
@@ -9,7 +9,7 @@ COPY src src
 RUN ./mvnw install -DskipTests
 RUN mkdir target/extracted && java -Djarmode=layertools -jar target/*.jar extract --destination target/extracted
 
-FROM openjdk:18-jdk-alpine
+FROM openjdk:17-jdk-alpine
 
 WORKDIR /app/
 
