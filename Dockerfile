@@ -4,9 +4,11 @@ WORKDIR /workspace/app
 COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
-COPY src src
+RUN ./mvnw dependency:copy-dependencies
+RUN ./mvnw dependency:go-offline
 
-RUN ./mvnw install -DskipTests
+COPY src src
+RUN ./mvnw install -DskipTests --offline
 RUN mkdir target/extracted && java -Djarmode=layertools -jar target/*.jar extract --destination target/extracted
 
 FROM openjdk:17-jdk-alpine
