@@ -11,13 +11,16 @@ RUN mkdir target/extracted && java -Djarmode=layertools -jar target/*.jar extrac
 
 FROM openjdk:17-jdk-alpine
 
+RUN addgroup -S user && adduser -S user -G user
+USER user:user
+
 WORKDIR /app/
 
 ARG EXTRACTED=/workspace/app/target/extracted
 
-COPY --from=build ${EXTRACTED}/dependencies/ ./
-COPY --from=build ${EXTRACTED}/spring-boot-loader/ ./
-COPY --from=build ${EXTRACTED}/snapshot-dependencies/ ./
-COPY --from=build ${EXTRACTED}/application/ ./
+COPY --from=build --chown=user ${EXTRACTED}/dependencies/ ./
+COPY --from=build --chown=user ${EXTRACTED}/spring-boot-loader/ ./
+COPY --from=build --chown=user ${EXTRACTED}/snapshot-dependencies/ ./
+COPY --from=build --chown=user ${EXTRACTED}/application/ ./
 
 ENTRYPOINT ["java","org.springframework.boot.loader.JarLauncher"]
