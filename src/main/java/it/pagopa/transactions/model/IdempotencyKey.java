@@ -17,7 +17,7 @@ public final class IdempotencyKey {
     private final String key;
 
     @PersistenceConstructor
-    public IdempotencyKey(RptId id, String key) {
+    private IdempotencyKey(RptId id, String key) {
         this.id = id;
         this.key = key;
     }
