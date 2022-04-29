@@ -1,24 +1,24 @@
 package it.pagopa.transactions.client;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.ws.client.core.support.WebServiceGatewaySupport;
+import javax.xml.bind.JAXBElement;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.ws.client.core.WebServiceTemplate;
 import org.springframework.ws.soap.client.core.SoapActionCallback;
 
 import it.pagopa.nodeforpsp.ActivatePaymentNoticeReq;
 import it.pagopa.nodeforpsp.ActivatePaymentNoticeRes;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
-public class NodeForPspClient extends WebServiceGatewaySupport {
+@Component
+public class NodeForPspClient {
 
-    @Value("${nodo.uri}")
-    private String nodeUri;
+    @Autowired
+    private WebServiceTemplate webServiceTemplate;
 
-    public ActivatePaymentNoticeRes activatePaymentNotice(ActivatePaymentNoticeReq request) {
+    public ActivatePaymentNoticeRes activatePaymentNotice(JAXBElement<ActivatePaymentNoticeReq> request) {
 
-        log.debug("Requesting activation for notice number " + request.getQrCode().getNoticeNumber());
-
-        return (ActivatePaymentNoticeRes) getWebServiceTemplate().marshalSendAndReceive(nodeUri, request,
+        return (ActivatePaymentNoticeRes) webServiceTemplate.marshalSendAndReceive(request,
                 new SoapActionCallback("activatePaymentNotice"));
     }
 }
