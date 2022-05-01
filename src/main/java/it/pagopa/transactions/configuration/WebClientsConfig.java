@@ -11,6 +11,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
+import it.pagopa.ecommerce.sessions.v1.ApiClient;
+import it.pagopa.ecommerce.sessions.v1.api.DefaultApi;
 import it.pagopa.nodeforpsp.ObjectFactory;
 import it.pagopa.transactions.utils.soap.Jaxb2SoapDecoder;
 import it.pagopa.transactions.utils.soap.Jaxb2SoapEncoder;
@@ -19,17 +21,10 @@ import reactor.netty.http.client.HttpClient;
 @Configuration
 public class WebClientsConfig {
 
-    @Value("${nodo.uri}")
-    private String nodoUri;
-
-    @Value("${nodo.readTimeout}")
-    private int nodoReadTimeout;
-
-    @Value("${nodo.connectionTimeout}")
-    private int nodoConnectionTimeout;
-
     @Bean(name = "nodoWebClient")
-    public WebClient nodoWebClient() {
+    public WebClient nodoWebClient(@Value("${nodo.uri}") String nodoUri,
+            @Value("${nodo.readTimeout}") int nodoReadTimeout,
+            @Value("${nodo.connectionTimeout}") int nodoConnectionTimeout) {
 
         HttpClient httpClient = HttpClient.create().option(ChannelOption.CONNECT_TIMEOUT_MILLIS, nodoConnectionTimeout)
                 .doOnConnected(connection -> connection
@@ -43,6 +38,22 @@ public class WebClientsConfig {
         return WebClient.builder().baseUrl(nodoUri).defaultHeader("Content-Type", "text/xml")
                 .clientConnector(new ReactorClientHttpConnector(httpClient)).exchangeStrategies(exchangeStrategies)
                 .build();
+    }
+
+    @Bean(name = "ecommerceSesionsWebClient")
+    public DefaultApi ecommerceSesionsWebClient(@Value("${ecommerceSessions.uri}") String ecommerceSesionsUri,
+            @Value("${ecommerceSessions.readTimeout}") int ecommerceSesionsReadTimeout,
+            @Value("${ecommerceSessions.connectionTimeout}") int ecommerceSesionsConnectionTimeout) {
+
+        HttpClient httpClient = HttpClient.create()
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, ecommerceSesionsConnectionTimeout)
+                .doOnConnected(connection -> connection
+                        .addHandlerLast(new ReadTimeoutHandler(ecommerceSesionsReadTimeout, TimeUnit.MILLISECONDS)));
+
+        WebClient webClient = ApiClient.buildWebClientBuilder()
+                .clientConnector(new ReactorClientHttpConnector(httpClient)).baseUrl(ecommerceSesionsUri).build();
+
+        return new DefaultApi(new ApiClient(webClient));
     }
 
     @Bean
