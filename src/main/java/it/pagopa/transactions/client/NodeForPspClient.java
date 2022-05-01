@@ -14,7 +14,7 @@ import reactor.core.publisher.Mono;
 
 @Component
 @Slf4j
-public class NodoClient {
+public class NodeForPspClient {
 
     @Autowired
     private WebClient nodoWebClient;
