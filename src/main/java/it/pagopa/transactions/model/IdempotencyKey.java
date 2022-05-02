@@ -1,5 +1,7 @@
 package it.pagopa.transactions.model;
 
+import org.springframework.data.annotation.PersistenceConstructor;
+
 import java.util.Objects;
 import java.util.regex.Pattern;
 
@@ -7,6 +9,11 @@ public final class IdempotencyKey {
     private static final Pattern pspFiscalCodeRegex = Pattern.compile("\\d{11}");
     private static final Pattern keyIdentifierRegex = Pattern.compile("[a-zA-Z\\d]{10}");
     private final String key;
+
+    @PersistenceConstructor
+    private IdempotencyKey(String key) {
+        this.key = key;
+    }
 
     public IdempotencyKey(String pspFiscalCode, String keyIdentifier) {
         if (!pspFiscalCodeRegex.matcher(pspFiscalCode).matches()) {
