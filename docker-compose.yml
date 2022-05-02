@@ -18,6 +18,13 @@ services:
     networks:
       - pagopa-ecommerce
 
+  redis-insight:
+    image: redislabs/redisinsight
+    ports:
+      - "8001:8001"
+    networks:
+      - pagopa-ecommerce
+
   mongo:
     image: mongo
     environment:
