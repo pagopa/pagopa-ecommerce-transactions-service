@@ -1,13 +1,11 @@
 package it.pagopa.transactions.controllers;
 
 import it.pagopa.nodeforpsp.ActivatePaymentNoticeReq;
-import it.pagopa.nodeforpsp.ActivatePaymentNoticeRes;
 import it.pagopa.nodeforpsp.CtQrCode;
 import it.pagopa.nodeforpsp.ObjectFactory;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.model.IdempotencyKey;
 import it.pagopa.transactions.model.RptId;
-import it.pagopa.transactions.repositories.IdempotencyKeyRepository;
 import it.pagopa.transactions.repositories.TransactionTokens;
 import it.pagopa.transactions.repositories.TransactionTokensRepository;
 import it.pagopa.transactions.server.api.TransactionsApi;
@@ -56,7 +54,6 @@ public class TransactionsController implements TransactionsApi {
                 .orElseGet(() -> {
                     System.out.println("Creating new idempotency key!");
                     final IdempotencyKey key = new IdempotencyKey(
-                            rptId,
                             PSP_PAGOPA_ECOMMERCE_FISCAL_CODE,
                             randomString(10)
                     );

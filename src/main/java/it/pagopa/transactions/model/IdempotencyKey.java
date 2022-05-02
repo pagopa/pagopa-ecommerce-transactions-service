@@ -1,28 +1,14 @@
 package it.pagopa.transactions.model;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.PersistenceConstructor;
-import org.springframework.data.redis.core.RedisHash;
-
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-@RedisHash(value = "keys", timeToLive = 30 * 60)
 public final class IdempotencyKey {
     private static final Pattern pspFiscalCodeRegex = Pattern.compile("\\d{11}");
     private static final Pattern keyIdentifierRegex = Pattern.compile("[a-zA-Z\\d]{10}");
-
-    @Id
-    private final RptId id;
     private final String key;
 
-    @PersistenceConstructor
-    private IdempotencyKey(RptId id, String key) {
-        this.id = id;
-        this.key = key;
-    }
-
-    public IdempotencyKey(RptId id, String pspFiscalCode, String keyIdentifier) {
+    public IdempotencyKey(String pspFiscalCode, String keyIdentifier) {
         if (!pspFiscalCodeRegex.matcher(pspFiscalCode).matches()) {
             throw new IllegalArgumentException("PSP fiscal code doesn't match regex: " + pspFiscalCodeRegex.pattern());
         }
@@ -31,7 +17,6 @@ public final class IdempotencyKey {
             throw new IllegalArgumentException("Key identifier doesn't match regex: " + keyIdentifierRegex.pattern());
         }
 
-        this.id = id;
         this.key = pspFiscalCode + "_" + keyIdentifier;
     }
 

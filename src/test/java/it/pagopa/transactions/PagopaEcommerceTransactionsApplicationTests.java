@@ -2,7 +2,6 @@ package it.pagopa.transactions;
 
 import it.pagopa.transactions.model.IdempotencyKey;
 import it.pagopa.transactions.model.RptId;
-import it.pagopa.transactions.repositories.IdempotencyKeyRepository;
 import it.pagopa.transactions.repositories.TransactionTokens;
 import it.pagopa.transactions.repositories.TransactionTokensRepository;
 import org.junit.jupiter.api.Test;
@@ -19,7 +18,7 @@ class PagopaEcommerceTransactionsApplicationTests {
     private TransactionTokensRepository repository;
 
     private static final RptId rptId = new RptId("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-    private static final IdempotencyKey key = new IdempotencyKey(rptId,"00000000000","aaaaaaaaaa");
+    private static final IdempotencyKey key = new IdempotencyKey("00000000000","aaaaaaaaaa");
 
     @Test
     void contextLoads() {
