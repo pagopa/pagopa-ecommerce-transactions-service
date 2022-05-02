@@ -7,7 +7,7 @@ import org.springframework.data.redis.core.RedisHash;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-@RedisHash(value = "keys")
+@RedisHash(value = "keys", timeToLive = 30 * 60)
 public final class IdempotencyKey {
     private static final Pattern pspFiscalCodeRegex = Pattern.compile("\\d{11}");
     private static final Pattern keyIdentifierRegex = Pattern.compile("[a-zA-Z\\d]{10}");

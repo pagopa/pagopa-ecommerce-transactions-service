@@ -3,12 +3,12 @@ package it.pagopa.transactions;
 import it.pagopa.transactions.model.IdempotencyKey;
 import it.pagopa.transactions.model.RptId;
 import it.pagopa.transactions.repositories.IdempotencyKeyRepository;
+import it.pagopa.transactions.repositories.TransactionTokens;
+import it.pagopa.transactions.repositories.TransactionTokensRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
-
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @TestPropertySource(locations="classpath:application-tests.properties")
 class PagopaEcommerceTransactionsApplicationTests {
     @Autowired
-    private IdempotencyKeyRepository repository;
+    private TransactionTokensRepository repository;
 
     private static final RptId rptId = new RptId("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     private static final IdempotencyKey key = new IdempotencyKey(rptId,"00000000000","aaaaaaaaaa");
@@ -28,8 +28,9 @@ class PagopaEcommerceTransactionsApplicationTests {
 
     @Test
     void canInsertIdempotencyKey() {
-        repository.save(key);
-        IdempotencyKey key = repository.findById(rptId).orElseThrow();
-        System.out.println(key);
+        repository.save(new TransactionTokens(rptId, key, null));
+        TransactionTokens tokens = repository.findById(rptId).orElseThrow();
+        assertNotNull(tokens.idempotencyKey());
+        System.out.println(tokens);
     }
 }

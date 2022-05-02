@@ -19,6 +19,14 @@ public final class RptId {
         return rptId;
     }
 
+    public String getFiscalCode() {
+        return rptId.substring(0, 11);
+    }
+
+    public String getNoticeId() {
+        return rptId.substring(12);
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj == this) return true;
