@@ -11,6 +11,8 @@ import it.pagopa.transactions.repositories.TransactionTokensRepository;
 import it.pagopa.transactions.server.api.TransactionsApi;
 import it.pagopa.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.transactions.server.model.NewTransactionResponseDto;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,6 +25,8 @@ public class TransactionsController implements TransactionsApi {
     private static final String ALPHANUMERICS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     private static final Random RANDOM = new Random();
     private static final String PSP_PAGOPA_ECOMMERCE_FISCAL_CODE = "00000000000";
+
+    private final Logger logger = LoggerFactory.getLogger(TransactionsController.class);
 
     private final TransactionTokensRepository transactionTokensRepository;
     private final ObjectFactory objectFactory;
@@ -52,7 +56,7 @@ public class TransactionsController implements TransactionsApi {
         TransactionTokens transactionTokens = transactionTokensRepository
                 .findById(rptId)
                 .orElseGet(() -> {
-                    System.out.println("Creating new idempotency key!");
+                    logger.info("Creating new idempotency key for rptId {}", rptId);
                     final IdempotencyKey key = new IdempotencyKey(
                             PSP_PAGOPA_ECOMMERCE_FISCAL_CODE,
                             randomString(10)
@@ -62,7 +66,7 @@ public class TransactionsController implements TransactionsApi {
                     return tokens;
                 });
 
-        System.out.println("Transaction tokens for " + rptId + ": " + transactionTokens);
+        logger.info("Transaction tokens for " + rptId + ": " + transactionTokens);
         String fiscalCode = rptId.getFiscalCode();
         String noticeId = rptId.getNoticeId();
 
