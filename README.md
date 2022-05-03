@@ -1,4 +1,4 @@
-# pagopa-ecommerce-transactions
+# pagopa-ecommerce-transactions-service
 
 ## What is this?
 
