@@ -17,11 +17,11 @@ import reactor.util.retry.Retry;
 public class EcommerceSessionsClient {
 
     @Autowired
-    private DefaultApi ecommerceSesionsWebClient;
+    private DefaultApi ecommerceSessionsWebClient;
 
     public Mono<SessionTokenDto> createSessionToken(SessionDataDto request) {
 
-        return ecommerceSesionsWebClient.postToken(request).retryWhen(Retry.backoff(2, Duration.ofMillis(25))
+        return ecommerceSessionsWebClient.postToken(request).retryWhen(Retry.backoff(2, Duration.ofMillis(25))
                 .filter(throwable -> throwable instanceof TimeoutException || throwable instanceof ConnectException));
     }
 }

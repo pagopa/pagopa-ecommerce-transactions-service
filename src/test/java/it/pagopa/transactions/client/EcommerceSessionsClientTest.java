@@ -24,7 +24,7 @@ public class EcommerceSessionsClientTest {
     private EcommerceSessionsClient client;
 
     @Mock
-    private DefaultApi ecommerceSesionsWebClient;
+    private DefaultApi ecommerceSessionsWebClient;
 
     @Test
     void shouldReturnValidTokenTest() {
@@ -39,7 +39,7 @@ public class EcommerceSessionsClientTest {
         /**
          * preconditions
          */
-        when(ecommerceSesionsWebClient.postToken(request)).thenReturn(response);
+        when(ecommerceSessionsWebClient.postToken(request)).thenReturn(response);
 
         /**
          * test
