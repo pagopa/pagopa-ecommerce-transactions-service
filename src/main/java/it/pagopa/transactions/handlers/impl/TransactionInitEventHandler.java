@@ -32,13 +32,13 @@ public class TransactionInitHandler implements EventHandler<TransactionInitData,
     @Override
     public String handle(TransactionEvent<TransactionInitData> transactionInitializedEvent) {
 
-        Mono.zip(transactionEventStoreRepository.save(transactionInitializedEvent),
+        return Mono.zip(transactionEventStoreRepository.save(transactionInitializedEvent),
                 viewEventStoreRepository.save(new Transaction(transactionInitializedEvent.getPaymentToken(),
                         transactionInitializedEvent.getRptId(), transactionInitializedEvent.getData().getDescription(),
                         transactionInitializedEvent.getData().getAmount(), TransactionStatus.TRANSACTION_INITIALIZED)))
                 .map(tuple -> {
 
                     return tuple.getT2().getId();
-                });
+                }).block();
     }
 }
