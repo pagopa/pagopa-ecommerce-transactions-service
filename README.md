@@ -8,15 +8,18 @@ This is a PagoPA microservice that handles transactions' lifecycle and workflow.
 
 These are all environment variables needed by the application:
 
-| Variable name           | Description                                                                 | type   | default |
-|-------------------------|-----------------------------------------------------------------------------|--------|---------|
-| MONGO_USERNAME          | Username used for connecting to MongoDB instance                            | string |         |
-| MONGO_PASSWORD          | Password used for connecting to MongoDB instance                            | string |         |
-| REDIS_HOST              | Host where the redis instance used to persist idempotency keys can be found | string |         |
-| REDIS_PASSWORD          | Password used for connecting to Redis instance                              | string |         |
-| NODO_URI                | Nodo connection URI                                                         | string |         |
-| NODO_READ_TIMEOUT       | Timeout for requests towards Nodo                                           | number |         |
-| NODO_CONNECTION_TIMEOUT | Timeout for establishing connections towards Nodo                           | number |         |
+| Variable name                         | Description                                                                 | type   | default |
+|---------------------------------------|-----------------------------------------------------------------------------|--------|---------|
+| MONGO_USERNAME                        | Username used for connecting to MongoDB instance                            | string |         |
+| MONGO_PASSWORD                        | Password used for connecting to MongoDB instance                            | string |         |
+| REDIS_HOST                            | Host where the redis instance used to persist idempotency keys can be found | string |         |
+| REDIS_PASSWORD                        | Password used for connecting to Redis instance                              | string |         |
+| ECOMMERCE_SESSIONS_URI                | eCommerce Sessions service connection URI                                   | string |         |
+| ECOMMERCE_SESSIONS_READ_TIMEOUT       | Timeout for requests towards eCommerce Sessions service                     | number |         |
+| ECOMMERCE_SESSIONS_CONNECTION_TIMEOUT | Timeout for establishing connections towards eCommerce Sessions service     | number |         |
+| NODO_URI                              | Nodo connection URI                                                         | string |         |
+| NODO_READ_TIMEOUT                     | Timeout for requests towards Nodo                                           | number |         |
+| NODO_CONNECTION_TIMEOUT               | Timeout for establishing connections towards Nodo                           | number |         |
 
 
 An example configuration of these environment variables is in the `.env.example` file.
