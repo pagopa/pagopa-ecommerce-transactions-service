@@ -1,8 +1,5 @@
 package it.pagopa.transactions.handlers.impl;
 
-import java.util.Optional;
-import java.util.UUID;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +13,7 @@ import it.pagopa.transactions.utils.TransactionStatus;
 import reactor.core.publisher.Mono;
 
 @Component
-public class TransactionInitHandler implements EventHandler<TransactionInitData, String> {
+public class TransactionInitEventHandler implements EventHandler<TransactionInitData, String> {
 
     @Autowired
     private TransactionsEventStoreRepository<TransactionInitData> transactionEventStoreRepository;
