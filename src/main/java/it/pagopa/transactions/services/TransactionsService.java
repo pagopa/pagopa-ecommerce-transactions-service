@@ -17,7 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.Service;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.Random;
@@ -31,19 +31,18 @@ public class TransactionsService {
     private static final String PSP_PAGOPA_ECOMMERCE_FISCAL_CODE = "00000000000";
 
     @Autowired
-    private final TransactionTokensRepository transactionTokensRepository;
+    private TransactionTokensRepository transactionTokensRepository;
     @Autowired
-    private final ObjectFactory objectFactory;
+    private ObjectFactory objectFactory;
     @Autowired
-    private final NodeForPspClient nodeForPspClient;
+    private NodeForPspClient nodeForPspClient;
 
-    @Override
     public NewTransactionResponseDto createTransactions(NewTransactionRequestDto newTransactionRequestDto) {
         RptId rptId = new RptId(newTransactionRequestDto.getRptId());
         TransactionTokens transactionTokens = transactionTokensRepository
                 .findById(rptId)
                 .orElseGet(() -> {
-                    logger.info("Creating new idempotency key for rptId {}", rptId);
+                    log.info("Creating new idempotency key for rptId {}", rptId);
                     final IdempotencyKey key = new IdempotencyKey(
                             PSP_PAGOPA_ECOMMERCE_FISCAL_CODE,
                             randomString(10));
@@ -52,7 +51,7 @@ public class TransactionsService {
                     return tokens;
                 });
 
-        logger.info("Transaction tokens for " + rptId + ": " + transactionTokens);
+        log.info("Transaction tokens for " + rptId + ": " + transactionTokens);
         String fiscalCode = rptId.getFiscalCode();
         String noticeId = rptId.getNoticeId();
 
@@ -66,15 +65,15 @@ public class TransactionsService {
         request.setAmount(amount);
         request.setQrCode(qrCode);
 
-        // ActivatePaymentNoticeRes activatePaymentNoticeRes =
-        // nodeForPspClient.activatePaymentNotice(objectFactory.createActivatePaymentNoticeReq(request));
+        ActivatePaymentNoticeRes activatePaymentNoticeRes =
+        nodeForPspClient.activatePaymentNotice(objectFactory.createActivatePaymentNoticeReq(request));
 
-        // TransactionTokens tokens = new TransactionTokens(rptId, idempotencyKey,
-        // activatePaymentNoticeRes.getPaymentToken());
+        TransactionTokens tokens = new TransactionTokens(rptId, idempotencyKey,
+        activatePaymentNoticeRes.getPaymentToken());
 
         NewTransactionResponseDto response = new NewTransactionResponseDto();
-        // .amount(activatePaymentNoticeRes.getTotalAmount().intValue())
-        // .reason(activatePaymentNoticeRes.getPaymentDescription());
+        .amount(activatePaymentNoticeRes.getTotalAmount().intValue())
+        .reason(activatePaymentNoticeRes.getPaymentDescription());
 
         return response;
     }

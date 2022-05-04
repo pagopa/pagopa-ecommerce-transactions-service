@@ -12,13 +12,8 @@ import org.springframework.core.io.buffer.PooledDataBuffer;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
-import org.springframework.ws.WebServiceMessage;
-import org.springframework.ws.WebServiceMessageFactory;
-import org.springframework.ws.client.core.WebServiceTemplate;
-import org.springframework.ws.soap.SoapHeader;
-import org.springframework.ws.soap.SoapMessage;
-import org.springframework.ws.support.DefaultStrategiesHelper;
-import org.springframework.xml.transform.StringSource;
+import org.w3c.dom.Document;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -27,8 +22,10 @@ import javax.xml.bind.MarshalException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.soap.MessageFactory;
+import javax.xml.soap.SOAPBody;
+import javax.xml.soap.SOAPMessage;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;

@@ -14,7 +14,6 @@ import io.netty.handler.timeout.ReadTimeoutHandler;
 import it.pagopa.ecommerce.sessions.v1.ApiClient;
 import it.pagopa.ecommerce.sessions.v1.api.DefaultApi;
 import it.pagopa.nodeforpsp.ObjectFactory;
-import it.pagopa.transactions.utils.soap.Jaxb2SoapDecoder;
 import it.pagopa.transactions.utils.soap.Jaxb2SoapEncoder;
 import reactor.netty.http.client.HttpClient;
 
