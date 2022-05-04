@@ -27,7 +27,24 @@ public class NodeForPspClient {
                         clientResponse -> clientResponse.bodyToMono(String.class)
                                 .flatMap(errorResponseBody -> Mono.error(
                                         new ResponseStatusException(clientResponse.statusCode(), errorResponseBody))))
-                .bodyToMono(ActivatePaymentNoticeRes.class)
+                .bodyToMono(String.class)
+                .map(response -> {
+                    // TODO temporary solution, waiting for Jaxb2SoapDecoder.java
+                    ActivatePaymentNoticeRes activatePaymentNoticeRes = new ActivatePaymentNoticeRes();
+                    String paymentToken = response
+                            .substring(response.indexOf("<paymentToken>") + "<paymentToken>".length());
+                    activatePaymentNoticeRes
+                            .setPaymentToken(paymentToken.substring(0, paymentToken.indexOf("</paymentToken>")));
+                    String totalAmount = response
+                            .substring(response.indexOf("<totalAmount>") + "<totalAmount>".length());
+                    activatePaymentNoticeRes.setTotalAmount(
+                            new BigDecimal(totalAmount.substring(0, totalAmount.indexOf("</totalAmount>"))));
+                    String paymentDescription = response
+                            .substring(response.indexOf("<paymentDescription>") + "<paymentDescription>".length());
+                    activatePaymentNoticeRes.setPaymentDescription(
+                            paymentDescription.substring(0, paymentDescription.indexOf("</paymentDescription>")));
+                    return activatePaymentNoticeRes;
+                })
                 .doOnSuccess((ActivatePaymentNoticeRes paymentActivedDetail) -> {
                     log.debug("Payment activated with paymentToken {}", paymentActivedDetail.getPaymentToken());
                 }).doOnError(ResponseStatusException.class, error -> {

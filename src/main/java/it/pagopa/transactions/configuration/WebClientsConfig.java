@@ -32,7 +32,8 @@ public class WebClientsConfig {
 
         ExchangeStrategies exchangeStrategies = ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
             clientCodecConfigurer.customCodecs().register(new Jaxb2SoapEncoder());
-            clientCodecConfigurer.customCodecs().register(new Jaxb2SoapDecoder());
+            // clientCodecConfigurer.customCodecs().register(new Jaxb2SoapDecoder()); TODO
+            // fix Jaxb2SoapDecoder
         }).build();
 
         return WebClient.builder().baseUrl(nodoUri).defaultHeader("Content-Type", "text/xml")
@@ -42,8 +43,8 @@ public class WebClientsConfig {
 
     @Bean(name = "ecommerceSessionsWebClient")
     public DefaultApi ecommerceSessionsWebClient(@Value("${ecommerceSessions.uri}") String ecommerceSessionsUri,
-                                                 @Value("${ecommerceSessions.readTimeout}") int ecommerceSessionsReadTimeout,
-                                                 @Value("${ecommerceSessions.connectionTimeout}") int ecommerceSessionsConnectionTimeout) {
+            @Value("${ecommerceSessions.readTimeout}") int ecommerceSessionsReadTimeout,
+            @Value("${ecommerceSessions.connectionTimeout}") int ecommerceSessionsConnectionTimeout) {
 
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, ecommerceSessionsConnectionTimeout)
