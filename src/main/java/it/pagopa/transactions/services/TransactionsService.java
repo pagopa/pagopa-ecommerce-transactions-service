@@ -1,6 +1,7 @@
 package it.pagopa.transactions.services;
 
 import it.pagopa.nodeforpsp.ActivatePaymentNoticeReq;
+import it.pagopa.nodeforpsp.ActivatePaymentNoticeRes;
 import it.pagopa.nodeforpsp.CtQrCode;
 import it.pagopa.nodeforpsp.ObjectFactory;
 import it.pagopa.transactions.client.NodeForPspClient;
@@ -64,17 +65,22 @@ public class TransactionsService {
         ActivatePaymentNoticeReq request = objectFactory.createActivatePaymentNoticeReq();
         request.setAmount(amount);
         request.setQrCode(qrCode);
+        request.setIdPSP("6666");
+        request.setIdChannel("7777");
+        request.setIdBrokerPSP("8888");
+        request.setPassword("password");
+        request.setIdempotencyKey(transactionTokens.idempotencyKey().getKey());
+        request.setPaymentNote(newTransactionRequestDto.getRptId());
+        ActivatePaymentNoticeRes activatePaymentNoticeRes = (ActivatePaymentNoticeRes) nodeForPspClient
+                .activatePaymentNotice(objectFactory.createActivatePaymentNoticeReq(request)).block();
 
-        ActivatePaymentNoticeRes activatePaymentNoticeRes =
-        nodeForPspClient.activatePaymentNotice(objectFactory.createActivatePaymentNoticeReq(request));
+        TransactionTokens tokens = new TransactionTokens(rptId, transactionTokens.idempotencyKey(),
+                activatePaymentNoticeRes.getPaymentToken());
+        transactionTokensRepository.save(tokens);
 
-        TransactionTokens tokens = new TransactionTokens(rptId, idempotencyKey,
-        activatePaymentNoticeRes.getPaymentToken());
-
-        NewTransactionResponseDto response = new NewTransactionResponseDto();
-        .amount(activatePaymentNoticeRes.getTotalAmount().intValue())
-        .reason(activatePaymentNoticeRes.getPaymentDescription());
-
+        NewTransactionResponseDto response = new NewTransactionResponseDto()
+                .amount(activatePaymentNoticeRes.getTotalAmount().intValue())
+                .reason(activatePaymentNoticeRes.getPaymentDescription());
         return response;
     }
 

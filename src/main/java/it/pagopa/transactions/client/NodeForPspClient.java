@@ -2,6 +2,8 @@ package it.pagopa.transactions.client;
 
 import java.math.BigDecimal;
 
+import javax.xml.bind.JAXBElement;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -21,7 +23,7 @@ public class NodeForPspClient {
 	@Autowired
 	private WebClient nodoWebClient;
 
-	public Mono<ActivatePaymentNoticeRes> activatePaymentNotice(ActivatePaymentNoticeReq request) {
+	public Mono<ActivatePaymentNoticeRes> activatePaymentNotice(JAXBElement<ActivatePaymentNoticeReq> request) {
 
 		return nodoWebClient.post().body(Mono.just(new SoapEnvelopeRequest("", request)), SoapEnvelopeRequest.class)
 				.retrieve()
