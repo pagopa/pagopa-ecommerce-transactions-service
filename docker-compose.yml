@@ -4,6 +4,7 @@ services:
   pagopa-ecommerce-transactions:
     build:
       context: .
+      dockerfile: Dockerfile
     ports:
       - "8080:8080"
     networks:
@@ -53,8 +54,8 @@ services:
   pagopa-node-mock:
     container_name: pagopa-node-mock
     build:
-      context: ./
-      dockerfile: DockerfileNodoMock
+      context: .
+      dockerfile: Dockerfile.nodo-mock
     environment:
       PORT: 3002
       PAGOPA_PROXY_PORT: 3000

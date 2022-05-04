@@ -9,7 +9,6 @@ ARG IO_PAGOPA_NODO_MOCK_COMMIT_SHA
 ARG GITHUB_TOKEN
 ARG PAGOPA_PORT
 ENV GITHUB_TOKEN=${GITHUB_TOKEN}
-ENV GITsdsssssddsdssssdsddsEN=sss
 
 RUN rm -rf * && \
     git clone https://github.com/pagopa/io-pagopa-node-mock.git /usr/src/app && \
