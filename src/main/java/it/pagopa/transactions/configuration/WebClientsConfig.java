@@ -5,7 +5,10 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.http.codec.xml.Jaxb2XmlDecoder;
+import org.springframework.http.codec.xml.Jaxb2XmlEncoder;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -14,7 +17,6 @@ import io.netty.handler.timeout.ReadTimeoutHandler;
 import it.pagopa.ecommerce.sessions.v1.ApiClient;
 import it.pagopa.ecommerce.sessions.v1.api.DefaultApi;
 import it.pagopa.nodeforpsp.ObjectFactory;
-import it.pagopa.transactions.utils.soap.Jaxb2SoapDecoder;
 import it.pagopa.transactions.utils.soap.Jaxb2SoapEncoder;
 import reactor.netty.http.client.HttpClient;
 
@@ -31,11 +33,12 @@ public class WebClientsConfig {
                         .addHandlerLast(new ReadTimeoutHandler(nodoReadTimeout, TimeUnit.MILLISECONDS)));
 
         ExchangeStrategies exchangeStrategies = ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
-            clientCodecConfigurer.customCodecs().register(new Jaxb2SoapEncoder());
-            clientCodecConfigurer.customCodecs().register(new Jaxb2SoapDecoder());
+            clientCodecConfigurer.customCodecs().registerWithDefaultConfig(new Jaxb2SoapEncoder());
+            // clientCodecConfigurer.customCodecs().registerWithDefaultConfig(new Jaxb2SoapDecoder());
         }).build();
 
-        return WebClient.builder().baseUrl(nodoUri).defaultHeader("Content-Type", "text/xml")
+        return WebClient.builder().baseUrl(nodoUri)
+        // .defaultHeader("Content-Type", "text/xml")
                 .clientConnector(new ReactorClientHttpConnector(httpClient)).exchangeStrategies(exchangeStrategies)
                 .build();
     }

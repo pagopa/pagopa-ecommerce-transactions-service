@@ -28,7 +28,7 @@ final class JaxbContextContainer {
         Assert.notNull(clazz, "Class must not be null");
         JAXBContext jaxbContext = this.jaxbContexts.get(clazz);
         if (jaxbContext == null) {
-            jaxbContext = JAXBContext.newInstance(clazz);
+            jaxbContext = JAXBContext.newInstance("it.pagopa.nodeforpsp");
             this.jaxbContexts.putIfAbsent(clazz, jaxbContext);
         }
         return jaxbContext;

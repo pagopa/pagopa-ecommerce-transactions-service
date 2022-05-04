@@ -1,6 +1,7 @@
 package it.pagopa.transactions.controllers;
 
 import it.pagopa.nodeforpsp.ActivatePaymentNoticeReq;
+import it.pagopa.nodeforpsp.ActivatePaymentNoticeRes;
 import it.pagopa.nodeforpsp.CtQrCode;
 import it.pagopa.nodeforpsp.ObjectFactory;
 import it.pagopa.transactions.client.NodeForPspClient;
@@ -11,6 +12,8 @@ import it.pagopa.transactions.repositories.TransactionTokensRepository;
 import it.pagopa.transactions.server.api.TransactionsApi;
 import it.pagopa.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.transactions.server.model.NewTransactionResponseDto;
+import reactor.core.publisher.Mono;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,8 +62,7 @@ public class TransactionsController implements TransactionsApi {
                     logger.info("Creating new idempotency key for rptId {}", rptId);
                     final IdempotencyKey key = new IdempotencyKey(
                             PSP_PAGOPA_ECOMMERCE_FISCAL_CODE,
-                            randomString(10)
-                    );
+                            randomString(10));
                     final TransactionTokens tokens = new TransactionTokens(rptId, key, null);
                     transactionTokensRepository.save(tokens);
                     return tokens;
@@ -79,14 +81,23 @@ public class TransactionsController implements TransactionsApi {
         ActivatePaymentNoticeReq request = objectFactory.createActivatePaymentNoticeReq();
         request.setAmount(amount);
         request.setQrCode(qrCode);
+        request.setIdPSP("6666");
+        request.setIdChannel("7777");
+        request.setIdBrokerPSP("8888");
+        request.setPassword("password");
+        request.setIdempotencyKey(transactionTokens.idempotencyKey().getKey());
+        request.setPaymentNote(newTransactionRequestDto.getRptId());
+        ActivatePaymentNoticeRes activatePaymentNoticeRes = (ActivatePaymentNoticeRes) nodeForPspClient
+                .activatePaymentNotice(objectFactory.createActivatePaymentNoticeReq(request)).block();
 
-        // ActivatePaymentNoticeRes activatePaymentNoticeRes = nodeForPspClient.activatePaymentNotice(objectFactory.createActivatePaymentNoticeReq(request));
+        TransactionTokens tokens = new TransactionTokens(rptId, transactionTokens.idempotencyKey(),
+                activatePaymentNoticeRes.getPaymentToken());
+        transactionTokensRepository.save(tokens);
 
-//        TransactionTokens tokens = new TransactionTokens(rptId, idempotencyKey, activatePaymentNoticeRes.getPaymentToken());
-
-        NewTransactionResponseDto response = new NewTransactionResponseDto();
-                //.amount(activatePaymentNoticeRes.getTotalAmount().intValue())
-                //.reason(activatePaymentNoticeRes.getPaymentDescription());
+        NewTransactionResponseDto response = new NewTransactionResponseDto()
+                .amount(activatePaymentNoticeRes.getTotalAmount().intValue())
+                .reason(activatePaymentNoticeRes.getPaymentDescription())
+                .paymentToken(activatePaymentNoticeRes.getPaymentToken());
 
         return ResponseEntity.ok(response);
     }

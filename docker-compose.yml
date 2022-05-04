@@ -10,6 +10,18 @@ services:
       - pagopa-ecommerce
     env_file: .env
 
+  pagopa-node-mock:
+    container_name: pagopa-node-mock
+    build:
+      context: ./
+      dockerfile: pagopa-node-mock/Dockerfile
+    env_file:
+        - pagopa-node-mock/env.io-pagopa-node-mock
+    ports:
+        - 3002:3002
+    networks:
+      - pagopa-ecommerce    
+
   redis:
     image: redis
     command: ["sh", "-c", 'exec redis-server --requirepass "$$REDIS_PASSWORD"']
@@ -53,3 +65,6 @@ services:
 networks:
   pagopa-ecommerce:
     name: pagopa-ecommerce
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1450
