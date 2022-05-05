@@ -13,7 +13,6 @@ final class JaxbContextContainer {
 
     private final ConcurrentMap<Class<?>, JAXBContext> jaxbContexts = new ConcurrentHashMap<>(64);
 
-
     public Marshaller createMarshaller(Class<?> clazz) throws JAXBException {
         JAXBContext jaxbContext = getJaxbContext(clazz);
         return jaxbContext.createMarshaller();
@@ -28,7 +27,8 @@ final class JaxbContextContainer {
         Assert.notNull(clazz, "Class must not be null");
         JAXBContext jaxbContext = this.jaxbContexts.get(clazz);
         if (jaxbContext == null) {
-            jaxbContext = JAXBContext.newInstance(clazz);
+            // jaxbContext = JAXBContext.newInstance(clazz);
+            jaxbContext = JAXBContext.newInstance("it.pagopa.nodeforpsp"); // TODO to check
             this.jaxbContexts.putIfAbsent(clazz, jaxbContext);
         }
         return jaxbContext;

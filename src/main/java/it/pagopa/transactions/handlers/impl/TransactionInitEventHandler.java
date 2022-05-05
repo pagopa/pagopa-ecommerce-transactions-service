@@ -24,7 +24,7 @@ public class TransactionInitEventHandler implements EventHandler<TransactionInit
     /**
      * store transactionInitializedEvent event and update view
      * 
-     * @return transaction id in view
+     * @return payment token associated to transaction
      */
     @Override
     public String handle(TransactionEvent<TransactionInitData> transactionInitializedEvent) {
@@ -33,9 +33,6 @@ public class TransactionInitEventHandler implements EventHandler<TransactionInit
                 viewEventStoreRepository.save(new Transaction(transactionInitializedEvent.getPaymentToken(),
                         transactionInitializedEvent.getRptId(), transactionInitializedEvent.getData().getDescription(),
                         transactionInitializedEvent.getData().getAmount(), TransactionStatus.TRANSACTION_INITIALIZED)))
-                .map(tuple -> {
-
-                    return tuple.getT2().getId();
-                }).block();
+                .map(tuple -> tuple.getT2().getPaymentToken()).block();
     }
 }
