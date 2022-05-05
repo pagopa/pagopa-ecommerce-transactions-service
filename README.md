@@ -10,6 +10,7 @@ These are all environment variables needed by the application:
 
 | Variable name                         | Description                                                                 | type   | default |
 |---------------------------------------|-----------------------------------------------------------------------------|--------|---------|
+| MONGO_HOST                            | Host where MongoDB instance used to persise events and view resides         | string |
 | MONGO_USERNAME                        | Username used for connecting to MongoDB instance                            | string |         |
 | MONGO_PASSWORD                        | Password used for connecting to MongoDB instance                            | string |         |
 | REDIS_HOST                            | Host where the redis instance used to persist idempotency keys can be found | string |         |
