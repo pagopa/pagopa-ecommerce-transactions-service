@@ -102,13 +102,13 @@ public class TransactionsService {
                                 TransactionEventCode.TRANSACTION_INITIALIZED_EVENT, data);
 
                 SessionDataDto sessionRequest = new SessionDataDto();
-                sessionRequest.setEmail("test@test.it");
+                sessionRequest.setEmail(newTransactionRequestDto.getEmail());
                 sessionRequest.setPaymentToken(activatePaymentNoticeRes.getPaymentToken());
                 sessionRequest.setRptId(newTransactionRequestDto.getRptId());
 
                 SessionTokenDto sessionToken = ecommerceSessionsClient.createSessionToken(sessionRequest).block();
                 transactionInitEventHandler.handle(transactionInitializedEvent);
-                response.setAuthToken(sessionToken.getToken());
+                response.setAuthToken(sessionToken.getSessionToken());
                 response.setPaymentToken(activatePaymentNoticeRes.getPaymentToken());
                 return response;
         }
