@@ -89,6 +89,7 @@ public class TransactionsService {
                 TransactionTokens tokens = new TransactionTokens(rptId, transactionTokens.idempotencyKey(),
                                 activatePaymentNoticeRes.getPaymentToken());
                 transactionTokensRepository.save(tokens);
+                logger.info("Persisted transaction tokens for payment token {}", activatePaymentNoticeRes.getPaymentToken());
 
                 NewTransactionResponseDto response = new NewTransactionResponseDto()
                                 .amount(activatePaymentNoticeRes.getTotalAmount().intValue())
@@ -100,6 +101,7 @@ public class TransactionsService {
                 TransactionEvent<TransactionInitData> transactionInitializedEvent = new TransactionEvent<TransactionInitData>(
                                 newTransactionRequestDto.getRptId(), activatePaymentNoticeRes.getPaymentToken(),
                                 TransactionEventCode.TRANSACTION_INITIALIZED_EVENT, data);
+                logger.info("Generated event TRANSACTION_INITIALIZED_EVENT for payment token {}", activatePaymentNoticeRes.getPaymentToken());
 
                 SessionDataDto sessionRequest = new SessionDataDto();
                 sessionRequest.setEmail(newTransactionRequestDto.getEmail());
@@ -110,6 +112,9 @@ public class TransactionsService {
                 transactionInitEventHandler.handle(transactionInitializedEvent);
                 response.setAuthToken(sessionToken.getSessionToken());
                 response.setPaymentToken(activatePaymentNoticeRes.getPaymentToken());
+
+                logger.info("Generated new session token for payment token {}", activatePaymentNoticeRes.getPaymentToken());
+
                 return response;
         }
 
