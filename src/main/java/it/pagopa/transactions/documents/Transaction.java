@@ -12,7 +12,7 @@ import lombok.Data;
 import static java.time.ZonedDateTime.now;
 
 @Data
-@Document
+@Document(collection = "view")
 public class Transaction {
 
     @Id
@@ -22,7 +22,7 @@ public class Transaction {
     private String description;
     private int amount;
     private TransactionStatus status;
-    private ZonedDateTime creationDate;
+    private String creationDate;
 
     public Transaction(String paymentToken, String rptId, String description, int amount, TransactionStatus status) {
         this.id = UUID.randomUUID().toString();
@@ -31,6 +31,6 @@ public class Transaction {
         this.paymentToken = paymentToken;
         this.amount = amount;
         this.status = status;
-        this.creationDate = now();
+        this.creationDate = now().toString();
     }
 }

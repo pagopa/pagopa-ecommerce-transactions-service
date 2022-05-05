@@ -9,12 +9,14 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import it.pagopa.transactions.utils.TransactionEventCode;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import static java.time.ZonedDateTime.now;
 
 @Data
-@Document
+@Document(collection = "eventstore")
 public class TransactionEvent<T> {
 
     @Id
@@ -23,7 +25,7 @@ public class TransactionEvent<T> {
     private String rptId;
     private String paymentToken;
     private TransactionEventCode eventCode;
-    private ZonedDateTime creationDate;
+    private String creationDate;
     private T data;
 
     public TransactionEvent(String rptId, String paymentToken, TransactionEventCode eventCode, T data) {
@@ -31,6 +33,6 @@ public class TransactionEvent<T> {
         this.eventCode = eventCode;
         this.paymentToken = paymentToken;
         this.data = data;
-        this.creationDate = now();
+        this.creationDate = now().toString();
     }
 }

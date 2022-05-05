@@ -31,8 +31,11 @@ components:
       properties:
         rptId:
           $ref: '#/components/schemas/RptId'
+        email:
+          type: string  
       required:
         - rptId
+        - email
       example:
         rptId: string
     NewTransactionResponse:
@@ -51,6 +54,10 @@ components:
           $ref: '#/components/schemas/Beneficiary'
         installments:
           $ref: '#/components/schemas/PaymentInstallments'
+        paymentToken:
+          type: string
+        authToken:
+          type: string
       required:
         - amount
       example:
