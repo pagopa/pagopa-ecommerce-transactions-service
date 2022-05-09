@@ -55,6 +55,12 @@
         <dependency>
             <groupId>org.glassfish.jaxb</groupId>
             <artifactId>jaxb-runtime</artifactId>
+            <version>2.3.1</version>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+            <version>3.0.0</version>
         </dependency>
         <dependency>
             <groupId>io.swagger</groupId>
@@ -200,7 +206,7 @@
                 </executions>
                 <configuration>
                     <schemaLanguage>WSDL</schemaLanguage>
-                    <generatePackage>it.pagopa.nodeforpsp</generatePackage>
+                    <generatePackage>it.pagopa.transactions.model</generatePackage>
                     <schemas>
                         <schema>
                             <url>
