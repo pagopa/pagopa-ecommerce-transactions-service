@@ -7,7 +7,7 @@ import javax.xml.bind.Unmarshaller;
 
 final class JaxbContextContainer {
 
-    private static final String PACKAGE_NODE_FOR_PSP = "it.pagopa.nodeforpsp";
+    private static final String PACKAGE_NODE_FOR_PSP = "it.pagopa.transactions.model";
 
     private static JAXBContext jaxbContext = null;
 
