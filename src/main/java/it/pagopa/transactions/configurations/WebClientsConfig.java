@@ -1,4 +1,4 @@
-package it.pagopa.transactions.configuration;
+package it.pagopa.transactions.configurations;
 
 import java.util.concurrent.TimeUnit;
 
