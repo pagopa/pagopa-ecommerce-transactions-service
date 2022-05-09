@@ -32,13 +32,12 @@ public class NodeForPspClient {
 								.flatMap(errorResponseBody -> Mono.error(
 										new ResponseStatusException(clientResponse.statusCode(), errorResponseBody))))
 				.bodyToMono(ActivatePaymentNoticeRes.class)
-				.doOnSuccess((ActivatePaymentNoticeRes paymentActivedDetail) -> {
-					log.debug("Payment activated with paymentToken {}",
-							new Object[] { paymentActivedDetail.getPaymentToken() });
-				}).doOnError(ResponseStatusException.class, error -> {
-					log.error("error : {}", new Object[] { error });
-				}).doOnError(Exception.class, (Exception error) -> {
-					log.error("error : {}", new Object[] { error });
-				});
+				.doOnSuccess((ActivatePaymentNoticeRes paymentActivedDetail) -> log.debug(
+						"Payment activated with paymentToken {}",
+						new Object[] { paymentActivedDetail.getPaymentToken() }))
+				.doOnError(ResponseStatusException.class,
+						error -> log.error("ResponseStatus Error : {}", new Object[] { error }))
+				.doOnError(Exception.class,
+						(Exception error) -> log.error("Generic Error : {}", new Object[] { error }));
 	}
 }

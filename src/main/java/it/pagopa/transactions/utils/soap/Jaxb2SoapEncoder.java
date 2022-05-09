@@ -48,7 +48,7 @@ public class Jaxb2SoapEncoder implements Encoder<Object> {
             ResolvableType elementType, MimeType mimeType, Map<String, Object> hints) {
         return Flux.from(inputStream)
                 .take(1)
-                .concatMap(value -> encode(value, bufferFactory, elementType, mimeType, hints))
+                .concatMap(value -> encode(value, bufferFactory))
                 .doOnDiscard(PooledDataBuffer.class, PooledDataBuffer::release);
     }
 
@@ -58,10 +58,7 @@ public class Jaxb2SoapEncoder implements Encoder<Object> {
     }
 
     private Flux<DataBuffer> encode(Object value,
-            DataBufferFactory bufferFactory,
-            ResolvableType type,
-            MimeType mimeType,
-            Map<String, Object> hints) {
+            DataBufferFactory bufferFactory) {
 
         return Mono.fromCallable(() -> {
 
