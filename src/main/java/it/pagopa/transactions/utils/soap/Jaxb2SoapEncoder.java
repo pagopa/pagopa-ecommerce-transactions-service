@@ -113,7 +113,7 @@ public class Jaxb2SoapEncoder implements Encoder<Object> {
     }
 
     private Marshaller getMarshaller() throws JAXBException {
-        Marshaller marshaller = this.jaxbContexts.createMarshaller();
+        Marshaller marshaller = jaxbContexts.createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_ENCODING, StandardCharsets.UTF_8.name());
         return marshaller;
     }
