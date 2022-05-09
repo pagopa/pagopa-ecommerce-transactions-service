@@ -1,7 +1,6 @@
 package it.pagopa.transactions.utils.soap;
 
 import org.reactivestreams.Publisher;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.codec.CodecException;
 import org.springframework.core.codec.Encoder;
