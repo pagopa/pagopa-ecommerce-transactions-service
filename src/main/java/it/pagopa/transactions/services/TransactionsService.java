@@ -10,6 +10,7 @@ import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.documents.TransactionEvent;
 import it.pagopa.transactions.documents.TransactionInitData;
+import it.pagopa.transactions.documents.TransactionInitEvent;
 import it.pagopa.transactions.handlers.impl.TransactionInitEventHandler;
 import it.pagopa.transactions.model.IdempotencyKey;
 import it.pagopa.transactions.model.RptId;
@@ -98,9 +99,9 @@ public class TransactionsService {
                 TransactionInitData data = new TransactionInitData();
                 data.setAmount(activatePaymentNoticeRes.getTotalAmount().intValue());
                 data.setDescription(activatePaymentNoticeRes.getPaymentDescription());
-                TransactionEvent<TransactionInitData> transactionInitializedEvent = new TransactionEvent<TransactionInitData>(
+                TransactionInitEvent transactionInitializedEvent = new TransactionInitEvent(
                                 newTransactionRequestDto.getRptId(), activatePaymentNoticeRes.getPaymentToken(),
-                                TransactionEventCode.TRANSACTION_INITIALIZED_EVENT, data);
+                                data);
                 logger.info("Generated event TRANSACTION_INITIALIZED_EVENT for payment token {}", activatePaymentNoticeRes.getPaymentToken());
 
                 SessionDataDto sessionRequest = new SessionDataDto();
