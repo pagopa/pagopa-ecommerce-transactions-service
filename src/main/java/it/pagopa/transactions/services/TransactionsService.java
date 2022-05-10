@@ -23,6 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
+import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
 import java.util.Random;
@@ -50,19 +52,15 @@ public class TransactionsService {
         @Autowired
         private EcommerceSessionsClient ecommerceSessionsClient;
 
-        public NewTransactionResponseDto newTransaction(NewTransactionRequestDto newTransactionRequestDto) {
+        public Mono<NewTransactionResponseDto> newTransaction(NewTransactionRequestDto newTransactionRequestDto) {
                 RptId rptId = new RptId(newTransactionRequestDto.getRptId());
-                TransactionTokens transactionTokens = transactionTokensRepository
-                                .findById(rptId)
-                                .orElseGet(() -> {
-                                        logger.info("Creating new idempotency key for rptId {}", rptId);
-                                        final IdempotencyKey key = new IdempotencyKey(
-                                                        PSP_PAGOPA_ECOMMERCE_FISCAL_CODE,
-                                                        randomString(10));
-                                        final TransactionTokens tokens = new TransactionTokens(rptId, key, null);
-                                        transactionTokensRepository.save(tokens);
-                                        return tokens;
-                                });
+                TransactionTokens transactionTokens = transactionTokensRepository.findById(rptId).orElseGet(() -> {
+                        logger.info("Creating new idempotency key for rptId {}", rptId);
+                        final IdempotencyKey key = new IdempotencyKey(PSP_PAGOPA_ECOMMERCE_FISCAL_CODE, randomString(10));
+                        final TransactionTokens tokens = new TransactionTokens(rptId, key, null);
+                        transactionTokensRepository.save(tokens);
+                        return tokens;
+                });
 
                 logger.info("Transaction tokens for " + rptId + ": " + transactionTokens);
                 String fiscalCode = rptId.getFiscalCode();
@@ -83,39 +81,45 @@ public class TransactionsService {
                 request.setPassword("password");
                 request.setIdempotencyKey(transactionTokens.idempotencyKey().getKey());
                 request.setPaymentNote(newTransactionRequestDto.getRptId());
-                ActivatePaymentNoticeRes activatePaymentNoticeRes = (ActivatePaymentNoticeRes) nodeForPspClient
-                                .activatePaymentNotice(objectFactory.createActivatePaymentNoticeReq(request)).block();
+                Mono<ActivatePaymentNoticeRes> activatePaymentNoticeResponse = nodeForPspClient.activatePaymentNotice(objectFactory.createActivatePaymentNoticeReq(request));
 
-                TransactionTokens tokens = new TransactionTokens(rptId, transactionTokens.idempotencyKey(),
-                                activatePaymentNoticeRes.getPaymentToken());
-                transactionTokensRepository.save(tokens);
-                logger.info("Persisted transaction tokens for payment token {}", activatePaymentNoticeRes.getPaymentToken());
+                return activatePaymentNoticeResponse.flatMap(activatePaymentNoticeRes -> {
+                        TransactionTokens tokens = new TransactionTokens(rptId, transactionTokens.idempotencyKey(), activatePaymentNoticeRes.getPaymentToken());
+                        transactionTokensRepository.save(tokens);
+                        logger.info("Persisted transaction tokens for payment token {}", activatePaymentNoticeRes.getPaymentToken());
 
-                NewTransactionResponseDto response = new NewTransactionResponseDto()
-                                .amount(activatePaymentNoticeRes.getTotalAmount().intValue())
-                                .reason(activatePaymentNoticeRes.getPaymentDescription());
+                        TransactionInitData data = new TransactionInitData();
+                        data.setAmount(activatePaymentNoticeRes.getTotalAmount().intValue());
+                        data.setDescription(activatePaymentNoticeRes.getPaymentDescription());
 
-                TransactionInitData data = new TransactionInitData();
-                data.setAmount(activatePaymentNoticeRes.getTotalAmount().intValue());
-                data.setDescription(activatePaymentNoticeRes.getPaymentDescription());
-                TransactionEvent<TransactionInitData> transactionInitializedEvent = new TransactionEvent<TransactionInitData>(
-                                newTransactionRequestDto.getRptId(), activatePaymentNoticeRes.getPaymentToken(),
-                                TransactionEventCode.TRANSACTION_INITIALIZED_EVENT, data);
-                logger.info("Generated event TRANSACTION_INITIALIZED_EVENT for payment token {}", activatePaymentNoticeRes.getPaymentToken());
+                        TransactionEvent<TransactionInitData> transactionInitializedEvent = new TransactionEvent<>(
+                                        newTransactionRequestDto.getRptId(),
+                                        activatePaymentNoticeRes.getPaymentToken(),
+                                        TransactionEventCode.TRANSACTION_INITIALIZED_EVENT,
+                                        data);
 
-                SessionDataDto sessionRequest = new SessionDataDto();
-                sessionRequest.setEmail(newTransactionRequestDto.getEmail());
-                sessionRequest.setPaymentToken(activatePaymentNoticeRes.getPaymentToken());
-                sessionRequest.setRptId(newTransactionRequestDto.getRptId());
+                        logger.info("Generated event TRANSACTION_INITIALIZED_EVENT for payment token {}", activatePaymentNoticeRes.getPaymentToken());
+                        transactionInitEventHandler.handle(transactionInitializedEvent);
 
-                SessionTokenDto sessionToken = ecommerceSessionsClient.createSessionToken(sessionRequest).block();
-                transactionInitEventHandler.handle(transactionInitializedEvent);
-                response.setAuthToken(sessionToken.getSessionToken());
-                response.setPaymentToken(activatePaymentNoticeRes.getPaymentToken());
+                        SessionDataDto sessionRequest = new SessionDataDto()
+                                        .email(newTransactionRequestDto.getEmail())
+                                        .paymentToken(activatePaymentNoticeRes.getPaymentToken())
+                                        .rptId(newTransactionRequestDto.getRptId());
 
-                logger.info("Generated new session token for payment token {}", activatePaymentNoticeRes.getPaymentToken());
+                        Mono<SessionTokenDto> sessionToken = ecommerceSessionsClient.createSessionToken(sessionRequest);
 
-                return response;
+                        return sessionToken.map(token -> Tuples.of(token, activatePaymentNoticeRes));
+                }).map(tuple -> {
+                        SessionTokenDto sessionToken = tuple.getT1();
+                        ActivatePaymentNoticeRes activatePaymentNoticeRes = tuple.getT2();
+                        logger.info("Generated new session token for payment token {}", activatePaymentNoticeRes.getPaymentToken());
+
+                        return new NewTransactionResponseDto()
+                                        .amount(activatePaymentNoticeRes.getTotalAmount().intValue())
+                                        .reason(activatePaymentNoticeRes.getPaymentDescription())
+                                        .authToken(sessionToken.getSessionToken())
+                                        .paymentToken(activatePaymentNoticeRes.getPaymentToken());
+                });
         }
 
         private String randomString(int len) {

@@ -13,7 +13,7 @@ import it.pagopa.transactions.utils.TransactionStatus;
 import reactor.core.publisher.Mono;
 
 @Component
-public class TransactionInitEventHandler implements EventHandler<TransactionInitData, String> {
+public class TransactionInitEventHandler implements EventHandler<TransactionInitData, Mono<String>> {
 
     @Autowired
     private TransactionsEventStoreRepository<TransactionInitData> transactionEventStoreRepository;
@@ -23,16 +23,18 @@ public class TransactionInitEventHandler implements EventHandler<TransactionInit
 
     /**
      * store transactionInitializedEvent event and update view
-     * 
+     *
      * @return payment token associated to transaction
      */
     @Override
-    public String handle(TransactionEvent<TransactionInitData> transactionInitializedEvent) {
+    public Mono<String> handle(TransactionEvent<TransactionInitData> transactionInitializedEvent) {
 
-        return Mono.zip(transactionEventStoreRepository.save(transactionInitializedEvent),
-                viewEventStoreRepository.save(new Transaction(transactionInitializedEvent.getPaymentToken(),
-                        transactionInitializedEvent.getRptId(), transactionInitializedEvent.getData().getDescription(),
-                        transactionInitializedEvent.getData().getAmount(), TransactionStatus.TRANSACTION_INITIALIZED)))
-                .map(tuple -> tuple.getT2().getPaymentToken()).block();
+        return Mono.zip(
+                transactionEventStoreRepository.save(transactionInitializedEvent),
+                viewEventStoreRepository.save(
+                        new Transaction(transactionInitializedEvent.getPaymentToken(),
+                                transactionInitializedEvent.getRptId(), transactionInitializedEvent.getData().getDescription(),
+                                transactionInitializedEvent.getData().getAmount(), TransactionStatus.TRANSACTION_INITIALIZED))
+        ).map(tuple -> tuple.getT2().getPaymentToken());
     }
 }
