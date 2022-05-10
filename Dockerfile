@@ -1,4 +1,4 @@
-FROM openjdk:17-jdk-alpine as build
+FROM openjdk:17-slim as build
 WORKDIR /workspace/app
 
 COPY mvnw .
@@ -12,9 +12,9 @@ COPY api-spec api-spec
 RUN ./mvnw install -DskipTests --offline
 RUN mkdir target/extracted && java -Djarmode=layertools -jar target/*.jar extract --destination target/extracted
 
-FROM openjdk:17-jdk-alpine
+FROM openjdk:17-slim
 
-RUN addgroup -S user && adduser -S user -G user
+RUN addgroup --system user && adduser --ingroup user --system user
 USER user:user
 
 WORKDIR /app/
