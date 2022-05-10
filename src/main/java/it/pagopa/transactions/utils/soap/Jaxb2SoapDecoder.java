@@ -34,9 +34,9 @@ public class Jaxb2SoapDecoder extends Jaxb2XmlDecoder {
     }
 
     @Override
-    @SuppressWarnings({ "rawtypes", "unchecked", "cast" })
+    @SuppressWarnings({"rawtypes", "unchecked", "cast"})
     public Object decode(DataBuffer dataBuffer, ResolvableType targetType, @Nullable MimeType mimeType,
-            @Nullable Map<String, Object> hints) throws DecodingException {
+                         @Nullable Map<String, Object> hints) throws DecodingException {
 
         try {
             DefaultStrategiesHelper helper = new DefaultStrategiesHelper(WebServiceTemplate.class);

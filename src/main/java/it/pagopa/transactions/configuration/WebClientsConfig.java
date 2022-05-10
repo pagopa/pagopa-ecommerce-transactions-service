@@ -21,8 +21,8 @@ public class WebClientsConfig {
 
     @Bean(name = "nodoWebClient")
     public WebClient nodoWebClient(@Value("${nodo.uri}") String nodoUri,
-            @Value("${nodo.readTimeout}") int nodoReadTimeout,
-            @Value("${nodo.connectionTimeout}") int nodoConnectionTimeout) {
+                                   @Value("${nodo.readTimeout}") int nodoReadTimeout,
+                                   @Value("${nodo.connectionTimeout}") int nodoConnectionTimeout) {
 
         HttpClient httpClient = HttpClient.create().option(ChannelOption.CONNECT_TIMEOUT_MILLIS, nodoConnectionTimeout)
                 .doOnConnected(connection -> connection
@@ -63,8 +63,8 @@ public class WebClientsConfig {
 
     @Bean(name = "ecommerceSessionsWebClient")
     public WebClient ecommerceSessionsWebClient(@Value("${ecommerceSessions.uri}") String ecommerceSessionsUri,
-            @Value("${ecommerceSessions.readTimeout}") int ecommerceSessionsReadTimeout,
-            @Value("${ecommerceSessions.connectionTimeout}") int ecommerceSessionsConnectionTimeout) {
+                                                @Value("${ecommerceSessions.readTimeout}") int ecommerceSessionsReadTimeout,
+                                                @Value("${ecommerceSessions.connectionTimeout}") int ecommerceSessionsConnectionTimeout) {
 
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, ecommerceSessionsConnectionTimeout)

@@ -18,18 +18,15 @@ import it.pagopa.transactions.repositories.TransactionTokensRepository;
 import it.pagopa.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.transactions.utils.TransactionEventCode;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
 import java.util.Random;
-import java.util.function.Function;
 
 @Service
 public class TransactionsService {

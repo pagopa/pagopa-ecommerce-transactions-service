@@ -141,5 +141,4 @@
 //         assertThat(testResponse.getFault().getFaultCode()).isEqualTo(faultError);
 //         assertThat(testResponse.getFault().getFaultString()).isEqualTo(faultError);
 //     }
-    
 // }
