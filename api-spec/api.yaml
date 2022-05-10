@@ -58,6 +58,8 @@ components:
           type: string
         authToken:
           type: string
+        rptId:
+          $ref: '#/components/schemas/RptId'  
       required:
         - amount
       example:
