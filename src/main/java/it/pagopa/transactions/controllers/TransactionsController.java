@@ -7,6 +7,8 @@ import it.pagopa.transactions.services.TransactionsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
 @RestController
 public class TransactionsController implements TransactionsApi {
@@ -15,8 +17,7 @@ public class TransactionsController implements TransactionsApi {
     private TransactionsService transactionsService;
 
     @Override
-    public ResponseEntity<NewTransactionResponseDto> newTransaction(NewTransactionRequestDto newTransactionRequestDto) {
-
-        return ResponseEntity.ok(transactionsService.newTransaction(newTransactionRequestDto));
+    public Mono<ResponseEntity<NewTransactionResponseDto>> newTransaction(Mono<NewTransactionRequestDto> newTransactionRequest, ServerWebExchange exchange) {
+        return newTransactionRequest.map(newTransactionRequestDto -> ResponseEntity.ok(transactionsService.newTransaction(newTransactionRequestDto)));
     }
 }
