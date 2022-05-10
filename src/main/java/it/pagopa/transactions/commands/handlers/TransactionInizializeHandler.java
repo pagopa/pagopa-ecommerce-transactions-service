@@ -1,7 +1,7 @@
 package it.pagopa.transactions.commands.handlers;
 
 import java.math.BigDecimal;
-import java.util.Random;
+import java.security.SecureRandom;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -33,7 +33,7 @@ public class TransactionInizializeHandler
                 implements CommandHandler<TransactionsCommand<NewTransactionRequestDto>, Object> {
 
         private static final String ALPHANUMERICS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-        private static final Random RANDOM = new Random();
+        private static final SecureRandom RANDOM = new SecureRandom();
         private static final String PSP_PAGOPA_ECOMMERCE_FISCAL_CODE = "00000000000";
 
         @Autowired
