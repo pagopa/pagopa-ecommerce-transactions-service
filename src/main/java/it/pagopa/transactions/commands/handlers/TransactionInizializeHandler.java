@@ -88,7 +88,7 @@ public class TransactionInizializeHandler
                 request.setPassword("password");
                 request.setIdempotencyKey(transactionTokens.idempotencyKey().getKey());
                 request.setPaymentNote(rptId.getNoticeId());
-                ActivatePaymentNoticeRes activatePaymentNoticeRes = (ActivatePaymentNoticeRes) nodeForPspClient
+                ActivatePaymentNoticeRes activatePaymentNoticeRes = nodeForPspClient
                                 .activatePaymentNotice(objectFactory.createActivatePaymentNoticeReq(request)).block();
 
                 TransactionTokens tokens = new TransactionTokens(rptId, transactionTokens.idempotencyKey(),
@@ -108,14 +108,15 @@ public class TransactionInizializeHandler
                 data.setAmount(activatePaymentNoticeRes.getTotalAmount().intValue());
                 data.setDescription(activatePaymentNoticeRes.getPaymentDescription());
 
-                TransactionEvent<TransactionInitData> transactionInitializedEvent = new TransactionEvent<TransactionInitData>(
+                TransactionEvent<TransactionInitData> transactionInitializedEvent = new TransactionEvent<>(
                                 newTransactionRequestDto.getRptId(), activatePaymentNoticeRes.getPaymentToken(),
                                 TransactionEventCode.TRANSACTION_INITIALIZED_EVENT, data);
 
                 transactionEventStoreRepository.save(transactionInitializedEvent)
                                 .doOnSuccess(event -> log.info(
                                                 "Generated event TRANSACTION_INITIALIZED_EVENT for payment token {}",
-                                                event.getPaymentToken())).subscribe();
+                                                event.getPaymentToken()))
+                                .subscribe();
 
                 NewTransactionResponseDto response = new NewTransactionResponseDto()
                                 .amount(activatePaymentNoticeRes.getTotalAmount().intValue())
