@@ -27,7 +27,7 @@ public class TransactionsService {
 
                 log.info("Transactions initialization for rptId: {}",
                                 newTransactionRequestDto.getRptId());
-                TransactionsCommand<NewTransactionRequestDto> command = new TransactionsCommand<NewTransactionRequestDto>();
+                TransactionsCommand<NewTransactionRequestDto> command = new TransactionsCommand<>();
                 command.setCode(TransactionsCommandCode.INITIALIZE_TRANSACTION);
                 command.setData(newTransactionRequestDto);
                 command.setRptId(new RptId(newTransactionRequestDto.getRptId()));
