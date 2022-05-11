@@ -26,12 +26,13 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
+import java.security.SecureRandom;
 import java.util.Random;
 
 @Service
 public class TransactionsService {
     private static final String ALPHANUMERICS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-    private static final Random RANDOM = new Random();
+    private static final Random RANDOM = new SecureRandom();
     private static final String PSP_PAGOPA_ECOMMERCE_FISCAL_CODE = "00000000000";
 
     private final Logger logger = LoggerFactory.getLogger(TransactionsService.class);
