@@ -29,8 +29,8 @@ public class Jaxb2SoapDecoder extends Jaxb2XmlDecoder {
     private final JaxbContextContainer jaxbContexts = new JaxbContextContainer();
 
     public Jaxb2SoapDecoder() {
-        super(MimeTypeUtils.APPLICATION_XML, new MediaType("application", "*+xml"),
-                new MediaType("text", "xml*"));
+        super(MimeTypeUtils.APPLICATION_XML, MimeTypeUtils.TEXT_XML, new MediaType("application", "*+xml"),
+                new MediaType("text", "*"));
     }
 
     @Override
