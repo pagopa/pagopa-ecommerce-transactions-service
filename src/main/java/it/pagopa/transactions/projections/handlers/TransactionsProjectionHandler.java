@@ -25,7 +25,7 @@ public class TransactionsProjectionHandler
 				data.getAmount(), TransactionStatus.TRANSACTION_INITIALIZED);
 
 		viewEventStoreRepository.save(transaction)
-				.doOnSuccess(event -> log.info("Transactions updata view for rptId: {}",
+				.doOnSuccess(event -> log.info("Transactions update view for rptId: {}",
 						event.getRptId()))
 				.subscribe();
 		return null;
