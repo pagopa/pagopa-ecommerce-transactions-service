@@ -8,10 +8,10 @@ import org.springframework.stereotype.Component;
 
 import it.pagopa.ecommerce.sessions.v1.dto.SessionDataDto;
 import it.pagopa.ecommerce.sessions.v1.dto.SessionTokenDto;
-import it.pagopa.nodeforpsp.ActivatePaymentNoticeReq;
-import it.pagopa.nodeforpsp.ActivatePaymentNoticeRes;
-import it.pagopa.nodeforpsp.CtQrCode;
-import it.pagopa.nodeforpsp.ObjectFactory;
+import it.pagopa.transactions.model.ActivatePaymentNoticeReq;
+import it.pagopa.transactions.model.ActivatePaymentNoticeRes;
+import it.pagopa.transactions.model.CtQrCode;
+import it.pagopa.transactions.model.ObjectFactory;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionsCommand;
