@@ -16,6 +16,7 @@ import lombok.NoArgsConstructor;
 import static java.time.ZonedDateTime.now;
 
 @Data
+@Document(collection = "eventstore")
 public sealed abstract class TransactionEvent<T> permits TransactionInitEvent {
 
     @Id
