@@ -1,37 +1,26 @@
 package it.pagopa.transactions.utils.soap;
 
-import org.springframework.util.Assert;
-
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 final class JaxbContextContainer {
 
-    private final ConcurrentMap<Class<?>, JAXBContext> jaxbContexts = new ConcurrentHashMap<>(64);
+    private static final String PACKAGE_NODE_FOR_PSP = "it.pagopa.transactions.model";
 
-    public Marshaller createMarshaller(Class<?> clazz) throws JAXBException {
-        JAXBContext jaxbContext = getJaxbContext(clazz);
-        return jaxbContext.createMarshaller();
+    private static JAXBContext jaxbContext = null;
+
+    public Marshaller createMarshaller() throws JAXBException {
+        return getJaxbContext().createMarshaller();
     }
 
-    public Unmarshaller createUnmarshaller(Class<?> clazz) throws JAXBException {
-        JAXBContext jaxbContext = getJaxbContext(clazz);
-        return jaxbContext.createUnmarshaller();
+    public Unmarshaller createUnmarshaller() throws JAXBException {
+        return getJaxbContext().createUnmarshaller();
     }
 
-    private JAXBContext getJaxbContext(Class<?> clazz) throws JAXBException {
-        Assert.notNull(clazz, "Class must not be null");
-        JAXBContext jaxbContext = this.jaxbContexts.get(clazz);
-        if (jaxbContext == null) {
-            // jaxbContext = JAXBContext.newInstance(clazz);
-            jaxbContext = JAXBContext.newInstance("it.pagopa.nodeforpsp"); // TODO to check
-            this.jaxbContexts.putIfAbsent(clazz, jaxbContext);
-        }
-        return jaxbContext;
+    private JAXBContext getJaxbContext() throws JAXBException {
+        return jaxbContext  == null ? JAXBContext.newInstance(PACKAGE_NODE_FOR_PSP) : jaxbContext;
     }
 
 }
