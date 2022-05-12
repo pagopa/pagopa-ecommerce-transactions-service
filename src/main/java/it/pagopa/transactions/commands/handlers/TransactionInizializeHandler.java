@@ -3,6 +3,7 @@ package it.pagopa.transactions.commands.handlers;
 import java.math.BigDecimal;
 import java.security.SecureRandom;
 
+import it.pagopa.transactions.documents.TransactionInitEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -108,10 +109,9 @@ public class TransactionInizializeHandler
                     data.setAmount(activatePaymentNoticeRes.getTotalAmount().intValue());
                     data.setDescription(activatePaymentNoticeRes.getPaymentDescription());
 
-                    TransactionEvent<TransactionInitData> transactionInitializedEvent = new TransactionEvent<>(
+                    TransactionEvent<TransactionInitData> transactionInitializedEvent = new TransactionInitEvent(
                             newTransactionRequestDto.getRptId(),
                             activatePaymentNoticeRes.getPaymentToken(),
-                            TransactionEventCode.TRANSACTION_INITIALIZED_EVENT,
                             data);
 
                     log.info("Generated event TRANSACTION_INITIALIZED_EVENT for payment token {}", activatePaymentNoticeRes.getPaymentToken());
