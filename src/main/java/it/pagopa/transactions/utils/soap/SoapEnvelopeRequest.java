@@ -17,7 +17,7 @@ public class SoapEnvelopeRequest {
         this.body = body;
     }
 
-    public String getHeaderContent(){
+    public String getHeaderContent() {
         return headerContent;
     }
 

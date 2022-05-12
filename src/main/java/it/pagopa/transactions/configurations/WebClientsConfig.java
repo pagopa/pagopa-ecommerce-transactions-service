@@ -1,4 +1,4 @@
-package it.pagopa.transactions.configuration;
+package it.pagopa.transactions.configurations;
 
 import java.util.concurrent.TimeUnit;
 
@@ -12,7 +12,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import it.pagopa.ecommerce.sessions.v1.ApiClient;
-import it.pagopa.nodeforpsp.ObjectFactory;
+import it.pagopa.transactions.model.ObjectFactory;
+import it.pagopa.transactions.utils.soap.Jaxb2SoapDecoder;
 import it.pagopa.transactions.utils.soap.Jaxb2SoapEncoder;
 import reactor.netty.http.client.HttpClient;
 
@@ -21,20 +22,20 @@ public class WebClientsConfig {
 
     @Bean(name = "nodoWebClient")
     public WebClient nodoWebClient(@Value("${nodo.uri}") String nodoUri,
-            @Value("${nodo.readTimeout}") int nodoReadTimeout,
-            @Value("${nodo.connectionTimeout}") int nodoConnectionTimeout) {
+                                   @Value("${nodo.readTimeout}") int nodoReadTimeout,
+                                   @Value("${nodo.connectionTimeout}") int nodoConnectionTimeout) {
 
         HttpClient httpClient = HttpClient.create().option(ChannelOption.CONNECT_TIMEOUT_MILLIS, nodoConnectionTimeout)
                 .doOnConnected(connection -> connection
                         .addHandlerLast(new ReadTimeoutHandler(nodoReadTimeout, TimeUnit.MILLISECONDS)));
 
         ExchangeStrategies exchangeStrategies = ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
+            clientCodecConfigurer.registerDefaults(false);
+            clientCodecConfigurer.customCodecs().register(new Jaxb2SoapDecoder());
             clientCodecConfigurer.customCodecs().register(new Jaxb2SoapEncoder());
-            // clientCodecConfigurer.customCodecs().register(new Jaxb2SoapDecoder()); TODO
-            // fix Jaxb2SoapDecoder
         }).build();
 
-        return WebClient.builder().baseUrl(nodoUri).defaultHeader("Content-Type", "text/xml")
+        return WebClient.builder().baseUrl(nodoUri)
                 .clientConnector(new ReactorClientHttpConnector(httpClient)).exchangeStrategies(exchangeStrategies)
                 .build();
     }
@@ -63,8 +64,8 @@ public class WebClientsConfig {
 
     @Bean(name = "ecommerceSessionsWebClient")
     public WebClient ecommerceSessionsWebClient(@Value("${ecommerceSessions.uri}") String ecommerceSessionsUri,
-            @Value("${ecommerceSessions.readTimeout}") int ecommerceSessionsReadTimeout,
-            @Value("${ecommerceSessions.connectionTimeout}") int ecommerceSessionsConnectionTimeout) {
+                                                @Value("${ecommerceSessions.readTimeout}") int ecommerceSessionsReadTimeout,
+                                                @Value("${ecommerceSessions.connectionTimeout}") int ecommerceSessionsConnectionTimeout) {
 
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, ecommerceSessionsConnectionTimeout)

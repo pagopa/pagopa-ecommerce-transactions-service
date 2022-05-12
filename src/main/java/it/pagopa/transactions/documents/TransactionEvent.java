@@ -1,17 +1,12 @@
 package it.pagopa.transactions.documents;
 
-import java.time.ZonedDateTime;
-import java.util.UUID;
-
 import com.azure.spring.data.cosmos.core.mapping.PartitionKey;
-
+import it.pagopa.transactions.utils.TransactionEventCode;
+import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import it.pagopa.transactions.utils.TransactionEventCode;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.util.UUID;
 
 import static java.time.ZonedDateTime.now;
 

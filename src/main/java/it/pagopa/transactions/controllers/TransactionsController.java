@@ -18,6 +18,8 @@ public class TransactionsController implements TransactionsApi {
 
     @Override
     public Mono<ResponseEntity<NewTransactionResponseDto>> newTransaction(Mono<NewTransactionRequestDto> newTransactionRequest, ServerWebExchange exchange) {
-        return newTransactionRequest.map(newTransactionRequestDto -> ResponseEntity.ok(transactionsService.newTransaction(newTransactionRequestDto)));
+        return newTransactionRequest
+                .flatMap(transactionsService::newTransaction)
+                .map(ResponseEntity::ok);
     }
 }

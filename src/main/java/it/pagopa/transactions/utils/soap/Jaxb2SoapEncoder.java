@@ -9,11 +9,11 @@ import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.core.io.buffer.PooledDataBuffer;
-import org.springframework.util.ClassUtils;
 import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
 import org.w3c.dom.Document;
 
+import it.pagopa.transactions.model.SoapEnvelope;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -41,15 +41,14 @@ public class Jaxb2SoapEncoder implements Encoder<Object> {
         Class<?> outputClass = elementType.toClass();
         return (outputClass.isAnnotationPresent(XmlRootElement.class) ||
                 outputClass.isAnnotationPresent(XmlType.class));
-
     }
 
     @Override
     public Flux<DataBuffer> encode(Publisher<?> inputStream, DataBufferFactory bufferFactory,
-            ResolvableType elementType, MimeType mimeType, Map<String, Object> hints) {
+                                   ResolvableType elementType, MimeType mimeType, Map<String, Object> hints) {
         return Flux.from(inputStream)
                 .take(1)
-                .concatMap(value -> encode(value, bufferFactory, elementType, mimeType, hints))
+                .concatMap(value -> encode(value, bufferFactory))
                 .doOnDiscard(PooledDataBuffer.class, PooledDataBuffer::release);
     }
 
@@ -59,39 +58,38 @@ public class Jaxb2SoapEncoder implements Encoder<Object> {
     }
 
     private Flux<DataBuffer> encode(Object value,
-            DataBufferFactory bufferFactory,
-            ResolvableType type,
-            MimeType mimeType,
-            Map<String, Object> hints) {
-
+            DataBufferFactory bufferFactory) {
         return Mono.fromCallable(() -> {
+
             boolean release = true;
             DataBuffer buffer = bufferFactory.allocateBuffer(1024);
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            SoapEnvelope soapEnvelope = (SoapEnvelope) value;
+            OutputStream outputStream = buffer.asOutputStream();
+            Document doc = dbf.newDocumentBuilder().newDocument();
+            SOAPMessage soapMessage = MessageFactory.newInstance().createMessage();
 
             try {
 
-                Document doc = dbf.newDocumentBuilder().newDocument();
+                /**
+                 * Marshal: body content into a xml Document.
+                 */
+                getMarshaller().marshal(soapEnvelope.getBody(), doc);
 
-                SoapEnvelopeRequest soapEnvelopeRequest = (SoapEnvelopeRequest) value;
-
-                OutputStream outputStream = buffer.asOutputStream();
-                Class<?> clazz = ClassUtils.getUserClass(soapEnvelopeRequest.getBody());
-                Marshaller marshaller = initMarshaller(clazz);
-
-                marshaller.marshal(soapEnvelopeRequest.getBody(), doc);
-
-                SOAPMessage soapMessage = MessageFactory.newInstance().createMessage();
-
+                /**
+                 * Clean: SOAP-ENV (SOAP1.2) into soap (SOAP1.1)
+                 */
                 soapMessage.getSOAPPart().getEnvelope().removeNamespaceDeclaration("SOAP-ENV");
                 soapMessage.getSOAPPart().getEnvelope().setPrefix("soap");
                 soapMessage.getSOAPHeader().setPrefix("soap");
                 soapMessage.getSOAPBody().setPrefix("soap");
 
+                /**
+                 * Marshal ending
+                 */
                 SOAPBody soapBody = soapMessage.getSOAPBody();
                 soapBody.addDocument(doc);
                 soapMessage.saveChanges();
-
                 soapMessage.writeTo(outputStream);
                 outputStream.flush();
 
@@ -110,10 +108,9 @@ public class Jaxb2SoapEncoder implements Encoder<Object> {
         }).flux();
     }
 
-    private Marshaller initMarshaller(Class<?> clazz) throws JAXBException {
-        Marshaller marshaller = this.jaxbContexts.createMarshaller(clazz);
+    private Marshaller getMarshaller() throws JAXBException {
+        Marshaller marshaller = jaxbContexts.createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_ENCODING, StandardCharsets.UTF_8.name());
         return marshaller;
     }
-
 }
