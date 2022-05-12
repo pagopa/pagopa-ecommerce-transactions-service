@@ -45,7 +45,7 @@ public class Jaxb2SoapEncoder implements Encoder<Object> {
 
     @Override
     public Flux<DataBuffer> encode(Publisher<?> inputStream, DataBufferFactory bufferFactory,
-            ResolvableType elementType, MimeType mimeType, Map<String, Object> hints) {
+                                   ResolvableType elementType, MimeType mimeType, Map<String, Object> hints) {
         return Flux.from(inputStream)
                 .take(1)
                 .concatMap(value -> encode(value, bufferFactory))
@@ -59,7 +59,6 @@ public class Jaxb2SoapEncoder implements Encoder<Object> {
 
     private Flux<DataBuffer> encode(Object value,
             DataBufferFactory bufferFactory) {
-
         return Mono.fromCallable(() -> {
 
             boolean release = true;

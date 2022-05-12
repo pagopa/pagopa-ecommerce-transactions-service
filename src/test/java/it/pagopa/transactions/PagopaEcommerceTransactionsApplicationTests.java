@@ -9,7 +9,7 @@ import org.springframework.test.context.TestPropertySource;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest
-@TestPropertySource(locations="classpath:application-tests.properties")
+@TestPropertySource(locations = "classpath:application-tests.properties")
 class PagopaEcommerceTransactionsApplicationTests {
     @Autowired
     private TransactionTokensRepository repository;
