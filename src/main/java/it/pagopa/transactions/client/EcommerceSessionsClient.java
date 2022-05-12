@@ -1,6 +1,7 @@
 package it.pagopa.transactions.client;
 
 
+import it.pagopa.ecommerce.sessions.v1.api.DefaultApi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -17,11 +18,15 @@ public class EcommerceSessionsClient {
 
     @Autowired
     @Qualifier("ecommerceSessionsWebClient")
-    private WebClient ecommerceSessionsWebClient;
+    private DefaultApi ecommerceSessionsWebClient;
 
     public Mono<SessionTokenDto> createSessionToken(SessionDataDto request) {
 
-        return ecommerceSessionsWebClient.post().body(Mono.just(request), SessionDataDto.class)
+        return ecommerceSessionsWebClient
+                .getApiClient()
+                .getWebClient()
+                .post()
+                .body(Mono.just(request), SessionDataDto.class)
                 .retrieve()
                 .onStatus(HttpStatus::isError,
                         clientResponse -> clientResponse.bodyToMono(String.class)
