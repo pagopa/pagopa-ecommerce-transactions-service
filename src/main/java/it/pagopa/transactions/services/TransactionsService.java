@@ -1,6 +1,5 @@
 package it.pagopa.transactions.services;
 
-
 import it.pagopa.transactions.commands.TransactionsCommand;
 import it.pagopa.transactions.commands.TransactionsCommandCode;
 import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;

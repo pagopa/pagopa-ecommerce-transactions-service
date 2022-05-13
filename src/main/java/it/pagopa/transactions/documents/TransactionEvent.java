@@ -12,7 +12,7 @@ import static java.time.ZonedDateTime.now;
 
 @Data
 @Document(collection = "eventstore")
-public class TransactionEvent<T> {
+public sealed abstract class TransactionEvent<T> permits TransactionInitEvent {
 
     @Id
     private String id;
@@ -31,3 +31,4 @@ public class TransactionEvent<T> {
         this.creationDate = now().toString();
     }
 }
+
