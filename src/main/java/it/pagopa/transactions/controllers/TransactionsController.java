@@ -3,6 +3,7 @@ package it.pagopa.transactions.controllers;
 import it.pagopa.transactions.server.api.TransactionsApi;
 import it.pagopa.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.transactions.server.model.NewTransactionResponseDto;
+import it.pagopa.transactions.server.model.TransactionInfoDto;
 import it.pagopa.transactions.services.TransactionsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -21,5 +22,10 @@ public class TransactionsController implements TransactionsApi {
         return newTransactionRequest
                 .flatMap(transactionsService::newTransaction)
                 .map(ResponseEntity::ok);
+    }
+
+    @Override
+    public Mono<ResponseEntity<TransactionInfoDto>> getTransactionInfo(String transactionId, ServerWebExchange exchange) {
+        return transactionsService.getTransactionInfo(transactionId).map(ResponseEntity::ok);
     }
 }

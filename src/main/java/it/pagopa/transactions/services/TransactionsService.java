@@ -7,6 +7,7 @@ import it.pagopa.transactions.model.RptId;
 import it.pagopa.transactions.projections.handlers.TransactionsProjectionHandler;
 import it.pagopa.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.transactions.server.model.NewTransactionResponseDto;
+import it.pagopa.transactions.server.model.TransactionInfoDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -35,5 +36,9 @@ public class TransactionsService {
                 .doOnNext((_tx) -> log.info("Transaction initialized for rptId: {}", newTransactionRequestDto.getRptId()));
 
         return response.flatMap(data -> transactionsProjectionHandler.handle(data).thenReturn(data));
+    }
+
+    public Mono<TransactionInfoDto> getTransactionInfo(String transactionId) {
+        return null;
     }
 }
