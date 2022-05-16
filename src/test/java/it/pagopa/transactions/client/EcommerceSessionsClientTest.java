@@ -1,55 +1,79 @@
-// package it.pagopa.transactions.client;
+package it.pagopa.transactions.client;
 
-// import static org.mockito.Mockito.when;
-// import static org.assertj.core.api.Assertions.assertThat;
+import it.pagopa.ecommerce.sessions.v1.dto.SessionDataDto;
+import it.pagopa.ecommerce.sessions.v1.dto.SessionRequestDto;
+import it.pagopa.ecommerce.sessions.v1.dto.SessionTokenDto;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
-// import java.util.UUID;
+import java.util.UUID;
 
-// import org.junit.jupiter.api.Test;
-// import org.junit.jupiter.api.extension.ExtendWith;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
-// import it.pagopa.ecommerce.sessions.v1.api.DefaultApi;
-// import it.pagopa.ecommerce.sessions.v1.dto.SessionDataDto;
-// import it.pagopa.ecommerce.sessions.v1.dto.SessionTokenDto;
-// import reactor.core.publisher.Mono;
+@ExtendWith(MockitoExtension.class)
+public class EcommerceSessionsClientTest {
 
-// import org.mockito.InjectMocks;
-// import org.mockito.Mock;
-// import org.mockito.junit.jupiter.MockitoExtension;
+    @InjectMocks
+    private EcommerceSessionsClient client;
 
-// @ExtendWith(MockitoExtension.class)
-// public class EcommerceSessionsClientTest {
+    @Mock
+    private WebClient ecommerceSessionsWebClient;
+    @Mock
+    private WebClient.RequestBodyUriSpec mockRequestBodyUriSpec;
+    @Mock
+    private WebClient.RequestHeadersSpec mockRequestHeadersSpec;
+    @Mock
+    private WebClient.ResponseSpec mockResponseSpec;
 
-//     @InjectMocks
-//     private EcommerceSessionsClient client;
+    @Test
+    void shouldReturnValidTokenTest() {
 
-//     @Mock
-//     private DefaultApi ecommerceSessionsWebClient;
+        String TEST_TOKEN = UUID.randomUUID().toString();
+        String TEST_EMAIL = "test@mail.it";
+        String TEST_RPTID = "77777777777302016723749670035";
 
-//     @Test
-//     void shouldReturnValidTokenTest() {
+        SessionRequestDto request = new SessionRequestDto();
+        request.setEmail(TEST_EMAIL);
+        request.setPaymentToken(TEST_TOKEN);
+        request.setRptId(TEST_RPTID);
 
-//         SessionTokenDto sessionToken = new SessionTokenDto();
-//         sessionToken.setToken(UUID.randomUUID().toString());
-//         Mono<SessionTokenDto> response = Mono.just(sessionToken);
-//         SessionDataDto request = new SessionDataDto();
-//         request.setEmail("test@mail.it");
-//         request.setPaymentToken(UUID.randomUUID().toString());
+        SessionDataDto dataDto = new SessionDataDto();
+        dataDto.setSessionToken(TEST_TOKEN);
+        dataDto.setEmail(TEST_EMAIL);
+        dataDto.setRptId(TEST_RPTID);
+        Mono<SessionDataDto> dataDtoMono = Mono.just(dataDto);
 
-//         /**
-//          * preconditions
-//          */
-//         when(ecommerceSessionsWebClient.postToken(request)).thenReturn(response);
+        SessionTokenDto tokenDto = new SessionTokenDto();
+        tokenDto.setSessionToken(TEST_TOKEN);
+        tokenDto.setEmail(TEST_EMAIL);
+        tokenDto.setRptId(TEST_RPTID);
 
-//         /**
-//          * test
-//          */
-//         SessionTokenDto testResponse = client.createSessionToken(request).block();
+        /**
+         * preconditions
+         */
+        when(ecommerceSessionsWebClient.post()).thenReturn(mockRequestBodyUriSpec);
+        when(mockRequestBodyUriSpec.body(Mockito.any(), Mockito.eq(SessionDataDto.class))).thenReturn(mockRequestHeadersSpec);
+        when(mockRequestHeadersSpec.retrieve()).thenReturn(mockResponseSpec);
+        when(mockResponseSpec.onStatus(Mockito.any(), Mockito.any())).thenReturn(mockResponseSpec);
+        when(mockResponseSpec.bodyToMono(SessionTokenDto.class)).thenReturn(Mono.just(tokenDto));
 
-//         /**
-//          * asserts
-//          */
-//         assertThat(testResponse.getToken()).isEqualTo(testResponse.getToken());
-//     }
 
-// }
+        /**
+         * test
+         */
+        SessionTokenDto testResponse = client.createSessionToken(dataDto).block();
+
+        /**
+         * asserts
+         */
+        assertThat(testResponse.getPaymentToken()).isEqualTo(testResponse.getPaymentToken());
+    }
+
+}
