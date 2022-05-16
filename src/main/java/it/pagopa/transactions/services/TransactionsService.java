@@ -16,24 +16,24 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class TransactionsService {
 
-        @Autowired
-        private TransactionInizializeHandler transactionInizializeHandler;
+    @Autowired
+    private TransactionInizializeHandler transactionInizializeHandler;
 
-        @Autowired
-        private TransactionsProjectionHandler transactionsProjectionHandler;
+    @Autowired
+    private TransactionsProjectionHandler transactionsProjectionHandler;
 
-        public Mono<NewTransactionResponseDto> newTransaction(NewTransactionRequestDto newTransactionRequestDto) {
+    public Mono<NewTransactionResponseDto> newTransaction(NewTransactionRequestDto newTransactionRequestDto) {
 
-                log.info("Initializing transaction for rptId: {}", newTransactionRequestDto.getRptId());
+        log.info("Initializing transaction for rptId: {}", newTransactionRequestDto.getRptId());
 
-                TransactionsCommand<NewTransactionRequestDto> command = new TransactionsCommand<>();
-                command.setCode(TransactionsCommandCode.INITIALIZE_TRANSACTION);
-                command.setData(newTransactionRequestDto);
-                command.setRptId(new RptId(newTransactionRequestDto.getRptId()));
+        TransactionsCommand<NewTransactionRequestDto> command = new TransactionsCommand<>();
+        command.setCode(TransactionsCommandCode.INITIALIZE_TRANSACTION);
+        command.setData(newTransactionRequestDto);
+        command.setRptId(new RptId(newTransactionRequestDto.getRptId()));
 
-                Mono<NewTransactionResponseDto> response = transactionInizializeHandler.handle(command)
-                        .doOnNext((_tx) -> log.info("Transaction initialized for rptId: {}", newTransactionRequestDto.getRptId()));
+        Mono<NewTransactionResponseDto> response = transactionInizializeHandler.handle(command)
+                .doOnNext((_tx) -> log.info("Transaction initialized for rptId: {}", newTransactionRequestDto.getRptId()));
 
-                return response.flatMap(data -> transactionsProjectionHandler.handle(data).thenReturn(data));
-        }
+        return response.flatMap(data -> transactionsProjectionHandler.handle(data).thenReturn(data));
+    }
 }
