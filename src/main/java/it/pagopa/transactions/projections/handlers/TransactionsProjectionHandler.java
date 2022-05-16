@@ -8,27 +8,26 @@ import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.transactions.utils.TransactionStatus;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
 
 @Component
 @Slf4j
 public class TransactionsProjectionHandler
-		implements ProjectionHandler<NewTransactionResponseDto, Void> {
+		implements ProjectionHandler<NewTransactionResponseDto, Mono<Transaction>> {
 
 	@Autowired
 	private TransactionsViewRepository viewEventStoreRepository;
 
 	@Override
-	public Void handle(NewTransactionResponseDto data) {
+	public Mono<Transaction> handle(NewTransactionResponseDto data) {
 
 		Transaction transaction = new Transaction(data.getPaymentToken(),
 				data.getRptId(), data.getReason(),
 				data.getAmount(), TransactionStatus.TRANSACTION_INITIALIZED);
 
-		viewEventStoreRepository.save(transaction)
-				.doOnSuccess(event -> log.info("Transactions update view for rptId: {}",
-						event.getRptId()))
-				.subscribe();
-		return null;
+		return viewEventStoreRepository
+				.save(transaction)
+				.doOnNext(event -> log.info("Transactions update view for rptId: {}", event.getRptId()));
 	}
 
 }

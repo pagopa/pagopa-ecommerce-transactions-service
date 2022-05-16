@@ -35,7 +35,7 @@ public class Jaxb2SoapDecoder extends Jaxb2XmlDecoder {
 
     @Override
     public Object decode(DataBuffer dataBuffer, ResolvableType targetType, @Nullable MimeType mimeType,
-            @Nullable Map<String, Object> hints) throws DecodingException {
+                         @Nullable Map<String, Object> hints) throws DecodingException {
 
         try {
 

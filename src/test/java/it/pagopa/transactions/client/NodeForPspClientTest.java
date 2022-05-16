@@ -1,28 +1,8 @@
 package it.pagopa.transactions.client;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.math.BigDecimal;
-import java.util.UUID;
-import java.util.function.Function;
-import java.util.function.Predicate;
-
-import javax.xml.bind.JAXBElement;
-
+import it.pagopa.transactions.model.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
-import it.pagopa.transactions.model.ActivatePaymentNoticeReq;
-import it.pagopa.transactions.model.ActivatePaymentNoticeRes;
-import it.pagopa.transactions.model.CtFaultBean;
-import it.pagopa.transactions.model.CtQrCode;
-import it.pagopa.transactions.model.ObjectFactory;
-import it.pagopa.transactions.model.SoapEnvelope;
-import reactor.core.publisher.Mono;
-
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -31,7 +11,18 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.RequestBodyUriSpec;
 import org.springframework.web.reactive.function.client.WebClient.RequestHeadersSpec;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
-import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Mono;
+
+import javax.xml.bind.JAXBElement;
+import java.math.BigDecimal;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class NodeForPspClientTest {
@@ -126,7 +117,7 @@ public class NodeForPspClientTest {
         /**
          * preconditions
          */
-        when(nodoWebClient.post()).thenReturn((RequestBodyUriSpec) requestBodyUriSpec);
+        when(nodoWebClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.header(any(), eq(MediaType.TEXT_XML_VALUE))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(), eq(SoapEnvelope.class))).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);

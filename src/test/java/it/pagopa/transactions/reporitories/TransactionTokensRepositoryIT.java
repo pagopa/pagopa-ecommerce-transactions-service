@@ -36,7 +36,7 @@
 
 //     @BeforeAll
 //     static void setup() {
-        
+
 //         System.setProperty("REDIS_HOST",  redis.getContainerInfo().getNetworkSettings().getIpAddress());
 //         System.out.println(redis.getFirstMappedPort().toString());
 //         System.setProperty("REDIS_PORT", redis.getFirstMappedPort().toString());
