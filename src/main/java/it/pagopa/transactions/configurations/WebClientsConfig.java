@@ -12,8 +12,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
-import it.pagopa.ecommerce.sessions.v1.ApiClient;
-import it.pagopa.transactions.model.ObjectFactory;
+import it.pagopa.generated.ecommerce.sessions.v1.ApiClient;
+import it.pagopa.generated.transactions.model.ObjectFactory;
 import it.pagopa.transactions.utils.soap.Jaxb2SoapDecoder;
 import it.pagopa.transactions.utils.soap.Jaxb2SoapEncoder;
 import reactor.netty.http.client.HttpClient;

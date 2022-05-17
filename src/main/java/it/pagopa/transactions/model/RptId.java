@@ -24,7 +24,7 @@ public final class RptId {
     }
 
     public String getNoticeId() {
-        return rptId.substring(12);
+        return rptId.substring(11);
     }
 
     @Override

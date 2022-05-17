@@ -1,11 +1,12 @@
 package it.pagopa.transactions.controllers;
 
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
-import it.pagopa.transactions.server.api.TransactionsApi;
-import it.pagopa.transactions.server.model.NewTransactionRequestDto;
-import it.pagopa.transactions.server.model.NewTransactionResponseDto;
-import it.pagopa.transactions.server.model.ProblemJsonDto;
-import it.pagopa.transactions.server.model.TransactionInfoDto;
+import it.pagopa.generated.transactions.server.api.TransactionsApi;
+import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
+import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
+import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
+import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
+
 import it.pagopa.transactions.services.TransactionsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

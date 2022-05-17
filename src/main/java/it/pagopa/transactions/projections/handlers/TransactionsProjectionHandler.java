@@ -1,12 +1,14 @@
 package it.pagopa.transactions.projections.handlers;
 
-import it.pagopa.transactions.server.model.TransactionStatusDto;
+import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import it.pagopa.transactions.documents.Transaction;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import it.pagopa.transactions.server.model.NewTransactionResponseDto;
+
+import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
+import it.pagopa.transactions.utils.TransactionStatus;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
