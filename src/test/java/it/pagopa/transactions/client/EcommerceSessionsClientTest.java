@@ -1,5 +1,7 @@
 package it.pagopa.transactions.client;
 
+import it.pagopa.generated.ecommerce.sessions.v1.ApiClient;
+import it.pagopa.generated.ecommerce.sessions.v1.api.DefaultApi;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionRequestDto;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionTokenDto;
@@ -9,6 +11,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -31,6 +35,12 @@ public class EcommerceSessionsClientTest {
     private WebClient.RequestHeadersSpec mockRequestHeadersSpec;
     @Mock
     private WebClient.ResponseSpec mockResponseSpec;
+
+    @Mock
+    private DefaultApi ecommerceSessionsDefaultApi;
+
+    @Mock
+    private ApiClient apiClient;
 
     @Test
     void shouldReturnValidTokenTest() {
@@ -63,6 +73,8 @@ public class EcommerceSessionsClientTest {
         when(mockRequestHeadersSpec.retrieve()).thenReturn(mockResponseSpec);
         when(mockResponseSpec.onStatus(Mockito.any(), Mockito.any())).thenReturn(mockResponseSpec);
         when(mockResponseSpec.bodyToMono(SessionTokenDto.class)).thenReturn(Mono.just(tokenDto));
+        when(ecommerceSessionsDefaultApi.getApiClient()).thenReturn(apiClient);
+        when(apiClient.getWebClient()).thenReturn(ecommerceSessionsWebClient);
 
 
         /**
