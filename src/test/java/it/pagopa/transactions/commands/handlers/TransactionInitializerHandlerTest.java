@@ -31,7 +31,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
-public class TransactionInitializerHandler {
+public class TransactionInitializerHandlerTest {
 
     @InjectMocks
     private TransactionInizializeHandler handler;
