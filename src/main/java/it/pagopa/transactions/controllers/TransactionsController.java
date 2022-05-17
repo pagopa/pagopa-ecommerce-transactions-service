@@ -29,8 +29,8 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @Override
-    public Mono<ResponseEntity<TransactionInfoDto>> getTransactionInfo(String transactionId, ServerWebExchange exchange) {
-        return transactionsService.getTransactionInfo(transactionId).map(ResponseEntity::ok);
+    public Mono<ResponseEntity<TransactionInfoDto>> getTransactionInfo(String paymentToken, ServerWebExchange exchange) {
+        return transactionsService.getTransactionInfo(paymentToken).map(ResponseEntity::ok);
     }
 
     @ExceptionHandler(TransactionNotFoundException.class)
