@@ -17,16 +17,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NewTransactionResponse'
-  /transactions/{transactionId}:
+  /transactions/{paymentToken}:
     get:
       operationId: getTransactionInfo
       parameters:
         - in: path
-          name: transactionId
+          name: paymentToken
           schema:
             type: string
           required: true
-          description: Transaction id
+          description: Payment token associated to transaction
       summary: Get information about a specific transaction
       responses:
         200:
