@@ -2,6 +2,7 @@ package it.pagopa.transactions.configurations;
 
 import java.util.concurrent.TimeUnit;
 
+import it.pagopa.ecommerce.sessions.v1.api.DefaultApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,41 +41,22 @@ public class WebClientsConfig {
                 .build();
     }
 
-    // @Bean(name = "ecommerceSessionsWebClient")
-    // public DefaultApi
-    // ecommerceSessionsWebClient(@Value("${ecommerceSessions.uri}") String
-    // ecommerceSessionsUri,
-    // @Value("${ecommerceSessions.readTimeout}") int ecommerceSessionsReadTimeout,
-    // @Value("${ecommerceSessions.connectionTimeout}") int
-    // ecommerceSessionsConnectionTimeout) {
-
-    // HttpClient httpClient = HttpClient.create()
-    // .option(ChannelOption.CONNECT_TIMEOUT_MILLIS,
-    // ecommerceSessionsConnectionTimeout)
-    // .doOnConnected(connection -> connection
-    // .addHandlerLast(new ReadTimeoutHandler(ecommerceSessionsReadTimeout,
-    // TimeUnit.MILLISECONDS)));
-
-    // WebClient webClient = ApiClient.buildWebClientBuilder()
-    // .clientConnector(new
-    // ReactorClientHttpConnector(httpClient)).baseUrl(ecommerceSessionsUri).build();
-
-    // return new DefaultApi(new ApiClient(webClient));
-    // }
-
     @Bean(name = "ecommerceSessionsWebClient")
-    public WebClient ecommerceSessionsWebClient(@Value("${ecommerceSessions.uri}") String ecommerceSessionsUri,
-                                                @Value("${ecommerceSessions.readTimeout}") int ecommerceSessionsReadTimeout,
-                                                @Value("${ecommerceSessions.connectionTimeout}") int ecommerceSessionsConnectionTimeout) {
-
+    public DefaultApi
+    ecommerceSessionsWebClient(@Value("${ecommerceSessions.uri}") String ecommerceSessionsUri,
+                               @Value("${ecommerceSessions.readTimeout}") int ecommerceSessionsReadTimeout,
+                               @Value("${ecommerceSessions.connectionTimeout}") int ecommerceSessionsConnectionTimeout) {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, ecommerceSessionsConnectionTimeout)
-                .doOnConnected(connection -> connection
-                        .addHandlerLast(new ReadTimeoutHandler(ecommerceSessionsReadTimeout, TimeUnit.MILLISECONDS)));
+                .doOnConnected(connection ->
+                        connection.addHandlerLast(new ReadTimeoutHandler(
+                                ecommerceSessionsReadTimeout,
+                                TimeUnit.MILLISECONDS)));
 
-        return ApiClient.buildWebClientBuilder()
-                .clientConnector(new ReactorClientHttpConnector(httpClient)).baseUrl(ecommerceSessionsUri).build();
+        WebClient webClient = ApiClient.buildWebClientBuilder().clientConnector(
+                new ReactorClientHttpConnector(httpClient)).baseUrl(ecommerceSessionsUri).build();
 
+        return new DefaultApi(new ApiClient(webClient));
     }
 
     @Bean
