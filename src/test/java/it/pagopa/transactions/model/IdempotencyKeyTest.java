@@ -5,8 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class IdempotencyKeyTest {
     private final String VALID_FISCAL_CODE = "32009090901";
@@ -59,6 +58,6 @@ public class IdempotencyKeyTest {
     @Test
     public void shouldReturnHashcode() {
         IdempotencyKey key = new IdempotencyKey(VALID_FISCAL_CODE, VALID_KEY_ID);
-        assertTrue(key.hashCode() == Objects.hash(VALID_FISCAL_CODE +"_"+ VALID_KEY_ID));
+        assertEquals(key.hashCode(), Objects.hash(VALID_FISCAL_CODE + "_" + VALID_KEY_ID));
     }
 }
