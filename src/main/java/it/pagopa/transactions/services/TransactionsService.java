@@ -3,6 +3,7 @@ package it.pagopa.transactions.services;
 import it.pagopa.transactions.commands.TransactionsCommand;
 import it.pagopa.transactions.commands.TransactionsCommandCode;
 import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
+import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.model.RptId;
 import it.pagopa.transactions.projections.handlers.TransactionsProjectionHandler;
 import it.pagopa.transactions.server.model.NewTransactionRequestDto;
@@ -38,7 +39,7 @@ public class TransactionsService {
         return response.flatMap(data -> transactionsProjectionHandler.handle(data).thenReturn(data));
     }
 
-    public Mono<TransactionInfoDto> getTransactionInfo(String transactionId) {
-        return null;
+    public Mono<TransactionInfoDto> getTransactionInfo(String paymentToken) {
+        return Mono.error(new TransactionNotFoundException(paymentToken));
     }
 }
