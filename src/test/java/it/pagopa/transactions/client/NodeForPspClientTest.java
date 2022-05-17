@@ -1,6 +1,7 @@
 package it.pagopa.transactions.client;
 
-import it.pagopa.transactions.model.*;
+import it.pagopa.generated.transactions.model.*;
+import it.pagopa.transactions.model.SoapEnvelope;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

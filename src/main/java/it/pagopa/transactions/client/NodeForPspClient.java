@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
 
-import it.pagopa.transactions.model.ActivatePaymentNoticeReq;
-import it.pagopa.transactions.model.ActivatePaymentNoticeRes;
+import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
+import it.pagopa.generated.transactions.model.ActivatePaymentNoticeRes;
 import it.pagopa.transactions.model.SoapEnvelope;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;

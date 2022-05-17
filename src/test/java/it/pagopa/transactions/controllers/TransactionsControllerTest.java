@@ -1,8 +1,8 @@
 package it.pagopa.transactions.controllers;
 
-import it.pagopa.transactions.server.model.BeneficiaryDto;
-import it.pagopa.transactions.server.model.NewTransactionRequestDto;
-import it.pagopa.transactions.server.model.NewTransactionResponseDto;
+import it.pagopa.generated.transactions.server.model.BeneficiaryDto;
+import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
+import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.transactions.services.TransactionsService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

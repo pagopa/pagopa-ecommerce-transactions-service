@@ -1,8 +1,8 @@
 package it.pagopa.transactions.client;
 
-import it.pagopa.ecommerce.sessions.v1.dto.SessionDataDto;
-import it.pagopa.ecommerce.sessions.v1.dto.SessionRequestDto;
-import it.pagopa.ecommerce.sessions.v1.dto.SessionTokenDto;
+import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
+import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionRequestDto;
+import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionTokenDto;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

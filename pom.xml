@@ -157,10 +157,10 @@
                             <generateApiTests>false</generateApiTests>
                             <generateModelTests>false</generateModelTests>
                             <configOptions>
-                                <basePackage>it.pagopa.transactions.server</basePackage>
-                                <modelPackage>it.pagopa.transactions.server.model</modelPackage>
-                                <apiPackage>it.pagopa.transactions.server.api</apiPackage>
-                                <configPackage>it.pagopa.transactions.server.config</configPackage>
+                                <basePackage>it.pagopa.generated.transactions.server</basePackage>
+                                <modelPackage>it.pagopa.generated.transactions.server.model</modelPackage>
+                                <apiPackage>it.pagopa.generated.transactions.server.api</apiPackage>
+                                <configPackage>it.pagopa.generated.transactions.server.config</configPackage>
                                 <interfaceOnly>true</interfaceOnly>
                                 <hideGenerationTimestamp>true</hideGenerationTimestamp>
                                 <skipDefaultInterface>true</skipDefaultInterface>
@@ -186,8 +186,8 @@
                                 <swaggerAnnotations>false</swaggerAnnotations>
                                 <openApiNullable>false</openApiNullable>
                             </configOptions>
-                            <modelPackage>it.pagopa.ecommerce.sessions.v1.dto</modelPackage>
-                            <apiPackage>it.pagopa.ecommerce.sessions.v1.api</apiPackage>
+                            <modelPackage>it.pagopa.generated.ecommerce.sessions.v1.dto</modelPackage>
+                            <apiPackage>it.pagopa.generated.ecommerce.sessions.v1.api</apiPackage>
                             <modelNameSuffix>dto</modelNameSuffix>
                         </configuration>
                     </execution>
@@ -206,7 +206,7 @@
                 </executions>
                 <configuration>
                     <schemaLanguage>WSDL</schemaLanguage>
-                    <generatePackage>it.pagopa.transactions.model</generatePackage>
+                    <generatePackage>it.pagopa.generated.transactions.model</generatePackage>
                     <schemas>
                         <schema>
                             <url>
@@ -219,6 +219,12 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>it/pagopa/generated/**</exclude>
+                        <exclude>it/pagopa/transactions/server/api/ApiUtil</exclude>
+                    </excludes>
+                </configuration>
                 <version>${jacoco.version}</version>
                 <executions>
                     <execution>

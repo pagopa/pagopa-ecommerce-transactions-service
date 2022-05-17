@@ -1,34 +1,32 @@
 package it.pagopa.transactions.commands.handlers;
 
-import java.math.BigDecimal;
-import java.security.SecureRandom;
-
-import it.pagopa.transactions.documents.TransactionInitEvent;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import it.pagopa.ecommerce.sessions.v1.dto.SessionDataDto;
-import it.pagopa.ecommerce.sessions.v1.dto.SessionTokenDto;
-import it.pagopa.transactions.model.ActivatePaymentNoticeReq;
-import it.pagopa.transactions.model.ActivatePaymentNoticeRes;
-import it.pagopa.transactions.model.CtQrCode;
-import it.pagopa.transactions.model.ObjectFactory;
+import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
+import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionTokenDto;
+import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
+import it.pagopa.generated.transactions.model.ActivatePaymentNoticeRes;
+import it.pagopa.generated.transactions.model.CtQrCode;
+import it.pagopa.generated.transactions.model.ObjectFactory;
+import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
+import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionsCommand;
 import it.pagopa.transactions.documents.TransactionEvent;
 import it.pagopa.transactions.documents.TransactionInitData;
+import it.pagopa.transactions.documents.TransactionInitEvent;
 import it.pagopa.transactions.model.IdempotencyKey;
 import it.pagopa.transactions.model.RptId;
 import it.pagopa.transactions.repositories.TransactionTokens;
 import it.pagopa.transactions.repositories.TransactionTokensRepository;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
-import it.pagopa.transactions.server.model.NewTransactionRequestDto;
-import it.pagopa.transactions.server.model.NewTransactionResponseDto;
-import it.pagopa.transactions.utils.TransactionEventCode;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
+
+import java.math.BigDecimal;
+import java.security.SecureRandom;
 
 @Slf4j
 @Component
