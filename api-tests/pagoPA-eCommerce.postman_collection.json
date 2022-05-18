@@ -32,6 +32,26 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "get tramsaction info",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/transactions/{{PAYMENT_TOKEN}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"transactions",
+						"{{PAYMENT_TOKEN}}"
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }
