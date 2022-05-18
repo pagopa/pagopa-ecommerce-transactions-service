@@ -14,7 +14,7 @@ import static java.time.ZonedDateTime.now;
 @Data
 @Document(collection = "eventstore")
 @Generated
-public sealed abstract class TransactionEvent<T> permits TransactionInitEvent {
+public abstract sealed class TransactionEvent<T> permits TransactionInitEvent {
 
     @Id
     private String id;
@@ -25,7 +25,7 @@ public sealed abstract class TransactionEvent<T> permits TransactionInitEvent {
     private String creationDate;
     private T data;
 
-    public TransactionEvent(String rptId, String paymentToken, TransactionEventCode eventCode, T data) {
+    TransactionEvent(String rptId, String paymentToken, TransactionEventCode eventCode, T data) {
         this.id = UUID.randomUUID().toString();
         this.eventCode = eventCode;
         this.paymentToken = paymentToken;

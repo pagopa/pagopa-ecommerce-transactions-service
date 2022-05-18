@@ -24,7 +24,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.sonatype.aether.SessionData;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
@@ -35,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @ExtendWith(MockitoExtension.class)
-public class TransactionInitializerHandlerTest {
+class TransactionInitializerHandlerTest {
 
     @InjectMocks
     private TransactionInizializeHandler handler;
@@ -52,7 +51,7 @@ public class TransactionInitializerHandlerTest {
     private TransactionsEventStoreRepository<TransactionInitData> transactionEventStoreRepository;
 
     @Test
-    public void shouldHandleMessage() {
+    void shouldHandleMessage() {
         RptId TEST_RPTID = new RptId("77777777777302016723749670035");
         IdempotencyKey TEST_KEY = new IdempotencyKey("32009090901", "aabbccddee");
         String TEST_TOKEN = UUID.randomUUID().toString();
@@ -109,7 +108,7 @@ public class TransactionInitializerHandlerTest {
     }
 
     @Test
-    public void shouldCreateANewKey() {
+    void shouldCreateANewKey() {
         RptId TEST_RPTID = new RptId("77777777777302016723749670035");
         IdempotencyKey TEST_KEY = new IdempotencyKey("32009090901", "aabbccddee");
         String TEST_TOKEN = UUID.randomUUID().toString();
@@ -155,7 +154,7 @@ public class TransactionInitializerHandlerTest {
 
 
     @Test
-    public void transactionsProjectionTests(){
+    void transactionsProjectionTests(){
         String TEST_RPTID = "77777777777302016723749670035";
         String TEST_TOKEN = "token";
 

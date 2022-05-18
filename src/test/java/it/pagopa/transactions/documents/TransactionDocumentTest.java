@@ -10,11 +10,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
-public class TransactionDocumentTest {
+class TransactionDocumentTest {
 
 
     @Test
-    public void shouldGetAndSetTransaction(){
+    void shouldGetAndSetTransaction(){
         String TEST_TOKEN = "token1";
         String TEST_RPTID = "77777777777302016723749670035";
         String TEST_DESC = "";

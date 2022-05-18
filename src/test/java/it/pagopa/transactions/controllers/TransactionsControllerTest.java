@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
-public class TransactionsControllerTest {
+class TransactionsControllerTest {
 
     @InjectMocks
     private TransactionsController transactionsController = new TransactionsController();
@@ -28,7 +28,7 @@ public class TransactionsControllerTest {
     private TransactionsService transactionsService;
 
     @Test
-    public void shouldGetOk(){
+    void shouldGetOk(){
        String RPTID = "77777777777302016723749670035";
        String EMAIL = "mario.rossi@email.com";
 
