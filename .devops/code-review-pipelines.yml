@@ -51,4 +51,5 @@ steps:
     inputs:
       codeCoverageTool: 'JaCoCo'
       summaryFileLocation: 'target/site/jacoco/jacoco.xml'
+      reportDirectory: 'target/site/jacoco'
     displayName: 'Publish Code Coverage on Azure Devops'     
