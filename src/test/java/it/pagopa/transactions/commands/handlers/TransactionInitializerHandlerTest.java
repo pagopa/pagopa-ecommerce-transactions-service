@@ -24,6 +24,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.sonatype.aether.SessionData;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
@@ -87,6 +88,7 @@ public class TransactionInitializerHandlerTest {
         Mockito.when(objectFactory.createActivatePaymentNoticeReq()).thenReturn(new ActivatePaymentNoticeReq());
         Mockito.when(nodeForPspClient.activatePaymentNotice(Mockito.any())).thenReturn(Mono.just(activateRes));
         Mockito.when(transactionEventStoreRepository.save(Mockito.any())).thenReturn(Mono.empty());
+        Mockito.when(transactionTokensRepository.save(Mockito.any(TransactionTokens.class))).thenReturn(tokens);
         Mockito.when(ecommerceSessionsClient.createSessionToken(new SessionDataDto()
                 .email(requestDto.getEmail())
                 .paymentToken(activateRes.getPaymentToken())
@@ -100,8 +102,57 @@ public class TransactionInitializerHandlerTest {
         /**
          * asserts
          */
-        assertEquals(sessionTokenDto.getSessionToken(), response.getAuthToken());
+        Mockito.verify(transactionTokensRepository, Mockito.times(1)).findById(TEST_RPTID);
+        Mockito.verify(ecommerceSessionsClient, Mockito.times(1)).createSessionToken(Mockito.any());
+
+        assertEquals(sessionTokenDto.getRptId(), response.getRptId());
     }
+
+    @Test
+    public void shouldCreateANewKey() {
+        RptId TEST_RPTID = new RptId("77777777777302016723749670035");
+        IdempotencyKey TEST_KEY = new IdempotencyKey("32009090901", "aabbccddee");
+        String TEST_TOKEN = UUID.randomUUID().toString();
+        TransactionsCommand<NewTransactionRequestDto> command = new TransactionsCommand<>();
+
+        NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
+        requestDto.setRptId(TEST_RPTID.getRptId());
+        requestDto.setEmail("jhon.doe@email.com");
+
+        command.setRptId(TEST_RPTID);
+        command.setData(requestDto);
+
+        ActivatePaymentNoticeRes activateRes = new ActivatePaymentNoticeRes();
+        activateRes.setFiscalCodePA("32009090901");
+        activateRes.setPaymentToken(TEST_TOKEN);
+        activateRes.setCompanyName("Company");
+        activateRes.setTotalAmount(BigDecimal.TEN);
+        activateRes.setCreditorReferenceId("1");
+        activateRes.setOfficeName("Name");
+
+
+        SessionTokenDto sessionTokenDto = new SessionTokenDto()
+                .email(requestDto.getEmail())
+                .sessionToken(TEST_TOKEN)
+                .paymentToken(UUID.randomUUID().toString())
+                .rptId(TEST_RPTID.getRptId());
+
+        /**
+         * preconditions
+         */
+        Mockito.when(transactionTokensRepository.findById(TEST_RPTID)).thenReturn(Optional.empty());
+
+        /**
+         * preconditions
+         */
+        handler.handle(command).block();
+
+        /**
+         * asserts
+         */
+        Mockito.verify(transactionTokensRepository, Mockito.times(1)).save(Mockito.any());
+    }
+
 
     @Test
     public void transactionsProjectionTests(){

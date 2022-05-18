@@ -57,5 +57,12 @@ public class RptIdTest {
         assertTrue(rptId1.equals(rptId2));
     }
 
+    @Test
+    public void shouldGenerateSameHash(){
+        RptId rptId1 = new RptId(rptIdAsString);
+        RptId rptId2 = new RptId(rptIdAsString);
+
+        assertEquals(rptId1.hashCode(), rptId2.hashCode());
+    }
 }
 
