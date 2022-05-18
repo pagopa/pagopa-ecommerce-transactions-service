@@ -19,6 +19,7 @@ class RptIdTest {
     @Test
     void shouldInstiateRptId() {
         RptId rptId = new RptId(VALID_FISCAL_CODE + VALID_NOTICE_CODE);
+        assertNotNull(rptId);
     }
 
     @Test
