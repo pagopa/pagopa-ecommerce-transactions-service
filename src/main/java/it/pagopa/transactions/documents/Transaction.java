@@ -1,6 +1,6 @@
 package it.pagopa.transactions.documents;
 
-import it.pagopa.transactions.utils.TransactionStatus;
+import it.pagopa.transactions.server.model.TransactionStatusDto;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -15,10 +15,10 @@ public class Transaction {
     private String rptId;
     private String description;
     private int amount;
-    private TransactionStatus status;
+    private TransactionStatusDto status;
     private String creationDate;
 
-    public Transaction(String paymentToken, String rptId, String description, int amount, TransactionStatus status) {
+    public Transaction(String paymentToken, String rptId, String description, int amount, TransactionStatusDto status) {
         this.rptId = rptId;
         this.description = description;
         this.paymentToken = paymentToken;

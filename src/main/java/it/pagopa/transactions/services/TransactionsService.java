@@ -3,10 +3,14 @@ package it.pagopa.transactions.services;
 import it.pagopa.transactions.commands.TransactionsCommand;
 import it.pagopa.transactions.commands.TransactionsCommandCode;
 import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
+import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.model.RptId;
 import it.pagopa.transactions.projections.handlers.TransactionsProjectionHandler;
+import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.transactions.server.model.NewTransactionResponseDto;
+import it.pagopa.transactions.server.model.TransactionInfoDto;
+import it.pagopa.transactions.server.model.TransactionStatusDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,24 +20,31 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class TransactionsService {
 
-        @Autowired
-        private TransactionInizializeHandler transactionInizializeHandler;
+    @Autowired
+    private TransactionInizializeHandler transactionInizializeHandler;
 
-        @Autowired
-        private TransactionsProjectionHandler transactionsProjectionHandler;
+    @Autowired
+    private TransactionsProjectionHandler transactionsProjectionHandler;
 
-        public Mono<NewTransactionResponseDto> newTransaction(NewTransactionRequestDto newTransactionRequestDto) {
+    @Autowired
+    private TransactionsViewRepository transactionsViewRepository;
 
-                log.info("Initializing transaction for rptId: {}", newTransactionRequestDto.getRptId());
+    public Mono<NewTransactionResponseDto> newTransaction(NewTransactionRequestDto newTransactionRequestDto) {
 
-                TransactionsCommand<NewTransactionRequestDto> command = new TransactionsCommand<>();
-                command.setCode(TransactionsCommandCode.INITIALIZE_TRANSACTION);
-                command.setData(newTransactionRequestDto);
-                command.setRptId(new RptId(newTransactionRequestDto.getRptId()));
+        log.info("Initializing transaction for rptId: {}", newTransactionRequestDto.getRptId());
 
-                Mono<NewTransactionResponseDto> response = transactionInizializeHandler.handle(command)
-                        .doOnNext((_tx) -> log.info("Transaction initialized for rptId: {}", newTransactionRequestDto.getRptId()));
+        TransactionsCommand<NewTransactionRequestDto> command = new TransactionsCommand<>();
+        command.setCode(TransactionsCommandCode.INITIALIZE_TRANSACTION);
+        command.setData(newTransactionRequestDto);
+        command.setRptId(new RptId(newTransactionRequestDto.getRptId()));
 
-                return response.flatMap(data -> transactionsProjectionHandler.handle(data).thenReturn(data));
-        }
+        Mono<NewTransactionResponseDto> response = transactionInizializeHandler.handle(command)
+                .doOnNext(tx -> log.info("Transaction initialized for rptId: {}", newTransactionRequestDto.getRptId()));
+
+        return response.flatMap(data -> transactionsProjectionHandler.handle(data).thenReturn(data));
+    }
+
+    public Mono<TransactionInfoDto> getTransactionInfo(String paymentToken) {
+        return Mono.error(new TransactionNotFoundException(paymentToken));
+    }
 }
