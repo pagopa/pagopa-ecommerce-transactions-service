@@ -55,7 +55,7 @@ class IdempotencyKeyTest {
         IdempotencyKey key1 = new IdempotencyKey(VALID_FISCAL_CODE, VALID_KEY_ID);
         IdempotencyKey key2 = new IdempotencyKey(VALID_FISCAL_CODE, VALID_KEY_ID);
 
-        assertTrue(key1.equals(key2));
+        assertEquals(key1.equals(key2),true);
     }
 
     @Test

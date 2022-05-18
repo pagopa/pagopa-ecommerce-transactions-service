@@ -94,7 +94,7 @@ class TransactionsControllerTest {
     }
 
     @Test
-    public void testExceptionHandler() throws NoSuchMethodException, SecurityException,
+    void testExceptionHandler() throws NoSuchMethodException, SecurityException,
             IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         final String PAYMENT_TOKEN = "aaa";
 
