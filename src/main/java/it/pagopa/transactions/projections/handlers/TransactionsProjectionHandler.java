@@ -8,7 +8,6 @@ import it.pagopa.transactions.documents.Transaction;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
-import it.pagopa.transactions.utils.TransactionStatus;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
