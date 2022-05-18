@@ -46,3 +46,9 @@ steps:
     displayName: 'Publish SonarCloud results on build summary'
     inputs:
       pollingTimeoutSec: '300'
+
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: 'JaCoCo'
+      summaryFileLocation: 'target/site/jacoco/jacoco.xml'
+    displayName: 'Publish Code Coverage on Azure Devops'     
