@@ -29,7 +29,8 @@ public class TransactionServiceTests {
     @Test
     void getTransactionReturnsTransactionData() {
         final String PAYMENT_TOKEN = "aaa";
-        final Transaction transaction = new Transaction(PAYMENT_TOKEN, "rptId", "reason", 100, TransactionStatusDto.INITIALIZED);
+        final Transaction transaction = new Transaction(PAYMENT_TOKEN, "rptId", "reason", 100,
+                TransactionStatusDto.INITIALIZED);
         final TransactionInfoDto expected = new TransactionInfoDto()
                 .amount(transaction.getAmount())
                 .recipientIban(null)
@@ -41,13 +42,11 @@ public class TransactionServiceTests {
                 .rptId("rptId")
                 .status(TransactionStatusDto.INITIALIZED);
 
-
         when(repository.findById(PAYMENT_TOKEN)).thenReturn(Mono.just(transaction));
 
         assertEquals(
                 transactionsService.getTransactionInfo(PAYMENT_TOKEN).block(),
-                expected
-        );
+                expected);
     }
 
     @Test
@@ -57,8 +56,17 @@ public class TransactionServiceTests {
 
         assertThrows(
                 TransactionNotFoundException.class,
-                () -> transactionsService.getTransactionInfo(PAYMENT_TOKEN).block()
-        );
+                () -> transactionsService.getTransactionInfo(PAYMENT_TOKEN).block(), PAYMENT_TOKEN);
     }
 
+    @Test
+    void getPaymentTokenByTransactionNotFound() {
+        final String PAYMENT_TOKEN = "aaa";
+
+        TransactionNotFoundException exception = new TransactionNotFoundException(PAYMENT_TOKEN);
+
+        assertEquals(
+                exception.getPaymentToken(),
+                PAYMENT_TOKEN);
+    }
 }

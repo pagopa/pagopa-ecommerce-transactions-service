@@ -32,6 +32,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionInitializerHandlerTest {
@@ -55,6 +56,7 @@ class TransactionInitializerHandlerTest {
         RptId TEST_RPTID = new RptId("77777777777302016723749670035");
         IdempotencyKey TEST_KEY = new IdempotencyKey("32009090901", "aabbccddee");
         String TEST_TOKEN = UUID.randomUUID().toString();
+        String SESSION_TOKEN = UUID.randomUUID().toString();
         TransactionsCommand<NewTransactionRequestDto> command = new TransactionsCommand<>();
 
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
@@ -76,8 +78,8 @@ class TransactionInitializerHandlerTest {
 
         SessionTokenDto sessionTokenDto = new SessionTokenDto()
                 .email(requestDto.getEmail())
-                .sessionToken(TEST_TOKEN)
-                .paymentToken(UUID.randomUUID().toString())
+                .sessionToken(SESSION_TOKEN)
+                .paymentToken(TEST_TOKEN)
                 .rptId(TEST_RPTID.getRptId());
 
         /**
@@ -105,6 +107,10 @@ class TransactionInitializerHandlerTest {
         Mockito.verify(ecommerceSessionsClient, Mockito.times(1)).createSessionToken(Mockito.any());
 
         assertEquals(sessionTokenDto.getRptId(), response.getRptId());
+        assertEquals(sessionTokenDto.getPaymentToken(), response.getPaymentToken());
+        assertEquals(tokens.paymentToken(), response.getPaymentToken());
+        assertNotNull(tokens.id());
+
     }
 
     @Test
@@ -129,7 +135,6 @@ class TransactionInitializerHandlerTest {
         activateRes.setCreditorReferenceId("1");
         activateRes.setOfficeName("Name");
 
-
         SessionTokenDto sessionTokenDto = new SessionTokenDto()
                 .email(requestDto.getEmail())
                 .sessionToken(TEST_TOKEN)
@@ -152,9 +157,8 @@ class TransactionInitializerHandlerTest {
         Mockito.verify(transactionTokensRepository, Mockito.times(1)).save(Mockito.any());
     }
 
-
     @Test
-    void transactionsProjectionTests(){
+    void transactionsProjectionTests() {
         String TEST_RPTID = "77777777777302016723749670035";
         String TEST_TOKEN = "token";
 
@@ -171,8 +175,7 @@ class TransactionInitializerHandlerTest {
                         .city("Roma")
                         .codiceUnitOperBeneficiario("1")
                         .country("Italia")
-                        .denominazioneBeneficiario("Denominazione"
-                        )));
+                        .denominazioneBeneficiario("Denominazione")));
 
         TransactionsProjection<NewTransactionResponseDto> differentTransactionsProjection = new TransactionsProjection<>();
         differentTransactionsProjection.setData(new NewTransactionResponseDto()
@@ -187,8 +190,7 @@ class TransactionInitializerHandlerTest {
                         .city("Roma")
                         .codiceUnitOperBeneficiario("1")
                         .country("Italia")
-                        .denominazioneBeneficiario("Denominazione"
-                        )));
+                        .denominazioneBeneficiario("Denominazione")));
 
         differentTransactionsProjection.setRptId(new RptId(TEST_RPTID));
 

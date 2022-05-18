@@ -1,5 +1,8 @@
 package it.pagopa.transactions.commands;
 
+import lombok.Getter;
+
+@Getter
 public enum TransactionsCommandCode {
 
   INITIALIZE_TRANSACTION("INITIALIZE_TRANSACTION");
@@ -8,10 +11,5 @@ public enum TransactionsCommandCode {
 
   TransactionsCommandCode(final String code) {
     this.code = code;
-  }
-
-  @Override
-  public String toString() {
-    return code;
   }
 }

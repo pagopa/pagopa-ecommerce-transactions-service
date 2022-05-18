@@ -2,11 +2,14 @@ package it.pagopa.transactions.model;
 
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@ExtendWith(MockitoExtension.class)
 class IdempotencyKeyTest {
     private final String VALID_FISCAL_CODE = "32009090901";
     private final String INVALID_FISCAL_CODE = "3200909090";
