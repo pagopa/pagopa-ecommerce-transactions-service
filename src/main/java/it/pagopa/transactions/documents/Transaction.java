@@ -1,9 +1,10 @@
 package it.pagopa.transactions.documents;
 
-import it.pagopa.transactions.server.model.TransactionStatusDto;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 
 import static java.time.ZonedDateTime.now;
 

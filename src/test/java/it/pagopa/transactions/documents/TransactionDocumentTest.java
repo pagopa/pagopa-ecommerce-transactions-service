@@ -2,7 +2,7 @@
 package it.pagopa.transactions.documents;
 
 
-import it.pagopa.transactions.utils.TransactionStatus;
+import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -19,7 +19,7 @@ class TransactionDocumentTest {
         String TEST_RPTID = "77777777777302016723749670035";
         String TEST_DESC = "";
         int TEST_AMOUNT = 1;
-        TransactionStatus TEST_STATUS = TransactionStatus.TRANSACTION_INITIALIZED;
+        TransactionStatusDto TEST_STATUS = TransactionStatusDto.INITIALIZED;
 
         /**
          * Test
