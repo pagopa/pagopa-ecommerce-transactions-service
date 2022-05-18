@@ -45,6 +45,17 @@ public class TransactionsService {
     }
 
     public Mono<TransactionInfoDto> getTransactionInfo(String paymentToken) {
-        return Mono.error(new TransactionNotFoundException(paymentToken));
+        return transactionsViewRepository
+                .findById(paymentToken)
+                .map(transaction -> new TransactionInfoDto()
+                        .amount(transaction.getAmount())
+                        .recipientIban(null)
+                        .reason(transaction.getDescription())
+                        .beneficiary(null)
+                        .installments(null)
+                        .paymentToken(transaction.getPaymentToken())
+                        .authToken(null)
+                        .rptId(transaction.getRptId())
+                        .status(transaction.getStatus()));
     }
 }
