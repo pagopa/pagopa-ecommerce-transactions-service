@@ -1,6 +1,7 @@
 package it.pagopa.transactions.services;
 
 import it.pagopa.transactions.documents.Transaction;
+import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.server.model.TransactionInfoDto;
 import it.pagopa.transactions.server.model.TransactionStatusDto;
@@ -13,6 +14,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
@@ -25,7 +27,7 @@ public class TransactionServiceTests {
     private TransactionsService transactionsService;
 
     @Test
-    void getTransactionWorks() {
+    void getTransactionReturnsTransactionData() {
         final String PAYMENT_TOKEN = "aaa";
         final Transaction transaction = new Transaction(PAYMENT_TOKEN, "rptId", "reason", 100, TransactionStatusDto.INITIALIZED);
         final TransactionInfoDto expected = new TransactionInfoDto()
@@ -47,4 +49,16 @@ public class TransactionServiceTests {
                 expected
         );
     }
+
+    @Test
+    void getTransactionThrowsOnTransactionNotFound() {
+        final String PAYMENT_TOKEN = "aaa";
+        when(repository.findById(PAYMENT_TOKEN)).thenReturn(Mono.empty());
+
+        assertThrows(
+                TransactionNotFoundException.class,
+                () -> transactionsService.getTransactionInfo(PAYMENT_TOKEN).block()
+        );
+    }
+
 }

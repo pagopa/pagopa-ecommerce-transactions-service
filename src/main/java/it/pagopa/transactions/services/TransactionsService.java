@@ -47,6 +47,7 @@ public class TransactionsService {
     public Mono<TransactionInfoDto> getTransactionInfo(String paymentToken) {
         return transactionsViewRepository
                 .findById(paymentToken)
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentToken)))
                 .map(transaction -> new TransactionInfoDto()
                         .amount(transaction.getAmount())
                         .recipientIban(null)
