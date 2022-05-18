@@ -1,5 +1,6 @@
 package it.pagopa.transactions.documents;
 
+import lombok.Generated;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import lombok.AllArgsConstructor;
@@ -10,6 +11,8 @@ import lombok.NoArgsConstructor;
 @Document
 @AllArgsConstructor
 @NoArgsConstructor
+@Generated
+
 public class TransactionInitData {
 
     private String description;
