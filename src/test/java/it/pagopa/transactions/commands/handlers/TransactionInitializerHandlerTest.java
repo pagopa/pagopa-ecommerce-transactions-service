@@ -5,6 +5,7 @@ import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionTokenDto;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeRes;
 import it.pagopa.generated.transactions.model.ObjectFactory;
+import it.pagopa.generated.transactions.server.model.BeneficiaryDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
@@ -13,6 +14,7 @@ import it.pagopa.transactions.commands.TransactionsCommand;
 import it.pagopa.transactions.documents.TransactionInitData;
 import it.pagopa.transactions.model.IdempotencyKey;
 import it.pagopa.transactions.model.RptId;
+import it.pagopa.transactions.projections.TransactionsProjection;
 import it.pagopa.transactions.repositories.TransactionTokens;
 import it.pagopa.transactions.repositories.TransactionTokensRepository;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -29,6 +31,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @ExtendWith(MockitoExtension.class)
 public class TransactionInitializerHandlerTest {
@@ -98,5 +101,49 @@ public class TransactionInitializerHandlerTest {
          * asserts
          */
         assertEquals(sessionTokenDto.getSessionToken(), response.getAuthToken());
+    }
+
+    @Test
+    public void transactionsProjectionTests(){
+        String TEST_RPTID = "77777777777302016723749670035";
+        String TEST_TOKEN = "token";
+
+        TransactionsProjection<NewTransactionResponseDto> transactionsProjection = new TransactionsProjection<>();
+        transactionsProjection.setData(new NewTransactionResponseDto()
+                .amount(1)
+                .rptId(TEST_RPTID)
+                .paymentToken(TEST_TOKEN)
+                .authToken(TEST_TOKEN)
+                .reason("")
+                .beneficiary(new BeneficiaryDto()
+                        .beneficiaryId("1")
+                        .address("Via X")
+                        .city("Roma")
+                        .codiceUnitOperBeneficiario("1")
+                        .country("Italia")
+                        .denominazioneBeneficiario("Denominazione"
+                        )));
+
+        TransactionsProjection<NewTransactionResponseDto> differentTransactionsProjection = new TransactionsProjection<>();
+        differentTransactionsProjection.setData(new NewTransactionResponseDto()
+                .amount(1)
+                .rptId(TEST_RPTID)
+                .paymentToken(TEST_TOKEN)
+                .authToken(TEST_TOKEN)
+                .reason("")
+                .beneficiary(new BeneficiaryDto()
+                        .beneficiaryId("2")
+                        .address("Via Y")
+                        .city("Roma")
+                        .codiceUnitOperBeneficiario("1")
+                        .country("Italia")
+                        .denominazioneBeneficiario("Denominazione"
+                        )));
+
+        differentTransactionsProjection.setRptId(new RptId(TEST_RPTID));
+
+        assertFalse(transactionsProjection.equals(differentTransactionsProjection));
+        assertFalse(transactionsProjection.getData().equals(differentTransactionsProjection.getData()));
+
     }
 }
