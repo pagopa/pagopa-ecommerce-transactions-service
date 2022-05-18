@@ -120,6 +120,7 @@
             <version>1.16.3</version>
             <scope>test</scope>
         </dependency>
+
     </dependencies>
     <dependencyManagement>
         <dependencies>
@@ -223,6 +224,8 @@
                     <excludes>
                         <exclude>it/pagopa/generated/**</exclude>
                         <exclude>it/pagopa/transactions/server/api/ApiUtil</exclude>
+                        <exclude>it/pagopa/transactions/utils/soap/**</exclude>
+                        <exclude>it/pagopa/transactions/PagopaEcommerceTransactionsApplication.class</exclude>
                     </excludes>
                 </configuration>
                 <version>${jacoco.version}</version>
