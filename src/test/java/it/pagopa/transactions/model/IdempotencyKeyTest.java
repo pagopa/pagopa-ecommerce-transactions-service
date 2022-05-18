@@ -7,7 +7,7 @@ import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class IdempotencyKeyTest {
+class IdempotencyKeyTest {
     private final String VALID_FISCAL_CODE = "32009090901";
     private final String INVALID_FISCAL_CODE = "3200909090";
 
@@ -16,7 +16,7 @@ public class IdempotencyKeyTest {
 
 
     @Test
-    public void shouldThrowInvalidFiscalCode(){
+    void shouldThrowInvalidFiscalCode(){
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
             IdempotencyKey key = new IdempotencyKey(INVALID_FISCAL_CODE, VALID_KEY_ID);
         });
@@ -28,7 +28,7 @@ public class IdempotencyKeyTest {
     }
 
     @Test
-    public void shouldThrowInvalidKeyId(){
+    void shouldThrowInvalidKeyId(){
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
             IdempotencyKey key = new IdempotencyKey(VALID_FISCAL_CODE, INVALID_KEY_ID);
         });
@@ -41,14 +41,14 @@ public class IdempotencyKeyTest {
 
 
     @Test
-    public void shouldReturnKey() {
+    void shouldReturnKey() {
         IdempotencyKey key = new IdempotencyKey(VALID_FISCAL_CODE, VALID_KEY_ID);
 
         assertTrue(key.getKey().equalsIgnoreCase(VALID_FISCAL_CODE + "_" + VALID_KEY_ID));
     }
 
     @Test
-    public void shouldGenerateSameKey() {
+    void shouldGenerateSameKey() {
         IdempotencyKey key1 = new IdempotencyKey(VALID_FISCAL_CODE, VALID_KEY_ID);
         IdempotencyKey key2 = new IdempotencyKey(VALID_FISCAL_CODE, VALID_KEY_ID);
 
@@ -56,7 +56,7 @@ public class IdempotencyKeyTest {
     }
 
     @Test
-    public void shouldReturnHashcode() {
+    void shouldReturnHashcode() {
         IdempotencyKey key = new IdempotencyKey(VALID_FISCAL_CODE, VALID_KEY_ID);
         assertEquals(key.hashCode(), Objects.hash(VALID_FISCAL_CODE + "_" + VALID_KEY_ID));
     }

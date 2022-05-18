@@ -15,7 +15,7 @@ import reactor.core.publisher.Mono;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
-public class TransactionProjectionHandlerTest {
+class TransactionProjectionHandlerTest {
 
     @InjectMocks
     private TransactionsProjectionHandler transactionsProjectionHandler;
@@ -24,7 +24,7 @@ public class TransactionProjectionHandlerTest {
     private TransactionsViewRepository viewEventStoreRepository;
 
     @Test
-    public void shouldHandleTransaction(){
+    void shouldHandleTransaction(){
 
         NewTransactionResponseDto data  = new NewTransactionResponseDto()
                 .paymentToken("token")

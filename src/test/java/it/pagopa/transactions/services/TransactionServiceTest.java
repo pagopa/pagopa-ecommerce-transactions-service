@@ -16,7 +16,7 @@ import reactor.core.publisher.Mono;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
-public class TransactionServiceTest {
+class TransactionServiceTest {
 
     @InjectMocks
     private TransactionsService transactionsService;
@@ -28,7 +28,7 @@ public class TransactionServiceTest {
     private TransactionsProjectionHandler transactionsProjectionHandler;
 
     @Test
-    public void shouldHandleNewTransaction(){
+    void shouldHandleNewTransaction(){
         String TEST_EMAIL = "j.doe@mail.com";
         String TEST_RPTID = "77777777777302016723749670035";
         String TEST_TOKEN = "token";

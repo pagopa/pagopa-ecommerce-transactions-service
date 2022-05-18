@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class RptIdTest {
+class RptIdTest {
     private final String INVALID_RPTID = "";
     private final String VALID_RPTID = "77777777777302016723749670035";
 
@@ -14,12 +14,12 @@ public class RptIdTest {
     String rptIdAsString = VALID_FISCAL_CODE+VALID_NOTICE_CODE;
 
     @Test
-    public void shouldInstiateRptId(){
+    void shouldInstiateRptId(){
         RptId rptId = new RptId(VALID_FISCAL_CODE+VALID_NOTICE_CODE);
     }
 
     @Test
-    public void shouldThrowInvalidRptId(){
+    void shouldThrowInvalidRptId(){
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
             RptId rptId = new RptId(INVALID_RPTID);
         });
@@ -31,26 +31,26 @@ public class RptIdTest {
     }
 
     @Test
-    public void shouldReturnRptId(){
+    void shouldReturnRptId(){
         RptId rptId = new RptId(VALID_RPTID);
 
         assertEquals(rptId.getRptId(), VALID_RPTID);
     }
 
    @Test
-   public void shouldReturnFiscalCode(){
+   void shouldReturnFiscalCode(){
        RptId rptId = new RptId(rptIdAsString);
        assertEquals(VALID_FISCAL_CODE, rptId.getFiscalCode());
    }
 
     @Test
-    public void shouldReturnNoticeCode(){
+    void shouldReturnNoticeCode(){
         RptId rptId = new RptId(rptIdAsString);
         assertEquals(VALID_NOTICE_CODE, rptId.getNoticeId());
     }
 
     @Test
-    public void shouldGetSameRptId(){
+    void shouldGetSameRptId(){
         RptId rptId1 = new RptId(rptIdAsString);
         RptId rptId2 = new RptId(rptIdAsString);
 
@@ -58,7 +58,7 @@ public class RptIdTest {
     }
 
     @Test
-    public void shouldGenerateSameHash(){
+    void shouldGenerateSameHash(){
         RptId rptId1 = new RptId(rptIdAsString);
         RptId rptId2 = new RptId(rptIdAsString);
 

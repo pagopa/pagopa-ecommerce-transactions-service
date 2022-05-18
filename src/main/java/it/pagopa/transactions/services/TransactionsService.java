@@ -59,4 +59,5 @@ public class TransactionsService {
                         .rptId(transaction.getRptId())
                         .status(transaction.getStatus()));
     }
+
 }
