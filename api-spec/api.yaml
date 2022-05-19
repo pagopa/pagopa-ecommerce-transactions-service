@@ -72,24 +72,18 @@ components:
       type: object
       description: Transaction data returned when creating a new transaction
       properties:
-        amount:
-          $ref: '#/components/schemas/AmountEuroCents'
-        recipientIban:
-          $ref: '#/components/schemas/Iban'
-        reason:
-          type: string
-          minLength: 1
-          maxLength: 140
-        beneficiary:
-          $ref: '#/components/schemas/Beneficiary'
-        installments:
-          $ref: '#/components/schemas/PaymentInstallments'
         paymentToken:
-          type: string
-        authToken:
           type: string
         rptId:
           $ref: '#/components/schemas/RptId'
+        reason:
+          type: string
+        amount:
+          $ref: '#/components/schemas/AmountEuroCents'
+          minLength: 1
+          maxLength: 140
+        authToken:
+          type: string
       required:
         - amount
       example:

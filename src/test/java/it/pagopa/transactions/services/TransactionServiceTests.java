@@ -33,10 +33,7 @@ public class TransactionServiceTests {
                 TransactionStatusDto.INITIALIZED);
         final TransactionInfoDto expected = new TransactionInfoDto()
                 .amount(transaction.getAmount())
-                .recipientIban(null)
                 .reason("reason")
-                .beneficiary(null)
-                .installments(null)
                 .paymentToken(PAYMENT_TOKEN)
                 .authToken(null)
                 .rptId("rptId")

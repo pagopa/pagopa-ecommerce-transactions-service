@@ -45,10 +45,7 @@ class TransactionsControllerTest {
         NewTransactionResponseDto response = new NewTransactionResponseDto();
         response.setAmount(10);
         response.setAuthToken("token");
-        response.setBeneficiary(new BeneficiaryDto());
-        response.setInstallments(new ArrayList<>());
         response.setReason("Reason");
-        response.setRecipientIban("iban");
         response.setPaymentToken("payment_token");
         response.setRptId(RPTID);
 
@@ -72,10 +69,7 @@ class TransactionsControllerTest {
         TransactionInfoDto response = new TransactionInfoDto();
         response.setAmount(10);
         response.setAuthToken("token");
-        response.setBeneficiary(new BeneficiaryDto());
-        response.setInstallments(new ArrayList<>());
         response.setReason("Reason");
-        response.setRecipientIban("iban");
         response.setPaymentToken("payment_token");
 
         String paymentToken = UUID.randomUUID().toString();

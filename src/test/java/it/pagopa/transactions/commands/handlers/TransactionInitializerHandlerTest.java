@@ -168,14 +168,7 @@ class TransactionInitializerHandlerTest {
                 .rptId(TEST_RPTID)
                 .paymentToken(TEST_TOKEN)
                 .authToken(TEST_TOKEN)
-                .reason("")
-                .beneficiary(new BeneficiaryDto()
-                        .beneficiaryId("1")
-                        .address("Via X")
-                        .city("Roma")
-                        .codiceUnitOperBeneficiario("1")
-                        .country("Italia")
-                        .denominazioneBeneficiario("Denominazione")));
+                .reason(""));
 
         TransactionsProjection<NewTransactionResponseDto> differentTransactionsProjection = new TransactionsProjection<>();
         differentTransactionsProjection.setData(new NewTransactionResponseDto()
@@ -183,14 +176,7 @@ class TransactionInitializerHandlerTest {
                 .rptId(TEST_RPTID)
                 .paymentToken(TEST_TOKEN)
                 .authToken(TEST_TOKEN)
-                .reason("")
-                .beneficiary(new BeneficiaryDto()
-                        .beneficiaryId("2")
-                        .address("Via Y")
-                        .city("Roma")
-                        .codiceUnitOperBeneficiario("1")
-                        .country("Italia")
-                        .denominazioneBeneficiario("Denominazione")));
+                .reason(""));
 
         differentTransactionsProjection.setRptId(new RptId(TEST_RPTID));
 
