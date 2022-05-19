@@ -181,7 +181,7 @@ class TransactionInitializerHandlerTest {
         differentTransactionsProjection.setRptId(new RptId(TEST_RPTID));
 
         assertFalse(transactionsProjection.equals(differentTransactionsProjection));
-        assertFalse(transactionsProjection.getData().equals(differentTransactionsProjection.getData()));
+        assertEquals(transactionsProjection.getData().equals(differentTransactionsProjection.getData()), true);
 
     }
 }
