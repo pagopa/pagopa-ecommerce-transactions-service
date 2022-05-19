@@ -1,6 +1,5 @@
 package it.pagopa.transactions.model;
 
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -17,9 +16,8 @@ class IdempotencyKeyTest {
     private final String VALID_KEY_ID = "aabbccddee";
     private final String INVALID_KEY_ID = "aabbccddeeffgg";
 
-
     @Test
-    void shouldThrowInvalidFiscalCode(){
+    void shouldThrowInvalidFiscalCode() {
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
             IdempotencyKey key = new IdempotencyKey(INVALID_FISCAL_CODE, VALID_KEY_ID);
         });
@@ -31,7 +29,7 @@ class IdempotencyKeyTest {
     }
 
     @Test
-    void shouldThrowInvalidKeyId(){
+    void shouldThrowInvalidKeyId() {
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
             IdempotencyKey key = new IdempotencyKey(VALID_FISCAL_CODE, INVALID_KEY_ID);
         });
@@ -41,7 +39,6 @@ class IdempotencyKeyTest {
 
         assertTrue(actualMessage.contains(expectedMessage));
     }
-
 
     @Test
     void shouldReturnKey() {
@@ -55,7 +52,11 @@ class IdempotencyKeyTest {
         IdempotencyKey key1 = new IdempotencyKey(VALID_FISCAL_CODE, VALID_KEY_ID);
         IdempotencyKey key2 = new IdempotencyKey(VALID_FISCAL_CODE, VALID_KEY_ID);
 
-        assertEquals(key1.equals(key2),true);
+        assertEquals(key1.equals(key2), true);
+        assertEquals(key1.equals(key1), true);
+        assertEquals(key1.equals(null), false);
+        assertEquals(key1.equals("test"), false);
+
     }
 
     @Test
