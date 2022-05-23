@@ -10,7 +10,7 @@ import static java.lang.annotation.ElementType.TYPE;
  * Value objects should be immutable classes where each instance derives its semantics from the values it contains.
  * Their characterizing feature is that value objects have no identity.</p>
  * <p>Value objects can have some form of input validation.</p>
- * <p>In practice, you can implement them via Lombok's <code>@Value</code> or Kotlin's data classes.</p>
+ * <p>In practice, you can implement them via Lombok's <code>@Value</code>, Java records or Kotlin's data classes.</p>
  */
 @Target(TYPE)
 @Documented
