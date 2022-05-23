@@ -10,6 +10,6 @@ import org.springframework.stereotype.Component;
 public class RptIdWritingStringConverter implements Converter<RptId, String> {
     @Override
     public String convert(RptId source) {
-        return source.getRptId();
+        return source.rptId();
     }
 }

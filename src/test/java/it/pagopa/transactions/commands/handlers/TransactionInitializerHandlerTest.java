@@ -5,7 +5,6 @@ import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionTokenDto;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeRes;
 import it.pagopa.generated.transactions.model.ObjectFactory;
-import it.pagopa.generated.transactions.server.model.BeneficiaryDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
@@ -60,7 +59,7 @@ class TransactionInitializerHandlerTest {
         TransactionsCommand<NewTransactionRequestDto> command = new TransactionsCommand<>();
 
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
-        requestDto.setRptId(TEST_RPTID.getRptId());
+        requestDto.setRptId(TEST_RPTID.rptId());
         requestDto.setEmail("jhon.doe@email.com");
 
         command.setRptId(TEST_RPTID);
@@ -80,7 +79,7 @@ class TransactionInitializerHandlerTest {
                 .email(requestDto.getEmail())
                 .sessionToken(SESSION_TOKEN)
                 .paymentToken(TEST_TOKEN)
-                .rptId(TEST_RPTID.getRptId());
+                .rptId(TEST_RPTID.rptId());
 
         /**
          * preconditions
@@ -121,7 +120,7 @@ class TransactionInitializerHandlerTest {
         TransactionsCommand<NewTransactionRequestDto> command = new TransactionsCommand<>();
 
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
-        requestDto.setRptId(TEST_RPTID.getRptId());
+        requestDto.setRptId(TEST_RPTID.rptId());
         requestDto.setEmail("jhon.doe@email.com");
 
         command.setRptId(TEST_RPTID);
@@ -139,7 +138,7 @@ class TransactionInitializerHandlerTest {
                 .email(requestDto.getEmail())
                 .sessionToken(TEST_TOKEN)
                 .paymentToken(UUID.randomUUID().toString())
-                .rptId(TEST_RPTID.getRptId());
+                .rptId(TEST_RPTID.rptId());
 
         /**
          * preconditions
