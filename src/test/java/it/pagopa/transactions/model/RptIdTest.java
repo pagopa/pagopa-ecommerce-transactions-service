@@ -38,7 +38,7 @@ class RptIdTest {
     void shouldReturnRptId() {
         RptId rptId = new RptId(VALID_RPTID);
 
-        assertEquals(rptId.rptId(), VALID_RPTID);
+        assertEquals(rptId.value(), VALID_RPTID);
     }
 
     @Test

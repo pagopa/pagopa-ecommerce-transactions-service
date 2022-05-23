@@ -134,7 +134,7 @@ public class TransactionInizializeHandler
                             .reason(activatePaymentNoticeRes.getPaymentDescription())
                             .authToken(sessionToken.getSessionToken())
                             .paymentToken(activatePaymentNoticeRes.getPaymentToken())
-                            .rptId(rptId.rptId());
+                            .rptId(rptId.value());
                 });
     }
 

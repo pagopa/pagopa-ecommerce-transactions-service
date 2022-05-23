@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets;
 public class RptIdWritingByteConverter implements Converter<RptId, byte[]> {
     @Override
     public byte[] convert(RptId source) {
-        return source.rptId().getBytes(StandardCharsets.UTF_8);
+        return source.value().getBytes(StandardCharsets.UTF_8);
     }
 }
 

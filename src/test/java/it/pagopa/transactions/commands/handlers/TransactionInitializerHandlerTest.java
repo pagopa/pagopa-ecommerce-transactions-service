@@ -59,7 +59,7 @@ class TransactionInitializerHandlerTest {
         TransactionsCommand<NewTransactionRequestDto> command = new TransactionsCommand<>();
 
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
-        requestDto.setRptId(TEST_RPTID.rptId());
+        requestDto.setRptId(TEST_RPTID.value());
         requestDto.setEmail("jhon.doe@email.com");
 
         command.setRptId(TEST_RPTID);
@@ -79,7 +79,7 @@ class TransactionInitializerHandlerTest {
                 .email(requestDto.getEmail())
                 .sessionToken(SESSION_TOKEN)
                 .paymentToken(TEST_TOKEN)
-                .rptId(TEST_RPTID.rptId());
+                .rptId(TEST_RPTID.value());
 
         /**
          * preconditions
@@ -120,7 +120,7 @@ class TransactionInitializerHandlerTest {
         TransactionsCommand<NewTransactionRequestDto> command = new TransactionsCommand<>();
 
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
-        requestDto.setRptId(TEST_RPTID.rptId());
+        requestDto.setRptId(TEST_RPTID.value());
         requestDto.setEmail("jhon.doe@email.com");
 
         command.setRptId(TEST_RPTID);
@@ -138,7 +138,7 @@ class TransactionInitializerHandlerTest {
                 .email(requestDto.getEmail())
                 .sessionToken(TEST_TOKEN)
                 .paymentToken(UUID.randomUUID().toString())
-                .rptId(TEST_RPTID.rptId());
+                .rptId(TEST_RPTID.value());
 
         /**
          * preconditions
