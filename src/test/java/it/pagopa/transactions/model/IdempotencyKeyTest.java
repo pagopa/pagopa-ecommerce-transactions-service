@@ -58,10 +58,4 @@ class IdempotencyKeyTest {
         assertEquals(key1.equals("test"), false);
 
     }
-
-    @Test
-    void shouldReturnHashcode() {
-        IdempotencyKey key = new IdempotencyKey(VALID_FISCAL_CODE, VALID_KEY_ID);
-        assertEquals(key.hashCode(), Objects.hash(VALID_FISCAL_CODE + "_" + VALID_KEY_ID));
-    }
 }
