@@ -13,14 +13,15 @@ import static java.time.ZonedDateTime.now;
 @Data
 public class Transaction {
     @AggregateRootId
-    private TransactionId transactionId;
+    private final TransactionId transactionId;
 
-    private PaymentToken paymentToken;
-    private RptId rptId;
-    private TransactionDescription description;
-    private TransactionAmount amount;
+    private final PaymentToken paymentToken;
+    private final RptId rptId;
+    private final TransactionDescription description;
+    private final TransactionAmount amount;
+    private final ZonedDateTime creationDate;
+
     private TransactionStatusDto status;
-    private ZonedDateTime creationDate;
 
     public Transaction(TransactionId transactionId, PaymentToken paymentToken, RptId rptId, TransactionDescription description, TransactionAmount amount, TransactionStatusDto status) {
         this.transactionId = transactionId;
