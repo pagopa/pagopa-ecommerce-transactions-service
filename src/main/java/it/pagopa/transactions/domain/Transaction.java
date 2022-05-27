@@ -1,4 +1,4 @@
-package it.pagopa.transactions.model;
+package it.pagopa.transactions.domain;
 
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.annotations.AggregateRoot;

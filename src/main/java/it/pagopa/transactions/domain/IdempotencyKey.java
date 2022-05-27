@@ -1,4 +1,4 @@
-package it.pagopa.transactions.model;
+package it.pagopa.transactions.domain;
 
 import it.pagopa.transactions.annotations.ValueObject;
 import lombok.Value;

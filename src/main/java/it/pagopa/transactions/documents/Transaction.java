@@ -38,7 +38,7 @@ public class Transaction {
         this.creationDate = creationDate.toString();
     }
 
-    public static Transaction from(it.pagopa.transactions.model.Transaction transaction) {
+    public static Transaction from(it.pagopa.transactions.domain.Transaction transaction) {
         return new Transaction(
                 transaction.getTransactionId().value(),
                 transaction.getPaymentToken().value(),

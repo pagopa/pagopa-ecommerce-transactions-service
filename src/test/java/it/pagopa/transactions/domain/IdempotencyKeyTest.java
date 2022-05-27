@@ -1,10 +1,8 @@
-package it.pagopa.transactions.model;
+package it.pagopa.transactions.domain;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 

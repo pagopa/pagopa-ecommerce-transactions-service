@@ -1,4 +1,4 @@
-package it.pagopa.transactions.model;
+package it.pagopa.transactions.domain;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
