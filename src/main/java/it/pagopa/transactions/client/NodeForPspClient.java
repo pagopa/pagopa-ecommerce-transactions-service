@@ -11,7 +11,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeRes;
-import it.pagopa.transactions.model.SoapEnvelope;
+import it.pagopa.transactions.utils.soap.SoapEnvelope;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
