@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 public class RptIdWritingByteConverterTest {
     @Test
-    void shouldConvertRptIdToValueByteRepresentation() {
+    void shouldConvertRptIdToByteRepresentation() {
         String rawRptId = "77777777777302016723749670035";
         RptId rptId = new RptId(rawRptId);
         RptIdWritingByteConverter converter = new RptIdWritingByteConverter();
