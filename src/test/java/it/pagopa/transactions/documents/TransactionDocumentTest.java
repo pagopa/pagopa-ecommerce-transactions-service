@@ -3,6 +3,7 @@ package it.pagopa.transactions.documents;
 
 
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
+import it.pagopa.transactions.domain.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -56,5 +57,34 @@ class TransactionDocumentTest {
         assertNotEquals(transaction, differentTransaction);
         assertEquals(transaction.hashCode(), sameTransaction.hashCode());
         assertNotEquals(transaction.toString(), differentTransaction.toString());
-    }   
+    }
+
+    @Test
+    void shouldConstructTransactionDocumentFromTransaction() {
+        TransactionId transactionId = new TransactionId("");
+        PaymentToken paymentToken = new PaymentToken("");
+        RptId rptId = new RptId("77777777777302016723749670035");
+        TransactionDescription description = new TransactionDescription("");
+        TransactionAmount amount = new TransactionAmount(100);
+        TransactionStatusDto status = TransactionStatusDto.INITIALIZED;
+
+        it.pagopa.transactions.domain.Transaction transaction = new it.pagopa.transactions.domain.Transaction(
+                transactionId,
+                paymentToken,
+                rptId,
+                description,
+                amount,
+                status
+        );
+
+        Transaction transactionDocument = Transaction.from(transaction);
+
+        assertEquals(transactionDocument.getTransactionId(), transaction.getTransactionId().value());
+        assertEquals(transactionDocument.getPaymentToken(), transaction.getPaymentToken().value());
+        assertEquals(transactionDocument.getRptId(), transaction.getRptId().value());
+        assertEquals(transactionDocument.getDescription(), transaction.getDescription().value());
+        assertEquals(transactionDocument.getAmount(), transaction.getAmount().value());
+        assertEquals(ZonedDateTime.parse(transactionDocument.getCreationDate()), transaction.getCreationDate());
+        assertEquals(transactionDocument.getStatus(), transaction.getStatus());
+    }
 }
