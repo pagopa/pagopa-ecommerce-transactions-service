@@ -1,10 +1,8 @@
-package it.pagopa.transactions.model;
+package it.pagopa.transactions.domain;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -57,11 +55,5 @@ class IdempotencyKeyTest {
         assertEquals(key1.equals(null), false);
         assertEquals(key1.equals("test"), false);
 
-    }
-
-    @Test
-    void shouldReturnHashcode() {
-        IdempotencyKey key = new IdempotencyKey(VALID_FISCAL_CODE, VALID_KEY_ID);
-        assertEquals(key.hashCode(), Objects.hash(VALID_FISCAL_CODE + "_" + VALID_KEY_ID));
     }
 }

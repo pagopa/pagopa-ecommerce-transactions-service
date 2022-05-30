@@ -14,8 +14,8 @@ import it.pagopa.transactions.commands.TransactionsCommand;
 import it.pagopa.transactions.documents.TransactionEvent;
 import it.pagopa.transactions.documents.TransactionInitData;
 import it.pagopa.transactions.documents.TransactionInitEvent;
-import it.pagopa.transactions.model.IdempotencyKey;
-import it.pagopa.transactions.model.RptId;
+import it.pagopa.transactions.domain.IdempotencyKey;
+import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.repositories.TransactionTokens;
 import it.pagopa.transactions.repositories.TransactionTokensRepository;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -134,7 +134,7 @@ public class TransactionInizializeHandler
                             .reason(activatePaymentNoticeRes.getPaymentDescription())
                             .authToken(sessionToken.getSessionToken())
                             .paymentToken(activatePaymentNoticeRes.getPaymentToken())
-                            .rptId(rptId.getRptId());
+                            .rptId(rptId.value());
                 });
     }
 

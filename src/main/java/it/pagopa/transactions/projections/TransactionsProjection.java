@@ -1,6 +1,6 @@
 package it.pagopa.transactions.projections;
 
-import it.pagopa.transactions.model.RptId;
+import it.pagopa.transactions.domain.RptId;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Generated;

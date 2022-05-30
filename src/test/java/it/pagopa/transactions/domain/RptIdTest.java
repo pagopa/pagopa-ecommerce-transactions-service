@@ -1,4 +1,4 @@
-package it.pagopa.transactions.model;
+package it.pagopa.transactions.domain;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,7 +38,7 @@ class RptIdTest {
     void shouldReturnRptId() {
         RptId rptId = new RptId(VALID_RPTID);
 
-        assertEquals(rptId.getRptId(), VALID_RPTID);
+        assertEquals(rptId.value(), VALID_RPTID);
     }
 
     @Test

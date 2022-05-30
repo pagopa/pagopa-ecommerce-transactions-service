@@ -5,15 +5,14 @@ import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionTokenDto;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeRes;
 import it.pagopa.generated.transactions.model.ObjectFactory;
-import it.pagopa.generated.transactions.server.model.BeneficiaryDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionsCommand;
 import it.pagopa.transactions.documents.TransactionInitData;
-import it.pagopa.transactions.model.IdempotencyKey;
-import it.pagopa.transactions.model.RptId;
+import it.pagopa.transactions.domain.IdempotencyKey;
+import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.projections.TransactionsProjection;
 import it.pagopa.transactions.repositories.TransactionTokens;
 import it.pagopa.transactions.repositories.TransactionTokensRepository;
@@ -60,7 +59,7 @@ class TransactionInitializerHandlerTest {
         TransactionsCommand<NewTransactionRequestDto> command = new TransactionsCommand<>();
 
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
-        requestDto.setRptId(TEST_RPTID.getRptId());
+        requestDto.setRptId(TEST_RPTID.value());
         requestDto.setEmail("jhon.doe@email.com");
 
         command.setRptId(TEST_RPTID);
@@ -80,7 +79,7 @@ class TransactionInitializerHandlerTest {
                 .email(requestDto.getEmail())
                 .sessionToken(SESSION_TOKEN)
                 .paymentToken(TEST_TOKEN)
-                .rptId(TEST_RPTID.getRptId());
+                .rptId(TEST_RPTID.value());
 
         /**
          * preconditions
@@ -121,7 +120,7 @@ class TransactionInitializerHandlerTest {
         TransactionsCommand<NewTransactionRequestDto> command = new TransactionsCommand<>();
 
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
-        requestDto.setRptId(TEST_RPTID.getRptId());
+        requestDto.setRptId(TEST_RPTID.value());
         requestDto.setEmail("jhon.doe@email.com");
 
         command.setRptId(TEST_RPTID);
@@ -139,7 +138,7 @@ class TransactionInitializerHandlerTest {
                 .email(requestDto.getEmail())
                 .sessionToken(TEST_TOKEN)
                 .paymentToken(UUID.randomUUID().toString())
-                .rptId(TEST_RPTID.getRptId());
+                .rptId(TEST_RPTID.value());
 
         /**
          * preconditions
