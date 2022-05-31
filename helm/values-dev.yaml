@@ -48,7 +48,7 @@ microservice-chart:
           tenantId: 7788edaf-0346-4068-9d79-c868aed15b3d
           subscriptionId: bbe47ad4-08b3-4925-94c5-1278e5819b86
           resourceGroupName: pagopa-d-ecommerce-sec-rg
-          resourceURI: Microsoft.KeyVault/vaults/dvopla-d-neu-kv
+          resourceURI: Microsoft.KeyVault/vaults/pagopa-d-ecommerce-kv
           metricName: ServiceApiHit
           # metricNamespace: Microsoft.KeyVault/vaults
           # metricFilter: namespace eq 'default'
