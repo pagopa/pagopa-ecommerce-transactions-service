@@ -43,15 +43,15 @@ variables:
   #   mavenGoals: 'package'
   #   settingsXmlsecureFileName: '$(SETTINGS_XML_RO_SECURE_FILE_NAME)'
 
-  ${{ else }}:
-    environment: 'DEV'
-    dockerRegistryServiceConnection: '$(DEV_CONTAINER_REGISTRY_SERVICE_CONN)'
-    kubernetesServiceConnection: '$(DEV_KUBERNETES_SERVICE_CONN)'
-    containerRegistry: '$(DEV_CONTAINER_REGISTRY_NAME)'
-    helmValues: values-dev.yaml
-    # selfHostedAgentPool: $(DEV_AGENT_POOL)
-    mavenGoals: 'package'
-    settingsXmlsecureFileName: '$(SETTINGS_XML_RO_SECURE_FILE_NAME)'
+  # ${{ else }}:
+  environment: 'DEV'
+  dockerRegistryServiceConnection: '$(DEV_CONTAINER_REGISTRY_SERVICE_CONN)'
+  kubernetesServiceConnection: '$(DEV_KUBERNETES_SERVICE_CONN)'
+  containerRegistry: '$(DEV_CONTAINER_REGISTRY_NAME)'
+  helmValues: values-dev.yaml
+  # selfHostedAgentPool: $(DEV_AGENT_POOL)
+  mavenGoals: 'package'
+  settingsXmlsecureFileName: '$(SETTINGS_XML_RO_SECURE_FILE_NAME)'
 
 stages:
   - stage: 'Build'
