@@ -9,6 +9,7 @@ import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.client.NodeForPspClient;
+import it.pagopa.transactions.commands.TransactionInitializeCommand;
 import it.pagopa.transactions.commands.TransactionsCommand;
 import it.pagopa.transactions.documents.TransactionInitData;
 import it.pagopa.transactions.domain.IdempotencyKey;
@@ -56,14 +57,12 @@ class TransactionInitializerHandlerTest {
         IdempotencyKey TEST_KEY = new IdempotencyKey("32009090901", "aabbccddee");
         String TEST_TOKEN = UUID.randomUUID().toString();
         String SESSION_TOKEN = UUID.randomUUID().toString();
-        TransactionsCommand<NewTransactionRequestDto> command = new TransactionsCommand<>();
 
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
         requestDto.setRptId(TEST_RPTID.value());
         requestDto.setEmail("jhon.doe@email.com");
 
-        command.setRptId(TEST_RPTID);
-        command.setData(requestDto);
+        TransactionInitializeCommand command = new TransactionInitializeCommand(TEST_RPTID, requestDto);
 
         ActivatePaymentNoticeRes activateRes = new ActivatePaymentNoticeRes();
         activateRes.setFiscalCodePA("32009090901");
@@ -117,14 +116,12 @@ class TransactionInitializerHandlerTest {
         RptId TEST_RPTID = new RptId("77777777777302016723749670035");
         IdempotencyKey TEST_KEY = new IdempotencyKey("32009090901", "aabbccddee");
         String TEST_TOKEN = UUID.randomUUID().toString();
-        TransactionsCommand<NewTransactionRequestDto> command = new TransactionsCommand<>();
 
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
         requestDto.setRptId(TEST_RPTID.value());
         requestDto.setEmail("jhon.doe@email.com");
 
-        command.setRptId(TEST_RPTID);
-        command.setData(requestDto);
+        TransactionInitializeCommand command = new TransactionInitializeCommand(TEST_RPTID, requestDto);
 
         ActivatePaymentNoticeRes activateRes = new ActivatePaymentNoticeRes();
         activateRes.setFiscalCodePA("32009090901");

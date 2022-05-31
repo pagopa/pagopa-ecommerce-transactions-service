@@ -2,6 +2,7 @@ package it.pagopa.transactions.services;
 
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
+import it.pagopa.transactions.commands.TransactionInitializeCommand;
 import it.pagopa.transactions.commands.TransactionsCommand;
 import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
 import it.pagopa.transactions.projections.handlers.TransactionsProjectionHandler;
@@ -46,7 +47,7 @@ class TransactionServiceTest {
         /**
          * Preconditions
          */
-        Mockito.when(transactionInizializeHandler.handle(Mockito.any(TransactionsCommand.class))).thenReturn(Mono.just(response));
+        Mockito.when(transactionInizializeHandler.handle(Mockito.any(TransactionInitializeCommand.class))).thenReturn(Mono.just(response));
         Mockito.when(transactionsProjectionHandler.handle(response)).thenReturn(Mono.empty());
 
         /**

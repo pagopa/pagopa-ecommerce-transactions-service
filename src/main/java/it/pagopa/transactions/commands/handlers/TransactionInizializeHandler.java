@@ -10,7 +10,7 @@ import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.client.NodeForPspClient;
-import it.pagopa.transactions.commands.TransactionsCommand;
+import it.pagopa.transactions.commands.TransactionInitializeCommand;
 import it.pagopa.transactions.documents.TransactionEvent;
 import it.pagopa.transactions.documents.TransactionInitData;
 import it.pagopa.transactions.documents.TransactionInitEvent;
@@ -31,7 +31,7 @@ import java.security.SecureRandom;
 @Slf4j
 @Component
 public class TransactionInizializeHandler
-        implements CommandHandler<TransactionsCommand<NewTransactionRequestDto>, Object> {
+        implements CommandHandler<TransactionInitializeCommand, Mono<NewTransactionResponseDto>> {
 
     private static final String ALPHANUMERICS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -53,7 +53,7 @@ public class TransactionInizializeHandler
     private TransactionsEventStoreRepository<TransactionInitData> transactionEventStoreRepository;
 
     @Override
-    public Mono<NewTransactionResponseDto> handle(TransactionsCommand<NewTransactionRequestDto> command) {
+    public Mono<NewTransactionResponseDto> handle(TransactionInitializeCommand command) {
         final RptId rptId = command.getRptId();
         final NewTransactionRequestDto newTransactionRequestDto = command.getData();
 
