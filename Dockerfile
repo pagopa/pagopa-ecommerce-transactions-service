@@ -26,4 +26,6 @@ COPY --from=build --chown=user ${EXTRACTED}/spring-boot-loader/ ./
 COPY --from=build --chown=user ${EXTRACTED}/snapshot-dependencies/ ./
 COPY --from=build --chown=user ${EXTRACTED}/application/ ./
 
+RUN true
+
 ENTRYPOINT ["java","org.springframework.boot.loader.JarLauncher"]
