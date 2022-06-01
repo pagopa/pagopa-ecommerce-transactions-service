@@ -10,7 +10,7 @@ microservice-chart:
 
   ingress:
     host: "weudev.ecommerce.internal.dev.platform.pagopa.it"
-    path: "ecommerce"
+    path: "/ecommerce"
     pathType: "ImplementationSpecific"
   
   serviceAccount:
