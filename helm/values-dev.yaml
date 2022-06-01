@@ -58,11 +58,11 @@ microservice-chart:
           metricAggregationType: Count
           targetValue: "30"
 
-  envConfig:
-    USER: my-user
+  # envConfig:
+  #   USER: my-user
 
-  envSecret:
-    PASS: helm-template-password
+  # envSecret:
+  #   PASS: helm-template-password
 
   keyvault:
     name: "pagopa-d-ecommerce-kv"
