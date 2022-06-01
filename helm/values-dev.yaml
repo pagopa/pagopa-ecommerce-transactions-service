@@ -9,8 +9,10 @@ microservice-chart:
     pullPolicy: Always
 
   ingress:
-    host: "internal.dev.platform.pagopa.it"
-
+    host: "weudev.ecommerce.internal.dev.platform.pagopa.it"
+    path: "ecommerce"
+    pathType: "ImplementationSpecific"
+  
   serviceAccount:
     create: false
     annotations: {}
