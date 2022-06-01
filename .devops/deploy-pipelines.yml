@@ -113,6 +113,16 @@ stages:
                     buildType: 'current'
                     artifactName: 'helm'
                     targetPath: '$(Pipeline.Workspace)/helm'
+                - task: Bash@3
+                  name: helm_dependency_build
+                  displayName: Helm dependency build
+                  inputs:
+                    workingDirectory: '$(Pipeline.Workspace)/helm'
+                    targetType: 'inline'
+                    script: |
+                      helm repo add pagopa-microservice https://pagopa.github.io/aks-microservice-chart-blueprint
+                      helm dep build
+                    failOnStderr: true    
                 - task: HelmDeploy@0
                   displayName: Helm upgrade
                   inputs:
