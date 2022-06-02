@@ -3,6 +3,11 @@ microservice-chart:
   nameOverride: ""
   fullnameOverride: ""
 
+  deployment:
+    create: true
+    livenessProbePath: /actuator/health/liveness
+    readinessProbePath: /actuator/health/readiness
+    
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
     tag: "latest" #improve
