@@ -12,6 +12,7 @@ microservice-chart:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
     tag: "latest" #improve
     pullPolicy: Always
+    port: 8080
 
   ingress:
     host: "weudev.ecommerce.internal.dev.platform.pagopa.it"
