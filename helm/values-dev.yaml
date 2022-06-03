@@ -43,7 +43,7 @@ microservice-chart:
       cpu: "40m"
     limits:
       memory: "250Mi"
-      cpu: "150m"
+      cpu: "250m"
 
   autoscaling:
     minReplica: 1
