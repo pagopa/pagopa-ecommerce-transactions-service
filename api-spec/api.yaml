@@ -47,6 +47,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
+  /transactions/{paymentToken}/auth-request:
+    summary: Request authorization for the transaction identified by payment token
+    post:
+      operationId: requestTransactionAuthorization
+      parameters:
+        - in: path
+          name: paymentToken
+          schema:
+            type: string
+          required: true
+          description: Payment token associated to transaction
+      requestBody:
+        $ref: "#/components/requestBodies/RequestAuthorizationRequest"
+      responses:
+        200:
+          description: Transaction authorization request successfully processed, redirecting client to authorization web page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestAuthorizationResponse"
+        400:
+          description: Invalid transaction id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        404:
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
 components:
   schemas:
     RptId:
@@ -88,6 +120,39 @@ components:
         - amount
       example:
         amount: 200
+    RequestAuthorizationRequest:
+      type: object
+      description: Request body for requesting an authorization for a transaction
+      properties:
+        amount:
+          $ref: "#/components/schemas/AmountEuroCents"
+        fee:
+          $ref: "#/components/schemas/AmountEuroCents"
+        paymentInstrumentId:
+          type: string
+          description: Payment instrument id
+        pspId:
+          type: string
+          description: PSP id
+      required:
+        - amount
+        - fee
+        - paymentInstrumentId
+        - pspId
+      example:
+        rptId: string
+    RequestAuthorizationResponse:
+      type: object
+      description: Response body for requesting an authorization for a transaction
+      properties:
+        authorizationUrl:
+          type: string
+          format: url
+          description: URL where to redirect clients to continue the authorization process
+      required:
+        - authorizationUrl
+      example:
+        authorizationUrl: https://example.com
     TransactionInfo:
       description: Transaction data returned when querying for an existing transaction
       allOf:
@@ -231,3 +296,9 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/NewTransactionRequest"
+    RequestAuthorizationRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RequestAuthorizationRequest"

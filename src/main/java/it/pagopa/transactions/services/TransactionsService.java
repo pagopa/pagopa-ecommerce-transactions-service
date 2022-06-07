@@ -1,10 +1,7 @@
 package it.pagopa.transactions.services;
 
-import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
-import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
-import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
+import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.commands.TransactionInitializeCommand;
-import it.pagopa.transactions.commands.TransactionsCommandCode;
 import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
 import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
@@ -14,6 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 
 @Service
 @Slf4j
@@ -53,4 +53,19 @@ public class TransactionsService {
                         .status(transaction.getStatus()));
     }
 
+    public Mono<RequestAuthorizationResponseDto> requestTransactionAuthorization(String paymentToken, RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
+        return transactionsViewRepository
+                .findByPaymentToken(paymentToken)
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentToken)))
+                .flatMap(t -> {
+                    try {
+                        return Mono.just(
+                                new RequestAuthorizationResponseDto()
+                                        .authorizationUrl(new URI("https://example.com").toString())
+                        );
+                    } catch (URISyntaxException e) {
+                        return Mono.error(e);
+                    }
+                });
+    }
 }
