@@ -181,7 +181,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-ecommerce-sessions-service/main/api-specs/pagopa-ecommerce-sessions-api.yaml</inputSpec>
+                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-ecommerce-sessions-service/main/api-spec/pagopa-ecommerce-sessions-api.yaml</inputSpec>
                             <generatorName>java</generatorName>
                             <library>webclient</library>
                             <generateApiDocumentation>false</generateApiDocumentation>
