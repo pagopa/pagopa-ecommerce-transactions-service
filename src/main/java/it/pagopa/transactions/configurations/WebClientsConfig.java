@@ -63,9 +63,9 @@ public class WebClientsConfig {
 
     @Bean(name = "paymentTransactionGatewayWebClient")
     public PaymentTransactionsControllerApi
-    paymentTransactionGateayWebClient(@Value("${paymentTransactionGateway.uri}") String paymentTransactionGatewayUri,
-                               @Value("${paymentTransactionGateway.readTimeout}") int paymentTransactionGatewayReadTimeout,
-                               @Value("${paymentTransactionGateway.connectionTimeout}") int paymentTransactionGatewayConnectionTimeout) {
+    paymentTransactionGateayWebClient(@Value("${paymentTransactionsGateway.uri}") String paymentTransactionGatewayUri,
+                               @Value("${paymentTransactionsGateway.readTimeout}") int paymentTransactionGatewayReadTimeout,
+                               @Value("${paymentTransactionsGateway.connectionTimeout}") int paymentTransactionGatewayConnectionTimeout) {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, paymentTransactionGatewayConnectionTimeout)
                 .doOnConnected(connection ->
