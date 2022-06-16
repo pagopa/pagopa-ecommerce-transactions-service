@@ -18,6 +18,8 @@ import it.pagopa.transactions.utils.soap.Jaxb2SoapDecoder;
 import it.pagopa.transactions.utils.soap.Jaxb2SoapEncoder;
 import reactor.netty.http.client.HttpClient;
 
+import it.pagopa.generated.ecommerce.gateway.v1.api.PaymentTransactionsControllerApi;
+
 @Configuration
 public class WebClientsConfig {
 
@@ -57,6 +59,24 @@ public class WebClientsConfig {
                 new ReactorClientHttpConnector(httpClient)).baseUrl(ecommerceSessionsUri).build();
 
         return new DefaultApi(new ApiClient(webClient));
+    }
+
+    @Bean(name = "paymentTransactionGatewayWebClient")
+    public PaymentTransactionsControllerApi
+    paymentTransactionGateayWebClient(@Value("${paymentTransactionGateway.uri}") String paymentTransactionGatewayUri,
+                               @Value("${paymentTransactionGateway.readTimeout}") int paymentTransactionGatewayReadTimeout,
+                               @Value("${paymentTransactionGateway.connectionTimeout}") int paymentTransactionGatewayConnectionTimeout) {
+        HttpClient httpClient = HttpClient.create()
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, paymentTransactionGatewayConnectionTimeout)
+                .doOnConnected(connection ->
+                        connection.addHandlerLast(new ReadTimeoutHandler(
+                                paymentTransactionGatewayReadTimeout,
+                                TimeUnit.MILLISECONDS)));
+
+        WebClient webClient = it.pagopa.generated.ecommerce.gateway.v1.ApiClient.buildWebClientBuilder().clientConnector(
+                new ReactorClientHttpConnector(httpClient)).baseUrl(paymentTransactionGatewayUri).build();
+
+        return new PaymentTransactionsControllerApi(new it.pagopa.generated.ecommerce.gateway.v1.ApiClient(webClient));
     }
 
     @Bean
