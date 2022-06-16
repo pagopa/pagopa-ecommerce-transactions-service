@@ -24,18 +24,22 @@ public class Transaction {
     private String creationDate;
 
     public Transaction(String paymentToken, String rptId, String description, int amount, TransactionStatusDto status) {
-        this(UUID.randomUUID().toString(), paymentToken, rptId, description, amount, status, ZonedDateTime.now());
+        this(UUID.randomUUID().toString(), paymentToken, rptId, description, amount, status, ZonedDateTime.now().toString());
+    }
+
+    public Transaction(String transactionId, String paymentToken, String rptId, String description, int amount, TransactionStatusDto status, ZonedDateTime creationDate) {
+        this(transactionId, paymentToken, rptId, description, amount, status, creationDate.toString());
     }
 
     @PersistenceConstructor
-    public Transaction(String transactionId, String paymentToken, String rptId, String description, int amount, TransactionStatusDto status, ZonedDateTime creationDate) {
+    public Transaction(String transactionId, String paymentToken, String rptId, String description, int amount, TransactionStatusDto status, String creationDate) {
         this.transactionId = transactionId;
         this.rptId = rptId;
         this.description = description;
         this.paymentToken = paymentToken;
         this.amount = amount;
         this.status = status;
-        this.creationDate = creationDate.toString();
+        this.creationDate = creationDate;
     }
 
     public static Transaction from(it.pagopa.transactions.domain.Transaction transaction) {
@@ -46,7 +50,7 @@ public class Transaction {
                 transaction.getDescription().value(),
                 transaction.getAmount().value(),
                 transaction.getStatus(),
-                transaction.getCreationDate()
+                transaction.getCreationDate().toString()
         );
     }
 }

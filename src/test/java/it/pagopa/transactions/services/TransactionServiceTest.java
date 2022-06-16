@@ -29,7 +29,7 @@ class TransactionServiceTest {
     private TransactionsProjectionHandler transactionsProjectionHandler;
 
     @Test
-    void shouldHandleNewTransaction(){
+    void shouldHandleNewTransaction() {
         String TEST_EMAIL = "j.doe@mail.com";
         String TEST_RPTID = "77777777777302016723749670035";
         String TEST_TOKEN = "token";

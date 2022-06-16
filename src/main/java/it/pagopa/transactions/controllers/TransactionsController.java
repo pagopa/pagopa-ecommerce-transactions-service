@@ -1,11 +1,8 @@
 package it.pagopa.transactions.controllers;
 
+import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
-import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
-import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
-import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
-import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
 
 import it.pagopa.transactions.services.TransactionsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +29,13 @@ public class TransactionsController implements TransactionsApi {
     @Override
     public Mono<ResponseEntity<TransactionInfoDto>> getTransactionInfo(String paymentToken, ServerWebExchange exchange) {
         return transactionsService.getTransactionInfo(paymentToken).map(ResponseEntity::ok);
+    }
+
+    @Override
+    public Mono<ResponseEntity<RequestAuthorizationResponseDto>> requestTransactionAuthorization(String paymentToken, Mono<RequestAuthorizationRequestDto> requestAuthorizationRequestDto, ServerWebExchange exchange) {
+        return requestAuthorizationRequestDto
+                .flatMap(requestAuthorizationRequest -> transactionsService.requestTransactionAuthorization(paymentToken, requestAuthorizationRequest))
+                .map(ResponseEntity::ok);
     }
 
     @ExceptionHandler(TransactionNotFoundException.class)

@@ -1,5 +1,7 @@
 package it.pagopa.transactions.services;
 
+import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
+import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.documents.Transaction;
@@ -9,12 +11,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
@@ -65,5 +67,57 @@ public class TransactionServiceTests {
         assertEquals(
                 exception.getPaymentToken(),
                 PAYMENT_TOKEN);
+    }
+
+    @Test
+    void shouldRedirectToAuthorizationURIForValidRequest() {
+        String paymentToken = "paymentToken";
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .paymentInstrumentId("paymentInstrumentId");
+
+        Transaction transaction = new Transaction(
+                paymentToken,
+                "rptId",
+                "description",
+                100,
+                TransactionStatusDto.INITIALIZED
+        );
+
+        /* preconditions */
+        Mockito.when(repository.findByPaymentToken(paymentToken))
+                .thenReturn(Mono.just(transaction));
+
+        /* test */
+        RequestAuthorizationResponseDto authorizationResponse = transactionsService.requestTransactionAuthorization(paymentToken, authorizationRequest).block();
+
+        assertNotNull(authorizationResponse);
+        assertFalse(authorizationResponse.getAuthorizationUrl().isEmpty());
+    }
+
+    @Test
+    void shouldReturnNotFoundForNonExistingRequest() {
+        String paymentToken = "paymentToken";
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .paymentInstrumentId("paymentInstrumentId");
+
+        Transaction transaction = new Transaction(
+                paymentToken,
+                "rptId",
+                "description",
+                100,
+                TransactionStatusDto.INITIALIZED
+        );
+
+        /* preconditions */
+        Mockito.when(repository.findByPaymentToken(paymentToken))
+                .thenReturn(Mono.empty());
+
+        /* test */
+        assertThrows(
+                TransactionNotFoundException.class,
+                () -> transactionsService.requestTransactionAuthorization(paymentToken, authorizationRequest).block()
+        );
     }
 }
