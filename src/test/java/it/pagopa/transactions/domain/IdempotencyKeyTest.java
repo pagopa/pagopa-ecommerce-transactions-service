@@ -54,6 +54,29 @@ class IdempotencyKeyTest {
         assertEquals(key1.equals(key1), true);
         assertEquals(key1.equals(null), false);
         assertEquals(key1.equals("test"), false);
+    }
 
+    @Test
+    void shouldReturnKeyWithPersistenceConstructor() {
+        IdempotencyKey key = new IdempotencyKey(VALID_FISCAL_CODE + "_" + VALID_KEY_ID);
+
+        assertTrue(key.getKey().equalsIgnoreCase(VALID_FISCAL_CODE + "_" + VALID_KEY_ID));
+    }
+
+    @Test
+    void shouldThrowInvalidIdempotencyKeyWithPersistenceConstructor() {
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            IdempotencyKey key = new IdempotencyKey(VALID_FISCAL_CODE + "_" + INVALID_KEY_ID);
+        });
+
+        String expectedMessage = "Key identifier doesn't match regex";
+        String actualMessage = exception.getMessage();
+
+        assertTrue(actualMessage.contains(expectedMessage));
+    }
+
+    @Test
+    void shouldThrowMalformedIdempotencyKeyWithPersistenceConstructor() {
+        assertThrows(IllegalArgumentException.class, () -> new IdempotencyKey(VALID_FISCAL_CODE + "_" + INVALID_KEY_ID + "_" + "aaaa"));
     }
 }
