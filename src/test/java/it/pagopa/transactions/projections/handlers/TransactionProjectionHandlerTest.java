@@ -2,15 +2,19 @@ package it.pagopa.transactions.projections.handlers;
 
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
-import it.pagopa.transactions.documents.Transaction;
+import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
+
+import java.time.ZonedDateTime;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -24,33 +28,52 @@ class TransactionProjectionHandlerTest {
     private TransactionsViewRepository viewEventStoreRepository;
 
     @Test
-    void shouldHandleTransaction(){
+    void shouldHandleTransaction() {
 
-        NewTransactionResponseDto data  = new NewTransactionResponseDto()
+        NewTransactionResponseDto data = new NewTransactionResponseDto()
                 .paymentToken("token")
                 .rptId("77777777777302016723749670035")
                 .reason("reason")
                 .amount(1);
 
-        Transaction transaction = new Transaction(
-                data.getPaymentToken(),
-                data.getRptId(),
-                data.getReason(),
-                data.getAmount(),
-                TransactionStatusDto.INITIALIZED);
-        /**
-         * Preconditions
-         */
-        Mockito.when(viewEventStoreRepository.save(Mockito.any(Transaction.class))).thenReturn(Mono.just(transaction));
+        UUID transactionUUID = UUID.randomUUID();
 
-        /**
-         * Test
-         */
-        Transaction result = transactionsProjectionHandler.handle(data).block();
+        TransactionId transactionId = new TransactionId(transactionUUID.toString());
+        PaymentToken paymentToken = new PaymentToken(data.getPaymentToken());
+        RptId rptId = new RptId(data.getRptId());
+        TransactionDescription description = new TransactionDescription(data.getReason());
+        TransactionAmount amount = new TransactionAmount(data.getAmount());
 
-        /**
-        * Assertions
-         */
-        assertEquals(transaction, result);
+        Transaction expected = new Transaction(
+                transactionId,
+                paymentToken,
+                rptId,
+                description,
+                amount,
+                TransactionStatusDto.INITIALIZED
+        );
+
+        try (
+                MockedStatic<UUID> uuid = Mockito.mockStatic(UUID.class);
+                MockedStatic<ZonedDateTime> zonedDateTime = Mockito.mockStatic(ZonedDateTime.class)
+        ) {
+            /*
+             * Preconditions
+             */
+            it.pagopa.transactions.documents.Transaction transactionDocument = it.pagopa.transactions.documents.Transaction.from(expected);
+            Mockito.when(viewEventStoreRepository.save(Mockito.any(it.pagopa.transactions.documents.Transaction.class))).thenReturn(Mono.just(transactionDocument));
+            uuid.when(UUID::randomUUID).thenReturn(transactionUUID);
+            zonedDateTime.when(ZonedDateTime::now).thenReturn(expected.getCreationDate());
+
+            /*
+             * Test
+             */
+            Transaction result = transactionsProjectionHandler.handle(data).block();
+
+            /*
+             * Assertions
+             */
+            assertEquals(expected, result);
+        }
     }
 }

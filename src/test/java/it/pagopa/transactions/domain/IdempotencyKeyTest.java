@@ -1,10 +1,8 @@
-package it.pagopa.transactions.model;
+package it.pagopa.transactions.domain;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -56,12 +54,29 @@ class IdempotencyKeyTest {
         assertEquals(key1.equals(key1), true);
         assertEquals(key1.equals(null), false);
         assertEquals(key1.equals("test"), false);
-
     }
 
     @Test
-    void shouldReturnHashcode() {
-        IdempotencyKey key = new IdempotencyKey(VALID_FISCAL_CODE, VALID_KEY_ID);
-        assertEquals(key.hashCode(), Objects.hash(VALID_FISCAL_CODE + "_" + VALID_KEY_ID));
+    void shouldReturnKeyWithPersistenceConstructor() {
+        IdempotencyKey key = new IdempotencyKey(VALID_FISCAL_CODE + "_" + VALID_KEY_ID);
+
+        assertTrue(key.getKey().equalsIgnoreCase(VALID_FISCAL_CODE + "_" + VALID_KEY_ID));
+    }
+
+    @Test
+    void shouldThrowInvalidIdempotencyKeyWithPersistenceConstructor() {
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            IdempotencyKey key = new IdempotencyKey(VALID_FISCAL_CODE + "_" + INVALID_KEY_ID);
+        });
+
+        String expectedMessage = "Key identifier doesn't match regex";
+        String actualMessage = exception.getMessage();
+
+        assertTrue(actualMessage.contains(expectedMessage));
+    }
+
+    @Test
+    void shouldThrowMalformedIdempotencyKeyWithPersistenceConstructor() {
+        assertThrows(IllegalArgumentException.class, () -> new IdempotencyKey(VALID_FISCAL_CODE + "_" + INVALID_KEY_ID + "_" + "aaaa"));
     }
 }

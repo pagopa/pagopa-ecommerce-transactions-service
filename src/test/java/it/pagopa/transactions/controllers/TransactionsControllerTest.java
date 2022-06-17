@@ -1,10 +1,6 @@
 package it.pagopa.transactions.controllers;
 
-import it.pagopa.generated.transactions.server.model.BeneficiaryDto;
-import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
-import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
-import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
-import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
+import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.services.TransactionsService;
 import org.junit.jupiter.api.Test;
@@ -19,10 +15,12 @@ import reactor.core.publisher.Mono;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionsControllerTest {
@@ -85,6 +83,49 @@ class TransactionsControllerTest {
         // Verify status code and response
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
         assertEquals(response, responseEntity.getBody());
+    }
+
+    @Test
+    void shouldRedirectToAuthorizationURIForValidRequest() throws URISyntaxException {
+        String paymentToken = "paymentToken";
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .fee(1)
+                .paymentInstrumentId("paymentInstrumentId")
+                .pspId("pspId");
+
+        RequestAuthorizationResponseDto authorizationResponse = new RequestAuthorizationResponseDto()
+                .authorizationUrl(new URI("https://example.com").toString());
+
+        /* preconditions */
+        Mockito.when(transactionsService.requestTransactionAuthorization(paymentToken, authorizationRequest))
+                .thenReturn(Mono.just(authorizationResponse));
+
+        /* test */
+        ResponseEntity<RequestAuthorizationResponseDto> response = transactionsController.requestTransactionAuthorization(paymentToken, Mono.just(authorizationRequest), null).block();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(authorizationResponse, response.getBody());
+    }
+
+    @Test
+    void shouldReturnNotFoundForNonExistingRequest() {
+        String paymentToken = "paymentToken";
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .fee(1)
+                .paymentInstrumentId("paymentInstrumentId")
+                .pspId("pspId");
+
+        /* preconditions */
+        Mockito.when(transactionsService.requestTransactionAuthorization(paymentToken, authorizationRequest))
+                .thenReturn(Mono.error(new TransactionNotFoundException(paymentToken)));
+
+        /* test */
+        assertThrows(
+                TransactionNotFoundException.class,
+                () -> transactionsController.requestTransactionAuthorization(paymentToken, Mono.just(authorizationRequest), null).block()
+        );
     }
 
     @Test

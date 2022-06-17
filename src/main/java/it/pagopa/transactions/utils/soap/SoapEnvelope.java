@@ -1,4 +1,4 @@
-package it.pagopa.transactions.model;
+package it.pagopa.transactions.utils.soap;
 
 import javax.xml.bind.annotation.XmlRootElement;
 

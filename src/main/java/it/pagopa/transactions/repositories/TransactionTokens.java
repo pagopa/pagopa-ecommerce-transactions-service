@@ -1,7 +1,7 @@
 package it.pagopa.transactions.repositories;
 
-import it.pagopa.transactions.model.IdempotencyKey;
-import it.pagopa.transactions.model.RptId;
+import it.pagopa.transactions.domain.IdempotencyKey;
+import it.pagopa.transactions.domain.RptId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.redis.core.RedisHash;

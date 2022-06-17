@@ -1,6 +1,6 @@
 package it.pagopa.transactions.data;
 
-import it.pagopa.transactions.model.RptId;
+import it.pagopa.transactions.domain.RptId;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.stereotype.Component;
@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets;
 public class RptIdWritingByteConverter implements Converter<RptId, byte[]> {
     @Override
     public byte[] convert(RptId source) {
-        return source.getRptId().getBytes(StandardCharsets.UTF_8);
+        return source.value().getBytes(StandardCharsets.UTF_8);
     }
 }
 
