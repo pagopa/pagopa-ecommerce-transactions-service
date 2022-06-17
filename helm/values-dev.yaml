@@ -3,22 +3,40 @@ microservice-chart:
   nameOverride: ""
   fullnameOverride: ""
 
-  deployment:
-    create: true
-    livenessProbePath: /actuator/health/liveness
-    readinessProbePath: /actuator/health/readiness
-    
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
     tag: "latest" #improve
     pullPolicy: Always
+
+  livenessProbe:
+    httpGet:
+      path: /actuator/health/liveness
+      port: 8080
+    initialDelaySeconds: 60
+    failureThreshold: 6
+    periodSeconds: 10
+
+  readinessProbe:
+    httpGet:
+      path: /actuator/health/readiness
+      port: 8080
+    initialDelaySeconds: 60
+    failureThreshold: 6
+    periodSeconds: 10
+
+  deployment:
+    create: true
+
+  service:
+    create: true
+    type: ClusterIP
     port: 8080
 
   ingress:
+    create: true
     host: "weudev.ecommerce.internal.dev.platform.pagopa.it"
-    path: "/ecommerce"
-    pathType: "ImplementationSpecific"
-  
+    path: /pagopa-ecommerce-transactions-service/(.*)
+
   serviceAccount:
     create: false
     annotations: {}
@@ -33,17 +51,13 @@ microservice-chart:
   securityContext:
     allowPrivilegeEscalation: false
 
-  service:
-    type: ClusterIP
-    port: 80
-
   resources:
     requests:
-      memory: "96Mi"
+      memory: "256Mi"
       cpu: "40m"
     limits:
-      memory: "300Mi"
-      cpu: "300m"
+      memory: "256Mi"
+      cpu: "150m"
 
   autoscaling:
     minReplica: 1
@@ -67,7 +81,7 @@ microservice-chart:
   envConfig:
     MONGO_HOST: pagopa-d-weu-ecommerce-cosmos-account.mongo.cosmos.azure.com
     MONGO_USERNAME: pagopa-d-weu-ecommerce-cosmos-account
-    REDIS_HOST: pagopa-d-pagopa-proxy-redis.redis.cache.windows.net
+    REDIS_HOST: privatelink.ecommerce.redis.azure.com
     NODO_URI: https://api.dev.platform.pagopa.it
     NODO_READ_TIMEOUT: "10000"
     NODO_CONNECTION_TIMEOUT: "10000"
