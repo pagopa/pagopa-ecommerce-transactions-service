@@ -1,9 +1,12 @@
 package it.pagopa.transactions.services;
 
 import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.transactions.commands.TransactionAuthorizeCommand;
 import it.pagopa.transactions.commands.TransactionInitializeCommand;
+import it.pagopa.transactions.commands.data.AuthorizationData;
+import it.pagopa.transactions.commands.handlers.TransactionAuthorizeHandler;
 import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
-import it.pagopa.transactions.domain.RptId;
+import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.TransactionsProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
@@ -12,15 +15,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-
 @Service
 @Slf4j
 public class TransactionsService {
 
     @Autowired
     private TransactionInizializeHandler transactionInizializeHandler;
+
+    @Autowired
+    private TransactionAuthorizeHandler transactionAuthorizeHandler;
 
     @Autowired
     private TransactionsProjectionHandler transactionsProjectionHandler;
@@ -57,15 +60,30 @@ public class TransactionsService {
         return transactionsViewRepository
                 .findByPaymentToken(paymentToken)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentToken)))
-                .flatMap(t -> {
-                    try {
-                        return Mono.just(
-                                new RequestAuthorizationResponseDto()
-                                        .authorizationUrl(new URI("https://example.com").toString())
-                        );
-                    } catch (URISyntaxException e) {
-                        return Mono.error(e);
-                    }
+                .flatMap(transactionDocument -> {
+                    log.info("Requesting authorization for rptId: {}", transactionDocument.getRptId());
+
+                    Transaction transaction = new Transaction(
+                            new TransactionId(transactionDocument.getTransactionId()),
+                            new PaymentToken(transactionDocument.getPaymentToken()),
+                            new RptId(transactionDocument.getRptId()),
+                            new TransactionDescription(transactionDocument.getDescription()),
+                            new TransactionAmount(transactionDocument.getAmount()),
+                            transactionDocument.getStatus()
+                    );
+
+                    AuthorizationData authorizationData = new AuthorizationData(
+                            transaction,
+                            requestAuthorizationRequestDto.getFee(),
+                            requestAuthorizationRequestDto.getPaymentInstrumentId(),
+                            requestAuthorizationRequestDto.getPspId()
+                    );
+
+                    TransactionAuthorizeCommand command = new TransactionAuthorizeCommand(transaction.getRptId(), authorizationData);
+
+                    // TODO: Update event store & view
+                    return transactionAuthorizeHandler.handle(command)
+                            .doOnNext(res -> log.info("Requested authorization for rptId: {}", transactionDocument.getRptId()));
                 });
     }
 }
