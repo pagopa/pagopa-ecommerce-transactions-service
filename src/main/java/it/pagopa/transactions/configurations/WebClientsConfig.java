@@ -59,6 +59,24 @@ public class WebClientsConfig {
         return new DefaultApi(new ApiClient(webClient));
     }
 
+    @Bean(name = "ecommercePaymentInstrumentsWebClient")
+    public DefaultApi
+    ecommercePaymentInstrumentsWebClient(@Value("${ecommercePaymentInstruments.uri}") String ecommercePaymentInstrumentsUri,
+                               @Value("${ecommercePaymentInstruments.readTimeout}") int ecommercePaymentInstrumentsReadTimeout,
+                               @Value("${ecommercePaymentInstruments.connectionTimeout}") int ecommercePaymentInstrumentsConnectionTimeout) {
+        HttpClient httpClient = HttpClient.create()
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, ecommercePaymentInstrumentsConnectionTimeout)
+                .doOnConnected(connection ->
+                        connection.addHandlerLast(new ReadTimeoutHandler(
+                                ecommercePaymentInstrumentsReadTimeout,
+                                TimeUnit.MILLISECONDS)));
+
+        WebClient webClient = ApiClient.buildWebClientBuilder().clientConnector(
+                new ReactorClientHttpConnector(httpClient)).baseUrl(ecommercePaymentInstrumentsUri).build();
+
+        return new DefaultApi(new ApiClient(webClient));
+    }
+
     @Bean
     public ObjectFactory objectFactory() {
         return new ObjectFactory();
