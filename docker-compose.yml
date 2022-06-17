@@ -20,7 +20,17 @@ services:
         - "8082:8080"
     networks:
       - pagopa-ecommerce-net
-    
+
+  pagopa-ecommerce-payment-instruments-service:
+    container_name: pagopa-ecommerce-payment-instruments-service
+    build:
+      context: .
+      dockerfile: Dockerfile.payment-instruments
+    ports:
+      - "8083:8080"
+    networks:
+      - pagopa-ecommerce-net
+
   pagopa-node-mock:
     container_name: pagopa-node-mock
     build:
