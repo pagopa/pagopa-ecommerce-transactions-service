@@ -1,6 +1,7 @@
 package it.pagopa.transactions.services;
 
 import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.commands.TransactionInitializeCommand;
 import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
 import it.pagopa.transactions.domain.RptId;
@@ -27,6 +28,9 @@ public class TransactionsService {
 
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
+
+    @Autowired
+    private EcommercePaymentInstrumentsClient ecommercePaymentInstrumentsClient;
 
     public Mono<NewTransactionResponseDto> newTransaction(NewTransactionRequestDto newTransactionRequestDto) {
 
@@ -57,6 +61,20 @@ public class TransactionsService {
         return transactionsViewRepository
                 .findByPaymentToken(paymentToken)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentToken)))
+                .map(transaction -> {
+                    if(transaction.getAmount() != requestAuthorizationRequestDto.getAmount()){
+                        return Mono.empty();
+                    } else {
+                        return ecommercePaymentInstrumentsClient
+                                .getPSPs(transaction.getAmount(), requestAuthorizationRequestDto.getLanguage().getValue())
+                                .filter(psp ->
+                                        psp.getCode().compareTo(requestAuthorizationRequestDto.getPspId()) == 0 &&
+                                                psp.getFixedCost().equals((double) requestAuthorizationRequestDto.getFee()/100))
+                                .collectList()
+                                .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentToken)))
+                                .map(list -> transaction);
+                    }
+                })
                 .flatMap(t -> {
                     try {
                         return Mono.just(

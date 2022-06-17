@@ -1,9 +1,11 @@
 package it.pagopa.transactions.services;
 
+import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
+import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.documents.Transaction;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
@@ -14,7 +16,11 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
@@ -27,6 +33,9 @@ public class TransactionServiceTests {
 
     @InjectMocks
     private TransactionsService transactionsService;
+
+    @Mock
+    private EcommercePaymentInstrumentsClient ecommercePaymentInstrumentsClient;
 
     @Test
     void getTransactionReturnsTransactionData() {
@@ -74,7 +83,8 @@ public class TransactionServiceTests {
         String paymentToken = "paymentToken";
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
                 .amount(100)
-                .paymentInstrumentId("paymentInstrumentId");
+                .paymentInstrumentId("paymentInstrumentId")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
         Transaction transaction = new Transaction(
                 paymentToken,
@@ -85,6 +95,17 @@ public class TransactionServiceTests {
         );
 
         /* preconditions */
+        List<PspDto> pspDtoList = new ArrayList<>();
+        pspDtoList.add(
+                new PspDto()
+                        .code("PSP_CODE")
+                        .fixedCost(2.0)
+        );
+
+        Mockito.when(ecommercePaymentInstrumentsClient.getPSPs(Mockito.any(), Mockito.any())).thenReturn(
+                Flux.fromIterable(pspDtoList)
+        );
+
         Mockito.when(repository.findByPaymentToken(paymentToken))
                 .thenReturn(Mono.just(transaction));
 
