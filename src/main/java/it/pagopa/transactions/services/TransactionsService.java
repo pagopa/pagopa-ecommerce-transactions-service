@@ -36,7 +36,8 @@ public class TransactionsService {
 
         log.info("Initializing transaction for rptId: {}", newTransactionRequestDto.getRptId());
 
-        TransactionInitializeCommand command = new TransactionInitializeCommand(new RptId(newTransactionRequestDto.getRptId()), newTransactionRequestDto);
+        TransactionInitializeCommand command = new TransactionInitializeCommand(
+                new RptId(newTransactionRequestDto.getRptId()), newTransactionRequestDto);
 
         Mono<NewTransactionResponseDto> response = transactionInizializeHandler.handle(command)
                 .doOnNext(tx -> log.info("Transaction initialized for rptId: {}", newTransactionRequestDto.getRptId()));
@@ -46,7 +47,7 @@ public class TransactionsService {
 
     public Mono<TransactionInfoDto> getTransactionInfo(String paymentToken) {
         return transactionsViewRepository
-                .findById(paymentToken)
+                .findByPaymentToken(paymentToken)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentToken)))
                 .map(transaction -> new TransactionInfoDto()
                         .amount(transaction.getAmount())
@@ -57,30 +58,36 @@ public class TransactionsService {
                         .status(transaction.getStatus()));
     }
 
-    public Mono<RequestAuthorizationResponseDto> requestTransactionAuthorization(String paymentToken, RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
+    public Mono<RequestAuthorizationResponseDto> requestTransactionAuthorization(String paymentToken,
+            RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
         return transactionsViewRepository
                 .findByPaymentToken(paymentToken)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentToken)))
-                .map(transaction -> {
-                    if(transaction.getAmount() != requestAuthorizationRequestDto.getAmount()){
-                        return Mono.empty();
-                    } else {
-                        return ecommercePaymentInstrumentsClient
-                                .getPSPs(transaction.getAmount(), requestAuthorizationRequestDto.getLanguage().getValue())
-                                .filter(psp ->
-                                        psp.getCode().compareTo(requestAuthorizationRequestDto.getPspId()) == 0 &&
-                                                psp.getFixedCost().equals((double) requestAuthorizationRequestDto.getFee()/100))
-                                .collectList()
-                                .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentToken)))
-                                .map(list -> transaction);
-                    }
+                .flatMap(transaction -> {
+                    log.info("Authorization request amount validation for paymentToken: {}", paymentToken);
+                    return transaction.getAmount() != requestAuthorizationRequestDto.getAmount() ? Mono.empty()
+                            : Mono.just(transaction);
                 })
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentToken)))
+                .flatMap(transaction -> {
+                    log.info("Authorization psp validation for paymentToken: {}", paymentToken);
+                    return ecommercePaymentInstrumentsClient
+                            .getPSPs(transaction.getAmount(),
+                                    requestAuthorizationRequestDto.getLanguage().getValue())
+                            .map(pspResponse -> pspResponse.getPsp()
+                                    .stream().anyMatch(psp -> psp.getCode()
+                                            .equals(requestAuthorizationRequestDto.getPspId())
+                                            &&
+                                            psp.getFixedCost()
+                                                    .equals((double) requestAuthorizationRequestDto.getFee() / 100)))
+                            .flatMap(isValid -> isValid ? Mono.just(transaction) : Mono.empty());
+                })
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentToken)))
                 .flatMap(t -> {
                     try {
                         return Mono.just(
                                 new RequestAuthorizationResponseDto()
-                                        .authorizationUrl(new URI("https://example.com").toString())
-                        );
+                                        .authorizationUrl(new URI("https://example.com").toString()));
                     } catch (URISyntaxException e) {
                         return Mono.error(e);
                     }
