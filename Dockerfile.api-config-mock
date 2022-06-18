@@ -1,0 +1,16 @@
+### 1. Cloning stage
+FROM alpine/git:latest AS clone
+WORKDIR /workspace/payment-instrument
+RUN git clone https://github.com/pagopa/pagopa-ecommerce-payment-instruments-service
+
+
+### 3. Run stage
+FROM node:14.16-alpine
+
+ARG EXTRACTED=/workspace/payment-instrument/
+
+COPY --from=clone ${EXTRACTED} .
+
+RUN yarn global add json-server
+
+CMD ["json-server", "pagopa-ecommerce-payment-instruments-service/api-config-mock/api-config-server.json", "--routes", "pagopa-ecommerce-payment-instruments-service/api-config-mock/routes.json", "--host", "0.0.0.0"]
