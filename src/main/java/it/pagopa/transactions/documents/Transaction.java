@@ -8,14 +8,11 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 
 import java.time.ZonedDateTime;
-import java.util.UUID;
 
 @Data
 @Document(collection = "view")
 public class Transaction {
     @Id
-    private String transactionId;
-
     private String paymentToken;
     private String rptId;
     private String description;
@@ -24,16 +21,17 @@ public class Transaction {
     private String creationDate;
 
     public Transaction(String paymentToken, String rptId, String description, int amount, TransactionStatusDto status) {
-        this(UUID.randomUUID().toString(), paymentToken, rptId, description, amount, status, ZonedDateTime.now().toString());
+        this(paymentToken, rptId, description, amount, status, ZonedDateTime.now().toString());
     }
 
-    public Transaction(String transactionId, String paymentToken, String rptId, String description, int amount, TransactionStatusDto status, ZonedDateTime creationDate) {
-        this(transactionId, paymentToken, rptId, description, amount, status, creationDate.toString());
+    public Transaction(String paymentToken, String rptId, String description, int amount, TransactionStatusDto status,
+            ZonedDateTime creationDate) {
+        this(paymentToken, rptId, description, amount, status, creationDate.toString());
     }
 
     @PersistenceConstructor
-    public Transaction(String transactionId, String paymentToken, String rptId, String description, int amount, TransactionStatusDto status, String creationDate) {
-        this.transactionId = transactionId;
+    public Transaction(String paymentToken, String rptId, String description, int amount, TransactionStatusDto status,
+            String creationDate) {
         this.rptId = rptId;
         this.description = description;
         this.paymentToken = paymentToken;
@@ -44,13 +42,11 @@ public class Transaction {
 
     public static Transaction from(it.pagopa.transactions.domain.Transaction transaction) {
         return new Transaction(
-                transaction.getTransactionId().value(),
                 transaction.getPaymentToken().value(),
                 transaction.getRptId().value(),
                 transaction.getDescription().value(),
                 transaction.getAmount().value(),
                 transaction.getStatus(),
-                transaction.getCreationDate().toString()
-        );
+                transaction.getCreationDate().toString());
     }
 }

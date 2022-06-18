@@ -1,0 +1,28 @@
+### 1. Cloning stage
+FROM alpine/git:latest AS clone
+WORKDIR /workspace/payment-instrument
+RUN git clone https://github.com/pagopa/pagopa-ecommerce-payment-instruments-service
+
+### 2. Build stage
+FROM maven:3.8.3-openjdk-17 AS build
+WORKDIR /workspace/payment-instrument/
+
+ARG REPO=/workspace/payment-instrument/pagopa-ecommerce-payment-instruments-service
+
+COPY --from=clone ${REPO}/ .
+RUN mvn -f ./pom.xml clean package
+
+### 3. Run stage
+FROM openjdk:17-jdk-alpine
+
+RUN addgroup -S spring && adduser -S spring -G spring
+USER spring:spring
+
+ARG EXTRACTED=/workspace/payment-instrument/target/
+
+COPY --from=build --chown=spring ${EXTRACTED} .
+
+ARG JAR_FILE=*.jar
+ENV APP_NAME=$JAR_FILE
+
+CMD java -jar $APP_NAME

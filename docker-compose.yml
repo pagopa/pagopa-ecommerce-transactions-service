@@ -20,7 +20,19 @@ services:
         - "8082:8080"
     networks:
       - pagopa-ecommerce-net
-    
+    env_file: .env
+
+  pagopa-ecommerce-payment-instruments-service:
+    container_name: pagopa-ecommerce-payment-instruments-service
+    build:
+      context: .
+      dockerfile: Dockerfile.payment-instruments
+    ports:
+      - "8083:8080"
+    networks:
+      - pagopa-ecommerce-net
+    env_file: .env
+
   pagopa-node-mock:
     container_name: pagopa-node-mock
     build:
@@ -82,6 +94,16 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+
+  pagopa-api-config-mock:
+    build:
+      context: .
+      dockerfile: Dockerfile.api-config-mock
+    container_name: pagopa-api-config-mock
+    ports:
+      - "8084:3000"
+    networks:
+      - pagopa-ecommerce-net
 
 networks:
   pagopa-ecommerce-net:
