@@ -13,8 +13,6 @@ import static java.time.ZonedDateTime.now;
 @Data
 public class Transaction {
     @AggregateRootId
-    private final TransactionId transactionId;
-
     private final PaymentToken paymentToken;
     private final RptId rptId;
     private final TransactionDescription description;
@@ -23,8 +21,7 @@ public class Transaction {
 
     private TransactionStatusDto status;
 
-    public Transaction(TransactionId transactionId, PaymentToken paymentToken, RptId rptId, TransactionDescription description, TransactionAmount amount, TransactionStatusDto status) {
-        this.transactionId = transactionId;
+    public Transaction(PaymentToken paymentToken, RptId rptId, TransactionDescription description, TransactionAmount amount, TransactionStatusDto status) {
         this.rptId = rptId;
         this.description = description;
         this.paymentToken = paymentToken;
