@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class TransactionTest {
     @Test
     void shouldConstructTransaction() {
-        TransactionId transactionId = new TransactionId("");
         PaymentToken paymentToken = new PaymentToken("");
         RptId rptId = new RptId("77777777777302016723749670035");
         TransactionDescription description = new TransactionDescription("");
@@ -16,7 +15,6 @@ public class TransactionTest {
         TransactionStatusDto status = TransactionStatusDto.INITIALIZED;
 
         Transaction transaction = new Transaction(
-                transactionId,
                 paymentToken,
                 rptId,
                 description,
@@ -24,7 +22,6 @@ public class TransactionTest {
                 status
         );
 
-        assertEquals(transaction.getTransactionId(), transactionId);
         assertEquals(transaction.getPaymentToken(), paymentToken);
         assertEquals(transaction.getRptId(), rptId);
         assertEquals(transaction.getDescription(), description);

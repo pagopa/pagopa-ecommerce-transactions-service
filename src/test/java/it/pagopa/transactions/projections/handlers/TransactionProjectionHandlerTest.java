@@ -38,14 +38,12 @@ class TransactionProjectionHandlerTest {
 
         UUID transactionUUID = UUID.randomUUID();
 
-        TransactionId transactionId = new TransactionId(transactionUUID.toString());
         PaymentToken paymentToken = new PaymentToken(data.getPaymentToken());
         RptId rptId = new RptId(data.getRptId());
         TransactionDescription description = new TransactionDescription(data.getReason());
         TransactionAmount amount = new TransactionAmount(data.getAmount());
 
         Transaction expected = new Transaction(
-                transactionId,
                 paymentToken,
                 rptId,
                 description,
