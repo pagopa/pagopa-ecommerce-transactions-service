@@ -1,5 +1,6 @@
 package it.pagopa.transactions.client;
 
+import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PSPsResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
 import it.pagopa.generated.ecommerce.sessions.v1.api.DefaultApi;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,7 @@ public class EcommercePaymentInstrumentsClient {
     @Qualifier("ecommercePaymentInstrumentsWebClient")
     private DefaultApi ecommercePaymentInstrumentsWebClient;
 
-    public Flux<PspDto> getPSPs(Integer amount, String language) {
+    public Mono<PSPsResponseDto> getPSPs(Integer amount, String language) {
 
         return ecommercePaymentInstrumentsWebClient
                 .getApiClient()
@@ -32,6 +33,6 @@ public class EcommercePaymentInstrumentsClient {
                         clientResponse -> clientResponse.bodyToMono(String.class)
                                 .flatMap(errorResponseBody -> Mono.error(
                                         new ResponseStatusException(clientResponse.statusCode(), errorResponseBody))))
-                .bodyToFlux(PspDto.class);
+                .bodyToMono(PSPsResponseDto.class);
     }
 }
