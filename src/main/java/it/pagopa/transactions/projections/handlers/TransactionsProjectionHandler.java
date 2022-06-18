@@ -11,8 +11,6 @@ import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
-import java.util.UUID;
-
 @Component
 @Slf4j
 public class TransactionsProjectionHandler
@@ -30,7 +28,6 @@ public class TransactionsProjectionHandler
 		TransactionAmount amount = new TransactionAmount(data.getAmount());
 
 		Transaction transaction = new Transaction(
-				new TransactionId(UUID.randomUUID().toString()),
 				paymentToken,
 				rptId,
 				description,
