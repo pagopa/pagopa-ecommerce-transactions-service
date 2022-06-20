@@ -1,8 +1,8 @@
 package it.pagopa.transactions.services;
 
 import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.transactions.commands.TransactionAuthorizeCommand;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
+import it.pagopa.transactions.commands.TransactionAuthorizeCommand;
 import it.pagopa.transactions.commands.TransactionInitializeCommand;
 import it.pagopa.transactions.commands.data.AuthorizationData;
 import it.pagopa.transactions.commands.handlers.TransactionAuthorizeHandler;
@@ -62,7 +62,7 @@ public class TransactionsService {
     }
 
     public Mono<RequestAuthorizationResponseDto> requestTransactionAuthorization(String paymentToken,
-            RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
+                                                                                 RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
         return transactionsViewRepository
                 .findByPaymentToken(paymentToken)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentToken)))
@@ -78,21 +78,23 @@ public class TransactionsService {
                             .getPSPs(transaction.getAmount(),
                                     requestAuthorizationRequestDto.getLanguage().getValue())
                             .map(pspResponse -> pspResponse.getPsp()
-                                    .stream().anyMatch(psp -> psp.getCode()
+                                    .stream()
+                                    .anyMatch(psp -> psp.getCode()
                                             .equals(requestAuthorizationRequestDto.getPspId())
                                             &&
                                             psp.getFixedCost()
                                                     .equals((double) requestAuthorizationRequestDto.getFee() / 100)))
-                            .flatMap(isValid -> isValid ? Mono.just(transaction) : Mono.empty());
+                            .flatMap(isValid -> {
+                                log.info("Valid psp request: {}", isValid);
+                                return isValid ? Mono.just(transaction) : Mono.empty();
+                            });
                 })
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentToken)))
-                .flatMap(t -> {
-                    try {
+                .flatMap(transactionDocument -> {
 
-                           log.info("Requesting authorization for rptId: {}", transactionDocument.getRptId());
+                    log.info("Requesting authorization for rptId: {}", transactionDocument.getRptId());
 
                     Transaction transaction = new Transaction(
-                            new TransactionId(transactionDocument.getTransactionId()),
                             new PaymentToken(transactionDocument.getPaymentToken()),
                             new RptId(transactionDocument.getRptId()),
                             new TransactionDescription(transactionDocument.getDescription()),
@@ -112,14 +114,6 @@ public class TransactionsService {
                     // TODO: Update event store & view
                     return transactionAuthorizeHandler.handle(command)
                             .doOnNext(res -> log.info("Requested authorization for rptId: {}", transactionDocument.getRptId()));
-                      
-                      return Mono.just(
-                                new RequestAuthorizationResponseDto()
-                                        .authorizationUrl(new URI("https://example.com").toString()));
-                    } catch (URISyntaxException e) {
-                        return Mono.error(e);
-                    }
-
                 });
     }
 }

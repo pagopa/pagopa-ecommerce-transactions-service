@@ -71,7 +71,6 @@ public class WebClientsConfig {
                                 paymentTransactionGatewayReadTimeout,
                                 TimeUnit.MILLISECONDS)));
 
-        log.info("#### PAYMENT TRANSACTION GATEWAY URI: " + paymentTransactionGatewayUri);
         WebClient webClient = it.pagopa.generated.ecommerce.gateway.v1.ApiClient.buildWebClientBuilder().clientConnector(
                 new ReactorClientHttpConnector(httpClient)).baseUrl(paymentTransactionGatewayUri).build();
 
@@ -92,6 +91,7 @@ public class WebClientsConfig {
 
         return it.pagopa.generated.ecommerce.gateway.v1.ApiClient.buildWebClientBuilder().clientConnector(
                 new ReactorClientHttpConnector(httpClient)).baseUrl(paymentTransactionGatewayUri).build();
+    }
 
     @Bean(name = "ecommercePaymentInstrumentsWebClient")
     public DefaultApi

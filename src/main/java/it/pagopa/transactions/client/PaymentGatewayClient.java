@@ -1,13 +1,9 @@
 package it.pagopa.transactions.client;
 
-import it.pagopa.generated.ecommerce.gateway.v1.api.PaymentTransactionsControllerApi;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
-import it.pagopa.generated.transactions.model.ActivatePaymentNoticeRes;
-import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.transactions.commands.data.AuthorizationData;
-import it.pagopa.transactions.configurations.WebClientsConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
