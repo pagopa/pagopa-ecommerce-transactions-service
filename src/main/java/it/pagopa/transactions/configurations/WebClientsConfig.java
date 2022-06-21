@@ -71,26 +71,12 @@ public class WebClientsConfig {
                                 paymentTransactionGatewayReadTimeout,
                                 TimeUnit.MILLISECONDS)));
 
-        WebClient webClient = it.pagopa.generated.ecommerce.gateway.v1.ApiClient.buildWebClientBuilder().clientConnector(
-                new ReactorClientHttpConnector(httpClient)).baseUrl(paymentTransactionGatewayUri).build();
+        WebClient webClient = it.pagopa.generated.ecommerce.gateway.v1.ApiClient.buildWebClientBuilder()
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .baseUrl(paymentTransactionGatewayUri)
+                .build();
 
-        return new PaymentTransactionsControllerApi(new it.pagopa.generated.ecommerce.gateway.v1.ApiClient(webClient));
-    }
-
-    @Bean(name = "paymentTransactionGatewayWebClientRaw")
-    public WebClient
-    paymentTransactionGateayWebClientRaw(@Value("${paymentTransactionsGateway.uri}") String paymentTransactionGatewayUri,
-                                      @Value("${paymentTransactionsGateway.readTimeout}") int paymentTransactionGatewayReadTimeout,
-                                      @Value("${paymentTransactionsGateway.connectionTimeout}") int paymentTransactionGatewayConnectionTimeout) {
-        HttpClient httpClient = HttpClient.create()
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, paymentTransactionGatewayConnectionTimeout)
-                .doOnConnected(connection ->
-                        connection.addHandlerLast(new ReadTimeoutHandler(
-                                paymentTransactionGatewayReadTimeout,
-                                TimeUnit.MILLISECONDS)));
-
-        return it.pagopa.generated.ecommerce.gateway.v1.ApiClient.buildWebClientBuilder().clientConnector(
-                new ReactorClientHttpConnector(httpClient)).baseUrl(paymentTransactionGatewayUri).build();
+        return new PaymentTransactionsControllerApi(new it.pagopa.generated.ecommerce.gateway.v1.ApiClient(webClient).setBasePath(paymentTransactionGatewayUri));
     }
 
     @Bean(name = "ecommercePaymentInstrumentsWebClient")
