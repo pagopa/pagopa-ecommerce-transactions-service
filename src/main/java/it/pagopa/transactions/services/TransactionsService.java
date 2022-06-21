@@ -85,10 +85,7 @@ public class TransactionsService {
                                             &&
                                             psp.getFixedCost()
                                                     .equals((double) requestAuthorizationRequestDto.getFee() / 100)))
-                            .flatMap(isValid -> {
-                                log.info("Valid psp request: {}", isValid);
-                                return isValid ? Mono.just(transaction) : Mono.empty();
-                            });
+                            .flatMap(isValid -> isValid ? Mono.just(transaction) : Mono.empty());
                 })
                 .switchIfEmpty(Mono.error(new UnsatisfiablePspRequestException(new PaymentToken(paymentToken), requestAuthorizationRequestDto.getLanguage(), requestAuthorizationRequestDto.getFee())))
                 .flatMap(transactionDocument -> {
