@@ -136,7 +136,9 @@ public class TransactionServiceTests {
 		String paymentToken = "paymentToken";
 		RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
 				.amount(100)
-				.paymentInstrumentId("paymentInstrumentId");
+				.fee(0)
+				.paymentInstrumentId("paymentInstrumentId")
+				.pspId("pspId");
 
 		/* preconditions */
 		Mockito.when(repository.findByPaymentToken(paymentToken))
