@@ -1,9 +1,11 @@
 package it.pagopa.transactions.client;
 
+import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthErrorDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.transactions.commands.data.AuthorizationData;
+import it.pagopa.transactions.exceptions.AlreadyAuthorizedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -33,6 +35,9 @@ public class PaymentGatewayClient {
                 .header("mdc_info", "mdcInfo")
                 .header("clientId", UUID.randomUUID().toString())
                 .retrieve()
+                .onStatus(status -> status == HttpStatus.UNAUTHORIZED,
+                        clientResponse -> clientResponse.bodyToMono(PostePayAuthErrorDto.class)
+                                .flatMap(errorResponseBody -> Mono.error(new AlreadyAuthorizedException(authorizationData.transaction().getRptId()))))
                 .onStatus(HttpStatus::isError,
                         clientResponse -> clientResponse.bodyToMono(String.class)
                                 .flatMap(errorResponseBody -> Mono.error(

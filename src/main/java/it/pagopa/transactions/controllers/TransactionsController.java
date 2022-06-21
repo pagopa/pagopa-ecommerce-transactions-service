@@ -1,6 +1,7 @@
 package it.pagopa.transactions.controllers;
 
 import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.transactions.exceptions.AlreadyAuthorizedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
 
@@ -46,5 +47,15 @@ public class TransactionsController implements TransactionsApi {
                         .title("Transaction not found")
                         .detail("Transaction for payment token '%s' not found".formatted(exception.getPaymentToken())),
                 HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(AlreadyAuthorizedException.class)
+    private ResponseEntity<ProblemJsonDto> alreadyAuthorizedHandler(AlreadyAuthorizedException exception) {
+        return new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(409)
+                        .title("Transaction already authorized")
+                        .detail("Transaction for RPT id '%s' has been already authorized".formatted(exception.getRptId().value())),
+                HttpStatus.CONFLICT);
     }
 }

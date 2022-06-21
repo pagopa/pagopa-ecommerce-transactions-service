@@ -79,6 +79,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
+        409:
+          description: Transaction already authorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
 components:
   schemas:
     RptId:
