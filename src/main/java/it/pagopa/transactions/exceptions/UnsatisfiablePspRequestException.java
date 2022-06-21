@@ -5,7 +5,7 @@ import it.pagopa.transactions.domain.PaymentToken;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(value = HttpStatus.UNPROCESSABLE_ENTITY)
+@ResponseStatus(value = HttpStatus.CONFLICT)
 public class UnsatisfiablePspRequestException extends Exception {
     private final PaymentToken paymentToken;
     private final RequestAuthorizationRequestDto.LanguageEnum language;
