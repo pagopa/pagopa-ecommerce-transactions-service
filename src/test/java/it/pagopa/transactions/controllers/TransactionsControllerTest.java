@@ -151,7 +151,7 @@ class TransactionsControllerTest {
     }
 
     @Test
-    void testAlreadyAuthorizedTransactionExceptionHandler() throws NoSuchMethodException, SecurityException,
+    void testAlreadyProcessedTransactionExceptionHandler() throws NoSuchMethodException, SecurityException,
             IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         final RptId RPT_ID = new RptId("aaa");
 
@@ -161,8 +161,8 @@ class TransactionsControllerTest {
                         .title("Transaction already authorized")
                         .detail("Transaction for RPT id '' has been already authorized"),
                 HttpStatus.CONFLICT);
-        AlreadyAuthorizedException exception = new AlreadyAuthorizedException(RPT_ID);
-        Method method = TransactionsController.class.getDeclaredMethod("alreadyAuthorizedHandler", AlreadyAuthorizedException.class);
+        AlreadyProcessedException exception = new AlreadyProcessedException(RPT_ID);
+        Method method = TransactionsController.class.getDeclaredMethod("alreadyProcessedHandler", AlreadyProcessedException.class);
         method.setAccessible(true);
         ResponseEntity response = (ResponseEntity) method.invoke(transactionsController, exception);
 

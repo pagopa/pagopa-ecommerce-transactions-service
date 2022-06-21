@@ -7,7 +7,7 @@ import it.pagopa.generated.transactions.server.model.RequestAuthorizationRespons
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.commands.data.AuthorizationData;
 import it.pagopa.transactions.domain.*;
-import it.pagopa.transactions.exceptions.AlreadyAuthorizedException;
+import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.GatewayTimeoutException;
 import org.junit.jupiter.api.Test;
@@ -76,7 +76,7 @@ public class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldThrowAlreadyAuthorizedOn401() {
+    void shouldThrowAlreadyProcessedOn401() {
         Transaction transaction = new Transaction(
                 new PaymentToken("paymentToken"),
                 new RptId("rptId"),
@@ -107,8 +107,8 @@ public class PaymentGatewayClientTest {
         /* test */
         StepVerifier.create(client.requestAuthorization(authorizationData))
                 .expectErrorMatches(error ->
-                        error instanceof AlreadyAuthorizedException &&
-                                ((AlreadyAuthorizedException) error).getRptId().equals(transaction.getRptId()))
+                        error instanceof AlreadyProcessedException &&
+                                ((AlreadyProcessedException) error).getRptId().equals(transaction.getRptId()))
                 .verify();
     }
 

@@ -59,13 +59,13 @@ public class TransactionsController implements TransactionsApi {
                 HttpStatus.CONFLICT);
     }
 
-    @ExceptionHandler(AlreadyAuthorizedException.class)
-    private ResponseEntity<ProblemJsonDto> alreadyAuthorizedHandler(AlreadyAuthorizedException exception) {
+    @ExceptionHandler(AlreadyProcessedException.class)
+    private ResponseEntity<ProblemJsonDto> alreadyProcessedHandler(AlreadyProcessedException exception) {
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(409)
-                        .title("Transaction already authorized")
-                        .detail("Transaction for RPT id '%s' has been already authorized".formatted(exception.getRptId().value())),
+                        .title("Transaction already processed")
+                        .detail("Transaction for RPT id '%s' has been already processed".formatted(exception.getRptId().value())),
                 HttpStatus.CONFLICT);
     }
 

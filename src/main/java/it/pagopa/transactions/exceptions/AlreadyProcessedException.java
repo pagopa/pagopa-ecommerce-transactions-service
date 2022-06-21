@@ -5,10 +5,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(value = HttpStatus.CONFLICT)
-public class AlreadyAuthorizedException extends Exception {
+public class AlreadyProcessedException extends Exception {
     private final RptId rptId;
 
-    public AlreadyAuthorizedException(RptId rptId) {
+    public AlreadyProcessedException(RptId rptId) {
         this.rptId = rptId;
     }
 

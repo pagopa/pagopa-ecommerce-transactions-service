@@ -1,21 +1,16 @@
 package it.pagopa.transactions.client;
 
 import it.pagopa.generated.ecommerce.gateway.v1.api.PaymentTransactionsControllerApi;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthErrorDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthRequestDto;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.transactions.commands.data.AuthorizationData;
-import it.pagopa.transactions.exceptions.AlreadyAuthorizedException;
+import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.GatewayTimeoutException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
@@ -37,7 +32,7 @@ public class PaymentGatewayClient {
 
         return paymentTransactionsControllerApi.authRequest(UUID.randomUUID(), postePayAuthRequest, "mdcInfo")
                 .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
-                    case UNAUTHORIZED -> new AlreadyAuthorizedException(authorizationData.transaction().getRptId());
+                    case UNAUTHORIZED -> new AlreadyProcessedException(authorizationData.transaction().getRptId());
                     case GATEWAY_TIMEOUT -> new GatewayTimeoutException();
                     case INTERNAL_SERVER_ERROR -> new BadGatewayException();
                     default -> exception;
