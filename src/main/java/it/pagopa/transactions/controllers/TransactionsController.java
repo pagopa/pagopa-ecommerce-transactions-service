@@ -5,6 +5,7 @@ import it.pagopa.transactions.exceptions.AlreadyAuthorizedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
 
+import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
 import it.pagopa.transactions.services.TransactionsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -47,6 +48,17 @@ public class TransactionsController implements TransactionsApi {
                         .title("Transaction not found")
                         .detail("Transaction for payment token '%s' not found".formatted(exception.getPaymentToken())),
                 HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(UnsatisfiablePspRequestException.class)
+    private ResponseEntity<ProblemJsonDto> unsatisfiablePspRequestHandler(UnsatisfiablePspRequestException exception) {
+        return new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(409)
+                        .title("Cannot find a PSP with the requested parameters")
+                        .detail("Cannot find a PSP with fee %d and language %s for transaction with payment token '%s'"
+                                .formatted(exception.getRequestedFee() / 100, exception.getLanguage(), exception.getPaymentToken().value())),
+                HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(AlreadyAuthorizedException.class)

@@ -9,6 +9,7 @@ import it.pagopa.transactions.commands.handlers.TransactionAuthorizeHandler;
 import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
+import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
 import it.pagopa.transactions.projections.handlers.TransactionsProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -89,7 +90,7 @@ public class TransactionsService {
                                 return isValid ? Mono.just(transaction) : Mono.empty();
                             });
                 })
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentToken)))
+                .switchIfEmpty(Mono.error(new UnsatisfiablePspRequestException(new PaymentToken(paymentToken), requestAuthorizationRequestDto.getLanguage(), requestAuthorizationRequestDto.getFee())))
                 .flatMap(transactionDocument -> {
 
                     log.info("Requesting authorization for rptId: {}", transactionDocument.getRptId());
