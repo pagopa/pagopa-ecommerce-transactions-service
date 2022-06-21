@@ -2,11 +2,13 @@ package it.pagopa.transactions.documents;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+@AllArgsConstructor
 @Data
 @Document
-@AllArgsConstructor
-@NoArgsConstructor
-public class TransactionAuthorizationData {}
+public class TransactionAuthorizationData {
+    private int fee;
+    private String paymentInstrumentId;
+    private String pspId;
+}
