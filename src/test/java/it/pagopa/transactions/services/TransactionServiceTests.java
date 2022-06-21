@@ -7,17 +7,20 @@ import it.pagopa.generated.transactions.server.model.RequestAuthorizationRespons
 import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
+import it.pagopa.transactions.client.PaymentGatewayClient;
+import it.pagopa.transactions.commands.handlers.TransactionAuthorizeHandler;
+import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
 import it.pagopa.transactions.documents.Transaction;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
+import it.pagopa.transactions.projections.handlers.TransactionsProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
@@ -26,17 +29,24 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(SpringExtension.class)
+@WebFluxTest
 @TestPropertySource(locations = "classpath:application-tests.properties")
+@Import({TransactionsService.class, TransactionAuthorizeHandler.class, TransactionsProjectionHandler.class})
 public class TransactionServiceTests {
-	@Mock
+	@MockBean
 	private TransactionsViewRepository repository;
 
-	@InjectMocks
+	@Autowired
 	private TransactionsService transactionsService;
 
-	@Mock
+	@MockBean
 	private EcommercePaymentInstrumentsClient ecommercePaymentInstrumentsClient;
+
+	@MockBean
+	private PaymentGatewayClient paymentGatewayClient;
+
+	@MockBean
+	private TransactionInizializeHandler transactionInizializeHandler;
 
 	@Test
 	void getTransactionReturnsTransactionData() {
@@ -109,6 +119,10 @@ public class TransactionServiceTests {
 		Mockito.when(repository.findByPaymentToken(paymentToken))
 				.thenReturn(Mono.just(transaction));
 
+		Mockito.when(paymentGatewayClient.requestAuthorization(Mockito.any())).thenReturn(
+				Mono.just(new RequestAuthorizationResponseDto().authorizationUrl("https://example.com"))
+		);
+
 		/* test */
 		RequestAuthorizationResponseDto authorizationResponse = transactionsService
 				.requestTransactionAuthorization(paymentToken, authorizationRequest).block();
@@ -132,5 +146,5 @@ public class TransactionServiceTests {
 		assertThrows(
 				TransactionNotFoundException.class,
 				() -> transactionsService.requestTransactionAuthorization(paymentToken, authorizationRequest).block());
-	}
+	};
 }
