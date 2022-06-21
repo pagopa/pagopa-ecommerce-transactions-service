@@ -3,9 +3,7 @@ package it.pagopa.transactions.controllers;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.domain.PaymentToken;
 import it.pagopa.transactions.domain.RptId;
-import it.pagopa.transactions.exceptions.AlreadyAuthorizedException;
-import it.pagopa.transactions.exceptions.TransactionNotFoundException;
-import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
+import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.TransactionsService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -186,6 +184,40 @@ class TransactionsControllerTest {
                 HttpStatus.CONFLICT);
         UnsatisfiablePspRequestException exception = new UnsatisfiablePspRequestException(PAYMENT_TOKEN, language, requestedFee);
         Method method = TransactionsController.class.getDeclaredMethod("unsatisfiablePspRequestHandler", UnsatisfiablePspRequestException.class);
+        method.setAccessible(true);
+        ResponseEntity response = (ResponseEntity) method.invoke(transactionsController, exception);
+
+        assertEquals(responseCheck.getStatusCode(), response.getStatusCode());
+    }
+
+    @Test
+    void testBadGatewayExceptionHandler() throws NoSuchMethodException, SecurityException,
+            IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        ResponseEntity responseCheck = new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(502)
+                        .title("Bad gateway")
+                        .detail(null),
+                HttpStatus.BAD_GATEWAY);
+        BadGatewayException exception = new BadGatewayException();
+        Method method = TransactionsController.class.getDeclaredMethod("badGatewayHandler", BadGatewayException.class);
+        method.setAccessible(true);
+        ResponseEntity response = (ResponseEntity) method.invoke(transactionsController, exception);
+
+        assertEquals(responseCheck.getStatusCode(), response.getStatusCode());
+    }
+
+    @Test
+    void testGatewayTimeoutExceptionHandler() throws NoSuchMethodException, SecurityException,
+            IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        ResponseEntity responseCheck = new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(504)
+                        .title("Gateway timeout")
+                        .detail(null),
+                HttpStatus.GATEWAY_TIMEOUT);
+        GatewayTimeoutException exception = new GatewayTimeoutException();
+        Method method = TransactionsController.class.getDeclaredMethod("gatewayTimeoutHandler", GatewayTimeoutException.class);
         method.setAccessible(true);
         ResponseEntity response = (ResponseEntity) method.invoke(transactionsController, exception);
 

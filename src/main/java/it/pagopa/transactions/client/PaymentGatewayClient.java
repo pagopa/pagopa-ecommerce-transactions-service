@@ -7,6 +7,8 @@ import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDt
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.transactions.commands.data.AuthorizationData;
 import it.pagopa.transactions.exceptions.AlreadyAuthorizedException;
+import it.pagopa.transactions.exceptions.BadGatewayException;
+import it.pagopa.transactions.exceptions.GatewayTimeoutException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -34,12 +36,11 @@ public class PaymentGatewayClient {
                 .idTransaction(0L);
 
         return paymentTransactionsControllerApi.authRequest(UUID.randomUUID(), postePayAuthRequest, "mdcInfo")
-                .onErrorMap(WebClientResponseException.class, exception -> {
-                    if (exception.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-                        return new AlreadyAuthorizedException(authorizationData.transaction().getRptId());
-                    } else {
-                        return exception;
-                    }
+                .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
+                    case UNAUTHORIZED -> new AlreadyAuthorizedException(authorizationData.transaction().getRptId());
+                    case GATEWAY_TIMEOUT -> new GatewayTimeoutException();
+                    case INTERNAL_SERVER_ERROR -> new BadGatewayException();
+                    default -> exception;
                 })
                 .map(response -> new RequestAuthorizationResponseDto().authorizationUrl(response.getUrlRedirect()));
     }

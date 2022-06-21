@@ -1,11 +1,9 @@
 package it.pagopa.transactions.controllers;
 
 import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.transactions.exceptions.AlreadyAuthorizedException;
-import it.pagopa.transactions.exceptions.TransactionNotFoundException;
+import it.pagopa.transactions.exceptions.*;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
 
-import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
 import it.pagopa.transactions.services.TransactionsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -69,5 +67,25 @@ public class TransactionsController implements TransactionsApi {
                         .title("Transaction already authorized")
                         .detail("Transaction for RPT id '%s' has been already authorized".formatted(exception.getRptId().value())),
                 HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(BadGatewayException.class)
+    private ResponseEntity<ProblemJsonDto> badGatewayHandler(BadGatewayException exception) {
+        return new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(502)
+                        .title("Bad gateway")
+                        .detail(null),
+                HttpStatus.BAD_GATEWAY);
+    }
+
+    @ExceptionHandler(GatewayTimeoutException.class)
+    private ResponseEntity<ProblemJsonDto> gatewayTimeoutHandler(GatewayTimeoutException exception) {
+        return new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(504)
+                        .title("Gateway timeout")
+                        .detail(null),
+                HttpStatus.GATEWAY_TIMEOUT);
     }
 }

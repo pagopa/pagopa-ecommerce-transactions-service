@@ -8,6 +8,8 @@ import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.commands.data.AuthorizationData;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.AlreadyAuthorizedException;
+import it.pagopa.transactions.exceptions.BadGatewayException;
+import it.pagopa.transactions.exceptions.GatewayTimeoutException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -107,6 +109,76 @@ public class PaymentGatewayClientTest {
                 .expectErrorMatches(error ->
                         error instanceof AlreadyAuthorizedException &&
                                 ((AlreadyAuthorizedException) error).getRptId().equals(transaction.getRptId()))
+                .verify();
+    }
+
+    @Test
+    void shouldThrowGatewayTimeoutOn504() {
+        Transaction transaction = new Transaction(
+                new PaymentToken("paymentToken"),
+                new RptId("rptId"),
+                new TransactionDescription("description"),
+                new TransactionAmount(100),
+                TransactionStatusDto.INITIALIZED
+        );
+
+        AuthorizationData authorizationData = new AuthorizationData(
+                transaction,
+                10,
+                "paymentInstrumentId",
+                "pspId"
+        );
+
+        PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
+                .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
+                .description(transaction.getDescription().value())
+                .paymentChannel("")
+                .idTransaction(0L);
+
+        String mdcInfo = "mdcInfo";
+
+        /* preconditions */
+        Mockito.when(paymentTransactionsControllerApi.authRequest(any(), eq(postePayAuthRequest), eq(mdcInfo)))
+                .thenReturn(Mono.error(new WebClientResponseException("api error", HttpStatus.GATEWAY_TIMEOUT.value(), "Gateway timeout", null, null, null)));
+
+        /* test */
+        StepVerifier.create(client.requestAuthorization(authorizationData))
+                .expectErrorMatches(error -> error instanceof GatewayTimeoutException)
+                .verify();
+    }
+
+    @Test
+    void shouldThrowBadGatewayOn500() {
+        Transaction transaction = new Transaction(
+                new PaymentToken("paymentToken"),
+                new RptId("rptId"),
+                new TransactionDescription("description"),
+                new TransactionAmount(100),
+                TransactionStatusDto.INITIALIZED
+        );
+
+        AuthorizationData authorizationData = new AuthorizationData(
+                transaction,
+                10,
+                "paymentInstrumentId",
+                "pspId"
+        );
+
+        PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
+                .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
+                .description(transaction.getDescription().value())
+                .paymentChannel("")
+                .idTransaction(0L);
+
+        String mdcInfo = "mdcInfo";
+
+        /* preconditions */
+        Mockito.when(paymentTransactionsControllerApi.authRequest(any(), eq(postePayAuthRequest), eq(mdcInfo)))
+                .thenReturn(Mono.error(new WebClientResponseException("api error", HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error", null, null, null)));
+
+        /* test */
+        StepVerifier.create(client.requestAuthorization(authorizationData))
+                .expectErrorMatches(error -> error instanceof BadGatewayException)
                 .verify();
     }
 }
