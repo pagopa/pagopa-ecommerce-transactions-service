@@ -1,7 +1,11 @@
 package it.pagopa.transactions.controllers;
 
 import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.transactions.domain.PaymentToken;
+import it.pagopa.transactions.domain.RptId;
+import it.pagopa.transactions.exceptions.AlreadyAuthorizedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
+import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
 import it.pagopa.transactions.services.TransactionsService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -129,7 +133,7 @@ class TransactionsControllerTest {
     }
 
     @Test
-    void testExceptionHandler() throws NoSuchMethodException, SecurityException,
+    void testTransactionNotFoundExceptionHandler() throws NoSuchMethodException, SecurityException,
             IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         final String PAYMENT_TOKEN = "aaa";
 
@@ -142,6 +146,46 @@ class TransactionsControllerTest {
         TransactionNotFoundException exception = new TransactionNotFoundException(PAYMENT_TOKEN);
         Method method = TransactionsController.class.getDeclaredMethod("transactionNotFoundHandler",
                 TransactionNotFoundException.class);
+        method.setAccessible(true);
+        ResponseEntity response = (ResponseEntity) method.invoke(transactionsController, exception);
+
+        assertEquals(responseCheck.getStatusCode(), response.getStatusCode());
+    }
+
+    @Test
+    void testAlreadyAuthorizedTransactionExceptionHandler() throws NoSuchMethodException, SecurityException,
+            IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        final RptId RPT_ID = new RptId("aaa");
+
+        ResponseEntity responseCheck = new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(409)
+                        .title("Transaction already authorized")
+                        .detail("Transaction for RPT id '' has been already authorized"),
+                HttpStatus.CONFLICT);
+        AlreadyAuthorizedException exception = new AlreadyAuthorizedException(RPT_ID);
+        Method method = TransactionsController.class.getDeclaredMethod("alreadyAuthorizedHandler", AlreadyAuthorizedException.class);
+        method.setAccessible(true);
+        ResponseEntity response = (ResponseEntity) method.invoke(transactionsController, exception);
+
+        assertEquals(responseCheck.getStatusCode(), response.getStatusCode());
+    }
+
+    @Test
+    void testUnsatisfiablePspRequestExceptionHandler() throws NoSuchMethodException, SecurityException,
+            IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        final PaymentToken PAYMENT_TOKEN = new PaymentToken("aaa");
+        final RequestAuthorizationRequestDto.LanguageEnum language = RequestAuthorizationRequestDto.LanguageEnum.IT;
+        final int requestedFee = 10;
+
+        ResponseEntity responseCheck = new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(409)
+                        .title("Cannot find a PSP with the requested parameters")
+                        .detail("Cannot find a PSP with fee and language for transaction with payment token ''"),
+                HttpStatus.CONFLICT);
+        UnsatisfiablePspRequestException exception = new UnsatisfiablePspRequestException(PAYMENT_TOKEN, language, requestedFee);
+        Method method = TransactionsController.class.getDeclaredMethod("unsatisfiablePspRequestHandler", UnsatisfiablePspRequestException.class);
         method.setAccessible(true);
         ResponseEntity response = (ResponseEntity) method.invoke(transactionsController, exception);
 
