@@ -102,6 +102,11 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>io.springfox</groupId>
             <artifactId>springfox-swagger2</artifactId>
             <version>3.0.0</version>
@@ -201,7 +206,7 @@
                             <modelNameSuffix>dto</modelNameSuffix>
                         </configuration>
                     </execution>
-                    <execution>
+                     <execution>
                         <id>payment-instruments-api</id>
                         <goals>
                             <goal>generate</goal>
@@ -220,6 +225,28 @@
                             </configOptions>
                             <modelPackage>it.pagopa.generated.ecommerce.paymentinstruments.v1.dto</modelPackage>
                             <apiPackage>it.pagopa.generated.ecommerce.paymentinstruments.v1.api</apiPackage>
+                            <modelNameSuffix>dto</modelNameSuffix>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>transactions-gateway-api</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-infra/main/src/api/payment_transactions_gateway_api/v1/_openapi.json.tpl</inputSpec>
+                            <generatorName>java</generatorName>
+                            <library>webclient</library>
+                            <generateApiDocumentation>false</generateApiDocumentation>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <generateSupportingFiles>true</generateSupportingFiles>
+                            <configOptions>
+                                <swaggerAnnotations>false</swaggerAnnotations>
+                                <openApiNullable>false</openApiNullable>
+                            </configOptions>
+                            <modelPackage>it.pagopa.generated.ecommerce.gateway.v1.dto</modelPackage>
+                            <apiPackage>it.pagopa.generated.ecommerce.gateway.v1.api</apiPackage>
                             <modelNameSuffix>dto</modelNameSuffix>
                         </configuration>
                     </execution>
