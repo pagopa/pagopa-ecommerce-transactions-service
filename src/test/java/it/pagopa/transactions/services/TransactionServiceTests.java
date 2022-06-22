@@ -95,7 +95,8 @@ public class TransactionServiceTests {
 		RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
 				.amount(100)
 				.paymentInstrumentId("paymentInstrumentId")
-				.language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200).pspId("PSP_CODE");
+				.language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
+				.pspId("PSP_CODE");
 
 		Transaction transaction = new Transaction(
 				paymentToken,
