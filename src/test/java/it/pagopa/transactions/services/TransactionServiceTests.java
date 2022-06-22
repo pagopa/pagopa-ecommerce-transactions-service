@@ -12,6 +12,7 @@ import it.pagopa.transactions.commands.handlers.TransactionAuthorizeHandler;
 import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
 import it.pagopa.transactions.documents.Transaction;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
+import it.pagopa.transactions.projections.handlers.AuthorizationProjectionHandler;
 import it.pagopa.transactions.projections.handlers.TransactionsProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
@@ -27,11 +28,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @WebFluxTest
 @TestPropertySource(locations = "classpath:application-tests.properties")
-@Import({TransactionsService.class, TransactionAuthorizeHandler.class, TransactionsProjectionHandler.class})
+@Import({TransactionsService.class, TransactionAuthorizeHandler.class, TransactionsProjectionHandler.class, AuthorizationProjectionHandler.class})
 public class TransactionServiceTests {
 	@MockBean
 	private TransactionsViewRepository repository;
@@ -47,6 +49,9 @@ public class TransactionServiceTests {
 
 	@MockBean
 	private TransactionInizializeHandler transactionInizializeHandler;
+
+	@MockBean
+	private TransactionAuthorizeHandler transactionAuthorizeHandler;
 
 	@Test
 	void getTransactionReturnsTransactionData() {
@@ -95,7 +100,8 @@ public class TransactionServiceTests {
 		RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
 				.amount(100)
 				.paymentInstrumentId("paymentInstrumentId")
-				.language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200).pspId("PSP_CODE");
+				.language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
+				.pspId("PSP_CODE");
 
 		Transaction transaction = new Transaction(
 				paymentToken,
@@ -113,15 +119,22 @@ public class TransactionServiceTests {
 		PSPsResponseDto pspResponseDto = new PSPsResponseDto();
 		pspResponseDto.psp(pspDtoList);
 
-		Mockito.when(ecommercePaymentInstrumentsClient.getPSPs(Mockito.any(), Mockito.any())).thenReturn(
+		RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
+				.authorizationUrl("https://example.com");
+
+		Mockito.when(ecommercePaymentInstrumentsClient.getPSPs(any(), any())).thenReturn(
 				Mono.just(pspResponseDto));
 
 		Mockito.when(repository.findByPaymentToken(paymentToken))
 				.thenReturn(Mono.just(transaction));
 
-		Mockito.when(paymentGatewayClient.requestAuthorization(Mockito.any())).thenReturn(
-				Mono.just(new RequestAuthorizationResponseDto().authorizationUrl("https://example.com"))
+		Mockito.when(paymentGatewayClient.requestAuthorization(any())).thenReturn(
+				Mono.just(requestAuthorizationResponse)
 		);
+
+		Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
+
+		Mockito.when(transactionAuthorizeHandler.handle(any())).thenReturn(Mono.just(requestAuthorizationResponse));
 
 		/* test */
 		RequestAuthorizationResponseDto authorizationResponse = transactionsService

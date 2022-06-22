@@ -5,7 +5,7 @@ import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
-import it.pagopa.transactions.commands.data.AuthorizationData;
+import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
@@ -45,7 +45,7 @@ public class PaymentGatewayClientTest {
                 TransactionStatusDto.INITIALIZED
         );
 
-        AuthorizationData authorizationData = new AuthorizationData(
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
                 "paymentInstrumentId",
@@ -85,7 +85,7 @@ public class PaymentGatewayClientTest {
                 TransactionStatusDto.INITIALIZED
         );
 
-        AuthorizationData authorizationData = new AuthorizationData(
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
                 "paymentInstrumentId",
@@ -122,7 +122,7 @@ public class PaymentGatewayClientTest {
                 TransactionStatusDto.INITIALIZED
         );
 
-        AuthorizationData authorizationData = new AuthorizationData(
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
                 "paymentInstrumentId",
@@ -157,7 +157,7 @@ public class PaymentGatewayClientTest {
                 TransactionStatusDto.INITIALIZED
         );
 
-        AuthorizationData authorizationData = new AuthorizationData(
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
                 "paymentInstrumentId",
