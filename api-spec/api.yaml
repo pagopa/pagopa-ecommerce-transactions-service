@@ -268,7 +268,7 @@ components:
       description: Possible statuses a transaction can be in
       enum:
         - INITIALIZED
-        - AUTHORIZED
+        - AUTHORIZATION_REQUESTED
     ProblemJson:
       type: object
       properties:

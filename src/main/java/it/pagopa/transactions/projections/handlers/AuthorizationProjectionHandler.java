@@ -22,7 +22,7 @@ public class AuthorizationProjectionHandler implements ProjectionHandler<Authori
         return transactionsViewRepository.findByPaymentToken(data.transaction().getPaymentToken().value())
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(data.transaction().getPaymentToken().value())))
                 .flatMap(transactionDocument -> {
-                    transactionDocument.setStatus(TransactionStatusDto.AUTHORIZED);
+                    transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_REQUESTED);
                     return transactionsViewRepository.save(transactionDocument);
                 });
     }

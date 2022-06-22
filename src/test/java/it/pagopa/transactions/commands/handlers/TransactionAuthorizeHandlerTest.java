@@ -93,7 +93,7 @@ class TransactionAuthorizeHandlerTest {
                 rptId,
                 description,
                 amount,
-                TransactionStatusDto.AUTHORIZED
+                TransactionStatusDto.AUTHORIZATION_REQUESTED
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
