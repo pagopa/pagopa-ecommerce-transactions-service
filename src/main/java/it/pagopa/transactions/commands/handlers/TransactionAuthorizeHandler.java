@@ -39,7 +39,12 @@ public class TransactionAuthorizeHandler implements CommandHandler<TransactionAu
                     TransactionAuthorizationEvent authorizationEvent = new TransactionAuthorizationEvent(
                             transaction.getRptId().value(),
                             transaction.getPaymentToken().value(),
-                            new TransactionAuthorizationData(command.getData().fee(), command.getData().paymentInstrumentId(), command.getData().pspId())
+                            new TransactionAuthorizationData(
+                                    command.getData().transaction().getAmount().value(),
+                                    command.getData().fee(),
+                                    command.getData().paymentInstrumentId(),
+                                    command.getData().pspId()
+                            )
                     );
 
                     return transactionEventStoreRepository.save(authorizationEvent).thenReturn(auth);

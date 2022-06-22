@@ -8,6 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Data
 @Document
 public class TransactionAuthorizationData {
+    private int amount;
     private int fee;
     private String paymentInstrumentId;
     private String pspId;
