@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @AllArgsConstructor
 @Data
 @Document
-public class TransactionAuthorizationData {
+public class TransactionAuthorizationRequestData {
     private int amount;
     private int fee;
     private String paymentInstrumentId;

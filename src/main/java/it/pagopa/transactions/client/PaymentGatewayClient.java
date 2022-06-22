@@ -3,7 +3,7 @@ package it.pagopa.transactions.client;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PaymentTransactionsControllerApi;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthRequestDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
-import it.pagopa.transactions.commands.data.AuthorizationData;
+import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.GatewayTimeoutException;
@@ -23,7 +23,7 @@ public class PaymentGatewayClient {
     PaymentTransactionsControllerApi paymentTransactionsControllerApi;
 
 
-    public Mono<RequestAuthorizationResponseDto> requestAuthorization(AuthorizationData authorizationData) {
+    public Mono<RequestAuthorizationResponseDto> requestAuthorization(AuthorizationRequestData authorizationData) {
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(BigDecimal.valueOf(authorizationData.transaction().getAmount().value() + authorizationData.fee()))
                 .description(authorizationData.transaction().getDescription().value())

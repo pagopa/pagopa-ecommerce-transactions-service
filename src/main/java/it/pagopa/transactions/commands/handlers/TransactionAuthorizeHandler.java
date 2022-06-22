@@ -4,8 +4,8 @@ import it.pagopa.generated.transactions.server.model.RequestAuthorizationRespons
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionAuthorizeCommand;
-import it.pagopa.transactions.documents.TransactionAuthorizationData;
-import it.pagopa.transactions.documents.TransactionAuthorizationEvent;
+import it.pagopa.transactions.documents.TransactionAuthorizationRequestData;
+import it.pagopa.transactions.documents.TransactionAuthorizationRequestedEvent;
 import it.pagopa.transactions.domain.Transaction;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -21,7 +21,7 @@ public class TransactionAuthorizeHandler implements CommandHandler<TransactionAu
     private PaymentGatewayClient paymentGatewayClient;
 
     @Autowired
-    private TransactionsEventStoreRepository<TransactionAuthorizationData> transactionEventStoreRepository;
+    private TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository;
 
     @Override
     public Mono<RequestAuthorizationResponseDto> handle(TransactionAuthorizeCommand command) {
@@ -36,10 +36,10 @@ public class TransactionAuthorizeHandler implements CommandHandler<TransactionAu
                 .flatMap(auth -> {
                     log.info("Logging authorization event for rpt id {}", transaction.getRptId().value());
 
-                    TransactionAuthorizationEvent authorizationEvent = new TransactionAuthorizationEvent(
+                    TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                             transaction.getRptId().value(),
                             transaction.getPaymentToken().value(),
-                            new TransactionAuthorizationData(
+                            new TransactionAuthorizationRequestData(
                                     command.getData().transaction().getAmount().value(),
                                     command.getData().fee(),
                                     command.getData().paymentInstrumentId(),

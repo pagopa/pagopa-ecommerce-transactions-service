@@ -4,7 +4,7 @@ import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.commands.TransactionAuthorizeCommand;
 import it.pagopa.transactions.commands.TransactionInitializeCommand;
-import it.pagopa.transactions.commands.data.AuthorizationData;
+import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.TransactionAuthorizeHandler;
 import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
 import it.pagopa.transactions.domain.*;
@@ -104,7 +104,7 @@ public class TransactionsService {
                             transactionDocument.getStatus()
                     );
 
-                    AuthorizationData authorizationData = new AuthorizationData(
+                    AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                             transaction,
                             requestAuthorizationRequestDto.getFee(),
                             requestAuthorizationRequestDto.getPaymentInstrumentId(),

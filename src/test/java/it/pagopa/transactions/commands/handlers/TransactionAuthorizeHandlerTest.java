@@ -6,8 +6,8 @@ import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionAuthorizeCommand;
-import it.pagopa.transactions.commands.data.AuthorizationData;
-import it.pagopa.transactions.documents.TransactionAuthorizationData;
+import it.pagopa.transactions.commands.data.AuthorizationRequestData;
+import it.pagopa.transactions.documents.TransactionAuthorizationRequestData;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -35,7 +35,7 @@ class TransactionAuthorizeHandlerTest {
     private EcommerceSessionsClient ecommerceSessionsClient;
 
     @Mock
-    private TransactionsEventStoreRepository<TransactionAuthorizationData> transactionEventStoreRepository;
+    private TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository;
 
     @Test
     void shouldSaveAuthorizationEvent() {
@@ -59,7 +59,7 @@ class TransactionAuthorizeHandlerTest {
                 .pspId("PSP_CODE")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
-        AuthorizationData authorizationData = new AuthorizationData(
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
@@ -103,7 +103,7 @@ class TransactionAuthorizeHandlerTest {
                 .pspId("PSP_CODE")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
-        AuthorizationData authorizationData = new AuthorizationData(
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
