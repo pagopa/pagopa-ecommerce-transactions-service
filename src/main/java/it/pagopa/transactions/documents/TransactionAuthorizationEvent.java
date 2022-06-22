@@ -6,6 +6,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "eventstore")
 public final class TransactionAuthorizationEvent extends TransactionEvent<TransactionAuthorizationData> {
     public TransactionAuthorizationEvent(String rptId, String paymentToken, TransactionAuthorizationData data) {
-        super(rptId, paymentToken, TransactionEventCode.TRANSACTION_AUTHORIZED_EVENT, data);
+        super(rptId, paymentToken, TransactionEventCode.TRANSACTION_AUTHORIZATION_REQUESTED_EVENT, data);
     }
 }
