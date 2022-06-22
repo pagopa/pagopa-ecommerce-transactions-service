@@ -22,11 +22,6 @@ public class AuthorizationProjectionHandler implements ProjectionHandler<Authori
         return transactionsViewRepository.findByPaymentToken(data.transaction().getPaymentToken().value())
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(data.transaction().getPaymentToken().value())))
                 .flatMap(transactionDocument -> {
-                    if (transactionDocument.getStatus() != TransactionStatusDto.INITIALIZED) {
-                        log.warn("Invalid state transition: requested authorization for transaction {} from status {}", transactionDocument.getPaymentToken(), transactionDocument.getStatus());
-                        return Mono.error(new AlreadyProcessedException(data.transaction().getRptId()));
-                    }
-
                     transactionDocument.setStatus(TransactionStatusDto.AUTHORIZED);
                     return transactionsViewRepository.save(transactionDocument);
                 });

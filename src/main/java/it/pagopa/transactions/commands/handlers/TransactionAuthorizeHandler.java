@@ -1,10 +1,13 @@
 package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
+import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionAuthorizeCommand;
 import it.pagopa.transactions.documents.TransactionAuthorizationData;
 import it.pagopa.transactions.documents.TransactionAuthorizationEvent;
+import it.pagopa.transactions.domain.Transaction;
+import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,13 +25,20 @@ public class TransactionAuthorizeHandler implements CommandHandler<TransactionAu
 
     @Override
     public Mono<RequestAuthorizationResponseDto> handle(TransactionAuthorizeCommand command) {
+        Transaction transaction = command.getData().transaction();
+
+        if (transaction.getStatus() != TransactionStatusDto.INITIALIZED) {
+            log.warn("Invalid state transition: requested authorization for transaction {} from status {}", transaction.getPaymentToken().value(), transaction.getStatus());
+            return Mono.error(new AlreadyProcessedException(transaction.getRptId()));
+        }
+
         return paymentGatewayClient.requestAuthorization(command.getData())
                 .flatMap(auth -> {
-                    log.info("Logging authorization event for rpt id {}", command.getRptId().value());
+                    log.info("Logging authorization event for rpt id {}", transaction.getRptId().value());
 
                     TransactionAuthorizationEvent authorizationEvent = new TransactionAuthorizationEvent(
-                            command.getRptId().value(),
-                            command.getData().transaction().getPaymentToken().value(),
+                            transaction.getRptId().value(),
+                            transaction.getPaymentToken().value(),
                             new TransactionAuthorizationData(command.getData().fee(), command.getData().paymentInstrumentId(), command.getData().pspId())
                     );
 
