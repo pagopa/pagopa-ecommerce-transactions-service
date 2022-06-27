@@ -19,6 +19,7 @@ import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.repositories.TransactionTokens;
 import it.pagopa.transactions.repositories.TransactionTokensRepository;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import it.pagopa.transactions.utils.NodoConnectionString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -52,6 +53,9 @@ public class TransactionInizializeHandler
     @Autowired
     private TransactionsEventStoreRepository<TransactionInitData> transactionEventStoreRepository;
 
+    @Autowired
+    NodoConnectionString nodoConnectionParams;
+    
     @Override
     public Mono<NewTransactionResponseDto> handle(TransactionInitializeCommand command) {
         final RptId rptId = command.getRptId();
@@ -83,10 +87,10 @@ public class TransactionInizializeHandler
                     ActivatePaymentNoticeReq request = objectFactory.createActivatePaymentNoticeReq();
                     request.setAmount(amount);
                     request.setQrCode(qrCode);
-                    request.setIdPSP("6666");
-                    request.setIdChannel("7777");
-                    request.setIdBrokerPSP("8888");
-                    request.setPassword("password");
+                    request.setIdPSP(nodoConnectionParams.getIdPSP());
+                    request.setIdChannel(nodoConnectionParams.getIdChannel());
+                    request.setIdBrokerPSP(nodoConnectionParams.getIdBrokerPSP());
+                    request.setPassword(nodoConnectionParams.getPassword());
                     request.setIdempotencyKey(tokens.idempotencyKey().getKey());
                     request.setPaymentNote(newTransactionRequestDto.getRptId());
                     Mono<ActivatePaymentNoticeRes> activatePaymentNoticeResponse = nodeForPspClient.activatePaymentNotice(objectFactory.createActivatePaymentNoticeReq(request));

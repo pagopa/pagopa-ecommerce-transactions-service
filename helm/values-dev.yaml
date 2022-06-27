@@ -92,6 +92,7 @@ microservice-chart:
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password
+    NODO_CONNECTION_STRING: nodo-connection-string
 
   keyvault:
     name: "pagopa-d-ecommerce-kv"
