@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class NodoConfig {
 
     @Bean
-    public NodoConnectionString nodoConnectionParams(
+    public NodoConnectionString nodoConnectionString(
             @Value("${nodo.connection.string}") String nodoConnectionParamsAsString)
             throws JsonMappingException, JsonProcessingException {
 

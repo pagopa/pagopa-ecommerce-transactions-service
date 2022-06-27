@@ -10,7 +10,6 @@ import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionInitializeCommand;
-import it.pagopa.transactions.commands.TransactionsCommand;
 import it.pagopa.transactions.documents.TransactionInitData;
 import it.pagopa.transactions.domain.IdempotencyKey;
 import it.pagopa.transactions.domain.RptId;
@@ -18,6 +17,8 @@ import it.pagopa.transactions.projections.TransactionsProjection;
 import it.pagopa.transactions.repositories.TransactionTokens;
 import it.pagopa.transactions.repositories.TransactionTokensRepository;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import it.pagopa.transactions.utils.NodoConnectionString;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -50,6 +51,8 @@ class TransactionInitializerHandlerTest {
     private EcommerceSessionsClient ecommerceSessionsClient;
     @Mock
     private TransactionsEventStoreRepository<TransactionInitData> transactionEventStoreRepository;
+    @Mock
+    private NodoConnectionString nodoConnectionParams;
 
     @Test
     void shouldHandleMessage() {
