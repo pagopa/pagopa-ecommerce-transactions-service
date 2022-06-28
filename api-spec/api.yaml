@@ -97,6 +97,48 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
+    patch:
+      operationId: updateTransactionAuthorization
+      parameters:
+        - in: path
+          name: paymentToken
+          schema:
+            type: string
+          required: true
+          description: Payment token associated to transaction
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateAuthorizationRequest"
+      responses:
+        200:
+          description: Transaction authorization request successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionInfo"
+        400:
+          description: Invalid transaction id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        404:
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        504:
+          description: Gateway timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
 components:
   schemas:
     RptId:
@@ -174,6 +216,16 @@ components:
         - authorizationUrl
       example:
         authorizationUrl: https://example.com
+    UpdateAuthorizationRequest:
+      type: object
+      description: Request body for updating an authorization for a transaction
+      properties:
+        authorizationResult:
+          $ref: '#/components/schemas/AuthorizationResult'
+      required:
+        - authorizationResult
+      example:
+        authorizationResult: OK
     TransactionInfo:
       description: Transaction data returned when querying for an existing transaction
       allOf:
@@ -192,6 +244,12 @@ components:
       type: integer
       minimum: 0
       maximum: 99999999
+    AuthorizationResult:
+      description: Authorization result
+      type: string
+      enum:
+        - OK
+        - KO
     Beneficiary:
       description: Beneficiary institution related to a payment
       type: object
@@ -324,3 +382,9 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/RequestAuthorizationRequest"
+    UpdateAuthorizationRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UpdateAuthorizationRequest"
