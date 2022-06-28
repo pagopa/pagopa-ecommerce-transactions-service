@@ -82,7 +82,7 @@ microservice-chart:
     MONGO_HOST: pagopa-d-weu-ecommerce-cosmos-account.mongo.cosmos.azure.com
     MONGO_USERNAME: pagopa-d-weu-ecommerce-cosmos-account
     MONGO_PORT: "10255"
-    REDIS_HOST: pagopa-d-weu-ecommerce-redis.privatelink.redis.cache.windows.net
+    REDIS_HOST: pagopa-d-weu-ecommerce-redis.redis.cache.windows.net 
     REDIS_PORT: "6380"
     NODO_URI: https://api.dev.platform.pagopa.it/nodo/nodo-per-psp/v1
     NODO_READ_TIMEOUT: "10000"
