@@ -8,7 +8,7 @@ import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
-import it.pagopa.transactions.commands.handlers.TransactionAuthorizeHandler;
+import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
 import it.pagopa.transactions.documents.Transaction;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
@@ -33,7 +33,7 @@ import static org.mockito.Mockito.when;
 
 @WebFluxTest
 @TestPropertySource(locations = "classpath:application-tests.properties")
-@Import({TransactionsService.class, TransactionAuthorizeHandler.class, TransactionsProjectionHandler.class, AuthorizationProjectionHandler.class})
+@Import({TransactionsService.class, TransactionRequestAuthorizationHandler.class, TransactionsProjectionHandler.class, AuthorizationProjectionHandler.class})
 public class TransactionServiceTests {
 	@MockBean
 	private TransactionsViewRepository repository;
@@ -51,7 +51,7 @@ public class TransactionServiceTests {
 	private TransactionInizializeHandler transactionInizializeHandler;
 
 	@MockBean
-	private TransactionAuthorizeHandler transactionAuthorizeHandler;
+	private TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandler;
 
 	@Test
 	void getTransactionReturnsTransactionData() {
@@ -134,7 +134,7 @@ public class TransactionServiceTests {
 
 		Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 
-		Mockito.when(transactionAuthorizeHandler.handle(any())).thenReturn(Mono.just(requestAuthorizationResponse));
+		Mockito.when(transactionRequestAuthorizationHandler.handle(any())).thenReturn(Mono.just(requestAuthorizationResponse));
 
 		/* test */
 		RequestAuthorizationResponseDto authorizationResponse = transactionsService
