@@ -2,6 +2,9 @@ package it.pagopa.transactions.client;
 
 import javax.xml.bind.JAXBElement;
 
+import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentRequestDto;
+import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentResponseDto;
+import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -38,5 +41,23 @@ public class NodeForPspClient {
 						error -> log.error("ResponseStatus Error : {}", new Object[] { error }))
 				.doOnError(Exception.class,
 						(Exception error) -> log.error("Generic Error : {}", new Object[] { error }));
+	}
+
+	public Mono<ClosePaymentResponseDto> closePayment(ClosePaymentRequestDto request) {
+		return nodoWebClient.post()
+				.header("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+				.body(Mono.just(request), ClosePaymentRequestDto.class)
+				.retrieve()
+				.onStatus(HttpStatus::isError, clientResponse ->
+						clientResponse
+								.bodyToMono(String.class)
+								.flatMap(errorResponseBody ->
+										Mono.error(new ResponseStatusException(clientResponse.statusCode(), errorResponseBody))))
+				.bodyToMono(ClosePaymentResponseDto.class)
+				.doOnSuccess(closePaymentResponse ->
+						log.debug("Requested closePayment for paymentTokens {}", request.getPaymentTokens()))
+				.doOnError(ResponseStatusException.class,
+						error -> log.error("ResponseStatus Error:", error))
+				.doOnError(Exception.class, error -> log.error("Generic Error:", error));
 	}
 }
