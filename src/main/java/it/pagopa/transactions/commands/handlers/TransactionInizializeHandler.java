@@ -16,6 +16,7 @@ import it.pagopa.transactions.documents.TransactionInitData;
 import it.pagopa.transactions.documents.TransactionInitEvent;
 import it.pagopa.transactions.domain.IdempotencyKey;
 import it.pagopa.transactions.domain.RptId;
+import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionTokens;
 import it.pagopa.transactions.repositories.TransactionTokensRepository;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -28,6 +29,7 @@ import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
 import java.security.SecureRandom;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -55,7 +57,7 @@ public class TransactionInizializeHandler
 
     @Autowired
     NodoConnectionString nodoConnectionParams;
-    
+
     @Override
     public Mono<NewTransactionResponseDto> handle(TransactionInitializeCommand command) {
         final RptId rptId = command.getRptId();
@@ -93,19 +95,29 @@ public class TransactionInizializeHandler
                     request.setPassword(nodoConnectionParams.getPassword());
                     request.setIdempotencyKey(tokens.idempotencyKey().getKey());
                     request.setPaymentNote(newTransactionRequestDto.getRptId());
-                    Mono<ActivatePaymentNoticeRes> activatePaymentNoticeResponse = nodeForPspClient.activatePaymentNotice(objectFactory.createActivatePaymentNoticeReq(request));
+                    Mono<ActivatePaymentNoticeRes> activatePaymentNoticeResponse = nodeForPspClient
+                            .activatePaymentNotice(objectFactory.createActivatePaymentNoticeReq(request));
 
                     return activatePaymentNoticeResponse.map(res -> Tuples.of(res, tokens.idempotencyKey()));
                 })
                 .flatMap(args -> {
                     final ActivatePaymentNoticeRes activatePaymentNoticeRes = args.getT1();
+                    return Optional.ofNullable(activatePaymentNoticeRes.getFault()).isEmpty()
+                            ? Mono.error(new BadGatewayException(activatePaymentNoticeRes.getFault().getFaultCode()))
+                            : Mono.just(args);
+                })
+                .flatMap(args -> {
+                    final ActivatePaymentNoticeRes activatePaymentNoticeRes = args.getT1();
                     final IdempotencyKey idempotencyKey = args.getT2();
 
-                    final TransactionTokens tokens = new TransactionTokens(rptId, idempotencyKey, activatePaymentNoticeRes.getPaymentToken());
-                    return Mono.fromCallable(() -> transactionTokensRepository.save(tokens)).thenReturn(activatePaymentNoticeRes);
+                    final TransactionTokens tokens = new TransactionTokens(rptId, idempotencyKey,
+                            activatePaymentNoticeRes.getPaymentToken());
+                    return Mono.fromCallable(() -> transactionTokensRepository.save(tokens))
+                            .thenReturn(activatePaymentNoticeRes);
                 })
                 .flatMap(activatePaymentNoticeRes -> {
-                    log.info("Persisted transaction tokens for payment token {}", activatePaymentNoticeRes.getPaymentToken());
+                    log.info("Persisted transaction tokens for payment token {}",
+                            activatePaymentNoticeRes.getPaymentToken());
 
                     TransactionInitData data = new TransactionInitData();
                     data.setAmount(activatePaymentNoticeRes.getTotalAmount().intValue());
@@ -116,8 +128,10 @@ public class TransactionInizializeHandler
                             activatePaymentNoticeRes.getPaymentToken(),
                             data);
 
-                    log.info("Generated event TRANSACTION_INITIALIZED_EVENT for payment token {}", activatePaymentNoticeRes.getPaymentToken());
-                    return transactionEventStoreRepository.save(transactionInitializedEvent).thenReturn(activatePaymentNoticeRes);
+                    log.info("Generated event TRANSACTION_INITIALIZED_EVENT for payment token {}",
+                            activatePaymentNoticeRes.getPaymentToken());
+                    return transactionEventStoreRepository.save(transactionInitializedEvent)
+                            .thenReturn(activatePaymentNoticeRes);
                 })
                 .flatMap(activatePaymentNoticeRes -> {
                     SessionDataDto sessionRequest = new SessionDataDto()
