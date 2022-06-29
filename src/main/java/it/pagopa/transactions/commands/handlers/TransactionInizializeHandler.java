@@ -6,6 +6,7 @@ import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeRes;
 import it.pagopa.generated.transactions.model.CtQrCode;
 import it.pagopa.generated.transactions.model.ObjectFactory;
+import it.pagopa.generated.transactions.model.StOutcome;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
@@ -102,7 +103,8 @@ public class TransactionInizializeHandler
                 })
                 .flatMap(args -> {
                     final ActivatePaymentNoticeRes activatePaymentNoticeRes = args.getT1();
-                    return Optional.ofNullable(activatePaymentNoticeRes.getFault()).isEmpty()
+                    final StOutcome outcome = activatePaymentNoticeRes.getOutcome();
+                    return StOutcome.KO.equals(outcome)
                             ? Mono.error(new BadGatewayException(activatePaymentNoticeRes.getFault().getFaultCode()))
                             : Mono.just(args);
                 })
