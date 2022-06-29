@@ -161,9 +161,12 @@ components:
           $ref: '#/components/schemas/RptId'
         email:
           type: string
+        amount:
+          $ref: '#/components/schemas/AmountEuroCents'
       required:
         - rptId
         - email
+        - amount
       example:
         rptId: string
     NewTransactionResponse:
