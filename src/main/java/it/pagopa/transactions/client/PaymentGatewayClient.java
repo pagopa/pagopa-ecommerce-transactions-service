@@ -34,7 +34,7 @@ public class PaymentGatewayClient {
                 .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
                     case UNAUTHORIZED -> new AlreadyProcessedException(authorizationData.transaction().getRptId());
                     case GATEWAY_TIMEOUT -> new GatewayTimeoutException();
-                    case INTERNAL_SERVER_ERROR -> new BadGatewayException();
+                    case INTERNAL_SERVER_ERROR -> new BadGatewayException("");
                     default -> exception;
                 })
                 .map(response -> new RequestAuthorizationResponseDto().authorizationUrl(response.getUrlRedirect()));
