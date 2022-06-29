@@ -29,8 +29,8 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.security.SecureRandom;
-import java.util.Optional;
 
 @Slf4j
 @Component
@@ -85,7 +85,8 @@ public class TransactionInizializeHandler
                     qrCode.setFiscalCode(fiscalCode);
                     qrCode.setNoticeNumber(noticeId);
 
-                    BigDecimal amount = BigDecimal.valueOf(1200);
+                    BigDecimal amount = BigDecimal.valueOf(newTransactionRequestDto.getAmount() / 100).setScale(2,
+                            RoundingMode.CEILING);
 
                     ActivatePaymentNoticeReq request = objectFactory.createActivatePaymentNoticeReq();
                     request.setAmount(amount);
@@ -95,7 +96,6 @@ public class TransactionInizializeHandler
                     request.setIdBrokerPSP(nodoConnectionParams.getIdBrokerPSP());
                     request.setPassword(nodoConnectionParams.getPassword());
                     request.setIdempotencyKey(tokens.idempotencyKey().getKey());
-                    request.setPaymentNote(newTransactionRequestDto.getRptId());
                     Mono<ActivatePaymentNoticeRes> activatePaymentNoticeResponse = nodeForPspClient
                             .activatePaymentNotice(objectFactory.createActivatePaymentNoticeReq(request));
 
