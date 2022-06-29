@@ -82,7 +82,7 @@ public class TransactionsController implements TransactionsApi {
                 new ProblemJsonDto()
                         .status(502)
                         .title("Bad gateway")
-                        .detail(null),
+                        .detail(exception.getDetail()),
                 HttpStatus.BAD_GATEWAY);
     }
 
