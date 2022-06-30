@@ -13,6 +13,7 @@ import java.time.ZonedDateTime;
 @Document(collection = "view")
 public class Transaction {
     @Id
+    private String transactionId;
     private String paymentToken;
     private String rptId;
     private String description;
@@ -20,18 +21,19 @@ public class Transaction {
     private TransactionStatusDto status;
     private String creationDate;
 
-    public Transaction(String paymentToken, String rptId, String description, int amount, TransactionStatusDto status) {
-        this(paymentToken, rptId, description, amount, status, ZonedDateTime.now().toString());
+    public Transaction(String transactionId, String paymentToken, String rptId, String description, int amount, TransactionStatusDto status) {
+        this(transactionId, paymentToken, rptId, description, amount, status, ZonedDateTime.now().toString());
     }
 
-    public Transaction(String paymentToken, String rptId, String description, int amount, TransactionStatusDto status,
+    public Transaction(String transactionId, String paymentToken, String rptId, String description, int amount, TransactionStatusDto status,
             ZonedDateTime creationDate) {
-        this(paymentToken, rptId, description, amount, status, creationDate.toString());
+        this(transactionId, paymentToken, rptId, description, amount, status, creationDate.toString());
     }
 
     @PersistenceConstructor
-    public Transaction(String paymentToken, String rptId, String description, int amount, TransactionStatusDto status,
+    public Transaction(String transactionId, String paymentToken, String rptId, String description, int amount, TransactionStatusDto status,
             String creationDate) {
+        this.transactionId = transactionId;
         this.rptId = rptId;
         this.description = description;
         this.paymentToken = paymentToken;
@@ -42,6 +44,7 @@ public class Transaction {
 
     public static Transaction from(it.pagopa.transactions.domain.Transaction transaction) {
         return new Transaction(
+                transaction.getTransactionId().value(),
                 transaction.getPaymentToken().value(),
                 transaction.getRptId().value(),
                 transaction.getDescription().value(),

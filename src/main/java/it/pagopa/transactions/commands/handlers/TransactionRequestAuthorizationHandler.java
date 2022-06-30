@@ -37,6 +37,7 @@ public class TransactionRequestAuthorizationHandler implements CommandHandler<Tr
                     log.info("Logging authorization event for rpt id {}", transaction.getRptId().value());
 
                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
+                            transaction.getTransactionId().value(),
                             transaction.getRptId().value(),
                             transaction.getPaymentToken().value(),
                             new TransactionAuthorizationRequestData(

@@ -173,6 +173,8 @@ components:
       type: object
       description: Transaction data returned when creating a new transaction
       properties:
+        transactionId:
+          type: string
         paymentToken:
           type: string
         rptId:
@@ -186,6 +188,7 @@ components:
         authToken:
           type: string
       required:
+        - transactionId
         - amount
       example:
         amount: 200

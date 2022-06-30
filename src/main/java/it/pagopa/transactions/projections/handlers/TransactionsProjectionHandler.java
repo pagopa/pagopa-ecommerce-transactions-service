@@ -22,12 +22,14 @@ public class TransactionsProjectionHandler
 	@Override
 	public Mono<Transaction> handle(NewTransactionResponseDto data) {
 
+		TransactionId transactionId = new TransactionId(data.getTransactionId());
 		PaymentToken paymentToken = new PaymentToken(data.getPaymentToken());
 		RptId rptId = new RptId(data.getRptId());
 		TransactionDescription description = new TransactionDescription(data.getReason());
 		TransactionAmount amount = new TransactionAmount(data.getAmount());
 
 		Transaction transaction = new Transaction(
+			    transactionId,
 				paymentToken,
 				rptId,
 				description,
