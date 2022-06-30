@@ -4,10 +4,14 @@ import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.TransactionInitializeCommand;
+import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
+import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
 import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
+import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHandler;
 import it.pagopa.transactions.domain.*;
+import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
 import it.pagopa.transactions.projections.handlers.AuthorizationProjectionHandler;
@@ -27,6 +31,9 @@ public class TransactionsService {
 
     @Autowired
     private TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandler;
+
+    @Autowired
+    private TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandler;
 
     @Autowired
     private TransactionsProjectionHandler transactionsProjectionHandler;
@@ -116,6 +123,32 @@ public class TransactionsService {
                     return transactionRequestAuthorizationHandler.handle(command)
                             .doOnNext(res -> log.info("Requested authorization for rptId: {}", transactionDocument.getRptId()))
                             .flatMap(res -> authorizationProjectionHandler.handle(authorizationData).thenReturn(res));
+                });
+    }
+
+    public Mono<TransactionInfoDto> updateTransactionAuthorization(String paymentToken, UpdateAuthorizationRequestDto updateAuthorizationRequestDto) {
+        // TODO: Add logging
+
+        return transactionsViewRepository
+                .findByPaymentToken(paymentToken)
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentToken)))
+                .flatMap(transactionDocument -> {
+                    Transaction transaction = new Transaction(
+                            new PaymentToken(transactionDocument.getPaymentToken()),
+                            new RptId(transactionDocument.getRptId()),
+                            new TransactionDescription(transactionDocument.getDescription()),
+                            new TransactionAmount(transactionDocument.getAmount()),
+                            transactionDocument.getStatus()
+                    );
+
+                    UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
+                            transaction,
+                            updateAuthorizationRequestDto
+                    );
+
+                    TransactionUpdateAuthorizationCommand transactionUpdateAuthorizationCommand = new TransactionUpdateAuthorizationCommand(transaction.getRptId(), updateAuthorizationStatusData);
+
+                    return transactionUpdateAuthorizationHandler.handle(transactionUpdateAuthorizationCommand);
                 });
     }
 }
