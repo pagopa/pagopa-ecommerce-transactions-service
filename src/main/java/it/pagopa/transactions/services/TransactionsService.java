@@ -116,6 +116,7 @@ public class TransactionsService {
                     log.info("Requesting authorization for rptId: {}", transactionDocument.getRptId());
 
                     Transaction transaction = new Transaction(
+                            new TransactionId(transactionDocument.getTransactionId()),
                             new PaymentToken(transactionDocument.getPaymentToken()),
                             new RptId(transactionDocument.getRptId()),
                             new TransactionDescription(transactionDocument.getDescription()),
