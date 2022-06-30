@@ -63,7 +63,8 @@ public class TransactionServiceTests {
 	@Test
 	void getTransactionReturnsTransactionData() {
 		final String PAYMENT_TOKEN = "aaa";
-		final Transaction transaction = new Transaction(PAYMENT_TOKEN, "rptId", "reason", 100,
+		final String TRANSACION_ID = "transactionId";
+		final Transaction transaction = new Transaction(TRANSACION_ID, PAYMENT_TOKEN, "rptId", "reason", 100,
 				TransactionStatusDto.INITIALIZED);
 		final TransactionInfoDto expected = new TransactionInfoDto()
 				.amount(transaction.getAmount())
@@ -104,6 +105,7 @@ public class TransactionServiceTests {
 	@Test
 	void shouldRedirectToAuthorizationURIForValidRequest() {
 		String paymentToken = "paymentToken";
+		String transactionId = "transactionId";
 		RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
 				.amount(100)
 				.paymentInstrumentId("paymentInstrumentId")
@@ -111,6 +113,7 @@ public class TransactionServiceTests {
 				.pspId("PSP_CODE");
 
 		Transaction transaction = new Transaction(
+				transactionId,
 				paymentToken,
 				"rptId",
 				"description",
@@ -136,8 +139,7 @@ public class TransactionServiceTests {
 				.thenReturn(Mono.just(transaction));
 
 		Mockito.when(paymentGatewayClient.requestAuthorization(any())).thenReturn(
-				Mono.just(requestAuthorizationResponse)
-		);
+				Mono.just(requestAuthorizationResponse));
 
 		Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 

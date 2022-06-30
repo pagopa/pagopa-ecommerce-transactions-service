@@ -41,12 +41,14 @@ class TransactionRequestAuthorizizationHandlerTest {
 
     @Test
     void shouldSaveAuthorizationEvent() {
+        TransactionId transactionId = new TransactionId("transactionId");
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("rptId");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
 
         Transaction transaction = new Transaction(
+                transactionId,
                 paymentToken,
                 rptId,
                 description,
@@ -89,12 +91,14 @@ class TransactionRequestAuthorizizationHandlerTest {
 
     @Test
     void shouldRejectAlreadyProcessedTransaction() {
+        TransactionId transactionId = new TransactionId("transactionId");
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("rptId");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
 
         Transaction transaction = new Transaction(
+                transactionId,
                 paymentToken,
                 rptId,
                 description,

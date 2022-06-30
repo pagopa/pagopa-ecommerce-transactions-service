@@ -1,7 +1,6 @@
 
 package it.pagopa.transactions.documents;
 
-
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.domain.*;
 import org.junit.jupiter.api.Test;
@@ -15,9 +14,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(MockitoExtension.class)
 class TransactionDocumentTest {
 
-
     @Test
-    void shouldGetAndSetTransaction(){
+    void shouldGetAndSetTransaction() {
+        String TEST_TRANSACTIONID = "d56ab1e6-f845-11ec-b939-0242ac120002";
         String TEST_TOKEN = "token1";
         String TEST_RPTID = "77777777777302016723749670035";
         String TEST_DESC = "";
@@ -28,14 +27,16 @@ class TransactionDocumentTest {
         /**
          * Test
          */
-        Transaction transaction = new Transaction(TEST_TOKEN, TEST_RPTID, TEST_DESC, TEST_AMOUNT, TEST_STATUS, TEST_TIME);
+        Transaction transaction = new Transaction(TEST_TRANSACTIONID, TEST_TOKEN, TEST_RPTID, TEST_DESC, TEST_AMOUNT,
+                TEST_STATUS, TEST_TIME);
 
-        Transaction sameTransaction = new Transaction(TEST_TOKEN, TEST_RPTID, TEST_DESC, TEST_AMOUNT, TEST_STATUS, TEST_TIME);
+        Transaction sameTransaction = new Transaction(TEST_TRANSACTIONID, TEST_TOKEN, TEST_RPTID, TEST_DESC,
+                TEST_AMOUNT, TEST_STATUS, TEST_TIME);
         sameTransaction.setCreationDate(transaction.getCreationDate());
 
         // Different transaction (creation date)
-        Transaction differentTransaction = new Transaction(
-                 "", "", "", 1, null, ZonedDateTime.now());
+        Transaction differentTransaction = new Transaction("",
+                "", "", "", 1, null, ZonedDateTime.now());
         differentTransaction.setPaymentToken(TEST_TOKEN);
         differentTransaction.setRptId(TEST_RPTID);
         differentTransaction.setDescription(TEST_DESC);
@@ -58,6 +59,7 @@ class TransactionDocumentTest {
 
     @Test
     void shouldConstructTransactionDocumentFromTransaction() {
+        TransactionId transactionId = new TransactionId("");
         PaymentToken paymentToken = new PaymentToken("");
         RptId rptId = new RptId("77777777777302016723749670035");
         TransactionDescription description = new TransactionDescription("");
@@ -65,12 +67,12 @@ class TransactionDocumentTest {
         TransactionStatusDto status = TransactionStatusDto.INITIALIZED;
 
         it.pagopa.transactions.domain.Transaction transaction = new it.pagopa.transactions.domain.Transaction(
+                transactionId,
                 paymentToken,
                 rptId,
                 description,
                 amount,
-                status
-        );
+                status);
 
         Transaction transactionDocument = Transaction.from(transaction);
 

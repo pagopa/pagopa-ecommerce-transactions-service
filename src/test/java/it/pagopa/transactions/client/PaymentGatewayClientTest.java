@@ -39,6 +39,7 @@ public class PaymentGatewayClientTest {
     @Test
     void shouldReturnAuthorizationResponse() {
         Transaction transaction = new Transaction(
+                new TransactionId("transactionId"),
                 new PaymentToken("paymentToken"),
                 new RptId("rptId"),
                 new TransactionDescription("description"),
@@ -83,6 +84,7 @@ public class PaymentGatewayClientTest {
     @Test
     void shouldThrowAlreadyProcessedOn401() {
         Transaction transaction = new Transaction(
+                new TransactionId("transactionId"),
                 new PaymentToken("paymentToken"),
                 new RptId("rptId"),
                 new TransactionDescription("description"),
@@ -124,6 +126,7 @@ public class PaymentGatewayClientTest {
     @Test
     void shouldThrowGatewayTimeoutOn504() {
         Transaction transaction = new Transaction(
+                new TransactionId("transactionId"),
                 new PaymentToken("paymentToken"),
                 new RptId("rptId"),
                 new TransactionDescription("description"),
@@ -163,6 +166,7 @@ public class PaymentGatewayClientTest {
     @Test
     void shouldThrowBadGatewayOn500() {
         Transaction transaction = new Transaction(
+                new TransactionId("transactionId"),
                 new PaymentToken("paymentToken"),
                 new RptId("rptId"),
                 new TransactionDescription("description"),

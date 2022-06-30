@@ -95,7 +95,7 @@ class TransactionInitializerHandlerTest {
         Mockito.when(ecommerceSessionsClient.createSessionToken(new SessionDataDto()
                 .email(requestDto.getEmail())
                 .paymentToken(activateRes.getPaymentToken())
-                .rptId(requestDto.getRptId()))).thenReturn(Mono.just(sessionTokenDto));
+                .rptId(null))).thenReturn(Mono.just(sessionTokenDto));
 
         /**
          * preconditions

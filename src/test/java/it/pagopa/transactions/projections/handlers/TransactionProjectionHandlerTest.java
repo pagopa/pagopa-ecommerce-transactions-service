@@ -31,6 +31,7 @@ class TransactionProjectionHandlerTest {
     void shouldHandleTransaction() {
 
         NewTransactionResponseDto data = new NewTransactionResponseDto()
+                .transactionId("d56ab1e6-f845-11ec-b939-0242ac120002")
                 .paymentToken("token")
                 .rptId("77777777777302016723749670035")
                 .reason("reason")
@@ -38,28 +39,30 @@ class TransactionProjectionHandlerTest {
 
         UUID transactionUUID = UUID.randomUUID();
 
+        TransactionId transactionId = new TransactionId(data.getTransactionId());
         PaymentToken paymentToken = new PaymentToken(data.getPaymentToken());
         RptId rptId = new RptId(data.getRptId());
         TransactionDescription description = new TransactionDescription(data.getReason());
         TransactionAmount amount = new TransactionAmount(data.getAmount());
 
         Transaction expected = new Transaction(
+                transactionId,
                 paymentToken,
                 rptId,
                 description,
                 amount,
-                TransactionStatusDto.INITIALIZED
-        );
+                TransactionStatusDto.INITIALIZED);
 
         try (
                 MockedStatic<UUID> uuid = Mockito.mockStatic(UUID.class);
-                MockedStatic<ZonedDateTime> zonedDateTime = Mockito.mockStatic(ZonedDateTime.class)
-        ) {
+                MockedStatic<ZonedDateTime> zonedDateTime = Mockito.mockStatic(ZonedDateTime.class)) {
             /*
              * Preconditions
              */
-            it.pagopa.transactions.documents.Transaction transactionDocument = it.pagopa.transactions.documents.Transaction.from(expected);
-            Mockito.when(viewEventStoreRepository.save(Mockito.any(it.pagopa.transactions.documents.Transaction.class))).thenReturn(Mono.just(transactionDocument));
+            it.pagopa.transactions.documents.Transaction transactionDocument = it.pagopa.transactions.documents.Transaction
+                    .from(expected);
+            Mockito.when(viewEventStoreRepository.save(Mockito.any(it.pagopa.transactions.documents.Transaction.class)))
+                    .thenReturn(Mono.just(transactionDocument));
             uuid.when(UUID::randomUUID).thenReturn(transactionUUID);
             zonedDateTime.when(ZonedDateTime::now).thenReturn(expected.getCreationDate());
 
