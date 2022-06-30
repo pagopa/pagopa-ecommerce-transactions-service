@@ -29,7 +29,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 
 @ExtendWith(SpringExtension.class)
-public class PaymentGatewayClientTest {
+class PaymentGatewayClientTest {
     @InjectMocks
     private PaymentGatewayClient client;
 
