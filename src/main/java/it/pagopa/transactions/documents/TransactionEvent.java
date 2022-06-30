@@ -34,6 +34,7 @@ public abstract sealed class TransactionEvent<T>
     TransactionEvent(String transactionId, String rptId, String paymentToken, TransactionEventCode eventCode, T data) {
         this.id = UUID.randomUUID().toString();
         this.transactionId = transactionId;
+        this.rptId = rptId;
         this.eventCode = eventCode;
         this.paymentToken = paymentToken;
         this.data = data;
