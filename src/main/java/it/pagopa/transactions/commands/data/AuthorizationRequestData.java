@@ -9,5 +9,6 @@ public record AuthorizationRequestData(
         int fee,
         String paymentInstrumentId,
         String pspId,
+        String paymentTypeCode,
         UUID transactionId
 ) {}

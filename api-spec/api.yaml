@@ -222,9 +222,6 @@ components:
       properties:
         authorizationResult:
           $ref: '#/components/schemas/AuthorizationResult'
-        tipoVersamento:
-          type: string
-          description: Deposit type
         identificativoIntermediario:
           type: string
           description: PSP intermediary id

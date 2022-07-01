@@ -51,6 +51,7 @@ public class PaymentGatewayClientTest {
                 10,
                 "paymentInstrumentId",
                 "pspId",
+                "paymentTypeCode",
                 UUID.randomUUID()
         );
 
@@ -92,6 +93,7 @@ public class PaymentGatewayClientTest {
                 10,
                 "paymentInstrumentId",
                 "pspId",
+                "paymentTypeCode",
                 UUID.randomUUID()
         );
 
@@ -130,6 +132,7 @@ public class PaymentGatewayClientTest {
                 10,
                 "paymentInstrumentId",
                 "pspId",
+                "paymentTypeCode",
                 UUID.randomUUID()
         );
 
@@ -166,6 +169,7 @@ public class PaymentGatewayClientTest {
                 10,
                 "paymentInstrumentId",
                 "pspId",
+                "paymentTypeCode",
                 UUID.randomUUID()
         );
 

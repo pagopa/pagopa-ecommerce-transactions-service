@@ -20,6 +20,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.UUID;
+
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
@@ -63,7 +65,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 transaction,
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
-                authorizationRequest.getPspId()
+                authorizationRequest.getPspId(),
+                "paymentTypeCode",
+                UUID.randomUUID()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);
@@ -107,7 +111,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 transaction,
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
-                authorizationRequest.getPspId()
+                authorizationRequest.getPspId(),
+                "paymentTypeCode",
+                UUID.randomUUID()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);

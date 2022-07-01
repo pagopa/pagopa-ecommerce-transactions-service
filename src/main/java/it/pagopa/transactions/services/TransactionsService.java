@@ -1,5 +1,6 @@
 package it.pagopa.transactions.services;
 
+import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
@@ -21,6 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import java.util.UUID;
 
@@ -91,17 +94,20 @@ public class TransactionsService {
                     return ecommercePaymentInstrumentsClient
                             .getPSPs(transaction.getAmount(),
                                     requestAuthorizationRequestDto.getLanguage().getValue())
-                            .map(pspResponse -> pspResponse.getPsp()
+                            .mapNotNull(pspResponse -> pspResponse.getPsp()
                                     .stream()
-                                    .anyMatch(psp -> psp.getCode()
+                                    .filter(psp -> psp.getCode()
                                             .equals(requestAuthorizationRequestDto.getPspId())
                                             &&
                                             psp.getFixedCost()
-                                                    .equals((double) requestAuthorizationRequestDto.getFee() / 100)))
-                            .flatMap(isValid -> isValid ? Mono.just(transaction) : Mono.empty());
+                                                    .equals((double) requestAuthorizationRequestDto.getFee() / 100))
+                                    .findFirst().orElse(null))
+                            .map(psp -> Tuples.of(transaction, psp));
                 })
                 .switchIfEmpty(Mono.error(new UnsatisfiablePspRequestException(new PaymentToken(paymentToken), requestAuthorizationRequestDto.getLanguage(), requestAuthorizationRequestDto.getFee())))
-                .flatMap(transactionDocument -> {
+                .flatMap(args -> {
+                    it.pagopa.transactions.documents.Transaction transactionDocument = args.getT1();
+                    PspDto psp = args.getT2();
 
                     log.info("Requesting authorization for rptId: {}", transactionDocument.getRptId());
 
@@ -118,6 +124,7 @@ public class TransactionsService {
                             requestAuthorizationRequestDto.getFee(),
                             requestAuthorizationRequestDto.getPaymentInstrumentId(),
                             requestAuthorizationRequestDto.getPspId(),
+                            psp.getPaymentTypeCode(),
                             UUID.randomUUID()
                     );
 
