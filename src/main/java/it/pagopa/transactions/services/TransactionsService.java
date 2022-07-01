@@ -22,6 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.util.UUID;
+
 @Service
 @Slf4j
 public class TransactionsService {
@@ -115,7 +117,8 @@ public class TransactionsService {
                             transaction,
                             requestAuthorizationRequestDto.getFee(),
                             requestAuthorizationRequestDto.getPaymentInstrumentId(),
-                            requestAuthorizationRequestDto.getPspId()
+                            requestAuthorizationRequestDto.getPspId(),
+                            UUID.randomUUID()
                     );
 
                     TransactionRequestAuthorizationCommand command = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);

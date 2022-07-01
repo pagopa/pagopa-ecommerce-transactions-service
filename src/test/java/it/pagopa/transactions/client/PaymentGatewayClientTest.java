@@ -22,6 +22,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -49,7 +50,8 @@ public class PaymentGatewayClientTest {
                 transaction,
                 10,
                 "paymentInstrumentId",
-                "pspId"
+                "pspId",
+                UUID.randomUUID()
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
@@ -89,7 +91,8 @@ public class PaymentGatewayClientTest {
                 transaction,
                 10,
                 "paymentInstrumentId",
-                "pspId"
+                "pspId",
+                UUID.randomUUID()
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
@@ -126,7 +129,8 @@ public class PaymentGatewayClientTest {
                 transaction,
                 10,
                 "paymentInstrumentId",
-                "pspId"
+                "pspId",
+                UUID.randomUUID()
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
@@ -161,7 +165,8 @@ public class PaymentGatewayClientTest {
                 transaction,
                 10,
                 "paymentInstrumentId",
-                "pspId"
+                "pspId",
+                UUID.randomUUID()
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()

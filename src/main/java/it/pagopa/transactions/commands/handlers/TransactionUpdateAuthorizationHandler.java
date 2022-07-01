@@ -61,7 +61,7 @@ public class TransactionUpdateAuthorizationHandler implements CommandHandler<Tra
                                 .tipoVersamento(ClosePaymentRequestDto.TipoVersamentoEnum.fromValue(updateAuthorizationRequest.getTipoVersamento()))
                                 .identificativoIntermediario(updateAuthorizationRequest.getIdentificativoIntermediario())
                                 .identificativoCanale(updateAuthorizationRequest.getIdentificativoCanale())
-                                .pspTransactionId(updateAuthorizationRequest.getPspTransactionId())
+                                .pspTransactionId(authorizationRequestData.getTransactionId().toString())
                                 .totalAmount(new BigDecimal(transaction.getAmount().value() + authorizationRequestData.getFee()))
                                 .fee(new BigDecimal(authorizationRequestData.getFee()))
                                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())

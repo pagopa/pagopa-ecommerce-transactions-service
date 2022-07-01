@@ -231,9 +231,6 @@ components:
         identificativoCanale:
           type: string
           description: PSP payment channel id
-        pspTransactionId:
-          type: string
-          description: Id used by the PSP to identify the transaction
         timestampOperation:
           type: string
           format: date-time
