@@ -47,7 +47,7 @@ public class TransactionUpdateAuthorizationHandler implements CommandHandler<Tra
         } else {
             UpdateAuthorizationRequestDto updateAuthorizationRequest = command.getData().updateAuthorizationRequest();
 
-            return authorizationRequestedEventStoreRepository.findByPaymentTokenAndTransactionEventCode(
+            return authorizationRequestedEventStoreRepository.findByPaymentTokenAndEventCode(
                             transaction.getPaymentToken().value(),
                             TransactionEventCode.TRANSACTION_AUTHORIZATION_REQUESTED_EVENT
                     )

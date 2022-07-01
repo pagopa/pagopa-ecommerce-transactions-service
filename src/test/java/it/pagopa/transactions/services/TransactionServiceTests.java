@@ -10,6 +10,7 @@ import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
+import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHandler;
 import it.pagopa.transactions.documents.Transaction;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.AuthorizationProjectionHandler;
@@ -52,6 +53,9 @@ public class TransactionServiceTests {
 
 	@MockBean
 	private TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandler;
+
+	@MockBean
+	private TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandler;
 
 	@Test
 	void getTransactionReturnsTransactionData() {

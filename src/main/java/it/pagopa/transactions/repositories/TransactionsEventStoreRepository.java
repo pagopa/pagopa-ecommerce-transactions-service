@@ -7,5 +7,5 @@ import it.pagopa.transactions.documents.TransactionEvent;
 import reactor.core.publisher.Mono;
 
 public interface TransactionsEventStoreRepository<T> extends ReactiveCrudRepository<TransactionEvent<T>, String> {
-    Mono<TransactionEvent<T>> findByPaymentTokenAndTransactionEventCode(String paymentToken, TransactionEventCode transactionEventCode);
+    Mono<TransactionEvent<T>> findByPaymentTokenAndEventCode(String paymentToken, TransactionEventCode transactionEventCode);
 }
