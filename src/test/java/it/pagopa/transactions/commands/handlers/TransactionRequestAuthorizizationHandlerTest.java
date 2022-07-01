@@ -5,7 +5,7 @@ import it.pagopa.generated.transactions.server.model.RequestAuthorizationRespons
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
-import it.pagopa.transactions.commands.TransactionAuthorizeCommand;
+import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestData;
 import it.pagopa.transactions.domain.*;
@@ -23,10 +23,10 @@ import reactor.test.StepVerifier;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
-class TransactionAuthorizeHandlerTest {
+class TransactionRequestAuthorizizationHandlerTest {
 
     @InjectMocks
-    private TransactionAuthorizeHandler authorizeHandler;
+    private TransactionRequestAuthorizationHandler requestAuthorizationHandler;
 
     @Mock
     private PaymentGatewayClient paymentGatewayClient;
@@ -66,7 +66,7 @@ class TransactionAuthorizeHandlerTest {
                 authorizationRequest.getPspId()
         );
 
-        TransactionAuthorizeCommand authorizeCommand = new TransactionAuthorizeCommand(transaction.getRptId(), authorizationData);
+        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);
 
         RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
                 .authorizationUrl("https://example.com");
@@ -76,13 +76,13 @@ class TransactionAuthorizeHandlerTest {
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.empty());
 
         /* test */
-        authorizeHandler.handle(authorizeCommand).block();
+        requestAuthorizationHandler.handle(requestAuthorizationCommand).block();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
     }
 
     @Test
-    void shouldRejectAlreadyAuthorizedTransaction() {
+    void shouldRejectAlreadyProcessedTransaction() {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("rptId");
         TransactionDescription description = new TransactionDescription("description");
@@ -110,10 +110,10 @@ class TransactionAuthorizeHandlerTest {
                 authorizationRequest.getPspId()
         );
 
-        TransactionAuthorizeCommand authorizeCommand = new TransactionAuthorizeCommand(transaction.getRptId(), authorizationData);
+        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);
 
         /* test */
-        StepVerifier.create(authorizeHandler.handle(authorizeCommand))
+        StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectErrorMatches(error -> error instanceof AlreadyProcessedException)
                 .verify();
 

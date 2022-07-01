@@ -158,8 +158,8 @@ class TransactionsControllerTest {
         ResponseEntity responseCheck = new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(409)
-                        .title("Transaction already authorized")
-                        .detail("Transaction for RPT id '' has been already authorized"),
+                        .title("Transaction already processed")
+                        .detail("Transaction for RPT id '' has been already processed"),
                 HttpStatus.CONFLICT);
         AlreadyProcessedException exception = new AlreadyProcessedException(RPT_ID);
         Method method = TransactionsController.class.getDeclaredMethod("alreadyProcessedHandler", AlreadyProcessedException.class);

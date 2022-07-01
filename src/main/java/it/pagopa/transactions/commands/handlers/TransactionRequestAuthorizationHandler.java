@@ -3,7 +3,7 @@ package it.pagopa.transactions.commands.handlers;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.client.PaymentGatewayClient;
-import it.pagopa.transactions.commands.TransactionAuthorizeCommand;
+import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestData;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestedEvent;
 import it.pagopa.transactions.domain.Transaction;
@@ -16,7 +16,7 @@ import reactor.core.publisher.Mono;
 
 @Component
 @Slf4j
-public class TransactionAuthorizeHandler implements CommandHandler<TransactionAuthorizeCommand, Mono<RequestAuthorizationResponseDto>> {
+public class TransactionRequestAuthorizationHandler implements CommandHandler<TransactionRequestAuthorizationCommand, Mono<RequestAuthorizationResponseDto>> {
     @Autowired
     private PaymentGatewayClient paymentGatewayClient;
 
@@ -24,7 +24,7 @@ public class TransactionAuthorizeHandler implements CommandHandler<TransactionAu
     private TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository;
 
     @Override
-    public Mono<RequestAuthorizationResponseDto> handle(TransactionAuthorizeCommand command) {
+    public Mono<RequestAuthorizationResponseDto> handle(TransactionRequestAuthorizationCommand command) {
         Transaction transaction = command.getData().transaction();
 
         if (transaction.getStatus() != TransactionStatusDto.INITIALIZED) {

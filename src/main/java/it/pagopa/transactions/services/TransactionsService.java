@@ -2,10 +2,10 @@ package it.pagopa.transactions.services;
 
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
-import it.pagopa.transactions.commands.TransactionAuthorizeCommand;
+import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.TransactionInitializeCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
-import it.pagopa.transactions.commands.handlers.TransactionAuthorizeHandler;
+import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
@@ -26,7 +26,7 @@ public class TransactionsService {
     private TransactionInizializeHandler transactionInizializeHandler;
 
     @Autowired
-    private TransactionAuthorizeHandler transactionAuthorizeHandler;
+    private TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandler;
 
     @Autowired
     private TransactionsProjectionHandler transactionsProjectionHandler;
@@ -111,9 +111,9 @@ public class TransactionsService {
                             requestAuthorizationRequestDto.getPspId()
                     );
 
-                    TransactionAuthorizeCommand command = new TransactionAuthorizeCommand(transaction.getRptId(), authorizationData);
+                    TransactionRequestAuthorizationCommand command = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);
 
-                    return transactionAuthorizeHandler.handle(command)
+                    return transactionRequestAuthorizationHandler.handle(command)
                             .doOnNext(res -> log.info("Requested authorization for rptId: {}", transactionDocument.getRptId()))
                             .flatMap(res -> authorizationProjectionHandler.handle(authorizationData).thenReturn(res));
                 });
