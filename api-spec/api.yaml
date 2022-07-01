@@ -226,14 +226,16 @@ components:
           type: string
           format: date-time
           description: Payment timestamp
-        additionalPaymentInformations:
-          $ref: "https://raw.githubusercontent.com/pagopa/pagopa-infra/8400e0ef51f9fd6ef9386ccc4e520d24465ba2b5/src/api/nodopagamenti_api/nodoPerPM/v1/_swagger.json.tpl#/definitions/AdditionalPaymentInformations"
+        authorizationCode:
+          type: string
+          description: Payment gateway-specific authorization code related to the transaction
       required:
         - authorizationResult
         - timestampOperation
-        - additionalPaymentInformations
+        - authorizationCode
       example:
         authorizationResult: OK
+        timestampOperation: 2022-02-11T13:00:00+01:00
     TransactionInfo:
       description: Transaction data returned when querying for an existing transaction
       allOf:

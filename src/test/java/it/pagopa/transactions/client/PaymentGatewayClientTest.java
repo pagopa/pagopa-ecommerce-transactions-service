@@ -60,7 +60,7 @@ public class PaymentGatewayClientTest {
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
                 .description(transaction.getDescription().value())
-                .paymentChannel("")
+                .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(0L);
 
         String mdcInfo = "mdcInfo";
@@ -104,7 +104,7 @@ public class PaymentGatewayClientTest {
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
                 .description(transaction.getDescription().value())
-                .paymentChannel("")
+                .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(0L);
 
         String mdcInfo = "mdcInfo";
@@ -145,7 +145,7 @@ public class PaymentGatewayClientTest {
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
                 .description(transaction.getDescription().value())
-                .paymentChannel("")
+                .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(0L);
 
         String mdcInfo = "mdcInfo";
@@ -184,7 +184,7 @@ public class PaymentGatewayClientTest {
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
                 .description(transaction.getDescription().value())
-                .paymentChannel("")
+                .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(0L);
 
         String mdcInfo = "mdcInfo";

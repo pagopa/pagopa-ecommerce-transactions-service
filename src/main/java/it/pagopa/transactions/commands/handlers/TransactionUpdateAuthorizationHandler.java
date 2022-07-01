@@ -65,7 +65,12 @@ public class TransactionUpdateAuthorizationHandler implements CommandHandler<Tra
                                 .totalAmount(new BigDecimal(transaction.getAmount().value() + authorizationRequestData.getFee()))
                                 .fee(new BigDecimal(authorizationRequestData.getFee()))
                                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
-                                .additionalPaymentInformations(convertAdditionalPaymentInformation(updateAuthorizationRequest.getAdditionalPaymentInformations()));
+                                .additionalPaymentInformations(
+                                        new AdditionalPaymentInformationsDto()
+                                                .outcomePaymentGateway(updateAuthorizationRequest.getAuthorizationResult().toString())
+                                                .transactionId(authorizationRequestData.getTransactionId().toString())
+                                                .authorizationCode(updateAuthorizationRequest.getAuthorizationCode())
+                                );
 
                         return nodeForPspClient.closePayment(closePaymentRequest);
                     })
@@ -116,12 +121,5 @@ public class TransactionUpdateAuthorizationHandler implements CommandHandler<Tra
             default ->
                     throw new RuntimeException("Missing authorization result enum value mapping to Nodo closePayment outcome");
         }
-    }
-
-    private AdditionalPaymentInformationsDto convertAdditionalPaymentInformation(it.pagopa.generated.transactions.server.model.AdditionalPaymentInformationsDto additionalPaymentInformationsDto) {
-        return new AdditionalPaymentInformationsDto()
-                .authorizationCode(additionalPaymentInformationsDto.getAuthorizationCode())
-                .transactionId(additionalPaymentInformationsDto.getTransactionId())
-                .outcomePaymentGateway(additionalPaymentInformationsDto.getOutcomePaymentGateway());
     }
 }
