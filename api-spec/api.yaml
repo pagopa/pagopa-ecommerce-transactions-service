@@ -222,9 +222,6 @@ components:
       properties:
         authorizationResult:
           $ref: '#/components/schemas/AuthorizationResult'
-        identificativoIntermediario:
-          type: string
-          description: PSP intermediary id
         identificativoCanale:
           type: string
           description: PSP payment channel id

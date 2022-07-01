@@ -10,5 +10,6 @@ public record AuthorizationRequestData(
         String paymentInstrumentId,
         String pspId,
         String paymentTypeCode,
+        String brokerName,
         UUID transactionId
 ) {}

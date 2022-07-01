@@ -125,6 +125,7 @@ public class TransactionsService {
                             requestAuthorizationRequestDto.getPaymentInstrumentId(),
                             requestAuthorizationRequestDto.getPspId(),
                             psp.getPaymentTypeCode(),
+                            psp.getBrokerName(),
                             UUID.randomUUID()
                     );
 
