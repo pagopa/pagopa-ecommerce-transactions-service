@@ -68,6 +68,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 authorizationRequest.getPspId(),
                 "paymentTypeCode",
                 "brokerName",
+                "pspChannelCode",
                 UUID.randomUUID()
         );
 
@@ -115,6 +116,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 authorizationRequest.getPspId(),
                 "paymentTypeCode",
                 "brokerName",
+                "pspChannelCode",
                 UUID.randomUUID()
         );
 

@@ -53,6 +53,7 @@ public class PaymentGatewayClientTest {
                 "pspId",
                 "paymentTypeCode",
                 "brokerName",
+                "pspChannelCode",
                 UUID.randomUUID()
         );
 
@@ -96,6 +97,7 @@ public class PaymentGatewayClientTest {
                 "pspId",
                 "paymentTypeCode",
                 "brokerName",
+                "pspChannelCode",
                 UUID.randomUUID()
         );
 
@@ -136,6 +138,7 @@ public class PaymentGatewayClientTest {
                 "pspId",
                 "paymentTypeCode",
                 "brokerName",
+                "pspChannelCode",
                 UUID.randomUUID()
         );
 
@@ -174,6 +177,7 @@ public class PaymentGatewayClientTest {
                 "pspId",
                 "paymentTypeCode",
                 "brokerName",
+                "pspChannelCode",
                 UUID.randomUUID()
         );
 

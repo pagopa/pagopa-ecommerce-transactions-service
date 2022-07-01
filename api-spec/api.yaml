@@ -222,9 +222,6 @@ components:
       properties:
         authorizationResult:
           $ref: '#/components/schemas/AuthorizationResult'
-        identificativoCanale:
-          type: string
-          description: PSP payment channel id
         timestampOperation:
           type: string
           format: date-time

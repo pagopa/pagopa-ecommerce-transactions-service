@@ -27,7 +27,7 @@ public class PaymentGatewayClient {
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(BigDecimal.valueOf(authorizationData.transaction().getAmount().value() + authorizationData.fee()))
                 .description(authorizationData.transaction().getDescription().value())
-                .paymentChannel("")
+                .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(0L);
 
         return paymentTransactionsControllerApi.authRequest(authorizationData.transactionId(), postePayAuthRequest, "mdcInfo")
