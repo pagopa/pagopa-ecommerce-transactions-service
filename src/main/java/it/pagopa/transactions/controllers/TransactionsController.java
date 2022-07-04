@@ -27,21 +27,21 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @Override
-    public Mono<ResponseEntity<TransactionInfoDto>> getTransactionInfo(String paymentToken, ServerWebExchange exchange) {
-        return transactionsService.getTransactionInfo(paymentToken).map(ResponseEntity::ok);
+    public Mono<ResponseEntity<TransactionInfoDto>> getTransactionInfo(String transactionId, ServerWebExchange exchange) {
+        return transactionsService.getTransactionInfo(transactionId).map(ResponseEntity::ok);
     }
 
     @Override
-    public Mono<ResponseEntity<RequestAuthorizationResponseDto>> requestTransactionAuthorization(String paymentToken, Mono<RequestAuthorizationRequestDto> requestAuthorizationRequestDto, ServerWebExchange exchange) {
+    public Mono<ResponseEntity<RequestAuthorizationResponseDto>> requestTransactionAuthorization(String transaciontId, Mono<RequestAuthorizationRequestDto> requestAuthorizationRequestDto, ServerWebExchange exchange) {
         return requestAuthorizationRequestDto
-                .flatMap(requestAuthorizationRequest -> transactionsService.requestTransactionAuthorization(paymentToken, requestAuthorizationRequest))
+                .flatMap(requestAuthorizationRequest -> transactionsService.requestTransactionAuthorization(transaciontId, requestAuthorizationRequest))
                 .map(ResponseEntity::ok);
     }
 
     @Override
-    public Mono<ResponseEntity<TransactionInfoDto>> updateTransactionAuthorization(String paymentToken, Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto, ServerWebExchange exchange) {
+    public Mono<ResponseEntity<TransactionInfoDto>> updateTransactionAuthorization(String transactionId, Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto, ServerWebExchange exchange) {
         return updateAuthorizationRequestDto
-                .flatMap(updateAuthorizationRequest -> transactionsService.updateTransactionAuthorization(paymentToken, updateAuthorizationRequest))
+                .flatMap(updateAuthorizationRequest -> transactionsService.updateTransactionAuthorization(transactionId, updateAuthorizationRequest))
                 .map(ResponseEntity::ok);
     }
 
