@@ -4,7 +4,7 @@ import javax.xml.bind.JAXBElement;
 
 import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentRequestDto;
 import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentResponseDto;
-import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
+import it.pagopa.transactions.exceptions.BadGatewayException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -56,8 +56,11 @@ public class NodeForPspClient {
 				.bodyToMono(ClosePaymentResponseDto.class)
 				.doOnSuccess(closePaymentResponse ->
 						log.debug("Requested closePayment for paymentTokens {}", request.getPaymentTokens()))
-				.doOnError(ResponseStatusException.class,
-						error -> log.error("ResponseStatus Error:", error))
-				.doOnError(Exception.class, error -> log.error("Generic Error:", error));
+				.doOnError(Exception.class, error -> log.error("Generic Error:", error))
+				.onErrorMap(ResponseStatusException.class,
+						error -> {
+							log.error("ResponseStatus Error:", error);
+							return new BadGatewayException();
+						});
 	}
 }

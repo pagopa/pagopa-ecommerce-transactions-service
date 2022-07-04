@@ -27,10 +27,10 @@ public class PaymentGatewayClient {
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(BigDecimal.valueOf(authorizationData.transaction().getAmount().value() + authorizationData.fee()))
                 .description(authorizationData.transaction().getDescription().value())
-                .paymentChannel("")
+                .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(0L);
 
-        return paymentTransactionsControllerApi.authRequest(UUID.randomUUID(), postePayAuthRequest, "mdcInfo")
+        return paymentTransactionsControllerApi.authRequest(authorizationData.transactionId(), postePayAuthRequest, "mdcInfo")
                 .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
                     case UNAUTHORIZED -> new AlreadyProcessedException(authorizationData.transaction().getRptId());
                     case GATEWAY_TIMEOUT -> new GatewayTimeoutException();

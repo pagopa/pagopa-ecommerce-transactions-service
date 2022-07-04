@@ -1,0 +1,120 @@
+package it.pagopa.transactions.commands.handlers;
+
+import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
+import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
+import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
+import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
+import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
+import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
+import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdateData;
+import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdatedEvent;
+import it.pagopa.transactions.domain.*;
+import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
+import java.time.OffsetDateTime;
+
+import static org.mockito.ArgumentMatchers.any;
+
+@ExtendWith(MockitoExtension.class)
+class TransactionUpdateAuthorizationHandlerTest {
+
+    @InjectMocks
+    private TransactionUpdateAuthorizationHandler updateAuthorizationHandler;
+    @Mock
+    private TransactionsEventStoreRepository<TransactionAuthorizationStatusUpdateData> transactionEventStoreRepository;
+
+    @Test
+    void shouldRejectTransactionInInvalidState() {
+        PaymentToken paymentToken = new PaymentToken("paymentToken");
+        RptId rptId = new RptId("rptId");
+        TransactionDescription description = new TransactionDescription("description");
+        TransactionAmount amount = new TransactionAmount(100);
+
+        Transaction transaction = new Transaction(
+                paymentToken,
+                rptId,
+                description,
+                amount,
+                TransactionStatusDto.INITIALIZED
+        );
+
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .authorizationResult(AuthorizationResultDto.OK)
+                .authorizationCode("authorizationCode")
+                .timestampOperation(OffsetDateTime.now());
+
+        UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
+                transaction,
+                updateAuthorizationRequest
+        );
+
+        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(transaction.getRptId(), updateAuthorizationStatusData);
+
+        /* test */
+        StepVerifier.create(updateAuthorizationHandler.handle(requestAuthorizationCommand))
+                .expectErrorMatches(error -> error instanceof AlreadyProcessedException)
+                .verify();
+
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(any());
+    }
+
+    @Test
+    void shouldSetTransactionStatusToAuthorizationFailedOnGatewayKO() {
+        PaymentToken paymentToken = new PaymentToken("paymentToken");
+        RptId rptId = new RptId("rptId");
+        TransactionDescription description = new TransactionDescription("description");
+        TransactionAmount amount = new TransactionAmount(100);
+
+        Transaction transaction = new Transaction(
+                paymentToken,
+                rptId,
+                description,
+                amount,
+                TransactionStatusDto.AUTHORIZATION_REQUESTED
+        );
+
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .authorizationResult(AuthorizationResultDto.KO)
+                .authorizationCode("authorizationCode")
+                .timestampOperation(OffsetDateTime.now());
+
+        UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
+                transaction,
+                updateAuthorizationRequest
+        );
+
+        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(transaction.getRptId(), updateAuthorizationStatusData);
+
+        TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = new TransactionAuthorizationStatusUpdateData(AuthorizationResultDto.KO, TransactionStatusDto.AUTHORIZATION_FAILED);
+
+        TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
+                transaction.getRptId().toString(),
+                transaction.getPaymentToken().toString(),
+                transactionAuthorizationStatusUpdateData
+        );
+
+        /* preconditions */
+        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
+
+        /* test */
+        StepVerifier.create(updateAuthorizationHandler.handle(requestAuthorizationCommand))
+                .expectNextMatches(transactionInfoDto -> transactionInfoDto.equals(new TransactionInfoDto()
+                        .paymentToken(paymentToken.value())
+                        .amount(amount.value())
+                        .rptId(rptId.value())
+                        .reason(description.value())
+                        .status(TransactionStatusDto.AUTHORIZATION_FAILED)))
+                .verifyComplete();
+
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
+    }
+}

@@ -22,6 +22,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -49,13 +50,17 @@ public class PaymentGatewayClientTest {
                 transaction,
                 10,
                 "paymentInstrumentId",
-                "pspId"
+                "pspId",
+                "paymentTypeCode",
+                "brokerName",
+                "pspChannelCode",
+                UUID.randomUUID()
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
                 .description(transaction.getDescription().value())
-                .paymentChannel("")
+                .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(0L);
 
         String mdcInfo = "mdcInfo";
@@ -89,13 +94,17 @@ public class PaymentGatewayClientTest {
                 transaction,
                 10,
                 "paymentInstrumentId",
-                "pspId"
+                "pspId",
+                "paymentTypeCode",
+                "brokerName",
+                "pspChannelCode",
+                UUID.randomUUID()
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
                 .description(transaction.getDescription().value())
-                .paymentChannel("")
+                .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(0L);
 
         String mdcInfo = "mdcInfo";
@@ -126,13 +135,17 @@ public class PaymentGatewayClientTest {
                 transaction,
                 10,
                 "paymentInstrumentId",
-                "pspId"
+                "pspId",
+                "paymentTypeCode",
+                "brokerName",
+                "pspChannelCode",
+                UUID.randomUUID()
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
                 .description(transaction.getDescription().value())
-                .paymentChannel("")
+                .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(0L);
 
         String mdcInfo = "mdcInfo";
@@ -161,13 +174,17 @@ public class PaymentGatewayClientTest {
                 transaction,
                 10,
                 "paymentInstrumentId",
-                "pspId"
+                "pspId",
+                "paymentTypeCode",
+                "brokerName",
+                "pspChannelCode",
+                UUID.randomUUID()
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
                 .description(transaction.getDescription().value())
-                .paymentChannel("")
+                .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(0L);
 
         String mdcInfo = "mdcInfo";

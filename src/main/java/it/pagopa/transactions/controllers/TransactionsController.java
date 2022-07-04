@@ -40,7 +40,9 @@ public class TransactionsController implements TransactionsApi {
 
     @Override
     public Mono<ResponseEntity<TransactionInfoDto>> updateTransactionAuthorization(String paymentToken, Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto, ServerWebExchange exchange) {
-        return null;
+        return updateAuthorizationRequestDto
+                .flatMap(updateAuthorizationRequest -> transactionsService.updateTransactionAuthorization(paymentToken, updateAuthorizationRequest))
+                .map(ResponseEntity::ok);
     }
 
     @ExceptionHandler(TransactionNotFoundException.class)

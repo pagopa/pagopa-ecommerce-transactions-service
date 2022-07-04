@@ -1,12 +1,19 @@
 package it.pagopa.transactions.services;
 
+import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
+import it.pagopa.transactions.commands.TransactionClosureRequestCommand;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.TransactionInitializeCommand;
+import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
+import it.pagopa.transactions.commands.data.ClosureRequestData;
+import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
+import it.pagopa.transactions.commands.handlers.TransactionClosureRequestHandler;
 import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
+import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHandler;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
@@ -17,6 +24,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuples;
+
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -27,6 +37,12 @@ public class TransactionsService {
 
     @Autowired
     private TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandler;
+
+    @Autowired
+    private TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandler;
+
+    @Autowired
+    private TransactionClosureRequestHandler transactionClosureRequestHandler;
 
     @Autowired
     private TransactionsProjectionHandler transactionsProjectionHandler;
@@ -82,17 +98,20 @@ public class TransactionsService {
                     return ecommercePaymentInstrumentsClient
                             .getPSPs(transaction.getAmount(),
                                     requestAuthorizationRequestDto.getLanguage().getValue())
-                            .map(pspResponse -> pspResponse.getPsp()
+                            .mapNotNull(pspResponse -> pspResponse.getPsp()
                                     .stream()
-                                    .anyMatch(psp -> psp.getCode()
+                                    .filter(psp -> psp.getCode()
                                             .equals(requestAuthorizationRequestDto.getPspId())
                                             &&
                                             psp.getFixedCost()
-                                                    .equals((double) requestAuthorizationRequestDto.getFee() / 100)))
-                            .flatMap(isValid -> isValid ? Mono.just(transaction) : Mono.empty());
+                                                    .equals((double) requestAuthorizationRequestDto.getFee() / 100))
+                                    .findFirst().orElse(null))
+                            .map(psp -> Tuples.of(transaction, psp));
                 })
                 .switchIfEmpty(Mono.error(new UnsatisfiablePspRequestException(new PaymentToken(paymentToken), requestAuthorizationRequestDto.getLanguage(), requestAuthorizationRequestDto.getFee())))
-                .flatMap(transactionDocument -> {
+                .flatMap(args -> {
+                    it.pagopa.transactions.documents.Transaction transactionDocument = args.getT1();
+                    PspDto psp = args.getT2();
 
                     log.info("Requesting authorization for rptId: {}", transactionDocument.getRptId());
 
@@ -108,7 +127,11 @@ public class TransactionsService {
                             transaction,
                             requestAuthorizationRequestDto.getFee(),
                             requestAuthorizationRequestDto.getPaymentInstrumentId(),
-                            requestAuthorizationRequestDto.getPspId()
+                            requestAuthorizationRequestDto.getPspId(),
+                            psp.getPaymentTypeCode(),
+                            psp.getBrokerName(),
+                            psp.getChannelCode(),
+                            UUID.randomUUID()
                     );
 
                     TransactionRequestAuthorizationCommand command = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);
@@ -116,6 +139,42 @@ public class TransactionsService {
                     return transactionRequestAuthorizationHandler.handle(command)
                             .doOnNext(res -> log.info("Requested authorization for rptId: {}", transactionDocument.getRptId()))
                             .flatMap(res -> authorizationProjectionHandler.handle(authorizationData).thenReturn(res));
+                });
+    }
+
+    public Mono<TransactionInfoDto> updateTransactionAuthorization(String paymentToken, UpdateAuthorizationRequestDto updateAuthorizationRequestDto) {
+        return transactionsViewRepository
+                .findByPaymentToken(paymentToken)
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentToken)))
+                .flatMap(transactionDocument -> {
+                    Transaction transaction = new Transaction(
+                            new PaymentToken(transactionDocument.getPaymentToken()),
+                            new RptId(transactionDocument.getRptId()),
+                            new TransactionDescription(transactionDocument.getDescription()),
+                            new TransactionAmount(transactionDocument.getAmount()),
+                            transactionDocument.getStatus()
+                    );
+
+                    UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
+                            transaction,
+                            updateAuthorizationRequestDto
+                    );
+
+                    TransactionUpdateAuthorizationCommand transactionUpdateAuthorizationCommand = new TransactionUpdateAuthorizationCommand(transaction.getRptId(), updateAuthorizationStatusData);
+
+                    return transactionUpdateAuthorizationHandler
+                            .handle(transactionUpdateAuthorizationCommand)
+                            .doOnNext(transactionInfo -> log.info("Requested authorization update for rptId: {}", transactionInfo.getRptId()))
+                            .thenReturn(transaction);
+                })
+                .flatMap(transaction -> {
+                    ClosureRequestData closureRequestData = new ClosureRequestData(transaction, updateAuthorizationRequestDto);
+
+                    TransactionClosureRequestCommand transactionClosureRequestCommand = new TransactionClosureRequestCommand(transaction.getRptId(), closureRequestData);
+
+                    return transactionClosureRequestHandler
+                            .handle(transactionClosureRequestCommand)
+                            .doOnNext(transactionInfo -> log.info("Requested transaction closure for rptId: {}", transactionInfo.getRptId()));
                 });
     }
 }

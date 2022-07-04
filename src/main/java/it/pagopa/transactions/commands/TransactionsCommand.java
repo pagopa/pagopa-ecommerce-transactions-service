@@ -6,7 +6,9 @@ import lombok.Data;
 @Data
 public abstract sealed class TransactionsCommand<T> permits
         TransactionInitializeCommand,
-        TransactionRequestAuthorizationCommand
+        TransactionRequestAuthorizationCommand,
+        TransactionUpdateAuthorizationCommand,
+        TransactionClosureRequestCommand
 {
     protected final RptId rptId;
     protected final TransactionsCommandCode code;

@@ -133,6 +133,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
+        502:
+          description: Bad gateway
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
         504:
           description: Gateway timeout
           content:
@@ -222,10 +228,20 @@ components:
       properties:
         authorizationResult:
           $ref: '#/components/schemas/AuthorizationResult'
+        timestampOperation:
+          type: string
+          format: date-time
+          description: Payment timestamp
+        authorizationCode:
+          type: string
+          description: Payment gateway-specific authorization code related to the transaction
       required:
         - authorizationResult
+        - timestampOperation
+        - authorizationCode
       example:
         authorizationResult: OK
+        timestampOperation: 2022-02-11T13:00:00+01:00
     TransactionInfo:
       description: Transaction data returned when querying for an existing transaction
       allOf:
@@ -327,6 +343,10 @@ components:
       enum:
         - INITIALIZED
         - AUTHORIZATION_REQUESTED
+        - AUTHORIZED
+        - AUTHORIZATION_FAILED
+        - CLOSED
+        - CLOSURE_FAILED
     ProblemJson:
       type: object
       properties:
