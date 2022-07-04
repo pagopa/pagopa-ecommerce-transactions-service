@@ -8,7 +8,8 @@ public abstract sealed class TransactionsCommand<T>
         permits
         TransactionInitializeCommand,
         TransactionRequestAuthorizationCommand,
-        TransactionUpdateAuthorizationCommand
+        TransactionUpdateAuthorizationCommand,
+        TransactionClosureRequestCommand
 {
     protected final RptId rptId;
     protected final TransactionsCommandCode code;

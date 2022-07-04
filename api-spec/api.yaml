@@ -339,6 +339,8 @@ components:
         - AUTHORIZATION_REQUESTED
         - AUTHORIZED
         - AUTHORIZATION_FAILED
+        - CLOSED
+        - CLOSURE_FAILED
     ProblemJson:
       type: object
       properties:
