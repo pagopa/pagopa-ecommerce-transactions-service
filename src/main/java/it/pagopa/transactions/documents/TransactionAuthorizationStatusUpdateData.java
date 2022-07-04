@@ -1,6 +1,5 @@
 package it.pagopa.transactions.documents;
 
-import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import lombok.AllArgsConstructor;
@@ -12,6 +11,5 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document
 public class TransactionAuthorizationStatusUpdateData {
     private AuthorizationResultDto authorizationResultDto;
-    private ClosePaymentResponseDto.EsitoEnum nodeClosePaymentOutcome;
     private TransactionStatusDto newTransactionStatus;
 }
