@@ -9,7 +9,6 @@ import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestD
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionClosureRequestCommand;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestData;
-import it.pagopa.transactions.documents.TransactionAuthorizationRequestedEvent;
 import it.pagopa.transactions.documents.TransactionClosureRequestData;
 import it.pagopa.transactions.documents.TransactionClosureRequestedEvent;
 import it.pagopa.transactions.domain.Transaction;
@@ -36,7 +35,7 @@ public class TransactionClosureRequestHandler implements CommandHandler<Transact
     private TransactionsEventStoreRepository<TransactionClosureRequestData> transactionEventStoreRepository;
 
     @Autowired
-    private TransactionsEventStoreRepository<TransactionAuthorizationRequestedEvent> authorizationRequestedEventStoreRepository;
+    private TransactionsEventStoreRepository<TransactionAuthorizationRequestData> authorizationRequestedEventStoreRepository;
 
     @Override
     public Mono<TransactionInfoDto> handle(TransactionClosureRequestCommand command) {
@@ -54,7 +53,7 @@ public class TransactionClosureRequestHandler implements CommandHandler<Transact
                     )
                     .switchIfEmpty(Mono.error(new TransactionNotFoundException(transaction.getPaymentToken().value())))
                     .flatMap(authorizationRequestedEvent -> {
-                        TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData().getData();
+                        TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
                         ClosePaymentRequestDto closePaymentRequest = new ClosePaymentRequestDto()
                                 .paymentTokens(List.of(transaction.getPaymentToken().value()))

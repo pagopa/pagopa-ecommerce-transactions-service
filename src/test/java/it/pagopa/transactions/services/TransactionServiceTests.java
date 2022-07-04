@@ -191,6 +191,7 @@ public class TransactionServiceTests {
 
 
 		UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+				.authorizationResult(AuthorizationResultDto.OK)
 				.authorizationCode("authorizationCode")
 				.timestampOperation(OffsetDateTime.now());
 
@@ -215,6 +216,7 @@ public class TransactionServiceTests {
 		String paymentToken = "paymentToken";
 
 		UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+				.authorizationResult(AuthorizationResultDto.OK)
 				.authorizationCode("authorizationCode")
 				.timestampOperation(OffsetDateTime.now());
 

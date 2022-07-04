@@ -143,6 +143,7 @@ class TransactionsControllerTest {
                 .paymentToken(paymentToken);
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .authorizationResult(AuthorizationResultDto.OK)
                 .authorizationCode("authorizationCode")
                 .timestampOperation(OffsetDateTime.now());
 
@@ -162,6 +163,7 @@ class TransactionsControllerTest {
         String paymentToken = "paymentToken";
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .authorizationResult(AuthorizationResultDto.OK)
                 .authorizationCode("authorizationCode")
                 .timestampOperation(OffsetDateTime.now());
 
@@ -180,6 +182,7 @@ class TransactionsControllerTest {
         String paymentToken = "paymentToken";
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .authorizationResult(AuthorizationResultDto.OK)
                 .authorizationCode("authorizationCode")
                 .timestampOperation(OffsetDateTime.now());
 
