@@ -42,7 +42,7 @@ public class TransactionClosureRequestHandler implements CommandHandler<Transact
         Transaction transaction = command.getData().transaction();
 
         if (transaction.getStatus() != TransactionStatusDto.AUTHORIZED) {
-            log.error("Error: requesting outcome update for transaction in state {}", transaction.getStatus());
+            log.error("Error: requesting closure status update for transaction in state {}", transaction.getStatus());
             return Mono.error(new AlreadyProcessedException(transaction.getRptId()));
         } else {
             UpdateAuthorizationRequestDto updateAuthorizationRequest = command.getData().updateAuthorizationRequest();
