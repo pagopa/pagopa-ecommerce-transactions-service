@@ -14,11 +14,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -128,6 +130,68 @@ class TransactionsControllerTest {
                 TransactionNotFoundException.class,
                 () -> transactionsController.requestTransactionAuthorization(paymentToken, Mono.just(authorizationRequest), null).block()
         );
+    }
+
+    @Test
+    void shouldReturnTransactionInfoOnCorrectAuthorizationAndClosure() {
+        String paymentToken = "paymentToken";
+
+        TransactionInfoDto transactionInfo = new TransactionInfoDto()
+                .amount(100)
+                .authToken("authToken")
+                .status(TransactionStatusDto.AUTHORIZED)
+                .paymentToken(paymentToken);
+
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .authorizationCode("authorizationCode")
+                .timestampOperation(OffsetDateTime.now());
+
+        /* preconditions */
+        Mockito.when(transactionsService.updateTransactionAuthorization(paymentToken, updateAuthorizationRequest))
+                .thenReturn(Mono.just(transactionInfo));
+
+        /* test */
+        ResponseEntity<TransactionInfoDto> response = transactionsController.updateTransactionAuthorization(paymentToken, Mono.just(updateAuthorizationRequest), null).block();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(transactionInfo, response.getBody());
+    }
+
+    @Test
+    void shouldReturnNotFoundForAuthorizingNonExistingRequest() {
+        String paymentToken = "paymentToken";
+
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .authorizationCode("authorizationCode")
+                .timestampOperation(OffsetDateTime.now());
+
+        /* preconditions */
+        Mockito.when(transactionsService.updateTransactionAuthorization(paymentToken, updateAuthorizationRequest))
+                .thenReturn(Mono.error(new TransactionNotFoundException(paymentToken)));
+
+        /* test */
+        StepVerifier.create(transactionsController.updateTransactionAuthorization(paymentToken, Mono.just(updateAuthorizationRequest), null))
+                .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
+                .verify();
+    }
+
+    @Test
+    void shouldReturnBadGatewayOnNodoHttpError() {
+        String paymentToken = "paymentToken";
+
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .authorizationCode("authorizationCode")
+                .timestampOperation(OffsetDateTime.now());
+
+        /* preconditions */
+        Mockito.when(transactionsService.updateTransactionAuthorization(paymentToken, updateAuthorizationRequest))
+                .thenReturn(Mono.error(new BadGatewayException()));
+
+        /* test */
+
+        StepVerifier.create(transactionsController.updateTransactionAuthorization(paymentToken, Mono.just(updateAuthorizationRequest), null))
+                .expectErrorMatches(error -> error instanceof BadGatewayException)
+                .verify();
     }
 
     @Test

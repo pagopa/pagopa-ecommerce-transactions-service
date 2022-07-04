@@ -14,6 +14,7 @@ import it.pagopa.transactions.documents.TransactionClosureRequestData;
 import it.pagopa.transactions.documents.TransactionClosureRequestedEvent;
 import it.pagopa.transactions.domain.Transaction;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionEventCode;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +52,7 @@ public class TransactionClosureRequestHandler implements CommandHandler<Transact
                             transaction.getPaymentToken().value(),
                             TransactionEventCode.TRANSACTION_AUTHORIZATION_REQUESTED_EVENT
                     )
+                    .switchIfEmpty(Mono.error(new TransactionNotFoundException(transaction.getPaymentToken().value())))
                     .flatMap(authorizationRequestedEvent -> {
                         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData().getData();
 
