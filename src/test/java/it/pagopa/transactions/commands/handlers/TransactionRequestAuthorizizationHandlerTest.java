@@ -24,6 +24,8 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 
+import java.util.UUID;
+
 @ExtendWith(MockitoExtension.class)
 class TransactionRequestAuthorizizationHandlerTest {
 
@@ -38,10 +40,12 @@ class TransactionRequestAuthorizizationHandlerTest {
 
     @Mock
     private TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository;
+   
+    private UUID transactionIdUUID = UUID.randomUUID();
 
     @Test
     void shouldSaveAuthorizationEvent() {
-        TransactionId transactionId = new TransactionId("transactionId");
+        TransactionId transactionId = new TransactionId(transactionIdUUID);
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("rptId");
         TransactionDescription description = new TransactionDescription("description");

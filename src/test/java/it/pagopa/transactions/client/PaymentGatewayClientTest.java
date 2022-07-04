@@ -36,10 +36,14 @@ class PaymentGatewayClientTest {
     @Mock
     PaymentTransactionsControllerApi paymentTransactionsControllerApi;
 
+    private UUID transactionIdUUID = UUID.randomUUID();
+
     @Test
     void shouldReturnAuthorizationResponse() {
+
+
         Transaction transaction = new Transaction(
-                new TransactionId("transactionId"),
+                new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
                 new RptId("rptId"),
                 new TransactionDescription("description"),
@@ -84,7 +88,7 @@ class PaymentGatewayClientTest {
     @Test
     void shouldThrowAlreadyProcessedOn401() {
         Transaction transaction = new Transaction(
-                new TransactionId("transactionId"),
+                new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
                 new RptId("rptId"),
                 new TransactionDescription("description"),
@@ -126,7 +130,7 @@ class PaymentGatewayClientTest {
     @Test
     void shouldThrowGatewayTimeoutOn504() {
         Transaction transaction = new Transaction(
-                new TransactionId("transactionId"),
+                new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
                 new RptId("rptId"),
                 new TransactionDescription("description"),
@@ -166,7 +170,7 @@ class PaymentGatewayClientTest {
     @Test
     void shouldThrowBadGatewayOn500() {
         Transaction transaction = new Transaction(
-                new TransactionId("transactionId"),
+                new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
                 new RptId("rptId"),
                 new TransactionDescription("description"),
