@@ -10,6 +10,7 @@ import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
 import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHandler;
 import it.pagopa.transactions.documents.Transaction;
+import it.pagopa.transactions.domain.TransactionId;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.AuthorizationProjectionHandler;
 import it.pagopa.transactions.projections.handlers.TransactionsProjectionHandler;
@@ -27,6 +28,7 @@ import reactor.test.StepVerifier;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -175,8 +177,10 @@ public class TransactionServiceTests {
 	@Test
 	void shouldReturnTransactionInfoForSuccessfulAuthAndClosure() {
 		String paymentToken = "paymentToken";
+	    TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
 		Transaction transactionDocument = new Transaction(
+			    transactionId.toString(),
 				paymentToken,
 				"rptId",
 				"description",

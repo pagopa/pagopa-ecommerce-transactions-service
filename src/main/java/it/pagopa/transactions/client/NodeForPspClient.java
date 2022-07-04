@@ -61,7 +61,7 @@ public class NodeForPspClient {
 				.onErrorMap(ResponseStatusException.class,
 						error -> {
 							log.error("ResponseStatus Error:", error);
-							return new BadGatewayException();
+							return new BadGatewayException("");
 						});
 	}
 }
