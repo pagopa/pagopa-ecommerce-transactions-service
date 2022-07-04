@@ -1,5 +1,7 @@
 package it.pagopa.transactions.client;
 
+import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentRequestDto;
+import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.transactions.model.*;
 import it.pagopa.transactions.utils.soap.SoapEnvelope;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,8 @@ import reactor.core.publisher.Mono;
 
 import javax.xml.bind.JAXBElement;
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -137,5 +141,69 @@ class NodeForPspClientTest {
          */
         assertThat(testResponse.getFault().getFaultCode()).isEqualTo(faultError);
         assertThat(testResponse.getFault().getFaultString()).isEqualTo(faultError);
+    }
+
+    @Test
+    void shouldReturnOKClosePaymentResponse() {
+        ClosePaymentRequestDto closePaymentRequest = new ClosePaymentRequestDto()
+                .paymentTokens(List.of("paymentToken"))
+                .outcome(ClosePaymentRequestDto.OutcomeEnum.OK)
+                .identificativoPsp("identificativoPsp")
+                .tipoVersamento(ClosePaymentRequestDto.TipoVersamentoEnum.CP)
+                .identificativoIntermediario("identificativoIntermediario")
+                .identificativoCanale("identificativoCanale")
+                .pspTransactionId("transactionId")
+                .fee(new BigDecimal(1))
+                .timestampOperation(OffsetDateTime.now())
+                .totalAmount(new BigDecimal(101))
+                .additionalPaymentInformations(null);
+
+        ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
+                .esito(ClosePaymentResponseDto.EsitoEnum.OK);
+
+        /* preconditions */
+        when(nodoWebClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.header(any(), eq(MediaType.APPLICATION_JSON_VALUE))).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.body(any(), eq(ClosePaymentRequestDto.class))).thenReturn(requestHeadersSpec);
+        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.onStatus(any(Predicate.class), any(Function.class))).thenReturn(responseSpec);
+        when(responseSpec.bodyToMono(ClosePaymentResponseDto.class)).thenReturn(Mono.just(closePaymentResponse));
+
+        ClosePaymentResponseDto clientResponse = client.closePayment(closePaymentRequest).block();
+
+        /* test */
+        assertThat(clientResponse.getEsito()).isEqualTo(closePaymentResponse.getEsito());
+    }
+
+    @Test
+    void shouldReturnKOClosePaymentResponse() {
+        ClosePaymentRequestDto closePaymentRequest = new ClosePaymentRequestDto()
+                .paymentTokens(List.of("paymentToken"))
+                .outcome(ClosePaymentRequestDto.OutcomeEnum.OK)
+                .identificativoPsp("identificativoPsp")
+                .tipoVersamento(ClosePaymentRequestDto.TipoVersamentoEnum.CP)
+                .identificativoIntermediario("identificativoIntermediario")
+                .identificativoCanale("identificativoCanale")
+                .pspTransactionId("transactionId")
+                .fee(new BigDecimal(1))
+                .timestampOperation(OffsetDateTime.now())
+                .totalAmount(new BigDecimal(101))
+                .additionalPaymentInformations(null);
+
+        ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
+                .esito(ClosePaymentResponseDto.EsitoEnum.KO);
+
+        /* preconditions */
+        when(nodoWebClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.header(any(), eq(MediaType.APPLICATION_JSON_VALUE))).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.body(any(), eq(ClosePaymentRequestDto.class))).thenReturn(requestHeadersSpec);
+        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.onStatus(any(Predicate.class), any(Function.class))).thenReturn(responseSpec);
+        when(responseSpec.bodyToMono(ClosePaymentResponseDto.class)).thenReturn(Mono.just(closePaymentResponse));
+
+        ClosePaymentResponseDto clientResponse = client.closePayment(closePaymentRequest).block();
+
+        /* test */
+        assertThat(clientResponse.getEsito()).isEqualTo(closePaymentResponse.getEsito());
     }
 }

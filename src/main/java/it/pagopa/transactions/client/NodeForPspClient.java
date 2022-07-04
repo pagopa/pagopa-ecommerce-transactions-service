@@ -4,7 +4,6 @@ import javax.xml.bind.JAXBElement;
 
 import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentRequestDto;
 import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentResponseDto;
-import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

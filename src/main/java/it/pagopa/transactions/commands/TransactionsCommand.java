@@ -4,8 +4,7 @@ import it.pagopa.transactions.domain.RptId;
 import lombok.Data;
 
 @Data
-public abstract sealed class TransactionsCommand<T>
-        permits
+public abstract sealed class TransactionsCommand<T> permits
         TransactionInitializeCommand,
         TransactionRequestAuthorizationCommand,
         TransactionUpdateAuthorizationCommand,
