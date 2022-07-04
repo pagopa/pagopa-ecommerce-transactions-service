@@ -2,14 +2,12 @@ package it.pagopa.transactions.services;
 
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PSPsResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
-import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
-import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
-import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
-import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
+import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
-import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandler;
+import it.pagopa.transactions.commands.handlers.TransactionClosureRequestHandler;
 import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
+import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHandler;
 import it.pagopa.transactions.documents.Transaction;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
@@ -24,7 +22,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,6 +56,9 @@ public class TransactionServiceTests {
 
 	@MockBean
 	private TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandler;
+
+	@MockBean
+	private TransactionClosureRequestHandler transactionClosureRequestHandler;
 
 	@Test
 	void getTransactionReturnsTransactionData() {
@@ -165,5 +168,63 @@ public class TransactionServiceTests {
 		assertThrows(
 				TransactionNotFoundException.class,
 				() -> transactionsService.requestTransactionAuthorization(paymentToken, authorizationRequest).block());
-	};
+	}
+
+	@Test
+	void shouldReturnTransactionInfoForSuccessfulAuthAndClosure() {
+		String paymentToken = "paymentToken";
+
+		Transaction transactionDocument = new Transaction(
+				paymentToken,
+				"rptId",
+				"description",
+				100,
+				TransactionStatusDto.AUTHORIZED);
+
+		TransactionInfoDto expectedResponse = new TransactionInfoDto()
+				.amount(transactionDocument.getAmount())
+				.authToken("authToken")
+				.status(transactionDocument.getStatus())
+				.reason("reason")
+				.paymentToken(paymentToken)
+				.rptId(transactionDocument.getRptId());
+
+
+		UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+				.authorizationCode("authorizationCode")
+				.timestampOperation(OffsetDateTime.now());
+
+		/* preconditions */
+		Mockito.when(repository.findByPaymentToken(paymentToken))
+				.thenReturn(Mono.just(transactionDocument));
+
+		Mockito.when(transactionUpdateAuthorizationHandler.handle(any()))
+				.thenReturn(Mono.just(expectedResponse));
+
+		Mockito.when(transactionClosureRequestHandler.handle(any()))
+				.thenReturn(Mono.just(expectedResponse));
+
+		/* test */
+		TransactionInfoDto transactionInfoResponse = transactionsService.updateTransactionAuthorization(paymentToken, updateAuthorizationRequest).block();
+
+		assertEquals(expectedResponse, transactionInfoResponse);
+	}
+
+	@Test
+	void shouldReturnNotFoundExceptionForNonExistingTransaction() {
+		String paymentToken = "paymentToken";
+
+		UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+				.authorizationCode("authorizationCode")
+				.timestampOperation(OffsetDateTime.now());
+
+		/* preconditions */
+		Mockito.when(repository.findByPaymentToken(paymentToken))
+				.thenReturn(Mono.empty());
+
+		/* test */
+		StepVerifier.create(transactionsService.updateTransactionAuthorization(paymentToken, updateAuthorizationRequest))
+				.expectErrorMatches(error -> error instanceof TransactionNotFoundException)
+				.verify();
+	}
 }
