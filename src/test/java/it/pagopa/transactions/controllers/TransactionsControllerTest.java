@@ -188,7 +188,7 @@ class TransactionsControllerTest {
 
         /* preconditions */
         Mockito.when(transactionsService.updateTransactionAuthorization(paymentToken, updateAuthorizationRequest))
-                .thenReturn(Mono.error(new BadGatewayException()));
+                .thenReturn(Mono.error(new BadGatewayException("")));
 
         /* test */
 

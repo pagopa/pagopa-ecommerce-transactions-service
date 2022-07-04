@@ -29,8 +29,6 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
-import java.util.UUID;
-
 @Service
 @Slf4j
 public class TransactionsService {
@@ -152,6 +150,7 @@ public class TransactionsService {
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentToken)))
                 .flatMap(transactionDocument -> {
                     Transaction transaction = new Transaction(
+                            new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
                             new PaymentToken(transactionDocument.getPaymentToken()),
                             new RptId(transactionDocument.getRptId()),
                             new TransactionDescription(transactionDocument.getDescription()),

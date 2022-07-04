@@ -43,6 +43,8 @@ class TransactionRequestAuthorizizationHandlerTest {
    
     private UUID transactionIdUUID = UUID.randomUUID();
 
+    TransactionId transactionId = new TransactionId(transactionIdUUID);
+
     @Test
     void shouldSaveAuthorizationEvent() {
         TransactionId transactionId = new TransactionId(transactionIdUUID);
@@ -95,7 +97,6 @@ class TransactionRequestAuthorizizationHandlerTest {
 
     @Test
     void shouldRejectAlreadyProcessedTransaction() {
-        TransactionId transactionId = new TransactionId("transactionId");
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("rptId");
         TransactionDescription description = new TransactionDescription("description");
