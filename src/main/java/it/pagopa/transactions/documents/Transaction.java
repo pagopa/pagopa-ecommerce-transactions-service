@@ -44,7 +44,7 @@ public class Transaction {
 
     public static Transaction from(it.pagopa.transactions.domain.Transaction transaction) {
         return new Transaction(
-                transaction.getTransactionId().value(),
+                transaction.getTransactionId().value().toString(),
                 transaction.getPaymentToken().value(),
                 transaction.getRptId().value(),
                 transaction.getDescription().value(),

@@ -21,6 +21,9 @@ import it.pagopa.transactions.projections.handlers.AuthorizationProjectionHandle
 import it.pagopa.transactions.projections.handlers.TransactionsProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -116,7 +119,7 @@ public class TransactionsService {
                     log.info("Requesting authorization for rptId: {}", transactionDocument.getRptId());
 
                     Transaction transaction = new Transaction(
-                            new TransactionId(transactionDocument.getTransactionId()),
+                            new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
                             new PaymentToken(transactionDocument.getPaymentToken()),
                             new RptId(transactionDocument.getRptId()),
                             new TransactionDescription(transactionDocument.getDescription()),

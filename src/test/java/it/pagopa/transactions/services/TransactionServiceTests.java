@@ -63,7 +63,7 @@ public class TransactionServiceTests {
 	@Test
 	void getTransactionReturnsTransactionData() {
 		final String PAYMENT_TOKEN = "aaa";
-		final String TRANSACION_ID = "transactionId";
+		final String TRANSACION_ID = "833d303a-f857-11ec-b939-0242ac120002";
 		final Transaction transaction = new Transaction(TRANSACION_ID, PAYMENT_TOKEN, "rptId", "reason", 100,
 				TransactionStatusDto.INITIALIZED);
 		final TransactionInfoDto expected = new TransactionInfoDto()
@@ -105,7 +105,7 @@ public class TransactionServiceTests {
 	@Test
 	void shouldRedirectToAuthorizationURIForValidRequest() {
 		String paymentToken = "paymentToken";
-		String transactionId = "transactionId";
+		String transactionId = "833d303a-f857-11ec-b939-0242ac120002";
 		RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
 				.amount(100)
 				.paymentInstrumentId("paymentInstrumentId")

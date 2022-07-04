@@ -30,16 +30,16 @@ class TransactionProjectionHandlerTest {
     @Test
     void shouldHandleTransaction() {
 
+        UUID transactionUUID = UUID.randomUUID();
+
         NewTransactionResponseDto data = new NewTransactionResponseDto()
-                .transactionId("d56ab1e6-f845-11ec-b939-0242ac120002")
+                .transactionId(transactionUUID.toString())
                 .paymentToken("token")
                 .rptId("77777777777302016723749670035")
                 .reason("reason")
                 .amount(1);
 
-        UUID transactionUUID = UUID.randomUUID();
-
-        TransactionId transactionId = new TransactionId(data.getTransactionId());
+        TransactionId transactionId = new TransactionId(transactionUUID);
         PaymentToken paymentToken = new PaymentToken(data.getPaymentToken());
         RptId rptId = new RptId(data.getRptId());
         TransactionDescription description = new TransactionDescription(data.getReason());
@@ -54,7 +54,6 @@ class TransactionProjectionHandlerTest {
                 TransactionStatusDto.INITIALIZED);
 
         try (
-                MockedStatic<UUID> uuid = Mockito.mockStatic(UUID.class);
                 MockedStatic<ZonedDateTime> zonedDateTime = Mockito.mockStatic(ZonedDateTime.class)) {
             /*
              * Preconditions
@@ -63,7 +62,6 @@ class TransactionProjectionHandlerTest {
                     .from(expected);
             Mockito.when(viewEventStoreRepository.save(Mockito.any(it.pagopa.transactions.documents.Transaction.class)))
                     .thenReturn(Mono.just(transactionDocument));
-            uuid.when(UUID::randomUUID).thenReturn(transactionUUID);
             zonedDateTime.when(ZonedDateTime::now).thenReturn(expected.getCreationDate());
 
             /*
