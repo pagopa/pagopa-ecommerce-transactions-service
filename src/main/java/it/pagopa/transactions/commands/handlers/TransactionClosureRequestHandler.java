@@ -47,8 +47,8 @@ public class TransactionClosureRequestHandler implements CommandHandler<Transact
         } else {
             UpdateAuthorizationRequestDto updateAuthorizationRequest = command.getData().updateAuthorizationRequest();
 
-            return authorizationRequestedEventStoreRepository.findByPaymentTokenAndEventCode(
-                            transaction.getPaymentToken().value(),
+            return authorizationRequestedEventStoreRepository.findByIdAndEventCode(
+                            transaction.getTransactionId().value().toString(),
                             TransactionEventCode.TRANSACTION_AUTHORIZATION_REQUESTED_EVENT
                     )
                     .switchIfEmpty(Mono.error(new TransactionNotFoundException(transaction.getPaymentToken().value())))

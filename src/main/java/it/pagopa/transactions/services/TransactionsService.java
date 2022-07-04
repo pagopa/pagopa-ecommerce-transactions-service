@@ -70,11 +70,12 @@ public class TransactionsService {
         return response.flatMap(data -> transactionsProjectionHandler.handle(data).thenReturn(data));
     }
 
-    public Mono<TransactionInfoDto> getTransactionInfo(String paymentToken) {
+    public Mono<TransactionInfoDto> getTransactionInfo(String transactionId) {
         return transactionsViewRepository
-                .findByPaymentToken(paymentToken)
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentToken)))
+                .findById(transactionId)
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .map(transaction -> new TransactionInfoDto()
+                        .transactionId(transaction.getTransactionId())
                         .amount(transaction.getAmount())
                         .reason(transaction.getDescription())
                         .paymentToken(transaction.getPaymentToken())
@@ -83,19 +84,19 @@ public class TransactionsService {
                         .status(transaction.getStatus()));
     }
 
-    public Mono<RequestAuthorizationResponseDto> requestTransactionAuthorization(String paymentToken,
+    public Mono<RequestAuthorizationResponseDto> requestTransactionAuthorization(String transaciontId,
                                                                                  RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
         return transactionsViewRepository
-                .findByPaymentToken(paymentToken)
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentToken)))
+                .findById(transaciontId)
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transaciontId)))
                 .flatMap(transaction -> {
-                    log.info("Authorization request amount validation for paymentToken: {}", paymentToken);
+                    log.info("Authorization request amount validation for transaciontId: {}", transaciontId);
                     return transaction.getAmount() != requestAuthorizationRequestDto.getAmount() ? Mono.empty()
                             : Mono.just(transaction);
                 })
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentToken)))
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transaciontId)))
                 .flatMap(transaction -> {
-                    log.info("Authorization psp validation for paymentToken: {}", paymentToken);
+                    log.info("Authorization psp validation for transaciontId: {}", transaciontId);
                     return ecommercePaymentInstrumentsClient
                             .getPSPs(transaction.getAmount(),
                                     requestAuthorizationRequestDto.getLanguage().getValue())
@@ -109,7 +110,7 @@ public class TransactionsService {
                                     .findFirst().orElse(null))
                             .map(psp -> Tuples.of(transaction, psp));
                 })
-                .switchIfEmpty(Mono.error(new UnsatisfiablePspRequestException(new PaymentToken(paymentToken), requestAuthorizationRequestDto.getLanguage(), requestAuthorizationRequestDto.getFee())))
+                .switchIfEmpty(Mono.error(new UnsatisfiablePspRequestException(new PaymentToken(transaciontId), requestAuthorizationRequestDto.getLanguage(), requestAuthorizationRequestDto.getFee())))
                 .flatMap(args -> {
                     it.pagopa.transactions.documents.Transaction transactionDocument = args.getT1();
                     PspDto psp = args.getT2();
@@ -144,10 +145,10 @@ public class TransactionsService {
                 });
     }
 
-    public Mono<TransactionInfoDto> updateTransactionAuthorization(String paymentToken, UpdateAuthorizationRequestDto updateAuthorizationRequestDto) {
+    public Mono<TransactionInfoDto> updateTransactionAuthorization(String transactionId, UpdateAuthorizationRequestDto updateAuthorizationRequestDto) {
         return transactionsViewRepository
-                .findByPaymentToken(paymentToken)
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentToken)))
+                .findById(transactionId)
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .flatMap(transactionDocument -> {
                     Transaction transaction = new Transaction(
                             new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
@@ -169,8 +170,8 @@ public class TransactionsService {
                             .handle(transactionUpdateAuthorizationCommand)
                             .doOnNext(transactionInfo -> log.info("Requested authorization update for rptId: {}", transactionInfo.getRptId()))
                             .thenReturn(transaction);
-                })
-                .flatMap(transaction -> {
+                }).flatMap(transaction -> {
+                    transaction.setStatus(TransactionStatusDto.AUTHORIZED);
                     ClosureRequestData closureRequestData = new ClosureRequestData(transaction, updateAuthorizationRequestDto);
 
                     TransactionClosureRequestCommand transactionClosureRequestCommand = new TransactionClosureRequestCommand(transaction.getRptId(), closureRequestData);

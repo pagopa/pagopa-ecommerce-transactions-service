@@ -17,16 +17,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NewTransactionResponse'
-  /transactions/{paymentToken}:
+  /transactions/{transactionId}:
     get:
       operationId: getTransactionInfo
       parameters:
         - in: path
-          name: paymentToken
+          name: transactionId
           schema:
             type: string
           required: true
-          description: Payment token associated to transaction
+          description: Transaction ID
       summary: Get information about a specific transaction
       responses:
         200:
@@ -47,17 +47,17 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
-  /transactions/{paymentToken}/auth-request:
+  /transactions/{transactionId}/auth-request:
     summary: Request authorization for the transaction identified by payment token
     post:
       operationId: requestTransactionAuthorization
       parameters:
         - in: path
-          name: paymentToken
+          name: transactionId
           schema:
             type: string
           required: true
-          description: Payment token associated to transaction
+          description: Transaction ID
       requestBody:
         $ref: "#/components/requestBodies/RequestAuthorizationRequest"
       responses:
@@ -101,11 +101,11 @@ paths:
       operationId: updateTransactionAuthorization
       parameters:
         - in: path
-          name: paymentToken
+          name: transactionId
           schema:
             type: string
           required: true
-          description: Payment token associated to transaction
+          description: Transaction Id
       requestBody:
         $ref: "#/components/requestBodies/UpdateAuthorizationRequest"
       responses:
