@@ -180,7 +180,7 @@ public class TransactionServiceTests {
 	    TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
 		Transaction transactionDocument = new Transaction(
-			    transactionId.toString(),
+			    transactionId.value().toString(),
 				paymentToken,
 				"rptId",
 				"description",
