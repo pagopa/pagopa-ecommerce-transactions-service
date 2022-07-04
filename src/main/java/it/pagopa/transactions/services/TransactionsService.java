@@ -3,16 +3,18 @@ package it.pagopa.transactions.services;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
+import it.pagopa.transactions.commands.TransactionClosureRequestCommand;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.TransactionInitializeCommand;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
+import it.pagopa.transactions.commands.data.ClosureRequestData;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
+import it.pagopa.transactions.commands.handlers.TransactionClosureRequestHandler;
 import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
 import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHandler;
 import it.pagopa.transactions.domain.*;
-import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
 import it.pagopa.transactions.projections.handlers.AuthorizationProjectionHandler;
@@ -22,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.util.UUID;
@@ -39,6 +40,9 @@ public class TransactionsService {
 
     @Autowired
     private TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandler;
+
+    @Autowired
+    private TransactionClosureRequestHandler transactionClosureRequestHandler;
 
     @Autowired
     private TransactionsProjectionHandler transactionsProjectionHandler;
@@ -139,8 +143,6 @@ public class TransactionsService {
     }
 
     public Mono<TransactionInfoDto> updateTransactionAuthorization(String paymentToken, UpdateAuthorizationRequestDto updateAuthorizationRequestDto) {
-        // TODO: Add logging
-
         return transactionsViewRepository
                 .findByPaymentToken(paymentToken)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentToken)))
@@ -160,7 +162,19 @@ public class TransactionsService {
 
                     TransactionUpdateAuthorizationCommand transactionUpdateAuthorizationCommand = new TransactionUpdateAuthorizationCommand(transaction.getRptId(), updateAuthorizationStatusData);
 
-                    return transactionUpdateAuthorizationHandler.handle(transactionUpdateAuthorizationCommand);
+                    return transactionUpdateAuthorizationHandler
+                            .handle(transactionUpdateAuthorizationCommand)
+                            .doOnNext(transactionInfo -> log.info("Requested authorization update for rptId: {}", transactionInfo.getRptId()))
+                            .thenReturn(transaction);
+                })
+                .flatMap(transaction -> {
+                    ClosureRequestData closureRequestData = new ClosureRequestData(transaction, updateAuthorizationRequestDto);
+
+                    TransactionClosureRequestCommand transactionClosureRequestCommand = new TransactionClosureRequestCommand(transaction.getRptId(), closureRequestData);
+
+                    return transactionClosureRequestHandler
+                            .handle(transactionClosureRequestCommand)
+                            .doOnNext(transactionInfo -> log.info("Requested transaction closure for rptId: {}", transactionInfo.getRptId()));
                 });
     }
 }
