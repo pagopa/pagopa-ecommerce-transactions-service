@@ -11,7 +11,7 @@ import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationH
 import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHandler;
 import it.pagopa.transactions.documents.Transaction;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
-import it.pagopa.transactions.projections.handlers.AuthorizationProjectionHandler;
+import it.pagopa.transactions.projections.handlers.AuthorizationRequestProjectionHandler;
 import it.pagopa.transactions.projections.handlers.TransactionsProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
@@ -34,7 +34,7 @@ import static org.mockito.Mockito.when;
 
 @WebFluxTest
 @TestPropertySource(locations = "classpath:application-tests.properties")
-@Import({TransactionsService.class, TransactionRequestAuthorizationHandler.class, TransactionsProjectionHandler.class, AuthorizationProjectionHandler.class})
+@Import({TransactionsService.class, TransactionRequestAuthorizationHandler.class, TransactionsProjectionHandler.class, AuthorizationRequestProjectionHandler.class})
 public class TransactionServiceTests {
 	@MockBean
 	private TransactionsViewRepository repository;

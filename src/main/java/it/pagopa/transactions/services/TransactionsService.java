@@ -17,7 +17,7 @@ import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHa
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
-import it.pagopa.transactions.projections.handlers.AuthorizationProjectionHandler;
+import it.pagopa.transactions.projections.handlers.AuthorizationRequestProjectionHandler;
 import it.pagopa.transactions.projections.handlers.TransactionsProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +48,7 @@ public class TransactionsService {
     private TransactionsProjectionHandler transactionsProjectionHandler;
 
     @Autowired
-    private AuthorizationProjectionHandler authorizationProjectionHandler;
+    private AuthorizationRequestProjectionHandler authorizationProjectionHandler;
 
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
