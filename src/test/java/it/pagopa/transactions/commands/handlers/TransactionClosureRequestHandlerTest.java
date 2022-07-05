@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionClosureRequestHandlerTest {
@@ -166,14 +167,9 @@ class TransactionClosureRequestHandlerTest {
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(closureRequestCommand))
-                .expectNextMatches(transactionInfoDto -> transactionInfoDto.equals(new TransactionInfoDto()
-                        .paymentToken(paymentToken.value())
-                        .amount(amount.value())
-                        .rptId(rptId.value())
-                        .reason(description.value())
-                        .status(TransactionStatusDto.CLOSURE_FAILED)))
+                .expectNextMatches(closureRequestedEvent -> closureRequestedEvent.equals(event))
                 .verifyComplete();
 
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(argThat(closureRequestEvent -> closureRequestEvent.getData().getNewTransactionStatus().equals(TransactionStatusDto.CLOSURE_FAILED)));
     }
 }
