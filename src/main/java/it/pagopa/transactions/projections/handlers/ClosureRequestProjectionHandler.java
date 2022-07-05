@@ -18,7 +18,7 @@ public class ClosureRequestProjectionHandler implements ProjectionHandler<Transa
 
     @Override
     public Mono<Transaction> handle(TransactionClosureRequestedEvent event) {
-        return transactionsViewRepository.findByPaymentToken(event.getPaymentToken())
+        return transactionsViewRepository.findById(event.getTransactionId())
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(event.getPaymentToken())))
                 .flatMap(transactionDocument -> {
                     TransactionStatusDto newStatus = event.getData().getNewTransactionStatus();
