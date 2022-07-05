@@ -59,7 +59,7 @@ class PaymentGatewayClientTest {
                 "paymentTypeCode",
                 "brokerName",
                 "pspChannelCode",
-                UUID.randomUUID()
+                transactionIdUUID
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()

@@ -14,6 +14,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.util.Random;
 import java.util.UUID;
 
 @Component
@@ -29,6 +30,7 @@ public class PaymentGatewayClient {
                 .description(authorizationData.transaction().getDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(0L);
+                //.idTransaction(new Random().nextLong()); //TODO waiting for pgs
 
         return paymentTransactionsControllerApi.authRequest(authorizationData.transactionId(), postePayAuthRequest, "mdcInfo")
                 .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
