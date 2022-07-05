@@ -114,6 +114,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         /* test */
         StepVerifier.create(updateAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectNextMatches(transactionInfoDto -> transactionInfoDto.equals(new TransactionInfoDto()
+                        .transactionId(transactionId.value().toString())
                         .paymentToken(paymentToken.value())
                         .amount(amount.value())
                         .rptId(rptId.value())

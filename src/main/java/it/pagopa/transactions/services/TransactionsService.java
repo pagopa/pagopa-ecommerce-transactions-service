@@ -171,7 +171,6 @@ public class TransactionsService {
                             .doOnNext(transactionInfo -> log.info("Requested authorization update for rptId: {}", transactionInfo.getRptId()))
                             .thenReturn(transaction);
                 }).flatMap(transaction -> {
-                    transaction.setStatus(TransactionStatusDto.AUTHORIZED);
                     ClosureRequestData closureRequestData = new ClosureRequestData(transaction, updateAuthorizationRequestDto);
 
                     TransactionClosureRequestCommand transactionClosureRequestCommand = new TransactionClosureRequestCommand(transaction.getRptId(), closureRequestData);
