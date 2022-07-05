@@ -45,7 +45,6 @@ public class TransactionClosureRequestHandler implements CommandHandler<Transact
             return Mono.error(new AlreadyProcessedException(transaction.getRptId()));
         } else {
             UpdateAuthorizationRequestDto updateAuthorizationRequest = command.getData().updateAuthorizationRequest();
-
             return authorizationRequestedEventStoreRepository.findByTransactionIdAndEventCode(
                             transaction.getTransactionId().value().toString(),
                             TransactionEventCode.TRANSACTION_AUTHORIZATION_REQUESTED_EVENT
@@ -92,7 +91,7 @@ public class TransactionClosureRequestHandler implements CommandHandler<Transact
                                 );
 
                         TransactionClosureRequestedEvent event = new TransactionClosureRequestedEvent(
-                                transaction.getTransactionId().toString(),
+                                transaction.getTransactionId().value().toString(),
                                 transaction.getRptId().toString(),
                                 transaction.getPaymentToken().toString(),
                                 statusUpdateData
