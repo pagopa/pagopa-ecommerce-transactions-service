@@ -26,7 +26,9 @@ public class NodeForPspClient {
 	private WebClient nodoWebClient;
 
 	public Mono<ActivatePaymentNoticeRes> activatePaymentNotice(JAXBElement<ActivatePaymentNoticeReq> request) {
-		return nodoWebClient.post().header("Content-Type", MediaType.TEXT_XML_VALUE)
+		return nodoWebClient.post()
+				.uri("/webservices/pof/PagamentiTelematiciPspNodoservice")
+				.header("Content-Type", MediaType.TEXT_XML_VALUE)
 				.header("SOAPAction", "activatePaymentNotice")
 				.body(Mono.just(new SoapEnvelope("", request)), SoapEnvelope.class)
 				.retrieve()
