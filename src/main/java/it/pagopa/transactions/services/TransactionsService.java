@@ -168,8 +168,8 @@ public class TransactionsService {
 
                     return transactionUpdateAuthorizationHandler
                             .handle(transactionUpdateAuthorizationCommand)
-                            .doOnNext(transactionInfo -> log.info("Requested authorization update for rptId: {}", transactionInfo.getRptId()))
-                            .flatMap(res -> authorizationUpdateProjectionHandler.handle(updateAuthorizationStatusData).thenReturn(transaction));
+                            .doOnNext(authorizationStatusUpdatedEvent -> log.info("Requested authorization update for rptId: {}", authorizationStatusUpdatedEvent.getRptId()))
+                            .flatMap(authorizationStatusUpdatedEvent -> authorizationUpdateProjectionHandler.handle(authorizationStatusUpdatedEvent).thenReturn(transaction));
                 })
                 .flatMap(transaction -> {
                     ClosureRequestData closureRequestData = new ClosureRequestData(transaction, updateAuthorizationRequestDto);

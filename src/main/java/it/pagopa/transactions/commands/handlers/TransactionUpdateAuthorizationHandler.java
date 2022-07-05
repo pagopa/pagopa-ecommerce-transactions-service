@@ -20,7 +20,7 @@ import reactor.core.publisher.Mono;
 
 @Component
 @Slf4j
-public class TransactionUpdateAuthorizationHandler implements CommandHandler<TransactionUpdateAuthorizationCommand, Mono<TransactionInfoDto>> {
+public class TransactionUpdateAuthorizationHandler implements CommandHandler<TransactionUpdateAuthorizationCommand, Mono<TransactionAuthorizationStatusUpdatedEvent>> {
 
     @Autowired
     NodeForPspClient nodeForPspClient;
@@ -29,7 +29,7 @@ public class TransactionUpdateAuthorizationHandler implements CommandHandler<Tra
     private TransactionsEventStoreRepository<TransactionAuthorizationStatusUpdateData> transactionEventStoreRepository;
 
     @Override
-    public Mono<TransactionInfoDto> handle(TransactionUpdateAuthorizationCommand command) {
+    public Mono<TransactionAuthorizationStatusUpdatedEvent> handle(TransactionUpdateAuthorizationCommand command) {
         Transaction transaction = command.getData().transaction();
 
         if (transaction.getStatus() != TransactionStatusDto.AUTHORIZATION_REQUESTED) {
@@ -60,15 +60,7 @@ public class TransactionUpdateAuthorizationHandler implements CommandHandler<Tra
                     statusUpdateData
             );
 
-            return transactionEventStoreRepository.save(event)
-                    .thenReturn(new TransactionInfoDto()
-                            .amount(transaction.getAmount().value())
-                            .reason(transaction.getDescription().value())
-                            .paymentToken(transaction.getPaymentToken().value())
-                            .authToken(null)
-                            .rptId(transaction.getRptId().value())
-                            .status(newStatus)
-                    );
+            return transactionEventStoreRepository.save(event);
         }
     }
 }
