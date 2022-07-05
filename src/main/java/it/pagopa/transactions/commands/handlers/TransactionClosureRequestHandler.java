@@ -46,7 +46,7 @@ public class TransactionClosureRequestHandler implements CommandHandler<Transact
         } else {
             UpdateAuthorizationRequestDto updateAuthorizationRequest = command.getData().updateAuthorizationRequest();
 
-            return authorizationRequestedEventStoreRepository.findByIdAndEventCode(
+            return authorizationRequestedEventStoreRepository.findByTransactionIdAndEventCode(
                             transaction.getTransactionId().value().toString(),
                             TransactionEventCode.TRANSACTION_AUTHORIZATION_REQUESTED_EVENT
                     )
