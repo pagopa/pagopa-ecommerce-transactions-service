@@ -18,6 +18,7 @@ import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
 import it.pagopa.transactions.projections.handlers.AuthorizationRequestProjectionHandler;
+import it.pagopa.transactions.projections.handlers.AuthorizationUpdateProjectionHandler;
 import it.pagopa.transactions.projections.handlers.TransactionsProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +50,9 @@ public class TransactionsService {
 
     @Autowired
     private AuthorizationRequestProjectionHandler authorizationProjectionHandler;
+
+    @Autowired
+    private AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandler;
 
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
@@ -165,7 +169,7 @@ public class TransactionsService {
                     return transactionUpdateAuthorizationHandler
                             .handle(transactionUpdateAuthorizationCommand)
                             .doOnNext(transactionInfo -> log.info("Requested authorization update for rptId: {}", transactionInfo.getRptId()))
-                            .thenReturn(transaction);
+                            .flatMap(res -> authorizationUpdateProjectionHandler.handle(updateAuthorizationStatusData).thenReturn(transaction));
                 })
                 .flatMap(transaction -> {
                     ClosureRequestData closureRequestData = new ClosureRequestData(transaction, updateAuthorizationRequestDto);
