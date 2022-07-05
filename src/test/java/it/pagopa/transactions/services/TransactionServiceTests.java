@@ -10,8 +10,11 @@ import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
 import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHandler;
 import it.pagopa.transactions.documents.Transaction;
+import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdateData;
+import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdatedEvent;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.AuthorizationRequestProjectionHandler;
+import it.pagopa.transactions.projections.handlers.AuthorizationUpdateProjectionHandler;
 import it.pagopa.transactions.projections.handlers.TransactionsProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
@@ -59,6 +62,9 @@ public class TransactionServiceTests {
 
 	@MockBean
 	private TransactionClosureRequestHandler transactionClosureRequestHandler;
+
+	@MockBean
+	private AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandler;
 
 	@Test
 	void getTransactionReturnsTransactionData() {
@@ -195,12 +201,26 @@ public class TransactionServiceTests {
 				.authorizationCode("authorizationCode")
 				.timestampOperation(OffsetDateTime.now());
 
+		TransactionAuthorizationStatusUpdateData statusUpdateData =
+				new TransactionAuthorizationStatusUpdateData(
+						updateAuthorizationRequest.getAuthorizationResult(),
+						expectedResponse.getStatus()
+				);
+
+		TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
+				transactionDocument.getRptId(),
+				transactionDocument.getPaymentToken(),
+				statusUpdateData
+		);
+
 		/* preconditions */
 		Mockito.when(repository.findByPaymentToken(paymentToken))
 				.thenReturn(Mono.just(transactionDocument));
 
 		Mockito.when(transactionUpdateAuthorizationHandler.handle(any()))
-				.thenReturn(Mono.just(expectedResponse));
+				.thenReturn(Mono.just(event));
+
+		Mockito.when(authorizationUpdateProjectionHandler.handle(any())).thenReturn(Mono.just(transactionDocument));
 
 		Mockito.when(transactionClosureRequestHandler.handle(any()))
 				.thenReturn(Mono.just(expectedResponse));

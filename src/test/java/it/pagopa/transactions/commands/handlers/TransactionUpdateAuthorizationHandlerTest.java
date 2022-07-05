@@ -107,12 +107,7 @@ class TransactionUpdateAuthorizationHandlerTest {
 
         /* test */
         StepVerifier.create(updateAuthorizationHandler.handle(requestAuthorizationCommand))
-                .expectNextMatches(transactionInfoDto -> transactionInfoDto.equals(new TransactionInfoDto()
-                        .paymentToken(paymentToken.value())
-                        .amount(amount.value())
-                        .rptId(rptId.value())
-                        .reason(description.value())
-                        .status(TransactionStatusDto.AUTHORIZATION_FAILED)))
+                .expectNextMatches(authorizationStatusUpdatedEvent -> authorizationStatusUpdatedEvent.equals(event))
                 .verifyComplete();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());

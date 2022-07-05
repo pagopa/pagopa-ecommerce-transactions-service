@@ -4,6 +4,8 @@ import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
+import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdateData;
+import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdatedEvent;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
@@ -45,11 +47,6 @@ class AuthorizationUpdateProjectionHandlerTest {
                 TransactionStatusDto.AUTHORIZATION_REQUESTED
         );
 
-        UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
-                transaction,
-                updateAuthorizationRequest
-        );
-
         it.pagopa.transactions.documents.Transaction expected = new it.pagopa.transactions.documents.Transaction(
                 transaction.getPaymentToken().value(),
                 transaction.getRptId().value(),
@@ -57,6 +54,18 @@ class AuthorizationUpdateProjectionHandlerTest {
                 transaction.getAmount().value(),
                 TransactionStatusDto.AUTHORIZED,
                 transaction.getCreationDate()
+        );
+
+        TransactionAuthorizationStatusUpdateData statusUpdateData =
+                new TransactionAuthorizationStatusUpdateData(
+                        updateAuthorizationRequest.getAuthorizationResult(),
+                        expected.getStatus()
+                );
+
+        TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
+                transaction.getRptId().value(),
+                transaction.getPaymentToken().value(),
+                statusUpdateData
         );
 
         /*
@@ -70,7 +79,7 @@ class AuthorizationUpdateProjectionHandlerTest {
         /*
          * Test
          */
-        StepVerifier.create(authorizationUpdateProjectionHandler.handle(updateAuthorizationStatusData))
+        StepVerifier.create(authorizationUpdateProjectionHandler.handle(event))
                 .expectNext(expected)
                 .verifyComplete();
 
