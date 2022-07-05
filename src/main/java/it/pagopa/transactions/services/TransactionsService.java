@@ -174,9 +174,16 @@ public class TransactionsService {
                     TransactionUpdateAuthorizationCommand transactionUpdateAuthorizationCommand = new TransactionUpdateAuthorizationCommand(transaction.getRptId(), updateAuthorizationStatusData);
 
                     return transactionUpdateAuthorizationHandler
-                            .handle(transactionUpdateAuthorizationCommand)
-                            .doOnNext(authorizationStatusUpdatedEvent -> log.info("Requested authorization update for rptId: {}", authorizationStatusUpdatedEvent.getRptId()))
-                            .flatMap(authorizationStatusUpdatedEvent -> authorizationUpdateProjectionHandler.handle(authorizationStatusUpdatedEvent).thenReturn(transaction));
+                        .handle(transactionUpdateAuthorizationCommand)
+                        .doOnNext(authorizationStatusUpdatedEvent -> log.info(
+                                "Requested authorization update for rptId: {}",
+                                authorizationStatusUpdatedEvent.getRptId()))
+                        .flatMap(authorizationStatusUpdatedEvent -> authorizationUpdateProjectionHandler
+                                .handle(authorizationStatusUpdatedEvent))
+                        .thenReturn(transaction).map(t -> {
+                            t.setStatus(TransactionStatusDto.AUTHORIZED);
+                            return t;
+                        });
                 })
                 .flatMap(transaction -> {
                     ClosureRequestData closureRequestData = new ClosureRequestData(transaction, updateAuthorizationRequestDto);
