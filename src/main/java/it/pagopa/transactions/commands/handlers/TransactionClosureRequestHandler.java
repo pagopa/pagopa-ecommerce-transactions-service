@@ -3,7 +3,6 @@ package it.pagopa.transactions.commands.handlers;
 import it.pagopa.generated.ecommerce.nodo.v1.dto.AdditionalPaymentInformationsDto;
 import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentRequestDto;
 import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
-import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
@@ -26,7 +25,7 @@ import java.util.List;
 
 @Component
 @Slf4j
-public class TransactionClosureRequestHandler implements CommandHandler<TransactionClosureRequestCommand, Mono<TransactionInfoDto>> {
+public class TransactionClosureRequestHandler implements CommandHandler<TransactionClosureRequestCommand, Mono<TransactionClosureRequestedEvent>> {
 
     @Autowired
     NodeForPspClient nodeForPspClient;
@@ -38,7 +37,7 @@ public class TransactionClosureRequestHandler implements CommandHandler<Transact
     private TransactionsEventStoreRepository<TransactionAuthorizationRequestData> authorizationRequestedEventStoreRepository;
 
     @Override
-    public Mono<TransactionInfoDto> handle(TransactionClosureRequestCommand command) {
+    public Mono<TransactionClosureRequestedEvent> handle(TransactionClosureRequestCommand command) {
         Transaction transaction = command.getData().transaction();
 
         if (transaction.getStatus() != TransactionStatusDto.AUTHORIZED) {
@@ -98,15 +97,8 @@ public class TransactionClosureRequestHandler implements CommandHandler<Transact
                                 statusUpdateData
                         );
 
-                        return transactionEventStoreRepository.save(event).thenReturn(newStatus);
-                    })
-                    .map(newStatus -> new TransactionInfoDto()
-                            .amount(transaction.getAmount().value())
-                            .reason(transaction.getDescription().value())
-                            .paymentToken(transaction.getPaymentToken().value())
-                            .authToken(null)
-                            .rptId(transaction.getRptId().value())
-                            .status(newStatus));
+                        return transactionEventStoreRepository.save(event);
+                    });
         }
     }
 

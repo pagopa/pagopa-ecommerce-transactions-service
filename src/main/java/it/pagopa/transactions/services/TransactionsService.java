@@ -4,21 +4,22 @@ import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.commands.TransactionClosureRequestCommand;
-import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.TransactionInitializeCommand;
+import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.data.ClosureRequestData;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
 import it.pagopa.transactions.commands.handlers.TransactionClosureRequestHandler;
-import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
+import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHandler;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
 import it.pagopa.transactions.projections.handlers.AuthorizationRequestProjectionHandler;
 import it.pagopa.transactions.projections.handlers.AuthorizationUpdateProjectionHandler;
+import it.pagopa.transactions.projections.handlers.ClosureRequestProjectionHandler;
 import it.pagopa.transactions.projections.handlers.TransactionsProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +54,9 @@ public class TransactionsService {
 
     @Autowired
     private AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandler;
+
+    @Autowired
+    private ClosureRequestProjectionHandler closureRequestProjectionHandler;
 
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
@@ -178,7 +182,15 @@ public class TransactionsService {
 
                     return transactionClosureRequestHandler
                             .handle(transactionClosureRequestCommand)
-                            .doOnNext(transactionInfo -> log.info("Requested transaction closure for rptId: {}", transactionInfo.getRptId()));
+                            .doOnNext(closureRequestedEvent -> log.info("Requested transaction closure for rptId: {}", closureRequestedEvent.getRptId()))
+                            .flatMap(closureRequestedEvent -> closureRequestProjectionHandler.handle(closureRequestedEvent))
+                            .map(transactionDocument -> new TransactionInfoDto()
+                                    .amount(transactionDocument.getAmount())
+                                    .reason(transactionDocument.getDescription())
+                                    .paymentToken(transactionDocument.getPaymentToken())
+                                    .rptId(transactionDocument.getRptId())
+                                    .status(transactionDocument.getStatus())
+                                    .authToken(null));
                 });
     }
 }
