@@ -24,14 +24,17 @@ public abstract sealed class TransactionEvent<T>
     @Id
     private String id;
     @PartitionKey
+    private String transactionId;
     private String rptId;
     private String paymentToken;
     private TransactionEventCode eventCode;
     private String creationDate;
     private T data;
 
-    TransactionEvent(String rptId, String paymentToken, TransactionEventCode eventCode, T data) {
+    TransactionEvent(String transactionId, String rptId, String paymentToken, TransactionEventCode eventCode, T data) {
         this.id = UUID.randomUUID().toString();
+        this.transactionId = transactionId;
+        this.rptId = rptId;
         this.eventCode = eventCode;
         this.paymentToken = paymentToken;
         this.data = data;

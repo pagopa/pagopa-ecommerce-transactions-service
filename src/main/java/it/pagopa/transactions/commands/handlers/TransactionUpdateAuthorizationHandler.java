@@ -55,6 +55,7 @@ public class TransactionUpdateAuthorizationHandler implements CommandHandler<Tra
                     );
 
             TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
+                    transaction.getTransactionId().toString(),
                     transaction.getRptId().toString(),
                     transaction.getPaymentToken().toString(),
                     statusUpdateData
@@ -62,6 +63,7 @@ public class TransactionUpdateAuthorizationHandler implements CommandHandler<Tra
 
             return transactionEventStoreRepository.save(event)
                     .thenReturn(new TransactionInfoDto()
+                            .transactionId(transaction.getTransactionId().value().toString())
                             .amount(transaction.getAmount().value())
                             .reason(transaction.getDescription().value())
                             .paymentToken(transaction.getPaymentToken().value())

@@ -64,6 +64,7 @@ class TransactionInitializerHandlerTest {
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
         requestDto.setRptId(TEST_RPTID.value());
         requestDto.setEmail("jhon.doe@email.com");
+        requestDto.setAmount(1200);
 
         TransactionInitializeCommand command = new TransactionInitializeCommand(TEST_RPTID, requestDto);
 

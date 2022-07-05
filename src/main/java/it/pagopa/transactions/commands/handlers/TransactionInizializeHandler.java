@@ -6,6 +6,7 @@ import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeRes;
 import it.pagopa.generated.transactions.model.CtQrCode;
 import it.pagopa.generated.transactions.model.ObjectFactory;
+import it.pagopa.generated.transactions.model.StOutcome;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
@@ -16,6 +17,7 @@ import it.pagopa.transactions.documents.TransactionInitData;
 import it.pagopa.transactions.documents.TransactionInitEvent;
 import it.pagopa.transactions.domain.IdempotencyKey;
 import it.pagopa.transactions.domain.RptId;
+import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionTokens;
 import it.pagopa.transactions.repositories.TransactionTokensRepository;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -27,7 +29,9 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.security.SecureRandom;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -55,7 +59,7 @@ public class TransactionInizializeHandler
 
     @Autowired
     NodoConnectionString nodoConnectionParams;
-    
+
     @Override
     public Mono<NewTransactionResponseDto> handle(TransactionInitializeCommand command) {
         final RptId rptId = command.getRptId();
@@ -82,7 +86,8 @@ public class TransactionInizializeHandler
                     qrCode.setFiscalCode(fiscalCode);
                     qrCode.setNoticeNumber(noticeId);
 
-                    BigDecimal amount = BigDecimal.valueOf(1200);
+                    BigDecimal amount = BigDecimal.valueOf(newTransactionRequestDto.getAmount() / 100).setScale(2,
+                            RoundingMode.CEILING);
 
                     ActivatePaymentNoticeReq request = objectFactory.createActivatePaymentNoticeReq();
                     request.setAmount(amount);
@@ -92,52 +97,70 @@ public class TransactionInizializeHandler
                     request.setIdBrokerPSP(nodoConnectionParams.getIdBrokerPSP());
                     request.setPassword(nodoConnectionParams.getPassword());
                     request.setIdempotencyKey(tokens.idempotencyKey().getKey());
-                    request.setPaymentNote(newTransactionRequestDto.getRptId());
-                    Mono<ActivatePaymentNoticeRes> activatePaymentNoticeResponse = nodeForPspClient.activatePaymentNotice(objectFactory.createActivatePaymentNoticeReq(request));
+                    Mono<ActivatePaymentNoticeRes> activatePaymentNoticeResponse = nodeForPspClient
+                            .activatePaymentNotice(objectFactory.createActivatePaymentNoticeReq(request));
 
                     return activatePaymentNoticeResponse.map(res -> Tuples.of(res, tokens.idempotencyKey()));
                 })
                 .flatMap(args -> {
                     final ActivatePaymentNoticeRes activatePaymentNoticeRes = args.getT1();
+                    final StOutcome outcome = activatePaymentNoticeRes.getOutcome();
+                    return StOutcome.KO.equals(outcome)
+                            ? Mono.error(new BadGatewayException(activatePaymentNoticeRes.getFault().getFaultCode()))
+                            : Mono.just(args);
+                })
+                .flatMap(args -> {
+                    final ActivatePaymentNoticeRes activatePaymentNoticeRes = args.getT1();
                     final IdempotencyKey idempotencyKey = args.getT2();
 
-                    final TransactionTokens tokens = new TransactionTokens(rptId, idempotencyKey, activatePaymentNoticeRes.getPaymentToken());
-                    return Mono.fromCallable(() -> transactionTokensRepository.save(tokens)).thenReturn(activatePaymentNoticeRes);
+                    log.info("Persisted transaction tokens for payment token {}",
+                            activatePaymentNoticeRes.getPaymentToken());
+
+                    final TransactionTokens tokens = new TransactionTokens(rptId, idempotencyKey,
+                            activatePaymentNoticeRes.getPaymentToken());
+                    return Mono.fromCallable(() -> transactionTokensRepository.save(tokens))
+                            .thenReturn(activatePaymentNoticeRes);
                 })
                 .flatMap(activatePaymentNoticeRes -> {
-                    log.info("Persisted transaction tokens for payment token {}", activatePaymentNoticeRes.getPaymentToken());
+
+                    final String transactionId = UUID.randomUUID().toString();
 
                     TransactionInitData data = new TransactionInitData();
                     data.setAmount(activatePaymentNoticeRes.getTotalAmount().intValue());
                     data.setDescription(activatePaymentNoticeRes.getPaymentDescription());
+                    data.setEmail(newTransactionRequestDto.getEmail());
 
                     TransactionEvent<TransactionInitData> transactionInitializedEvent = new TransactionInitEvent(
+                            transactionId,
                             newTransactionRequestDto.getRptId(),
                             activatePaymentNoticeRes.getPaymentToken(),
                             data);
 
-                    log.info("Generated event TRANSACTION_INITIALIZED_EVENT for payment token {}", activatePaymentNoticeRes.getPaymentToken());
-                    return transactionEventStoreRepository.save(transactionInitializedEvent).thenReturn(activatePaymentNoticeRes);
+                    log.info("Generated event TRANSACTION_INITIALIZED_EVENT for payment token {}",
+                            activatePaymentNoticeRes.getPaymentToken());
+                    return transactionEventStoreRepository.save(transactionInitializedEvent)
+                            .thenReturn(transactionInitializedEvent);
                 })
-                .flatMap(activatePaymentNoticeRes -> {
+                .flatMap(transactionInitializedEvent -> {
                     SessionDataDto sessionRequest = new SessionDataDto()
-                            .email(newTransactionRequestDto.getEmail())
-                            .paymentToken(activatePaymentNoticeRes.getPaymentToken())
-                            .rptId(newTransactionRequestDto.getRptId());
+                            .email(transactionInitializedEvent.getData().getEmail())
+                            .paymentToken(transactionInitializedEvent.getPaymentToken())
+                            .rptId(transactionInitializedEvent.getRptId());
 
                     Mono<SessionTokenDto> sessionToken = ecommerceSessionsClient.createSessionToken(sessionRequest);
 
-                    return sessionToken.map(token -> Tuples.of(token, activatePaymentNoticeRes));
+                    return sessionToken.map(token -> Tuples.of(token, transactionInitializedEvent));
                 })
                 .map(args -> {
-                    SessionTokenDto sessionToken = args.getT1();
-                    ActivatePaymentNoticeRes activatePaymentNoticeRes = args.getT2();
+                    final SessionTokenDto sessionToken = args.getT1();
+                    final TransactionEvent<TransactionInitData> transactionInitializedEvent = args.getT2();
 
                     return new NewTransactionResponseDto()
-                            .amount(activatePaymentNoticeRes.getTotalAmount().intValue())
-                            .reason(activatePaymentNoticeRes.getPaymentDescription())
+                            .amount(transactionInitializedEvent.getData().getAmount().intValue())
+                            .reason(transactionInitializedEvent.getData().getDescription())
                             .authToken(sessionToken.getSessionToken())
-                            .paymentToken(activatePaymentNoticeRes.getPaymentToken())
+                            .transactionId(transactionInitializedEvent.getTransactionId())
+                            .paymentToken(transactionInitializedEvent.getPaymentToken())
                             .rptId(rptId.value());
                 });
     }

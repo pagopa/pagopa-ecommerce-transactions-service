@@ -21,6 +21,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 
@@ -32,6 +33,8 @@ class TransactionUpdateAuthorizationHandlerTest {
     @Mock
     private TransactionsEventStoreRepository<TransactionAuthorizationStatusUpdateData> transactionEventStoreRepository;
 
+    private TransactionId transactionId = new TransactionId(UUID.randomUUID());
+
     @Test
     void shouldRejectTransactionInInvalidState() {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
@@ -40,6 +43,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         TransactionAmount amount = new TransactionAmount(100);
 
         Transaction transaction = new Transaction(
+                transactionId,
                 paymentToken,
                 rptId,
                 description,
@@ -75,6 +79,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         TransactionAmount amount = new TransactionAmount(100);
 
         Transaction transaction = new Transaction(
+                transactionId,
                 paymentToken,
                 rptId,
                 description,
@@ -97,6 +102,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = new TransactionAuthorizationStatusUpdateData(AuthorizationResultDto.KO, TransactionStatusDto.AUTHORIZATION_FAILED);
 
         TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
+                transactionId.toString(),
                 transaction.getRptId().toString(),
                 transaction.getPaymentToken().toString(),
                 transactionAuthorizationStatusUpdateData
@@ -108,6 +114,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         /* test */
         StepVerifier.create(updateAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectNextMatches(transactionInfoDto -> transactionInfoDto.equals(new TransactionInfoDto()
+                        .transactionId(transactionId.value().toString())
                         .paymentToken(paymentToken.value())
                         .amount(amount.value())
                         .rptId(rptId.value())

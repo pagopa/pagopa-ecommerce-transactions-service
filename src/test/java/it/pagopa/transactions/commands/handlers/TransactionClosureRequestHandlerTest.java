@@ -6,11 +6,7 @@ import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionClosureRequestCommand;
-import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
-import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
-import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.data.ClosureRequestData;
-import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
 import it.pagopa.transactions.documents.*;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.domain.Transaction;
@@ -48,14 +44,18 @@ class TransactionClosureRequestHandlerTest {
     @Mock
     NodeForPspClient nodeForPspClient;
 
+    private TransactionId transactionId = new TransactionId(UUID.randomUUID());
+
     @Test
     void shouldRejectTransactionInWrongState() {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
+
         RptId rptId = new RptId("rptId");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
 
         Transaction transaction = new Transaction(
+                transactionId,
                 paymentToken,
                 rptId,
                 description,
@@ -91,6 +91,7 @@ class TransactionClosureRequestHandlerTest {
         TransactionAmount amount = new TransactionAmount(100);
 
         Transaction transaction = new Transaction(
+                transactionId,
                 paymentToken,
                 rptId,
                 description,
@@ -113,6 +114,7 @@ class TransactionClosureRequestHandlerTest {
         TransactionClosureRequestData transactionAuthorizationStatusUpdateData = new TransactionClosureRequestData(ClosePaymentResponseDto.EsitoEnum.KO, TransactionStatusDto.CLOSURE_FAILED);
 
         TransactionClosureRequestedEvent event = new TransactionClosureRequestedEvent(
+                transactionId.toString(),
                 transaction.getRptId().toString(),
                 transaction.getPaymentToken().toString(),
                 transactionAuthorizationStatusUpdateData
@@ -130,6 +132,7 @@ class TransactionClosureRequestHandlerTest {
         );
         TransactionAuthorizationRequestedEvent transactionAuthorizationRequestedEvent =
                 new TransactionAuthorizationRequestedEvent(
+                        transactionId.toString(),
                         rptId.value(),
                         paymentToken.value(),
                         authorizationRequestData
@@ -159,7 +162,7 @@ class TransactionClosureRequestHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
 
-        Mockito.when(transactionAuthorizationEventStoreRepository.findByPaymentTokenAndEventCode(paymentToken.value(), TransactionEventCode.TRANSACTION_AUTHORIZATION_REQUESTED_EVENT))
+        Mockito.when(transactionAuthorizationEventStoreRepository.findByIdAndEventCode(transactionId.value().toString(), TransactionEventCode.TRANSACTION_AUTHORIZATION_REQUESTED_EVENT))
                 .thenReturn(Mono.just(transactionAuthorizationRequestedEvent));
 
         Mockito.when(nodeForPspClient.closePayment(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
