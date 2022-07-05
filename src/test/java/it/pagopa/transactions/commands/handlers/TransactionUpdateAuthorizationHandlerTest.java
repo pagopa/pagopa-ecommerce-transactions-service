@@ -1,7 +1,6 @@
 package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
-import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
@@ -21,6 +20,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -33,6 +33,8 @@ class TransactionUpdateAuthorizationHandlerTest {
     @Mock
     private TransactionsEventStoreRepository<TransactionAuthorizationStatusUpdateData> transactionEventStoreRepository;
 
+    private TransactionId transactionId = new TransactionId(UUID.randomUUID());
+
     @Test
     void shouldSaveSuccessfulUpdate() {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
@@ -41,6 +43,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         TransactionAmount amount = new TransactionAmount(100);
 
         Transaction transaction = new Transaction(
+                transactionId,
                 paymentToken,
                 rptId,
                 description,
@@ -63,6 +66,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = new TransactionAuthorizationStatusUpdateData(AuthorizationResultDto.KO, TransactionStatusDto.AUTHORIZED);
 
         TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
+                transactionId.toString(),
                 transaction.getRptId().toString(),
                 transaction.getPaymentToken().toString(),
                 transactionAuthorizationStatusUpdateData
@@ -78,6 +82,7 @@ class TransactionUpdateAuthorizationHandlerTest {
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(argThat(eventArg -> eventArg.getData().getNewTransactionStatus().equals(TransactionStatusDto.AUTHORIZED)));
     }
+
     @Test
     void shouldRejectTransactionInInvalidState() {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
@@ -86,6 +91,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         TransactionAmount amount = new TransactionAmount(100);
 
         Transaction transaction = new Transaction(
+                transactionId,
                 paymentToken,
                 rptId,
                 description,
@@ -121,6 +127,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         TransactionAmount amount = new TransactionAmount(100);
 
         Transaction transaction = new Transaction(
+                transactionId,
                 paymentToken,
                 rptId,
                 description,
@@ -143,6 +150,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = new TransactionAuthorizationStatusUpdateData(AuthorizationResultDto.KO, TransactionStatusDto.AUTHORIZATION_FAILED);
 
         TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
+                transactionId.toString(),
                 transaction.getRptId().toString(),
                 transaction.getPaymentToken().toString(),
                 transactionAuthorizationStatusUpdateData

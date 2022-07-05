@@ -1,13 +1,9 @@
 package it.pagopa.transactions.commands.handlers;
 
-import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentRequestDto;
-import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
-import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
-import it.pagopa.transactions.documents.TransactionAuthorizationRequestedEvent;
 import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdateData;
 import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdatedEvent;
 import it.pagopa.transactions.domain.Transaction;
@@ -55,6 +51,7 @@ public class TransactionUpdateAuthorizationHandler implements CommandHandler<Tra
                     );
 
             TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
+                    transaction.getTransactionId().toString(),
                     transaction.getRptId().toString(),
                     transaction.getPaymentToken().toString(),
                     statusUpdateData

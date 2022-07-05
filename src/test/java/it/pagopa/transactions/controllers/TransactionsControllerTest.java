@@ -188,7 +188,7 @@ class TransactionsControllerTest {
 
         /* preconditions */
         Mockito.when(transactionsService.updateTransactionAuthorization(paymentToken, updateAuthorizationRequest))
-                .thenReturn(Mono.error(new BadGatewayException()));
+                .thenReturn(Mono.error(new BadGatewayException("")));
 
         /* test */
 
@@ -266,7 +266,7 @@ class TransactionsControllerTest {
                         .title("Bad gateway")
                         .detail(null),
                 HttpStatus.BAD_GATEWAY);
-        BadGatewayException exception = new BadGatewayException();
+        BadGatewayException exception = new BadGatewayException("");
         Method method = TransactionsController.class.getDeclaredMethod("badGatewayHandler", BadGatewayException.class);
         method.setAccessible(true);
         ResponseEntity response = (ResponseEntity) method.invoke(transactionsController, exception);

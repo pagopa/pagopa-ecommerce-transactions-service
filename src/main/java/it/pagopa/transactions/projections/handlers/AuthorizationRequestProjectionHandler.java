@@ -18,7 +18,7 @@ public class AuthorizationRequestProjectionHandler implements ProjectionHandler<
 
     @Override
     public Mono<Transaction> handle(AuthorizationRequestData data) {
-        return transactionsViewRepository.findByPaymentToken(data.transaction().getPaymentToken().value())
+        return transactionsViewRepository.findById(data.transaction().getTransactionId().value().toString())
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(data.transaction().getPaymentToken().value())))
                 .flatMap(transactionDocument -> {
                     transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_REQUESTED);

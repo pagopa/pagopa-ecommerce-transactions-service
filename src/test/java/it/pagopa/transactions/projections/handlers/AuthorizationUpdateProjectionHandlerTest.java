@@ -3,7 +3,6 @@ package it.pagopa.transactions.projections.handlers;
 import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
-import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
 import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdateData;
 import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdatedEvent;
 import it.pagopa.transactions.domain.*;
@@ -18,9 +17,8 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 
 @ExtendWith(MockitoExtension.class)
@@ -40,6 +38,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 .timestampOperation(OffsetDateTime.now());
 
         Transaction transaction = new Transaction(
+                new TransactionId(UUID.randomUUID()),
                 new PaymentToken("paymentToken"),
                 new RptId("rptId"),
                 new TransactionDescription("description"),
@@ -48,6 +47,7 @@ class AuthorizationUpdateProjectionHandlerTest {
         );
 
         it.pagopa.transactions.documents.Transaction expected = new it.pagopa.transactions.documents.Transaction(
+                transaction.getTransactionId().value().toString(),
                 transaction.getPaymentToken().value(),
                 transaction.getRptId().value(),
                 transaction.getDescription().value(),
@@ -63,6 +63,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 );
 
         TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
+                transaction.getTransactionId().toString(),
                 transaction.getRptId().value(),
                 transaction.getPaymentToken().value(),
                 statusUpdateData

@@ -29,16 +29,21 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 
 @ExtendWith(SpringExtension.class)
-public class PaymentGatewayClientTest {
+class PaymentGatewayClientTest {
     @InjectMocks
     private PaymentGatewayClient client;
 
     @Mock
     PaymentTransactionsControllerApi paymentTransactionsControllerApi;
 
+    private UUID transactionIdUUID = UUID.randomUUID();
+
     @Test
     void shouldReturnAuthorizationResponse() {
+
+
         Transaction transaction = new Transaction(
+                new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
                 new RptId("rptId"),
                 new TransactionDescription("description"),
@@ -54,7 +59,7 @@ public class PaymentGatewayClientTest {
                 "paymentTypeCode",
                 "brokerName",
                 "pspChannelCode",
-                UUID.randomUUID()
+                transactionIdUUID
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
@@ -83,6 +88,7 @@ public class PaymentGatewayClientTest {
     @Test
     void shouldThrowAlreadyProcessedOn401() {
         Transaction transaction = new Transaction(
+                new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
                 new RptId("rptId"),
                 new TransactionDescription("description"),
@@ -124,6 +130,7 @@ public class PaymentGatewayClientTest {
     @Test
     void shouldThrowGatewayTimeoutOn504() {
         Transaction transaction = new Transaction(
+                new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
                 new RptId("rptId"),
                 new TransactionDescription("description"),
@@ -163,6 +170,7 @@ public class PaymentGatewayClientTest {
     @Test
     void shouldThrowBadGatewayOn500() {
         Transaction transaction = new Transaction(
+                new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
                 new RptId("rptId"),
                 new TransactionDescription("description"),

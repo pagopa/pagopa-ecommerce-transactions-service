@@ -22,11 +22,12 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class NodeForPspClient {
 
-    @Autowired
-    private WebClient nodoWebClient;
+	@Autowired
+	private WebClient nodoWebClient;
 
-    public Mono<ActivatePaymentNoticeRes> activatePaymentNotice(JAXBElement<ActivatePaymentNoticeReq> request) {
+	public Mono<ActivatePaymentNoticeRes> activatePaymentNotice(JAXBElement<ActivatePaymentNoticeReq> request) {
 		return nodoWebClient.post().header("Content-Type", MediaType.TEXT_XML_VALUE)
+				.header("SOAPAction", "activatePaymentNotice")
 				.body(Mono.just(new SoapEnvelope("", request)), SoapEnvelope.class)
 				.retrieve()
 				.onStatus(HttpStatus::isError,
@@ -60,7 +61,7 @@ public class NodeForPspClient {
 				.onErrorMap(ResponseStatusException.class,
 						error -> {
 							log.error("ResponseStatus Error:", error);
-							return new BadGatewayException();
+							return new BadGatewayException("");
 						});
 	}
 }

@@ -2,6 +2,9 @@ package it.pagopa.transactions.projections.handlers;
 
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.domain.*;
+
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -22,12 +25,14 @@ public class TransactionsProjectionHandler
 	@Override
 	public Mono<Transaction> handle(NewTransactionResponseDto data) {
 
+		TransactionId transactionId = new TransactionId(UUID.fromString(data.getTransactionId()));
 		PaymentToken paymentToken = new PaymentToken(data.getPaymentToken());
 		RptId rptId = new RptId(data.getRptId());
 		TransactionDescription description = new TransactionDescription(data.getReason());
 		TransactionAmount amount = new TransactionAmount(data.getAmount());
 
 		Transaction transaction = new Transaction(
+			    transactionId,
 				paymentToken,
 				rptId,
 				description,
