@@ -63,7 +63,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 );
 
         TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
-                transaction.getTransactionId().toString(),
+                transaction.getTransactionId().value().toString(),
                 transaction.getRptId().value(),
                 transaction.getPaymentToken().value(),
                 statusUpdateData
@@ -72,7 +72,7 @@ class AuthorizationUpdateProjectionHandlerTest {
         /*
          * Preconditions
          */
-        Mockito.when(viewRepository.findByPaymentToken(transaction.getPaymentToken().value()))
+        Mockito.when(viewRepository.findById(transaction.getTransactionId().value().toString()))
                 .thenReturn(Mono.just(it.pagopa.transactions.documents.Transaction.from(transaction)));
 
         Mockito.when(viewRepository.save(expected)).thenReturn(Mono.just(expected));
