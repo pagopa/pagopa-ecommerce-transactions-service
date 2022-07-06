@@ -140,8 +140,7 @@ public class TransactionsService {
                             requestAuthorizationRequestDto.getPspId(),
                             psp.getPaymentTypeCode(),
                             psp.getBrokerName(),
-                            psp.getChannelCode(),
-                            UUID.randomUUID()
+                            psp.getChannelCode()
                     );
 
                     TransactionRequestAuthorizationCommand command = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);

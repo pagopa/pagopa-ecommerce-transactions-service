@@ -32,7 +32,7 @@ public class PaymentGatewayClient {
                 .idTransaction(0L);
                 //.idTransaction(new Random().nextLong()); //TODO waiting for pgs
 
-        return paymentTransactionsControllerApi.authRequest(authorizationData.transactionId(), postePayAuthRequest, "mdcInfo")
+        return paymentTransactionsControllerApi.authRequest(authorizationData.transaction().getTransactionId().value(), postePayAuthRequest, "mdcInfo")
                 .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
                     case UNAUTHORIZED -> new AlreadyProcessedException(authorizationData.transaction().getRptId());
                     case GATEWAY_TIMEOUT -> new GatewayTimeoutException();

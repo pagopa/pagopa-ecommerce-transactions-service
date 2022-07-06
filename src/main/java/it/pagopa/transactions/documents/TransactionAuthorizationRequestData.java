@@ -17,5 +17,4 @@ public class TransactionAuthorizationRequestData {
     private String paymentTypeCode;
     private String brokerName;
     private String pspChannelCode;
-    private UUID transactionId;
 }

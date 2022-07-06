@@ -60,14 +60,14 @@ public class TransactionClosureRequestHandler implements CommandHandler<Transact
                                 .tipoVersamento(ClosePaymentRequestDto.TipoVersamentoEnum.fromValue(authorizationRequestData.getPaymentTypeCode()))
                                 .identificativoIntermediario(authorizationRequestData.getBrokerName())
                                 .identificativoCanale(authorizationRequestData.getPspChannelCode())
-                                .pspTransactionId(authorizationRequestData.getTransactionId().toString())
+                                .pspTransactionId(transaction.getTransactionId().value().toString())
                                 .totalAmount(new BigDecimal(transaction.getAmount().value() + authorizationRequestData.getFee()))
                                 .fee(new BigDecimal(authorizationRequestData.getFee()))
                                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
                                 .additionalPaymentInformations(
                                         new AdditionalPaymentInformationsDto()
                                                 .outcomePaymentGateway(updateAuthorizationRequest.getAuthorizationResult().toString())
-                                                .transactionId(authorizationRequestData.getTransactionId().toString())
+                                                .transactionId(transaction.getTransactionId().value().toString())
                                                 .authorizationCode(updateAuthorizationRequest.getAuthorizationCode())
                                 );
 
