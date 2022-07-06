@@ -11,7 +11,8 @@ import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
 import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHandler;
 import it.pagopa.transactions.documents.*;
-import it.pagopa.transactions.domain.TransactionId;
+import it.pagopa.transactions.documents.Transaction;
+import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.AuthorizationRequestProjectionHandler;
 import it.pagopa.transactions.projections.handlers.AuthorizationUpdateProjectionHandler;
@@ -193,6 +194,15 @@ public class TransactionServiceTests {
 				100,
 				TransactionStatusDto.AUTHORIZATION_REQUESTED);
 
+		it.pagopa.transactions.domain.Transaction transaction = new it.pagopa.transactions.domain.Transaction(
+				new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
+				new PaymentToken(transactionDocument.getPaymentToken()),
+				new RptId(transactionDocument.getRptId()),
+				new TransactionDescription(transactionDocument.getDescription()),
+				new TransactionAmount(transactionDocument.getAmount()),
+				transactionDocument.getStatus()
+		);
+
 		UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
 				.authorizationResult(AuthorizationResultDto.OK)
 				.authorizationCode("authorizationCode")
@@ -245,7 +255,7 @@ public class TransactionServiceTests {
 		Mockito.when(transactionUpdateAuthorizationHandler.handle(any()))
 				.thenReturn(Mono.just(event));
 
-		Mockito.when(authorizationUpdateProjectionHandler.handle(any())).thenReturn(Mono.just(transactionDocument));
+		Mockito.when(authorizationUpdateProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
 
 		Mockito.when(transactionClosureRequestHandler.handle(any()))
 				.thenReturn(Mono.just(closureRequestedEvent));

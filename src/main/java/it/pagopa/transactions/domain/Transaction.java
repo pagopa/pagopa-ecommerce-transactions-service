@@ -22,6 +22,16 @@ public class Transaction {
 
     private TransactionStatusDto status;
 
+    public Transaction(TransactionId transactionId, PaymentToken paymentToken, RptId rptId, TransactionDescription description, TransactionAmount amount, ZonedDateTime creationDate, TransactionStatusDto status) {
+        this.transactionId = transactionId;
+        this.paymentToken = paymentToken;
+        this.rptId = rptId;
+        this.description = description;
+        this.amount = amount;
+        this.creationDate = creationDate;
+        this.status = status;
+    }
+
     public Transaction(TransactionId transactionId, PaymentToken paymentToken, RptId rptId, TransactionDescription description, TransactionAmount amount, TransactionStatusDto status) {
         this.transactionId = transactionId;
         this.rptId = rptId;

@@ -17,6 +17,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.argThat;
@@ -46,7 +47,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 TransactionStatusDto.AUTHORIZATION_REQUESTED
         );
 
-        it.pagopa.transactions.documents.Transaction expected = new it.pagopa.transactions.documents.Transaction(
+        it.pagopa.transactions.documents.Transaction expectedDocument = new it.pagopa.transactions.documents.Transaction(
                 transaction.getTransactionId().value().toString(),
                 transaction.getPaymentToken().value(),
                 transaction.getRptId().value(),
@@ -59,7 +60,7 @@ class AuthorizationUpdateProjectionHandlerTest {
         TransactionAuthorizationStatusUpdateData statusUpdateData =
                 new TransactionAuthorizationStatusUpdateData(
                         updateAuthorizationRequest.getAuthorizationResult(),
-                        expected.getStatus()
+                        expectedDocument.getStatus()
                 );
 
         TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
@@ -69,13 +70,23 @@ class AuthorizationUpdateProjectionHandlerTest {
                 statusUpdateData
         );
 
+        Transaction expected = new Transaction(
+                transaction.getTransactionId(),
+                transaction.getPaymentToken(),
+                transaction.getRptId(),
+                transaction.getDescription(),
+                transaction.getAmount(),
+                ZonedDateTime.parse(expectedDocument.getCreationDate()),
+                expectedDocument.getStatus()
+        );
+
         /*
          * Preconditions
          */
         Mockito.when(viewRepository.findById(transaction.getTransactionId().value().toString()))
                 .thenReturn(Mono.just(it.pagopa.transactions.documents.Transaction.from(transaction)));
 
-        Mockito.when(viewRepository.save(expected)).thenReturn(Mono.just(expected));
+        Mockito.when(viewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
 
         /*
          * Test
