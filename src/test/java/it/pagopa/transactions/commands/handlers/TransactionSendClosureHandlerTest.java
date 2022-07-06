@@ -5,8 +5,8 @@ import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentRequestDto;
 import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.NodeForPspClient;
-import it.pagopa.transactions.commands.TransactionClosureRequestCommand;
-import it.pagopa.transactions.commands.data.ClosureRequestData;
+import it.pagopa.transactions.commands.TransactionClosureSendCommand;
+import it.pagopa.transactions.commands.data.ClosureSendData;
 import it.pagopa.transactions.documents.*;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.domain.Transaction;
@@ -31,13 +31,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 
 @ExtendWith(MockitoExtension.class)
-class TransactionClosureRequestHandlerTest {
+class TransactionSendClosureHandlerTest {
 
     @InjectMocks
-    private TransactionClosureRequestHandler requestAuthorizationHandler;
+    private TransactionSendClosureHandler transactionSendClosureHandler;
 
     @Mock
-    private TransactionsEventStoreRepository<TransactionClosureRequestData> transactionEventStoreRepository;
+    private TransactionsEventStoreRepository<TransactionClosureSendData> transactionEventStoreRepository;
 
     @Mock
     private TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionAuthorizationEventStoreRepository;
@@ -69,15 +69,15 @@ class TransactionClosureRequestHandlerTest {
                 .authorizationCode("authorizationCode")
                 .timestampOperation(OffsetDateTime.now());
 
-        ClosureRequestData closureRequestData = new ClosureRequestData(
+        ClosureSendData closureSendData = new ClosureSendData(
                 transaction,
                 updateAuthorizationRequest
         );
 
-        TransactionClosureRequestCommand closureRequestCommand = new TransactionClosureRequestCommand(transaction.getRptId(), closureRequestData);
+        TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(transaction.getRptId(), closureSendData);
 
         /* test */
-        StepVerifier.create(requestAuthorizationHandler.handle(closureRequestCommand))
+        StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
                 .expectErrorMatches(error -> error instanceof AlreadyProcessedException)
                 .verify();
 
@@ -105,20 +105,20 @@ class TransactionClosureRequestHandlerTest {
                 .authorizationCode("authorizationCode")
                 .timestampOperation(OffsetDateTime.now());
 
-        ClosureRequestData closureRequestData = new ClosureRequestData(
+        ClosureSendData closureSendData = new ClosureSendData(
                 transaction,
                 updateAuthorizationRequest
         );
 
-        TransactionClosureRequestCommand closureRequestCommand = new TransactionClosureRequestCommand(transaction.getRptId(), closureRequestData);
+        TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(transaction.getRptId(), closureSendData);
 
-        TransactionClosureRequestData transactionAuthorizationStatusUpdateData = new TransactionClosureRequestData(ClosePaymentResponseDto.EsitoEnum.KO, TransactionStatusDto.CLOSURE_FAILED);
+        TransactionClosureSendData transactionClosureSendData = new TransactionClosureSendData(ClosePaymentResponseDto.EsitoEnum.KO, TransactionStatusDto.CLOSURE_FAILED);
 
-        TransactionClosureRequestedEvent event = new TransactionClosureRequestedEvent(
+        TransactionClosureSentEvent event = new TransactionClosureSentEvent(
                 transactionId.toString(),
                 transaction.getRptId().toString(),
                 transaction.getPaymentToken().toString(),
-                transactionAuthorizationStatusUpdateData
+                transactionClosureSendData
         );
 
         TransactionAuthorizationRequestData authorizationRequestData = new TransactionAuthorizationRequestData(
@@ -168,10 +168,10 @@ class TransactionClosureRequestHandlerTest {
         Mockito.when(nodeForPspClient.closePayment(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
 
         /* test */
-        StepVerifier.create(requestAuthorizationHandler.handle(closureRequestCommand))
-                .expectNextMatches(closureRequestedEvent -> closureRequestedEvent.equals(event))
+        StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
+                .expectNextMatches(closureSentEvent -> closureSentEvent.equals(event))
                 .verifyComplete();
 
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(argThat(closureRequestEvent -> closureRequestEvent.getData().getNewTransactionStatus().equals(TransactionStatusDto.CLOSURE_FAILED)));
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(argThat(closureSendDataEvent -> closureSendDataEvent.getData().getNewTransactionStatus().equals(TransactionStatusDto.CLOSURE_FAILED)));
     }
 }

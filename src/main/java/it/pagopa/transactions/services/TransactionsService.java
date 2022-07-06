@@ -3,14 +3,14 @@ package it.pagopa.transactions.services;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
-import it.pagopa.transactions.commands.TransactionClosureRequestCommand;
+import it.pagopa.transactions.commands.TransactionClosureSendCommand;
 import it.pagopa.transactions.commands.TransactionInitializeCommand;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
-import it.pagopa.transactions.commands.data.ClosureRequestData;
+import it.pagopa.transactions.commands.data.ClosureSendData;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
-import it.pagopa.transactions.commands.handlers.TransactionClosureRequestHandler;
+import it.pagopa.transactions.commands.handlers.TransactionSendClosureHandler;
 import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
 import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHandler;
@@ -19,7 +19,7 @@ import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
 import it.pagopa.transactions.projections.handlers.AuthorizationRequestProjectionHandler;
 import it.pagopa.transactions.projections.handlers.AuthorizationUpdateProjectionHandler;
-import it.pagopa.transactions.projections.handlers.ClosureRequestProjectionHandler;
+import it.pagopa.transactions.projections.handlers.ClosureSendProjectionHandler;
 import it.pagopa.transactions.projections.handlers.TransactionsProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +44,7 @@ public class TransactionsService {
     private TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandler;
 
     @Autowired
-    private TransactionClosureRequestHandler transactionClosureRequestHandler;
+    private TransactionSendClosureHandler transactionSendClosureHandler;
 
     @Autowired
     private TransactionsProjectionHandler transactionsProjectionHandler;
@@ -56,7 +56,7 @@ public class TransactionsService {
     private AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandler;
 
     @Autowired
-    private ClosureRequestProjectionHandler closureRequestProjectionHandler;
+    private ClosureSendProjectionHandler closureSendProjectionHandler;
 
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
@@ -180,14 +180,14 @@ public class TransactionsService {
                             .flatMap(authorizationStatusUpdatedEvent -> authorizationUpdateProjectionHandler.handle(authorizationStatusUpdatedEvent));
                 })
                 .flatMap(transaction -> {
-                    ClosureRequestData closureRequestData = new ClosureRequestData(transaction, updateAuthorizationRequestDto);
+                    ClosureSendData closureSendData = new ClosureSendData(transaction, updateAuthorizationRequestDto);
 
-                    TransactionClosureRequestCommand transactionClosureRequestCommand = new TransactionClosureRequestCommand(transaction.getRptId(), closureRequestData);
+                    TransactionClosureSendCommand transactionClosureSendCommand = new TransactionClosureSendCommand(transaction.getRptId(), closureSendData);
 
-                    return transactionClosureRequestHandler
-                            .handle(transactionClosureRequestCommand)
-                            .doOnNext(closureRequestedEvent -> log.info("Requested transaction closure for rptId: {}", closureRequestedEvent.getRptId()))
-                            .flatMap(closureRequestedEvent -> closureRequestProjectionHandler.handle(closureRequestedEvent))
+                    return transactionSendClosureHandler
+                            .handle(transactionClosureSendCommand)
+                            .doOnNext(closureSentEvent -> log.info("Requested transaction closure for rptId: {}", closureSentEvent.getRptId()))
+                            .flatMap(closureSentEvent -> closureSendProjectionHandler.handle(closureSentEvent))
                             .map(transactionDocument -> new TransactionInfoDto()
                                     .transactionId(transactionDocument.getTransactionId())
                                     .amount(transactionDocument.getAmount())

@@ -6,10 +6,10 @@ import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
-import it.pagopa.transactions.commands.TransactionClosureRequestCommand;
+import it.pagopa.transactions.commands.TransactionClosureSendCommand;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestData;
-import it.pagopa.transactions.documents.TransactionClosureRequestData;
-import it.pagopa.transactions.documents.TransactionClosureRequestedEvent;
+import it.pagopa.transactions.documents.TransactionClosureSendData;
+import it.pagopa.transactions.documents.TransactionClosureSentEvent;
 import it.pagopa.transactions.domain.Transaction;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
@@ -25,19 +25,19 @@ import java.util.List;
 
 @Component
 @Slf4j
-public class TransactionClosureRequestHandler implements CommandHandler<TransactionClosureRequestCommand, Mono<TransactionClosureRequestedEvent>> {
+public class TransactionSendClosureHandler implements CommandHandler<TransactionClosureSendCommand, Mono<TransactionClosureSentEvent>> {
 
     @Autowired
     NodeForPspClient nodeForPspClient;
 
     @Autowired
-    private TransactionsEventStoreRepository<TransactionClosureRequestData> transactionEventStoreRepository;
+    private TransactionsEventStoreRepository<TransactionClosureSendData> transactionEventStoreRepository;
 
     @Autowired
     private TransactionsEventStoreRepository<TransactionAuthorizationRequestData> authorizationRequestedEventStoreRepository;
 
     @Override
-    public Mono<TransactionClosureRequestedEvent> handle(TransactionClosureRequestCommand command) {
+    public Mono<TransactionClosureSentEvent> handle(TransactionClosureSendCommand command) {
         Transaction transaction = command.getData().transaction();
 
         if (transaction.getStatus() != TransactionStatusDto.AUTHORIZED) {
@@ -84,17 +84,17 @@ public class TransactionClosureRequestHandler implements CommandHandler<Transact
                             }
                         }
 
-                        TransactionClosureRequestData statusUpdateData =
-                                new TransactionClosureRequestData(
+                        TransactionClosureSendData closureSendData =
+                                new TransactionClosureSendData(
                                         response.getEsito(),
                                         newStatus
                                 );
 
-                        TransactionClosureRequestedEvent event = new TransactionClosureRequestedEvent(
+                        TransactionClosureSentEvent event = new TransactionClosureSentEvent(
                                 transaction.getTransactionId().value().toString(),
                                 transaction.getRptId().value(),
                                 transaction.getPaymentToken().value(),
-                                statusUpdateData
+                                closureSendData
                         );
 
                         return transactionEventStoreRepository.save(event);

@@ -2,7 +2,7 @@ package it.pagopa.transactions.projections.handlers;
 
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.documents.Transaction;
-import it.pagopa.transactions.documents.TransactionClosureRequestedEvent;
+import it.pagopa.transactions.documents.TransactionClosureSentEvent;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -12,12 +12,12 @@ import reactor.core.publisher.Mono;
 
 @Component
 @Slf4j
-public class ClosureRequestProjectionHandler implements ProjectionHandler<TransactionClosureRequestedEvent, Mono<Transaction>> {
+public class ClosureSendProjectionHandler implements ProjectionHandler<TransactionClosureSentEvent, Mono<Transaction>> {
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
 
     @Override
-    public Mono<Transaction> handle(TransactionClosureRequestedEvent event) {
+    public Mono<Transaction> handle(TransactionClosureSentEvent event) {
         return transactionsViewRepository.findById(event.getTransactionId())
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(event.getPaymentToken())))
                 .flatMap(transactionDocument -> {
