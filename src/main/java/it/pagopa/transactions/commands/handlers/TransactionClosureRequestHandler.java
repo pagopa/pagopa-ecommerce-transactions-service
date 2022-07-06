@@ -92,8 +92,8 @@ public class TransactionClosureRequestHandler implements CommandHandler<Transact
 
                         TransactionClosureRequestedEvent event = new TransactionClosureRequestedEvent(
                                 transaction.getTransactionId().value().toString(),
-                                transaction.getRptId().toString(),
-                                transaction.getPaymentToken().toString(),
+                                transaction.getRptId().value(),
+                                transaction.getPaymentToken().value(),
                                 statusUpdateData
                         );
 
