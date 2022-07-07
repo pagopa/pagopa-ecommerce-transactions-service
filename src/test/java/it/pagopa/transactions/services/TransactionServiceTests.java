@@ -1,18 +1,22 @@
 package it.pagopa.transactions.services;
 
+import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PSPsResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
-import it.pagopa.transactions.commands.handlers.TransactionClosureRequestHandler;
+import it.pagopa.transactions.commands.handlers.TransactionSendClosureHandler;
 import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
 import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHandler;
+import it.pagopa.transactions.documents.*;
 import it.pagopa.transactions.documents.Transaction;
-import it.pagopa.transactions.domain.TransactionId;
+import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
-import it.pagopa.transactions.projections.handlers.AuthorizationProjectionHandler;
+import it.pagopa.transactions.projections.handlers.AuthorizationRequestProjectionHandler;
+import it.pagopa.transactions.projections.handlers.AuthorizationUpdateProjectionHandler;
+import it.pagopa.transactions.projections.handlers.ClosureSendProjectionHandler;
 import it.pagopa.transactions.projections.handlers.TransactionsProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
@@ -36,7 +40,7 @@ import static org.mockito.Mockito.when;
 
 @WebFluxTest
 @TestPropertySource(locations = "classpath:application-tests.properties")
-@Import({TransactionsService.class, TransactionRequestAuthorizationHandler.class, TransactionsProjectionHandler.class, AuthorizationProjectionHandler.class})
+@Import({TransactionsService.class, TransactionRequestAuthorizationHandler.class, TransactionsProjectionHandler.class, AuthorizationRequestProjectionHandler.class})
 public class TransactionServiceTests {
 	@MockBean
 	private TransactionsViewRepository repository;
@@ -60,7 +64,13 @@ public class TransactionServiceTests {
 	private TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandler;
 
 	@MockBean
-	private TransactionClosureRequestHandler transactionClosureRequestHandler;
+	private TransactionSendClosureHandler transactionSendClosureHandler;
+
+	@MockBean
+	private AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandler;
+
+	@MockBean
+	private ClosureSendProjectionHandler closureSendProjectionHandler;
 
 	final String PAYMENT_TOKEN = "aaa";
 	final String TRANSACION_ID = "833d303a-f857-11ec-b939-0242ac120002";
@@ -182,31 +192,75 @@ public class TransactionServiceTests {
 				"rptId",
 				"description",
 				100,
-				TransactionStatusDto.AUTHORIZED);
+				TransactionStatusDto.AUTHORIZATION_REQUESTED);
 
-		TransactionInfoDto expectedResponse = new TransactionInfoDto()
-				.amount(transactionDocument.getAmount())
-				.authToken("authToken")
-				.status(transactionDocument.getStatus())
-				.reason("reason")
-				.paymentToken(PAYMENT_TOKEN)
-				.rptId(transactionDocument.getRptId());
-
+		it.pagopa.transactions.domain.Transaction transaction = new it.pagopa.transactions.domain.Transaction(
+				new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
+				new PaymentToken(transactionDocument.getPaymentToken()),
+				new RptId(transactionDocument.getRptId()),
+				new TransactionDescription(transactionDocument.getDescription()),
+				new TransactionAmount(transactionDocument.getAmount()),
+				transactionDocument.getStatus()
+		);
 
 		UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
 				.authorizationResult(AuthorizationResultDto.OK)
 				.authorizationCode("authorizationCode")
 				.timestampOperation(OffsetDateTime.now());
 
+		TransactionAuthorizationStatusUpdateData statusUpdateData =
+				new TransactionAuthorizationStatusUpdateData(
+						updateAuthorizationRequest.getAuthorizationResult(),
+						TransactionStatusDto.AUTHORIZED
+				);
+
+		TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
+				transactionDocument.getTransactionId(),
+				transactionDocument.getRptId(),
+				transactionDocument.getPaymentToken(),
+				statusUpdateData
+		);
+
+		TransactionClosureSendData closureSendData = new TransactionClosureSendData(ClosePaymentResponseDto.EsitoEnum.OK, TransactionStatusDto.CLOSED);
+
+		TransactionClosureSentEvent closureSentEvent = new TransactionClosureSentEvent(
+				transactionDocument.getTransactionId(),
+				transactionDocument.getRptId(),
+				transactionDocument.getPaymentToken(),
+				closureSendData
+		);
+
+		TransactionInfoDto expectedResponse = new TransactionInfoDto()
+				.transactionId(transactionDocument.getTransactionId())
+				.amount(transactionDocument.getAmount())
+				.authToken(null)
+				.status(TransactionStatusDto.CLOSED)
+				.reason(transactionDocument.getDescription())
+				.paymentToken(transactionDocument.getPaymentToken())
+				.rptId(transactionDocument.getRptId());
+
+		Transaction closedTransactionDocument = new Transaction(
+				transactionDocument.getTransactionId(),
+				transactionDocument.getPaymentToken(),
+				transactionDocument.getRptId(),
+				transactionDocument.getDescription(),
+				transactionDocument.getAmount(),
+				TransactionStatusDto.CLOSED);
+
 		/* preconditions */
 		Mockito.when(repository.findById(transactionId.value().toString()))
 				.thenReturn(Mono.just(transactionDocument));
 
 		Mockito.when(transactionUpdateAuthorizationHandler.handle(any()))
-				.thenReturn(Mono.just(expectedResponse));
+				.thenReturn(Mono.just(event));
 
-		Mockito.when(transactionClosureRequestHandler.handle(any()))
-				.thenReturn(Mono.just(expectedResponse));
+		Mockito.when(authorizationUpdateProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
+
+		Mockito.when(transactionSendClosureHandler.handle(any()))
+				.thenReturn(Mono.just(closureSentEvent));
+
+		Mockito.when(closureSendProjectionHandler.handle(any()))
+				.thenReturn(Mono.just(closedTransactionDocument));
 
 		/* test */
 		TransactionInfoDto transactionInfoResponse = transactionsService.updateTransactionAuthorization(transactionId.value().toString(), updateAuthorizationRequest).block();

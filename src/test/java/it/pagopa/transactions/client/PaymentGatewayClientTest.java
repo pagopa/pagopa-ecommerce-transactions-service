@@ -36,7 +36,7 @@ class PaymentGatewayClientTest {
     @Mock
     PaymentTransactionsControllerApi paymentTransactionsControllerApi;
 
-    private UUID transactionIdUUID = UUID.randomUUID();
+    private final UUID transactionIdUUID = UUID.randomUUID();
 
     @Test
     void shouldReturnAuthorizationResponse() {
@@ -58,8 +58,7 @@ class PaymentGatewayClientTest {
                 "pspId",
                 "paymentTypeCode",
                 "brokerName",
-                "pspChannelCode",
-                transactionIdUUID
+                "pspChannelCode"
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
@@ -103,8 +102,7 @@ class PaymentGatewayClientTest {
                 "pspId",
                 "paymentTypeCode",
                 "brokerName",
-                "pspChannelCode",
-                UUID.randomUUID()
+                "pspChannelCode"
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
@@ -145,8 +143,7 @@ class PaymentGatewayClientTest {
                 "pspId",
                 "paymentTypeCode",
                 "brokerName",
-                "pspChannelCode",
-                UUID.randomUUID()
+                "pspChannelCode"
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
@@ -185,8 +182,7 @@ class PaymentGatewayClientTest {
                 "pspId",
                 "paymentTypeCode",
                 "brokerName",
-                "pspChannelCode",
-                UUID.randomUUID()
+                "pspChannelCode"
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()

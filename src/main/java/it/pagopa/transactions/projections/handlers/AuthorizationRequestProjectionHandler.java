@@ -12,7 +12,7 @@ import reactor.core.publisher.Mono;
 
 @Component
 @Slf4j
-public class AuthorizationProjectionHandler implements ProjectionHandler<AuthorizationRequestData, Mono<Transaction>> {
+public class AuthorizationRequestProjectionHandler implements ProjectionHandler<AuthorizationRequestData, Mono<Transaction>> {
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
 

@@ -47,8 +47,7 @@ public class TransactionRequestAuthorizationHandler implements CommandHandler<Tr
                                     command.getData().pspId(),
                                     command.getData().paymentTypeCode(),
                                     command.getData().brokerName(),
-                                    command.getData().pspChannelCode(),
-                                    command.getData().transactionId()
+                                    command.getData().pspChannelCode()
                             )
                     );
 

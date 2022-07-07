@@ -3,31 +3,32 @@ package it.pagopa.transactions.services;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
-import it.pagopa.transactions.commands.TransactionClosureRequestCommand;
-import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
+import it.pagopa.transactions.commands.TransactionClosureSendCommand;
 import it.pagopa.transactions.commands.TransactionInitializeCommand;
+import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
-import it.pagopa.transactions.commands.data.ClosureRequestData;
+import it.pagopa.transactions.commands.data.ClosureSendData;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
-import it.pagopa.transactions.commands.handlers.TransactionClosureRequestHandler;
-import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandler;
+import it.pagopa.transactions.commands.handlers.TransactionSendClosureHandler;
 import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
+import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHandler;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
-import it.pagopa.transactions.projections.handlers.AuthorizationProjectionHandler;
+import it.pagopa.transactions.projections.handlers.AuthorizationRequestProjectionHandler;
+import it.pagopa.transactions.projections.handlers.AuthorizationUpdateProjectionHandler;
+import it.pagopa.transactions.projections.handlers.ClosureSendProjectionHandler;
 import it.pagopa.transactions.projections.handlers.TransactionsProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.UUID;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
+
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -43,13 +44,19 @@ public class TransactionsService {
     private TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandler;
 
     @Autowired
-    private TransactionClosureRequestHandler transactionClosureRequestHandler;
+    private TransactionSendClosureHandler transactionSendClosureHandler;
 
     @Autowired
     private TransactionsProjectionHandler transactionsProjectionHandler;
 
     @Autowired
-    private AuthorizationProjectionHandler authorizationProjectionHandler;
+    private AuthorizationRequestProjectionHandler authorizationProjectionHandler;
+
+    @Autowired
+    private AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandler;
+
+    @Autowired
+    private ClosureSendProjectionHandler closureSendProjectionHandler;
 
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
@@ -84,19 +91,19 @@ public class TransactionsService {
                         .status(transaction.getStatus()));
     }
 
-    public Mono<RequestAuthorizationResponseDto> requestTransactionAuthorization(String transaciontId,
+    public Mono<RequestAuthorizationResponseDto> requestTransactionAuthorization(String transactionId,
                                                                                  RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
         return transactionsViewRepository
-                .findById(transaciontId)
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transaciontId)))
+                .findById(transactionId)
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .flatMap(transaction -> {
-                    log.info("Authorization request amount validation for transaciontId: {}", transaciontId);
+                    log.info("Authorization request amount validation for transactionId: {}", transactionId);
                     return transaction.getAmount() != requestAuthorizationRequestDto.getAmount() ? Mono.empty()
                             : Mono.just(transaction);
                 })
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transaciontId)))
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .flatMap(transaction -> {
-                    log.info("Authorization psp validation for transaciontId: {}", transaciontId);
+                    log.info("Authorization psp validation for transactionId: {}", transactionId);
                     return ecommercePaymentInstrumentsClient
                             .getPSPs(transaction.getAmount(),
                                     requestAuthorizationRequestDto.getLanguage().getValue())
@@ -110,7 +117,7 @@ public class TransactionsService {
                                     .findFirst().orElse(null))
                             .map(psp -> Tuples.of(transaction, psp));
                 })
-                .switchIfEmpty(Mono.error(new UnsatisfiablePspRequestException(new PaymentToken(transaciontId), requestAuthorizationRequestDto.getLanguage(), requestAuthorizationRequestDto.getFee())))
+                .switchIfEmpty(Mono.error(new UnsatisfiablePspRequestException(new PaymentToken(transactionId), requestAuthorizationRequestDto.getLanguage(), requestAuthorizationRequestDto.getFee())))
                 .flatMap(args -> {
                     it.pagopa.transactions.documents.Transaction transactionDocument = args.getT1();
                     PspDto psp = args.getT2();
@@ -133,8 +140,7 @@ public class TransactionsService {
                             requestAuthorizationRequestDto.getPspId(),
                             psp.getPaymentTypeCode(),
                             psp.getBrokerName(),
-                            psp.getChannelCode(),
-                            UUID.randomUUID()
+                            psp.getChannelCode()
                     );
 
                     TransactionRequestAuthorizationCommand command = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);
@@ -168,16 +174,28 @@ public class TransactionsService {
 
                     return transactionUpdateAuthorizationHandler
                             .handle(transactionUpdateAuthorizationCommand)
-                            .doOnNext(transactionInfo -> log.info("Requested authorization update for rptId: {}", transactionInfo.getRptId()))
-                            .thenReturn(transaction);
-                }).flatMap(transaction -> {
-                    ClosureRequestData closureRequestData = new ClosureRequestData(transaction, updateAuthorizationRequestDto);
+                            .doOnNext(authorizationStatusUpdatedEvent -> log.info(
+                                    "Requested authorization update for rptId: {}",
+                                    authorizationStatusUpdatedEvent.getRptId()))
+                            .flatMap(authorizationStatusUpdatedEvent -> authorizationUpdateProjectionHandler.handle(authorizationStatusUpdatedEvent));
+                })
+                .flatMap(transaction -> {
+                    ClosureSendData closureSendData = new ClosureSendData(transaction, updateAuthorizationRequestDto);
 
-                    TransactionClosureRequestCommand transactionClosureRequestCommand = new TransactionClosureRequestCommand(transaction.getRptId(), closureRequestData);
+                    TransactionClosureSendCommand transactionClosureSendCommand = new TransactionClosureSendCommand(transaction.getRptId(), closureSendData);
 
-                    return transactionClosureRequestHandler
-                            .handle(transactionClosureRequestCommand)
-                            .doOnNext(transactionInfo -> log.info("Requested transaction closure for rptId: {}", transactionInfo.getRptId()));
+                    return transactionSendClosureHandler
+                            .handle(transactionClosureSendCommand)
+                            .doOnNext(closureSentEvent -> log.info("Requested transaction closure for rptId: {}", closureSentEvent.getRptId()))
+                            .flatMap(closureSentEvent -> closureSendProjectionHandler.handle(closureSentEvent))
+                            .map(transactionDocument -> new TransactionInfoDto()
+                                    .transactionId(transactionDocument.getTransactionId())
+                                    .amount(transactionDocument.getAmount())
+                                    .reason(transactionDocument.getDescription())
+                                    .paymentToken(transactionDocument.getPaymentToken())
+                                    .rptId(transactionDocument.getRptId())
+                                    .status(transactionDocument.getStatus())
+                                    .authToken(null));
                 });
     }
 }

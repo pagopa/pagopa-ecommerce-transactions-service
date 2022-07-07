@@ -3,14 +3,13 @@ package it.pagopa.transactions.commands.handlers;
 import it.pagopa.generated.ecommerce.nodo.v1.dto.AdditionalPaymentInformationsDto;
 import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentRequestDto;
 import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
-import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
-import it.pagopa.transactions.commands.TransactionClosureRequestCommand;
+import it.pagopa.transactions.commands.TransactionClosureSendCommand;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestData;
-import it.pagopa.transactions.documents.TransactionClosureRequestData;
-import it.pagopa.transactions.documents.TransactionClosureRequestedEvent;
+import it.pagopa.transactions.documents.TransactionClosureSendData;
+import it.pagopa.transactions.documents.TransactionClosureSentEvent;
 import it.pagopa.transactions.domain.Transaction;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
@@ -26,19 +25,19 @@ import java.util.List;
 
 @Component
 @Slf4j
-public class TransactionClosureRequestHandler implements CommandHandler<TransactionClosureRequestCommand, Mono<TransactionInfoDto>> {
+public class TransactionSendClosureHandler implements CommandHandler<TransactionClosureSendCommand, Mono<TransactionClosureSentEvent>> {
 
     @Autowired
     NodeForPspClient nodeForPspClient;
 
     @Autowired
-    private TransactionsEventStoreRepository<TransactionClosureRequestData> transactionEventStoreRepository;
+    private TransactionsEventStoreRepository<TransactionClosureSendData> transactionEventStoreRepository;
 
     @Autowired
     private TransactionsEventStoreRepository<TransactionAuthorizationRequestData> authorizationRequestedEventStoreRepository;
 
     @Override
-    public Mono<TransactionInfoDto> handle(TransactionClosureRequestCommand command) {
+    public Mono<TransactionClosureSentEvent> handle(TransactionClosureSendCommand command) {
         Transaction transaction = command.getData().transaction();
 
         if (transaction.getStatus() != TransactionStatusDto.AUTHORIZED) {
@@ -46,8 +45,7 @@ public class TransactionClosureRequestHandler implements CommandHandler<Transact
             return Mono.error(new AlreadyProcessedException(transaction.getRptId()));
         } else {
             UpdateAuthorizationRequestDto updateAuthorizationRequest = command.getData().updateAuthorizationRequest();
-
-            return authorizationRequestedEventStoreRepository.findByIdAndEventCode(
+            return authorizationRequestedEventStoreRepository.findByTransactionIdAndEventCode(
                             transaction.getTransactionId().value().toString(),
                             TransactionEventCode.TRANSACTION_AUTHORIZATION_REQUESTED_EVENT
                     )
@@ -62,14 +60,14 @@ public class TransactionClosureRequestHandler implements CommandHandler<Transact
                                 .tipoVersamento(ClosePaymentRequestDto.TipoVersamentoEnum.fromValue(authorizationRequestData.getPaymentTypeCode()))
                                 .identificativoIntermediario(authorizationRequestData.getBrokerName())
                                 .identificativoCanale(authorizationRequestData.getPspChannelCode())
-                                .pspTransactionId(authorizationRequestData.getTransactionId().toString())
+                                .pspTransactionId(transaction.getTransactionId().value().toString())
                                 .totalAmount(new BigDecimal(transaction.getAmount().value() + authorizationRequestData.getFee()))
                                 .fee(new BigDecimal(authorizationRequestData.getFee()))
                                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
                                 .additionalPaymentInformations(
                                         new AdditionalPaymentInformationsDto()
                                                 .outcomePaymentGateway(updateAuthorizationRequest.getAuthorizationResult().toString())
-                                                .transactionId(authorizationRequestData.getTransactionId().toString())
+                                                .transactionId(transaction.getTransactionId().value().toString())
                                                 .authorizationCode(updateAuthorizationRequest.getAuthorizationCode())
                                 );
 
@@ -86,28 +84,21 @@ public class TransactionClosureRequestHandler implements CommandHandler<Transact
                             }
                         }
 
-                        TransactionClosureRequestData statusUpdateData =
-                                new TransactionClosureRequestData(
+                        TransactionClosureSendData closureSendData =
+                                new TransactionClosureSendData(
                                         response.getEsito(),
                                         newStatus
                                 );
 
-                        TransactionClosureRequestedEvent event = new TransactionClosureRequestedEvent(
-                                transaction.getTransactionId().toString(),
-                                transaction.getRptId().toString(),
-                                transaction.getPaymentToken().toString(),
-                                statusUpdateData
+                        TransactionClosureSentEvent event = new TransactionClosureSentEvent(
+                                transaction.getTransactionId().value().toString(),
+                                transaction.getRptId().value(),
+                                transaction.getPaymentToken().value(),
+                                closureSendData
                         );
 
-                        return transactionEventStoreRepository.save(event).thenReturn(newStatus);
-                    })
-                    .map(newStatus -> new TransactionInfoDto()
-                            .amount(transaction.getAmount().value())
-                            .reason(transaction.getDescription().value())
-                            .paymentToken(transaction.getPaymentToken().value())
-                            .authToken(null)
-                            .rptId(transaction.getRptId().value())
-                            .status(newStatus));
+                        return transactionEventStoreRepository.save(event);
+                    });
         }
     }
 

@@ -1,13 +1,9 @@
 package it.pagopa.transactions.commands.handlers;
 
-import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentRequestDto;
-import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
-import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
-import it.pagopa.transactions.documents.TransactionAuthorizationRequestedEvent;
 import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdateData;
 import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdatedEvent;
 import it.pagopa.transactions.domain.Transaction;
@@ -20,7 +16,7 @@ import reactor.core.publisher.Mono;
 
 @Component
 @Slf4j
-public class TransactionUpdateAuthorizationHandler implements CommandHandler<TransactionUpdateAuthorizationCommand, Mono<TransactionInfoDto>> {
+public class TransactionUpdateAuthorizationHandler implements CommandHandler<TransactionUpdateAuthorizationCommand, Mono<TransactionAuthorizationStatusUpdatedEvent>> {
 
     @Autowired
     NodeForPspClient nodeForPspClient;
@@ -29,7 +25,7 @@ public class TransactionUpdateAuthorizationHandler implements CommandHandler<Tra
     private TransactionsEventStoreRepository<TransactionAuthorizationStatusUpdateData> transactionEventStoreRepository;
 
     @Override
-    public Mono<TransactionInfoDto> handle(TransactionUpdateAuthorizationCommand command) {
+    public Mono<TransactionAuthorizationStatusUpdatedEvent> handle(TransactionUpdateAuthorizationCommand command) {
         Transaction transaction = command.getData().transaction();
 
         if (transaction.getStatus() != TransactionStatusDto.AUTHORIZATION_REQUESTED) {
@@ -55,22 +51,13 @@ public class TransactionUpdateAuthorizationHandler implements CommandHandler<Tra
                     );
 
             TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
-                    transaction.getTransactionId().toString(),
-                    transaction.getRptId().toString(),
-                    transaction.getPaymentToken().toString(),
+                    transaction.getTransactionId().value().toString(),
+                    transaction.getRptId().value(),
+                    transaction.getPaymentToken().value(),
                     statusUpdateData
             );
 
-            return transactionEventStoreRepository.save(event)
-                    .thenReturn(new TransactionInfoDto()
-                            .transactionId(transaction.getTransactionId().value().toString())
-                            .amount(transaction.getAmount().value())
-                            .reason(transaction.getDescription().value())
-                            .paymentToken(transaction.getPaymentToken().value())
-                            .authToken(null)
-                            .rptId(transaction.getRptId().value())
-                            .status(newStatus)
-                    );
+            return transactionEventStoreRepository.save(event);
         }
     }
 }

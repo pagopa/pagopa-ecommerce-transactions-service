@@ -9,7 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @AllArgsConstructor
 @Data
 @Document
-public class TransactionClosureRequestData {
+public class TransactionClosureSendData {
     private ClosePaymentResponseDto.EsitoEnum nodeClosePaymentOutcome;
     private TransactionStatusDto newTransactionStatus;
 }

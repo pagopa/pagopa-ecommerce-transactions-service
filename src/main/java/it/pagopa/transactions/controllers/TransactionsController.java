@@ -32,9 +32,9 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @Override
-    public Mono<ResponseEntity<RequestAuthorizationResponseDto>> requestTransactionAuthorization(String transaciontId, Mono<RequestAuthorizationRequestDto> requestAuthorizationRequestDto, ServerWebExchange exchange) {
+    public Mono<ResponseEntity<RequestAuthorizationResponseDto>> requestTransactionAuthorization(String transactionId, Mono<RequestAuthorizationRequestDto> requestAuthorizationRequestDto, ServerWebExchange exchange) {
         return requestAuthorizationRequestDto
-                .flatMap(requestAuthorizationRequest -> transactionsService.requestTransactionAuthorization(transaciontId, requestAuthorizationRequest))
+                .flatMap(requestAuthorizationRequest -> transactionsService.requestTransactionAuthorization(transactionId, requestAuthorizationRequest))
                 .map(ResponseEntity::ok);
     }
 
