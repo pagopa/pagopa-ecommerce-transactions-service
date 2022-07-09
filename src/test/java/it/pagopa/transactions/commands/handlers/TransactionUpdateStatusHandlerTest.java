@@ -63,7 +63,7 @@ class TransactionUpdateStatusHandlerTest {
                 transaction.getRptId(), updateTransactionStatusData);
 
         TransactionStatusUpdateData transactionAuthorizationStatusUpdateData = new TransactionStatusUpdateData(
-                AuthorizationResultDto.KO, TransactionStatusDto.AUTHORIZED);
+                AuthorizationResultDto.OK, TransactionStatusDto.AUTHORIZED);
 
         TransactionStatusUpdatedEvent event = new TransactionStatusUpdatedEvent(
                 transactionId.toString(),
@@ -82,6 +82,55 @@ class TransactionUpdateStatusHandlerTest {
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(argThat(eventArg -> eventArg
                 .getData().getNewTransactionStatus().equals(TransactionStatusDto.NOTIFIED)));
+    }
+
+    @Test
+    void shouldSaveKoUpdate() {
+        PaymentToken paymentToken = new PaymentToken("paymentToken");
+        RptId rptId = new RptId("rptId");
+        TransactionDescription description = new TransactionDescription("description");
+        TransactionAmount amount = new TransactionAmount(100);
+
+        Transaction transaction = new Transaction(
+                transactionId,
+                paymentToken,
+                rptId,
+                description,
+                amount,
+                TransactionStatusDto.CLOSED);
+
+        UpdateTransactionStatusRequestDto updateTransactionRequest = new UpdateTransactionStatusRequestDto()
+                .authorizationResult(AuthorizationResultDto.KO)
+                .authorizationCode("authorizationCode")
+                .timestampOperation(OffsetDateTime.now());
+
+        UpdateTransactionStatusData updateTransactionStatusData = new UpdateTransactionStatusData(
+                transaction,
+                updateTransactionRequest);
+
+        TransactionUpdateStatusCommand requestAuthorizationCommand = new TransactionUpdateStatusCommand(
+                transaction.getRptId(), updateTransactionStatusData);
+
+        TransactionStatusUpdateData transactionAuthorizationStatusUpdateData = new TransactionStatusUpdateData(
+                AuthorizationResultDto.KO, TransactionStatusDto.CLOSED);
+
+        TransactionStatusUpdatedEvent event = new TransactionStatusUpdatedEvent(
+                transactionId.toString(),
+                transaction.getRptId().toString(),
+                transaction.getPaymentToken().toString(),
+                transactionAuthorizationStatusUpdateData);
+
+        /* preconditions */
+        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
+
+        /* test */
+        StepVerifier.create(updateStatusHandler.handle(requestAuthorizationCommand))
+                .expectNextMatches(transacttionStatusUpdatedEvent -> transacttionStatusUpdatedEvent
+                        .equals(event))
+                .verifyComplete();
+
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(argThat(eventArg -> eventArg
+                .getData().getNewTransactionStatus().equals(TransactionStatusDto.NOTIFIED_FAILED)));
     }
 
     @Test
