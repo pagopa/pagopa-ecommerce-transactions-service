@@ -10,6 +10,7 @@ import it.pagopa.transactions.commands.handlers.TransactionSendClosureHandler;
 import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
 import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHandler;
+import it.pagopa.transactions.commands.handlers.TransactionUpdateStatusHandler;
 import it.pagopa.transactions.documents.*;
 import it.pagopa.transactions.documents.Transaction;
 import it.pagopa.transactions.domain.*;
@@ -17,6 +18,7 @@ import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.AuthorizationRequestProjectionHandler;
 import it.pagopa.transactions.projections.handlers.AuthorizationUpdateProjectionHandler;
 import it.pagopa.transactions.projections.handlers.ClosureSendProjectionHandler;
+import it.pagopa.transactions.projections.handlers.TransactionUpdateProjectionHandler;
 import it.pagopa.transactions.projections.handlers.TransactionsProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
@@ -72,6 +74,12 @@ public class TransactionServiceTests {
 	@MockBean
 	private ClosureSendProjectionHandler closureSendProjectionHandler;
 
+	@MockBean
+	private TransactionUpdateStatusHandler transactionUpdateStatusHandler;
+
+	@MockBean
+	private TransactionUpdateProjectionHandler transactionUpdateProjectionHandler;
+	
 	final String PAYMENT_TOKEN = "aaa";
 	final String TRANSACION_ID = "833d303a-f857-11ec-b939-0242ac120002";
 
