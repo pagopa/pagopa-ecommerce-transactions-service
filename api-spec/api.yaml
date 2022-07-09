@@ -47,6 +47,43 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
+    patch:
+      operationId: patchTransactionStatus
+      parameters:
+        - in: path
+          name: transactionId
+          schema:
+            type: string
+          required: true
+          description: Transaction ID
+      summary: Patch status of specific transaction
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateTransactionStatusRequest"
+      responses:
+        200:
+          description: Transaction data successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionInfo"
+        400:
+          description: Invalid transaction id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        404:
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"   
+        409:
+          description: Illegal transaction status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"                 
   /transactions/{transactionId}/auth-request:
     summary: Request authorization for the transaction identified by payment token
     post:
@@ -248,6 +285,23 @@ components:
       example:
         authorizationResult: OK
         timestampOperation: 2022-02-11T13:00:00+01:00
+    UpdateTransactionStatusRequest:
+      type: object
+      description: Request body for updating a transaction
+      properties:
+        authorizationResult:
+          $ref: '#/components/schemas/AuthorizationResult'
+        timestampOperation:
+          type: string
+          format: date-time
+          description: Payment timestamp
+        authorizationCode:
+          type: string
+          description: Payment gateway-specific authorization code related to the transaction
+      required:
+        - authorizationResult
+        - timestampOperation
+        - authorizationCode    
     TransactionInfo:
       description: Transaction data returned when querying for an existing transaction
       allOf:
@@ -353,6 +407,8 @@ components:
         - AUTHORIZATION_FAILED
         - CLOSED
         - CLOSURE_FAILED
+        - NOTIFIED
+        - NOTIFIED_FAILED
     ProblemJson:
       type: object
       properties:
@@ -414,3 +470,9 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/UpdateAuthorizationRequest"
+    UpdateTransactionStatusRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UpdateTransactionStatusRequest"
