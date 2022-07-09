@@ -293,4 +293,85 @@ public class TransactionServiceTests {
 				.expectErrorMatches(error -> error instanceof TransactionNotFoundException)
 				.verify();
 	}
+
+	@Test
+	void shouldReturnTransactionInfoForSuccessfulNotified() {
+	    TransactionId transactionId = new TransactionId(UUID.randomUUID());
+
+		Transaction transactionDocument = new Transaction(
+			    transactionId.value().toString(),
+				PAYMENT_TOKEN,
+				"rptId",
+				"description",
+				100,
+				TransactionStatusDto.CLOSED);
+
+		it.pagopa.transactions.domain.Transaction transaction = new it.pagopa.transactions.domain.Transaction(
+				new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
+				new PaymentToken(transactionDocument.getPaymentToken()),
+				new RptId(transactionDocument.getRptId()),
+				new TransactionDescription(transactionDocument.getDescription()),
+				new TransactionAmount(transactionDocument.getAmount()),
+				TransactionStatusDto.NOTIFIED
+		);
+
+		UpdateTransactionStatusRequestDto updateTransactionStatusRequest = new UpdateTransactionStatusRequestDto()
+				.authorizationResult(AuthorizationResultDto.OK)
+				.authorizationCode("authorizationCode")
+				.timestampOperation(OffsetDateTime.now());
+
+		TransactionStatusUpdateData statusUpdateData =
+				new TransactionStatusUpdateData(
+					updateTransactionStatusRequest.getAuthorizationResult(),
+						TransactionStatusDto.NOTIFIED
+				);
+
+		TransactionStatusUpdatedEvent event = new TransactionStatusUpdatedEvent(
+				transactionDocument.getTransactionId(),
+				transactionDocument.getRptId(),
+				transactionDocument.getPaymentToken(),
+				statusUpdateData
+		);
+
+		TransactionInfoDto expectedResponse = new TransactionInfoDto()
+				.transactionId(transactionDocument.getTransactionId())
+				.amount(transactionDocument.getAmount())
+				.authToken(null)
+				.status(TransactionStatusDto.NOTIFIED)
+				.reason(transactionDocument.getDescription())
+				.paymentToken(transactionDocument.getPaymentToken())
+				.rptId(transactionDocument.getRptId());
+
+		/* preconditions */
+		Mockito.when(repository.findById(transactionId.value().toString()))
+				.thenReturn(Mono.just(transactionDocument));
+
+		Mockito.when(transactionUpdateStatusHandler.handle(any()))
+				.thenReturn(Mono.just(event));
+
+		Mockito.when(transactionUpdateProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
+
+		/* test */
+		TransactionInfoDto transactionInfoResponse = transactionsService.updateTransactionStatus(transactionId.value().toString(), updateTransactionStatusRequest).block();
+
+		assertEquals(expectedResponse, transactionInfoResponse);
+	}
+
+	@Test
+	void shouldReturnNotFoundExceptionForNonExistingToUpdateTransaction() {
+
+		UpdateTransactionStatusRequestDto updateTransactionStatusRequest = new UpdateTransactionStatusRequestDto()
+				.authorizationResult(AuthorizationResultDto.OK)
+				.authorizationCode("authorizationCode")
+				.timestampOperation(OffsetDateTime.now());
+
+		/* preconditions */
+		Mockito.when(repository.findById(TRANSACION_ID))
+				.thenReturn(Mono.empty());
+
+		/* test */
+		StepVerifier.create(transactionsService.updateTransactionStatus(TRANSACION_ID, updateTransactionStatusRequest))
+				.expectErrorMatches(error -> error instanceof TransactionNotFoundException)
+				.verify();
+	}
 }
