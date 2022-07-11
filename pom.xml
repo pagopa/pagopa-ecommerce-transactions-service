@@ -53,6 +53,11 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-storage-queue</artifactId>
+            <version>12.14.0</version>
+        </dependency>
+        <dependency>
             <groupId>wsdl4j</groupId>
             <artifactId>wsdl4j</artifactId>
         </dependency>
