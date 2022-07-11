@@ -31,7 +31,11 @@ import reactor.util.function.Tuples;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.util.UUID;
+
+import com.azure.core.util.BinaryData;
+import com.azure.storage.queue.QueueClient;
 
 @Slf4j
 @Component
@@ -60,6 +64,9 @@ public class TransactionInizializeHandler
     @Autowired
     NodoConnectionString nodoConnectionParams;
 
+    @Autowired
+    QueueClient queueClient;
+    
     @Override
     public Mono<NewTransactionResponseDto> handle(TransactionInitializeCommand command) {
         final RptId rptId = command.getRptId();
@@ -140,7 +147,10 @@ public class TransactionInizializeHandler
                             activatePaymentNoticeRes.getPaymentToken());
                     return transactionEventStoreRepository.save(transactionInitializedEvent)
                             .thenReturn(transactionInitializedEvent);
-                })
+                        })
+                .doOnNext(transactionInitializedEvent -> queueClient.sendMessageWithResponse(
+                        BinaryData.fromObject(transactionInitializedEvent),
+                        Duration.ofSeconds(60), null, Duration.ofSeconds(1), null))
                 .flatMap(transactionInitializedEvent -> {
                     SessionDataDto sessionRequest = new SessionDataDto()
                             .email(transactionInitializedEvent.getData().getEmail())
