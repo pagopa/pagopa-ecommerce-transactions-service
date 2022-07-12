@@ -24,6 +24,7 @@ import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.NodoConnectionString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
@@ -35,7 +36,7 @@ import java.time.Duration;
 import java.util.UUID;
 
 import com.azure.core.util.BinaryData;
-import com.azure.storage.queue.QueueClient;
+import com.azure.storage.queue.QueueAsyncClient;
 
 @Slf4j
 @Component
@@ -65,7 +66,10 @@ public class TransactionInizializeHandler
     NodoConnectionString nodoConnectionParams;
 
     @Autowired
-    QueueClient queueClient;
+    QueueAsyncClient queueAsyncClient;
+
+    @Value("${azurestorage.queues.transactioninitevents.visibilityTimeout}")
+    String queueVisibilityTimeout;
     
     @Override
     public Mono<NewTransactionResponseDto> handle(TransactionInitializeCommand command) {
@@ -148,9 +152,12 @@ public class TransactionInizializeHandler
                     return transactionEventStoreRepository.save(transactionInitializedEvent)
                             .thenReturn(transactionInitializedEvent);
                         })
-                .doOnNext(transactionInitializedEvent -> queueClient.sendMessageWithResponse(
-                        BinaryData.fromObject(transactionInitializedEvent),
-                        Duration.ofSeconds(60), null, Duration.ofSeconds(1), null))
+                .doOnNext(transactionInitializedEvent -> {
+                    queueAsyncClient.sendMessageWithResponse(
+                            BinaryData.fromObject(transactionInitializedEvent),
+                            Duration.ofSeconds(Integer.valueOf(queueVisibilityTimeout)), null);
+                })
+                .doOnError(throwable -> log.error("Failed sending transactionInitializedEvent queue", throwable))
                 .flatMap(transactionInitializedEvent -> {
                     SessionDataDto sessionRequest = new SessionDataDto()
                             .email(transactionInitializedEvent.getData().getEmail())
