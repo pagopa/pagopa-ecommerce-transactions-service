@@ -71,7 +71,7 @@ public class TransactionRequestAuthorizationHandler
                         Duration.ofSeconds(Integer.valueOf(queueVisibilityTimeout)), null).subscribe(
                                 response -> log.debug("Message {} expires at {}", response.getValue().getMessageId(),
                                         response.getValue().getExpirationTime()),
-                                error -> System.err.print(error.toString()),
+                                error -> log.error(error.toString()),
                                 () -> log.debug("Complete enqueuing the message!")));
     }
 }
