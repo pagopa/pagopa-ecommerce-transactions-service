@@ -32,11 +32,8 @@ import reactor.util.function.Tuples;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
-import java.time.Duration;
 import java.util.UUID;
 
-import com.azure.core.util.BinaryData;
-import com.azure.storage.queue.QueueAsyncClient;
 
 @Slf4j
 @Component
@@ -65,12 +62,6 @@ public class TransactionInizializeHandler
     @Autowired
     NodoConnectionString nodoConnectionParams;
 
-    @Autowired
-    QueueAsyncClient queueAsyncClient;
-
-    @Value("${azurestorage.queues.transactioninitevents.visibilityTimeout}")
-    String queueVisibilityTimeout;
-    
     @Override
     public Mono<NewTransactionResponseDto> handle(TransactionInitializeCommand command) {
         final RptId rptId = command.getRptId();
@@ -152,12 +143,6 @@ public class TransactionInizializeHandler
                     return transactionEventStoreRepository.save(transactionInitializedEvent)
                             .thenReturn(transactionInitializedEvent);
                         })
-                .doOnNext(transactionInitializedEvent -> {
-                    queueAsyncClient.sendMessageWithResponse(
-                            BinaryData.fromObject(transactionInitializedEvent),
-                            Duration.ofSeconds(Integer.valueOf(queueVisibilityTimeout)), null);
-                })
-                .doOnError(throwable -> log.error("Failed sending transactionInitializedEvent queue", throwable))
                 .flatMap(transactionInitializedEvent -> {
                     SessionDataDto sessionRequest = new SessionDataDto()
                             .email(transactionInitializedEvent.getData().getEmail())
