@@ -11,14 +11,14 @@ import org.springframework.context.annotation.Configuration;
 public class AzureStorageConfig {
 
     @Bean
-    public QueueAsyncClient initEventsQueueClient(
+    public QueueAsyncClient queueAsyncClient(
             @Value("${azurestorage.connectionstring}") String storageConnectionString,
-            @Value("${azurestorage.queues.transactioninitevents.name}") String queueEventInitName) {
-        QueueAsyncClient queueClient = new QueueClientBuilder()
+            @Value("${azurestorage.queues.transactionauthrequestedtevents.name}") String queueEventInitName) {
+        QueueAsyncClient queueAsyncClient = new QueueClientBuilder()
                 .connectionString(storageConnectionString)
                 .queueName(queueEventInitName)
                 .buildAsyncClient();
-        queueClient.createIfNotExists();
-        return queueClient;
+        queueAsyncClient.createIfNotExists().block();
+        return queueAsyncClient;
     }
 }
