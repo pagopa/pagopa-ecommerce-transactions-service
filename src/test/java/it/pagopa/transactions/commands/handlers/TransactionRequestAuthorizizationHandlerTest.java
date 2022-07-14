@@ -17,14 +17,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.any;
+import com.azure.core.util.BinaryData;
+import com.azure.storage.queue.QueueAsyncClient;
 
-import java.util.UUID;
+import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionRequestAuthorizizationHandlerTest {
@@ -41,6 +44,9 @@ class TransactionRequestAuthorizizationHandlerTest {
     @Mock
     private TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository;
    
+    @Mock
+    private QueueAsyncClient queueAsyncClient;
+
     private UUID transactionIdUUID = UUID.randomUUID();
 
     TransactionId transactionId = new TransactionId(transactionIdUUID);
@@ -84,9 +90,12 @@ class TransactionRequestAuthorizizationHandlerTest {
         RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
                 .authorizationUrl("https://example.com");
 
+        ReflectionTestUtils.setField(requestAuthorizationHandler, "queueVisibilityTimeout", "300");
+
         /* preconditions */
         Mockito.when(paymentGatewayClient.requestAuthorization(authorizationData)).thenReturn(Mono.just(requestAuthorizationResponse));
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.empty());
+        Mockito.when(queueAsyncClient.sendMessageWithResponse(BinaryData.fromObject(any()),any(),any())).thenReturn(Mono.empty());
 
         /* test */
         requestAuthorizationHandler.handle(requestAuthorizationCommand).block();
