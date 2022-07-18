@@ -95,7 +95,6 @@ class TransactionRequestAuthorizizationHandlerTest {
         /* preconditions */
         Mockito.when(paymentGatewayClient.requestAuthorization(authorizationData)).thenReturn(Mono.just(requestAuthorizationResponse));
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.empty());
-        Mockito.when(queueAsyncClient.sendMessageWithResponse(BinaryData.fromObject(any()),any(),any())).thenReturn(Mono.empty());
 
         /* test */
         requestAuthorizationHandler.handle(requestAuthorizationCommand).block();
