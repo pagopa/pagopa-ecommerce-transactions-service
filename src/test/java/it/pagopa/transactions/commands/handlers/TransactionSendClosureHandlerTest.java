@@ -128,7 +128,8 @@ class TransactionSendClosureHandlerTest {
                 "pspId",
                 ClosePaymentRequestDto.TipoVersamentoEnum.BP.toString(),
                 "brokerName",
-                "pspChannelCode"
+                "pspChannelCode",
+                "requestId"
         );
         TransactionAuthorizationRequestedEvent transactionAuthorizationRequestedEvent =
                 new TransactionAuthorizationRequestedEvent(

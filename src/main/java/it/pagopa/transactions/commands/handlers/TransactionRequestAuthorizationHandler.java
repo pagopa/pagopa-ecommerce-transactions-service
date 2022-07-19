@@ -20,6 +20,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 @Component
 @Slf4j
@@ -62,16 +65,19 @@ public class TransactionRequestAuthorizationHandler
                                     command.getData().pspId(),
                                     command.getData().paymentTypeCode(),
                                     command.getData().brokerName(),
-                                    command.getData().pspChannelCode()));
-
-                    return transactionEventStoreRepository.save(authorizationEvent).thenReturn(auth);
+                                    command.getData().pspChannelCode(),
+                                    auth.getRequestId()));
+                    return transactionEventStoreRepository.save(authorizationEvent).map(event -> Tuples.of(event, auth));
                 })
-                .doOnNext(authorizationEvent -> queueAsyncClient.sendMessageWithResponse(
-                        BinaryData.fromObject(authorizationEvent),
-                        Duration.ofSeconds(Integer.valueOf(queueVisibilityTimeout)), null).subscribe(
+                .publishOn(Schedulers.boundedElastic())
+                .doOnNext(args -> queueAsyncClient.sendMessageWithResponse(
+                        BinaryData.fromObject(args.getT1()),
+                        Duration.ofSeconds(Integer.parseInt(queueVisibilityTimeout)), null).subscribe(
                                 response -> log.debug("Message {} expires at {}", response.getValue().getMessageId(),
                                         response.getValue().getExpirationTime()),
                                 error -> log.error(error.toString()),
-                                () -> log.debug("Complete enqueuing the message!")));
+                                () -> log.debug("Complete enqueuing the message!")))
+                .map(Tuple2::getT2)
+                .map(authorizationResponse -> new RequestAuthorizationResponseDto().authorizationUrl(authorizationResponse.getAuthorizationUrl()));
     }
 }
