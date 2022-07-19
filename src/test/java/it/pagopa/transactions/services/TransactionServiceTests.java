@@ -140,8 +140,11 @@ public class TransactionServiceTests {
 		PSPsResponseDto pspResponseDto = new PSPsResponseDto();
 		pspResponseDto.psp(pspDtoList);
 
+		PaymentGatewayClient.AuthorizationResponse gatewayAuthorizationResponse =
+				new PaymentGatewayClient.AuthorizationResponse("https://example.com", "requestId");
+
 		RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
-				.authorizationUrl("https://example.com");
+				.authorizationUrl(gatewayAuthorizationResponse.getAuthorizationUrl());
 
 		Mockito.when(ecommercePaymentInstrumentsClient.getPSPs(any(), any())).thenReturn(
 				Mono.just(pspResponseDto));
@@ -150,7 +153,7 @@ public class TransactionServiceTests {
 				.thenReturn(Mono.just(transaction));
 
 		Mockito.when(paymentGatewayClient.requestAuthorization(any())).thenReturn(
-				Mono.just(requestAuthorizationResponse));
+				Mono.just(gatewayAuthorizationResponse));
 
 		Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 

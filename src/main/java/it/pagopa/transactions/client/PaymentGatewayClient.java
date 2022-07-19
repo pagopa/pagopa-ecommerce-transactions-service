@@ -19,7 +19,7 @@ import java.math.BigDecimal;
 @Component
 public class PaymentGatewayClient {
     @Value
-    public class AuthorizationResponse {
+    public static class AuthorizationResponse {
         private final String authorizationUrl;
         private final String requestId;
     }

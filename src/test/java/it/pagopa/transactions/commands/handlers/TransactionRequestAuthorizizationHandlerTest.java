@@ -87,13 +87,13 @@ class TransactionRequestAuthorizizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);
 
-        RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
-                .authorizationUrl("https://example.com");
+        PaymentGatewayClient.AuthorizationResponse gatewayAuthorizationResponse =
+                new PaymentGatewayClient.AuthorizationResponse("https://example.com", "requestId");
 
         ReflectionTestUtils.setField(requestAuthorizationHandler, "queueVisibilityTimeout", "300");
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestAuthorization(authorizationData)).thenReturn(Mono.just(requestAuthorizationResponse));
+        Mockito.when(paymentGatewayClient.requestAuthorization(authorizationData)).thenReturn(Mono.just(gatewayAuthorizationResponse));
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.empty());
 
         /* test */
