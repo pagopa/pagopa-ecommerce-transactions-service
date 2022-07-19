@@ -5,6 +5,6 @@ import it.pagopa.transactions.domain.RptId;
 
 public final class TransactionUpdateStatusCommand extends TransactionsCommand<UpdateTransactionStatusData> {
     public TransactionUpdateStatusCommand(RptId rptId, UpdateTransactionStatusData data) {
-        super(rptId, TransactionsCommandCode.UPDATE_AUTHORIZATION_STATUS, data);
+        super(rptId, TransactionsCommandCode.UPDATE_TRANSACTION_STATUS, data);
     }
 }
