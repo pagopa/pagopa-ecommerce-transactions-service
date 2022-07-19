@@ -290,4 +290,32 @@ class TransactionsControllerTest {
 
         assertEquals(responseCheck.getStatusCode(), response.getStatusCode());
     }
+
+    @Test
+    void shouldReturnTransactionInfoOnCorrectNotify() {
+        String paymentToken = UUID.randomUUID().toString();
+        String transactionId = UUID.randomUUID().toString();
+
+        TransactionInfoDto transactionInfo = new TransactionInfoDto()
+                .transactionId(transactionId)
+                .amount(100)
+                .status(TransactionStatusDto.NOTIFIED)
+                .paymentToken(paymentToken);
+
+        UpdateTransactionStatusRequestDto updateStatusRequest = new UpdateTransactionStatusRequestDto()
+                .authorizationResult(AuthorizationResultDto.OK)
+                .authorizationCode("authorizationCode")
+                .timestampOperation(OffsetDateTime.now());
+
+        /* preconditions */
+        Mockito.when(transactionsService.updateTransactionStatus(transactionId, updateStatusRequest))
+                .thenReturn(Mono.just(transactionInfo));
+
+        /* test */
+        ResponseEntity<TransactionInfoDto> response = transactionsController
+                .patchTransactionStatus(transactionId, Mono.just(updateStatusRequest), null).block();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(transactionInfo, response.getBody());
+    }
 }

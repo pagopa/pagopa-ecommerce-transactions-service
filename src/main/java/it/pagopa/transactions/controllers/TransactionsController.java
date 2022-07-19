@@ -5,6 +5,9 @@ import it.pagopa.transactions.exceptions.*;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
 
 import it.pagopa.transactions.services.TransactionsService;
+
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,6 +48,14 @@ public class TransactionsController implements TransactionsApi {
                 .map(ResponseEntity::ok);
     }
 
+
+@Override
+public Mono<ResponseEntity<TransactionInfoDto>> patchTransactionStatus(String transactionId,
+                @Valid Mono<UpdateTransactionStatusRequestDto> updateTransactioRequestDto, ServerWebExchange exchange) {
+                        return updateTransactioRequestDto
+                        .flatMap(updateTransactionRequest -> transactionsService.updateTransactionStatus(transactionId, updateTransactionRequest))
+                        .map(ResponseEntity::ok);
+}
     @ExceptionHandler(TransactionNotFoundException.class)
     private ResponseEntity<ProblemJsonDto> transactionNotFoundHandler(TransactionNotFoundException exception) {
         return new ResponseEntity<>(
