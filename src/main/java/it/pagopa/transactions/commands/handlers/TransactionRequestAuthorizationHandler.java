@@ -10,25 +10,40 @@ import it.pagopa.transactions.domain.Transaction;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import lombok.extern.slf4j.Slf4j;
+
+import java.time.Duration;
+
+import com.azure.core.util.BinaryData;
+import com.azure.storage.queue.QueueAsyncClient;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 @Component
 @Slf4j
-public class TransactionRequestAuthorizationHandler implements CommandHandler<TransactionRequestAuthorizationCommand, Mono<RequestAuthorizationResponseDto>> {
+public class TransactionRequestAuthorizationHandler
+        implements CommandHandler<TransactionRequestAuthorizationCommand, Mono<RequestAuthorizationResponseDto>> {
     @Autowired
     private PaymentGatewayClient paymentGatewayClient;
 
     @Autowired
     private TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository;
 
+    @Autowired
+    QueueAsyncClient queueAsyncClient;
+
+    @Value("${azurestorage.queues.transactionauthrequestedtevents.visibilityTimeout}")
+    String queueVisibilityTimeout;
+
     @Override
     public Mono<RequestAuthorizationResponseDto> handle(TransactionRequestAuthorizationCommand command) {
         Transaction transaction = command.getData().transaction();
 
         if (transaction.getStatus() != TransactionStatusDto.INITIALIZED) {
-            log.warn("Invalid state transition: requested authorization for transaction {} from status {}", transaction.getPaymentToken().value(), transaction.getStatus());
+            log.warn("Invalid state transition: requested authorization for transaction {} from status {}",
+                    transaction.getPaymentToken().value(), transaction.getStatus());
             return Mono.error(new AlreadyProcessedException(transaction.getRptId()));
         }
 
@@ -47,11 +62,16 @@ public class TransactionRequestAuthorizationHandler implements CommandHandler<Tr
                                     command.getData().pspId(),
                                     command.getData().paymentTypeCode(),
                                     command.getData().brokerName(),
-                                    command.getData().pspChannelCode()
-                            )
-                    );
+                                    command.getData().pspChannelCode()));
 
                     return transactionEventStoreRepository.save(authorizationEvent).thenReturn(auth);
-                });
+                })
+                .doOnNext(authorizationEvent -> queueAsyncClient.sendMessageWithResponse(
+                        BinaryData.fromObject(authorizationEvent),
+                        Duration.ofSeconds(Integer.valueOf(queueVisibilityTimeout)), null).subscribe(
+                                response -> log.debug("Message {} expires at {}", response.getValue().getMessageId(),
+                                        response.getValue().getExpirationTime()),
+                                error -> log.error(error.toString()),
+                                () -> log.debug("Complete enqueuing the message!")));
     }
 }

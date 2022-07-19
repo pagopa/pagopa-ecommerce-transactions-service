@@ -29,7 +29,11 @@ steps:
         sonar.coverage.exclusions=**/config/*,**/*Mock*,**/model/*
         sonar.coverage.jacoco.xmlReportPaths=./target/site/jacoco/jacoco.xml
         sonar.junit.reportPaths=target/surefire-reports/
-  
+
+  - bash: |
+        docker run -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite &
+    displayName: Run azurite to test Service - Storage integration
+
   - task: Maven@3
     inputs:
       mavenPomFile: 'pom.xml'

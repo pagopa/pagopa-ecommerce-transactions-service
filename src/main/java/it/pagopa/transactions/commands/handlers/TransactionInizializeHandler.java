@@ -24,6 +24,7 @@ import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.NodoConnectionString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
@@ -32,6 +33,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.util.UUID;
+
 
 @Slf4j
 @Component
@@ -140,7 +142,7 @@ public class TransactionInizializeHandler
                             activatePaymentNoticeRes.getPaymentToken());
                     return transactionEventStoreRepository.save(transactionInitializedEvent)
                             .thenReturn(transactionInitializedEvent);
-                })
+                        })
                 .flatMap(transactionInitializedEvent -> {
                     SessionDataDto sessionRequest = new SessionDataDto()
                             .email(transactionInitializedEvent.getData().getEmail())
