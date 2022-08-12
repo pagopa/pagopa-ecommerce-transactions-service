@@ -289,22 +289,40 @@
                 <version>0.15.1</version>
                 <executions>
                     <execution>
+                        <id>node-for-psp</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
+                        <configuration>
+                            <schemaLanguage>WSDL</schemaLanguage>
+                            <generatePackage>it.pagopa.generated.transactions.model</generatePackage>
+                            <schemas>
+                                <schema>
+                                    <url>
+                                        https://raw.githubusercontent.com/pagopa/pagopa-infra/main/src/api/nodopagamenti_api/nodeForPsp/v1/nodeForPsp.wsdl
+                                    </url>
+                                </schema>
+                            </schemas>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>nodo-per-psp</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <schemaLanguage>WSDL</schemaLanguage>
+                            <generatePackage>it.pagopa.generated.nodoperpsp.model</generatePackage>
+                            <schemas>
+                                <schema>
+                                    <url>
+                                        https://raw.githubusercontent.com/pagopa/pagopa-infra/main/src/api/nodopagamenti_api/nodoPerPsp/v1/nodoPerPsp.wsdl
+                                    </url>
+                                </schema>
+                            </schemas>
+                        </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <schemaLanguage>WSDL</schemaLanguage>
-                    <generatePackage>it.pagopa.generated.transactions.model</generatePackage>
-                    <schemas>
-                        <schema>
-                            <url>
-                                https://raw.githubusercontent.com/pagopa/pagopa-infra/main/src/api/nodopagamenti_api/nodeForPsp/v1/nodeForPsp.wsdl
-                            </url>
-                        </schema>
-                    </schemas>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.jacoco</groupId>
