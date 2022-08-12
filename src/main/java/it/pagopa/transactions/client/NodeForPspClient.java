@@ -4,6 +4,8 @@ import javax.xml.bind.JAXBElement;
 
 import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentRequestDto;
 import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentResponseDto;
+import it.pagopa.generated.transactions.model.VerifyPaymentNoticeReq;
+import it.pagopa.generated.transactions.model.VerifyPaymentNoticeRes;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -25,6 +27,27 @@ public class NodeForPspClient {
 
 	@Autowired
 	private WebClient nodoWebClient;
+
+	public Mono<VerifyPaymentNoticeRes> verifyPaymentNotice(JAXBElement<VerifyPaymentNoticeReq> request) {
+		return nodoWebClient.post()
+				.uri("/webservices/pof/PagamentiTelematiciPspNodoservice")
+				.header("Content-Type", MediaType.TEXT_XML_VALUE)
+				.header("SOAPAction", "verifyPaymentNotice")
+				.body(Mono.just(new SoapEnvelope("", request)), SoapEnvelope.class)
+				.retrieve()
+				.onStatus(HttpStatus::isError,
+						clientResponse -> clientResponse.bodyToMono(String.class)
+								.flatMap(errorResponseBody -> Mono.error(
+										new ResponseStatusException(clientResponse.statusCode(), errorResponseBody))))
+				.bodyToMono(VerifyPaymentNoticeRes.class)
+				.doOnSuccess((VerifyPaymentNoticeRes paymentInfo) -> log.debug(
+						"Payment activated with paymentToken {}",
+						new Object[] { request.getValue().getQrCode().getNoticeNumber() }))
+				.doOnError(ResponseStatusException.class,
+						error -> log.error("ResponseStatus Error : {}", new Object[] { error }))
+				.doOnError(Exception.class,
+						(Exception error) -> log.error("Generic Error : {}", new Object[] { error }));
+	}
 
 	public Mono<ActivatePaymentNoticeRes> activatePaymentNotice(JAXBElement<ActivatePaymentNoticeReq> request) {
 		return nodoWebClient.post()

@@ -19,6 +19,7 @@ import reactor.core.publisher.Mono;
 import javax.xml.bind.JAXBElement;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
@@ -46,6 +47,105 @@ class NodeForPspClientTest {
 
     @Mock
     private ResponseSpec responseSpec;
+
+    @Test
+    void shouldReturnVerifyPaymentResponseGivenValidPaymentNoticeTest() {
+
+        ObjectFactory objectFactory = new ObjectFactory();
+        BigDecimal amount = BigDecimal.valueOf(1200);
+        String fiscalCode = "77777777777";
+        String paymentNotice = "302000100000009424";
+        String paymentToken = UUID.randomUUID().toString();
+        String paymentDescription = "paymentDescription";
+
+        VerifyPaymentNoticeReq request = objectFactory.createVerifyPaymentNoticeReq();
+        CtQrCode qrCode = new CtQrCode();
+        qrCode.setFiscalCode(fiscalCode);
+        qrCode.setNoticeNumber(paymentNotice);
+        request.setQrCode(qrCode);
+
+        VerifyPaymentNoticeRes response = objectFactory.createVerifyPaymentNoticeRes();
+        response.setOutcome(StOutcome.OK);
+        response.setFiscalCodePA(fiscalCode);
+        response.setPaymentDescription(paymentDescription);
+        CtPaymentOptionsDescriptionList paymentList = objectFactory.createCtPaymentOptionsDescriptionList();
+        response.setPaymentList(paymentList);
+
+        /**
+         * preconditions
+         */
+        when(nodoWebClient.post()).thenReturn((RequestBodyUriSpec) requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(any(String.class), any(Object[].class))).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.header(any(), any())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.body(any(), eq(SoapEnvelope.class))).thenReturn(requestHeadersSpec);
+        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.onStatus(any(Predicate.class), any(Function.class))).thenReturn(responseSpec);
+        when(responseSpec.bodyToMono(VerifyPaymentNoticeRes.class)).thenReturn(Mono.just(response));
+
+        /**
+         * test
+         */
+        VerifyPaymentNoticeRes testResponse = client
+                .verifyPaymentNotice(objectFactory.createVerifyPaymentNoticeReq(request)).block();
+
+        /**
+         * asserts
+         */
+        assertThat(testResponse.getFiscalCodePA()).isEqualTo(fiscalCode);
+        assertThat(testResponse.getPaymentDescription()).isEqualTo(paymentDescription);
+        assertThat(testResponse.getOutcome()).isEqualTo(StOutcome.OK);
+    }
+
+    @Test
+    void shouldReturnVerifyFaultGivenDuplicatePaymentNoticeTest() {
+
+        /**
+         * preconditions
+         */
+        ObjectFactory objectFactory = new ObjectFactory();
+        BigDecimal amount = BigDecimal.valueOf(1200);
+        String fiscalCode = "77777777777";
+        String paymentNotice = "30200010000000999";
+        String faultError = "PAA_PAGAMENTO_DUPLICATO";
+
+        VerifyPaymentNoticeReq request = objectFactory.createVerifyPaymentNoticeReq();
+        CtQrCode qrCode = new CtQrCode();
+        qrCode.setFiscalCode(fiscalCode);
+        qrCode.setNoticeNumber(paymentNotice);
+        request.setQrCode(qrCode);
+        JAXBElement<VerifyPaymentNoticeReq> jaxbElementRequest = objectFactory
+                .createVerifyPaymentNoticeReq(request);
+
+        VerifyPaymentNoticeRes verifyPaymentRes = objectFactory.createVerifyPaymentNoticeRes();
+        CtFaultBean fault = objectFactory.createCtFaultBean();
+        fault.setFaultCode(faultError);
+        fault.setFaultString(faultError);
+        verifyPaymentRes.setFault(fault);
+
+        /**
+         * preconditions
+         */
+        when(nodoWebClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.header(any(),any())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(any(String.class), any(Object[].class))).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.body(any(), eq(SoapEnvelope.class))).thenReturn(requestHeadersSpec);
+        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+
+        when(responseSpec.onStatus(any(Predicate.class), any(Function.class))).thenReturn(responseSpec);
+        when(responseSpec.bodyToMono(VerifyPaymentNoticeRes.class)).thenReturn(Mono.just(verifyPaymentRes));
+
+        /**
+         * test
+         */
+        VerifyPaymentNoticeRes testResponse = client
+                .verifyPaymentNotice(objectFactory.createVerifyPaymentNoticeReq(request)).block();
+
+        /**
+         * asserts
+         */
+        assertThat(testResponse.getFault().getFaultCode()).isEqualTo(faultError);
+        assertThat(testResponse.getFault().getFaultString()).isEqualTo(faultError);
+    }
 
     @Test
     void shouldReturnActivatePaymentResponseGivenValidPaymentNoticeTest() {
