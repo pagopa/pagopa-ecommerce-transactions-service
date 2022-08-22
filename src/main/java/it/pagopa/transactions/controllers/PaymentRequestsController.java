@@ -11,6 +11,6 @@ import reactor.core.publisher.Mono;
 public class PaymentRequestsController implements PaymentRequestsApi {
     @Override
     public Mono<ResponseEntity<PaymentRequestsGetResponseDto>> getPaymentRequestInfo(String rptId, ServerWebExchange exchange) {
-        return null;
+        return Mono.just(ResponseEntity.ok().build());
     }
 }
