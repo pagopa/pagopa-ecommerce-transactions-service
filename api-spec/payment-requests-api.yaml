@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   version: 0.1.0
   title: Pagopa eCommerce payment transactions service - payment requests
-  description: Api to support transactions microservice
+  description: Api to support payment requests, so verificaRPT and verifyPaymentNotice with nodo
 paths:
   /payment-requests/{rpt_id}:
     get:
@@ -10,7 +10,7 @@ paths:
       parameters:
         - in: path
           name: rpt_id
-          description: Unique identifier for payment request, the concatenation of the tax code and notice number.
+          description: Unique identifier for payment request, so the concatenation of the tax code and notice number.
           schema:
             type: string
             pattern: '([a-zA-Z\d]{1,35})|(RF\d{2}[a-zA-Z\d]{1,21})'
