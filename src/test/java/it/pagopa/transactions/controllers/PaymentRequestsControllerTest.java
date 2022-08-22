@@ -28,6 +28,5 @@ class PaymentRequestsControllerTest {
                 .getPaymentRequestInfo(RPTID, null).block();
 
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-        assertEquals(responseEntity.getBody(), null);
     }
 }
