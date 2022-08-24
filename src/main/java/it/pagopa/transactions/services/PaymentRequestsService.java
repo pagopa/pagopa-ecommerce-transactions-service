@@ -40,14 +40,25 @@ public class PaymentRequestsService {
 
   public Mono<PaymentRequestsGetResponseDto> getPaymentRequestInfo(String rptId) {
 
-    final String paymentContextCode = UUID.randomUUID().toString();
     final RptId rptIdRecord = new RptId(rptId);
 
     return getPaymentInfoFromCache(rptIdRecord)
+        .doOnNext(
+            paymentRequestFromCache ->
+                log.info(
+                    "PaymentRequestInfo cache hit for {}: {}",
+                    rptId,
+                    paymentRequestFromCache != null))
         .switchIfEmpty(
             Mono.defer(
                 () ->
                     getPaymentInfoFromNodo(rptIdRecord)
+                        .doOnNext(
+                            paymentRequestFromNodo ->
+                                log.info(
+                                    "PaymentRequestInfo from nodo pagoPA for {}: {}",
+                                    rptId,
+                                    paymentRequestFromNodo != null))
                         .doOnSuccess(
                             paymenRequestInfo ->
                                 paymentRequestsInfoRepository.save(paymenRequestInfo))))
@@ -59,7 +70,10 @@ public class PaymentRequestsService {
                     .paName(paymentInfo.paName())
                     .description(paymentInfo.description())
                     .dueDate(paymentInfo.dueDate())
-                    .paymentContextCode(paymentContextCode));
+                    .paymentContextCode(UUID.randomUUID().toString()))
+        .doOnNext(
+            paymentInfo ->
+                log.info("PaymentRequestInfo retrived for {}: {}", rptId, paymentInfo != null));
   }
 
   private Mono<PaymentRequestInfo> getPaymentInfoFromCache(RptId rptId) {
