@@ -8,7 +8,6 @@ import io.netty.handler.timeout.ReadTimeoutHandler;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PaymentTransactionsControllerApi;
 import it.pagopa.generated.ecommerce.sessions.v1.ApiClient;
 import it.pagopa.generated.ecommerce.sessions.v1.api.DefaultApi;
-import it.pagopa.generated.transactions.model.ObjectFactory;
 import it.pagopa.transactions.utils.soap.Jaxb2SoapDecoder;
 import it.pagopa.transactions.utils.soap.Jaxb2SoapEncoder;
 import org.springframework.beans.factory.annotation.Value;
@@ -110,7 +109,12 @@ public class WebClientsConfig {
     }
 
     @Bean
-    public ObjectFactory objectFactory() {
-        return new ObjectFactory();
+    public  it.pagopa.generated.transactions.model.ObjectFactory objectFactoryNodeForPsp() {
+        return new  it.pagopa.generated.transactions.model.ObjectFactory();
+    }
+
+    @Bean
+    public  it.pagopa.generated.nodoperpsp.model.ObjectFactory objectFactoryNodoPerPSP() {
+        return new  it.pagopa.generated.nodoperpsp.model.ObjectFactory();
     }
 }
