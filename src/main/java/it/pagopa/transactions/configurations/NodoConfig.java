@@ -13,48 +13,43 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Configuration
 public class NodoConfig {
 
-    @Autowired
-    private it.pagopa.generated.nodoperpsp.model.ObjectFactory objectFactoryNodoPerPsp;
+  @Bean
+  public NodoConnectionString nodoConnectionString(
+      @Value("${nodo.connection.string}") String nodoConnectionParamsAsString)
+      throws JsonProcessingException {
 
-    @Autowired
-    private it.pagopa.generated.transactions.model.ObjectFactory objectFactoryNodeForPsp;
+    return new ObjectMapper().readValue(nodoConnectionParamsAsString, NodoConnectionString.class);
+  }
 
-    @Bean
-    public NodoConnectionString nodoConnectionString(
-            @Value("${nodo.connection.string}") String nodoConnectionParamsAsString)
-            throws JsonProcessingException {
+  @Bean
+  public NodoVerificaRPT baseNodoVerificaRPTRequest(
+      @Value("${nodo.connection.string}") String nodoConnectionParamsAsString,
+      it.pagopa.generated.nodoperpsp.model.ObjectFactory objectFactoryNodoPerPsp)
+      throws JsonProcessingException {
 
-        return new ObjectMapper().readValue(nodoConnectionParamsAsString, NodoConnectionString.class);
-    }
+    NodoConnectionString nodoConnectionParams = nodoConnectionString(nodoConnectionParamsAsString);
 
-    @Bean
-    public NodoVerificaRPT baseNodoVerificaRPTRequest(
-            @Value("${nodo.connection.string}") String nodoConnectionParamsAsString)
-            throws JsonProcessingException {
+    NodoVerificaRPT request = objectFactoryNodoPerPsp.createNodoVerificaRPT();
+    request.setIdentificativoPSP(nodoConnectionParams.getIdPSP());
+    request.setIdentificativoCanale(nodoConnectionParams.getIdChannel());
+    request.setIdentificativoIntermediarioPSP(nodoConnectionParams.getIdBrokerPSP());
+    request.setPassword(nodoConnectionParams.getPassword());
+    return request;
+  }
 
-        NodoConnectionString nodoConnectionParams = nodoConnectionString(nodoConnectionParamsAsString);
+  @Bean
+  public VerifyPaymentNoticeReq baseVerifyPaymentNoticeReq(
+      @Value("${nodo.connection.string}") String nodoConnectionParamsAsString,
+      it.pagopa.generated.transactions.model.ObjectFactory objectFactoryNodeForPsp)
+      throws JsonProcessingException {
 
-        NodoVerificaRPT request = objectFactoryNodoPerPsp.createNodoVerificaRPT();
-        request.setIdentificativoPSP(nodoConnectionParams.getIdPSP());
-        request.setIdentificativoCanale(nodoConnectionParams.getIdChannel());
-        request.setIdentificativoIntermediarioPSP(nodoConnectionParams.getIdBrokerPSP());
-        request.setPassword(nodoConnectionParams.getPassword());
-        return request;
-    }
+    NodoConnectionString nodoConnectionParams = nodoConnectionString(nodoConnectionParamsAsString);
 
-    @Bean
-    public VerifyPaymentNoticeReq baseVerifyPaymentNoticeReq(
-            @Value("${nodo.connection.string}") String nodoConnectionParamsAsString)
-            throws JsonProcessingException {
-
-        NodoConnectionString nodoConnectionParams = nodoConnectionString(nodoConnectionParamsAsString);
-
-        VerifyPaymentNoticeReq request = objectFactoryNodeForPsp.createVerifyPaymentNoticeReq();
-        request.setIdPSP(nodoConnectionParams.getIdPSP());
-        request.setIdChannel(nodoConnectionParams.getIdChannel());
-        request.setIdBrokerPSP(nodoConnectionParams.getIdBrokerPSP());
-        request.setPassword(nodoConnectionParams.getPassword());
-        return request;
-    }
-
+    VerifyPaymentNoticeReq request = objectFactoryNodeForPsp.createVerifyPaymentNoticeReq();
+    request.setIdPSP(nodoConnectionParams.getIdPSP());
+    request.setIdChannel(nodoConnectionParams.getIdChannel());
+    request.setIdBrokerPSP(nodoConnectionParams.getIdBrokerPSP());
+    request.setPassword(nodoConnectionParams.getPassword());
+    return request;
+  }
 }
