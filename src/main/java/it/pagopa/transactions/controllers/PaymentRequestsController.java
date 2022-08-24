@@ -2,6 +2,8 @@ package it.pagopa.transactions.controllers;
 
 import it.pagopa.generated.payment.requests.api.PaymentRequestsApi;
 import it.pagopa.generated.payment.requests.model.PaymentRequestsGetResponseDto;
+import it.pagopa.transactions.services.PaymentRequestsService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
@@ -9,8 +11,14 @@ import reactor.core.publisher.Mono;
 
 @RestController
 public class PaymentRequestsController implements PaymentRequestsApi {
-    @Override
-    public Mono<ResponseEntity<PaymentRequestsGetResponseDto>> getPaymentRequestInfo(String rptId, ServerWebExchange exchange) {
-        return Mono.just(ResponseEntity.ok().build());
-    }
+
+  @Autowired private PaymentRequestsService paymentRequestsService;
+
+  @Override
+  public Mono<ResponseEntity<PaymentRequestsGetResponseDto>> getPaymentRequestInfo(
+      String rptId, ServerWebExchange exchange) {
+    return Mono.just(rptId)
+        .flatMap(paymentRequestsService::getPaymentRequestInfo)
+        .map(ResponseEntity::ok);
+  }
 }
