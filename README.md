@@ -71,3 +71,15 @@ pagopa-ecommerce-transactions-service-pagopa-ecommerce-transactions-1  | 2022-04
 When running with the Docker container you can check data persisted to either Mongo or Redis with their respective web interfaces (Mongo express/Redis Insight). To do so, go to:
  * http://localhost:8001 for Redis Insight
  * http://localhost:8081 for Mongo Express
+
+## Run the application with `springboot-plugin`
+
+Create your environment:
+```sh
+export $(grep -v '^#' .env.local | xargs)
+``` 
+
+Then from current project directory run :
+```sh
+ mvn spring-boot:run
+```
