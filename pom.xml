@@ -341,7 +341,7 @@
                             <schemas>
                                 <schema>
                                     <url>
-                                        https://raw.githubusercontent.com/pagopa/pagopa-infra/main/src/api/nodopagamenti_api/nodoPerPsp/v1/nodoPerPsp.wsdl
+                                        ${project.basedir}/nodo-wsdl/nodoPerPsp.wsdl
                                     </url>
                                 </schema>
                             </schemas>
