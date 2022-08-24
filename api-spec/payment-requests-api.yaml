@@ -63,8 +63,23 @@ components:
     PaymentRequestsGetResponse:
       type: object
       title: PaymentRequestsGetResponse
-      description: Respone with payment request information
+      description: Response with payment request information
       properties:
+        rptId:
+          type: string
+          pattern: '([a-zA-Z\d]{1,35})|(RF\d{2}[a-zA-Z\d]{1,21})'
+        paTaxCode:
+          type: string
+          minLength: 11
+          maxLength: 11
+        paName:
+          type: string
+          minLength: 1
+          maxLength: 70
+        description:
+          type: string
+          minLength: 1
+          maxLength: 140
         amount:
           type: integer
           minimum: 0
@@ -73,22 +88,6 @@ components:
           type: string
           minLength: 32
           maxLength: 32
-        reason:
-          type: string
-          minLength: 1
-          maxLength: 140
-        PAId:
-          type: string
-          minLength: 1
-          maxLength: 35
-        PAName:
-          type: string
-          minLength: 1
-          maxLength: 35
-        denominazioneBeneficiario:
-          type: string
-          minLength: 1
-          maxLength: 70
         dueDate:
           type: string
           pattern:  >-
@@ -97,7 +96,6 @@ components:
       required:
         - amount
         - paymentContextCode
-        - PAId
     ValidationFaultPaymentProblemJson:
       description: |-
         A PaymentProblemJson-like type specific for the GetPayment and ActivatePayment operations.
