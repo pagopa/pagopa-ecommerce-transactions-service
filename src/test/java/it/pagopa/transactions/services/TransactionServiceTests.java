@@ -42,7 +42,7 @@ import static org.mockito.Mockito.when;
 
 @WebFluxTest
 @TestPropertySource(locations = "classpath:application-tests.properties")
-@Import({TransactionsService.class, TransactionRequestAuthorizationHandler.class, TransactionsProjectionHandler.class, AuthorizationRequestProjectionHandler.class})
+@Import({TransactionsService.class, PaymentRequestsService.class, TransactionRequestAuthorizationHandler.class, TransactionsProjectionHandler.class, AuthorizationRequestProjectionHandler.class})
 public class TransactionServiceTests {
 	@MockBean
 	private TransactionsViewRepository repository;
@@ -79,7 +79,10 @@ public class TransactionServiceTests {
 
 	@MockBean
 	private TransactionUpdateProjectionHandler transactionUpdateProjectionHandler;
-	
+
+	@MockBean
+	private PaymentRequestsService paymentRequestsService;
+
 	final String PAYMENT_TOKEN = "aaa";
 	final String TRANSACION_ID = "833d303a-f857-11ec-b939-0242ac120002";
 
