@@ -81,7 +81,7 @@ public class PaymentRequestsService {
 
     Optional<PaymentRequestInfo> paymentRequestInfoOptional =
         paymentRequestsInfoRepository.findById(rptId);
-    return paymentRequestInfoOptional.map(Mono::just).orElseGet(() -> Mono.empty());
+    return paymentRequestInfoOptional.map(Mono::just).orElseGet(Mono::empty);
   }
 
   private Mono<PaymentRequestInfo> getPaymentInfoFromNodo(RptId rptId) {
@@ -113,7 +113,7 @@ public class PaymentRequestsService {
                       && "PPT_MULTI_BENEFICIARIO"
                           .equals(nodoVerificaRPTRResponse.getFault().getFaultCode());
 
-              return StOutcome.KO.value().equals(outcome) && !isNM3
+              return StOutcome.KO.value().equals(outcome) && Boolean.FALSE.equals(isNM3)
                   ? Mono.error(
                       new NodoErrorException(nodoVerificaRPTRResponse.getFault().getFaultCode()))
                   : Mono.just(Tuples.of(nodoVerificaRPTRResponse, isNM3));
@@ -125,7 +125,7 @@ public class PaymentRequestsService {
 
               Mono<PaymentRequestInfo> paymentRequestInfo = null;
 
-              if (isNM3) {
+              if (Boolean.TRUE.equals(isNM3)) {
 
                 VerifyPaymentNoticeReq verifyPaymentNoticeReq = baseVerifyPaymentNoticeReq;
                 CtQrCode qrCode = new CtQrCode();
