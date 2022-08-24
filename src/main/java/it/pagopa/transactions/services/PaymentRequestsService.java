@@ -9,6 +9,7 @@ import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NodoPerPspClient;
 import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.exceptions.BadGatewayException;
+import it.pagopa.transactions.exceptions.NodoErrorException;
 import it.pagopa.transactions.repositories.PaymentRequestInfo;
 import it.pagopa.transactions.repositories.PaymentRequestsInfoRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -114,7 +115,7 @@ public class PaymentRequestsService {
 
               return StOutcome.KO.value().equals(outcome) && !isNM3
                   ? Mono.error(
-                      new BadGatewayException(nodoVerificaRPTRResponse.getFault().getFaultCode()))
+                      new NodoErrorException(nodoVerificaRPTRResponse.getFault().getFaultCode()))
                   : Mono.just(Tuples.of(nodoVerificaRPTRResponse, isNM3));
             })
         .flatMap(
