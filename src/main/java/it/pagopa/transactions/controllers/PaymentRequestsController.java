@@ -4,9 +4,7 @@ import io.lettuce.core.RedisConnectionException;
 import it.pagopa.generated.payment.requests.api.PaymentRequestsApi;
 import it.pagopa.generated.payment.requests.model.*;
 import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
-import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.NodoErrorException;
-import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
 import it.pagopa.transactions.services.PaymentRequestsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.RedisSystemException;
@@ -19,8 +17,6 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
-import java.util.Random;
-import java.util.random.RandomGenerator;
 
 @RestController
 public class PaymentRequestsController implements PaymentRequestsApi {
