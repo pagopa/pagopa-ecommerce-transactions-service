@@ -98,246 +98,112 @@ components:
         - paymentContextCode
     ValidationFaultPaymentProblemJson:
       description: |-
-        A PaymentProblemJson-like type specific for the GetPayment and ActivatePayment operations.
+        A PaymentProblemJson-like type specific for the GetPayment operations.
         Possible values of `detail_v2` are limited to faults pertaining to validation errors.
       type: object
       properties:
-        type:
-          type: string
-          format: uri
-          description: |-
-            An absolute URI that identifies the problem type. When dereferenced,
-            it SHOULD provide human-readable documentation for the problem type
-            (e.g., using HTML).
-          default: about:blank
-          example: https://example.com/problem/constraint-violation
         title:
           type: string
           description: |-
             A short, summary of the problem type. Written in english and readable
             for engineers (usually not suited for non technical stakeholders and
             not localized); example: Service Unavailable
-        status:
-          type: integer
-          format: int32
-          minimum: 100
-          maximum: 600
-          exclusiveMaximum: true
-        category:
+        faultCodeCategory:
           $ref: '#/components/schemas/FaultCategory'
-        detail:
+        faultCodeDetail:
           $ref: '#/components/schemas/ValidationFault'
-        instance:
-          type: string
-          format: uri
-          description: |-
-            An absolute URI that identifies the specific occurrence of the problem.
-            It may or may not yield further information if dereferenced.
       required:
-        - category
-        - detail
+        - faultCodeCategory
+        - faultCodeDetail
     PaymentStatusFaultPaymentProblemJson:
       description: |-
         A PaymentProblemJson-like type specific for the GetPayment and ActivatePayment operations.
         Possible values of `detail_v2` are limited to faults pertaining to Nodo errors related to payment status conflicts.
       type: object
       properties:
-        type:
-          type: string
-          format: uri
-          description: |-
-            An absolute URI that identifies the problem type. When dereferenced,
-            it SHOULD provide human-readable documentation for the problem type
-            (e.g., using HTML).
-          default: about:blank
-          example: https://example.com/problem/constraint-violation
         title:
           type: string
           description: |-
             A short, summary of the problem type. Written in english and readable
             for engineers (usually not suited for non technical stakeholders and
             not localized); example: Service Unavailable
-        status:
-          type: integer
-          format: int32
-          minimum: 100
-          maximum: 600
-          exclusiveMaximum: true
-        category:
+        faultCodeCategory:
           $ref: '#/components/schemas/FaultCategory'
-        detail:
+        faultCodeDetail:
           $ref: '#/components/schemas/PaymentStatusFault'
-        instance:
-          type: string
-          format: uri
-          description: |-
-            An absolute URI that identifies the specific occurrence of the problem.
-            It may or may not yield further information if dereferenced.
       required:
-        - category
-        - detail
+        - faultCodeCategory
+        - faultCodeDetail
     GatewayFaultPaymentProblemJson:
       description: |-
         A PaymentProblemJson-like type specific for the GetPayment and ActivatePayment operations.
         Possible values of `detail_v2` are limited to faults pertaining to Nodo errors.
       type: object
       properties:
-        type:
-          type: string
-          format: uri
-          description: |-
-            An absolute URI that identifies the problem type. When dereferenced,
-            it SHOULD provide human-readable documentation for the problem type
-            (e.g., using HTML).
-          default: about:blank
-          example: https://example.com/problem/constraint-violation
         title:
           type: string
           description: |-
             A short, summary of the problem type. Written in english and readable
             for engineers (usually not suited for non technical stakeholders and
             not localized); example: Service Unavailable
-        status:
-          type: integer
-          format: int32
-          minimum: 100
-          maximum: 600
-          exclusiveMaximum: true
-        category:
+        faultCodeCategory:
           $ref: '#/components/schemas/FaultCategory'
-        detail:
+        faultCodeDetail:
           $ref: '#/components/schemas/GatewayFault'
-        instance:
-          type: string
-          format: uri
-          description: |-
-            An absolute URI that identifies the specific occurrence of the problem.
-            It may or may not yield further information if dereferenced.
       required:
-        - category
-        - detail
+        - faultCodeCategory
+        - faultCodeDetail
     PartyConfigurationFaultPaymentProblemJson:
       description: |-
-        A PaymentProblemJson-like type specific for the GetPayment and ActivatePayment operations.
-        Possible values of `detail_v2` are limited to faults pertaining to EC fatal errors.
+        A PaymentProblemJson-like type specific for the GetPayment
       type: object
       properties:
-        type:
-          type: string
-          format: uri
-          description: |-
-            An absolute URI that identifies the problem type. When dereferenced,
-            it SHOULD provide human-readable documentation for the problem type
-            (e.g., using HTML).
-          default: about:blank
-          example: https://example.com/problem/constraint-violation
         title:
           type: string
           description: |-
             A short, summary of the problem type. Written in english and readable
             for engineers (usually not suited for non technical stakeholders and
             not localized); example: Service Unavailable
-        status:
-          type: integer
-          format: int32
-          minimum: 100
-          maximum: 600
-          exclusiveMaximum: true
-        category:
+        faultCodeCategory:
           $ref: '#/components/schemas/FaultCategory'
-        detail:
+        faultCodeDetail:
           $ref: '#/components/schemas/PartyConfigurationFault'
-        instance:
-          type: string
-          format: uri
-          description: |-
-            An absolute URI that identifies the specific occurrence of the problem.
-            It may or may not yield further information if dereferenced.
       required:
-        - category
-        - detail
+        - faultCodeCategory
+        - faultCodeDetail
     PartyTimeoutFaultPaymentProblemJson:
       description: |-
-        A PaymentProblemJson-like type specific for the GetPayment and ActivatePayment operations.
-        Possible values of `detail_v2` are limited to faults pertaining to EC timeouts.
+        A PaymentProblemJson-like type specific for the GetPayment an operations.
       type: object
       properties:
-        type:
-          type: string
-          format: uri
-          description: |-
-            An absolute URI that identifies the problem type. When dereferenced,
-            it SHOULD provide human-readable documentation for the problem type
-            (e.g., using HTML).
-          default: about:blank
-          example: https://example.com/problem/constraint-violation
+        faultCodeCategory:
+          $ref: '#/components/schemas/FaultCategory'
+        faultCodeDetail:
+          $ref: '#/components/schemas/PartyTimeoutFault'
         title:
           type: string
           description: |-
             A short, summary of the problem type. Written in english and readable
             for engineers (usually not suited for non technical stakeholders and
             not localized); example: Service Unavailable
-        status:
-          type: integer
-          format: int32
-          minimum: 100
-          maximum: 600
-          exclusiveMaximum: true
-        category:
-          $ref: '#/components/schemas/FaultCategory'
-        detail:
-          $ref: '#/components/schemas/PartyTimeoutFault'
-        instance:
-          type: string
-          format: uri
-          description: |-
-            An absolute URI that identifies the specific occurrence of the problem.
-            It may or may not yield further information if dereferenced.
       required:
-        - category
-        - detail
-    HttpStatusCode:
-      type: integer
-      format: int32
-      description: |-
-        The HTTP status code generated by the origin server for this occurrence
-          of the problem.
-      minimum: 100
-      maximum: 600
-      exclusiveMaximum: true
-      example: 200
+        - faultCodeCategory
+        - faultCodeCategory
     ProblemJson:
       type: object
       properties:
-        type:
-          type: string
-          format: uri
-          description: |-
-            An absolute URI that identifies the problem type. When dereferenced,
-            it SHOULD provide human-readable documentation for the problem type
-            (e.g., using HTML).
-          default: about:blank
-          example: https://example.com/problem/constraint-violation
         title:
           type: string
           description: |-
             A short, summary of the problem type. Written in english and readable
             for engineers (usually not suited for non technical stakeholders and
             not localized); example: Service Unavailable
-        status:
-          $ref: '#/components/schemas/HttpStatusCode'
         detail:
           type: string
           description: |-
             A human readable explanation specific to this occurrence of the
             problem.
           example: There was an error processing the request
-        instance:
-          type: string
-          format: uri
-          description: |-
-            An absolute URI that identifies the specific occurrence of the problem.
-            It may or may not yield further information if dereferenced.
     FaultCategory:
       description: |-
         Fault code categorization for the PagoPA Verifica and Attiva operations.
@@ -351,7 +217,7 @@ components:
         - `PAYMENT_CANCELED`
         - `GENERIC_ERROR`
       type: string
-      x-extensible-enum:
+      enum:
         - PAYMENT_DUPLICATED
         - PAYMENT_ONGOING
         - PAYMENT_EXPIRED
@@ -373,7 +239,7 @@ components:
         - `PAA_PAGAMENTO_DUPLICATO`
         - `PAA_PAGAMENTO_SCADUTO`
       type: string
-      x-extensible-enum:
+      enum:
         - PPT_PAGAMENTO_IN_CORSO
         - PAA_PAGAMENTO_IN_CORSO
         - PPT_PAGAMENTO_DUPLICATO
@@ -391,7 +257,7 @@ components:
         - `PPT_STAZIONE_INT_PA_SCONOSCIUTA`
         - `PAA_PAGAMENTO_ANNULLATO`
       type: string
-      x-extensible-enum:
+      enum:
         - PAA_PAGAMENTO_SCONOSCIUTO
         - PPT_DOMINIO_SCONOSCIUTO
         - PPT_INTERMEDIARIO_PA_SCONOSCIUTO
@@ -419,7 +285,7 @@ components:
         - `PPT_SYSTEM_ERROR`
         - `PAA_SYSTEM_ERROR`
       type: string
-      x-extensible-enum:
+      enum:
         - GENERIC_ERROR
         - PPT_SINTASSI_EXTRAXSD
         - PPT_SINTASSI_XSD
@@ -454,7 +320,7 @@ components:
         - `PAA_STAZIONE_INT_ERRATA`
         - `PAA_ATTIVA_RPT_IMPORTO_NON_VALIDO`
       type: string
-      x-extensible-enum:
+      enum:
         - PPT_DOMINIO_DISABILITATO
         - PPT_INTERMEDIARIO_PA_DISABILITATO
         - PPT_STAZIONE_INT_PA_DISABILITATA
@@ -477,7 +343,7 @@ components:
         - `PPT_STAZIONE_INT_PA_SERVIZIO_NONATTIVO`
         - `GENERIC_ERROR`
       type: string
-      x-extensible-enum:
+      enum:
         - PPT_STAZIONE_INT_PA_TIMEOUT
         - PPT_STAZIONE_INT_PA_IRRAGGIUNGIBILE
         - PPT_STAZIONE_INT_PA_SERVIZIO_NONATTIVO
