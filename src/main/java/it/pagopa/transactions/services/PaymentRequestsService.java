@@ -70,6 +70,7 @@ public class PaymentRequestsService {
                     .paTaxCode(paymentInfo.paTaxCode())
                     .paName(paymentInfo.paName())
                     .description(paymentInfo.description())
+                    .amount(paymentInfo.amount().intValue())
                     .dueDate(paymentInfo.dueDate())
                     .paymentContextCode(UUID.randomUUID().toString()))
         .doOnNext(
