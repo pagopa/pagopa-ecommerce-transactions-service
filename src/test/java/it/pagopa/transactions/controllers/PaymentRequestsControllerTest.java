@@ -55,8 +55,8 @@ class PaymentRequestsControllerTest {
         (ResponseEntity<ProblemJsonDto>)
             method.invoke(paymentRequestsController, new RuntimeException());
 
-    assertEquals(responseEntity != null, Boolean.TRUE);
-    assertEquals(responseEntity.getStatusCode(), HttpStatus.BAD_GATEWAY);
+    assertEquals(Boolean.TRUE, responseEntity != null);
+    assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
   }
 
   @Test
@@ -75,13 +75,13 @@ class PaymentRequestsControllerTest {
                 new NodoErrorException(
                     PartyConfigurationFaultDto.PPT_DOMINIO_DISABILITATO.getValue()));
 
-    assertEquals(responseEntity != null, Boolean.TRUE);
-    assertEquals(responseEntity.getStatusCode(), HttpStatus.BAD_GATEWAY);
+    assertEquals(Boolean.TRUE, responseEntity != null);
+    assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
     assertEquals(
-        responseEntity.getBody().getFaultCodeCategory(), FaultCategoryDto.PAYMENT_UNAVAILABLE);
+        FaultCategoryDto.PAYMENT_UNAVAILABLE, responseEntity.getBody().getFaultCodeCategory());
     assertEquals(
-        responseEntity.getBody().getFaultCodeDetail().getValue(),
-        PartyConfigurationFaultDto.PPT_DOMINIO_DISABILITATO.getValue());
+        PartyConfigurationFaultDto.PPT_DOMINIO_DISABILITATO.getValue(),
+        responseEntity.getBody().getFaultCodeDetail().getValue());
   }
 
   @Test
@@ -99,12 +99,12 @@ class PaymentRequestsControllerTest {
                 paymentRequestsController,
                 new NodoErrorException(ValidationFaultDto.PPT_DOMINIO_SCONOSCIUTO.getValue()));
 
-    assertEquals(responseEntity != null, Boolean.TRUE);
-    assertEquals(responseEntity.getStatusCode(), HttpStatus.NOT_FOUND);
-    assertEquals(responseEntity.getBody().getFaultCodeCategory(), FaultCategoryDto.PAYMENT_UNKNOWN);
+    assertEquals(Boolean.TRUE, responseEntity != null);
+    assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+    assertEquals(FaultCategoryDto.PAYMENT_UNKNOWN, responseEntity.getBody().getFaultCodeCategory());
     assertEquals(
-        responseEntity.getBody().getFaultCodeDetail().getValue(),
-        ValidationFaultDto.PPT_DOMINIO_SCONOSCIUTO.getValue());
+        ValidationFaultDto.PPT_DOMINIO_SCONOSCIUTO.getValue(),
+        responseEntity.getBody().getFaultCodeDetail().getValue());
   }
 
   @Test
@@ -122,12 +122,12 @@ class PaymentRequestsControllerTest {
                 paymentRequestsController,
                 new NodoErrorException(GatewayFaultDto.PAA_SYSTEM_ERROR.getValue()));
 
-    assertEquals(responseEntity != null, Boolean.TRUE);
-    assertEquals(responseEntity.getStatusCode(), HttpStatus.BAD_GATEWAY);
-    assertEquals(responseEntity.getBody().getFaultCodeCategory(), FaultCategoryDto.GENERIC_ERROR);
+    assertEquals(Boolean.TRUE, responseEntity != null);
+    assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
+    assertEquals(FaultCategoryDto.GENERIC_ERROR, responseEntity.getBody().getFaultCodeCategory());
     assertEquals(
-        responseEntity.getBody().getFaultCodeDetail().getValue(),
-        GatewayFaultDto.PAA_SYSTEM_ERROR.getValue());
+        GatewayFaultDto.PAA_SYSTEM_ERROR.getValue(),
+        responseEntity.getBody().getFaultCodeDetail().getValue());
   }
 
   @Test
@@ -146,12 +146,12 @@ class PaymentRequestsControllerTest {
                 new NodoErrorException(
                     PartyTimeoutFaultDto.PPT_STAZIONE_INT_PA_IRRAGGIUNGIBILE.getValue()));
 
-    assertEquals(responseEntity != null, Boolean.TRUE);
-    assertEquals(responseEntity.getStatusCode(), HttpStatus.GATEWAY_TIMEOUT);
-    assertEquals(responseEntity.getBody().getFaultCodeCategory(), FaultCategoryDto.GENERIC_ERROR);
+    assertEquals(Boolean.TRUE, responseEntity != null);
+    assertEquals(HttpStatus.GATEWAY_TIMEOUT, responseEntity.getStatusCode());
+    assertEquals(FaultCategoryDto.GENERIC_ERROR, responseEntity.getBody().getFaultCodeCategory());
     assertEquals(
-        responseEntity.getBody().getFaultCodeDetail().getValue(),
-        PartyTimeoutFaultDto.PPT_STAZIONE_INT_PA_IRRAGGIUNGIBILE.getValue());
+        PartyTimeoutFaultDto.PPT_STAZIONE_INT_PA_IRRAGGIUNGIBILE.getValue(),
+        responseEntity.getBody().getFaultCodeDetail().getValue());
   }
 
   @Test
@@ -169,12 +169,12 @@ class PaymentRequestsControllerTest {
                 paymentRequestsController,
                 new NodoErrorException(PaymentStatusFaultDto.PAA_PAGAMENTO_IN_CORSO.getValue()));
 
-    assertEquals(responseEntity != null, Boolean.TRUE);
-    assertEquals(responseEntity.getStatusCode(), HttpStatus.CONFLICT);
+    assertEquals(Boolean.TRUE, responseEntity != null);
+    assertEquals(HttpStatus.CONFLICT, responseEntity.getStatusCode());
     assertEquals(
-        responseEntity.getBody().getFaultCodeCategory(), FaultCategoryDto.PAYMENT_UNAVAILABLE);
+        FaultCategoryDto.PAYMENT_UNAVAILABLE, responseEntity.getBody().getFaultCodeCategory());
     assertEquals(
-        responseEntity.getBody().getFaultCodeDetail().getValue(),
-        PaymentStatusFaultDto.PAA_PAGAMENTO_IN_CORSO.getValue());
+        PaymentStatusFaultDto.PAA_PAGAMENTO_IN_CORSO.getValue(),
+        responseEntity.getBody().getFaultCodeDetail().getValue());
   }
 }
