@@ -1,6 +1,5 @@
-package it.pagopa.transactions.util;
+package it.pagopa.transactions.utils.soap;
 
-import it.pagopa.transactions.controllers.TransactionsController;
 import it.pagopa.transactions.utils.soap.Jaxb2SoapEncoder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
