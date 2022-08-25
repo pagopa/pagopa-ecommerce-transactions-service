@@ -13,7 +13,7 @@ import java.lang.reflect.Method;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
-public class Jaxb2SoapEncoderTest {
+class Jaxb2SoapEncoderTest {
 
   @InjectMocks private Jaxb2SoapEncoder jaxb2SoapEncoder = new Jaxb2SoapEncoder();
 
@@ -25,6 +25,6 @@ public class Jaxb2SoapEncoderTest {
 
     Marshaller marshaller = (Marshaller) method.invoke(jaxb2SoapEncoder);
 
-    assertEquals(marshaller != null, Boolean.TRUE);
+    assertEquals(Boolean.TRUE, marshaller != null);
   }
 }
