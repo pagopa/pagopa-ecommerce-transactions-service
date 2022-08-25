@@ -177,4 +177,21 @@ class PaymentRequestsControllerTest {
         PaymentStatusFaultDto.PAA_PAGAMENTO_IN_CORSO.getValue(),
         responseEntity.getBody().getFaultCodeDetail().getValue());
   }
+
+  @Test
+  void shouldReturnResponseEntityWithGenericGatewayFault()
+      throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+
+    Method method =
+        PaymentRequestsController.class.getDeclaredMethod(
+            "nodoErrorHandler", NodoErrorException.class);
+    method.setAccessible(true);
+
+    ResponseEntity<ProblemJsonDto> responseEntity =
+        (ResponseEntity<ProblemJsonDto>)
+            method.invoke(paymentRequestsController, new NodoErrorException("UKNOWK_ERROR"));
+
+    assertEquals(Boolean.TRUE, responseEntity != null);
+    assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
+  }
 }
