@@ -122,6 +122,51 @@ class PaymentRequestsServiceTest {
   }
 
   @Test
+  void shouldReturnPaymentInfoRequestFromNodoVerificaRPTWithEnteBeneficiario() {
+    final String rptIdAsString = "77777777777302016723749670035";
+    final RptId rptIdAsObject = new RptId(rptIdAsString);
+    final String paTaxCode = "77777777777";
+    final String paName = "Pa Name";
+    final String description = "Payment request description";
+    final BigDecimal amount = BigDecimal.valueOf(1000);
+
+    NodoVerificaRPTRisposta verificaRPTRIsposta = new NodoVerificaRPTRisposta();
+    EsitoNodoVerificaRPTRisposta esitoVerificaRPT = new EsitoNodoVerificaRPTRisposta();
+    esitoVerificaRPT.setEsito(StOutcome.OK.value());
+    NodoTipoDatiPagamentoPA datiPagamento = new NodoTipoDatiPagamentoPA();
+    datiPagamento.setCausaleVersamento(description);
+    datiPagamento.setImportoSingoloVersamento(amount);
+    CtEnteBeneficiario ente = new CtEnteBeneficiario();
+    ente.setDenominazioneBeneficiario(paName);
+    CtIdentificativoUnivocoPersonaG paId = new CtIdentificativoUnivocoPersonaG();
+    paId.setCodiceIdentificativoUnivoco(paTaxCode);
+    ente.setIdentificativoUnivocoBeneficiario(paId);
+    datiPagamento.setEnteBeneficiario(ente);
+    esitoVerificaRPT.setDatiPagamentoPA(datiPagamento);
+    verificaRPTRIsposta.setNodoVerificaRPTRisposta(esitoVerificaRPT);
+
+    /** Preconditions */
+    Mockito.when(paymentRequestsInfoRepository.findById(rptIdAsObject))
+        .thenReturn(Optional.empty());
+    Mockito.when(objectFactoryNodoPerPsp.createNodoTipoCodiceIdRPT())
+        .thenReturn(new NodoTipoCodiceIdRPT());
+    Mockito.when(nodoPerPspClient.verificaRPT(Mockito.any()))
+        .thenReturn(Mono.just(verificaRPTRIsposta));
+
+    /** Test */
+    PaymentRequestsGetResponseDto responseDto =
+        paymentRequestsService.getPaymentRequestInfo(rptIdAsString).block();
+
+    /** Assertions */
+    assertEquals(responseDto.getRptId(), rptIdAsString);
+    assertEquals(responseDto.getDescription(), description);
+    assertEquals(null, responseDto.getDueDate());
+    assertEquals(BigDecimal.valueOf(responseDto.getAmount()), amount);
+    assertEquals(responseDto.getPaName(), paName);
+    assertEquals(responseDto.getPaTaxCode(), paTaxCode);
+  }
+
+  @Test
   void shouldReturnPaymentInfoRequestFromNodoVerifyPaymentNotice() {
     final String rptIdAsString = "77777777777302016723749670035";
     final RptId rptIdAsObject = new RptId(rptIdAsString);
