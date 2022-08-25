@@ -117,7 +117,7 @@ class PaymentRequestsServiceTest {
     /** Assertions */
     assertEquals(responseDto.getRptId(), rptIdAsString);
     assertEquals(responseDto.getDescription(), description);
-    assertEquals(responseDto.getDueDate(), null);
+    assertEquals(null, responseDto.getDueDate());
     assertEquals(BigDecimal.valueOf(responseDto.getAmount()), amount);
   }
 
@@ -166,7 +166,7 @@ class PaymentRequestsServiceTest {
     /** Assertions */
     assertEquals(responseDto.getRptId(), rptIdAsString);
     assertEquals(responseDto.getDescription(), description);
-    assertEquals(responseDto.getDueDate(), null);
+    assertEquals(null, responseDto.getDueDate());
     assertEquals(BigDecimal.valueOf(responseDto.getAmount()), amount);
   }
 
