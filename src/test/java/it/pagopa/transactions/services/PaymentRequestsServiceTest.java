@@ -11,6 +11,7 @@ import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.exceptions.NodoErrorException;
 import it.pagopa.transactions.repositories.PaymentRequestInfo;
 import it.pagopa.transactions.repositories.PaymentRequestsInfoRepository;
+import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -237,8 +238,9 @@ class PaymentRequestsServiceTest {
         .thenReturn(Mono.just(verificaRPTRIsposta));
 
     /** Test */
-    assertThatThrownBy(() -> paymentRequestsService.getPaymentRequestInfo(rptIdAsString).block())
-        .isInstanceOf(NodoErrorException.class);
+    Assert.assertThrows(
+        NodoErrorException.class,
+        () -> paymentRequestsService.getPaymentRequestInfo(rptIdAsString).block());
   }
 
   @Test
@@ -263,8 +265,9 @@ class PaymentRequestsServiceTest {
         .thenReturn(Mono.just(verificaRPTRIsposta));
 
     /** Test */
-    assertThatThrownBy(() -> paymentRequestsService.getPaymentRequestInfo(rptIdAsString).block())
-        .isInstanceOf(NodoErrorException.class);
+    Assert.assertThrows(
+        NodoErrorException.class,
+        () -> paymentRequestsService.getPaymentRequestInfo(rptIdAsString).block());
   }
 
   @Test
