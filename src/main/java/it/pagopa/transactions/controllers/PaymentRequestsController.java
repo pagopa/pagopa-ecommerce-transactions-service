@@ -62,7 +62,7 @@ public class PaymentRequestsController implements PaymentRequestsApi {
                       .title("Payment unavailable")
                       .faultCodeCategory(FaultCategoryDto.GENERIC_ERROR)
                       .faultCodeDetail(GatewayFaultDto.fromValue(s)), HttpStatus.BAD_GATEWAY);
-      case String s && Arrays.stream(GatewayFaultDto.values()).anyMatch( z -> z.getValue().equals(s)) -> new ResponseEntity<>(
+      case String s && Arrays.stream(PartyTimeoutFaultDto.values()).anyMatch( z -> z.getValue().equals(s)) -> new ResponseEntity<>(
               new PartyTimeoutFaultPaymentProblemJsonDto()
                       .title("Gateway Timeout")
                       .faultCodeCategory(FaultCategoryDto.GENERIC_ERROR)
@@ -70,8 +70,8 @@ public class PaymentRequestsController implements PaymentRequestsApi {
       case String s && Arrays.stream(PaymentStatusFaultDto.values()).anyMatch( z -> z.getValue().equals(s)) -> new ResponseEntity<>(
               new PaymentStatusFaultPaymentProblemJsonDto()
                       .title("Payment Status Fault")
-                      .faultCodeCategory(FaultCategoryDto.GENERIC_ERROR)
-                      .faultCodeDetail(PaymentStatusFaultDto.fromValue(s)), HttpStatus.GATEWAY_TIMEOUT);
+                      .faultCodeCategory(FaultCategoryDto.PAYMENT_UNAVAILABLE)
+                      .faultCodeDetail(PaymentStatusFaultDto.fromValue(s)), HttpStatus.CONFLICT);
        default -> new ResponseEntity<>(
                new ProblemJsonDto().title("Bad gateway"), HttpStatus.BAD_GATEWAY);
     };
