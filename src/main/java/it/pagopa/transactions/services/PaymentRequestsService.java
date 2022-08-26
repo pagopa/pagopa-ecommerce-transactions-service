@@ -57,9 +57,9 @@ public class PaymentRequestsService {
                         .doOnNext(
                             paymentRequestFromNodo ->
                                 log.info(
-                                    "PaymentRequestInfo from nodo pagoPA for {}: {}",
+                                    "PaymentRequestInfo from nodo pagoPA for {}, isNM3 {}",
                                     rptId,
-                                    paymentRequestFromNodo != null))
+                                    paymentRequestFromNodo.isNM3()))
                         .doOnSuccess(
                             paymenRequestInfo ->
                                 paymentRequestsInfoRepository.save(paymenRequestInfo))))
