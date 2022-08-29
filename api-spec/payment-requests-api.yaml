@@ -188,7 +188,7 @@ components:
             not localized); example: Service Unavailable
       required:
         - faultCodeCategory
-        - faultCodeCategory
+        - faultCodeDetail
     ProblemJson:
       type: object
       properties:
