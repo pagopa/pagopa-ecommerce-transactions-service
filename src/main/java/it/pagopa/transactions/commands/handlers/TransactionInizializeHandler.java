@@ -65,7 +65,7 @@ public class TransactionInizializeHandler
                   partialPaymentRequestInfo.paymentToken() != null
                       && !partialPaymentRequestInfo.paymentToken().trim().isEmpty();
 
-              return isValidPaymentToken
+              return Boolean.TRUE.equals(isValidPaymentToken)
                   ? Mono.just(partialPaymentRequestInfo)
                       .doOnSuccess(
                           p ->

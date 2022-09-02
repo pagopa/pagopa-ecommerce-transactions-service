@@ -72,7 +72,7 @@ public class PaymentRequestsService {
                     .description(paymentInfo.description())
                     .amount(paymentInfo.amount().intValue())
                     .dueDate(paymentInfo.dueDate())
-                    .paymentContextCode(UUID.randomUUID().toString().replaceAll("-", "")))
+                    .paymentContextCode(UUID.randomUUID().toString().replace("-", "")))
         .doOnNext(
             paymentInfo ->
                 log.info("PaymentRequestInfo retrived for {}: {}", rptId, paymentInfo != null));

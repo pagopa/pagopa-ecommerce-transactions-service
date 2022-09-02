@@ -126,7 +126,7 @@ public class NodoOperations {
                                               request))
                                       .flatMap(
                                           x ->
-                                              StOutcome.KO.value().equals(x.getOutcome())
+                                              StOutcome.KO.value().equals(x.getOutcome().value())
                                                   ? Mono.error(
                                                       new NodoErrorException(
                                                           nodoAttivaRPTRResponse
