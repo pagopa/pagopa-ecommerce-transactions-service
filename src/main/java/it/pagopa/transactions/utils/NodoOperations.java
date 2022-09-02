@@ -46,99 +46,23 @@ public class NodoOperations {
       String dueDate,
       String description) {
 
-    BigDecimal amountAsBigDecimal =
+    final BigDecimal amountAsBigDecimal =
         BigDecimal.valueOf(amount / 100).setScale(2, RoundingMode.CEILING);
-
-    String fiscalCode = rptId.getFiscalCode();
-    String noticeId = rptId.getNoticeId();
-
-    CtQrCode qrCode = new CtQrCode();
-    qrCode.setFiscalCode(fiscalCode);
-    qrCode.setNoticeNumber(noticeId);
-
-    ActivatePaymentNoticeReq request = baseActivatePaymentNoticeReq;
-    request.setAmount(amountAsBigDecimal);
-    request.setQrCode(qrCode);
-    request.setIdempotencyKey(idempotencyKey.getKey());
-
-    NodoAttivaRPT nodoAttivaRPTReq = baseNodoAttivaRPT;
-
-    NodoTipoCodiceIdRPT nodoTipoCodiceIdRPT = objectFactoryNodoPerPsp.createNodoTipoCodiceIdRPT();
-    NodoTipoCodiceIdRPT.QrCode qrCodeVerificaRPT = new NodoTipoCodiceIdRPT.QrCode();
-    qrCodeVerificaRPT.setCF(rptId.getFiscalCode());
-    qrCodeVerificaRPT.setCodIUV(rptId.getNoticeId().substring(1));
-    qrCodeVerificaRPT.setAuxDigit(rptId.getNoticeId().substring(0, 1));
-    nodoTipoCodiceIdRPT.setQrCode(qrCodeVerificaRPT);
-    NodoTipoDatiPagamentoPSP datiPagamentoPsp =
-        objectFactoryNodoPerPsp.createNodoTipoDatiPagamentoPSP();
-    datiPagamentoPsp.setImportoSingoloVersamento(amountAsBigDecimal);
-    nodoAttivaRPTReq.setDatiPagamentoPSP(datiPagamentoPsp);
-    nodoAttivaRPTReq.setCodiceIdRPT(nodoTipoCodiceIdRPT);
-    nodoAttivaRPTReq.setCodiceContestoPagamento(paymentContextCode);
+    final String fiscalCode = rptId.getFiscalCode();
+    final String noticeCode = rptId.getNoticeId();
 
     return Mono.just(isNM3)
         .flatMap(
             validIsNM3 ->
                 Boolean.TRUE.equals(validIsNM3)
-                    ? nodeForPspClient
-                        .activatePaymentNotice(
-                            objectFactoryNodeForPsp.createActivatePaymentNoticeReq(request))
-                        .flatMap(
-                            activatePaymentNoticeRes -> {
-                              final String outcome = activatePaymentNoticeRes.getOutcome().value();
-                              final Boolean isNM3GivenActivatePaymentNotice =
-                                  StOutcome.KO.value().equals(outcome)
-                                      && "PPT_MULTI_BENEFICIARIO"
-                                          .equals(
-                                              activatePaymentNoticeRes.getFault().getFaultCode());
-
-                              return StOutcome.KO.value().equals(outcome)
-                                      && Boolean.FALSE.equals(isNM3GivenActivatePaymentNotice)
-                                  ? Mono.error(
-                                      new NodoErrorException(
-                                          activatePaymentNoticeRes.getFault().getFaultCode()))
-                                  : Mono.just(activatePaymentNoticeRes.getPaymentToken());
-                            })
-                    : nodoPerPspClient
-                        .attivaRPT(objectFactoryNodoPerPsp.createNodoAttivaRPT(nodoAttivaRPTReq))
-                        .flatMap(
-                            nodoAttivaRPTResponse -> {
-                              final EsitoNodoAttivaRPTRisposta nodoAttivaRPTRResponse =
-                                  nodoAttivaRPTResponse.getNodoAttivaRPTRisposta();
-                              final String outcome = nodoAttivaRPTRResponse.getEsito();
-                              final Boolean isNM3GivenAttivaRPTRisposta =
-                                  StOutcome.KO.value().equals(outcome)
-                                      && "PPT_MULTI_BENEFICIARIO"
-                                          .equals(nodoAttivaRPTRResponse.getFault().getFaultCode());
-
-                              return Mono.just(
-                                  Tuples.of(nodoAttivaRPTRResponse, isNM3GivenAttivaRPTRisposta));
-                            })
-                        .flatMap(
-                            args -> {
-                              final EsitoNodoAttivaRPTRisposta nodoAttivaRPTRResponse =
-                                  args.getT1();
-                              final Boolean isNM3GivenAttivaRPTRisposta = args.getT2();
-                              return Boolean.TRUE.equals(isNM3GivenAttivaRPTRisposta)
-                                  ? nodeForPspClient
-                                      .activatePaymentNotice(
-                                          objectFactoryNodeForPsp.createActivatePaymentNoticeReq(
-                                              request))
-                                      .flatMap(
-                                          x ->
-                                              StOutcome.KO.value().equals(x.getOutcome().value())
-                                                  ? Mono.error(
-                                                      new NodoErrorException(
-                                                          nodoAttivaRPTRResponse
-                                                              .getFault()
-                                                              .getFaultCode()))
-                                                  : Mono.just(x.getPaymentToken()))
-                                  : StOutcome.KO.value().equals(nodoAttivaRPTRResponse.getEsito())
-                                      ? Mono.error(
-                                          new NodoErrorException(
-                                              nodoAttivaRPTRResponse.getFault().getFaultCode()))
-                                      : Mono.just("");
-                            }))
+                    ? nodoActivationForNM3PaymentRequest(
+                        fiscalCode, noticeCode, amountAsBigDecimal, idempotencyKey.getKey())
+                    : nodoActivationForUnknownPaymentRequest(
+                        fiscalCode,
+                        noticeCode,
+                        amountAsBigDecimal,
+                        idempotencyKey.getKey(),
+                        paymentContextCode))
         .flatMap(
             paymentToken ->
                 Mono.just(
@@ -152,5 +76,67 @@ public class NodoOperations {
                         isNM3,
                         paymentToken,
                         idempotencyKey)));
+  }
+
+  private Mono<String> nodoActivationForNM3PaymentRequest(
+      String fiscalCode, String noticeCode, BigDecimal amount, String idempotencyKey) {
+    CtQrCode qrCode = new CtQrCode();
+    qrCode.setFiscalCode(fiscalCode);
+    qrCode.setNoticeNumber(noticeCode);
+    ActivatePaymentNoticeReq request = baseActivatePaymentNoticeReq;
+    request.setAmount(amount);
+    request.setQrCode(qrCode);
+    request.setIdempotencyKey(idempotencyKey);
+    return nodeForPspClient
+        .activatePaymentNotice(objectFactoryNodeForPsp.createActivatePaymentNoticeReq(request))
+        .flatMap(
+            activatePaymentNoticeRes ->
+                StOutcome.OK.value().equals(activatePaymentNoticeRes.getOutcome().value())
+                    ? Mono.just(activatePaymentNoticeRes.getPaymentToken())
+                    : Mono.error(
+                        new NodoErrorException(
+                            activatePaymentNoticeRes.getFault().getFaultCode())));
+  }
+
+  private Mono<String> nodoActivationForUnknownPaymentRequest(
+      String fiscalCode,
+      String noticeCode,
+      BigDecimal amount,
+      String idempotencyKey,
+      String paymentContextCode) {
+    NodoAttivaRPT nodoAttivaRPTReq = baseNodoAttivaRPT;
+
+    NodoTipoCodiceIdRPT nodoTipoCodiceIdRPT = objectFactoryNodoPerPsp.createNodoTipoCodiceIdRPT();
+    NodoTipoCodiceIdRPT.QrCode qrCodeVerificaRPT = new NodoTipoCodiceIdRPT.QrCode();
+    qrCodeVerificaRPT.setCF(fiscalCode);
+    qrCodeVerificaRPT.setCodIUV(noticeCode.substring(1));
+    qrCodeVerificaRPT.setAuxDigit(noticeCode.substring(0, 1));
+    nodoTipoCodiceIdRPT.setQrCode(qrCodeVerificaRPT);
+    NodoTipoDatiPagamentoPSP datiPagamentoPsp =
+        objectFactoryNodoPerPsp.createNodoTipoDatiPagamentoPSP();
+    datiPagamentoPsp.setImportoSingoloVersamento(amount);
+    nodoAttivaRPTReq.setDatiPagamentoPSP(datiPagamentoPsp);
+    nodoAttivaRPTReq.setCodiceIdRPT(nodoTipoCodiceIdRPT);
+    nodoAttivaRPTReq.setCodiceContestoPagamento(paymentContextCode);
+    return nodoPerPspClient
+        .attivaRPT(objectFactoryNodoPerPsp.createNodoAttivaRPT(nodoAttivaRPTReq))
+        .flatMap(
+            nodoAttivaRPTResponse -> {
+              final EsitoNodoAttivaRPTRisposta nodoAttivaRPTRResponse =
+                  nodoAttivaRPTResponse.getNodoAttivaRPTRisposta();
+              final String outcome = nodoAttivaRPTRResponse.getEsito();
+              final Boolean isNM3GivenAttivaRPTRisposta =
+                  StOutcome.KO.value().equals(outcome)
+                      && "PPT_MULTI_BENEFICIARIO"
+                          .equals(nodoAttivaRPTRResponse.getFault().getFaultCode());
+
+              return Boolean.TRUE.equals(isNM3GivenAttivaRPTRisposta)
+                  ? nodoActivationForNM3PaymentRequest(
+                      fiscalCode, noticeCode, amount, idempotencyKey)
+                  : StOutcome.KO.value().equals(nodoAttivaRPTRResponse.getEsito())
+                      ? Mono.error(
+                          new NodoErrorException(nodoAttivaRPTRResponse.getFault().getFaultCode()))
+                      : Mono.just("");
+            });
   }
 }
