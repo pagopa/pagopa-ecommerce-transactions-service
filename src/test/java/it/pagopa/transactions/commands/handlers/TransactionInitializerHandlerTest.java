@@ -138,6 +138,7 @@ class TransactionInitializerHandlerTest {
 
     assertFalse(transactionsProjection.equals(differentTransactionsProjection));
     assertEquals(
-        transactionsProjection.getData().equals(differentTransactionsProjection.getData()), true);
+        Boolean.TRUE,
+        transactionsProjection.getData().equals(differentTransactionsProjection.getData()));
   }
 }

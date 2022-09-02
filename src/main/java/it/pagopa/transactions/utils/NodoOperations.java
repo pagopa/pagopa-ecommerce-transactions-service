@@ -130,13 +130,15 @@ public class NodoOperations {
                       && "PPT_MULTI_BENEFICIARIO"
                           .equals(nodoAttivaRPTRResponse.getFault().getFaultCode());
 
-              return Boolean.TRUE.equals(isNM3GivenAttivaRPTRisposta)
-                  ? nodoActivationForNM3PaymentRequest(
-                      fiscalCode, noticeCode, amount, idempotencyKey)
-                  : StOutcome.KO.value().equals(nodoAttivaRPTRResponse.getEsito())
-                      ? Mono.error(
-                          new NodoErrorException(nodoAttivaRPTRResponse.getFault().getFaultCode()))
-                      : Mono.just("");
+              if (Boolean.TRUE.equals(isNM3GivenAttivaRPTRisposta)) {
+                return nodoActivationForNM3PaymentRequest(
+                    fiscalCode, noticeCode, amount, idempotencyKey);
+              }
+
+              return StOutcome.OK.value().equals(nodoAttivaRPTRResponse.getEsito())
+                  ? Mono.just("")
+                  : Mono.error(
+                      new NodoErrorException(nodoAttivaRPTRResponse.getFault().getFaultCode()));
             });
   }
 }
