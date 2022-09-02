@@ -174,7 +174,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/api-spec/api.yaml</inputSpec>
+                            <inputSpec>${project.basedir}/api-spec/transactions-api.yaml</inputSpec>
                             <generatorName>spring</generatorName>
                             <library>spring-boot</library>
                             <modelNameSuffix>Dto</modelNameSuffix>
