@@ -84,7 +84,15 @@ public class TransactionsService {
         Mono<NewTransactionResponseDto> response = transactionInizializeHandler.handle(command)
                 .doOnNext(tx -> log.info("Transaction initialized for rptId: {}", newTransactionRequestDto.getRptId()));
 
-        return response.flatMap(data -> transactionsProjectionHandler.handle(data).thenReturn(data));
+    return response.flatMap(
+        data ->
+            transactionsProjectionHandler
+                .handle(data)
+                .map(
+                    t -> {
+                      data.setStatus(t.getStatus());
+                      return data;
+                    }));
     }
 
     public Mono<TransactionInfoDto> getTransactionInfo(String transactionId) {

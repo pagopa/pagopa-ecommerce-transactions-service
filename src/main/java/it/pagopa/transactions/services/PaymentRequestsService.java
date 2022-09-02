@@ -72,7 +72,7 @@ public class PaymentRequestsService {
                     .description(paymentInfo.description())
                     .amount(paymentInfo.amount().intValue())
                     .dueDate(paymentInfo.dueDate())
-                    .paymentContextCode(UUID.randomUUID().toString()))
+                    .paymentContextCode(UUID.randomUUID().toString().replaceAll("-", "")))
         .doOnNext(
             paymentInfo ->
                 log.info("PaymentRequestInfo retrived for {}: {}", rptId, paymentInfo != null));
@@ -164,7 +164,9 @@ public class PaymentRequestsService {
                                             .getDueDate()
                                             .toString()
                                         : null,
-                                    true));
+                                    true,
+                                    null,
+                                    null));
 
               } else {
 
@@ -188,7 +190,9 @@ public class PaymentRequestsService {
                                 .getDatiPagamentoPA()
                                 .getImportoSingoloVersamento(),
                             null,
-                            false));
+                            false,
+                            null,
+                            null));
               }
               return paymentRequestInfo;
             });
