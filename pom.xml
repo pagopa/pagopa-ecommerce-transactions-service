@@ -268,7 +268,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-infra/main/src/api/payment_transactions_gateway_api/internal/v1/_openapi.json.tpl</inputSpec>
+                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-infra/main/src/core/api/payment_transactions_gateway_api/internal/v1/_openapi.json.tpl</inputSpec>
                             <generatorName>java</generatorName>
                             <library>webclient</library>
                             <generateApiDocumentation>false</generateApiDocumentation>
@@ -324,7 +324,7 @@
                             <schemas>
                                 <schema>
                                     <url>
-                                        https://raw.githubusercontent.com/pagopa/pagopa-infra/main/src/api/nodopagamenti_api/nodeForPsp/v1/nodeForPsp.wsdl
+                                        https://raw.githubusercontent.com/pagopa/pagopa-infra/main/src/core/api/nodopagamenti_api/nodeForPsp/v1/nodeForPsp.wsdl
                                     </url>
                                 </schema>
                             </schemas>
