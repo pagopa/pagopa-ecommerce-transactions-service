@@ -3,6 +3,7 @@ package it.pagopa.transactions.projections.handlers;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.domain.*;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,35 +18,33 @@ import reactor.core.publisher.Mono;
 @Component
 @Slf4j
 public class TransactionsProjectionHandler
-		implements ProjectionHandler<NewTransactionResponseDto, Mono<Transaction>> {
+    implements ProjectionHandler<NewTransactionResponseDto, Mono<Transaction>> {
 
-	@Autowired
-	private TransactionsViewRepository viewEventStoreRepository;
+  @Autowired private TransactionsViewRepository viewEventStoreRepository;
 
-	@Override
-	public Mono<Transaction> handle(NewTransactionResponseDto data) {
+  @Override
+  public Mono<Transaction> handle(NewTransactionResponseDto data) {
 
-		TransactionId transactionId = new TransactionId(UUID.fromString(data.getTransactionId()));
-		PaymentToken paymentToken = new PaymentToken(data.getPaymentToken());
-		RptId rptId = new RptId(data.getRptId());
-		TransactionDescription description = new TransactionDescription(data.getReason());
-		TransactionAmount amount = new TransactionAmount(data.getAmount());
+    TransactionId transactionId = new TransactionId(UUID.fromString(data.getTransactionId()));
+    PaymentToken paymentToken = new PaymentToken(data.getPaymentToken());
+    RptId rptId = new RptId(data.getRptId());
+    TransactionDescription description = new TransactionDescription(data.getReason());
+    TransactionAmount amount = new TransactionAmount(data.getAmount());
 
-		Transaction transaction = new Transaction(
-			    transactionId,
-				paymentToken,
-				rptId,
-				description,
-				amount,
-				TransactionStatusDto.INITIALIZED
-		);
+    final TransactionStatusDto transactionStatus =
+        Optional.ofNullable(paymentToken.value()).isEmpty()
+            ? TransactionStatusDto.INIT_REQUESTED
+            : TransactionStatusDto.INITIALIZED;
 
-		it.pagopa.transactions.documents.Transaction transactionDocument = it.pagopa.transactions.documents.Transaction.from(transaction);
+    Transaction transaction =
+        new Transaction(transactionId, paymentToken, rptId, description, amount, transactionStatus);
 
-		return viewEventStoreRepository
-				.save(transactionDocument)
-				.doOnNext(event -> log.info("Transactions update view for rptId: {}", event.getRptId()))
-				.thenReturn(transaction);
-	}
+    it.pagopa.transactions.documents.Transaction transactionDocument =
+        it.pagopa.transactions.documents.Transaction.from(transaction);
 
+    return viewEventStoreRepository
+        .save(transactionDocument)
+        .doOnNext(event -> log.info("Transactions update view for rptId: {}", event.getRptId()))
+        .thenReturn(transaction);
+  }
 }

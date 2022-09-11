@@ -2,6 +2,8 @@ package it.pagopa.transactions.client;
 
 import javax.xml.bind.JAXBElement;
 
+import it.pagopa.generated.nodoperpsp.model.NodoAttivaRPT;
+import it.pagopa.generated.nodoperpsp.model.NodoAttivaRPTRisposta;
 import it.pagopa.generated.nodoperpsp.model.NodoVerificaRPT;
 import it.pagopa.generated.nodoperpsp.model.NodoVerificaRPTRisposta;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +37,27 @@ public class NodoPerPspClient {
                                         new ResponseStatusException(clientResponse.statusCode(), errorResponseBody))))
                 .bodyToMono(NodoVerificaRPTRisposta.class)
                 .doOnSuccess((NodoVerificaRPTRisposta verificaRPTResponse) -> log.debug(
+                        "Payment info for {}",
+                        new Object[]{request.getValue().getCodiceIdRPT()}))
+                .doOnError(ResponseStatusException.class,
+                        error -> log.error("ResponseStatus Error : {}", new Object[]{error}))
+                .doOnError(Exception.class,
+                        (Exception error) -> log.error("Generic Error : {}", new Object[]{error}));
+    }
+
+    public Mono<NodoAttivaRPTRisposta> attivaRPT(JAXBElement<NodoAttivaRPT> request) {
+        return nodoWebClient.post()
+                .uri("/webservices/pof/PagamentiTelematiciPspNodoservice")
+                .header("Content-Type", MediaType.TEXT_XML_VALUE)
+                .header("SOAPAction", "nodoAttivaRPT")
+                .body(Mono.just(new SoapEnvelope("", request)), SoapEnvelope.class)
+                .retrieve()
+                .onStatus(HttpStatus::isError,
+                        clientResponse -> clientResponse.bodyToMono(String.class)
+                                .flatMap(errorResponseBody -> Mono.error(
+                                        new ResponseStatusException(clientResponse.statusCode(), errorResponseBody))))
+                .bodyToMono(NodoAttivaRPTRisposta.class)
+                .doOnSuccess((NodoAttivaRPTRisposta attivaRPTResponse) -> log.debug(
                         "Payment info for {}",
                         new Object[]{request.getValue().getCodiceIdRPT()}))
                 .doOnError(ResponseStatusException.class,

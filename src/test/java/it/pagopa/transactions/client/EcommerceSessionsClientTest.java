@@ -4,7 +4,6 @@ import it.pagopa.generated.ecommerce.sessions.v1.ApiClient;
 import it.pagopa.generated.ecommerce.sessions.v1.api.DefaultApi;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionRequestDto;
-import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionTokenDto;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -52,13 +51,12 @@ class EcommerceSessionsClientTest {
         request.setPaymentToken(TEST_TOKEN);
         request.setRptId(TEST_RPTID);
 
-        SessionDataDto dataDto = new SessionDataDto();
-        dataDto.setSessionToken(TEST_TOKEN);
+        SessionRequestDto dataDto = new SessionRequestDto();
         dataDto.setEmail(TEST_EMAIL);
         dataDto.setRptId(TEST_RPTID);
-        Mono<SessionDataDto> dataDtoMono = Mono.just(dataDto);
+        Mono<SessionRequestDto> dataDtoMono = Mono.just(dataDto);
 
-        SessionTokenDto tokenDto = new SessionTokenDto();
+        SessionDataDto tokenDto = new SessionDataDto();
         tokenDto.setSessionToken(TEST_TOKEN);
         tokenDto.setEmail(TEST_EMAIL);
         tokenDto.setRptId(TEST_RPTID);
@@ -67,10 +65,10 @@ class EcommerceSessionsClientTest {
          * preconditions
          */
         when(ecommerceSessionsWebClient.post()).thenReturn(mockRequestBodyUriSpec);
-        when(mockRequestBodyUriSpec.body(Mockito.any(), Mockito.eq(SessionDataDto.class))).thenReturn(mockRequestHeadersSpec);
+        when(mockRequestBodyUriSpec.body(Mockito.any(), Mockito.eq(SessionRequestDto.class))).thenReturn(mockRequestHeadersSpec);
         when(mockRequestHeadersSpec.retrieve()).thenReturn(mockResponseSpec);
         when(mockResponseSpec.onStatus(Mockito.any(), Mockito.any())).thenReturn(mockResponseSpec);
-        when(mockResponseSpec.bodyToMono(SessionTokenDto.class)).thenReturn(Mono.just(tokenDto));
+        when(mockResponseSpec.bodyToMono(SessionDataDto.class)).thenReturn(Mono.just(tokenDto));
         when(ecommerceSessionsDefaultApi.getApiClient()).thenReturn(apiClient);
         when(apiClient.getWebClient()).thenReturn(ecommerceSessionsWebClient);
 
@@ -78,7 +76,7 @@ class EcommerceSessionsClientTest {
         /**
          * test
          */
-        SessionTokenDto testResponse = client.createSessionToken(dataDto).block();
+        SessionDataDto testResponse = client.createSessionToken(dataDto).block();
 
         /**
          * asserts

@@ -1,9 +1,7 @@
 package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
-import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionTokenDto;
-import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
-import it.pagopa.generated.transactions.model.ActivatePaymentNoticeRes;
+import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionRequestDto;
 import it.pagopa.generated.transactions.model.ObjectFactory;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
@@ -14,8 +12,8 @@ import it.pagopa.transactions.documents.TransactionInitData;
 import it.pagopa.transactions.domain.IdempotencyKey;
 import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.projections.TransactionsProjection;
-import it.pagopa.transactions.repositories.TransactionTokens;
-import it.pagopa.transactions.repositories.TransactionTokensRepository;
+import it.pagopa.transactions.repositories.PaymentRequestInfo;
+import it.pagopa.transactions.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.NodoConnectionString;
 
@@ -38,150 +36,109 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @ExtendWith(MockitoExtension.class)
 class TransactionInitializerHandlerTest {
 
-    @InjectMocks
-    private TransactionInizializeHandler handler;
+  @InjectMocks private TransactionInizializeHandler handler;
 
-    @Mock
-    private TransactionTokensRepository transactionTokensRepository;
-    @Mock
-    private ObjectFactory objectFactory;
-    @Mock
-    private NodeForPspClient nodeForPspClient;
-    @Mock
-    private EcommerceSessionsClient ecommerceSessionsClient;
-    @Mock
-    private TransactionsEventStoreRepository<TransactionInitData> transactionEventStoreRepository;
-    @Mock
-    private NodoConnectionString nodoConnectionParams;
+  @Mock private PaymentRequestsInfoRepository paymentRequestInfoRepository;
+  @Mock private ObjectFactory objectFactory;
+  @Mock private NodeForPspClient nodeForPspClient;
+  @Mock private EcommerceSessionsClient ecommerceSessionsClient;
 
-    @Test
-    void shouldHandleMessage() {
-        RptId TEST_RPTID = new RptId("77777777777302016723749670035");
-        IdempotencyKey TEST_KEY = new IdempotencyKey("32009090901", "aabbccddee");
-        String TEST_TOKEN = UUID.randomUUID().toString();
-        String SESSION_TOKEN = UUID.randomUUID().toString();
+  @Mock
+  private TransactionsEventStoreRepository<TransactionInitData> transactionEventStoreRepository;
 
-        NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
-        requestDto.setRptId(TEST_RPTID.value());
-        requestDto.setEmail("jhon.doe@email.com");
-        requestDto.setAmount(1200);
+  @Mock private NodoConnectionString nodoConnectionParams;
 
-        TransactionInitializeCommand command = new TransactionInitializeCommand(TEST_RPTID, requestDto);
+  @Test
+  void shouldHandleCommandForNM3CachedPaymentRequest() {
+    RptId rptId = new RptId("77777777777302016723749670035");
+    IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
+    String transactionId = UUID.randomUUID().toString();
+    String paymentToken = UUID.randomUUID().toString();
+    String sessionToken = UUID.randomUUID().toString();
+    String paName = "paName";
+    String paTaxcode = "77777777777";
+    String description = "Description";
+    BigDecimal amount = BigDecimal.valueOf(1000);
 
-        ActivatePaymentNoticeRes activateRes = new ActivatePaymentNoticeRes();
-        activateRes.setFiscalCodePA("32009090901");
-        activateRes.setPaymentToken(TEST_TOKEN);
-        activateRes.setCompanyName("Company");
-        activateRes.setTotalAmount(BigDecimal.TEN);
-        activateRes.setCreditorReferenceId("1");
-        activateRes.setOfficeName("Name");
+    NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
+    requestDto.setRptId(rptId.value());
+    requestDto.setEmail("jhon.doe@email.com");
+    requestDto.setAmount(1200);
 
-        TransactionTokens tokens = new TransactionTokens(TEST_RPTID, TEST_KEY, TEST_TOKEN);
+    TransactionInitializeCommand command = new TransactionInitializeCommand(rptId, requestDto);
 
-        SessionTokenDto sessionTokenDto = new SessionTokenDto()
-                .email(requestDto.getEmail())
-                .sessionToken(SESSION_TOKEN)
-                .paymentToken(TEST_TOKEN)
-                .rptId(TEST_RPTID.value());
+    PaymentRequestInfo paymentRequestInfoCached =
+        new PaymentRequestInfo(
+            rptId,
+            paTaxcode,
+            paName,
+            description,
+            amount,
+            null,
+            true,
+            paymentToken,
+            idempotencyKey);
 
-        /**
-         * preconditions
-         */
-        Mockito.when(transactionTokensRepository.findById(TEST_RPTID)).thenReturn(Optional.of(tokens));
-        Mockito.when(objectFactory.createActivatePaymentNoticeReq()).thenReturn(new ActivatePaymentNoticeReq());
-        Mockito.when(nodeForPspClient.activatePaymentNotice(Mockito.any())).thenReturn(Mono.just(activateRes));
-        Mockito.when(transactionEventStoreRepository.save(Mockito.any())).thenReturn(Mono.empty());
-        Mockito.when(transactionTokensRepository.save(Mockito.any(TransactionTokens.class))).thenReturn(tokens);
-        Mockito.when(ecommerceSessionsClient.createSessionToken(new SessionDataDto()
-                .email(requestDto.getEmail())
-                .paymentToken(activateRes.getPaymentToken())
-                .rptId(requestDto.getRptId()))).thenReturn(Mono.just(sessionTokenDto));
+    SessionDataDto sessionDataDto =
+        new SessionDataDto()
+            .email(requestDto.getEmail())
+            .sessionToken(sessionToken)
+            .paymentToken(paymentToken)
+            .rptId(rptId.value())
+            .transactionId(transactionId);
 
-        /**
-         * preconditions
-         */
-        NewTransactionResponseDto response = handler.handle(command).block();
+    /** preconditions */
+    Mockito.when(paymentRequestInfoRepository.findById(rptId))
+        .thenReturn(Optional.of(paymentRequestInfoCached));
+    Mockito.when(transactionEventStoreRepository.save(Mockito.any())).thenReturn(Mono.empty());
+    Mockito.when(paymentRequestInfoRepository.save(Mockito.any(PaymentRequestInfo.class)))
+        .thenReturn(paymentRequestInfoCached);
+    Mockito.when(ecommerceSessionsClient.createSessionToken(Mockito.any()))
+        .thenReturn(Mono.just(sessionDataDto));
 
-        /**
-         * asserts
-         */
-        Mockito.verify(transactionTokensRepository, Mockito.times(1)).findById(TEST_RPTID);
-        Mockito.verify(ecommerceSessionsClient, Mockito.times(1)).createSessionToken(Mockito.any());
+    /** preconditions */
+    NewTransactionResponseDto response = handler.handle(command).block();
 
-        assertEquals(sessionTokenDto.getRptId(), response.getRptId());
-        assertEquals(sessionTokenDto.getPaymentToken(), response.getPaymentToken());
-        assertEquals(tokens.paymentToken(), response.getPaymentToken());
-        assertNotNull(tokens.id());
+    /** asserts */
+    Mockito.verify(paymentRequestInfoRepository, Mockito.times(1)).findById(rptId);
+    Mockito.verify(ecommerceSessionsClient, Mockito.times(1)).createSessionToken(Mockito.any());
 
-    }
+    assertEquals(sessionDataDto.getRptId(), response.getRptId());
+    assertEquals(sessionDataDto.getPaymentToken(), response.getPaymentToken());
+    assertEquals(paymentRequestInfoCached.paymentToken(), response.getPaymentToken());
+    assertNotNull(paymentRequestInfoCached.id());
+  }
 
-    @Test
-    void shouldCreateANewKey() {
-        RptId TEST_RPTID = new RptId("77777777777302016723749670035");
-        IdempotencyKey TEST_KEY = new IdempotencyKey("32009090901", "aabbccddee");
-        String TEST_TOKEN = UUID.randomUUID().toString();
+  @Test
+  void transactionsProjectionTests() {
+    String TEST_RPTID = "77777777777302016723749670035";
+    String TEST_TOKEN = "token";
 
-        NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
-        requestDto.setRptId(TEST_RPTID.value());
-        requestDto.setEmail("jhon.doe@email.com");
+    TransactionsProjection<NewTransactionResponseDto> transactionsProjection =
+        new TransactionsProjection<>();
+    transactionsProjection.setData(
+        new NewTransactionResponseDto()
+            .amount(1)
+            .rptId(TEST_RPTID)
+            .paymentToken(TEST_TOKEN)
+            .authToken(TEST_TOKEN)
+            .reason(""));
 
-        TransactionInitializeCommand command = new TransactionInitializeCommand(TEST_RPTID, requestDto);
+    TransactionsProjection<NewTransactionResponseDto> differentTransactionsProjection =
+        new TransactionsProjection<>();
+    differentTransactionsProjection.setData(
+        new NewTransactionResponseDto()
+            .amount(1)
+            .rptId(TEST_RPTID)
+            .paymentToken(TEST_TOKEN)
+            .authToken(TEST_TOKEN)
+            .reason(""));
 
-        ActivatePaymentNoticeRes activateRes = new ActivatePaymentNoticeRes();
-        activateRes.setFiscalCodePA("32009090901");
-        activateRes.setPaymentToken(TEST_TOKEN);
-        activateRes.setCompanyName("Company");
-        activateRes.setTotalAmount(BigDecimal.TEN);
-        activateRes.setCreditorReferenceId("1");
-        activateRes.setOfficeName("Name");
+    differentTransactionsProjection.setRptId(new RptId(TEST_RPTID));
 
-        SessionTokenDto sessionTokenDto = new SessionTokenDto()
-                .email(requestDto.getEmail())
-                .sessionToken(TEST_TOKEN)
-                .paymentToken(UUID.randomUUID().toString())
-                .rptId(TEST_RPTID.value());
-
-        /**
-         * preconditions
-         */
-        Mockito.when(transactionTokensRepository.findById(TEST_RPTID)).thenReturn(Optional.empty());
-
-        /**
-         * preconditions
-         */
-        handler.handle(command).block();
-
-        /**
-         * asserts
-         */
-        Mockito.verify(transactionTokensRepository, Mockito.times(1)).save(Mockito.any());
-    }
-
-    @Test
-    void transactionsProjectionTests() {
-        String TEST_RPTID = "77777777777302016723749670035";
-        String TEST_TOKEN = "token";
-
-        TransactionsProjection<NewTransactionResponseDto> transactionsProjection = new TransactionsProjection<>();
-        transactionsProjection.setData(new NewTransactionResponseDto()
-                .amount(1)
-                .rptId(TEST_RPTID)
-                .paymentToken(TEST_TOKEN)
-                .authToken(TEST_TOKEN)
-                .reason(""));
-
-        TransactionsProjection<NewTransactionResponseDto> differentTransactionsProjection = new TransactionsProjection<>();
-        differentTransactionsProjection.setData(new NewTransactionResponseDto()
-                .amount(1)
-                .rptId(TEST_RPTID)
-                .paymentToken(TEST_TOKEN)
-                .authToken(TEST_TOKEN)
-                .reason(""));
-
-        differentTransactionsProjection.setRptId(new RptId(TEST_RPTID));
-
-        assertFalse(transactionsProjection.equals(differentTransactionsProjection));
-        assertEquals(transactionsProjection.getData().equals(differentTransactionsProjection.getData()), true);
-
-    }
+    assertFalse(transactionsProjection.equals(differentTransactionsProjection));
+    assertEquals(
+        Boolean.TRUE,
+        transactionsProjection.getData().equals(differentTransactionsProjection.getData()));
+  }
 }

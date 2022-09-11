@@ -63,7 +63,8 @@ class PaymentRequestsServiceTest {
     final BigDecimal amount = BigDecimal.valueOf(1000);
 
     PaymentRequestInfo paymentRequestInfo =
-        new PaymentRequestInfo(rptIdAsObject, paTaxCode, paName, description, amount, null, true);
+        new PaymentRequestInfo(
+            rptIdAsObject, paTaxCode, paName, description, amount, null, true, null, null);
 
     /** Preconditions */
     Mockito.when(paymentRequestsInfoRepository.findById(rptIdAsObject))
@@ -92,7 +93,8 @@ class PaymentRequestsServiceTest {
     final BigDecimal amount = BigDecimal.valueOf(1000);
 
     PaymentRequestInfo paymentRequestInfo =
-        new PaymentRequestInfo(rptIdAsObject, paTaxCode, paName, description, amount, null, true);
+        new PaymentRequestInfo(
+            rptIdAsObject, paTaxCode, paName, description, amount, null, true, null, null);
 
     NodoVerificaRPTRisposta verificaRPTRIsposta = new NodoVerificaRPTRisposta();
     EsitoNodoVerificaRPTRisposta esitoVerificaRPT = new EsitoNodoVerificaRPTRisposta();
@@ -177,7 +179,8 @@ class PaymentRequestsServiceTest {
     final BigDecimal amount = BigDecimal.valueOf(1000);
 
     PaymentRequestInfo paymentRequestInfo =
-        new PaymentRequestInfo(rptIdAsObject, paTaxCode, paName, description, amount, null, true);
+        new PaymentRequestInfo(
+            rptIdAsObject, paTaxCode, paName, description, amount, null, true, null, null);
 
     NodoVerificaRPTRisposta verificaRPTRIsposta = new NodoVerificaRPTRisposta();
     EsitoNodoVerificaRPTRisposta esitoVerificaRPT = new EsitoNodoVerificaRPTRisposta();
