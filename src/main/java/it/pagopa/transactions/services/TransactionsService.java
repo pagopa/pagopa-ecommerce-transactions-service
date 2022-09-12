@@ -229,7 +229,7 @@ public class TransactionsService {
                 .map(transactionDocument -> {
                     Transaction transaction = new Transaction(
                             new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
-                            new PaymentToken(transactionDocument.getPaymentToken()),
+                            new PaymentToken(updateTransactionRequestDto.getPaymentToken()),
                             new RptId(transactionDocument.getRptId()),
                             new TransactionDescription(transactionDocument.getDescription()),
                             new TransactionAmount(transactionDocument.getAmount()),

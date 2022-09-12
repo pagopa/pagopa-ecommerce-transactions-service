@@ -1,5 +1,6 @@
 package it.pagopa.transactions.documents;
 
+import it.pagopa.generated.transactions.server.model.ActivationResultDto;
 import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import lombok.AllArgsConstructor;
@@ -12,4 +13,5 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class TransactionStatusUpdateData {
     private AuthorizationResultDto authorizationResult;
     private TransactionStatusDto newTransactionStatus;
+    private ActivationResultDto activationResultDto;
 }

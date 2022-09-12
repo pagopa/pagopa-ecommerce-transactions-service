@@ -20,20 +20,23 @@ public class TransactionUpdateProjectionHandler implements ProjectionHandler<Tra
 
     @Override
     public Mono<Transaction> handle(TransactionStatusUpdatedEvent data) {
-        return transactionsViewRepository.findById(data.getTransactionId())
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(data.getPaymentToken())))
-                .flatMap(transactionDocument -> {
-                    transactionDocument.setStatus(data.getData().getNewTransactionStatus());
-                    return transactionsViewRepository.save(transactionDocument);
-                })
-                .map(transactionDocument -> new Transaction(
-                        new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
-                        new PaymentToken(transactionDocument.getPaymentToken()),
-                        new RptId(transactionDocument.getRptId()),
-                        new TransactionDescription(transactionDocument.getDescription()),
-                        new TransactionAmount(transactionDocument.getAmount()),
-                        ZonedDateTime.parse(transactionDocument.getCreationDate()),
-                        transactionDocument.getStatus()
-                ));
+    return transactionsViewRepository
+        .findById(data.getTransactionId())
+        .switchIfEmpty(Mono.error(new TransactionNotFoundException(data.getPaymentToken())))
+        .flatMap(
+            transactionDocument -> {
+              transactionDocument.setStatus(data.getData().getNewTransactionStatus());
+              return transactionsViewRepository.save(transactionDocument);
+            })
+        .map(
+            transactionDocument ->
+                new Transaction(
+                    new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
+                    new PaymentToken(data.getPaymentToken()),
+                    new RptId(transactionDocument.getRptId()),
+                    new TransactionDescription(transactionDocument.getDescription()),
+                    new TransactionAmount(transactionDocument.getAmount()),
+                    ZonedDateTime.parse(transactionDocument.getCreationDate()),
+                    transactionDocument.getStatus()));
     }
 }

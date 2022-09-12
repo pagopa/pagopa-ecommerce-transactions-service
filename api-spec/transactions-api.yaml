@@ -301,17 +301,19 @@ components:
       properties:
         authorizationResult:
           $ref: '#/components/schemas/AuthorizationResult'
+        authorizationCode:
+          type: string
+          description: Payment gateway-specific authorization code related to the transaction
+        activationResult:
+          $ref: '#/components/schemas/ActivationResult'
+        paymentToken:
+          type: string
         timestampOperation:
           type: string
           format: date-time
           description: Payment timestamp
-        authorizationCode:
-          type: string
-          description: Payment gateway-specific authorization code related to the transaction
       required:
-        - authorizationResult
         - timestampOperation
-        - authorizationCode    
     TransactionInfo:
       description: Transaction data returned when querying for an existing transaction
       allOf:
@@ -332,6 +334,12 @@ components:
       maximum: 99999999
     AuthorizationResult:
       description: Authorization result
+      type: string
+      enum:
+        - OK
+        - KO
+    ActivationResult:
+      description: Activation result
       type: string
       enum:
         - OK
