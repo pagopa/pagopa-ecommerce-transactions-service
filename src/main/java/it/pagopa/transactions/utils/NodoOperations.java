@@ -60,7 +60,7 @@ public class NodoOperations {
                     : nodoActivationForUnknownPaymentRequest(
                         fiscalCode,
                         noticeCode,
-                        amountAsBigDecimal,
+                        amountAsBigDecimal.multiply(BigDecimal.valueOf(100)),
                         idempotencyKey.getKey(),
                         paymentContextCode))
         .flatMap(
@@ -71,7 +71,7 @@ public class NodoOperations {
                         paTaxCode,
                         paName,
                         description,
-                        amountAsBigDecimal,
+                        amountAsBigDecimal.multiply(BigDecimal.valueOf(100)),
                         dueDate,
                         isNM3,
                         paymentToken,

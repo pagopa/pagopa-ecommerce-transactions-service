@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -67,7 +68,7 @@ public class PaymentRequestsService {
             paymentInfo ->
                 new PaymentRequestsGetResponseDto()
                     .rptId(paymentInfo.id().value())
-                    .paTaxCode(paymentInfo.paTaxCode())
+                    .paFiscalCode(paymentInfo.paTaxCode())
                     .paName(paymentInfo.paName())
                     .description(paymentInfo.description())
                     .amount(paymentInfo.amount().intValue())
@@ -150,7 +151,8 @@ public class PaymentRequestsService {
                                         .getPaymentList()
                                         .getPaymentOptionDescription()
                                         .get(0)
-                                        .getAmount(),
+                                        .getAmount()
+                                        .multiply(BigDecimal.valueOf(100)),
                                     verifyPaymentNoticeRes
                                                 .getPaymentList()
                                                 .getPaymentOptionDescription()
@@ -188,7 +190,8 @@ public class PaymentRequestsService {
                             nodoVerificaRPTRResponse.getDatiPagamentoPA().getCausaleVersamento(),
                             nodoVerificaRPTRResponse
                                 .getDatiPagamentoPA()
-                                .getImportoSingoloVersamento(),
+                                .getImportoSingoloVersamento()
+                                .multiply(BigDecimal.valueOf(100)),
                             null,
                             false,
                             null,
