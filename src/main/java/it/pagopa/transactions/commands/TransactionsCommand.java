@@ -1,5 +1,6 @@
 package it.pagopa.transactions.commands;
 
+import it.pagopa.transactions.commands.data.ActivationResultData;
 import it.pagopa.transactions.domain.RptId;
 import lombok.Data;
 
@@ -9,7 +10,8 @@ public abstract sealed class TransactionsCommand<T> permits
         TransactionRequestAuthorizationCommand,
         TransactionUpdateAuthorizationCommand,
         TransactionClosureSendCommand,
-        TransactionUpdateStatusCommand
+        TransactionUpdateStatusCommand,
+        TransactionActivateResultCommand
 {
     protected final RptId rptId;
     protected final TransactionsCommandCode code;
