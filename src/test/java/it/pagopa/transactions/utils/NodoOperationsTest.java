@@ -424,4 +424,20 @@ class NodoOperationsTest {
     /** asserts */
     assertEquals(response.id(), rptId);
   }
+
+  @Test
+  void shouldTrasformNodoAmountWithCentInEuroCent(){
+
+    BigDecimal amountFromNodo = BigDecimal.valueOf(19.91);
+    Integer amount = nodoOperations.getEuroCentsFromNodoAmount(amountFromNodo);
+    assertEquals(1991, amount);
+  }
+
+  @Test
+  void shouldTrasformNodoAmountWithoutCentInEuroCent(){
+
+    BigDecimal amountFromNodo = BigDecimal.valueOf(19.00);
+    Integer amount = nodoOperations.getEuroCentsFromNodoAmount(amountFromNodo);
+    assertEquals(1900, amount);
+  }
 }
