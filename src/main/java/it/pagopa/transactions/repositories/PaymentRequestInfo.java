@@ -18,5 +18,6 @@ public record PaymentRequestInfo(@Id RptId id, String paFiscalCode, String paNam
                                  IdempotencyKey idempotencyKey) {
     @PersistenceConstructor
     public PaymentRequestInfo {
+        // Do nothing
     }
 }
