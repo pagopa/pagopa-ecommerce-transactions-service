@@ -79,7 +79,7 @@ public class TransactionInizializeHandler
                           newTransactionRequestDto.getPaymentContextCode(),
                           partialPaymentRequestInfo.isNM3(),
                           newTransactionRequestDto.getAmount(),
-                          partialPaymentRequestInfo.paTaxCode(),
+                          partialPaymentRequestInfo.paFiscalCode(),
                           partialPaymentRequestInfo.paName(),
                           Optional.ofNullable(partialPaymentRequestInfo.idempotencyKey())
                               .orElseGet(
@@ -107,7 +107,7 @@ public class TransactionInizializeHandler
             paymentRequestInfo -> {
               final String transactionId = UUID.randomUUID().toString();
               TransactionInitData data = new TransactionInitData();
-              data.setAmount(paymentRequestInfo.amount().intValue());
+              data.setAmount(paymentRequestInfo.amount());
               data.setDescription(paymentRequestInfo.description());
               data.setEmail(newTransactionRequestDto.getEmail());
 
@@ -145,7 +145,7 @@ public class TransactionInizializeHandler
                   args.getT2();
 
               return new NewTransactionResponseDto()
-                  .amount(transactionInitializedEvent.getData().getAmount().intValue())
+                  .amount(transactionInitializedEvent.getData().getAmount())
                   .reason(transactionInitializedEvent.getData().getDescription())
                   .authToken(sessionData.getSessionToken())
                   .transactionId(transactionInitializedEvent.getTransactionId())

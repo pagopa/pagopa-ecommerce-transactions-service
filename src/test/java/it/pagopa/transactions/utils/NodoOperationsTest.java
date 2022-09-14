@@ -101,7 +101,7 @@ class NodoOperationsTest {
     assertEquals(response.paymentToken(), paymentToken);
     assertEquals(response.description(), description);
     assertEquals(response.idempotencyKey(), idempotencyKey);
-    assertEquals(response.paTaxCode(), paTaxCode);
+    assertEquals(response.paFiscalCode(), paTaxCode);
   }
 
   @Test
@@ -262,7 +262,7 @@ class NodoOperationsTest {
     assertEquals(response.paymentToken(), paymentToken);
     assertEquals(response.description(), description);
     assertEquals(response.idempotencyKey(), idempotencyKey);
-    assertEquals(response.paTaxCode(), paTaxCode);
+    assertEquals(response.paFiscalCode(), paTaxCode);
   }
 
   @Test

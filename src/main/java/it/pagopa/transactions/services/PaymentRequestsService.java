@@ -12,6 +12,7 @@ import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.NodoErrorException;
 import it.pagopa.transactions.repositories.PaymentRequestInfo;
 import it.pagopa.transactions.repositories.PaymentRequestsInfoRepository;
+import it.pagopa.transactions.utils.NodoOperations;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,8 @@ public class PaymentRequestsService {
   @Autowired private NodoVerificaRPT baseNodoVerificaRPTRequest;
 
   @Autowired private VerifyPaymentNoticeReq baseVerifyPaymentNoticeReq;
+
+  @Autowired private NodoOperations nodoOperations;
 
   public Mono<PaymentRequestsGetResponseDto> getPaymentRequestInfo(String rptId) {
 
@@ -67,10 +70,10 @@ public class PaymentRequestsService {
             paymentInfo ->
                 new PaymentRequestsGetResponseDto()
                     .rptId(paymentInfo.id().value())
-                    .paTaxCode(paymentInfo.paTaxCode())
+                    .paFiscalCode(paymentInfo.paFiscalCode())
                     .paName(paymentInfo.paName())
                     .description(paymentInfo.description())
-                    .amount(paymentInfo.amount().intValue())
+                    .amount(paymentInfo.amount())
                     .dueDate(paymentInfo.dueDate())
                     .paymentContextCode(UUID.randomUUID().toString().replace("-", "")))
         .doOnNext(
@@ -146,11 +149,12 @@ public class PaymentRequestsService {
                                     verifyPaymentNoticeRes.getFiscalCodePA(),
                                     verifyPaymentNoticeRes.getCompanyName(),
                                     verifyPaymentNoticeRes.getPaymentDescription(),
-                                    verifyPaymentNoticeRes
-                                        .getPaymentList()
-                                        .getPaymentOptionDescription()
-                                        .get(0)
-                                        .getAmount(),
+                                    nodoOperations.getEuroCentsFromNodoAmount(
+                                        verifyPaymentNoticeRes
+                                            .getPaymentList()
+                                            .getPaymentOptionDescription()
+                                            .get(0)
+                                            .getAmount()),
                                     verifyPaymentNoticeRes
                                                 .getPaymentList()
                                                 .getPaymentOptionDescription()
@@ -186,9 +190,10 @@ public class PaymentRequestsService {
                                 ? enteBeneficiario.getDenominazioneBeneficiario()
                                 : null,
                             nodoVerificaRPTRResponse.getDatiPagamentoPA().getCausaleVersamento(),
-                            nodoVerificaRPTRResponse
-                                .getDatiPagamentoPA()
-                                .getImportoSingoloVersamento(),
+                            nodoOperations.getEuroCentsFromNodoAmount(
+                                nodoVerificaRPTRResponse
+                                    .getDatiPagamentoPA()
+                                    .getImportoSingoloVersamento()),
                             null,
                             false,
                             null,

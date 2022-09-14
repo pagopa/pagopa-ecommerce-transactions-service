@@ -11,6 +11,7 @@ import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.exceptions.NodoErrorException;
 import it.pagopa.transactions.repositories.PaymentRequestInfo;
 import it.pagopa.transactions.repositories.PaymentRequestsInfoRepository;
+import it.pagopa.transactions.utils.NodoOperations;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,10 +29,8 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
@@ -53,6 +52,8 @@ class PaymentRequestsServiceTest {
 
   @Mock private VerifyPaymentNoticeReq baseVerifyPaymentNoticeReq;
 
+  @Mock private NodoOperations nodoOperations;
+
   @Test
   void shouldReturnPaymentInfoRequestFromCache() {
     final String rptIdAsString = "77777777777302016723749670035";
@@ -60,7 +61,7 @@ class PaymentRequestsServiceTest {
     final String paTaxCode = "77777777777";
     final String paName = "Pa Name";
     final String description = "Payment request description";
-    final BigDecimal amount = BigDecimal.valueOf(1000);
+    final Integer amount = Integer.valueOf(1000);
 
     PaymentRequestInfo paymentRequestInfo =
         new PaymentRequestInfo(
@@ -78,9 +79,9 @@ class PaymentRequestsServiceTest {
     assertEquals(responseDto.getRptId(), rptIdAsString);
     assertEquals(responseDto.getDescription(), description);
     assertEquals(responseDto.getDueDate(), null);
-    assertEquals(BigDecimal.valueOf(responseDto.getAmount()), amount);
+    assertEquals(responseDto.getAmount(), amount);
     assertEquals(responseDto.getPaName(), paName);
-    assertEquals(responseDto.getPaTaxCode(), paTaxCode);
+    assertEquals(responseDto.getPaFiscalCode(), paTaxCode);
   }
 
   @Test
@@ -90,7 +91,8 @@ class PaymentRequestsServiceTest {
     final String paTaxCode = "77777777777";
     final String paName = "Pa Name";
     final String description = "Payment request description";
-    final BigDecimal amount = BigDecimal.valueOf(1000);
+    final Integer amount = 1000;
+    final BigDecimal amountForNodo = BigDecimal.valueOf(amount);
 
     PaymentRequestInfo paymentRequestInfo =
         new PaymentRequestInfo(
@@ -101,7 +103,7 @@ class PaymentRequestsServiceTest {
     esitoVerificaRPT.setEsito(StOutcome.OK.value());
     NodoTipoDatiPagamentoPA datiPagamento = new NodoTipoDatiPagamentoPA();
     datiPagamento.setCausaleVersamento(description);
-    datiPagamento.setImportoSingoloVersamento(amount);
+    datiPagamento.setImportoSingoloVersamento(amountForNodo);
     esitoVerificaRPT.setDatiPagamentoPA(datiPagamento);
     verificaRPTRIsposta.setNodoVerificaRPTRisposta(esitoVerificaRPT);
 
@@ -112,6 +114,8 @@ class PaymentRequestsServiceTest {
         .thenReturn(new NodoTipoCodiceIdRPT());
     Mockito.when(nodoPerPspClient.verificaRPT(Mockito.any()))
         .thenReturn(Mono.just(verificaRPTRIsposta));
+    Mockito.when(nodoOperations.getEuroCentsFromNodoAmount(amountForNodo))
+            .thenReturn(amount);
 
     /** Test */
     PaymentRequestsGetResponseDto responseDto =
@@ -121,7 +125,7 @@ class PaymentRequestsServiceTest {
     assertEquals(responseDto.getRptId(), rptIdAsString);
     assertEquals(responseDto.getDescription(), description);
     assertEquals(null, responseDto.getDueDate());
-    assertEquals(BigDecimal.valueOf(responseDto.getAmount()), amount);
+    assertEquals(responseDto.getAmount(), amount);
   }
 
   @Test
@@ -131,14 +135,15 @@ class PaymentRequestsServiceTest {
     final String paTaxCode = "77777777777";
     final String paName = "Pa Name";
     final String description = "Payment request description";
-    final BigDecimal amount = BigDecimal.valueOf(1000);
+    final Integer amount = 1000;
+    final BigDecimal amountForNodo = BigDecimal.valueOf(amount);
 
     NodoVerificaRPTRisposta verificaRPTRIsposta = new NodoVerificaRPTRisposta();
     EsitoNodoVerificaRPTRisposta esitoVerificaRPT = new EsitoNodoVerificaRPTRisposta();
     esitoVerificaRPT.setEsito(StOutcome.OK.value());
     NodoTipoDatiPagamentoPA datiPagamento = new NodoTipoDatiPagamentoPA();
     datiPagamento.setCausaleVersamento(description);
-    datiPagamento.setImportoSingoloVersamento(amount);
+    datiPagamento.setImportoSingoloVersamento(amountForNodo);
     CtEnteBeneficiario ente = new CtEnteBeneficiario();
     ente.setDenominazioneBeneficiario(paName);
     CtIdentificativoUnivocoPersonaG paId = new CtIdentificativoUnivocoPersonaG();
@@ -155,6 +160,8 @@ class PaymentRequestsServiceTest {
         .thenReturn(new NodoTipoCodiceIdRPT());
     Mockito.when(nodoPerPspClient.verificaRPT(Mockito.any()))
         .thenReturn(Mono.just(verificaRPTRIsposta));
+    Mockito.when(nodoOperations.getEuroCentsFromNodoAmount(amountForNodo))
+            .thenReturn(amount);
 
     /** Test */
     PaymentRequestsGetResponseDto responseDto =
@@ -164,9 +171,9 @@ class PaymentRequestsServiceTest {
     assertEquals(responseDto.getRptId(), rptIdAsString);
     assertEquals(responseDto.getDescription(), description);
     assertEquals(null, responseDto.getDueDate());
-    assertEquals(BigDecimal.valueOf(responseDto.getAmount()), amount);
+    assertEquals(responseDto.getAmount(), amount);
     assertEquals(responseDto.getPaName(), paName);
-    assertEquals(responseDto.getPaTaxCode(), paTaxCode);
+    assertEquals(responseDto.getPaFiscalCode(), paTaxCode);
   }
 
   @Test
@@ -176,7 +183,8 @@ class PaymentRequestsServiceTest {
     final String paTaxCode = "77777777777";
     final String paName = "Pa Name";
     final String description = "Payment request description";
-    final BigDecimal amount = BigDecimal.valueOf(1000);
+    final Integer amount = 1000;
+    final BigDecimal amountForNodo = BigDecimal.valueOf(amount);
 
     PaymentRequestInfo paymentRequestInfo =
         new PaymentRequestInfo(
@@ -195,7 +203,7 @@ class PaymentRequestsServiceTest {
     verifyPaymentNotice.setPaymentDescription(description);
     CtPaymentOptionsDescriptionList paymentList = new CtPaymentOptionsDescriptionList();
     CtPaymentOptionDescription paymentDescription = new CtPaymentOptionDescription();
-    paymentDescription.setAmount(amount);
+    paymentDescription.setAmount(amountForNodo);
     paymentList.getPaymentOptionDescription().add(paymentDescription);
     verifyPaymentNotice.setPaymentList(paymentList);
 
@@ -208,6 +216,9 @@ class PaymentRequestsServiceTest {
         .thenReturn(Mono.just(verificaRPTRIsposta));
     Mockito.when(nodeForPspClient.verifyPaymentNotice(Mockito.any()))
         .thenReturn(Mono.just(verifyPaymentNotice));
+    Mockito.when(nodoOperations.getEuroCentsFromNodoAmount(amountForNodo))
+            .thenReturn(amount);
+
     /** Test */
     PaymentRequestsGetResponseDto responseDto =
         paymentRequestsService.getPaymentRequestInfo(rptIdAsString).block();
@@ -216,7 +227,7 @@ class PaymentRequestsServiceTest {
     assertEquals(responseDto.getRptId(), rptIdAsString);
     assertEquals(responseDto.getDescription(), description);
     assertEquals(null, responseDto.getDueDate());
-    assertEquals(BigDecimal.valueOf(responseDto.getAmount()), amount);
+    assertEquals(responseDto.getAmount(), amount);
   }
 
   @Test
@@ -281,7 +292,8 @@ class PaymentRequestsServiceTest {
     final String paTaxCode = "77777777777";
     final String paName = "Pa Name";
     final String description = "Payment request description";
-    final BigDecimal amount = BigDecimal.valueOf(1000);
+    final Integer amount = 1000;
+    final BigDecimal amountForNodo = BigDecimal.valueOf(amount);
 
     DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
     Date date = format.parse("2022-04-24");
@@ -301,7 +313,7 @@ class PaymentRequestsServiceTest {
     verifyPaymentNotice.setPaymentDescription(description);
     CtPaymentOptionsDescriptionList paymentList = new CtPaymentOptionsDescriptionList();
     CtPaymentOptionDescription paymentDescription = new CtPaymentOptionDescription();
-    paymentDescription.setAmount(amount);
+    paymentDescription.setAmount(amountForNodo);
     paymentDescription.setDueDate(dueDate);
     paymentList.getPaymentOptionDescription().add(paymentDescription);
     verifyPaymentNotice.setPaymentList(paymentList);
@@ -315,6 +327,9 @@ class PaymentRequestsServiceTest {
         .thenReturn(Mono.just(verificaRPTRIsposta));
     Mockito.when(nodeForPspClient.verifyPaymentNotice(Mockito.any()))
         .thenReturn(Mono.just(verifyPaymentNotice));
+    Mockito.when(nodoOperations.getEuroCentsFromNodoAmount(amountForNodo))
+            .thenReturn(amount);
+
     /** Test */
     PaymentRequestsGetResponseDto responseDto =
         paymentRequestsService.getPaymentRequestInfo(rptIdAsString).block();
@@ -323,6 +338,6 @@ class PaymentRequestsServiceTest {
     assertEquals(responseDto.getRptId(), rptIdAsString);
     assertEquals(responseDto.getDescription(), description);
     assertEquals("2022-04-24", responseDto.getDueDate());
-    assertEquals(BigDecimal.valueOf(responseDto.getAmount()), amount);
+    assertEquals(responseDto.getAmount(), amount);
   }
 }

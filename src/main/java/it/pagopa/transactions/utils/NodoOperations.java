@@ -71,7 +71,7 @@ public class NodoOperations {
                         paTaxCode,
                         paName,
                         description,
-                        amountAsBigDecimal,
+                        amount,
                         dueDate,
                         isNM3,
                         paymentToken,
@@ -140,5 +140,9 @@ public class NodoOperations {
                   : Mono.error(
                       new NodoErrorException(nodoAttivaRPTRResponse.getFault().getFaultCode()));
             });
+  }
+
+  public Integer getEuroCentsFromNodoAmount(BigDecimal amountFromNodo) {
+    return amountFromNodo.multiply(BigDecimal.valueOf(100)).intValue();
   }
 }
