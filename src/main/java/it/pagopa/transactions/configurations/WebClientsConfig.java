@@ -108,6 +108,24 @@ public class WebClientsConfig {
         return new DefaultApi(new ApiClient(webClient));
     }
 
+    @Bean(name = "notificationsServiceWebClient")
+    public it.pagopa.generated.notifications.v1.api.DefaultApi
+    notificationsServiceWebClient(@Value("${notificationsService.uri}") String notificationsServiceUri,
+                                         @Value("${notificationsService.readTimeout}") int notificationsServiceReadTimeout,
+                                         @Value("${notificationsService.connectionTimeout}") int notificationsServiceConnectionTimeout) {
+        HttpClient httpClient = HttpClient.create()
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, notificationsServiceConnectionTimeout)
+                .doOnConnected(connection ->
+                        connection.addHandlerLast(new ReadTimeoutHandler(
+                                notificationsServiceReadTimeout,
+                                TimeUnit.MILLISECONDS)));
+
+        WebClient webClient = ApiClient.buildWebClientBuilder().clientConnector(
+                new ReactorClientHttpConnector(httpClient)).baseUrl(notificationsServiceUri).build();
+
+        return new it.pagopa.generated.notifications.v1.api.DefaultApi(new it.pagopa.generated.notifications.v1.ApiClient(webClient));
+    }
+
     @Bean
     public  it.pagopa.generated.transactions.model.ObjectFactory objectFactoryNodeForPsp() {
         return new  it.pagopa.generated.transactions.model.ObjectFactory();
