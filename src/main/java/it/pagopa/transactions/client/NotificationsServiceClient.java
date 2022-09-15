@@ -20,7 +20,7 @@ public class NotificationsServiceClient {
 
     public Mono<NotificationEmailResponseDto> sendNotificationEmail(NotificationEmailRequestDto notificationEmailRequestDto) {
         if (!(notificationEmailRequestDto.getParameters() instanceof Map)) {
-            throw new IllegalArgumentException("Notifications service `parameters` field in `sendNotificationsEmail` request body must implement `java.util.Map`");
+            return Mono.error(new IllegalArgumentException("Notifications service `parameters` field in `sendNotificationsEmail` request body must implement `java.util.Map`"));
         }
 
         return notificationsServiceApi.sendNotificationEmail(notificationsServiceApiKey, notificationEmailRequestDto);
