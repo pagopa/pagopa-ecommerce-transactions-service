@@ -32,6 +32,7 @@ import java.util.Date;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentRequestsServiceTest {
@@ -76,12 +77,12 @@ class PaymentRequestsServiceTest {
         paymentRequestsService.getPaymentRequestInfo(rptIdAsString).block();
 
     /** Assertions */
-    assertEquals(responseDto.getRptId(), rptIdAsString);
-    assertEquals(responseDto.getDescription(), description);
-    assertEquals(responseDto.getDueDate(), null);
-    assertEquals(responseDto.getAmount(), amount);
-    assertEquals(responseDto.getPaName(), paName);
-    assertEquals(responseDto.getPaFiscalCode(), paTaxCode);
+    assertEquals(rptIdAsString, responseDto.getRptId());
+    assertEquals(description, responseDto.getDescription());
+    assertNull(responseDto.getDueDate());
+    assertEquals(amount, responseDto.getAmount());
+    assertEquals(paName, responseDto.getPaName());
+    assertEquals(paTaxCode, responseDto.getPaFiscalCode());
   }
 
   @Test
