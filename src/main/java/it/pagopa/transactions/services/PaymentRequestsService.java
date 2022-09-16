@@ -114,11 +114,9 @@ public class PaymentRequestsService {
               final String outcome = nodoVerificaRPTRResponse.getEsito();
               final Boolean ko = StOutcome.KO.value().equals(outcome);
               final FaultBean faultBean = nodoVerificaRPTRResponse.getFault();
-              final Boolean multibeneficiario = ko ? "PPT_MULTI_BENEFICIARIO"
-                      .equals(faultBean.getFaultCode()) : false;
+              final Boolean multibeneficiario = isMultibeneficiario(ko, faultBean);
               final Boolean isNM3 = ko && multibeneficiario;
               final Boolean isNodoErrorException = ko && !multibeneficiario;
-
               return isNodoErrorException
                   ? Mono.error(
                       new NodoErrorException(faultBean.getFaultCode()))
@@ -203,5 +201,12 @@ public class PaymentRequestsService {
               }
               return paymentRequestInfo;
             });
+  }
+
+  private Boolean isMultibeneficiario(Boolean ko, FaultBean faultBean) {
+      if(ko && faultBean != null) {
+          return faultBean.getFaultCode().equals("PPT_MULTI_BENEFICIARIO");
+      }
+      return false;
   }
 }
