@@ -2,43 +2,25 @@ package it.pagopa.transactions.domain;
 
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.annotations.AggregateRoot;
-import it.pagopa.transactions.annotations.AggregateRootId;
-import lombok.Data;
+import it.pagopa.transactions.documents.TransactionAuthorizationRequestedEvent;
+import it.pagopa.transactions.domain.pojos.BaseTransaction;
 
 import java.time.ZonedDateTime;
 
 import static java.time.ZonedDateTime.now;
 
 @AggregateRoot
-@Data
-public class Transaction {
-    @AggregateRootId
-    private final TransactionId transactionId;
-    private final PaymentToken paymentToken;
-    private final RptId rptId;
-    private final TransactionDescription description;
-    private final TransactionAmount amount;
-    private final ZonedDateTime creationDate;
-
-    private TransactionStatusDto status;
-
+public class Transaction extends BaseTransaction implements EventUpdatable<TransactionWithRequestedAuthorization, TransactionAuthorizationRequestedEvent> {
     public Transaction(TransactionId transactionId, PaymentToken paymentToken, RptId rptId, TransactionDescription description, TransactionAmount amount, ZonedDateTime creationDate, TransactionStatusDto status) {
-        this.transactionId = transactionId;
-        this.paymentToken = paymentToken;
-        this.rptId = rptId;
-        this.description = description;
-        this.amount = amount;
-        this.creationDate = creationDate;
-        this.status = status;
+        super(transactionId, paymentToken, rptId, description, amount, creationDate, status);
     }
 
     public Transaction(TransactionId transactionId, PaymentToken paymentToken, RptId rptId, TransactionDescription description, TransactionAmount amount, TransactionStatusDto status) {
-        this.transactionId = transactionId;
-        this.rptId = rptId;
-        this.description = description;
-        this.paymentToken = paymentToken;
-        this.amount = amount;
-        this.status = status;
-        this.creationDate = now();
+        super(transactionId, paymentToken, rptId, description, amount, now(), status);
+    }
+
+    @Override
+    public TransactionWithRequestedAuthorization applyEvent(TransactionAuthorizationRequestedEvent event) {
+        return new TransactionWithRequestedAuthorization(this, event);
     }
 }
