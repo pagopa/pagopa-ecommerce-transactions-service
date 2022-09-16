@@ -113,7 +113,7 @@ public class PaymentRequestsService {
                   nodoVerificaRPTResponse.getNodoVerificaRPTRisposta();
               final String outcome = nodoVerificaRPTRResponse.getEsito();
               final Boolean ko = StOutcome.KO.value().equals(outcome);
-              final Boolean multibeneficiario = "PPT_MULTI_BENEFICIARIO"
+              final Boolean multibeneficiario = nodoVerificaRPTRResponse.getFault() != null && "PPT_MULTI_BENEFICIARIO"
                       .equals(nodoVerificaRPTRResponse.getFault().getFaultCode());
               final Boolean isNM3 = ko && multibeneficiario;
               final Boolean isNodoErrorException = ko && !multibeneficiario;
