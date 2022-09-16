@@ -28,11 +28,6 @@ import java.util.UUID;
 public class TransactionInizializeHandler
     implements CommandHandler<TransactionInitializeCommand, Mono<NewTransactionResponseDto>> {
 
-  private static final String ALPHANUMERICS =
-      "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-  private static final SecureRandom RANDOM = new SecureRandom();
-  private static final String PSP_PAGOPA_ECOMMERCE_FISCAL_CODE = "00000000000";
-
   @Autowired PaymentRequestsInfoRepository paymentRequestsInfoRepository;
 
   @Autowired TransactionsEventStoreRepository<TransactionInitData> transactionEventStoreRepository;
@@ -74,20 +69,7 @@ public class TransactionInizializeHandler
                                   rptId,
                                   p.paymentToken()))
                   : nodoOperations
-                      .activatePaymentRequest(
-                          partialPaymentRequestInfo.id(),
-                          newTransactionRequestDto.getPaymentContextCode(),
-                          partialPaymentRequestInfo.isNM3(),
-                          newTransactionRequestDto.getAmount(),
-                          partialPaymentRequestInfo.paFiscalCode(),
-                          partialPaymentRequestInfo.paName(),
-                          Optional.ofNullable(partialPaymentRequestInfo.idempotencyKey())
-                              .orElseGet(
-                                  () ->
-                                      new IdempotencyKey(
-                                          PSP_PAGOPA_ECOMMERCE_FISCAL_CODE, randomString(10))),
-                          partialPaymentRequestInfo.dueDate(),
-                          partialPaymentRequestInfo.description())
+                      .activatePaymentRequest(partialPaymentRequestInfo, newTransactionRequestDto)
                       .doOnSuccess(
                           p ->
                               log.info(
@@ -163,11 +145,4 @@ public class TransactionInizializeHandler
     return paymentRequestsInfoRepository.findById(rptId).map(Mono::just).orElseGet(Mono::empty);
   }
 
-  private String randomString(int len) {
-    StringBuilder sb = new StringBuilder(len);
-    for (int i = 0; i < len; i++) {
-      sb.append(ALPHANUMERICS.charAt(RANDOM.nextInt(ALPHANUMERICS.length())));
-    }
-    return sb.toString();
-  }
 }

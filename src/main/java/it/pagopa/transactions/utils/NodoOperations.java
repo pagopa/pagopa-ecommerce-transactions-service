@@ -4,6 +4,7 @@ import it.pagopa.generated.nodoperpsp.model.*;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
 import it.pagopa.generated.transactions.model.CtQrCode;
 import it.pagopa.generated.transactions.model.StOutcome;
+import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NodoPerPspClient;
 import it.pagopa.transactions.domain.IdempotencyKey;
@@ -18,10 +19,18 @@ import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.security.SecureRandom;
+import java.util.Optional;
 
 @Slf4j
 @Component
 public class NodoOperations {
+
+  private static final String PSP_PAGOPA_ECOMMERCE_FISCAL_CODE = "00000000000";
+
+  private static final String ALPHANUMERICS =
+          "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  private static final SecureRandom RANDOM = new SecureRandom();
 
   @Autowired NodoPerPspClient nodoPerPspClient;
 
@@ -36,15 +45,22 @@ public class NodoOperations {
   @Autowired it.pagopa.generated.transactions.model.ObjectFactory objectFactoryNodeForPsp;
 
   public Mono<PaymentRequestInfo> activatePaymentRequest(
-      RptId rptId,
-      String paymentContextCode,
-      Boolean isNM3,
-      Integer amount,
-      String paTaxCode,
-      String paName,
-      IdempotencyKey idempotencyKey,
-      String dueDate,
-      String description) {
+          PaymentRequestInfo paymentRequestInfo,
+          NewTransactionRequestDto newTransactionRequestDto) {
+
+    RptId rptId = paymentRequestInfo.id();
+    String paymentContextCode = newTransactionRequestDto.getPaymentContextCode();
+    Boolean isNM3 = paymentRequestInfo.isNM3();
+    Integer amount = newTransactionRequestDto.getAmount();
+    String paTaxCode = paymentRequestInfo.paFiscalCode();
+    String paName = paymentRequestInfo.paName();
+    IdempotencyKey idempotencyKey = Optional.ofNullable(paymentRequestInfo.idempotencyKey())
+            .orElseGet(
+                    () ->
+                            new IdempotencyKey(
+                                    PSP_PAGOPA_ECOMMERCE_FISCAL_CODE, randomString(10)));
+    String dueDate = paymentRequestInfo.dueDate();
+    String description = paymentRequestInfo.description();
 
     final BigDecimal amountAsBigDecimal =
         BigDecimal.valueOf(amount / 100).setScale(2, RoundingMode.CEILING);
@@ -144,5 +160,13 @@ public class NodoOperations {
 
   public Integer getEuroCentsFromNodoAmount(BigDecimal amountFromNodo) {
     return amountFromNodo.multiply(BigDecimal.valueOf(100)).intValue();
+  }
+
+  private String randomString(int len) {
+    StringBuilder sb = new StringBuilder(len);
+    for (int i = 0; i < len; i++) {
+      sb.append(ALPHANUMERICS.charAt(RANDOM.nextInt(ALPHANUMERICS.length())));
+    }
+    return sb.toString();
   }
 }
