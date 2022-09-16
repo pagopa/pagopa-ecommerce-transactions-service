@@ -112,12 +112,13 @@ public class PaymentRequestsService {
               final EsitoNodoVerificaRPTRisposta nodoVerificaRPTRResponse =
                   nodoVerificaRPTResponse.getNodoVerificaRPTRisposta();
               final String outcome = nodoVerificaRPTRResponse.getEsito();
-              final Boolean isNM3 =
-                  StOutcome.KO.value().equals(outcome)
-                      && "PPT_MULTI_BENEFICIARIO"
-                          .equals(nodoVerificaRPTRResponse.getFault().getFaultCode());
+              final Boolean ko = StOutcome.KO.value().equals(outcome);
+              final Boolean multibeneficiario = "PPT_MULTI_BENEFICIARIO"
+                      .equals(nodoVerificaRPTRResponse.getFault().getFaultCode());
+              final Boolean isNM3 = ko && multibeneficiario;
+              final Boolean isNodoErrorException = ko && !multibeneficiario;
 
-              return StOutcome.KO.value().equals(outcome) && Boolean.FALSE.equals(isNM3)
+              return isNodoErrorException
                   ? Mono.error(
                       new NodoErrorException(nodoVerificaRPTRResponse.getFault().getFaultCode()))
                   : Mono.just(Tuples.of(nodoVerificaRPTRResponse, isNM3));
