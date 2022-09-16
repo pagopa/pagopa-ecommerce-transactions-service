@@ -8,7 +8,6 @@ import it.pagopa.generated.transactions.model.VerifyPaymentNoticeReq;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NodoPerPspClient;
 import it.pagopa.transactions.domain.RptId;
-import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.NodoErrorException;
 import it.pagopa.transactions.repositories.PaymentRequestInfo;
 import it.pagopa.transactions.repositories.PaymentRequestsInfoRepository;
@@ -19,6 +18,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
+import javax.xml.datatype.XMLGregorianCalendar;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -111,12 +111,10 @@ public class PaymentRequestsService {
             nodoVerificaRPTResponse -> {
               final EsitoNodoVerificaRPTRisposta nodoVerificaRPTRResponse =
                   nodoVerificaRPTResponse.getNodoVerificaRPTRisposta();
-              final String outcome = nodoVerificaRPTRResponse.getEsito();
-              final Boolean ko = StOutcome.KO.value().equals(outcome);
+
               final FaultBean faultBean = nodoVerificaRPTRResponse.getFault();
-              final Boolean multibeneficiario = isMultibeneficiario(ko, faultBean);
-              final Boolean isNM3 = ko && multibeneficiario;
-              final Boolean isNodoErrorException = ko && !multibeneficiario;
+              final boolean isNM3 = isNm3(nodoVerificaRPTRResponse);
+              final boolean isNodoErrorException = isNodoError(nodoVerificaRPTRResponse);
               return isNodoErrorException
                   ? Mono.error(
                       new NodoErrorException(faultBean.getFaultCode()))
@@ -155,20 +153,11 @@ public class PaymentRequestsService {
                                             .getPaymentOptionDescription()
                                             .get(0)
                                             .getAmount()),
-                                    verifyPaymentNoticeRes
+                                    getDueDateString(verifyPaymentNoticeRes
                                                 .getPaymentList()
                                                 .getPaymentOptionDescription()
                                                 .get(0)
-                                                .getDueDate()
-                                            != null
-                                        ? verifyPaymentNoticeRes
-                                            .getPaymentList()
-                                            .getPaymentOptionDescription()
-                                            .get(0)
-                                            .getDueDate()
-                                            .toString()
-                                        : null,
-                                    true,
+                                                .getDueDate()),                                    true,
                                     null,
                                     null));
 
@@ -203,10 +192,19 @@ public class PaymentRequestsService {
             });
   }
 
-  private Boolean isMultibeneficiario(Boolean ko, FaultBean faultBean) {
-      if(ko && faultBean != null) {
-          return faultBean.getFaultCode().equals("PPT_MULTI_BENEFICIARIO");
-      }
-      return false;
+  private Boolean isNm3(EsitoNodoVerificaRPTRisposta nodoVerificaRPTRResponse) {
+      final String outcome = nodoVerificaRPTRResponse.getEsito();
+      final Boolean ko = StOutcome.KO.value().equals(outcome);
+      return ko && nodoVerificaRPTRResponse.getFault().getFaultCode().equals("PPT_MULTI_BENEFICIARIO");
+  }
+
+  private Boolean isNodoError(EsitoNodoVerificaRPTRisposta nodoVerificaRPTRResponse) {
+      final String outcome = nodoVerificaRPTRResponse.getEsito();
+      final Boolean ko = StOutcome.KO.value().equals(outcome);
+      return ko && !nodoVerificaRPTRResponse.getFault().getFaultCode().equals("PPT_MULTI_BENEFICIARIO");
+  }
+
+  private String getDueDateString(XMLGregorianCalendar date) {
+      return date != null ? date.toString() : null;
   }
 }
