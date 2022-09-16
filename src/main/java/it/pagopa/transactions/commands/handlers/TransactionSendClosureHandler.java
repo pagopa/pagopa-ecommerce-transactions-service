@@ -10,7 +10,7 @@ import it.pagopa.transactions.commands.TransactionClosureSendCommand;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestData;
 import it.pagopa.transactions.documents.TransactionClosureSendData;
 import it.pagopa.transactions.documents.TransactionClosureSentEvent;
-import it.pagopa.transactions.domain.Transaction;
+import it.pagopa.transactions.domain.TransactionInitialized;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -38,7 +38,7 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
 
     @Override
     public Mono<TransactionClosureSentEvent> handle(TransactionClosureSendCommand command) {
-        Transaction transaction = command.getData().transaction();
+        TransactionInitialized transaction = command.getData().transaction();
 
         if (transaction.getStatus() != TransactionStatusDto.AUTHORIZED) {
             log.error("Error: requesting closure status update for transaction in state {}", transaction.getStatus());

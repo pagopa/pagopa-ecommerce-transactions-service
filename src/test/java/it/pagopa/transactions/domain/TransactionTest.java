@@ -17,7 +17,7 @@ class TransactionTest {
         TransactionAmount amount = new TransactionAmount(100);
         TransactionStatusDto status = TransactionStatusDto.INITIALIZED;
 
-        Transaction transaction = new Transaction(
+        TransactionInitialized transaction = new TransactionInitialized(
                 transactionId,
                 paymentToken,
                 rptId,

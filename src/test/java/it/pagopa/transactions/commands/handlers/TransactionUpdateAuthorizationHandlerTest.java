@@ -42,7 +42,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
 
-        Transaction transaction = new Transaction(
+        TransactionInitialized transaction = new TransactionInitialized(
                 transactionId,
                 paymentToken,
                 rptId,
@@ -90,7 +90,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
 
-        Transaction transaction = new Transaction(
+        TransactionInitialized transaction = new TransactionInitialized(
                 transactionId,
                 paymentToken,
                 rptId,
@@ -126,7 +126,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
 
-        Transaction transaction = new Transaction(
+        TransactionInitialized transaction = new TransactionInitialized(
                 transactionId,
                 paymentToken,
                 rptId,

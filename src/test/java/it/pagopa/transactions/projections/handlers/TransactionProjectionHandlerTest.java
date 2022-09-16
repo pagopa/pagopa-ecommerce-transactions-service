@@ -45,7 +45,7 @@ class TransactionProjectionHandlerTest {
         TransactionDescription description = new TransactionDescription(data.getReason());
         TransactionAmount amount = new TransactionAmount(data.getAmount());
 
-        Transaction expected = new Transaction(
+        TransactionInitialized expected = new TransactionInitialized(
                 transactionId,
                 paymentToken,
                 rptId,
@@ -67,7 +67,7 @@ class TransactionProjectionHandlerTest {
             /*
              * Test
              */
-            Transaction result = transactionsProjectionHandler.handle(data).block();
+            TransactionInitialized result = transactionsProjectionHandler.handle(data).block();
 
             /*
              * Assertions

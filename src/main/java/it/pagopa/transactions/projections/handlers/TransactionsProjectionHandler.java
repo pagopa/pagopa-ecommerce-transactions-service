@@ -36,8 +36,8 @@ public class TransactionsProjectionHandler
             ? TransactionStatusDto.INIT_REQUESTED
             : TransactionStatusDto.INITIALIZED;
 
-    Transaction transaction =
-        new Transaction(transactionId, paymentToken, rptId, description, amount, transactionStatus);
+    TransactionInitialized transaction =
+        new TransactionInitialized(transactionId, paymentToken, rptId, description, amount, transactionStatus);
 
     it.pagopa.transactions.documents.Transaction transactionDocument =
         it.pagopa.transactions.documents.Transaction.from(transaction);

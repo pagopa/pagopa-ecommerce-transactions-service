@@ -4,7 +4,6 @@ import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.commands.TransactionInitializeCommand;
-import it.pagopa.transactions.commands.TransactionsCommand;
 import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.projections.handlers.TransactionsProjectionHandler;
@@ -50,7 +49,7 @@ class TransactionServiceTest {
                 .reason("")
                 .authToken(TEST_TOKEN);
 
-      Transaction transaction = new Transaction(
+      TransactionInitialized transaction = new TransactionInitialized(
               new TransactionId(TRANSACTION_ID),
               new PaymentToken(TEST_TOKEN),
               new RptId(TEST_RPTID),

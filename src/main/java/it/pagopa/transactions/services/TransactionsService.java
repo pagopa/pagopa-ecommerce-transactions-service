@@ -143,7 +143,7 @@ public class TransactionsService {
 
                     log.info("Requesting authorization for rptId: {}", transactionDocument.getRptId());
 
-                    Transaction transaction = new Transaction(
+                    TransactionInitialized transaction = new TransactionInitialized(
                             new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
                             new PaymentToken(transactionDocument.getPaymentToken()),
                             new RptId(transactionDocument.getRptId()),
@@ -176,7 +176,7 @@ public class TransactionsService {
                 .findById(transactionId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .flatMap(transactionDocument -> {
-                    Transaction transaction = new Transaction(
+                    TransactionInitialized transaction = new TransactionInitialized(
                             new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
                             new PaymentToken(transactionDocument.getPaymentToken()),
                             new RptId(transactionDocument.getRptId()),
@@ -227,7 +227,7 @@ public class TransactionsService {
                 .findById(transactionId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .map(transactionDocument -> {
-                    Transaction transaction = new Transaction(
+                    TransactionInitialized transaction = new TransactionInitialized(
                             new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
                             new PaymentToken(transactionDocument.getPaymentToken()),
                             new RptId(transactionDocument.getRptId()),

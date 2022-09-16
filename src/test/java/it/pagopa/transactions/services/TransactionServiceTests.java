@@ -205,7 +205,7 @@ public class TransactionServiceTests {
 				100,
 				TransactionStatusDto.AUTHORIZATION_REQUESTED);
 
-		it.pagopa.transactions.domain.Transaction transaction = new it.pagopa.transactions.domain.Transaction(
+		TransactionInitialized transaction = new TransactionInitialized(
 				new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
 				new PaymentToken(transactionDocument.getPaymentToken()),
 				new RptId(transactionDocument.getRptId()),
@@ -309,7 +309,7 @@ public class TransactionServiceTests {
 				100,
 				TransactionStatusDto.CLOSED);
 
-		it.pagopa.transactions.domain.Transaction transaction = new it.pagopa.transactions.domain.Transaction(
+		TransactionInitialized transaction = new TransactionInitialized(
 				new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
 				new PaymentToken(transactionDocument.getPaymentToken()),
 				new RptId(transactionDocument.getRptId()),

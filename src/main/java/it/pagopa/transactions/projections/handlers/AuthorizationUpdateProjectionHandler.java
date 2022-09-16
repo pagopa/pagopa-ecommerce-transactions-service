@@ -26,7 +26,7 @@ public class AuthorizationUpdateProjectionHandler implements ProjectionHandler<T
                     transactionDocument.setStatus(data.getData().getNewTransactionStatus());
                     return transactionsViewRepository.save(transactionDocument);
                 })
-                .map(transactionDocument -> new Transaction(
+                .map(transactionDocument -> new TransactionInitialized(
                         new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
                         new PaymentToken(transactionDocument.getPaymentToken()),
                         new RptId(transactionDocument.getRptId()),

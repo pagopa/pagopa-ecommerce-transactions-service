@@ -4,7 +4,7 @@ import it.pagopa.transactions.documents.TransactionClosureSentEvent;
 import it.pagopa.transactions.domain.pojos.BaseTransactionClosed;
 import it.pagopa.transactions.domain.pojos.BaseTransactionWithCompletedAuthorization;
 
-public class TransactionClosed extends BaseTransactionClosed {
+public final class TransactionClosed extends BaseTransactionClosed implements Transaction {
     public TransactionClosed(BaseTransactionWithCompletedAuthorization baseTransaction, TransactionClosureSentEvent event) {
         super(baseTransaction, event.getData());
     }

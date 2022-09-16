@@ -7,7 +7,7 @@ import it.pagopa.transactions.domain.pojos.BaseTransaction;
 import it.pagopa.transactions.domain.pojos.BaseTransactionWithRequestedAuthorization;
 
 @AggregateRoot
-public class TransactionWithRequestedAuthorization extends BaseTransactionWithRequestedAuthorization implements EventUpdatable<TransactionWithCompletedAuthorization, TransactionAuthorizationStatusUpdatedEvent> {
+public final class TransactionWithRequestedAuthorization extends BaseTransactionWithRequestedAuthorization implements EventUpdatable<TransactionWithCompletedAuthorization, TransactionAuthorizationStatusUpdatedEvent>, Transaction {
     TransactionWithRequestedAuthorization(BaseTransaction transaction, TransactionAuthorizationRequestedEvent event) {
         super(transaction, event.getData());
     }

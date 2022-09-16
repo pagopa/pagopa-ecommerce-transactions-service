@@ -1,7 +1,6 @@
 package it.pagopa.transactions.domain.pojos;
 
 import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdateData;
-import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdatedEvent;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
