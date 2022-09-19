@@ -41,6 +41,7 @@ public class TransactionsController implements TransactionsApi {
                 .map(ResponseEntity::ok);
     }
 
+
     @Override
     public Mono<ResponseEntity<TransactionInfoDto>> updateTransactionAuthorization(String transactionId, Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto, ServerWebExchange exchange) {
         return updateAuthorizationRequestDto
@@ -49,13 +50,20 @@ public class TransactionsController implements TransactionsApi {
     }
 
 
-@Override
-public Mono<ResponseEntity<TransactionInfoDto>> patchTransactionStatus(String transactionId,
+    @Override
+    public Mono<ResponseEntity<TransactionInfoDto>> patchTransactionStatus(String transactionId,
                 @Valid Mono<UpdateTransactionStatusRequestDto> updateTransactioRequestDto, ServerWebExchange exchange) {
                         return updateTransactioRequestDto
                         .flatMap(updateTransactionRequest -> transactionsService.updateTransactionStatus(transactionId, updateTransactionRequest))
                         .map(ResponseEntity::ok);
-}
+    }
+
+    @Override
+    public Mono<ResponseEntity<ActivationResultResponseDto>> transactionActivationResult(String transactionId, Mono<ActivationResultRequestDto> activationResultRequestDto, ServerWebExchange exchange) {
+        return activationResultRequestDto
+                .flatMap(activationResultRequest -> transactionsService.activateTransaction(transactionId, activationResultRequest))
+                .map(ResponseEntity::ok);    }
+
     @ExceptionHandler(TransactionNotFoundException.class)
     private ResponseEntity<ProblemJsonDto> transactionNotFoundHandler(TransactionNotFoundException exception) {
         return new ResponseEntity<>(

@@ -182,6 +182,62 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
+  /transactions/{transactionId}/activation-results:
+    summary: PaymentToken related to cdInfoWisp and attivaRPT
+    post:
+      operationId: transactionActivationResult
+      parameters:
+        - in: path
+          name: transactionId
+          schema:
+            type: string
+          required: true
+          description: Transaction ID
+      requestBody:
+        $ref: "#/components/requestBodies/ActivationResultRequest"
+      responses:
+        200:
+          description: Activation result for the transaction successfully processed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/requestBodies/ActivationResultResponse"
+        400:
+          description: Invalid transaction id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        404:
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        409:
+          description: Transaction already processed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        502:
+          description: Bad gateway
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        504:
+          description: Gateway timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
 components:
   schemas:
     RptId:
@@ -311,7 +367,26 @@ components:
       required:
         - authorizationResult
         - timestampOperation
-        - authorizationCode    
+        - authorizationCode
+    ActivationResultRequest:
+      type: object
+      description: Request body for activation result
+      properties:
+        paymentToken:
+          type: string
+      required:
+        - paymentToken
+    ActivationResultResponse:
+      type: object
+      description: Response body for activation result
+      properties:
+        outcome:
+          type: string
+          enum:
+            - OK
+            - KO
+      required:
+        - outcome
     TransactionInfo:
       description: Transaction data returned when querying for an existing transaction
       allOf:
@@ -487,3 +562,15 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/UpdateTransactionStatusRequest"
+    ActivationResultRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ActivationResultRequest"
+    ActivationResultResponse:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ActivationResultResponse"
