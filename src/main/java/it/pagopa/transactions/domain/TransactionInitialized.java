@@ -20,8 +20,16 @@ public final class TransactionInitialized extends BaseTransaction implements Eve
     }
 
     @Override
-    public TransactionWithRequestedAuthorization applyEvent(TransactionAuthorizationRequestedEvent event) {
+    public TransactionWithRequestedAuthorization apply(TransactionAuthorizationRequestedEvent event) {
         return new TransactionWithRequestedAuthorization(this, event);
     }
-}
 
+    @Override
+    public <E> Transaction applyEvent(E event) {
+        if (event instanceof TransactionAuthorizationRequestedEvent) {
+            return this.apply((TransactionAuthorizationRequestedEvent) event);
+        } else {
+            return this;
+        }
+    }
+}

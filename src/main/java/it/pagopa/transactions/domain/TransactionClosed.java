@@ -8,4 +8,9 @@ public final class TransactionClosed extends BaseTransactionClosed implements Tr
     public TransactionClosed(BaseTransactionWithCompletedAuthorization baseTransaction, TransactionClosureSentEvent event) {
         super(baseTransaction, event.getData());
     }
+
+    @Override
+    public <E> Transaction applyEvent(E event) {
+        return this;
+    }
 }

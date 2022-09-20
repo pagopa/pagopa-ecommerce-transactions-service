@@ -10,6 +10,9 @@ import it.pagopa.transactions.commands.TransactionClosureSendCommand;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestData;
 import it.pagopa.transactions.documents.TransactionClosureSendData;
 import it.pagopa.transactions.documents.TransactionClosureSentEvent;
+import it.pagopa.transactions.documents.TransactionEvent;
+import it.pagopa.transactions.domain.EmptyTransaction;
+import it.pagopa.transactions.domain.Transaction;
 import it.pagopa.transactions.domain.TransactionInitialized;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
@@ -18,6 +21,7 @@ import it.pagopa.transactions.utils.TransactionEventCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
@@ -35,6 +39,9 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
 
     @Autowired
     private TransactionsEventStoreRepository<TransactionAuthorizationRequestData> authorizationRequestedEventStoreRepository;
+
+    @Autowired
+    private TransactionsEventStoreRepository<Object> eventStoreRepository;
 
     @Override
     public Mono<TransactionClosureSentEvent> handle(TransactionClosureSendCommand command) {
@@ -113,5 +120,12 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
             default ->
                     throw new RuntimeException("Missing authorization result enum value mapping to Nodo closePayment outcome");
         }
+    }
+
+    // FIXME: Example aggregate building from events
+    private Mono<Transaction> replayTransactionEvents(String transactionId) {
+        Flux<TransactionEvent<Object>> events = eventStoreRepository.findByTransactionId(transactionId);
+
+        return events.reduce(new EmptyTransaction(), Transaction::applyEvent);
     }
 }

@@ -11,7 +11,16 @@ public final class TransactionWithCompletedAuthorization extends BaseTransaction
     }
 
     @Override
-    public TransactionClosed applyEvent(TransactionClosureSentEvent event) {
+    public TransactionClosed apply(TransactionClosureSentEvent event) {
         return new TransactionClosed(this, event);
+    }
+
+    @Override
+    public <E> Transaction applyEvent(E event) {
+        if (event instanceof TransactionClosureSentEvent) {
+            return this.apply((TransactionClosureSentEvent) event);
+        } else {
+            return this;
+        }
     }
 }

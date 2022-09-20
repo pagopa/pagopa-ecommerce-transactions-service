@@ -67,7 +67,7 @@ class TransactionProjectionHandlerTest {
             /*
              * Test
              */
-            TransactionInitialized result = transactionsProjectionHandler.handle(data).block();
+            TransactionInitialized result = transactionsProjectionHandler.handle(data).cast(TransactionInitialized.class).block();
 
             /*
              * Assertions

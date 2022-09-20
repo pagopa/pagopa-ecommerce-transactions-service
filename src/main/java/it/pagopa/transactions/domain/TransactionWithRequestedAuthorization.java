@@ -13,7 +13,16 @@ public final class TransactionWithRequestedAuthorization extends BaseTransaction
     }
 
     @Override
-    public TransactionWithCompletedAuthorization applyEvent(TransactionAuthorizationStatusUpdatedEvent event) {
+    public TransactionWithCompletedAuthorization apply(TransactionAuthorizationStatusUpdatedEvent event) {
         return new TransactionWithCompletedAuthorization(this, event);
+    }
+
+    @Override
+    public <E> Transaction applyEvent(E event) {
+        if (event instanceof TransactionAuthorizationStatusUpdatedEvent) {
+            return this.apply((TransactionAuthorizationStatusUpdatedEvent) event);
+        } else {
+            return this;
+        }
     }
 }

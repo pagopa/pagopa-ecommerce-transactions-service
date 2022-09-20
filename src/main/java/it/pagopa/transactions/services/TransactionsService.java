@@ -88,6 +88,7 @@ public class TransactionsService {
         data ->
             transactionsProjectionHandler
                 .handle(data)
+                .cast(TransactionInitialized.class)
                 .map(
                     t -> {
                       data.setStatus(t.getStatus());
@@ -199,6 +200,7 @@ public class TransactionsService {
                             .flatMap(authorizationStatusUpdatedEvent -> authorizationUpdateProjectionHandler
                                     .handle(authorizationStatusUpdatedEvent));
                 })
+                .cast(TransactionInitialized.class)
                 .flatMap(transaction -> {
                     ClosureSendData closureSendData = new ClosureSendData(transaction, updateAuthorizationRequestDto);
 
@@ -246,6 +248,7 @@ public class TransactionsService {
                         transactionStatusUpdatedEvent.getTransactionId()))
                 .flatMap(transactionStatusUpdatedEvent -> transactionUpdateProjectionHandler
                         .handle(transactionStatusUpdatedEvent))
+                .cast(TransactionInitialized.class)
                 .map(transaction -> new TransactionInfoDto()
                         .transactionId(transaction.getTransactionId().value().toString())
                         .amount(transaction.getAmount().value())
