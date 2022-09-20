@@ -44,13 +44,13 @@ parameters:
     values:
       - False
       - True
-      - name: "SKIP_RELEASE"
-        displayName: "Skip release"
-        type: boolean
-        default: False
-        values:
-          - False
-          - True
+  - name: "SKIP_RELEASE"
+    displayName: "Skip release"
+    type: boolean
+    default: False
+    values:
+      - False
+      - True
 resources:
   repositories:
     - repository: pagopaCommons
