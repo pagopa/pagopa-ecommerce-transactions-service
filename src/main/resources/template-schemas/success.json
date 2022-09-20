@@ -2,62 +2,10 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "success",
   "type": "object",
+  "required": ["transaction", "user", "cart"],
   "properties": {
     "transaction": {
       "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "timestamp": {
-          "type": "string"
-        },
-        "amount": {
-          "type": "string"
-        },
-        "psp": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "type": "string"
-            },
-            "fee": {
-              "type": "object",
-              "properties": {
-                "amount": {
-                  "type": "string"
-                }
-              },
-              "required": ["amount"]
-            }
-          },
-          "required": ["name", "fee"]
-        },
-        "rrn": {
-          "type": "string"
-        },
-        "authCode": {
-          "type": "string"
-        },
-        "paymentMethod": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "type": "string"
-            },
-            "logo": {
-              "type": "string"
-            },
-            "accountHolder": {
-              "type": "string"
-            },
-            "extraFee": {
-              "type": "boolean"
-            }
-          },
-          "required": ["name"]
-        }
-      },
       "required": [
         "id",
         "timestamp",
@@ -66,93 +14,163 @@
         "rrn",
         "authCode",
         "paymentMethod"
-      ]
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "examples": ["F57E2F8E-25FF-4183-AB7B-4A5EC1A96644"]
+        },
+        "timestamp": {
+          "type": "string",
+          "examples": ["2020-07-10 15:00:00.000"]
+        },
+        "amount": {
+          "type": "string"
+        },
+        "psp": {
+          "type": "object",
+          "required": ["name", "fee"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "examples": ["Nexi"]
+            },
+            "fee": {
+              "type": "object",
+              "required": ["amount"],
+              "properties": {
+                "amount": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "rrn": {
+          "type": "string",
+          "examples": ["1234567890"]
+        },
+        "authCode": {
+          "type": "string",
+          "examples": ["9999999999"]
+        },
+        "paymentMethod": {
+          "type": "object",
+          "required": ["name"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "examples": ["Visa *1234"]
+            },
+            "logo": {
+              "type": "string"
+            },
+            "accountHolder": {
+              "type": "string",
+              "examples": ["Marzia Roccaraso"]
+            },
+            "extraFee": {
+              "type": "boolean",
+              "examples": [false]
+            }
+          }
+        }
+      }
     },
     "user": {
       "type": "object",
+      "required": ["email"],
       "properties": {
         "data": {
           "type": "object",
+          "required": ["firstName", "lastName", "taxCode"],
           "properties": {
             "firstName": {
-              "type": "string"
+              "type": "string",
+              "examples": ["Marzia"]
             },
             "lastName": {
-              "type": "string"
+              "type": "string",
+              "examples": ["Roccaraso"]
             },
             "taxCode": {
-              "type": "string"
+              "type": "string",
+              "examples": ["RCCMRZ88A52C409A"]
             }
-          },
-          "required": ["firstName", "lastName", "taxCode"]
+          }
         },
         "email": {
           "type": "string"
         }
-      },
-      "required": ["email"]
+      }
     },
     "cart": {
       "type": "object",
+      "required": ["items", "amountPartial"],
       "properties": {
         "items": {
           "type": "array",
           "additionalItems": false,
           "items": {
-              "type": "object",
-              "properties": {
-                "refNumber": {
-                  "type": "object",
-                  "properties": {
-                    "type": {
-                      "enum": ["codiceAvviso", "IUV"]
-                    },
-                    "value": {
-                      "type": "string"
-                    }
+            "type": "object",
+            "required": ["refNumber", "payee", "amount"],
+            "properties": {
+              "refNumber": {
+                "type": "object",
+                "required": ["type", "value"],
+                "properties": {
+                  "type": {
+                    "enum": ["codiceAvviso", "IUV"],
+                    "examples": ["codiceAvviso"]
                   },
-                  "required": ["type", "value"]
-                },
-                "debtor": {
-                  "type": "object",
-                  "properties": {
-                    "fullName": {
-                      "type": "string"
-                    },
-                    "taxCode": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["fullName", "taxCode"]
-                },
-                "payee": {
-                  "type": "object",
-                  "properties": {
-                    "name": {
-                      "type": "string"
-                    },
-                    "taxCode": {
-                      "type": "integer"
-                    }
-                  },
-                  "required": ["name", "taxCode"]
-                },
-                "subject": {
-                  "type": "string"
-                },
-                "amount": {
-                  "type": "string"
+                  "value": {
+                    "type": "string",
+                    "examples": ["123456789012345678"]
+                  }
                 }
               },
-              "required": ["refNumber", "payee", "amount"]
+              "debtor": {
+                "type": "object",
+                "required": ["fullName", "taxCode"],
+                "properties": {
+                  "fullName": {
+                    "type": "string",
+                    "examples": ["Giuseppe Bianchi"]
+                  },
+                  "taxCode": {
+                    "type": "string",
+                    "examples": ["BNCGSP70A12F205X"]
+                  }
+                }
+              },
+              "payee": {
+                "type": "object",
+                "required": ["name", "taxCode"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "examples": ["Comune di Controguerra"]
+                  },
+                  "taxCode": {
+                    "type": "integer",
+                    "examples": [82001760675]
+                  }
+                }
+              },
+              "subject": {
+                "type": "string",
+                "examples": ["TARI 2022"]
+              },
+              "amount": {
+                "type": "string"
+              }
             }
+          }
         },
         "amountPartial": {
           "type": "string"
         }
-      },
-      "required": ["items", "amountPartial"]
+      }
     }
-  },
-  "required": ["transaction", "user", "cart"]
+  }
 }
