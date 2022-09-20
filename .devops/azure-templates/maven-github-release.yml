@@ -79,23 +79,6 @@ steps:
       failOnStderr: true
 
   - task: Bash@3
-    displayName: Update app Version Helm
-    name: update_version_helm
-    inputs:
-      targetType: 'inline'
-      script: |
-        for i in helm/values-*.yaml; do
-          [ -f "$i" ] || break
-          yq -i ".microservice-chart.image.tag = \"$(next_version.value)\"" "$i"
-          yq -i ".microservice-chart.canaryDelivery.deployment.image.tag = \"$(next_version.value)\"" "$i"
-          git add "$i"
-        done
-        CHART_FILE="helm/Chart.yaml"
-        if [[ -f "$CHART_FILE" ]]; then
-          yq -i ".appVersion = \"$(next_version.value)\"" "$CHART_FILE"
-          git add "$CHART_FILE"
-        fi
-  - task: Bash@3
     name: setup_semver_utility
     displayName: 'Setup semver utility'
     inputs:
