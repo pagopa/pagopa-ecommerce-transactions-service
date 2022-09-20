@@ -8,16 +8,17 @@ import it.pagopa.generated.transactions.model.VerifyPaymentNoticeReq;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NodoPerPspClient;
 import it.pagopa.transactions.domain.RptId;
-import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.NodoErrorException;
 import it.pagopa.transactions.repositories.PaymentRequestInfo;
 import it.pagopa.transactions.repositories.PaymentRequestsInfoRepository;
+import it.pagopa.transactions.utils.NodoOperations;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
+import javax.xml.datatype.XMLGregorianCalendar;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -38,6 +39,8 @@ public class PaymentRequestsService {
   @Autowired private NodoVerificaRPT baseNodoVerificaRPTRequest;
 
   @Autowired private VerifyPaymentNoticeReq baseVerifyPaymentNoticeReq;
+
+  @Autowired private NodoOperations nodoOperations;
 
   public Mono<PaymentRequestsGetResponseDto> getPaymentRequestInfo(String rptId) {
 
@@ -67,10 +70,10 @@ public class PaymentRequestsService {
             paymentInfo ->
                 new PaymentRequestsGetResponseDto()
                     .rptId(paymentInfo.id().value())
-                    .paTaxCode(paymentInfo.paTaxCode())
+                    .paFiscalCode(paymentInfo.paFiscalCode())
                     .paName(paymentInfo.paName())
                     .description(paymentInfo.description())
-                    .amount(paymentInfo.amount().intValue())
+                    .amount(paymentInfo.amount())
                     .dueDate(paymentInfo.dueDate())
                     .paymentContextCode(UUID.randomUUID().toString().replace("-", "")))
         .doOnNext(
@@ -108,15 +111,13 @@ public class PaymentRequestsService {
             nodoVerificaRPTResponse -> {
               final EsitoNodoVerificaRPTRisposta nodoVerificaRPTRResponse =
                   nodoVerificaRPTResponse.getNodoVerificaRPTRisposta();
-              final String outcome = nodoVerificaRPTRResponse.getEsito();
-              final Boolean isNM3 =
-                  StOutcome.KO.value().equals(outcome)
-                      && "PPT_MULTI_BENEFICIARIO"
-                          .equals(nodoVerificaRPTRResponse.getFault().getFaultCode());
 
-              return StOutcome.KO.value().equals(outcome) && Boolean.FALSE.equals(isNM3)
+              final FaultBean faultBean = nodoVerificaRPTRResponse.getFault();
+              final boolean isNM3 = isNm3(nodoVerificaRPTRResponse);
+              final boolean isNodoErrorException = isNodoError(nodoVerificaRPTRResponse);
+              return isNodoErrorException
                   ? Mono.error(
-                      new NodoErrorException(nodoVerificaRPTRResponse.getFault().getFaultCode()))
+                      new NodoErrorException(faultBean.getFaultCode()))
                   : Mono.just(Tuples.of(nodoVerificaRPTRResponse, isNM3));
             })
         .flatMap(
@@ -146,25 +147,17 @@ public class PaymentRequestsService {
                                     verifyPaymentNoticeRes.getFiscalCodePA(),
                                     verifyPaymentNoticeRes.getCompanyName(),
                                     verifyPaymentNoticeRes.getPaymentDescription(),
-                                    verifyPaymentNoticeRes
-                                        .getPaymentList()
-                                        .getPaymentOptionDescription()
-                                        .get(0)
-                                        .getAmount(),
-                                    verifyPaymentNoticeRes
-                                                .getPaymentList()
-                                                .getPaymentOptionDescription()
-                                                .get(0)
-                                                .getDueDate()
-                                            != null
-                                        ? verifyPaymentNoticeRes
+                                    nodoOperations.getEuroCentsFromNodoAmount(
+                                        verifyPaymentNoticeRes
                                             .getPaymentList()
                                             .getPaymentOptionDescription()
                                             .get(0)
-                                            .getDueDate()
-                                            .toString()
-                                        : null,
-                                    true,
+                                            .getAmount()),
+                                    getDueDateString(verifyPaymentNoticeRes
+                                                .getPaymentList()
+                                                .getPaymentOptionDescription()
+                                                .get(0)
+                                                .getDueDate()),                                    true,
                                     null,
                                     null));
 
@@ -186,9 +179,10 @@ public class PaymentRequestsService {
                                 ? enteBeneficiario.getDenominazioneBeneficiario()
                                 : null,
                             nodoVerificaRPTRResponse.getDatiPagamentoPA().getCausaleVersamento(),
-                            nodoVerificaRPTRResponse
-                                .getDatiPagamentoPA()
-                                .getImportoSingoloVersamento(),
+                            nodoOperations.getEuroCentsFromNodoAmount(
+                                nodoVerificaRPTRResponse
+                                    .getDatiPagamentoPA()
+                                    .getImportoSingoloVersamento()),
                             null,
                             false,
                             null,
@@ -196,5 +190,21 @@ public class PaymentRequestsService {
               }
               return paymentRequestInfo;
             });
+  }
+
+  private Boolean isNm3(EsitoNodoVerificaRPTRisposta nodoVerificaRPTRResponse) {
+      final String outcome = nodoVerificaRPTRResponse.getEsito();
+      final Boolean ko = StOutcome.KO.value().equals(outcome);
+      return ko && nodoVerificaRPTRResponse.getFault().getFaultCode().equals("PPT_MULTI_BENEFICIARIO");
+  }
+
+  private Boolean isNodoError(EsitoNodoVerificaRPTRisposta nodoVerificaRPTRResponse) {
+      final String outcome = nodoVerificaRPTRResponse.getEsito();
+      final Boolean ko = StOutcome.KO.value().equals(outcome);
+      return ko && !nodoVerificaRPTRResponse.getFault().getFaultCode().equals("PPT_MULTI_BENEFICIARIO");
+  }
+
+  private String getDueDateString(XMLGregorianCalendar date) {
+      return date != null ? date.toString() : null;
   }
 }

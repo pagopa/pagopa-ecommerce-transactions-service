@@ -58,7 +58,7 @@ class TransactionInitializerHandlerTest {
     String paName = "paName";
     String paTaxcode = "77777777777";
     String description = "Description";
-    BigDecimal amount = BigDecimal.valueOf(1000);
+    Integer amount = Integer.valueOf(1000);
 
     NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
     requestDto.setRptId(rptId.value());

@@ -3,6 +3,7 @@ package it.pagopa.transactions.utils;
 import it.pagopa.generated.nodoperpsp.model.*;
 import it.pagopa.generated.transactions.model.*;
 import it.pagopa.generated.transactions.model.ObjectFactory;
+import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NodoPerPspClient;
 import it.pagopa.transactions.domain.IdempotencyKey;
@@ -53,6 +54,11 @@ class NodoOperationsTest {
     Integer amount = Integer.valueOf(1000);
     Boolean isNM3 = Boolean.TRUE;
 
+    PaymentRequestInfo paymentRequestInfo = new PaymentRequestInfo(rptId, paTaxCode, paName, description, amount, null, isNM3, paymentToken, idempotencyKey);
+    NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
+    newTransactionRequestDto.setPaymentContextCode(paymentContextCode);
+    newTransactionRequestDto.setAmount(amount);
+
     it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil =
         new it.pagopa.generated.transactions.model.ObjectFactory();
     BigDecimal amountBigDec = BigDecimal.valueOf(amount);
@@ -83,15 +89,8 @@ class NodoOperationsTest {
     PaymentRequestInfo response =
         nodoOperations
             .activatePaymentRequest(
-                rptId,
-                paymentContextCode,
-                isNM3,
-                amount,
-                paTaxCode,
-                paName,
-                idempotencyKey,
-                null,
-                description)
+                paymentRequestInfo,
+                newTransactionRequestDto)
             .block();
 
     /** asserts */
@@ -101,7 +100,7 @@ class NodoOperationsTest {
     assertEquals(response.paymentToken(), paymentToken);
     assertEquals(response.description(), description);
     assertEquals(response.idempotencyKey(), idempotencyKey);
-    assertEquals(response.paTaxCode(), paTaxCode);
+    assertEquals(response.paFiscalCode(), paTaxCode);
   }
 
   @Test
@@ -144,21 +143,19 @@ class NodoOperationsTest {
     Mockito.when(objectFactoryNodeForPsp.createActivatePaymentNoticeReq(Mockito.any()))
         .thenReturn(objectFactoryUtil.createActivatePaymentNoticeReq(activatePaymentReq));
 
+    PaymentRequestInfo paymentRequestInfo = new PaymentRequestInfo(rptId, paTaxCode, paName, description, amount, null, isNM3, paymentToken, idempotencyKey);
+    NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
+    newTransactionRequestDto.setPaymentContextCode(paymentContextCode);
+    newTransactionRequestDto.setAmount(amount);
+
     /** Test / asserts */
     Assert.assertThrows(
         NodoErrorException.class,
         () ->
             nodoOperations
                 .activatePaymentRequest(
-                    rptId,
-                    paymentContextCode,
-                    isNM3,
-                    amount,
-                    paTaxCode,
-                    paName,
-                    idempotencyKey,
-                    null,
-                    description)
+                        paymentRequestInfo,
+                        newTransactionRequestDto)
                 .block());
   }
 
@@ -240,19 +237,17 @@ class NodoOperationsTest {
     Mockito.when(objectFactoryNodoPerPsp.createNodoAttivaRPT(Mockito.any()))
         .thenReturn(objectFactoryUtilNodoPerPsp.createNodoAttivaRPT(nodoAttivaRPT));
 
+    PaymentRequestInfo paymentRequestInfo = new PaymentRequestInfo(rptId, paTaxCode, paName, description, amount, null, isNM3, paymentToken, idempotencyKey);
+    NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
+    newTransactionRequestDto.setPaymentContextCode(paymentContextCode);
+    newTransactionRequestDto.setAmount(amount);
+
     /** test */
     PaymentRequestInfo response =
         nodoOperations
             .activatePaymentRequest(
-                rptId,
-                paymentContextCode,
-                isNM3,
-                amount,
-                paTaxCode,
-                paName,
-                idempotencyKey,
-                null,
-                description)
+                paymentRequestInfo,
+                newTransactionRequestDto)
             .block();
 
     /** asserts */
@@ -262,7 +257,7 @@ class NodoOperationsTest {
     assertEquals(response.paymentToken(), paymentToken);
     assertEquals(response.description(), description);
     assertEquals(response.idempotencyKey(), idempotencyKey);
-    assertEquals(response.paTaxCode(), paTaxCode);
+    assertEquals(response.paFiscalCode(), paTaxCode);
   }
 
   @Test
@@ -324,21 +319,19 @@ class NodoOperationsTest {
     Mockito.when(objectFactoryNodoPerPsp.createNodoAttivaRPT(Mockito.any()))
         .thenReturn(objectFactoryUtilNodoPerPsp.createNodoAttivaRPT(nodoAttivaRPT));
 
+    PaymentRequestInfo paymentRequestInfo = new PaymentRequestInfo(rptId, paTaxCode, paName, description, amount, null, isNM3, paymentToken, idempotencyKey);
+    NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
+    newTransactionRequestDto.setPaymentContextCode(paymentContextCode);
+    newTransactionRequestDto.setAmount(amount);
+
     /** Test / asserts */
     Assert.assertThrows(
         NodoErrorException.class,
         () ->
             nodoOperations
                 .activatePaymentRequest(
-                    rptId,
-                    paymentContextCode,
-                    isNM3,
-                    amount,
-                    paTaxCode,
-                    paName,
-                    idempotencyKey,
-                    null,
-                    description)
+                    paymentRequestInfo,
+                    newTransactionRequestDto)
                 .block());
   }
 
@@ -406,22 +399,36 @@ class NodoOperationsTest {
     Mockito.when(objectFactoryNodoPerPsp.createNodoAttivaRPT(Mockito.any()))
         .thenReturn(objectFactoryUtilNodoPerPsp.createNodoAttivaRPT(nodoAttivaRPT));
 
+    PaymentRequestInfo paymentRequestInfo = new PaymentRequestInfo(rptId, paTaxCode, paName, description, amount, null, isNM3, paymentToken, idempotencyKey);
+    NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
+    newTransactionRequestDto.setPaymentContextCode(paymentContextCode);
+    newTransactionRequestDto.setAmount(amount);
+
     /** test */
     PaymentRequestInfo response =
         nodoOperations
             .activatePaymentRequest(
-                rptId,
-                paymentContextCode,
-                isNM3,
-                amount,
-                paTaxCode,
-                paName,
-                idempotencyKey,
-                null,
-                description)
+                paymentRequestInfo,
+                newTransactionRequestDto)
             .block();
 
     /** asserts */
     assertEquals(response.id(), rptId);
+  }
+
+  @Test
+  void shouldTrasformNodoAmountWithCentInEuroCent(){
+
+    BigDecimal amountFromNodo = BigDecimal.valueOf(19.91);
+    Integer amount = nodoOperations.getEuroCentsFromNodoAmount(amountFromNodo);
+    assertEquals(1991, amount);
+  }
+
+  @Test
+  void shouldTrasformNodoAmountWithoutCentInEuroCent(){
+
+    BigDecimal amountFromNodo = BigDecimal.valueOf(19.00);
+    Integer amount = nodoOperations.getEuroCentsFromNodoAmount(amountFromNodo);
+    assertEquals(1900, amount);
   }
 }
