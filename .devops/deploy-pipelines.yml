@@ -198,12 +198,12 @@ stages:
                   persistCredentials: true
               - template: azure-templates/maven-github-release.yml
                 parameters:
-                  semver: '${{ parameters.RELEASE_SEMVER }}'
                   gitEmail: $(GIT_EMAIL)
                   gitUsername: $(GIT_USERNAME)
                   gitHubConnection: $(GITHUB_CONNECTION)
                   release_branch: CHK-633-uat-pipeline
-                  release_chart_semver: '${{ parameters.RELEASE_CHART_SEMVER }}'
+                  semver_chart: '${{ parameters.RELEASE_CHART_SEMVER }}'
+                  semver: '${{ parameters.RELEASE_SEMVER }}'
           - ${{ if eq(parameters['SKIP_RELEASE'], False) }}:
               - template: templates/maven-github-current-version/template.yaml@pagopaCommons
       - job: tag_version
