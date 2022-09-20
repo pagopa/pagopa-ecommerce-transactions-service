@@ -71,7 +71,6 @@ steps:
   - task: Bash@3
     name: next_version
     displayName: 'Set release variables'
-    dependsOn: dump_version
     inputs:
       targetType: "inline"
       script: |
