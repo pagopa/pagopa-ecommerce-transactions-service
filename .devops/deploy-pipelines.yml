@@ -38,19 +38,19 @@ parameters:
       - none
     default: none
   - name: "FORCE_REPLACE_DOCKER_IMAGE"
-      displayName: "Force the existing docker image to be replaced (latest tag)"
-      type: boolean
-      default: False
-      values:
-        - False
-        - True
-        - name: "SKIP_RELEASE"
-          displayName: "Skip release"
-          type: boolean
-          default: False
-          values:
-            - False
-            - True
+    displayName: "Force the existing docker image to be replaced (latest tag)"
+    type: boolean
+    default: False
+    values:
+      - False
+      - True
+      - name: "SKIP_RELEASE"
+        displayName: "Skip release"
+        type: boolean
+        default: False
+        values:
+          - False
+          - True
 resources:
   repositories:
     - repository: pagopaCommons
