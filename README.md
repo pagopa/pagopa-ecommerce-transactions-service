@@ -8,23 +8,29 @@ This is a PagoPA microservice that handles transactions' lifecycle and workflow.
 
 These are all environment variables needed by the application:
 
-| Variable name                                  | Description                                                                       | type   | default |
-|------------------------------------------------|-----------------------------------------------------------------------------------|--------|---------|
-| MONGO_HOST                                     | Host where MongoDB instance used to persise events and view resides               | string |
-| MONGO_USERNAME                                 | Username used for connecting to MongoDB instance                                  | string |         |
-| MONGO_PASSWORD                                 | Password used for connecting to MongoDB instance                                  | string |         |
-| REDIS_HOST                                     | Host where the redis instance used to persist idempotency keys can be found       | string |         |
-| REDIS_PASSWORD                                 | Password used for connecting to Redis instance                                    | string |         |
-| ECOMMERCE_SESSIONS_URI                         | eCommerce Sessions service connection URI                                         | string |         |
-| ECOMMERCE_SESSIONS_READ_TIMEOUT                | Timeout for requests towards eCommerce Sessions service                           | number |         |
-| ECOMMERCE_SESSIONS_CONNECTION_TIMEOUT          | Timeout for establishing connections towards eCommerce Sessions service           | number |         |
-| PAYMENT_TRANSACTION_GATEWAY_URI                | Payment transactions gateway service connection URI                               | string |         |
-| PAYMENT_TRANSACTION_GATEWAY_READ_TIMEOUT       | Timeout for requests towards Payment transactions gateway service                 | number |         |
-| PAYMENT_TRANSACTION_GATEWAY_CONNECTION_TIMEOUT | Timeout for establishing connections towards Payment transactions gateway service | number |         |
-| NODO_URI                                       | Nodo connection URI                                                               | string |         |
-| NODO_READ_TIMEOUT                              | Timeout for requests towards Nodo                                                 | number |         |
-| NODO_CONNECTION_TIMEOUT                        | Timeout for establishing connections towards Nodo                                 | number |         |
-
+| Variable name                                  | Description                                                                        | type   | default |
+|------------------------------------------------|------------------------------------------------------------------------------------|--------|---------|
+| MONGO_HOST                                     | Host where MongoDB instance used to persise events and view resides                | string |
+| MONGO_USERNAME                                 | Username used for connecting to MongoDB instance                                   | string |         |
+| MONGO_PASSWORD                                 | Password used for connecting to MongoDB instance                                   | string |         |
+| REDIS_HOST                                     | Host where the redis instance used to persist idempotency keys can be found        | string |         |
+| REDIS_PASSWORD                                 | Password used for connecting to Redis instance                                     | string |         |
+| ECOMMERCE_SESSIONS_URI                         | eCommerce Sessions service connection URI                                          | string |         |
+| ECOMMERCE_SESSIONS_READ_TIMEOUT                | Timeout for requests towards eCommerce Sessions service                            | number |         |
+| ECOMMERCE_SESSIONS_CONNECTION_TIMEOUT          | Timeout for establishing connections towards eCommerce Sessions service            | number |         |
+| PAYMENT_TRANSACTION_GATEWAY_URI                | Payment transactions gateway service connection URI                                | string |         |
+| PAYMENT_TRANSACTION_GATEWAY_READ_TIMEOUT       | Timeout for requests towards Payment transactions gateway service                  | number |         |
+| PAYMENT_TRANSACTION_GATEWAY_CONNECTION_TIMEOUT | Timeout for establishing connections towards Payment transactions gateway service  | number |         |
+| NODO_URI                                       | Nodo connection URI                                                                | string |         |
+| NODO_READ_TIMEOUT                              | Timeout for requests towards Nodo                                                  | number |         |
+| NODO_CONNECTION_TIMEOUT                        | Timeout for establishing connections towards Nodo                                  | number |         |
+| PAYMENT_INSTRUMENTS_SERVICE_URI                | eCommerce payment instruments service connection URI                               | string |         |
+| PAYMENT_INSTRUMENTS_SERVICE_READ_TIMEOUT       | Timeout for requests towards eCommerce payment instruments service                 | number |         |
+| PAYMENT_INSTRUMENTS_SERVICE_CONNECTION_TIMEOUT | Timeout for establishing connections towards eCommerce payment instruments service | number |         |
+| NOTIFICATIONS_SERVICE_URI                      | Notifications service connection URI                                               | string |         |
+| NOTIFICATIONS_SERVICE_READ_TIMEOUT             | Timeout for requests towards Notifications service                                 | number |         |
+| NOTIFICATIONS_SERVICE_CONNECTION_TIMEOUT       | Timeout for establishing connections towards Notifications service                 | number |         |
+| NOTIFICATIONS_SERVICE_API_KEY                  | Notifications service API Key                                                      | string |         |
 
 An example configuration of these environment variables is in the `.env.example` file.
 
