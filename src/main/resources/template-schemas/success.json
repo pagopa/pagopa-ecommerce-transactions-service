@@ -1,0 +1,158 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "success",
+  "type": "object",
+  "properties": {
+    "transaction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "string"
+        },
+        "psp": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "fee": {
+              "type": "object",
+              "properties": {
+                "amount": {
+                  "type": "string"
+                }
+              },
+              "required": ["amount"]
+            }
+          },
+          "required": ["name", "fee"]
+        },
+        "rrn": {
+          "type": "string"
+        },
+        "authCode": {
+          "type": "string"
+        },
+        "paymentMethod": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "logo": {
+              "type": "string"
+            },
+            "accountHolder": {
+              "type": "string"
+            },
+            "extraFee": {
+              "type": "boolean"
+            }
+          },
+          "required": ["name"]
+        }
+      },
+      "required": [
+        "id",
+        "timestamp",
+        "amount",
+        "psp",
+        "rrn",
+        "authCode",
+        "paymentMethod"
+      ]
+    },
+    "user": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "firstName": {
+              "type": "string"
+            },
+            "lastName": {
+              "type": "string"
+            },
+            "taxCode": {
+              "type": "string"
+            }
+          },
+          "required": ["firstName", "lastName", "taxCode"]
+        },
+        "email": {
+          "type": "string"
+        }
+      },
+      "required": ["email"]
+    },
+    "cart": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "additionalItems": false,
+          "items": {
+              "type": "object",
+              "properties": {
+                "refNumber": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "enum": ["codiceAvviso", "IUV"]
+                    },
+                    "value": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["type", "value"]
+                },
+                "debtor": {
+                  "type": "object",
+                  "properties": {
+                    "fullName": {
+                      "type": "string"
+                    },
+                    "taxCode": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["fullName", "taxCode"]
+                },
+                "payee": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "taxCode": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": ["name", "taxCode"]
+                },
+                "subject": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "string"
+                }
+              },
+              "required": ["refNumber", "payee", "amount"]
+            }
+        },
+        "amountPartial": {
+          "type": "string"
+        }
+      },
+      "required": ["items", "amountPartial"]
+    }
+  },
+  "required": ["transaction", "user", "cart"]
+}

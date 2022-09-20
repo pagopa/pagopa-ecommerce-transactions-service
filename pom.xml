@@ -126,6 +126,12 @@
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
         <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
             <version>${jacoco.version}</version>
@@ -415,6 +421,26 @@
                 <configuration>
                     <argLine>${argLine} --enable-preview</argLine>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.jsonschema2pojo</groupId>
+                <artifactId>jsonschema2pojo-maven-plugin</artifactId>
+                <version>1.1.2</version>
+                <configuration>
+                    <sourcePaths>
+                        <sourcePath>${basedir}/src/main/resources/template-schemas/success.json</sourcePath>
+                    </sourcePaths>
+                    <targetPackage>it.pagopa.generated.notifications.templates.success</targetPackage>
+                    <classNameSuffix>Template</classNameSuffix>
+                    <includeConstructors>true</includeConstructors>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

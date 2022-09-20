@@ -1,5 +1,6 @@
 package it.pagopa.transactions.client;
 
+import it.pagopa.generated.notifications.templates.success.SuccessTemplate;
 import it.pagopa.generated.notifications.v1.api.DefaultApi;
 import it.pagopa.generated.notifications.v1.dto.NotificationEmailRequestDto;
 import it.pagopa.generated.notifications.v1.dto.NotificationEmailResponseDto;
@@ -24,5 +25,15 @@ public class NotificationsServiceClient {
         }
 
         return notificationsServiceApi.sendNotificationEmail(notificationsServiceApiKey, notificationEmailRequestDto);
+    }
+
+    public Mono<NotificationEmailResponseDto> sendSuccessEmail(SuccessTemplate successTemplate) {
+        return notificationsServiceApi.sendNotificationEmail(notificationsServiceApiKey, new NotificationEmailRequestDto()
+                .language("it-IT")
+                .subject("subject")
+                .to("giovanni.berti@pagopa.it")
+                .templateId("success")
+                .parameters(successTemplate)
+        );
     }
 }

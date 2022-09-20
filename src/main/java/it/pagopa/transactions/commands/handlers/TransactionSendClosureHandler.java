@@ -2,10 +2,13 @@ package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.generated.ecommerce.nodo.v1.dto.AdditionalPaymentInformationsDto;
 import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentRequestDto;
+import it.pagopa.generated.notifications.templates.success.*;
+import it.pagopa.generated.notifications.v1.dto.NotificationEmailResponseDto;
 import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
+import it.pagopa.transactions.client.NotificationsServiceClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestData;
 import it.pagopa.transactions.documents.TransactionClosureSendData;
@@ -35,6 +38,9 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
 
     @Autowired
     private TransactionsEventStoreRepository<TransactionAuthorizationRequestData> authorizationRequestedEventStoreRepository;
+
+    @Autowired
+    NotificationsServiceClient notificationsServiceClient;
 
     @Override
     public Mono<TransactionClosureSentEvent> handle(TransactionClosureSendCommand command) {
@@ -97,7 +103,41 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                                 closureSendData
                         );
 
-                        return transactionEventStoreRepository.save(event);
+                        Mono<NotificationEmailResponseDto> emailResponse = notificationsServiceClient.sendSuccessEmail(
+                                new SuccessTemplate(
+                                        new TransactionTemplate(
+                                                "transactionId",
+                                                "timestamp",
+                                                "amount",
+                                                new PspTemplate(
+                                                        "pspName",
+                                                        new FeeTemplate("feeAmount")
+                                                ),
+                                                "RRN",
+                                                "authorizationCode",
+                                                new PaymentMethodTemplate(
+                                                        "paymentMethodName",
+                                                        "paymentMethodLogo",
+                                                        "paymentMethodAccountHolder",
+                                                        false
+                                                )
+                                        ),
+                                        new UserTemplate(
+                                                new DataTemplate(
+                                                        "firstName",
+                                                        "lastName",
+                                                        "taxCode"
+                                                ),
+                                                "email"
+                                        ),
+                                        new CartTemplate(
+                                                List.of(),
+                                                "partialAmount"
+                                        )
+                                )
+                        );
+
+                        return emailResponse.flatMap(v -> transactionEventStoreRepository.save(event));
                     });
         }
     }
