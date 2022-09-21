@@ -18,6 +18,7 @@ import org.springframework.transaction.TransactionSystemException;
 import reactor.core.publisher.Mono;
 
 import javax.validation.constraints.NotNull;
+import java.lang.annotation.Annotation;
 import java.util.UUID;
 
 @Component
@@ -52,26 +53,32 @@ public class TransactionActivateResultHandler
 
 					return nodoPerPM.chiediInformazioniPagamento(paymentToken)
 							.doOnError(throwable -> log.error("chiediInformazioniPagamento failed for paymentToken {}", paymentToken))
-							.doOnSuccess(informazioniPagamentoDto -> {
-								log.info("chiediInformazioniPagamento info for rptID {} with paymentToken {} succeed", rptId, paymentToken);
-								paymentRequestsInfoRepository.findById(commandData2.getRptId())
-										.map(Mono::just).orElseGet(Mono::empty)
-										.switchIfEmpty(Mono.error(new TransactionNotFoundException("Error while searching for payment info with rptId " + rptId + " and paymentToken " + paymentToken + " in repository")))
-										.doOnSuccess(paymentRequestInfo ->
-												paymentRequestsInfoRepository.save(
-														new PaymentRequestInfo(
-																paymentRequestInfo.id(),
-																paymentRequestInfo.paFiscalCode(),
-																paymentRequestInfo.paName(),
-																paymentRequestInfo.description(),
-																paymentRequestInfo.amount(),
-																paymentRequestInfo.dueDate(),
-																paymentRequestInfo.isNM3(),
-																paymentToken,
-																paymentRequestInfo.idempotencyKey())
-												));
-							})
 							.flatMap(informazioniPagamentoDto -> {
+								log.info("chiediInformazioniPagamento info for rptID {} with paymentToken {} succeed", rptId, paymentToken);
+								return paymentRequestsInfoRepository.findById(commandData2.getRptId())
+										.map(Mono::just).orElseGet(Mono::empty)
+										.doOnSuccess(paymentRequestInfo -> {
+											log.info("save payment");
+											paymentRequestsInfoRepository.save(
+													new PaymentRequestInfo(
+															paymentRequestInfo.id(),
+															paymentRequestInfo.paFiscalCode(),
+															paymentRequestInfo.paName(),
+															paymentRequestInfo.description(),
+															paymentRequestInfo.amount(),
+															paymentRequestInfo.dueDate(),
+															paymentRequestInfo.isNM3(),
+															paymentToken,
+															paymentRequestInfo.idempotencyKey())
+											);
+										})
+										.switchIfEmpty(Mono.defer(() -> {
+											log.info("empty");
+											return Mono.error(new TransactionNotFoundException("transaction not found"));
+										}));
+							})
+							.flatMap((informazioniPagamentoDto) -> {
+								log.info("save transaction");
 								TransactionInitEvent transactionInitializedEvent =
 										new TransactionInitEvent(
 												transactionId,
