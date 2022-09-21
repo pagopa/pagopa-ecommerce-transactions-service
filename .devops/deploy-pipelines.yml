@@ -175,8 +175,7 @@ stages:
 
   - stage: "Bluegreen_WaitForApproval"
     displayName: 'UAT green approval deployment'
-    dependsOn: [ ]
-    #dependsOn: Deploy_UAT_Blue
+    dependsOn: Deploy_UAT_Blue
     jobs:
       - job: Bluegreen_WaitForApproval
         displayName: Manual blue deploy approval
@@ -189,7 +188,8 @@ stages:
               onTimeout: 'skip'
 
   - stage: Release
-    dependsOn: Bluegreen_WaitForApproval
+    dependsOn: [ ]
+    #dependsOn: Bluegreen_WaitForApproval
     jobs:
       - job: make_release
         steps:
