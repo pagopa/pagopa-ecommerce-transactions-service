@@ -1,20 +1,23 @@
 package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
+import it.pagopa.transactions.client.NodoPerPM;
 import it.pagopa.transactions.commands.TransactionActivateResultCommand;
-import it.pagopa.transactions.commands.data.ActivationResultData;
-import it.pagopa.transactions.documents.TransactionEvent;
 import it.pagopa.transactions.documents.TransactionInitData;
 import it.pagopa.transactions.documents.TransactionInitEvent;
 import it.pagopa.transactions.domain.Transaction;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.TransactionNotFoundException;
+import it.pagopa.transactions.repositories.PaymentRequestInfo;
+import it.pagopa.transactions.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.TransactionSystemException;
 import reactor.core.publisher.Mono;
 
-import java.util.Optional;
+import javax.validation.constraints.NotNull;
 import java.util.UUID;
 
 @Component
@@ -23,7 +26,11 @@ public class TransactionActivateResultHandler
 		implements CommandHandler<TransactionActivateResultCommand, Mono<TransactionInitEvent>> {
 
 	@Autowired
-	private TransactionsEventStoreRepository<ActivationResultData> transactionEventStoreRepository;
+	private TransactionsEventStoreRepository<TransactionInitData> transactionEventStoreRepository;
+
+	@Autowired private NodoPerPM nodoPerPM;
+
+	@Autowired private PaymentRequestsInfoRepository paymentRequestsInfoRepository;
 
 	@Override
 	public Mono<TransactionInitEvent> handle(TransactionActivateResultCommand command) {
@@ -32,31 +39,48 @@ public class TransactionActivateResultHandler
 				.filterWhen(commandData -> Mono
 						.just(commandData.getData().transaction().getStatus() == TransactionStatusDto.INIT_REQUESTED))
 				.switchIfEmpty(Mono.error(new AlreadyProcessedException(command.getRptId())))
-				.flatMap(commandData -> {
+				.flatMap(commandData2 -> {
 
-					final String paymentToken = command.getData().activationResultData().getPaymentToken();
-					final String rptId = command.getRptId().value();
-					final Transaction transaction = command.getData().transaction();
+					final String paymentToken = commandData2.getData().activationResultData().getPaymentToken();
+					final String rptId = commandData2.getRptId().value();
+					final Transaction transaction = commandData2.getData().transaction();
 
-					final String transactionId = UUID.randomUUID().toString();
+					final String transactionId = commandData2.getData().transaction().getTransactionId().toString();
 					TransactionInitData data = new TransactionInitData();
 					data.setAmount(transaction.getAmount().value());
 					data.setDescription(transaction.getDescription().value());
 
-					/**
-					 * TODO:
-					 * 1.  nodoChioediInformazioni
-					 * 2. transactionId <-> paymentToken
-					 * */
+					return nodoPerPM.chiediInformazioniPagamento(paymentToken)
+							.doOnError(throwable -> log.error("chiediInformazioniPagamento failed for paymentToken {}", paymentToken))
+							.doOnSuccess(informazioniPagamentoDto -> {
+								log.info("chiediInformazioniPagamento info for rptID {} with paymentToken {} succeed", rptId, paymentToken);
+								paymentRequestsInfoRepository.findById(commandData2.getRptId())
+										.map(Mono::just).orElseGet(Mono::empty)
+										.switchIfEmpty(Mono.error(new TransactionNotFoundException("Error while searching for payment info with rptId " + rptId + " and paymentToken " + paymentToken + " in repository")))
+										.doOnSuccess(paymentRequestInfo ->
+												paymentRequestsInfoRepository.save(
+														new PaymentRequestInfo(
+																paymentRequestInfo.id(),
+																paymentRequestInfo.paTaxCode(),
+																paymentRequestInfo.paName(),
+																paymentRequestInfo.description(),
+																paymentRequestInfo.amount(),
+																paymentRequestInfo.dueDate(),
+																paymentRequestInfo.isNM3(),
+																paymentToken,
+																paymentRequestInfo.idempotencyKey())
+												));
+							})
+							.flatMap(informazioniPagamentoDto -> {
+								TransactionInitEvent transactionInitializedEvent =
+										new TransactionInitEvent(
+												transactionId,
+												rptId,
+												paymentToken,
+												data);
 
-					TransactionEvent<TransactionInitData> event =
-							new TransactionInitEvent(
-									transactionId,
-									rptId,
-									paymentToken,
-									data);
-
-					return transactionEventStoreRepository.save(event);
+								return transactionEventStoreRepository.save(transactionInitializedEvent);
+							});
 				});
 	}
 }
