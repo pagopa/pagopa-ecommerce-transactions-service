@@ -52,7 +52,7 @@ steps:
 
   # bump version
   - task: Maven@3
-    condition: or(succeeded(), ne(${{parameters.semver}}, 'none') )
+    condition: or(succeeded(), ne('${{parameters.semver}}', 'none') )
     displayName: 'Bump version'
     name: dump_version
     inputs:
@@ -101,7 +101,7 @@ steps:
 
   - task: Bash@3
     displayName: Update Version Helm
-    condition: or(succeeded(), ne(${{parameters.semver_chart}}, 'none') )
+    condition: or(succeeded(), ne('${{parameters.semver_chart}}', 'none') )
     name: update_version_helm
     inputs:
       targetType: 'inline'
