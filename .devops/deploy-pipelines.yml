@@ -172,7 +172,6 @@ stages:
                     VALUE_FILE: "helm/values-uat.yaml"
                     GREEN_VERSION: $(green_version)
                     BLUE_VERSION: $(Build.SourceVersion)
-                  failOnStderr: true
 
 
   - stage: "Bluegreen_WaitForApproval"
