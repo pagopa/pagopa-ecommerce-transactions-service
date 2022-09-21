@@ -188,8 +188,7 @@ stages:
               onTimeout: 'skip'
 
   - stage: Release
-    dependsOn: [ ]
-    #dependsOn: Bluegreen_WaitForApproval
+    dependsOn: Bluegreen_WaitForApproval
     jobs:
       - job: make_release
         steps:
