@@ -19,7 +19,8 @@ microservice-chart:
     envConfig:
       MONGO_HOST: pagopa-u-weu-ecommerce-cosmos-account.mongo.cosmos.azure.com
       MONGO_USERNAME: pagopa-u-weu-ecommerce-cosmos-account
-      MONGO_PORT: "10255"
+      MONGO_PORT: "443"
+      MONGO_SSL_ENABLED: "true"
       REDIS_HOST: pagopa-u-weu-ecommerce-redis.redis.cache.windows.net
       REDIS_PORT: "6380"
       NODO_URI: https://api.dev.platform.pagopa.it/nodo/node-for-psp/v1
@@ -107,7 +108,8 @@ microservice-chart:
   envConfig:
     MONGO_HOST: pagopa-u-weu-ecommerce-cosmos-account.mongo.cosmos.azure.com
     MONGO_USERNAME: pagopa-u-weu-ecommerce-cosmos-account
-    MONGO_PORT: "10255"
+    MONGO_PORT: "443"
+    MONGO_SSL_ENABLED: "true"
     REDIS_HOST: pagopa-u-weu-ecommerce-redis.redis.cache.windows.net
     REDIS_PORT: "6380"
     NODO_URI: https://api.uat.platform.pagopa.it/nodo/node-for-psp/v1
