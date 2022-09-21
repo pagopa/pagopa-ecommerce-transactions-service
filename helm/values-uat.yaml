@@ -34,6 +34,11 @@ microservice-chart:
       PAYMENT_TRANSACTIONS_GATEWAY_URI: http://pagopa-ecommerce-payment-instruments-service:8080
       PAYMENT_TRANSACTIONS_GATEWAY_READ_TIMEOUT: "10000"
       PAYMENT_TRANSACTIONS_GATEWAY_CONNECTION_TIMEOUT: "10000"
+      NOTIFICATIONS_SERVICE_URI: https://api.uat.platform.pagopa.it/ecommerce/notifications-service/v1
+      NOTIFICATIONS_SERVICE_READ_TIMEOUT: "10000"
+      NOTIFICATIONS_SERVICE_CONNECTION_TIMEOUT: "10000"
+      TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_NAME: transaction-events
+      TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_VISIBILITY_TIMEOUT: "600"
     envSecret:
       MONGO_PASSWORD: mongo-ecommerce-password
       REDIS_PASSWORD: redis-ecommerce-password
@@ -77,10 +82,10 @@ microservice-chart:
   resources:
     requests:
       memory: "384Mi"
-      cpu: "150m"
+      cpu: "200m"
     limits:
       memory: "384Mi"
-      cpu: "150m"
+      cpu: "200m"
   autoscaling:
     minReplica: 1
     maxReplica: 2
