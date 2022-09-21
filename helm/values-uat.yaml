@@ -23,13 +23,13 @@ microservice-chart:
       MONGO_SSL_ENABLED: "true"
       REDIS_HOST: pagopa-u-weu-ecommerce-redis.redis.cache.windows.net
       REDIS_PORT: "6380"
-      NODO_URI: https://api.dev.platform.pagopa.it/nodo/node-for-psp/v1
+      NODO_URI: https://api.uat.platform.pagopa.it/nodo/node-for-psp/v1
       NODO_READ_TIMEOUT: "10000"
       NODO_CONNECTION_TIMEOUT: "10000"
-      ECOMMERCE_SESSIONS_URI: https://api.dev.platform.pagopa.it/ecommerce/sessions-service/v1
+      ECOMMERCE_SESSIONS_URI: https://api.uat.platform.pagopa.it/ecommerce/sessions-service/v1
       ECOMMERCE_SESSIONS_READ_TIMEOUT: "10000"
       ECOMMERCE_SESSIONS_CONNECTION_TIMEOUT: "10000"
-      ECOMMERCE_PAYMENT_INSTRUMENTS_URI: https://api.dev.platform.pagopa.it/ecommerce/payment-instruments-service/v1
+      ECOMMERCE_PAYMENT_INSTRUMENTS_URI: https://api.uat.platform.pagopa.it/ecommerce/payment-instruments-service/v1
       ECOMMERCE_PAYMENT_INSTRUMENTS_READ_TIMEOUT: "10000"
       ECOMMERCE_PAYMENT_INSTRUMENTS_CONNECTION_TIMEOUT: "10000"
       PAYMENT_TRANSACTIONS_GATEWAY_URI: http://pagopa-ecommerce-payment-instruments-service:8080
@@ -65,7 +65,7 @@ microservice-chart:
   service:
     create: true
     type: ClusterIP
-    port: 3000
+    port: 8080
   ingress:
     create: true
     host: "weuuat.ecommerce.internal.uat.platform.pagopa.it"
