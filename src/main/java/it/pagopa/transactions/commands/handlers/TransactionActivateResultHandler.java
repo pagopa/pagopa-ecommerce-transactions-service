@@ -61,7 +61,7 @@ public class TransactionActivateResultHandler
 												paymentRequestsInfoRepository.save(
 														new PaymentRequestInfo(
 																paymentRequestInfo.id(),
-																paymentRequestInfo.paTaxCode(),
+																paymentRequestInfo.paFiscalCode(),
 																paymentRequestInfo.paName(),
 																paymentRequestInfo.description(),
 																paymentRequestInfo.amount(),
