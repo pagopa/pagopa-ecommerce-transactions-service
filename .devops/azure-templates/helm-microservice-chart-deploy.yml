@@ -57,7 +57,6 @@ steps:
       waitForExecution: ${{ parameters.WAIT_FOR_EXECUTION }}
       arguments: ${{ parameters.ARGUMENTS }}
       overrideValues: microservice-chart.image.tag=${{ parameters.GREEN_VERSION }},microservice-chart.canaryDelivery.create=${{ parameters.DO_BLUE_GREEN_DEPLOY }},microservice-chart.canaryDelivery.deployment.image.tag=${{ parameters.BLUE_VERSION }}
-    failOnStderr: false
   - ${{ if ne(parameters['APPINSIGHTS_SERVICE_CONN'], 'none') }}:
       - task: AzureCLI@2
         displayName: Release annotations
