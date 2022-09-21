@@ -55,7 +55,6 @@ class NodoPerPMClientTest {
     @Test
     void shouldReturnInformazioniPagamentoDtoGivenValidPaymentTokenTest() {
 
-        ObjectFactory objectFactory = new ObjectFactory();
         BigDecimal amount = BigDecimal.valueOf(1200);
         String fiscalCode = "77777777777";
         String paymentNotice = "302000100000009424";
