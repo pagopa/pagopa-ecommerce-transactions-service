@@ -26,6 +26,7 @@ public class NodoPerPspClient {
 
     public Mono<NodoVerificaRPTRisposta> verificaRPT(JAXBElement<NodoVerificaRPT> request) {
         return nodoWebClient.post()
+                .uri("/nodo-per-psp/v1")
                 .header("Content-Type", MediaType.TEXT_XML_VALUE)
                 .header("SOAPAction", "nodoVerificaRPT")
                 .body(Mono.just(new SoapEnvelope("", request)), SoapEnvelope.class)

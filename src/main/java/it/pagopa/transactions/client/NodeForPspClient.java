@@ -30,6 +30,7 @@ public class NodeForPspClient {
 
 	public Mono<VerifyPaymentNoticeRes> verifyPaymentNotice(JAXBElement<VerifyPaymentNoticeReq> request) {
 		return nodoWebClient.post()
+				.uri("/node-for-psp/v1")
 				.header("Content-Type", MediaType.TEXT_XML_VALUE)
 				.header("SOAPAction", "verifyPaymentNotice")
 				.body(Mono.just(new SoapEnvelope("", request)), SoapEnvelope.class)
