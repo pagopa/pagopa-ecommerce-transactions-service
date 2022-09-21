@@ -170,12 +170,13 @@ stages:
                     NAMESPACE: ecommerce
                     APP_NAME: $(K8S_IMAGE_REPOSITORY_NAME)
                     VALUE_FILE: "helm/values-uat.yaml"
-                    GREEN_VERSION: $(Build.SourceVersion)
+                    GREEN_VERSION: $(green_version)
                     BLUE_VERSION: $(Build.SourceVersion)
 
   - stage: "Bluegreen_WaitForApproval"
     displayName: 'UAT green approval deployment'
-    dependsOn: Deploy_UAT_Blue
+    dependsOn: [ ]
+    #dependsOn: Deploy_UAT_Blue
     jobs:
       - job: Bluegreen_WaitForApproval
         displayName: Manual blue deploy approval
