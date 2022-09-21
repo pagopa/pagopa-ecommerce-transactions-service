@@ -15,6 +15,8 @@ RUN mkdir target/extracted && java -Djarmode=layertools -jar target/*.jar extrac
 
 FROM openjdk:17-slim
 
+RUN echo "10.230.9.5 api.uat.platform.pagopa.it" >> /etc/hosts
+
 RUN addgroup --system user && adduser --ingroup user --system user
 USER user:user
 
@@ -30,7 +32,5 @@ COPY --from=build --chown=user ${EXTRACTED}/snapshot-dependencies/ ./
 RUN true
 COPY --from=build --chown=user ${EXTRACTED}/application/ ./
 RUN true
-
-RUN echo "10.230.9.5 api.uat.platform.pagopa.it" >> /etc/hosts
 
 ENTRYPOINT ["java", "--enable-preview", "org.springframework.boot.loader.JarLauncher"]
