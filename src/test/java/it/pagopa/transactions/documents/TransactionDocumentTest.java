@@ -67,7 +67,7 @@ class TransactionDocumentTest {
         TransactionAmount amount = new TransactionAmount(100);
         TransactionStatusDto status = TransactionStatusDto.INITIALIZED;
 
-        it.pagopa.transactions.domain.Transaction transaction = new it.pagopa.transactions.domain.Transaction(
+        TransactionInitialized transaction = new TransactionInitialized(
                 transactionId,
                 paymentToken,
                 rptId,
