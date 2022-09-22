@@ -7,6 +7,7 @@ import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionActivateResultCommand;
+import it.pagopa.transactions.commands.data.ActivationResultData;
 import it.pagopa.transactions.commands.handlers.*;
 import it.pagopa.transactions.documents.*;
 import it.pagopa.transactions.documents.Transaction;
@@ -420,14 +421,19 @@ public class TransactionServiceTests {
 				TransactionStatusDto.INIT_REQUESTED
 		);
 
+		RptId rtpId = new RptId("RtpID");
+
+
 		it.pagopa.transactions.domain.Transaction transactionDomain = new it.pagopa.transactions.domain.Transaction(
 				new TransactionId(UUID.fromString(TRANSACION_ID)),
 				new PaymentToken(PAYMENT_TOKEN),
-				new RptId("RtpID"),
+				rtpId,
 				new TransactionDescription("Description"),
 				new TransactionAmount(100),
 				TransactionStatusDto.INIT_REQUESTED
 		);
+
+		ActivationResultData activationResultData = new ActivationResultData(transactionDomain, activationResultRequestDto);
 
 		TransactionInitEvent transactionInitEvent = new TransactionInitEvent(
 				TRANSACION_ID,
@@ -443,6 +449,8 @@ public class TransactionServiceTests {
 		ActivationResultResponseDto activationResultResponseDto = transactionsService.activateTransaction(TRANSACION_ID, activationResultRequestDto).block();
 
 		assertEquals(activationResultResponseDto.getOutcome(), ActivationResultResponseDto.OutcomeEnum.OK);
+		Mockito.verify(transactionActivateResultHandler, Mockito.times(1)).handle(Mockito.any(TransactionActivateResultCommand.class));
+		Mockito.verify(transactionsActivationProjectionHandler, Mockito.times(1)).handle(Mockito.any(TransactionInitEvent.class));
 
 	}
 
