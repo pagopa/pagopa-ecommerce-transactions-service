@@ -394,12 +394,14 @@ public class TransactionServiceTests {
 	@Test
 	void shouldThrowTransacrionNotFoundExceptionWhenNotInTransactionRepository() {
 
+		/** preconditions */
+
 		ActivationResultRequestDto activationResultRequestDto = new ActivationResultRequestDto().paymentToken(UUID.randomUUID().toString());
 
 		Mockito.when(repository.findById(TRANSACION_ID))
 				.thenReturn(Mono.empty());
 
-		/* test */
+		/** test */
 		StepVerifier.create(transactionsService.activateTransaction(TRANSACION_ID, activationResultRequestDto))
 				.expectErrorMatches(error -> error instanceof TransactionNotFoundException)
 				.verify();
@@ -408,7 +410,7 @@ public class TransactionServiceTests {
 
 	@Test
 	void shouldReturnTransactionActivationOk() {
-
+		/** preconditions */
 
 		ActivationResultRequestDto activationResultRequestDto = new ActivationResultRequestDto().paymentToken(PAYMENT_TOKEN);
 
@@ -423,7 +425,6 @@ public class TransactionServiceTests {
 
 		RptId rtpId = new RptId("RtpID");
 
-
 		it.pagopa.transactions.domain.Transaction transactionDomain = new it.pagopa.transactions.domain.Transaction(
 				new TransactionId(UUID.fromString(TRANSACION_ID)),
 				new PaymentToken(PAYMENT_TOKEN),
@@ -432,8 +433,6 @@ public class TransactionServiceTests {
 				new TransactionAmount(100),
 				TransactionStatusDto.INIT_REQUESTED
 		);
-
-		ActivationResultData activationResultData = new ActivationResultData(transactionDomain, activationResultRequestDto);
 
 		TransactionInitEvent transactionInitEvent = new TransactionInitEvent(
 				TRANSACION_ID,
@@ -445,7 +444,9 @@ public class TransactionServiceTests {
 		Mockito.when(repository.findById(TRANSACION_ID)).thenReturn(Mono.just(transaction));
 		Mockito.when(transactionActivateResultHandler.handle(Mockito.any(TransactionActivateResultCommand.class))).thenReturn(Mono.just(transactionInitEvent));
 		Mockito.when(transactionsActivationProjectionHandler.handle(Mockito.any(TransactionInitEvent.class))).thenReturn(Mono.just(transactionDomain));
-		/* test */
+
+		/** test */
+
 		ActivationResultResponseDto activationResultResponseDto = transactionsService.activateTransaction(TRANSACION_ID, activationResultRequestDto).block();
 
 		assertEquals(activationResultResponseDto.getOutcome(), ActivationResultResponseDto.OutcomeEnum.OK);
