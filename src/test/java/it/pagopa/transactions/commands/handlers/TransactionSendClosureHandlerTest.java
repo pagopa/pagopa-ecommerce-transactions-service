@@ -9,7 +9,7 @@ import it.pagopa.transactions.commands.TransactionClosureSendCommand;
 import it.pagopa.transactions.commands.data.ClosureSendData;
 import it.pagopa.transactions.documents.*;
 import it.pagopa.transactions.domain.*;
-import it.pagopa.transactions.domain.Transaction;
+import it.pagopa.transactions.domain.TransactionInitialized;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionEventCode;
@@ -55,7 +55,7 @@ class TransactionSendClosureHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
 
-        Transaction transaction = new Transaction(
+        TransactionInitialized transaction = new TransactionInitialized(
                 transactionId,
                 paymentToken,
                 rptId,
@@ -91,7 +91,7 @@ class TransactionSendClosureHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
 
-        Transaction transaction = new Transaction(
+        TransactionInitialized transaction = new TransactionInitialized(
                 transactionId,
                 paymentToken,
                 rptId,

@@ -88,6 +88,7 @@ public class TransactionsService {
         data ->
             transactionsProjectionHandler
                 .handle(data)
+                .cast(TransactionInitialized.class)
                 .map(
                     t -> {
                       data.setStatus(t.getStatus());
@@ -143,7 +144,7 @@ public class TransactionsService {
 
                     log.info("Requesting authorization for rptId: {}", transactionDocument.getRptId());
 
-                    Transaction transaction = new Transaction(
+                    TransactionInitialized transaction = new TransactionInitialized(
                             new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
                             new PaymentToken(transactionDocument.getPaymentToken()),
                             new RptId(transactionDocument.getRptId()),
@@ -176,7 +177,7 @@ public class TransactionsService {
                 .findById(transactionId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .flatMap(transactionDocument -> {
-                    Transaction transaction = new Transaction(
+                    TransactionInitialized transaction = new TransactionInitialized(
                             new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
                             new PaymentToken(transactionDocument.getPaymentToken()),
                             new RptId(transactionDocument.getRptId()),
@@ -199,6 +200,7 @@ public class TransactionsService {
                             .flatMap(authorizationStatusUpdatedEvent -> authorizationUpdateProjectionHandler
                                     .handle(authorizationStatusUpdatedEvent));
                 })
+                .cast(TransactionInitialized.class)
                 .flatMap(transaction -> {
                     ClosureSendData closureSendData = new ClosureSendData(transaction, updateAuthorizationRequestDto);
 
@@ -227,7 +229,7 @@ public class TransactionsService {
                 .findById(transactionId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .map(transactionDocument -> {
-                    Transaction transaction = new Transaction(
+                    TransactionInitialized transaction = new TransactionInitialized(
                             new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
                             new PaymentToken(transactionDocument.getPaymentToken()),
                             new RptId(transactionDocument.getRptId()),
@@ -246,6 +248,7 @@ public class TransactionsService {
                         transactionStatusUpdatedEvent.getTransactionId()))
                 .flatMap(transactionStatusUpdatedEvent -> transactionUpdateProjectionHandler
                         .handle(transactionStatusUpdatedEvent))
+                .cast(TransactionInitialized.class)
                 .map(transaction -> new TransactionInfoDto()
                         .transactionId(transaction.getTransactionId().value().toString())
                         .amount(transaction.getAmount().value())
