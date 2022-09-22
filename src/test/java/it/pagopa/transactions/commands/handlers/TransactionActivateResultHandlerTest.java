@@ -1,13 +1,11 @@
 package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.generated.ecommerce.nodo.v1.dto.InformazioniPagamentoDto;
-import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
 import it.pagopa.generated.transactions.server.model.ActivationResultRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.client.NodoPerPM;
 import it.pagopa.transactions.commands.TransactionActivateResultCommand;
-import it.pagopa.transactions.commands.TransactionInitializeCommand;
 import it.pagopa.transactions.commands.data.ActivationResultData;
 import it.pagopa.transactions.documents.TransactionInitData;
 import it.pagopa.transactions.documents.TransactionInitEvent;
@@ -33,6 +31,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.startsWith;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,6 +48,47 @@ class TransactionActivateResultHandlerTest {
     private TransactionsEventStoreRepository<TransactionInitData> transactionEventStoreRepository;
 
     @Test
+    void shouldThrowsTransactionNotFoundOnNodoPerPMError() {
+
+        RptId rptId = new RptId("77777777777302016723749670035");
+        String transactionId = UUID.randomUUID().toString();
+        String paymentToken = UUID.randomUUID().toString();
+        Integer amount = Integer.valueOf(1000);
+
+        NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
+        requestDto.setRptId(rptId.value());
+        requestDto.setEmail("jhon.doe@email.com");
+        requestDto.setAmount(1200);
+
+        ActivationResultRequestDto activationResultRequestDto =
+                new ActivationResultRequestDto()
+                        .paymentToken(paymentToken);
+
+        Transaction transaction = new Transaction(
+                new TransactionId(UUID.fromString(transactionId)),
+                new PaymentToken(paymentToken),
+                rptId,
+                new TransactionDescription("testTransactionDescription"),
+                new TransactionAmount(amount),
+                TransactionStatusDto.INIT_REQUESTED
+        );
+
+        ActivationResultData activationResultData = new ActivationResultData(transaction, activationResultRequestDto);
+
+        TransactionActivateResultCommand command = new TransactionActivateResultCommand(rptId, activationResultData);
+
+        when(nodoPerPM.chiediInformazioniPagamento(Mockito.any(String.class))).thenReturn(Mono.error(new Throwable("test error")));
+
+        StepVerifier.create(handler.handle(command))
+                .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
+                .verify();
+
+        Mockito.verify(paymentRequestInfoRepository, Mockito.never()).findById(Mockito.any(RptId.class));
+        Mockito.verify(paymentRequestInfoRepository, Mockito.never()).save(Mockito.any(PaymentRequestInfo.class));
+        Mockito.verify(transactionEventStoreRepository, Mockito.never()).save(Mockito.any(TransactionInitEvent.class));
+    }
+
+        @Test
     void shouldHandleCommandForTransactionActivateResultCallingChiediInfoNodo() {
 
         RptId rptId = new RptId("77777777777302016723749670035");
@@ -80,9 +120,6 @@ class TransactionActivateResultHandlerTest {
                 );
 
         ActivationResultData activationResultData = new ActivationResultData(transaction, activationResultRequestDto);
-
-        //when(activationResultData.activationResultData()).thenReturn(activationResultRequestDto);
-        //when(activationResultData.transaction()).thenReturn(transaction);
 
         TransactionActivateResultCommand command = new TransactionActivateResultCommand(rptId, activationResultData);
 
@@ -145,13 +182,8 @@ class TransactionActivateResultHandlerTest {
     void shouldThrowsAlreadyProcessedException() {
 
         RptId rptId = new RptId("77777777777302016723749670035");
-        IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String transactionId = UUID.randomUUID().toString();
         String paymentToken = UUID.randomUUID().toString();
-        String idCarrello = UUID.randomUUID().toString();
-        String paName = "paName";
-        String paTaxcode = "77777777777";
-        String description = "Description";
         Integer amount = Integer.valueOf(1000);
 
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();

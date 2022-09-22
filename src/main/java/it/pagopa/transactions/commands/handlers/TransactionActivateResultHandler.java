@@ -52,7 +52,10 @@ public class TransactionActivateResultHandler
 					data.setDescription(transaction.getDescription().value());
 
 					return nodoPerPM.chiediInformazioniPagamento(paymentToken)
-							.doOnError(throwable -> log.error("chiediInformazioniPagamento failed for paymentToken {}", paymentToken))
+							.doOnError(throwable -> {
+								log.error("chiediInformazioniPagamento failed for paymentToken {}", paymentToken);
+								throw new TransactionNotFoundException("chiediInformazioniPagamento failed for paymentToken " + paymentToken);
+							})
 							.flatMap(informazioniPagamentoDto -> {
 								log.info("chiediInformazioniPagamento info for rptID {} with paymentToken {} succeed", rptId, paymentToken);
 								return paymentRequestsInfoRepository.findById(commandData2.getRptId())
