@@ -2,10 +2,12 @@ package it.pagopa.transactions.domain;
 
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.documents.TransactionInitEvent;
+import lombok.EqualsAndHashCode;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
+@EqualsAndHashCode
 public final class EmptyTransaction implements EventUpdatable<TransactionInitialized, TransactionInitEvent>, Transaction {
     @Override
     public TransactionInitialized apply(TransactionInitEvent event) {

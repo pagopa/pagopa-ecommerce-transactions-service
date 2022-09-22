@@ -42,6 +42,42 @@ class TransactionTest {
     }
 
     @Test
+    void shouldIgnoreInvalidEventStream() {
+        EmptyTransaction transaction = new EmptyTransaction();
+
+        String trxId = UUID.randomUUID().toString();
+        String rptId = "rptId";
+        String paymentToken = "paymentToken";
+        int amount = 100;
+
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
+                trxId,
+                rptId,
+                paymentToken,
+                new TransactionAuthorizationRequestData(
+                        amount,
+                        10,
+                        "paymentInstrumentId",
+                        "pspId",
+                        "paymentTypeCode",
+                        "brokerName",
+                        "pspChannelCode"
+                )
+        );
+
+        Flux<TransactionEvent<?>> events = Flux.just(authorizationRequestedEvent);
+
+        EmptyTransaction expected = new EmptyTransaction();
+
+        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent);
+
+        StepVerifier.create(actual)
+                .expectNext(expected)
+                .verifyComplete();
+
+    }
+
+    @Test
     void shouldConstructTransactionFromInitEventStream() {
         EmptyTransaction transaction = new EmptyTransaction();
 
@@ -63,6 +99,46 @@ class TransactionTest {
                 ));
 
         Flux<TransactionEvent<?>> events = Flux.just(event);
+
+        TransactionInitialized expected = new TransactionInitialized(
+                new TransactionId(UUID.fromString(trxId)),
+                new PaymentToken(paymentToken),
+                new RptId(rptId),
+                new TransactionDescription(description),
+                new TransactionAmount(amount),
+                ZonedDateTime.parse(event.getCreationDate()),
+                TransactionStatusDto.INITIALIZED
+        );
+
+        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent);
+
+        StepVerifier.create(actual)
+                .expectNext(expected)
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldConstructTransactionFromInitEventStreamIgnoringInvalidEvents() {
+        EmptyTransaction transaction = new EmptyTransaction();
+
+        String trxId = UUID.randomUUID().toString();
+        String rptId = "rptId";
+        String paymentToken = "paymentToken";
+        String description = "description";
+        int amount = 100;
+        TransactionInitEvent event = new TransactionInitEvent(
+                trxId,
+                rptId,
+                paymentToken,
+                new TransactionInitData(
+                        description,
+                        amount,
+                        "email",
+                        "faultCode",
+                        "faultCodeString"
+                ));
+
+        Flux<TransactionEvent<?>> events = Flux.just(event, event);
 
         TransactionInitialized expected = new TransactionInitialized(
                 new TransactionId(UUID.fromString(trxId)),
@@ -119,6 +195,67 @@ class TransactionTest {
         );
 
         Flux<TransactionEvent<?>> events = Flux.just(transactionInitEvent, authorizationRequestedEvent);
+
+        TransactionInitialized transactionInitialized = new TransactionInitialized(
+                new TransactionId(UUID.fromString(trxId)),
+                new PaymentToken(paymentToken),
+                new RptId(rptId),
+                new TransactionDescription(description),
+                new TransactionAmount(amount),
+                ZonedDateTime.parse(transactionInitEvent.getCreationDate()),
+                TransactionStatusDto.INITIALIZED
+        );
+
+        TransactionWithRequestedAuthorization expected = new TransactionWithRequestedAuthorization(
+                transactionInitialized,
+                authorizationRequestedEvent
+        );
+
+        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent);
+
+        StepVerifier.create(actual)
+                .expectNext(expected)
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldConstructTransactionFromAuthRequestEventStreamIgnoringInvalidEvents() {
+        EmptyTransaction transaction = new EmptyTransaction();
+
+        String trxId = UUID.randomUUID().toString();
+        String rptId = "rptId";
+        String paymentToken = "paymentToken";
+        String description = "description";
+        int amount = 100;
+
+        TransactionInitEvent transactionInitEvent = new TransactionInitEvent(
+                trxId,
+                rptId,
+                paymentToken,
+                new TransactionInitData(
+                        description,
+                        amount,
+                        "email",
+                        "faultCode",
+                        "faultCodeString"
+                ));
+
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
+                trxId,
+                rptId,
+                paymentToken,
+                new TransactionAuthorizationRequestData(
+                        amount,
+                        10,
+                        "paymentInstrumentId",
+                        "pspId",
+                        "paymentTypeCode",
+                        "brokerName",
+                        "pspChannelCode"
+                )
+        );
+
+        Flux<TransactionEvent<?>> events = Flux.just(transactionInitEvent, authorizationRequestedEvent, authorizationRequestedEvent);
 
         TransactionInitialized transactionInitialized = new TransactionInitialized(
                 new TransactionId(UUID.fromString(trxId)),
@@ -219,6 +356,82 @@ class TransactionTest {
     }
 
     @Test
+    void shouldConstructTransactionFromAuthCompletedEventStreamIgnoringInvalidEvents() {
+        EmptyTransaction transaction = new EmptyTransaction();
+
+        String trxId = UUID.randomUUID().toString();
+        String rptId = "rptId";
+        String paymentToken = "paymentToken";
+        String description = "description";
+        int amount = 100;
+
+        TransactionInitEvent transactionInitEvent = new TransactionInitEvent(
+                trxId,
+                rptId,
+                paymentToken,
+                new TransactionInitData(
+                        description,
+                        amount,
+                        "email",
+                        "faultCode",
+                        "faultCodeString"
+                ));
+
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
+                trxId,
+                rptId,
+                paymentToken,
+                new TransactionAuthorizationRequestData(
+                        amount,
+                        10,
+                        "paymentInstrumentId",
+                        "pspId",
+                        "paymentTypeCode",
+                        "brokerName",
+                        "pspChannelCode"
+                )
+        );
+
+        TransactionAuthorizationStatusUpdatedEvent authorizationStatusUpdatedEvent = new TransactionAuthorizationStatusUpdatedEvent(
+                trxId,
+                rptId,
+                paymentToken,
+                new TransactionAuthorizationStatusUpdateData(
+                        AuthorizationResultDto.OK,
+                        TransactionStatusDto.AUTHORIZED
+                )
+        );
+
+        Flux<TransactionEvent<?>> events = Flux.just(transactionInitEvent, authorizationRequestedEvent, authorizationStatusUpdatedEvent, authorizationStatusUpdatedEvent);
+
+        TransactionInitialized transactionInitialized = new TransactionInitialized(
+                new TransactionId(UUID.fromString(trxId)),
+                new PaymentToken(paymentToken),
+                new RptId(rptId),
+                new TransactionDescription(description),
+                new TransactionAmount(amount),
+                ZonedDateTime.parse(transactionInitEvent.getCreationDate()),
+                TransactionStatusDto.INITIALIZED
+        );
+
+        TransactionWithRequestedAuthorization transactionWithRequestedAuthorization = new TransactionWithRequestedAuthorization(
+                transactionInitialized,
+                authorizationRequestedEvent
+        );
+
+        TransactionWithCompletedAuthorization expected = new TransactionWithCompletedAuthorization(
+                transactionWithRequestedAuthorization,
+                authorizationStatusUpdatedEvent
+        );
+
+        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent);
+
+        StepVerifier.create(actual)
+                .expectNext(expected)
+                .verifyComplete();
+    }
+
+    @Test
     void shouldConstructTransactionFromClosureSentEventStream() {
         EmptyTransaction transaction = new EmptyTransaction();
 
@@ -276,6 +489,100 @@ class TransactionTest {
         );
 
         Flux<TransactionEvent<?>> events = Flux.just(transactionInitEvent, authorizationRequestedEvent, authorizationStatusUpdatedEvent, closureSentEvent);
+
+        TransactionInitialized transactionInitialized = new TransactionInitialized(
+                new TransactionId(UUID.fromString(trxId)),
+                new PaymentToken(paymentToken),
+                new RptId(rptId),
+                new TransactionDescription(description),
+                new TransactionAmount(amount),
+                ZonedDateTime.parse(transactionInitEvent.getCreationDate()),
+                TransactionStatusDto.INITIALIZED
+        );
+
+        TransactionWithRequestedAuthorization transactionWithRequestedAuthorization = new TransactionWithRequestedAuthorization(
+                transactionInitialized,
+                authorizationRequestedEvent
+        );
+
+        TransactionWithCompletedAuthorization transactionWithCompletedAuthorization = new TransactionWithCompletedAuthorization(
+                transactionWithRequestedAuthorization,
+                authorizationStatusUpdatedEvent
+        );
+
+        TransactionClosed expected = new TransactionClosed(transactionWithCompletedAuthorization, closureSentEvent);
+
+        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent);
+
+        StepVerifier.create(actual)
+                .expectNext(expected)
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldConstructTransactionFromClosureSentEventStreamIgnoringInvalidEvents() {
+        EmptyTransaction transaction = new EmptyTransaction();
+
+        String trxId = UUID.randomUUID().toString();
+        String rptId = "rptId";
+        String paymentToken = "paymentToken";
+        String description = "description";
+        int amount = 100;
+
+        TransactionInitEvent transactionInitEvent = new TransactionInitEvent(
+                trxId,
+                rptId,
+                paymentToken,
+                new TransactionInitData(
+                        description,
+                        amount,
+                        "email",
+                        "faultCode",
+                        "faultCodeString"
+                ));
+
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
+                trxId,
+                rptId,
+                paymentToken,
+                new TransactionAuthorizationRequestData(
+                        amount,
+                        10,
+                        "paymentInstrumentId",
+                        "pspId",
+                        "paymentTypeCode",
+                        "brokerName",
+                        "pspChannelCode"
+                )
+        );
+
+        TransactionAuthorizationStatusUpdatedEvent authorizationStatusUpdatedEvent = new TransactionAuthorizationStatusUpdatedEvent(
+                trxId,
+                rptId,
+                paymentToken,
+                new TransactionAuthorizationStatusUpdateData(
+                        AuthorizationResultDto.OK,
+                        TransactionStatusDto.AUTHORIZED
+                )
+        );
+
+        TransactionClosureSentEvent closureSentEvent = new TransactionClosureSentEvent(
+                trxId,
+                rptId,
+                paymentToken,
+                new TransactionClosureSendData(
+                        ClosePaymentResponseDto.EsitoEnum.OK,
+                        TransactionStatusDto.CLOSED
+                )
+        );
+
+        Flux<TransactionEvent<?>> events = Flux.just(
+                transactionInitEvent,
+                authorizationRequestedEvent,
+                authorizationStatusUpdatedEvent,
+                closureSentEvent,
+                closureSentEvent
+        );
 
         TransactionInitialized transactionInitialized = new TransactionInitialized(
                 new TransactionId(UUID.fromString(trxId)),
