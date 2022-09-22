@@ -6,6 +6,7 @@ import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
+import it.pagopa.transactions.commands.TransactionActivateResultCommand;
 import it.pagopa.transactions.commands.handlers.*;
 import it.pagopa.transactions.documents.*;
 import it.pagopa.transactions.documents.Transaction;
@@ -31,6 +32,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @WebFluxTest
@@ -387,4 +389,61 @@ public class TransactionServiceTests {
 				.expectErrorMatches(error -> error instanceof TransactionNotFoundException)
 				.verify();
 	}
+
+	@Test
+	void shouldThrowTransacrionNotFoundExceptionWhenNotInTransactionRepository() {
+
+		ActivationResultRequestDto activationResultRequestDto = new ActivationResultRequestDto().paymentToken(UUID.randomUUID().toString());
+
+		Mockito.when(repository.findById(TRANSACION_ID))
+				.thenReturn(Mono.empty());
+
+		/* test */
+		StepVerifier.create(transactionsService.activateTransaction(TRANSACION_ID, activationResultRequestDto))
+				.expectErrorMatches(error -> error instanceof TransactionNotFoundException)
+				.verify();
+
+	}
+
+	@Test
+	void shouldReturnTransactionActivationOk() {
+
+
+		ActivationResultRequestDto activationResultRequestDto = new ActivationResultRequestDto().paymentToken(PAYMENT_TOKEN);
+
+		Transaction transaction = new Transaction(
+				TRANSACION_ID,
+				PAYMENT_TOKEN,
+				"RtpID",
+				"Description",
+				100,
+				TransactionStatusDto.INIT_REQUESTED
+		);
+
+		it.pagopa.transactions.domain.Transaction transactionDomain = new it.pagopa.transactions.domain.Transaction(
+				new TransactionId(UUID.fromString(TRANSACION_ID)),
+				new PaymentToken(PAYMENT_TOKEN),
+				new RptId("RtpID"),
+				new TransactionDescription("Description"),
+				new TransactionAmount(100),
+				TransactionStatusDto.INIT_REQUESTED
+		);
+
+		TransactionInitEvent transactionInitEvent = new TransactionInitEvent(
+				TRANSACION_ID,
+				"rptId",
+				PAYMENT_TOKEN,
+				new TransactionInitData(TRANSACION_ID, transactionDomain.getAmount().value(), null, null, null)
+		);
+
+		Mockito.when(repository.findById(TRANSACION_ID)).thenReturn(Mono.just(transaction));
+		Mockito.when(transactionActivateResultHandler.handle(Mockito.any(TransactionActivateResultCommand.class))).thenReturn(Mono.just(transactionInitEvent));
+		Mockito.when(transactionsActivationProjectionHandler.handle(Mockito.any(TransactionInitEvent.class))).thenReturn(Mono.just(transactionDomain));
+		/* test */
+		ActivationResultResponseDto activationResultResponseDto = transactionsService.activateTransaction(TRANSACION_ID, activationResultRequestDto).block();
+
+		assertEquals(activationResultResponseDto.getOutcome(), ActivationResultResponseDto.OutcomeEnum.OK);
+
+	}
+
 }

@@ -51,11 +51,8 @@ public class TransactionActivateResultHandler
 					data.setAmount(transaction.getAmount().value());
 					data.setDescription(transaction.getDescription().value());
 
+					//Edit this function
 					return nodoPerPM.chiediInformazioniPagamento(paymentToken)
-							.doOnError(throwable -> {
-								log.error("chiediInformazioniPagamento failed for paymentToken {}", paymentToken);
-								throw new TransactionNotFoundException("chiediInformazioniPagamento failed for paymentToken " + paymentToken);
-							})
 							.flatMap(informazioniPagamentoDto -> {
 								log.info("chiediInformazioniPagamento info for rptID {} with paymentToken {} succeed", rptId, paymentToken);
 								return paymentRequestsInfoRepository.findById(commandData2.getRptId())
@@ -75,6 +72,10 @@ public class TransactionActivateResultHandler
 															paymentRequestInfo.idempotencyKey())
 											);
 										});
+							})
+							.doOnError(throwable -> {
+								log.error("chiediInformazioniPagamento failed for paymentToken {}", paymentToken);
+								throw new TransactionNotFoundException("chiediInformazioniPagamento failed for paymentToken " + paymentToken);
 							})
 							.flatMap((informazioniPagamentoDto) -> {
 								TransactionInitEvent transactionInitializedEvent =
