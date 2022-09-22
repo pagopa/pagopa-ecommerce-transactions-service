@@ -6,7 +6,7 @@ import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestData;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestedEvent;
-import it.pagopa.transactions.domain.Transaction;
+import it.pagopa.transactions.domain.TransactionInitialized;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +39,7 @@ public class TransactionRequestAuthorizationHandler
 
     @Override
     public Mono<RequestAuthorizationResponseDto> handle(TransactionRequestAuthorizationCommand command) {
-        Transaction transaction = command.getData().transaction();
+        TransactionInitialized transaction = command.getData().transaction();
 
         if (transaction.getStatus() != TransactionStatusDto.INITIALIZED) {
             log.warn("Invalid state transition: requested authorization for transaction {} from status {}",
