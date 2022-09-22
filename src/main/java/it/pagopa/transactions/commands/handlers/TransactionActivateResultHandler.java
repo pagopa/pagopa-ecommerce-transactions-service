@@ -57,8 +57,8 @@ public class TransactionActivateResultHandler
 								log.info("chiediInformazioniPagamento info for rptID {} with paymentToken {} succeed", rptId, paymentToken);
 								return paymentRequestsInfoRepository.findById(commandData2.getRptId())
 										.map(Mono::just).orElseGet(Mono::empty)
+										.switchIfEmpty(Mono.defer(() -> Mono.error(new TransactionNotFoundException("Transaction not found for rptID " + rptId + " with paymentToken "+ paymentToken))))
 										.doOnSuccess(paymentRequestInfo -> {
-											log.info("save payment");
 											paymentRequestsInfoRepository.save(
 													new PaymentRequestInfo(
 															paymentRequestInfo.id(),
@@ -71,14 +71,9 @@ public class TransactionActivateResultHandler
 															paymentToken,
 															paymentRequestInfo.idempotencyKey())
 											);
-										})
-										.switchIfEmpty(Mono.defer(() -> {
-											log.info("empty");
-											return Mono.error(new TransactionNotFoundException("transaction not found"));
-										}));
+										});
 							})
 							.flatMap((informazioniPagamentoDto) -> {
-								log.info("save transaction");
 								TransactionInitEvent transactionInitializedEvent =
 										new TransactionInitEvent(
 												transactionId,

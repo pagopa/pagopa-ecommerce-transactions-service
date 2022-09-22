@@ -24,6 +24,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -78,20 +79,19 @@ class TransactionActivateResultHandlerTest {
                 TransactionStatusDto.INIT_REQUESTED
                 );
 
-        TransactionInitEvent transactionInitEvent = new TransactionInitEvent(
-                transactionId,
-                rptId.value(),
-                paymentToken,
-                new TransactionInitData(transaction.getDescription().value(), transaction.getAmount().value(), requestDto.getEmail(), null, null)
-                );
-
         ActivationResultData activationResultData = new ActivationResultData(transaction, activationResultRequestDto);
-
 
         //when(activationResultData.activationResultData()).thenReturn(activationResultRequestDto);
         //when(activationResultData.transaction()).thenReturn(transaction);
 
         TransactionActivateResultCommand command = new TransactionActivateResultCommand(rptId, activationResultData);
+
+        TransactionInitEvent transactionInitEvent = new TransactionInitEvent(
+                command.getData().transaction().getTransactionId().toString(),
+                rptId.value(),
+                paymentToken,
+                new TransactionInitData(transaction.getDescription().value(), transaction.getAmount().value(), null, null, null)
+        );
 
         PaymentRequestInfo paymentRequestInfoCachedNoToken =
                 new PaymentRequestInfo(
@@ -125,22 +125,19 @@ class TransactionActivateResultHandlerTest {
                                                 .codiceFiscale(paTaxcode)
                                                         .importoTotale(new BigDecimal(amount));
 
-
-
-
         Mockito.when(paymentRequestInfoRepository.findById(rptId))
                 .thenReturn(Optional.of(paymentRequestInfoCachedNoToken));
         Mockito.when(paymentRequestInfoRepository.save(Mockito.any(PaymentRequestInfo.class)))
                 .thenReturn(paymentRequestInfoCachedWithToken);
         Mockito.when(nodoPerPM.chiediInformazioniPagamento(Mockito.any(String.class)))
                 .thenReturn(Mono.just(informazioniPagamentoDto));
-        Mockito.when(transactionEventStoreRepository.save(Mockito.any())).thenReturn(Mono.just(transactionInitEvent));
+        Mockito.when(transactionEventStoreRepository.save(Mockito.any(TransactionInitEvent.class))).thenReturn(Mono.just(transactionInitEvent));
 
         handler.handle(command).block();
 
         Mockito.verify(paymentRequestInfoRepository, Mockito.times(1)).findById(rptId);
         Mockito.verify(paymentRequestInfoRepository, Mockito.times(1)).save(paymentRequestInfoCachedWithToken);
-        //Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(transactionInitEvent);
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(Mockito.any(TransactionInitEvent.class));
 
     }
 
@@ -180,10 +177,14 @@ class TransactionActivateResultHandlerTest {
 
         TransactionActivateResultCommand command = new TransactionActivateResultCommand(rptId, activationResultData);
 
-        assertThrows(
-                AlreadyProcessedException.class,
-                () -> handler.handle(command).block(),
-                command.getRptId().value());
+        /* test */
+        StepVerifier.create(handler.handle(command))
+                .expectErrorMatches(error -> error instanceof AlreadyProcessedException)
+                .verify();
+
+        Mockito.verify(paymentRequestInfoRepository, Mockito.times(0)).findById(Mockito.any(RptId.class));
+        Mockito.verify(paymentRequestInfoRepository, Mockito.times(0)).save(Mockito.any(PaymentRequestInfo.class));
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(Mockito.any(TransactionInitEvent.class));
 
     }
 
@@ -218,32 +219,9 @@ class TransactionActivateResultHandlerTest {
                 TransactionStatusDto.INIT_REQUESTED
         );
 
-        TransactionInitEvent transactionInitEvent = new TransactionInitEvent(
-                transactionId,
-                rptId.value(),
-                paymentToken,
-                new TransactionInitData(transaction.getDescription().value(), transaction.getAmount().value(), requestDto.getEmail(), null, null)
-        );
-
         ActivationResultData activationResultData = new ActivationResultData(transaction, activationResultRequestDto);
 
-
-        //when(activationResultData.activationResultData()).thenReturn(activationResultRequestDto);
-        //when(activationResultData.transaction()).thenReturn(transaction);
-
         TransactionActivateResultCommand command = new TransactionActivateResultCommand(rptId, activationResultData);
-
-        PaymentRequestInfo paymentRequestInfoCachedNoToken =
-                new PaymentRequestInfo(
-                        rptId,
-                        paTaxcode,
-                        paName,
-                        description,
-                        amount,
-                        null,
-                        true,
-                        null,
-                        idempotencyKey);
 
         PaymentRequestInfo paymentRequestInfoCachedWithToken =
                 new PaymentRequestInfo(
@@ -270,17 +248,18 @@ class TransactionActivateResultHandlerTest {
 
         Mockito.when(nodoPerPM.chiediInformazioniPagamento(Mockito.any(String.class)))
                 .thenReturn(Mono.just(informazioniPagamentoDto));
-        Mockito.when(transactionEventStoreRepository.save(Mockito.any())).thenReturn(Mono.just(transactionInitEvent));
+        //Mockito.when(transactionEventStoreRepository.save(Mockito.any())).thenReturn(Mono.just(transactionInitEvent));
 
-        assertThrows(
-                TransactionNotFoundException.class,
-                () -> handler.handle(command).block(),
-                "Error while searching for payment info with rptId " + rptId + " and paymentToken " + paymentToken + " in repository");
+        /* test */
+        StepVerifier.create(handler.handle(command))
+                .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
+                .verify();
 
         //handler.handle(command).block();
 
         Mockito.verify(paymentRequestInfoRepository, Mockito.times(1)).findById(rptId);
         Mockito.verify(paymentRequestInfoRepository, Mockito.never()).save(paymentRequestInfoCachedWithToken);
+        Mockito.verify(transactionEventStoreRepository, Mockito.never()).save(Mockito.any(TransactionInitEvent.class));
     }
 
 
