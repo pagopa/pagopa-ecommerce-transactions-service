@@ -14,7 +14,7 @@ import lombok.experimental.FieldDefaults;
 public class BaseTransactionClosed extends BaseTransactionWithCompletedAuthorization {
     TransactionClosureSendData transactionClosureSendData;
 
-    public BaseTransactionClosed(BaseTransactionWithCompletedAuthorization baseTransaction, TransactionClosureSendData transactionClosureSendData) {
+    protected BaseTransactionClosed(BaseTransactionWithCompletedAuthorization baseTransaction, TransactionClosureSendData transactionClosureSendData) {
         super(baseTransaction, baseTransaction.getTransactionAuthorizationStatusUpdateData());
         this.transactionClosureSendData = transactionClosureSendData;
     }

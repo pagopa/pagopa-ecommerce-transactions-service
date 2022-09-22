@@ -14,7 +14,7 @@ import lombok.experimental.FieldDefaults;
 public abstract class BaseTransactionWithRequestedAuthorization extends BaseTransaction {
     TransactionAuthorizationRequestData transactionAuthorizationRequestData;
 
-    public BaseTransactionWithRequestedAuthorization(BaseTransaction baseTransaction, TransactionAuthorizationRequestData transactionAuthorizationRequestData) {
+    protected BaseTransactionWithRequestedAuthorization(BaseTransaction baseTransaction, TransactionAuthorizationRequestData transactionAuthorizationRequestData) {
         super(
                 baseTransaction.getTransactionId(),
                 baseTransaction.getPaymentToken(),

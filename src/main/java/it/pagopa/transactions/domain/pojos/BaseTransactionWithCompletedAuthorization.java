@@ -14,7 +14,7 @@ import lombok.experimental.FieldDefaults;
 public abstract class BaseTransactionWithCompletedAuthorization extends BaseTransactionWithRequestedAuthorization {
     TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData;
 
-    public BaseTransactionWithCompletedAuthorization(BaseTransactionWithRequestedAuthorization baseTransaction, TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData) {
+    protected BaseTransactionWithCompletedAuthorization(BaseTransactionWithRequestedAuthorization baseTransaction, TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData) {
         super(baseTransaction, baseTransaction.getTransactionAuthorizationRequestData());
         this.transactionAuthorizationStatusUpdateData = transactionAuthorizationStatusUpdateData;
     }
