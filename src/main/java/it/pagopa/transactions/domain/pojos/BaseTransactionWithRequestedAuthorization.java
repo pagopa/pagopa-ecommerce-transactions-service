@@ -1,5 +1,6 @@
 package it.pagopa.transactions.domain.pojos;
 
+import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestData;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
@@ -21,6 +22,7 @@ public abstract class BaseTransactionWithRequestedAuthorization extends BaseTran
                 baseTransaction.getRptId(),
                 baseTransaction.getDescription(),
                 baseTransaction.getAmount(),
+                baseTransaction.getEmail(),
                 baseTransaction.getCreationDate(),
                 baseTransaction.getStatus()
         );

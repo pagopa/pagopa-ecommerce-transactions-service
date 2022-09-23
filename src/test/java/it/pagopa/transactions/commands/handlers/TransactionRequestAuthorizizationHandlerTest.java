@@ -9,7 +9,6 @@ import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestData;
 import it.pagopa.transactions.domain.*;
-import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,7 +19,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
 
 import java.util.UUID;
 
@@ -58,6 +56,7 @@ class TransactionRequestAuthorizizationHandlerTest {
         RptId rptId = new RptId("rptId");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
+        Email email = new Email("foo@example.com");
 
         TransactionInitialized transaction = new TransactionInitialized(
                 transactionId,
@@ -65,6 +64,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 rptId,
                 description,
                 amount,
+                email,
                 TransactionStatusDto.INITIALIZED
         );
 
@@ -101,48 +101,5 @@ class TransactionRequestAuthorizizationHandlerTest {
         requestAuthorizationHandler.handle(requestAuthorizationCommand).block();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
-    }
-
-    @Test
-    void shouldRejectAlreadyProcessedTransaction() {
-        PaymentToken paymentToken = new PaymentToken("paymentToken");
-        RptId rptId = new RptId("rptId");
-        TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
-
-        TransactionInitialized transaction = new TransactionInitialized(
-                transactionId,
-                paymentToken,
-                rptId,
-                description,
-                amount,
-                TransactionStatusDto.AUTHORIZATION_REQUESTED
-        );
-
-        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
-                .fee(200)
-                .paymentInstrumentId("paymentInstrumentId")
-                .pspId("PSP_CODE")
-                .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
-
-        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
-                authorizationRequest.getFee(),
-                authorizationRequest.getPaymentInstrumentId(),
-                authorizationRequest.getPspId(),
-                "paymentTypeCode",
-                "brokerName",
-                "pspChannelCode"
-        );
-
-        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);
-
-        /* test */
-        StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
-                .expectErrorMatches(error -> error instanceof AlreadyProcessedException)
-                .verify();
-
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(any());
     }
 }

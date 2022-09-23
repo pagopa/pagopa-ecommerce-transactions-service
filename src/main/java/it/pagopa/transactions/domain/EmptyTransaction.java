@@ -17,6 +17,7 @@ public final class EmptyTransaction implements EventUpdatable<TransactionInitial
                 new RptId(event.getRptId()),
                 new TransactionDescription(event.getData().getDescription()),
                 new TransactionAmount(event.getData().getAmount()),
+                new Email(event.getData().getEmail()),
                 ZonedDateTime.parse(event.getCreationDate()),
                 TransactionStatusDto.INITIALIZED
         );

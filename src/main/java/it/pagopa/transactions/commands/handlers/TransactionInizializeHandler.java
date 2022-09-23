@@ -9,24 +9,25 @@ import it.pagopa.transactions.commands.TransactionInitializeCommand;
 import it.pagopa.transactions.documents.TransactionEvent;
 import it.pagopa.transactions.documents.TransactionInitData;
 import it.pagopa.transactions.documents.TransactionInitEvent;
-import it.pagopa.transactions.domain.IdempotencyKey;
 import it.pagopa.transactions.domain.RptId;
-import it.pagopa.transactions.repositories.*;
+import it.pagopa.transactions.domain.TransactionId;
+import it.pagopa.transactions.repositories.PaymentRequestInfo;
+import it.pagopa.transactions.repositories.PaymentRequestsInfoRepository;
+import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.NodoOperations;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import java.security.SecureRandom;
-import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
 @Component
 public class TransactionInizializeHandler
-    implements CommandHandler<TransactionInitializeCommand, Mono<NewTransactionResponseDto>> {
+    implements CommandHandler<TransactionInitializeCommand, Mono<Tuple2<NewTransactionResponseDto, TransactionInitEvent>>> {
 
   @Autowired PaymentRequestsInfoRepository paymentRequestsInfoRepository;
 
@@ -36,7 +37,7 @@ public class TransactionInizializeHandler
 
   @Autowired NodoOperations nodoOperations;
 
-  public Mono<NewTransactionResponseDto> handle(TransactionInitializeCommand command) {
+  public Mono<Tuple2<NewTransactionResponseDto, TransactionInitEvent>> handle(TransactionInitializeCommand command) {
     final RptId rptId = command.getRptId();
     final NewTransactionRequestDto newTransactionRequestDto = command.getData();
 
@@ -93,7 +94,7 @@ public class TransactionInizializeHandler
               data.setDescription(paymentRequestInfo.description());
               data.setEmail(newTransactionRequestDto.getEmail());
 
-              TransactionEvent<TransactionInitData> transactionInitializedEvent =
+                TransactionInitEvent transactionInitializedEvent =
                   new TransactionInitEvent(
                       transactionId,
                       newTransactionRequestDto.getRptId(),
@@ -123,20 +124,23 @@ public class TransactionInizializeHandler
         .map(
             args -> {
               final SessionDataDto sessionData = args.getT1();
-              final TransactionEvent<TransactionInitData> transactionInitializedEvent =
+              final TransactionInitEvent transactionInitializedEvent =
                   args.getT2();
 
-              return new NewTransactionResponseDto()
-                  .amount(transactionInitializedEvent.getData().getAmount())
-                  .reason(transactionInitializedEvent.getData().getDescription())
-                  .authToken(sessionData.getSessionToken())
-                  .transactionId(transactionInitializedEvent.getTransactionId())
-                  .paymentToken(
-                      transactionInitializedEvent.getPaymentToken() != null
-                              && !transactionInitializedEvent.getPaymentToken().isEmpty()
-                          ? transactionInitializedEvent.getPaymentToken()
-                          : null)
-                  .rptId(rptId.value());
+              return Tuples.of(
+                      new NewTransactionResponseDto()
+                              .amount(transactionInitializedEvent.getData().getAmount())
+                              .reason(transactionInitializedEvent.getData().getDescription())
+                              .authToken(sessionData.getSessionToken())
+                              .transactionId(transactionInitializedEvent.getTransactionId())
+                              .paymentToken(
+                                  transactionInitializedEvent.getPaymentToken() != null
+                                          && !transactionInitializedEvent.getPaymentToken().isEmpty()
+                                      ? transactionInitializedEvent.getPaymentToken()
+                                      : null)
+                              .rptId(rptId.value()),
+                      transactionInitializedEvent
+              );
             });
   }
 

@@ -2,6 +2,8 @@ package it.pagopa.transactions.projections.handlers;
 
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
+import it.pagopa.transactions.documents.TransactionInitData;
+import it.pagopa.transactions.documents.TransactionInitEvent;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
@@ -39,11 +41,26 @@ class TransactionProjectionHandlerTest {
                 .reason("reason")
                 .amount(1);
 
+        TransactionInitEvent event = new TransactionInitEvent(
+                data.getTransactionId(),
+                data.getRptId(),
+                data.getPaymentToken(),
+                ZonedDateTime.now().toString(),
+                new TransactionInitData(
+                        data.getReason(),
+                        data.getAmount(),
+                        "foo@example.com",
+                        "",
+                        ""
+                )
+        );
+
         TransactionId transactionId = new TransactionId(transactionUUID);
         PaymentToken paymentToken = new PaymentToken(data.getPaymentToken());
         RptId rptId = new RptId(data.getRptId());
         TransactionDescription description = new TransactionDescription(data.getReason());
         TransactionAmount amount = new TransactionAmount(data.getAmount());
+        Email email = new Email("foo@example.com");
 
         TransactionInitialized expected = new TransactionInitialized(
                 transactionId,
@@ -51,7 +68,9 @@ class TransactionProjectionHandlerTest {
                 rptId,
                 description,
                 amount,
-                TransactionStatusDto.INITIALIZED);
+                email,
+                TransactionStatusDto.INITIALIZED
+        );
 
         try (
                 MockedStatic<ZonedDateTime> zonedDateTime = Mockito.mockStatic(ZonedDateTime.class)) {
@@ -67,7 +86,7 @@ class TransactionProjectionHandlerTest {
             /*
              * Test
              */
-            TransactionInitialized result = transactionsProjectionHandler.handle(data).cast(TransactionInitialized.class).block();
+            TransactionInitialized result = transactionsProjectionHandler.handle(event).cast(TransactionInitialized.class).block();
 
             /*
              * Assertions

@@ -17,6 +17,7 @@ import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
 import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHandler;
 import it.pagopa.transactions.commands.handlers.TransactionUpdateStatusHandler;
+import it.pagopa.transactions.documents.TransactionInitEvent;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
@@ -30,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.util.UUID;
@@ -81,19 +83,22 @@ public class TransactionsService {
         TransactionInitializeCommand command = new TransactionInitializeCommand(
                 new RptId(newTransactionRequestDto.getRptId()), newTransactionRequestDto);
 
-        Mono<NewTransactionResponseDto> response = transactionInizializeHandler.handle(command)
+        Mono<Tuple2<NewTransactionResponseDto, TransactionInitEvent>> handlerResponse = transactionInizializeHandler.handle(command)
                 .doOnNext(tx -> log.info("Transaction initialized for rptId: {}", newTransactionRequestDto.getRptId()));
 
-    return response.flatMap(
-        data ->
-            transactionsProjectionHandler
-                .handle(data)
-                .cast(TransactionInitialized.class)
-                .map(
-                    t -> {
-                      data.setStatus(t.getStatus());
-                      return data;
-                    }));
+        return handlerResponse.flatMap(
+            data -> {
+                NewTransactionResponseDto response = data.getT1();
+                TransactionInitEvent initEvent = data.getT2();
+
+                return transactionsProjectionHandler
+                        .handle(initEvent)
+                        .cast(TransactionInitialized.class)
+                        .map(t -> {
+                            response.setStatus(t.getStatus());
+                            return response;
+                        });
+            });
     }
 
     public Mono<TransactionInfoDto> getTransactionInfo(String transactionId) {
@@ -150,6 +155,7 @@ public class TransactionsService {
                             new RptId(transactionDocument.getRptId()),
                             new TransactionDescription(transactionDocument.getDescription()),
                             new TransactionAmount(transactionDocument.getAmount()),
+                            new Email(transactionDocument.getEmail()),
                             transactionDocument.getStatus());
 
                     AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -183,6 +189,7 @@ public class TransactionsService {
                             new RptId(transactionDocument.getRptId()),
                             new TransactionDescription(transactionDocument.getDescription()),
                             new TransactionAmount(transactionDocument.getAmount()),
+                            new Email(transactionDocument.getEmail()),
                             transactionDocument.getStatus());
 
                     UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
@@ -200,7 +207,6 @@ public class TransactionsService {
                             .flatMap(authorizationStatusUpdatedEvent -> authorizationUpdateProjectionHandler
                                     .handle(authorizationStatusUpdatedEvent));
                 })
-                .cast(TransactionInitialized.class)
                 .flatMap(transaction -> {
                     ClosureSendData closureSendData = new ClosureSendData(transaction, updateAuthorizationRequestDto);
 
@@ -235,6 +241,7 @@ public class TransactionsService {
                             new RptId(transactionDocument.getRptId()),
                             new TransactionDescription(transactionDocument.getDescription()),
                             new TransactionAmount(transactionDocument.getAmount()),
+                            new Email(transactionDocument.getEmail()),
                             transactionDocument.getStatus());
                     UpdateTransactionStatusData updateTransactionStatusData = new UpdateTransactionStatusData(
                             transaction,

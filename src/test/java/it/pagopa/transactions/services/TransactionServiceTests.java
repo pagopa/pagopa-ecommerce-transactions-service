@@ -90,7 +90,7 @@ public class TransactionServiceTests {
 	void getTransactionReturnsTransactionData() {
 
 		final Transaction transaction = new Transaction(TRANSACION_ID, PAYMENT_TOKEN, "rptId", "reason", 100,
-				TransactionStatusDto.INITIALIZED);
+				"foo@example.com", TransactionStatusDto.INITIALIZED);
 		final TransactionInfoDto expected = new TransactionInfoDto()
 		        .transactionId(TRANSACION_ID)
 				.amount(transaction.getAmount())
@@ -140,6 +140,7 @@ public class TransactionServiceTests {
 				"rptId",
 				"description",
 				100,
+				"foo@example.com",
 				TransactionStatusDto.INITIALIZED);
 
 		/* preconditions */
@@ -203,6 +204,7 @@ public class TransactionServiceTests {
 				"rptId",
 				"description",
 				100,
+				"foo@example.com",
 				TransactionStatusDto.AUTHORIZATION_REQUESTED);
 
 		TransactionInitialized transaction = new TransactionInitialized(
@@ -211,6 +213,7 @@ public class TransactionServiceTests {
 				new RptId(transactionDocument.getRptId()),
 				new TransactionDescription(transactionDocument.getDescription()),
 				new TransactionAmount(transactionDocument.getAmount()),
+				new Email(transactionDocument.getEmail()),
 				transactionDocument.getStatus()
 		);
 
@@ -256,6 +259,7 @@ public class TransactionServiceTests {
 				transactionDocument.getRptId(),
 				transactionDocument.getDescription(),
 				transactionDocument.getAmount(),
+				transactionDocument.getEmail(),
 				TransactionStatusDto.CLOSED);
 
 		/* preconditions */
@@ -307,6 +311,7 @@ public class TransactionServiceTests {
 				"rptId",
 				"description",
 				100,
+				"foo@example.com",
 				TransactionStatusDto.CLOSED);
 
 		TransactionInitialized transaction = new TransactionInitialized(
@@ -315,6 +320,7 @@ public class TransactionServiceTests {
 				new RptId(transactionDocument.getRptId()),
 				new TransactionDescription(transactionDocument.getDescription()),
 				new TransactionAmount(transactionDocument.getAmount()),
+				new Email(transactionDocument.getEmail()),
 				TransactionStatusDto.NOTIFIED
 		);
 

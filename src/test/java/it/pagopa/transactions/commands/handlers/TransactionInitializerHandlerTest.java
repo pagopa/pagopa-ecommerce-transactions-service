@@ -9,6 +9,7 @@ import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionInitializeCommand;
 import it.pagopa.transactions.documents.TransactionInitData;
+import it.pagopa.transactions.documents.TransactionInitEvent;
 import it.pagopa.transactions.domain.IdempotencyKey;
 import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.projections.TransactionsProjection;
@@ -24,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -97,7 +99,8 @@ class TransactionInitializerHandlerTest {
         .thenReturn(Mono.just(sessionDataDto));
 
     /** preconditions */
-    NewTransactionResponseDto response = handler.handle(command).block();
+    Tuple2<NewTransactionResponseDto, TransactionInitEvent> handlerResponse = handler.handle(command).block();
+    NewTransactionResponseDto response = handlerResponse.getT1();
 
     /** asserts */
     Mockito.verify(paymentRequestInfoRepository, Mockito.times(1)).findById(rptId);

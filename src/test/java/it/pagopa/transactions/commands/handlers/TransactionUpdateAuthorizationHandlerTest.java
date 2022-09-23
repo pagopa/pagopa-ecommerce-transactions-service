@@ -41,6 +41,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         RptId rptId = new RptId("rptId");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
+        Email email = new Email("foo@example.com");
 
         TransactionInitialized transaction = new TransactionInitialized(
                 transactionId,
@@ -48,6 +49,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                 rptId,
                 description,
                 amount,
+                email,
                 TransactionStatusDto.AUTHORIZATION_REQUESTED
         );
 
@@ -89,6 +91,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         RptId rptId = new RptId("rptId");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
+        Email email = new Email("foo@example.com");
 
         TransactionInitialized transaction = new TransactionInitialized(
                 transactionId,
@@ -96,6 +99,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                 rptId,
                 description,
                 amount,
+                email,
                 TransactionStatusDto.INITIALIZED
         );
 
@@ -125,6 +129,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         RptId rptId = new RptId("rptId");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
+        Email email = new Email("foo@example.com");
 
         TransactionInitialized transaction = new TransactionInitialized(
                 transactionId,
@@ -132,6 +137,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                 rptId,
                 description,
                 amount,
+                email,
                 TransactionStatusDto.AUTHORIZATION_REQUESTED
         );
 

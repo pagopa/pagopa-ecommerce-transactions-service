@@ -44,6 +44,7 @@ class TransactionUpdateProjectionHandlerTest {
                 new RptId("rptId"),
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
+                new Email("foo@example.com"),
                 TransactionStatusDto.CLOSED
         );
 
@@ -53,6 +54,7 @@ class TransactionUpdateProjectionHandlerTest {
                 transaction.getRptId().value(),
                 transaction.getDescription().value(),
                 transaction.getAmount().value(),
+                transaction.getEmail().value(),
                 TransactionStatusDto.NOTIFIED,
                 transaction.getCreationDate()
         );
@@ -76,6 +78,7 @@ class TransactionUpdateProjectionHandlerTest {
                 transaction.getRptId(),
                 transaction.getDescription(),
                 transaction.getAmount(),
+                transaction.getEmail(),
                 ZonedDateTime.parse(expectedDocument.getCreationDate()),
                 expectedDocument.getStatus()
         );

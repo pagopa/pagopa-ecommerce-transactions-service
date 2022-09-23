@@ -17,6 +17,8 @@ import it.pagopa.transactions.documents.TransactionEvent;
 import it.pagopa.transactions.domain.EmptyTransaction;
 import it.pagopa.transactions.domain.Transaction;
 import it.pagopa.transactions.domain.TransactionInitialized;
+import it.pagopa.transactions.domain.TransactionWithCompletedAuthorization;
+import it.pagopa.transactions.domain.pojos.BaseTransaction;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -29,6 +31,7 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 @Slf4j

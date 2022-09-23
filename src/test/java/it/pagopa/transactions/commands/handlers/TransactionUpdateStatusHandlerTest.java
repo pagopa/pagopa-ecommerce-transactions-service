@@ -41,6 +41,7 @@ class TransactionUpdateStatusHandlerTest {
         RptId rptId = new RptId("rptId");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
+        Email email = new Email("foo@example.com");
 
         TransactionInitialized transaction = new TransactionInitialized(
                 transactionId,
@@ -48,6 +49,7 @@ class TransactionUpdateStatusHandlerTest {
                 rptId,
                 description,
                 amount,
+                email,
                 TransactionStatusDto.CLOSED);
 
         UpdateTransactionStatusRequestDto updateTransactionRequest = new UpdateTransactionStatusRequestDto()
@@ -90,6 +92,7 @@ class TransactionUpdateStatusHandlerTest {
         RptId rptId = new RptId("rptId");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
+        Email email = new Email("foo@example.com");
 
         TransactionInitialized transaction = new TransactionInitialized(
                 transactionId,
@@ -97,6 +100,7 @@ class TransactionUpdateStatusHandlerTest {
                 rptId,
                 description,
                 amount,
+                email,
                 TransactionStatusDto.CLOSED);
 
         UpdateTransactionStatusRequestDto updateTransactionRequest = new UpdateTransactionStatusRequestDto()
@@ -139,6 +143,7 @@ class TransactionUpdateStatusHandlerTest {
         RptId rptId = new RptId("rptId");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
+        Email email = new Email("foo@example.com");
 
         TransactionInitialized transaction = new TransactionInitialized(
                 transactionId,
@@ -146,6 +151,7 @@ class TransactionUpdateStatusHandlerTest {
                 rptId,
                 description,
                 amount,
+                email,
                 TransactionStatusDto.INITIALIZED);
 
         UpdateTransactionStatusRequestDto updateStatusRequest = new UpdateTransactionStatusRequestDto()
