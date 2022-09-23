@@ -6,6 +6,7 @@ import it.pagopa.transactions.commands.TransactionActivateResultCommand;
 import it.pagopa.transactions.documents.TransactionInitData;
 import it.pagopa.transactions.documents.TransactionInitEvent;
 import it.pagopa.transactions.domain.Transaction;
+import it.pagopa.transactions.domain.TransactionInitialized;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.PaymentRequestInfo;
@@ -38,18 +39,18 @@ public class TransactionActivateResultHandler
 
 		return Mono.just(command)
 				.filterWhen(commandData -> Mono
-						.just(commandData.getData().transaction().getStatus() == TransactionStatusDto.INIT_REQUESTED))
+						.just(commandData.getData().transactionInitialized().getStatus() == TransactionStatusDto.INIT_REQUESTED))
 				.switchIfEmpty(Mono.error(new AlreadyProcessedException(command.getRptId())))
 				.flatMap(commandData2 -> {
 
 					final String paymentToken = commandData2.getData().activationResultData().getPaymentToken();
 					final String rptId = commandData2.getRptId().value();
-					final Transaction transaction = commandData2.getData().transaction();
+					final TransactionInitialized transactionInitialized = commandData2.getData().transactionInitialized();
 
-					final String transactionId = commandData2.getData().transaction().getTransactionId().toString();
+					final String transactionId = commandData2.getData().transactionInitialized().getTransactionId().toString();
 					TransactionInitData data = new TransactionInitData();
-					data.setAmount(transaction.getAmount().value());
-					data.setDescription(transaction.getDescription().value());
+					data.setAmount(transactionInitialized.getAmount().value());
+					data.setDescription(transactionInitialized.getDescription().value());
 
 					//Edit this function
 					return nodoPerPM.chiediInformazioniPagamento(paymentToken)

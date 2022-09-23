@@ -425,7 +425,7 @@ public class TransactionServiceTests {
 
 		RptId rtpId = new RptId("RtpID");
 
-		it.pagopa.transactions.domain.Transaction transactionDomain = new it.pagopa.transactions.domain.Transaction(
+		it.pagopa.transactions.domain.TransactionInitialized transactionInitializedDomain = new it.pagopa.transactions.domain.TransactionInitialized(
 				new TransactionId(UUID.fromString(TRANSACION_ID)),
 				new PaymentToken(PAYMENT_TOKEN),
 				rtpId,
@@ -438,12 +438,12 @@ public class TransactionServiceTests {
 				TRANSACION_ID,
 				"rptId",
 				PAYMENT_TOKEN,
-				new TransactionInitData(TRANSACION_ID, transactionDomain.getAmount().value(), null, null, null)
+				new TransactionInitData(TRANSACION_ID, transactionInitializedDomain.getAmount().value(), null, null, null)
 		);
 
 		Mockito.when(repository.findById(TRANSACION_ID)).thenReturn(Mono.just(transaction));
 		Mockito.when(transactionActivateResultHandler.handle(Mockito.any(TransactionActivateResultCommand.class))).thenReturn(Mono.just(transactionInitEvent));
-		Mockito.when(transactionsActivationProjectionHandler.handle(Mockito.any(TransactionInitEvent.class))).thenReturn(Mono.just(transactionDomain));
+		Mockito.when(transactionsActivationProjectionHandler.handle(Mockito.any(TransactionInitEvent.class))).thenReturn(Mono.just(transactionInitializedDomain));
 
 		/** test */
 

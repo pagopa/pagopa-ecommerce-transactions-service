@@ -15,13 +15,13 @@ import java.util.UUID;
 @Component
 @Slf4j
 public class TransactionsActivationProjectionHandler
-		implements ProjectionHandler<TransactionInitEvent, Mono<Transaction>> {
+		implements ProjectionHandler<TransactionInitEvent, Mono<TransactionInitialized>> {
 
 	@Autowired
 	private TransactionsViewRepository viewEventStoreRepository;
 
 	@Override
-	public Mono<Transaction> handle(TransactionInitEvent event) {
+	public Mono<TransactionInitialized> handle(TransactionInitEvent event) {
 
 		TransactionInitData data = event.getData();
 		TransactionId transactionId = new TransactionId(UUID.fromString(event.getTransactionId()));
@@ -30,8 +30,8 @@ public class TransactionsActivationProjectionHandler
 		TransactionDescription description = new TransactionDescription(data.getDescription());
 		TransactionAmount amount = new TransactionAmount(data.getAmount());
 
-		Transaction transaction =
-				new Transaction(transactionId, paymentToken, rptId, description, amount, TransactionStatusDto.INITIALIZED);
+		TransactionInitialized transaction =
+				new TransactionInitialized(transactionId, paymentToken, rptId, description, amount, TransactionStatusDto.INITIALIZED);
 
 		it.pagopa.transactions.documents.Transaction transactionDocument =
 				it.pagopa.transactions.documents.Transaction.from(transaction);
