@@ -23,13 +23,12 @@ import javax.xml.bind.JAXBElement;
 public class NodoPerPM {
 
     @Autowired
-    private NodoApi nodoWebClient;
+    private NodoApi nodoApiClient;
 
     public Mono<InformazioniPagamentoDto> chiediInformazioniPagamento(String paymentToken) {
 
-                //.header("Content-Type", MediaType.TEXT_XML_VALUE)
-        //TOOD Update Path
-        return nodoWebClient
+        //TODO Update Path?
+        return nodoApiClient
                 .getApiClient()
                 .getWebClient()
                 .get()

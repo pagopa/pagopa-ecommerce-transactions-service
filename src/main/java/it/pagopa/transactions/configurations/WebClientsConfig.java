@@ -6,6 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PaymentTransactionsControllerApi;
+import it.pagopa.generated.ecommerce.nodo.v1.api.NodoApi;
 import it.pagopa.generated.ecommerce.sessions.v1.ApiClient;
 import it.pagopa.generated.ecommerce.sessions.v1.api.DefaultApi;
 import it.pagopa.transactions.utils.soap.Jaxb2SoapDecoder;
@@ -25,6 +26,34 @@ import java.util.concurrent.TimeUnit;
 
 @Configuration
 public class WebClientsConfig {
+
+    @Bean(name = "nodoApiClient")
+    public NodoApi nodoApiClient(@Value("${nodo.uri}") String nodoUri,
+                                 @Value("${nodo.readTimeout}") int nodoReadTimeout,
+                                 @Value("${nodo.connectionTimeout}") int nodoConnectionTimeout) {
+
+        HttpClient httpClient = HttpClient.create().option(ChannelOption.CONNECT_TIMEOUT_MILLIS, nodoConnectionTimeout)
+                .doOnConnected(connection -> connection
+                        .addHandlerLast(new ReadTimeoutHandler(nodoReadTimeout, TimeUnit.MILLISECONDS)));
+
+        ExchangeStrategies exchangeStrategies = ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
+            mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+            clientCodecConfigurer.registerDefaults(false);
+            clientCodecConfigurer.customCodecs().register(new Jackson2JsonDecoder(mapper, MediaType.APPLICATION_JSON));
+            clientCodecConfigurer.customCodecs().register(new Jackson2JsonEncoder(mapper, MediaType.APPLICATION_JSON));
+        }).build();
+
+        WebClient webClient = WebClient.builder().baseUrl(nodoUri)
+                .clientConnector(new ReactorClientHttpConnector(httpClient)).exchangeStrategies(exchangeStrategies)
+                .build();
+        it.pagopa.generated.ecommerce.nodo.v1.ApiClient apiClient = new it.pagopa.generated.ecommerce.nodo.v1.ApiClient(webClient);
+
+        NodoApi nodoApi = new NodoApi(apiClient);
+        return nodoApi;
+    }
 
     @Bean(name = "nodoWebClient")
     public WebClient nodoWebClient(@Value("${nodo.uri}") String nodoUri,
