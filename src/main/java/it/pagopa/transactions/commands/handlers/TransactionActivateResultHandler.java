@@ -52,10 +52,9 @@ public class TransactionActivateResultHandler
 								throw new TransactionNotFoundException("chiediInformazioniPagamento failed for paymentToken " +paymentToken);
 							})
 							.doOnSuccess(a -> log.info("chiediInformazioniPagamento succeded for paymentToken {}", paymentToken));
-				}).flatMap(a -> paymentRequestsInfoRepository.findById(command.getRptId())
-							.map(Mono::just).orElseGet(Mono::empty)
-							.switchIfEmpty(Mono.defer(() ->Mono.error(new TransactionNotFoundException("Transaction not found for rptID " + command.getRptId().value() + " with paymentToken "+ command.getData().activationResultData().getPaymentToken()))))
-				).flatMap(paymentRequestInfo -> {
+				}).flatMap(a -> paymentRequestsInfoRepository.findById(command.getRptId()).map(Mono::just).orElseGet(Mono::empty))
+				.switchIfEmpty(Mono.error(new TransactionNotFoundException("Transaction not found for rptID " + command.getRptId().value() + " with paymentToken "+ command.getData().activationResultData().getPaymentToken())))
+				.flatMap(paymentRequestInfo -> {
 					log.info("paymentRequestsInfoRepository findById info for rptID {} succeeded", command.getRptId().value());
 					return Mono.just(paymentRequestsInfoRepository.save(
 							new PaymentRequestInfo(
