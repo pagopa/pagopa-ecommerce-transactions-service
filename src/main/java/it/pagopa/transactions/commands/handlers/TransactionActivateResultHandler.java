@@ -5,7 +5,6 @@ import it.pagopa.transactions.client.NodoPerPM;
 import it.pagopa.transactions.commands.TransactionActivateResultCommand;
 import it.pagopa.transactions.documents.TransactionInitData;
 import it.pagopa.transactions.documents.TransactionInitEvent;
-import it.pagopa.transactions.domain.Transaction;
 import it.pagopa.transactions.domain.TransactionInitialized;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
@@ -15,12 +14,7 @@ import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.TransactionSystemException;
 import reactor.core.publisher.Mono;
-
-import javax.validation.constraints.NotNull;
-import java.lang.annotation.Annotation;
-import java.util.UUID;
 
 @Component
 @Slf4j
@@ -37,6 +31,13 @@ public class TransactionActivateResultHandler
 	@Override
 	public Mono<TransactionInitEvent> handle(TransactionActivateResultCommand command) {
 
+		final TransactionInitialized transactionInitialized = command.getData().transactionInitialized();
+
+		final String transactionId = command.getData().transactionInitialized().getTransactionId().toString();
+		TransactionInitData data = new TransactionInitData();
+		data.setAmount(transactionInitialized.getAmount().value());
+		data.setDescription(transactionInitialized.getDescription().value());
+
 		return Mono.just(command)
 				.filterWhen(commandData -> Mono
 						.just(commandData.getData().transactionInitialized().getStatus() == TransactionStatusDto.INIT_REQUESTED))
@@ -44,50 +45,39 @@ public class TransactionActivateResultHandler
 				.flatMap(commandData2 -> {
 
 					final String paymentToken = commandData2.getData().activationResultData().getPaymentToken();
-					final String rptId = commandData2.getRptId().value();
-					final TransactionInitialized transactionInitialized = commandData2.getData().transactionInitialized();
 
-					final String transactionId = commandData2.getData().transactionInitialized().getTransactionId().toString();
-					TransactionInitData data = new TransactionInitData();
-					data.setAmount(transactionInitialized.getAmount().value());
-					data.setDescription(transactionInitialized.getDescription().value());
-
-					//Edit this function
 					return nodoPerPM.chiediInformazioniPagamento(paymentToken)
-							.flatMap(informazioniPagamentoDto -> {
-								log.info("chiediInformazioniPagamento info for rptID {} with paymentToken {} succeed", rptId, paymentToken);
-								return paymentRequestsInfoRepository.findById(commandData2.getRptId())
-										.map(Mono::just).orElseGet(Mono::empty)
-										.switchIfEmpty(Mono.defer(() -> Mono.error(new TransactionNotFoundException("Transaction not found for rptID " + rptId + " with paymentToken "+ paymentToken))))
-										.doOnSuccess(paymentRequestInfo -> {
-											paymentRequestsInfoRepository.save(
-													new PaymentRequestInfo(
-															paymentRequestInfo.id(),
-															paymentRequestInfo.paFiscalCode(),
-															paymentRequestInfo.paName(),
-															paymentRequestInfo.description(),
-															paymentRequestInfo.amount(),
-															paymentRequestInfo.dueDate(),
-															paymentRequestInfo.isNM3(),
-															paymentToken,
-															paymentRequestInfo.idempotencyKey())
-											);
-										});
-							})
 							.doOnError(throwable -> {
 								log.error("chiediInformazioniPagamento failed for paymentToken {}", paymentToken);
-								throw new TransactionNotFoundException("chiediInformazioniPagamento failed for paymentToken " + paymentToken);
+								throw new TransactionNotFoundException("chiediInformazioniPagamento failed for paymentToken " +paymentToken);
 							})
-							.flatMap((informazioniPagamentoDto) -> {
-								TransactionInitEvent transactionInitializedEvent =
-										new TransactionInitEvent(
-												transactionId,
-												rptId,
-												paymentToken,
-												data);
-
-								return transactionEventStoreRepository.save(transactionInitializedEvent);
-							});
+							.doOnSuccess(a -> log.info("chiediInformazioniPagamento succeded for paymentToken {}", paymentToken));
+				}).flatMap(a -> paymentRequestsInfoRepository.findById(command.getRptId())
+							.map(Mono::just).orElseGet(Mono::empty)
+							.switchIfEmpty(Mono.defer(() ->Mono.error(new TransactionNotFoundException("Transaction not found for rptID " + command.getRptId().value() + " with paymentToken "+ command.getData().activationResultData().getPaymentToken()))))
+				).flatMap(paymentRequestInfo -> {
+					log.info("paymentRequestsInfoRepository findById info for rptID {} succeeded", command.getRptId().value());
+					return Mono.just(paymentRequestsInfoRepository.save(
+							new PaymentRequestInfo(
+									paymentRequestInfo.id(),
+									paymentRequestInfo.paFiscalCode(),
+									paymentRequestInfo.paName(),
+									paymentRequestInfo.description(),
+									paymentRequestInfo.amount(),
+									paymentRequestInfo.dueDate(),
+									paymentRequestInfo.isNM3(),
+									command.getData().activationResultData().getPaymentToken(),
+									paymentRequestInfo.idempotencyKey())
+					));
+				}).flatMap(saved -> {
+					TransactionInitEvent transactionInitializedEvent =
+							new TransactionInitEvent(
+									transactionId,
+									command.getData().transactionInitialized().getRptId().value(),
+									saved.paymentToken(),
+									data);
+					log.info("Saving transactionInitializedevent {}", transactionInitializedEvent);
+					return transactionEventStoreRepository.save(transactionInitializedEvent);
 				});
 	}
 }
