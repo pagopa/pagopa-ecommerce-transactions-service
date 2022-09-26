@@ -42,9 +42,8 @@ public class TransactionActivateResultHandler
 				.filterWhen(commandData -> Mono
 						.just(commandData.getData().transactionInitialized().getStatus() == TransactionStatusDto.INIT_REQUESTED))
 				.switchIfEmpty(Mono.error(new AlreadyProcessedException(command.getRptId())))
-				.flatMap(commandData2 -> {
-
-					final String paymentToken = commandData2.getData().activationResultData().getPaymentToken();
+				.flatMap(commandData -> {
+					final String paymentToken = commandData.getData().activationResultData().getPaymentToken();
 
 					return nodoPerPM.chiediInformazioniPagamento(paymentToken)
 							.doOnError(throwable -> {
@@ -52,10 +51,11 @@ public class TransactionActivateResultHandler
 								throw new TransactionNotFoundException("chiediInformazioniPagamento failed for paymentToken " +paymentToken);
 							})
 							.doOnSuccess(a -> log.info("chiediInformazioniPagamento succeded for paymentToken {}", paymentToken));
-				}).flatMap(a -> paymentRequestsInfoRepository.findById(command.getRptId()).map(Mono::just).orElseGet(Mono::empty))
+				}).flatMap(informazioniPagamentoDto -> paymentRequestsInfoRepository.findById(command.getRptId()).map(Mono::just).orElseGet(Mono::empty))
 				.switchIfEmpty(Mono.error(new TransactionNotFoundException("Transaction not found for rptID " + command.getRptId().value() + " with paymentToken "+ command.getData().activationResultData().getPaymentToken())))
 				.flatMap(paymentRequestInfo -> {
 					log.info("paymentRequestsInfoRepository findById info for rptID {} succeeded", command.getRptId().value());
+					//FIXME check why this repository is not a reactive repository
 					return Mono.just(paymentRequestsInfoRepository.save(
 							new PaymentRequestInfo(
 									paymentRequestInfo.id(),
