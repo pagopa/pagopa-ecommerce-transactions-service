@@ -3,8 +3,8 @@ package it.pagopa.transactions.services;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
-import it.pagopa.transactions.commands.TransactionInitializeCommand;
-import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
+import it.pagopa.transactions.commands.TransactionActivateCommand;
+import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.projections.handlers.TransactionsProjectionHandler;
 import org.junit.jupiter.api.Test;
@@ -26,7 +26,7 @@ class TransactionServiceTest {
     private TransactionsService transactionsService;
 
     @Mock
-    private TransactionInizializeHandler transactionInizializeHandler;
+    private TransactionActivateHandler transactionActivateHandler;
 
     @Mock
     private TransactionsProjectionHandler transactionsProjectionHandler;
@@ -55,12 +55,12 @@ class TransactionServiceTest {
               new RptId(TEST_RPTID),
               new TransactionDescription("desc"),
               new TransactionAmount(0),
-              TransactionStatusDto.INITIALIZED
+              TransactionStatusDto.ACTIVATED
       );
         /**
          * Preconditions
          */
-        Mockito.when(transactionInizializeHandler.handle(Mockito.any(TransactionInitializeCommand.class))).thenReturn(Mono.just(response));
+        Mockito.when(transactionActivateHandler.handle(Mockito.any(TransactionActivateCommand.class))).thenReturn(Mono.just(response));
         Mockito.when(transactionsProjectionHandler.handle(response)).thenReturn(Mono.just(transaction));
 
         /**

@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Generated
 
-public class TransactionInitData {
+public class TransactionActivatedData {
 
     private String description;
     private Integer amount;

@@ -1,8 +1,8 @@
 package it.pagopa.transactions.projections.handlers;
 
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
-import it.pagopa.transactions.documents.TransactionInitData;
-import it.pagopa.transactions.documents.TransactionInitEvent;
+import it.pagopa.transactions.documents.TransactionActivatedData;
+import it.pagopa.transactions.documents.TransactionActivatedEvent;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -15,15 +15,15 @@ import java.util.UUID;
 @Component
 @Slf4j
 public class TransactionsActivationProjectionHandler
-		implements ProjectionHandler<TransactionInitEvent, Mono<TransactionInitialized>> {
+		implements ProjectionHandler<TransactionActivatedEvent, Mono<TransactionInitialized>> {
 
 	@Autowired
 	private TransactionsViewRepository viewEventStoreRepository;
 
 	@Override
-	public Mono<TransactionInitialized> handle(TransactionInitEvent event) {
+	public Mono<TransactionInitialized> handle(TransactionActivatedEvent event) {
 
-		TransactionInitData data = event.getData();
+		TransactionActivatedData data = event.getData();
 		TransactionId transactionId = new TransactionId(UUID.fromString(event.getTransactionId()));
 		PaymentToken paymentToken = new PaymentToken(event.getPaymentToken());
 		RptId rptId = new RptId(event.getRptId());
@@ -31,7 +31,7 @@ public class TransactionsActivationProjectionHandler
 		TransactionAmount amount = new TransactionAmount(data.getAmount());
 
 		TransactionInitialized transaction =
-				new TransactionInitialized(transactionId, paymentToken, rptId, description, amount, TransactionStatusDto.INITIALIZED);
+				new TransactionInitialized(transactionId, paymentToken, rptId, description, amount, TransactionStatusDto.ACTIVATED);
 
 		it.pagopa.transactions.documents.Transaction transactionDocument =
 				it.pagopa.transactions.documents.Transaction.from(transaction);

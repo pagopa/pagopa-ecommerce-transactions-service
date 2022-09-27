@@ -41,7 +41,7 @@ public class TransactionRequestAuthorizationHandler
     public Mono<RequestAuthorizationResponseDto> handle(TransactionRequestAuthorizationCommand command) {
         TransactionInitialized transaction = command.getData().transaction();
 
-        if (transaction.getStatus() != TransactionStatusDto.INITIALIZED) {
+        if (transaction.getStatus() != TransactionStatusDto.ACTIVATED) {
             log.warn("Invalid state transition: requested authorization for transaction {} from status {}",
                     transaction.getPaymentToken().value(), transaction.getStatus());
             return Mono.error(new AlreadyProcessedException(transaction.getRptId()));

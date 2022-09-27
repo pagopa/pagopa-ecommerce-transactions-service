@@ -3,8 +3,8 @@ package it.pagopa.transactions.commands.handlers;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.client.NodoPerPM;
 import it.pagopa.transactions.commands.TransactionActivateResultCommand;
-import it.pagopa.transactions.documents.TransactionInitData;
-import it.pagopa.transactions.documents.TransactionInitEvent;
+import it.pagopa.transactions.documents.TransactionActivatedData;
+import it.pagopa.transactions.documents.TransactionActivatedEvent;
 import it.pagopa.transactions.domain.TransactionInitialized;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
@@ -19,22 +19,22 @@ import reactor.core.publisher.Mono;
 @Component
 @Slf4j
 public class TransactionActivateResultHandler
-		implements CommandHandler<TransactionActivateResultCommand, Mono<TransactionInitEvent>> {
+		implements CommandHandler<TransactionActivateResultCommand, Mono<TransactionActivatedEvent>> {
 
 	@Autowired
-	private TransactionsEventStoreRepository<TransactionInitData> transactionEventStoreRepository;
+	private TransactionsEventStoreRepository<TransactionActivatedData> transactionEventStoreRepository;
 
 	@Autowired private NodoPerPM nodoPerPM;
 
 	@Autowired private PaymentRequestsInfoRepository paymentRequestsInfoRepository;
 
 	@Override
-	public Mono<TransactionInitEvent> handle(TransactionActivateResultCommand command) {
+	public Mono<TransactionActivatedEvent> handle(TransactionActivateResultCommand command) {
 
 		final TransactionInitialized transactionInitialized = command.getData().transactionInitialized();
 
 		final String transactionId = command.getData().transactionInitialized().getTransactionId().toString();
-		TransactionInitData data = new TransactionInitData();
+		TransactionActivatedData data = new TransactionActivatedData();
 		data.setAmount(transactionInitialized.getAmount().value());
 		data.setDescription(transactionInitialized.getDescription().value());
 
@@ -69,8 +69,8 @@ public class TransactionActivateResultHandler
 									paymentRequestInfo.idempotencyKey())
 					));
 				}).flatMap(saved -> {
-					TransactionInitEvent transactionInitializedEvent =
-							new TransactionInitEvent(
+					TransactionActivatedEvent transactionInitializedEvent =
+							new TransactionActivatedEvent(
 									transactionId,
 									command.getData().transactionInitialized().getRptId().value(),
 									saved.paymentToken(),

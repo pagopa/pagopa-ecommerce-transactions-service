@@ -5,6 +5,6 @@ import it.pagopa.transactions.domain.RptId;
 
 public final class TransactionActivateResultCommand extends TransactionsCommand<ActivationResultData> {
 	public TransactionActivateResultCommand(RptId rptId, ActivationResultData data) {
-		super(rptId, TransactionsCommandCode.INITIALIZE_TRANSACTION, data);
+		super(rptId, TransactionsCommandCode.ACTIVATE, data);
 	}
 }

@@ -5,11 +5,10 @@ import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
-import it.pagopa.transactions.commands.TransactionInitializeCommand;
+import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.documents.TransactionEvent;
-import it.pagopa.transactions.documents.TransactionInitData;
-import it.pagopa.transactions.documents.TransactionInitEvent;
-import it.pagopa.transactions.domain.IdempotencyKey;
+import it.pagopa.transactions.documents.TransactionActivatedData;
+import it.pagopa.transactions.documents.TransactionActivatedEvent;
 import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.repositories.*;
 import it.pagopa.transactions.utils.NodoOperations;
@@ -19,24 +18,22 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
-import java.security.SecureRandom;
-import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
 @Component
-public class TransactionInizializeHandler
-    implements CommandHandler<TransactionInitializeCommand, Mono<NewTransactionResponseDto>> {
+public class TransactionActivateHandler
+    implements CommandHandler<TransactionActivateCommand, Mono<NewTransactionResponseDto>> {
 
   @Autowired PaymentRequestsInfoRepository paymentRequestsInfoRepository;
 
-  @Autowired TransactionsEventStoreRepository<TransactionInitData> transactionEventStoreRepository;
+  @Autowired TransactionsEventStoreRepository<TransactionActivatedData> transactionEventStoreRepository;
 
   @Autowired EcommerceSessionsClient ecommerceSessionsClient;
 
   @Autowired NodoOperations nodoOperations;
 
-  public Mono<NewTransactionResponseDto> handle(TransactionInitializeCommand command) {
+  public Mono<NewTransactionResponseDto> handle(TransactionActivateCommand command) {
     final RptId rptId = command.getRptId();
     final NewTransactionRequestDto newTransactionRequestDto = command.getData();
 
@@ -88,13 +85,13 @@ public class TransactionInizializeHandler
         .flatMap(
             paymentRequestInfo -> {
               final String transactionId = UUID.randomUUID().toString();
-              TransactionInitData data = new TransactionInitData();
+              TransactionActivatedData data = new TransactionActivatedData();
               data.setAmount(paymentRequestInfo.amount());
               data.setDescription(paymentRequestInfo.description());
               data.setEmail(newTransactionRequestDto.getEmail());
 
-              TransactionEvent<TransactionInitData> transactionInitializedEvent =
-                  new TransactionInitEvent(
+              TransactionEvent<TransactionActivatedData> transactionInitializedEvent =
+                  new TransactionActivatedEvent(
                       transactionId,
                       newTransactionRequestDto.getRptId(),
                       paymentRequestInfo.paymentToken(),
@@ -123,7 +120,7 @@ public class TransactionInizializeHandler
         .map(
             args -> {
               final SessionDataDto sessionData = args.getT1();
-              final TransactionEvent<TransactionInitData> transactionInitializedEvent =
+              final TransactionEvent<TransactionActivatedData> transactionInitializedEvent =
                   args.getT2();
 
               return new NewTransactionResponseDto()

@@ -7,7 +7,6 @@ import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionActivateResultCommand;
-import it.pagopa.transactions.commands.data.ActivationResultData;
 import it.pagopa.transactions.commands.handlers.*;
 import it.pagopa.transactions.documents.*;
 import it.pagopa.transactions.documents.Transaction;
@@ -61,7 +60,7 @@ public class TransactionServiceTests {
 	private PaymentGatewayClient paymentGatewayClient;
 
 	@MockBean
-	private TransactionInizializeHandler transactionInizializeHandler;
+	private TransactionActivateHandler transactionActivateHandler;
 
 	@MockBean
 	private TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandler;
@@ -434,16 +433,16 @@ public class TransactionServiceTests {
 				TransactionStatusDto.INIT_REQUESTED
 		);
 
-		TransactionInitEvent transactionInitEvent = new TransactionInitEvent(
+		TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
 				TRANSACION_ID,
 				"rptId",
 				PAYMENT_TOKEN,
-				new TransactionInitData(TRANSACION_ID, transactionInitializedDomain.getAmount().value(), null, null, null)
+				new TransactionActivatedData(TRANSACION_ID, transactionInitializedDomain.getAmount().value(), null, null, null)
 		);
 
 		Mockito.when(repository.findById(TRANSACION_ID)).thenReturn(Mono.just(transaction));
-		Mockito.when(transactionActivateResultHandler.handle(Mockito.any(TransactionActivateResultCommand.class))).thenReturn(Mono.just(transactionInitEvent));
-		Mockito.when(transactionsActivationProjectionHandler.handle(Mockito.any(TransactionInitEvent.class))).thenReturn(Mono.just(transactionInitializedDomain));
+		Mockito.when(transactionActivateResultHandler.handle(Mockito.any(TransactionActivateResultCommand.class))).thenReturn(Mono.just(transactionActivatedEvent));
+		Mockito.when(transactionsActivationProjectionHandler.handle(Mockito.any(TransactionActivatedEvent.class))).thenReturn(Mono.just(transactionInitializedDomain));
 
 		/** test */
 
@@ -451,7 +450,7 @@ public class TransactionServiceTests {
 
 		assertEquals(activationResultResponseDto.getOutcome(), ActivationResultResponseDto.OutcomeEnum.OK);
 		Mockito.verify(transactionActivateResultHandler, Mockito.times(1)).handle(Mockito.any(TransactionActivateResultCommand.class));
-		Mockito.verify(transactionsActivationProjectionHandler, Mockito.times(1)).handle(Mockito.any(TransactionInitEvent.class));
+		Mockito.verify(transactionsActivationProjectionHandler, Mockito.times(1)).handle(Mockito.any(TransactionActivatedEvent.class));
 
 	}
 

@@ -1,14 +1,13 @@
 package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
-import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionRequestDto;
 import it.pagopa.generated.transactions.model.ObjectFactory;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.client.NodeForPspClient;
-import it.pagopa.transactions.commands.TransactionInitializeCommand;
-import it.pagopa.transactions.documents.TransactionInitData;
+import it.pagopa.transactions.commands.TransactionActivateCommand;
+import it.pagopa.transactions.documents.TransactionActivatedData;
 import it.pagopa.transactions.domain.IdempotencyKey;
 import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.projections.TransactionsProjection;
@@ -25,7 +24,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 
-import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -36,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @ExtendWith(MockitoExtension.class)
 class TransactionInitializerHandlerTest {
 
-  @InjectMocks private TransactionInizializeHandler handler;
+  @InjectMocks private TransactionActivateHandler handler;
 
   @Mock private PaymentRequestsInfoRepository paymentRequestInfoRepository;
   @Mock private ObjectFactory objectFactory;
@@ -44,7 +42,7 @@ class TransactionInitializerHandlerTest {
   @Mock private EcommerceSessionsClient ecommerceSessionsClient;
 
   @Mock
-  private TransactionsEventStoreRepository<TransactionInitData> transactionEventStoreRepository;
+  private TransactionsEventStoreRepository<TransactionActivatedData> transactionEventStoreRepository;
 
   @Mock private NodoConnectionString nodoConnectionParams;
 
@@ -65,7 +63,7 @@ class TransactionInitializerHandlerTest {
     requestDto.setEmail("jhon.doe@email.com");
     requestDto.setAmount(1200);
 
-    TransactionInitializeCommand command = new TransactionInitializeCommand(rptId, requestDto);
+    TransactionActivateCommand command = new TransactionActivateCommand(rptId, requestDto);
 
     PaymentRequestInfo paymentRequestInfoCached =
         new PaymentRequestInfo(

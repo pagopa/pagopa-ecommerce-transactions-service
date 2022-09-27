@@ -1,8 +1,8 @@
 package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
-import it.pagopa.transactions.documents.TransactionInitData;
-import it.pagopa.transactions.documents.TransactionInitEvent;
+import it.pagopa.transactions.documents.TransactionActivatedData;
+import it.pagopa.transactions.documents.TransactionActivatedEvent;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.projections.handlers.TransactionsActivationProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
@@ -35,14 +35,14 @@ class TransactionsActivationProjectionHandlerTest {
         String paymentTokenString = UUID.randomUUID().toString();
         String transactionDescription = "transaction description";
         int amountInt = 100;
-        TransactionInitData transactionInitData = new TransactionInitData();
-        transactionInitData.setEmail("jon.doe@email.it");
-        transactionInitData.setAmount(amountInt);
-        transactionInitData.setDescription(transactionDescription);
+        TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
+        transactionActivatedData.setEmail("jon.doe@email.it");
+        transactionActivatedData.setAmount(amountInt);
+        transactionActivatedData.setDescription(transactionDescription);
 
-        TransactionInitEvent event = new TransactionInitEvent(transactionIdString, rptIdString, paymentTokenString, transactionInitData);
+        TransactionActivatedEvent event = new TransactionActivatedEvent(transactionIdString, rptIdString, paymentTokenString, transactionActivatedData);
 
-        TransactionInitData data = event.getData();
+        TransactionActivatedData data = event.getData();
         TransactionId transactionId = new TransactionId(UUID.fromString(event.getTransactionId()));
         PaymentToken paymentToken = new PaymentToken(event.getPaymentToken());
         RptId rptId = new RptId(event.getRptId());
@@ -50,7 +50,7 @@ class TransactionsActivationProjectionHandlerTest {
         TransactionAmount amount = new TransactionAmount(data.getAmount());
 
         TransactionInitialized transaction =
-                new TransactionInitialized(transactionId, paymentToken, rptId, description, amount, TransactionStatusDto.INITIALIZED);
+                new TransactionInitialized(transactionId, paymentToken, rptId, description, amount, TransactionStatusDto.ACTIVATED);
 
         it.pagopa.transactions.documents.Transaction transactionDocument =
                 it.pagopa.transactions.documents.Transaction.from(transaction);

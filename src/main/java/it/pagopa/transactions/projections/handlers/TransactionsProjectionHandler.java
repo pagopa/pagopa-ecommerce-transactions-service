@@ -34,7 +34,7 @@ public class TransactionsProjectionHandler
     final TransactionStatusDto transactionStatus =
         Optional.ofNullable(paymentToken.value()).isEmpty()
             ? TransactionStatusDto.INIT_REQUESTED
-            : TransactionStatusDto.INITIALIZED;
+            : TransactionStatusDto.ACTIVATED;
 
     TransactionInitialized transaction =
         new TransactionInitialized(transactionId, paymentToken, rptId, description, amount, transactionStatus);

@@ -24,7 +24,7 @@ import java.util.UUID;
 public class TransactionsService {
 
 	@Autowired
-	private TransactionInizializeHandler transactionInizializeHandler;
+	private TransactionActivateHandler transactionActivateHandler;
 
 	@Autowired
 	private TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandler;
@@ -69,10 +69,10 @@ public class TransactionsService {
 
 		log.info("Initializing transaction for rptId: {}", newTransactionRequestDto.getRptId());
 
-		TransactionInitializeCommand command = new TransactionInitializeCommand(
+		TransactionActivateCommand command = new TransactionActivateCommand(
 				new RptId(newTransactionRequestDto.getRptId()), newTransactionRequestDto);
 
-		Mono<NewTransactionResponseDto> response = transactionInizializeHandler.handle(command)
+		Mono<NewTransactionResponseDto> response = transactionActivateHandler.handle(command)
 				.doOnNext(tx -> log.info("Transaction initialized for rptId: {}", newTransactionRequestDto.getRptId()));
 
     return response.flatMap(

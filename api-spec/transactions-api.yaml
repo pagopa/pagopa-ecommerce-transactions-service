@@ -399,7 +399,7 @@ components:
             - status
       example:
         amount: 200
-        status: INITIALIZED
+        status: ACTIVATED
     AmountEuroCents:
       description: Amount for payments, in euro cents
       type: integer
@@ -487,7 +487,7 @@ components:
       description: Possible statuses a transaction can be in
       enum:
         - INIT_REQUESTED
-        - INITIALIZED
+        - ACTIVATED
         - AUTHORIZATION_REQUESTED
         - AUTHORIZED
         - AUTHORIZATION_FAILED
