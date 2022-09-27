@@ -10,12 +10,12 @@ import java.time.ZonedDateTime;
 import static java.time.ZonedDateTime.now;
 
 @AggregateRoot
-public final class TransactionInitialized extends BaseTransaction implements EventUpdatable<TransactionWithRequestedAuthorization, TransactionAuthorizationRequestedEvent>, Transaction {
-    public TransactionInitialized(TransactionId transactionId, PaymentToken paymentToken, RptId rptId, TransactionDescription description, TransactionAmount amount, ZonedDateTime creationDate, TransactionStatusDto status) {
+public final class TransactionActivated extends BaseTransaction implements EventUpdatable<TransactionWithRequestedAuthorization, TransactionAuthorizationRequestedEvent>, Transaction {
+    public TransactionActivated(TransactionId transactionId, PaymentToken paymentToken, RptId rptId, TransactionDescription description, TransactionAmount amount, ZonedDateTime creationDate, TransactionStatusDto status) {
         super(transactionId, paymentToken, rptId, description, amount, creationDate, status);
     }
 
-    public TransactionInitialized(TransactionId transactionId, PaymentToken paymentToken, RptId rptId, TransactionDescription description, TransactionAmount amount, TransactionStatusDto status) {
+    public TransactionActivated(TransactionId transactionId, PaymentToken paymentToken, RptId rptId, TransactionDescription description, TransactionAmount amount, TransactionStatusDto status) {
         super(transactionId, paymentToken, rptId, description, amount, now(), status);
     }
 
