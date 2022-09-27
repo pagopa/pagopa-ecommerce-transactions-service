@@ -6,7 +6,7 @@ import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdateData;
 import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdatedEvent;
-import it.pagopa.transactions.domain.TransactionInitialized;
+import it.pagopa.transactions.domain.TransactionActivated;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +26,7 @@ public class TransactionUpdateAuthorizationHandler implements CommandHandler<Tra
 
     @Override
     public Mono<TransactionAuthorizationStatusUpdatedEvent> handle(TransactionUpdateAuthorizationCommand command) {
-        TransactionInitialized transaction = command.getData().transaction();
+        TransactionActivated transaction = command.getData().transaction();
 
         if (transaction.getStatus() != TransactionStatusDto.AUTHORIZATION_REQUESTED) {
             log.error("Error: requesting authorization update for transaction in state {}", transaction.getStatus());
