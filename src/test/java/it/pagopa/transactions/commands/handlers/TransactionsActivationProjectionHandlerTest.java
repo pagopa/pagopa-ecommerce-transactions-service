@@ -49,8 +49,8 @@ class TransactionsActivationProjectionHandlerTest {
         TransactionDescription description = new TransactionDescription(data.getDescription());
         TransactionAmount amount = new TransactionAmount(data.getAmount());
 
-        TransactionInitialized transaction =
-                new TransactionInitialized(transactionId, paymentToken, rptId, description, amount, TransactionStatusDto.ACTIVATED);
+        TransactionActivated transaction =
+                new TransactionActivated(transactionId, paymentToken, rptId, description, amount, TransactionStatusDto.ACTIVATED);
 
         it.pagopa.transactions.documents.Transaction transactionDocument =
                 it.pagopa.transactions.documents.Transaction.from(transaction);
@@ -59,7 +59,7 @@ class TransactionsActivationProjectionHandlerTest {
 
         /** test */
 
-        TransactionInitialized transactionResult = handler.handle(event).block();
+        TransactionActivated transactionResult = handler.handle(event).block();
 
         Assert.assertNotEquals(transactionResult, transaction);
         Assert.assertEquals(transactionResult.getTransactionId(),transaction.getTransactionId());

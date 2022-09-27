@@ -45,13 +45,13 @@ class TransactionProjectionHandlerTest {
         TransactionDescription description = new TransactionDescription(data.getReason());
         TransactionAmount amount = new TransactionAmount(data.getAmount());
 
-        TransactionInitialized expected = new TransactionInitialized(
+        TransactionActivated expected = new TransactionActivated(
                 transactionId,
                 paymentToken,
                 rptId,
                 description,
                 amount,
-                TransactionStatusDto.INITIALIZED);
+                TransactionStatusDto.ACTIVATED);
 
         try (
                 MockedStatic<ZonedDateTime> zonedDateTime = Mockito.mockStatic(ZonedDateTime.class)) {
@@ -67,7 +67,7 @@ class TransactionProjectionHandlerTest {
             /*
              * Test
              */
-            TransactionInitialized result = transactionsProjectionHandler.handle(data).cast(TransactionInitialized.class).block();
+            TransactionActivated result = transactionsProjectionHandler.handle(data).cast(TransactionActivated.class).block();
 
             /*
              * Assertions

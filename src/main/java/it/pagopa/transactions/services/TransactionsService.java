@@ -79,7 +79,7 @@ public class TransactionsService {
         data ->
             transactionsProjectionHandler
                 .handle(data)
-                .cast(TransactionInitialized.class)
+                .cast(TransactionActivated.class)
                 .map(
                     t -> {
                       data.setStatus(t.getStatus());
@@ -135,7 +135,7 @@ public class TransactionsService {
 
 					log.info("Requesting authorization for rptId: {}", transactionDocument.getRptId());
 
-                    TransactionInitialized transaction = new TransactionInitialized(
+                    TransactionActivated transaction = new TransactionActivated(
                             new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
                             new PaymentToken(transactionDocument.getPaymentToken()),
                             new RptId(transactionDocument.getRptId()),
@@ -168,7 +168,7 @@ public class TransactionsService {
                 .findById(transactionId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .flatMap(transactionDocument -> {
-                    TransactionInitialized transaction = new TransactionInitialized(
+                    TransactionActivated transaction = new TransactionActivated(
                             new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
                             new PaymentToken(transactionDocument.getPaymentToken()),
                             new RptId(transactionDocument.getRptId()),
@@ -191,7 +191,7 @@ public class TransactionsService {
                             .flatMap(authorizationStatusUpdatedEvent -> authorizationUpdateProjectionHandler
                                     .handle(authorizationStatusUpdatedEvent));
                 })
-                .cast(TransactionInitialized.class)
+                .cast(TransactionActivated.class)
                 .flatMap(transaction -> {
                     ClosureSendData closureSendData = new ClosureSendData(transaction, updateAuthorizationRequestDto);
 
@@ -220,7 +220,7 @@ public class TransactionsService {
                 .findById(transactionId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .map(transactionDocument -> {
-                    TransactionInitialized transaction = new TransactionInitialized(
+					TransactionActivated transaction = new TransactionActivated(
                             new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
                             new PaymentToken(transactionDocument.getPaymentToken()),
                             new RptId(transactionDocument.getRptId()),
@@ -239,7 +239,7 @@ public class TransactionsService {
                         transactionStatusUpdatedEvent.getTransactionId()))
                 .flatMap(transactionStatusUpdatedEvent -> transactionUpdateProjectionHandler
                         .handle(transactionStatusUpdatedEvent))
-                .cast(TransactionInitialized.class)
+                .cast(TransactionActivated.class)
                 .map(transaction -> new TransactionInfoDto()
                         .transactionId(transaction.getTransactionId().value().toString())
                         .amount(transaction.getAmount().value())
@@ -259,7 +259,7 @@ public class TransactionsService {
                 .findById(transactionId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .map(transactionDocument -> {
-                    TransactionInitialized transaction = new TransactionInitialized(
+					TransactionActivated transaction = new TransactionActivated(
                             new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
                             new PaymentToken(transactionDocument.getPaymentToken()),
                             new RptId(transactionDocument.getRptId()),
@@ -273,9 +273,9 @@ public class TransactionsService {
                             transaction.getRptId(), activationResultData);
                 }).flatMap(transactionActivateResultCommand -> transactionActivateResultHandler
                         .handle(transactionActivateResultCommand))
-                .doOnNext(transactionInitializedEvent -> log.info(
-                        "TRANSACTION_INIT_EVENT for transactionId: {}",
-                        transactionInitializedEvent.getTransactionId()))
+                .doOnNext(transactionActivatedEvent -> log.info(
+                        "TRANSACTION_ACTIVATED_EVENT for transactionId: {}",
+						transactionActivatedEvent.getTransactionId()))
                 .flatMap(transactionInitializedEvent -> transactionsActivationProjectionHandler
                         .handle(transactionInitializedEvent))
                 .map(transactionInitializedEvent -> new ActivationResultResponseDto().outcome(ActivationResultResponseDto.OutcomeEnum.OK))

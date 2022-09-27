@@ -5,7 +5,7 @@ import it.pagopa.transactions.client.NodoPerPM;
 import it.pagopa.transactions.commands.TransactionActivateResultCommand;
 import it.pagopa.transactions.documents.TransactionActivatedData;
 import it.pagopa.transactions.documents.TransactionActivatedEvent;
-import it.pagopa.transactions.domain.TransactionInitialized;
+import it.pagopa.transactions.domain.TransactionActivated;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.PaymentRequestInfo;
@@ -31,7 +31,7 @@ public class TransactionActivateResultHandler
 	@Override
 	public Mono<TransactionActivatedEvent> handle(TransactionActivateResultCommand command) {
 
-		final TransactionInitialized transactionInitialized = command.getData().transactionInitialized();
+		final TransactionActivated transactionInitialized = command.getData().transactionInitialized();
 
 		final String transactionId = command.getData().transactionInitialized().getTransactionId().toString();
 		TransactionActivatedData data = new TransactionActivatedData();

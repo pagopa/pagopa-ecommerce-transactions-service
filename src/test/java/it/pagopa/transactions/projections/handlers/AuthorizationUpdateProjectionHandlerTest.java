@@ -38,7 +38,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 .authorizationCode("OK")
                 .timestampOperation(OffsetDateTime.now());
 
-        TransactionInitialized transaction = new TransactionInitialized(
+        TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(UUID.randomUUID()),
                 new PaymentToken("paymentToken"),
                 new RptId("rptId"),
@@ -70,7 +70,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 statusUpdateData
         );
 
-        TransactionInitialized expected = new TransactionInitialized(
+        TransactionActivated expected = new TransactionActivated(
                 transaction.getTransactionId(),
                 transaction.getPaymentToken(),
                 transaction.getRptId(),

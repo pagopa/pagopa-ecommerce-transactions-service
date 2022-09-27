@@ -23,7 +23,7 @@ class TransactionDocumentTest {
         String TEST_DESC = "";
         ZonedDateTime TEST_TIME = ZonedDateTime.now();
         int TEST_AMOUNT = 1;
-        TransactionStatusDto TEST_STATUS = TransactionStatusDto.INITIALIZED;
+        TransactionStatusDto TEST_STATUS = TransactionStatusDto.ACTIVATED;
 
         /**
          * Test
@@ -65,9 +65,9 @@ class TransactionDocumentTest {
         RptId rptId = new RptId("77777777777302016723749670035");
         TransactionDescription description = new TransactionDescription("");
         TransactionAmount amount = new TransactionAmount(100);
-        TransactionStatusDto status = TransactionStatusDto.INITIALIZED;
+        TransactionStatusDto status = TransactionStatusDto.ACTIVATED;
 
-        TransactionInitialized transaction = new TransactionInitialized(
+        TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 paymentToken,
                 rptId,
