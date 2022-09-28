@@ -11,9 +11,11 @@ import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.repositories.*;
 import it.pagopa.transactions.utils.NodoOperations;
 import lombok.extern.slf4j.Slf4j;
+import org.javatuples.Tuple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.util.UUID;
@@ -21,18 +23,26 @@ import java.util.UUID;
 @Slf4j
 @Component
 public class TransactionActivateHandler
-    implements CommandHandler<TransactionActivateCommand, Mono<NewTransactionResponseDto>> {
+    implements CommandHandler<
+        TransactionActivateCommand,
+        Mono<Tuple2<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>>>> {
 
   @Autowired PaymentRequestsInfoRepository paymentRequestsInfoRepository;
 
-  @Autowired TransactionsEventStoreRepository<TransactionActivatedData> transactionEventStoreRepository;
-  @Autowired TransactionsEventStoreRepository<TransactionActivationRequestedData> transactionEventActivationRequestedStoreRepository;
+  @Autowired
+  TransactionsEventStoreRepository<TransactionActivatedData>
+      transactionEventActivatedStoreRepository;
+
+  @Autowired
+  TransactionsEventStoreRepository<TransactionActivationRequestedData>
+      transactionEventActivationRequestedStoreRepository;
 
   @Autowired EcommerceSessionsClient ecommerceSessionsClient;
 
   @Autowired NodoOperations nodoOperations;
 
-  public Mono<NewTransactionResponseDto> handle(TransactionActivateCommand command) {
+  public Mono<Tuple2<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>>> handle(
+      TransactionActivateCommand command) {
     final RptId rptId = command.getRptId();
     final NewTransactionRequestDto newTransactionRequestDto = command.getData();
 
@@ -53,9 +63,7 @@ public class TransactionActivateHandler
         .flatMap(
             partialPaymentRequestInfo -> {
               final Boolean isValidPaymentToken =
-                  partialPaymentRequestInfo.paymentToken() != null
-                      && !partialPaymentRequestInfo.paymentToken().trim().isEmpty();
-
+                  isValidPaymentToken(partialPaymentRequestInfo.paymentToken());
               return Boolean.TRUE.equals(isValidPaymentToken)
                   ? Mono.just(partialPaymentRequestInfo)
                       .doOnSuccess(
@@ -83,79 +91,43 @@ public class TransactionActivateHandler
             })
         .flatMap(
             paymentRequestInfo -> {
-                final String transactionId = UUID.randomUUID().toString();
-                if(paymentRequestInfo.paymentToken() != null) {
-                    TransactionActivatedData data = new TransactionActivatedData();
-                    data.setAmount(paymentRequestInfo.amount());
-                    data.setDescription(paymentRequestInfo.description());
-                    data.setEmail(newTransactionRequestDto.getEmail());
-
-                    TransactionEvent<TransactionActivatedData> transactionActivatedEvent =
-                            new TransactionActivatedEvent(
-                                    transactionId,
-                                    newTransactionRequestDto.getRptId(),
-                                    paymentRequestInfo.paymentToken(),
-                                    data);
-
-                    log.info(
-                            "Generated event TRANSACTION_INITIALIZED_EVENT for payment token {}",
-                            paymentRequestInfo.paymentToken());
-
-                    return transactionEventStoreRepository
-                            .save(transactionActivatedEvent)
-                            .thenReturn(transactionActivatedEvent);
-                } else {
-                    TransactionActivationRequestedData data = new TransactionActivationRequestedData();
-                    data.setAmount(paymentRequestInfo.amount());
-                    data.setDescription(paymentRequestInfo.description());
-                    data.setEmail(newTransactionRequestDto.getEmail());
-
-                    TransactionEvent<TransactionActivationRequestedData> transactionActivationRequestedEvent =
-                            new TransactionActivationRequestedEvent(
-                                    transactionId,
-                                    newTransactionRequestDto.getRptId(),
-                                    paymentRequestInfo.paymentToken(),
-                                    data);
-
-                    log.info(
-                            "Generated event TRANSACTION_INITIALIZED_EVENT for payment token {}",
-                            paymentRequestInfo.paymentToken());
-
-                    return transactionEventActivationRequestedStoreRepository
-                            .save(transactionActivationRequestedEvent)
-                            .thenReturn(transactionActivationRequestedEvent);
-                }
-            })
-        .flatMap(
-            transactionActivatedEvent -> {
-              SessionRequestDto sessionRequest =
+              final String transactionId = UUID.randomUUID().toString();
+              final SessionRequestDto sessionRequest =
                   new SessionRequestDto()
-                      .email(transactionActivatedEvent.getData().getEmail())
-                      .paymentToken(transactionActivatedEvent.getPaymentToken())
-                      .rptId(transactionActivatedEvent.getRptId())
-                      .transactionId(transactionActivatedEvent.getTransactionId());
+                      .email(newTransactionRequestDto.getEmail())
+                      .rptId(paymentRequestInfo.id().value())
+                      .transactionId(transactionId);
 
               return ecommerceSessionsClient
                   .createSessionToken(sessionRequest)
-                  .map(sessionData -> Tuples.of(sessionData, transactionActivatedEvent));
+                  .map(sessionData -> Tuples.of(sessionData, paymentRequestInfo));
             })
-        .map(
+        .flatMap(
             args -> {
-              final SessionDataDto sessionData = args.getT1();
-              final TransactionEvent<TransactionActivatedData> transactionInitializedEvent =
-                  args.getT2();
+              final SessionDataDto sessionDataDto = args.getT1();
+              final PaymentRequestInfo paymentRequestInfo = args.getT2();
 
-              return new NewTransactionResponseDto()
-                  .amount(transactionInitializedEvent.getData().getAmount())
-                  .reason(transactionInitializedEvent.getData().getDescription())
-                  .authToken(sessionData.getSessionToken())
-                  .transactionId(transactionInitializedEvent.getTransactionId())
-                  .paymentToken(
-                      transactionInitializedEvent.getPaymentToken() != null
-                              && !transactionInitializedEvent.getPaymentToken().isEmpty()
-                          ? transactionInitializedEvent.getPaymentToken()
-                          : null)
-                  .rptId(rptId.value());
+              return Mono.just(paymentRequestInfo.paymentToken())
+                  .flatMap(
+                      paymentToken ->
+                          isValidPaymentToken(paymentToken)
+                              ? Mono.just(Tuples.of(
+                                  newTransactionActivatedEvent(
+                                      paymentRequestInfo.amount(),
+                                      paymentRequestInfo.description(),
+                                      sessionDataDto.getEmail(),
+                                      sessionDataDto.getTransactionId(),
+                                      sessionDataDto.getRptId(),
+                                      paymentToken),
+                                  Mono.empty()))
+                              : Mono.just(Tuples.of(
+                                  Mono.empty(),
+                                  newTransactionActivationRequestedEvent(
+                                      paymentRequestInfo.amount(),
+                                      paymentRequestInfo.description(),
+                                      sessionDataDto.getEmail(),
+                                      sessionDataDto.getTransactionId(),
+                                      sessionDataDto.getRptId()))));
             });
   }
 
@@ -164,4 +136,52 @@ public class TransactionActivateHandler
     return paymentRequestsInfoRepository.findById(rptId).map(Mono::just).orElseGet(Mono::empty);
   }
 
+  private boolean isValidPaymentToken(String paymentToken) {
+    return paymentToken != null && paymentToken.trim().isEmpty();
+  }
+
+  private Mono<TransactionActivationRequestedEvent> newTransactionActivationRequestedEvent(
+      Integer amount, String description, String email, String transactionId, String rptId) {
+
+    TransactionActivationRequestedData data = new TransactionActivationRequestedData();
+    data.setAmount(amount);
+    data.setDescription(description);
+    data.setEmail(email);
+
+    TransactionActivationRequestedEvent transactionActivationRequestedEvent =
+        new TransactionActivationRequestedEvent(transactionId, rptId, data);
+
+    log.info(
+        "Generated event TRANSACTION_ACTIVATION_REQUESTED_EVENT for rptId {} and transactionId {}",
+        rptId,
+        transactionId);
+
+    return transactionEventActivationRequestedStoreRepository.save(
+        transactionActivationRequestedEvent);
+  }
+
+  private Mono<TransactionActivatedEvent> newTransactionActivatedEvent(
+      Integer amount,
+      String description,
+      String email,
+      String transactionId,
+      String rptId,
+      String paymentToken) {
+
+    TransactionActivatedData data = new TransactionActivatedData();
+    data.setAmount(amount);
+    data.setDescription(description);
+    data.setEmail(email);
+    data.setPaymentToken(paymentToken);
+
+    TransactionActivatedEvent transactionActivationRequestedEvent =
+        new TransactionActivatedEvent(transactionId, rptId, paymentToken, data);
+
+    log.info(
+        "Generated event TRANSACTION_ACTIVATED_EVENT for rptId {} and transactionId {}",
+        rptId,
+        transactionId);
+
+    return transactionEventActivatedStoreRepository.save(transactionActivationRequestedEvent).map(e -> e);
+  }
 }

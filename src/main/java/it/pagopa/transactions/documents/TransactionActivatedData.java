@@ -20,4 +20,5 @@ public class TransactionActivatedData {
     private String email;
     private String faultCode; // TODO enum with all PAA & PTT
     private String faultCodeString;
+    private String paymentToken;
 }

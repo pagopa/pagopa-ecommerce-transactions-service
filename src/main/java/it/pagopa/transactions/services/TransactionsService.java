@@ -6,6 +6,8 @@ import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.commands.*;
 import it.pagopa.transactions.commands.data.*;
 import it.pagopa.transactions.commands.handlers.*;
+import it.pagopa.transactions.documents.TransactionActivatedEvent;
+import it.pagopa.transactions.documents.TransactionActivationRequestedEvent;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
@@ -15,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.util.UUID;
@@ -23,63 +26,72 @@ import java.util.UUID;
 @Slf4j
 public class TransactionsService {
 
-	@Autowired
-	private TransactionActivateHandler transactionActivateHandler;
+  @Autowired private TransactionActivateHandler transactionActivateHandler;
 
-	@Autowired
-	private TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandler;
+  @Autowired private TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandler;
 
-	@Autowired
-	private TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandler;
+  @Autowired private TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandler;
 
-	@Autowired
-	private TransactionUpdateStatusHandler transactionUpdateHandler;
+  @Autowired private TransactionUpdateStatusHandler transactionUpdateHandler;
 
-	@Autowired
-	private TransactionSendClosureHandler transactionSendClosureHandler;
+  @Autowired private TransactionSendClosureHandler transactionSendClosureHandler;
 
-	@Autowired
-	private TransactionsActivationRequestedProjectionHandler transactionsActivationRequestedProjectionHandler;
+  @Autowired
+  private TransactionsActivationRequestedProjectionHandler
+      transactionsActivationRequestedProjectionHandler;
 
-	@Autowired
-	private AuthorizationRequestProjectionHandler authorizationProjectionHandler;
+  @Autowired private AuthorizationRequestProjectionHandler authorizationProjectionHandler;
 
-	@Autowired
-	private AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandler;
+  @Autowired private AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandler;
 
-	@Autowired
-	private TransactionUpdateProjectionHandler transactionUpdateProjectionHandler;
+  @Autowired private TransactionUpdateProjectionHandler transactionUpdateProjectionHandler;
 
-	@Autowired
-	private ClosureSendProjectionHandler closureSendProjectionHandler;
+  @Autowired private ClosureSendProjectionHandler closureSendProjectionHandler;
 
-	@Autowired
-	private TransactionsViewRepository transactionsViewRepository;
+  @Autowired private TransactionsViewRepository transactionsViewRepository;
 
-	@Autowired
-	private EcommercePaymentInstrumentsClient ecommercePaymentInstrumentsClient;
+  @Autowired private EcommercePaymentInstrumentsClient ecommercePaymentInstrumentsClient;
 
-	@Autowired
-	private TransactionActivateResultHandler transactionActivateResultHandler;
+  @Autowired private TransactionActivateResultHandler transactionActivateResultHandler;
 
-	@Autowired
-	private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
+  @Autowired
+  private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
 
-	public Mono<NewTransactionResponseDto> newTransaction(NewTransactionRequestDto newTransactionRequestDto) {
+  public Mono<NewTransactionResponseDto> newTransaction(
+      NewTransactionRequestDto newTransactionRequestDto) {
 
-		log.info("Initializing transaction for rptId: {}", newTransactionRequestDto.getRptId());
+    log.info("Initializing transaction for rptId: {}", newTransactionRequestDto.getRptId());
 
-		TransactionActivateCommand command = new TransactionActivateCommand(
-				new RptId(newTransactionRequestDto.getRptId()), newTransactionRequestDto);
+    TransactionActivateCommand command =
+        new TransactionActivateCommand(
+            new RptId(newTransactionRequestDto.getRptId()), newTransactionRequestDto);
 
-		Mono<NewTransactionResponseDto> response = transactionActivateHandler.handle(command)
-				.doOnNext(tx -> log.info("Transaction initialized for rptId: {}", newTransactionRequestDto.getRptId()));
+    Mono<Tuple2<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>>>
+        events =
+            transactionActivateHandler
+                .handle(command)
+                .doOnNext(
+                    tx ->
+                        log.info(
+                            "Transaction initialized for rptId: {}",
+                            newTransactionRequestDto.getRptId()));
 
-		/*
-		if(paymentToken) -> activated
-				else -> activation_requested
-		*/
-    return response.flatMap(
+    events
+        .flatMap(es -> es.getT1())
+        .switchIfEmpty(
+            Mono.defer(
+                () -> {
+                    TransactionActivationRequestedEvent activationRequested = events.flatMap(es -> es.getT2());
+
+                    transactionsActivationRequestedProjectionHandler.handle(events.flatMap(es -> es.getT2()));
+                  return null;
+                }))
+        .flatMap(
+            transactionActivatedEvent -> {
+              return null;
+            });
+
+    return event.flatMap(
         data ->
             transactionsActivationRequestedProjectionHandler
                 .handle(data)
@@ -89,202 +101,263 @@ public class TransactionsService {
                       data.setStatus(t.getStatus());
                       return data;
                     }));
-    }
+  }
 
-	public Mono<TransactionInfoDto> getTransactionInfo(String transactionId) {
-		return transactionsViewRepository
-				.findById(transactionId)
-				.switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
-				.map(transaction -> new TransactionInfoDto()
-						.transactionId(transaction.getTransactionId())
-						.amount(transaction.getAmount())
-						.reason(transaction.getDescription())
-						.paymentToken(transaction.getPaymentToken())
-						.authToken(null)
-						.rptId(transaction.getRptId())
-						.status(transaction.getStatus()));
-	}
+  public Mono<TransactionInfoDto> getTransactionInfo(String transactionId) {
+    return transactionsViewRepository
+        .findById(transactionId)
+        .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+        .map(
+            transaction ->
+                new TransactionInfoDto()
+                    .transactionId(transaction.getTransactionId())
+                    .amount(transaction.getAmount())
+                    .reason(transaction.getDescription())
+                    .paymentToken(transaction.getPaymentToken())
+                    .authToken(null)
+                    .rptId(transaction.getRptId())
+                    .status(transaction.getStatus()));
+  }
 
-	public Mono<RequestAuthorizationResponseDto> requestTransactionAuthorization(String transactionId,
-																				 RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
-		return transactionsViewRepository
-				.findById(transactionId)
-				.switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
-				.flatMap(transaction -> {
-					log.info("Authorization request amount validation for transactionId: {}", transactionId);
-					return transaction.getAmount() != requestAuthorizationRequestDto.getAmount() ? Mono.empty()
-							: Mono.just(transaction);
-				})
-				.switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
-				.flatMap(transaction -> {
-					log.info("Authorization psp validation for transactionId: {}", transactionId);
-					return ecommercePaymentInstrumentsClient
-							.getPSPs(transaction.getAmount(),
-									requestAuthorizationRequestDto.getLanguage().getValue())
-							.mapNotNull(pspResponse -> pspResponse.getPsp()
-									.stream()
-									.filter(psp -> psp.getCode()
-											.equals(requestAuthorizationRequestDto.getPspId())
-											&&
-											psp.getFixedCost()
-													.equals((double) requestAuthorizationRequestDto.getFee() / 100))
-									.findFirst().orElse(null))
-							.map(psp -> Tuples.of(transaction, psp));
-				})
-				.switchIfEmpty(Mono.error(new UnsatisfiablePspRequestException(new PaymentToken(transactionId),
-						requestAuthorizationRequestDto.getLanguage(), requestAuthorizationRequestDto.getFee())))
-				.flatMap(args -> {
-					it.pagopa.transactions.documents.Transaction transactionDocument = args.getT1();
-					PspDto psp = args.getT2();
+  public Mono<RequestAuthorizationResponseDto> requestTransactionAuthorization(
+      String transactionId, RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
+    return transactionsViewRepository
+        .findById(transactionId)
+        .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+        .flatMap(
+            transaction -> {
+              log.info(
+                  "Authorization request amount validation for transactionId: {}", transactionId);
+              return transaction.getAmount() != requestAuthorizationRequestDto.getAmount()
+                  ? Mono.empty()
+                  : Mono.just(transaction);
+            })
+        .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+        .flatMap(
+            transaction -> {
+              log.info("Authorization psp validation for transactionId: {}", transactionId);
+              return ecommercePaymentInstrumentsClient
+                  .getPSPs(
+                      transaction.getAmount(),
+                      requestAuthorizationRequestDto.getLanguage().getValue())
+                  .mapNotNull(
+                      pspResponse ->
+                          pspResponse.getPsp().stream()
+                              .filter(
+                                  psp ->
+                                      psp.getCode()
+                                              .equals(requestAuthorizationRequestDto.getPspId())
+                                          && psp.getFixedCost()
+                                              .equals(
+                                                  (double) requestAuthorizationRequestDto.getFee()
+                                                      / 100))
+                              .findFirst()
+                              .orElse(null))
+                  .map(psp -> Tuples.of(transaction, psp));
+            })
+        .switchIfEmpty(
+            Mono.error(
+                new UnsatisfiablePspRequestException(
+                    new PaymentToken(transactionId),
+                    requestAuthorizationRequestDto.getLanguage(),
+                    requestAuthorizationRequestDto.getFee())))
+        .flatMap(
+            args -> {
+              it.pagopa.transactions.documents.Transaction transactionDocument = args.getT1();
+              PspDto psp = args.getT2();
 
-					log.info("Requesting authorization for rptId: {}", transactionDocument.getRptId());
+              log.info("Requesting authorization for rptId: {}", transactionDocument.getRptId());
 
-                    TransactionActivated transaction = new TransactionActivated(
-                            new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
-                            new PaymentToken(transactionDocument.getPaymentToken()),
-                            new RptId(transactionDocument.getRptId()),
-                            new TransactionDescription(transactionDocument.getDescription()),
-                            new TransactionAmount(transactionDocument.getAmount()),
-                            transactionDocument.getStatus());
+              TransactionActivated transaction =
+                  new TransactionActivated(
+                      new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
+                      new PaymentToken(transactionDocument.getPaymentToken()),
+                      new RptId(transactionDocument.getRptId()),
+                      new TransactionDescription(transactionDocument.getDescription()),
+                      new TransactionAmount(transactionDocument.getAmount()),
+                      transactionDocument.getStatus());
 
-					AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-							transaction,
-							requestAuthorizationRequestDto.getFee(),
-							requestAuthorizationRequestDto.getPaymentInstrumentId(),
-							requestAuthorizationRequestDto.getPspId(),
-							psp.getPaymentTypeCode(),
-							psp.getBrokerName(),
-							psp.getChannelCode());
+              AuthorizationRequestData authorizationData =
+                  new AuthorizationRequestData(
+                      transaction,
+                      requestAuthorizationRequestDto.getFee(),
+                      requestAuthorizationRequestDto.getPaymentInstrumentId(),
+                      requestAuthorizationRequestDto.getPspId(),
+                      psp.getPaymentTypeCode(),
+                      psp.getBrokerName(),
+                      psp.getChannelCode());
 
-					TransactionRequestAuthorizationCommand command = new TransactionRequestAuthorizationCommand(
-							transaction.getRptId(), authorizationData);
+              TransactionRequestAuthorizationCommand command =
+                  new TransactionRequestAuthorizationCommand(
+                      transaction.getRptId(), authorizationData);
 
-					return transactionRequestAuthorizationHandler.handle(command)
-							.doOnNext(res -> log.info("Requested authorization for rptId: {}",
-									transactionDocument.getRptId()))
-							.flatMap(res -> authorizationProjectionHandler.handle(authorizationData).thenReturn(res));
-				});
-	}
+              return transactionRequestAuthorizationHandler
+                  .handle(command)
+                  .doOnNext(
+                      res ->
+                          log.info(
+                              "Requested authorization for rptId: {}",
+                              transactionDocument.getRptId()))
+                  .flatMap(
+                      res ->
+                          authorizationProjectionHandler.handle(authorizationData).thenReturn(res));
+            });
+  }
 
-    public Mono<TransactionInfoDto> updateTransactionAuthorization(String transactionId,
-            UpdateAuthorizationRequestDto updateAuthorizationRequestDto) {
-        return transactionsViewRepository
-                .findById(transactionId)
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
-                .flatMap(transactionDocument -> {
-                    TransactionActivated transaction = new TransactionActivated(
-                            new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
-                            new PaymentToken(transactionDocument.getPaymentToken()),
-                            new RptId(transactionDocument.getRptId()),
-                            new TransactionDescription(transactionDocument.getDescription()),
-                            new TransactionAmount(transactionDocument.getAmount()),
-                            transactionDocument.getStatus());
+  public Mono<TransactionInfoDto> updateTransactionAuthorization(
+      String transactionId, UpdateAuthorizationRequestDto updateAuthorizationRequestDto) {
+    return transactionsViewRepository
+        .findById(transactionId)
+        .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+        .flatMap(
+            transactionDocument -> {
+              TransactionActivated transaction =
+                  new TransactionActivated(
+                      new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
+                      new PaymentToken(transactionDocument.getPaymentToken()),
+                      new RptId(transactionDocument.getRptId()),
+                      new TransactionDescription(transactionDocument.getDescription()),
+                      new TransactionAmount(transactionDocument.getAmount()),
+                      transactionDocument.getStatus());
 
-					UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
-							transaction,
-							updateAuthorizationRequestDto);
+              UpdateAuthorizationStatusData updateAuthorizationStatusData =
+                  new UpdateAuthorizationStatusData(transaction, updateAuthorizationRequestDto);
 
-					TransactionUpdateAuthorizationCommand transactionUpdateAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
-							transaction.getRptId(), updateAuthorizationStatusData);
+              TransactionUpdateAuthorizationCommand transactionUpdateAuthorizationCommand =
+                  new TransactionUpdateAuthorizationCommand(
+                      transaction.getRptId(), updateAuthorizationStatusData);
 
-                    return transactionUpdateAuthorizationHandler
-                            .handle(transactionUpdateAuthorizationCommand)
-                            .doOnNext(authorizationStatusUpdatedEvent -> log.info(
-                                    "Requested authorization update for rptId: {}",
-                                    authorizationStatusUpdatedEvent.getRptId()))
-                            .flatMap(authorizationStatusUpdatedEvent -> authorizationUpdateProjectionHandler
-                                    .handle(authorizationStatusUpdatedEvent));
-                })
-                .cast(TransactionActivated.class)
-                .flatMap(transaction -> {
-                    ClosureSendData closureSendData = new ClosureSendData(transaction, updateAuthorizationRequestDto);
+              return transactionUpdateAuthorizationHandler
+                  .handle(transactionUpdateAuthorizationCommand)
+                  .doOnNext(
+                      authorizationStatusUpdatedEvent ->
+                          log.info(
+                              "Requested authorization update for rptId: {}",
+                              authorizationStatusUpdatedEvent.getRptId()))
+                  .flatMap(
+                      authorizationStatusUpdatedEvent ->
+                          authorizationUpdateProjectionHandler.handle(
+                              authorizationStatusUpdatedEvent));
+            })
+        .cast(TransactionActivated.class)
+        .flatMap(
+            transaction -> {
+              ClosureSendData closureSendData =
+                  new ClosureSendData(transaction, updateAuthorizationRequestDto);
 
-					TransactionClosureSendCommand transactionClosureSendCommand = new TransactionClosureSendCommand(
-							transaction.getRptId(), closureSendData);
+              TransactionClosureSendCommand transactionClosureSendCommand =
+                  new TransactionClosureSendCommand(transaction.getRptId(), closureSendData);
 
-					return transactionSendClosureHandler
-							.handle(transactionClosureSendCommand)
-							.doOnNext(closureSentEvent -> log.info("Requested transaction closure for rptId: {}",
-									closureSentEvent.getRptId()))
-							.flatMap(closureSentEvent -> closureSendProjectionHandler.handle(closureSentEvent))
-							.map(transactionDocument -> new TransactionInfoDto()
-									.transactionId(transactionDocument.getTransactionId())
-									.amount(transactionDocument.getAmount())
-									.reason(transactionDocument.getDescription())
-									.paymentToken(transactionDocument.getPaymentToken())
-									.rptId(transactionDocument.getRptId())
-									.status(transactionDocument.getStatus())
-									.authToken(null));
-				});
-	}
+              return transactionSendClosureHandler
+                  .handle(transactionClosureSendCommand)
+                  .doOnNext(
+                      closureSentEvent ->
+                          log.info(
+                              "Requested transaction closure for rptId: {}",
+                              closureSentEvent.getRptId()))
+                  .flatMap(
+                      closureSentEvent -> closureSendProjectionHandler.handle(closureSentEvent))
+                  .map(
+                      transactionDocument ->
+                          new TransactionInfoDto()
+                              .transactionId(transactionDocument.getTransactionId())
+                              .amount(transactionDocument.getAmount())
+                              .reason(transactionDocument.getDescription())
+                              .paymentToken(transactionDocument.getPaymentToken())
+                              .rptId(transactionDocument.getRptId())
+                              .status(transactionDocument.getStatus())
+                              .authToken(null));
+            });
+  }
 
-    public Mono<TransactionInfoDto> updateTransactionStatus(String transactionId,
-            UpdateTransactionStatusRequestDto updateTransactionRequestDto) {
-        return transactionsViewRepository
-                .findById(transactionId)
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
-                .map(transactionDocument -> {
-					TransactionActivated transaction = new TransactionActivated(
-                            new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
-                            new PaymentToken(transactionDocument.getPaymentToken()),
-                            new RptId(transactionDocument.getRptId()),
-                            new TransactionDescription(transactionDocument.getDescription()),
-                            new TransactionAmount(transactionDocument.getAmount()),
-                            transactionDocument.getStatus());
-                    UpdateTransactionStatusData updateTransactionStatusData = new UpdateTransactionStatusData(
-                            transaction,
-                            updateTransactionRequestDto);
-                    return new TransactionUpdateStatusCommand(
-                            transaction.getRptId(), updateTransactionStatusData);
-                }).flatMap(transactionUpdateCommand -> transactionUpdateHandler
-                        .handle(transactionUpdateCommand))
-                .doOnNext(transactionStatusUpdatedEvent -> log.info(
-                        "TRANSACTION_STATUS_UPDATED_EVENT for transactionId: {}",
-                        transactionStatusUpdatedEvent.getTransactionId()))
-                .flatMap(transactionStatusUpdatedEvent -> transactionUpdateProjectionHandler
-                        .handle(transactionStatusUpdatedEvent))
-                .cast(TransactionActivated.class)
-                .map(transaction -> new TransactionInfoDto()
-                        .transactionId(transaction.getTransactionId().value().toString())
-                        .amount(transaction.getAmount().value())
-                        .reason(transaction.getDescription().value())
-                        .paymentToken(transaction.getPaymentToken().value())
-                        .rptId(transaction.getRptId().value())
-                        .status(transaction.getStatus())
-                        .authToken(null))
-                .doOnNext(transaction -> log.info(
-                        "Transaction status updated NOTIFIED for transactionId: {}", transaction.getStatus(),
-                        transaction.getTransactionId()));
-    }
+  public Mono<TransactionInfoDto> updateTransactionStatus(
+      String transactionId, UpdateTransactionStatusRequestDto updateTransactionRequestDto) {
+    return transactionsViewRepository
+        .findById(transactionId)
+        .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+        .map(
+            transactionDocument -> {
+              TransactionActivated transaction =
+                  new TransactionActivated(
+                      new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
+                      new PaymentToken(transactionDocument.getPaymentToken()),
+                      new RptId(transactionDocument.getRptId()),
+                      new TransactionDescription(transactionDocument.getDescription()),
+                      new TransactionAmount(transactionDocument.getAmount()),
+                      transactionDocument.getStatus());
+              UpdateTransactionStatusData updateTransactionStatusData =
+                  new UpdateTransactionStatusData(transaction, updateTransactionRequestDto);
+              return new TransactionUpdateStatusCommand(
+                  transaction.getRptId(), updateTransactionStatusData);
+            })
+        .flatMap(
+            transactionUpdateCommand -> transactionUpdateHandler.handle(transactionUpdateCommand))
+        .doOnNext(
+            transactionStatusUpdatedEvent ->
+                log.info(
+                    "TRANSACTION_STATUS_UPDATED_EVENT for transactionId: {}",
+                    transactionStatusUpdatedEvent.getTransactionId()))
+        .flatMap(
+            transactionStatusUpdatedEvent ->
+                transactionUpdateProjectionHandler.handle(transactionStatusUpdatedEvent))
+        .cast(TransactionActivated.class)
+        .map(
+            transaction ->
+                new TransactionInfoDto()
+                    .transactionId(transaction.getTransactionId().value().toString())
+                    .amount(transaction.getAmount().value())
+                    .reason(transaction.getDescription().value())
+                    .paymentToken(transaction.getPaymentToken().value())
+                    .rptId(transaction.getRptId().value())
+                    .status(transaction.getStatus())
+                    .authToken(null))
+        .doOnNext(
+            transaction ->
+                log.info(
+                    "Transaction status updated NOTIFIED for transactionId: {}",
+                    transaction.getStatus(),
+                    transaction.getTransactionId()));
+  }
 
-    public Mono<ActivationResultResponseDto> activateTransaction(String transactionId,
-                                                                 ActivationResultRequestDto activationResultRequestDto) {
-        return transactionsViewRepository
-                .findById(transactionId)
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
-                .map(transactionDocument -> {
-					TransactionActivated transaction = new TransactionActivated(
-                            new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
-                            new PaymentToken(transactionDocument.getPaymentToken()),
-                            new RptId(transactionDocument.getRptId()),
-                            new TransactionDescription(transactionDocument.getDescription()),
-                            new TransactionAmount(transactionDocument.getAmount()),
-                            transactionDocument.getStatus());
-                    ActivationResultData activationResultData = new ActivationResultData(
-                            transaction,
-                            activationResultRequestDto);
-                    return new TransactionActivateResultCommand(
-                            transaction.getRptId(), activationResultData);
-                }).flatMap(transactionActivateResultCommand -> transactionActivateResultHandler
-                        .handle(transactionActivateResultCommand))
-                .doOnNext(transactionActivatedEvent -> log.info(
-                        "TRANSACTION_ACTIVATED_EVENT for transactionId: {}",
-						transactionActivatedEvent.getTransactionId()))
-                .flatMap(transactionInitializedEvent -> transactionsActivationProjectionHandler
-                        .handle(transactionInitializedEvent))
-                .map(transactionInitializedEvent -> new ActivationResultResponseDto().outcome(ActivationResultResponseDto.OutcomeEnum.OK))
-                .doOnNext(activationResultResponseDto -> log.info(
-                        "Transaction status updated INITIALIZED after nodoAttivaRPT for transactionId: {}",
-                        transactionId));
-    }
+  public Mono<ActivationResultResponseDto> activateTransaction(
+      String transactionId, ActivationResultRequestDto activationResultRequestDto) {
+    return transactionsViewRepository
+        .findById(transactionId)
+        .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+        .map(
+            transactionDocument -> {
+              TransactionActivated transaction =
+                  new TransactionActivated(
+                      new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
+                      new PaymentToken(transactionDocument.getPaymentToken()),
+                      new RptId(transactionDocument.getRptId()),
+                      new TransactionDescription(transactionDocument.getDescription()),
+                      new TransactionAmount(transactionDocument.getAmount()),
+                      transactionDocument.getStatus());
+              ActivationResultData activationResultData =
+                  new ActivationResultData(transaction, activationResultRequestDto);
+              return new TransactionActivateResultCommand(
+                  transaction.getRptId(), activationResultData);
+            })
+        .flatMap(
+            transactionActivateResultCommand ->
+                transactionActivateResultHandler.handle(transactionActivateResultCommand))
+        .doOnNext(
+            transactionActivatedEvent ->
+                log.info(
+                    "TRANSACTION_ACTIVATED_EVENT for transactionId: {}",
+                    transactionActivatedEvent.getTransactionId()))
+        .flatMap(
+            transactionInitializedEvent ->
+                transactionsActivationProjectionHandler.handle(transactionInitializedEvent))
+        .map(
+            transactionInitializedEvent ->
+                new ActivationResultResponseDto()
+                    .outcome(ActivationResultResponseDto.OutcomeEnum.OK))
+        .doOnNext(
+            activationResultResponseDto ->
+                log.info(
+                    "Transaction status updated INITIALIZED after nodoAttivaRPT for transactionId: {}",
+                    transactionId));
+  }
 }
