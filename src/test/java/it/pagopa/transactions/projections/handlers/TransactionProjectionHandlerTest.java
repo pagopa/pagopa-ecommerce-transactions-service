@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class TransactionProjectionHandlerTest {
 
     @InjectMocks
-    private TransactionsProjectionHandler transactionsProjectionHandler;
+    private TransactionsActivationRequestedProjectionHandler transactionsProjectionHandler;
 
     @Mock
     private TransactionsViewRepository viewEventStoreRepository;

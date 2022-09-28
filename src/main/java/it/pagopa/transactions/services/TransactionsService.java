@@ -39,7 +39,7 @@ public class TransactionsService {
 	private TransactionSendClosureHandler transactionSendClosureHandler;
 
 	@Autowired
-	private TransactionsProjectionHandler transactionsProjectionHandler;
+	private TransactionsActivationRequestedProjectionHandler transactionsActivationRequestedProjectionHandler;
 
 	@Autowired
 	private AuthorizationRequestProjectionHandler authorizationProjectionHandler;
@@ -75,9 +75,13 @@ public class TransactionsService {
 		Mono<NewTransactionResponseDto> response = transactionActivateHandler.handle(command)
 				.doOnNext(tx -> log.info("Transaction initialized for rptId: {}", newTransactionRequestDto.getRptId()));
 
+		/*
+		if(paymentToken) -> activated
+				else -> activation_requested
+		*/
     return response.flatMap(
         data ->
-            transactionsProjectionHandler
+            transactionsActivationRequestedProjectionHandler
                 .handle(data)
                 .cast(TransactionActivated.class)
                 .map(

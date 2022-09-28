@@ -6,9 +6,7 @@ import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
-import it.pagopa.transactions.documents.TransactionEvent;
-import it.pagopa.transactions.documents.TransactionActivatedData;
-import it.pagopa.transactions.documents.TransactionActivatedEvent;
+import it.pagopa.transactions.documents.*;
 import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.repositories.*;
 import it.pagopa.transactions.utils.NodoOperations;
@@ -28,6 +26,7 @@ public class TransactionActivateHandler
   @Autowired PaymentRequestsInfoRepository paymentRequestsInfoRepository;
 
   @Autowired TransactionsEventStoreRepository<TransactionActivatedData> transactionEventStoreRepository;
+  @Autowired TransactionsEventStoreRepository<TransactionActivationRequestedData> transactionEventActivationRequestedStoreRepository;
 
   @Autowired EcommerceSessionsClient ecommerceSessionsClient;
 
@@ -84,38 +83,61 @@ public class TransactionActivateHandler
             })
         .flatMap(
             paymentRequestInfo -> {
-              final String transactionId = UUID.randomUUID().toString();
-              TransactionActivatedData data = new TransactionActivatedData();
-              data.setAmount(paymentRequestInfo.amount());
-              data.setDescription(paymentRequestInfo.description());
-              data.setEmail(newTransactionRequestDto.getEmail());
+                final String transactionId = UUID.randomUUID().toString();
+                if(paymentRequestInfo.paymentToken() != null) {
+                    TransactionActivatedData data = new TransactionActivatedData();
+                    data.setAmount(paymentRequestInfo.amount());
+                    data.setDescription(paymentRequestInfo.description());
+                    data.setEmail(newTransactionRequestDto.getEmail());
 
-              TransactionEvent<TransactionActivatedData> transactionInitializedEvent =
-                  new TransactionActivatedEvent(
-                      transactionId,
-                      newTransactionRequestDto.getRptId(),
-                      paymentRequestInfo.paymentToken(),
-                      data);
+                    TransactionEvent<TransactionActivatedData> transactionActivatedEvent =
+                            new TransactionActivatedEvent(
+                                    transactionId,
+                                    newTransactionRequestDto.getRptId(),
+                                    paymentRequestInfo.paymentToken(),
+                                    data);
 
-              log.info(
-                  "Generated event TRANSACTION_INITIALIZED_EVENT for payment token {}",
-                  paymentRequestInfo.paymentToken());
-              return transactionEventStoreRepository
-                  .save(transactionInitializedEvent)
-                  .thenReturn(transactionInitializedEvent);
+                    log.info(
+                            "Generated event TRANSACTION_INITIALIZED_EVENT for payment token {}",
+                            paymentRequestInfo.paymentToken());
+
+                    return transactionEventStoreRepository
+                            .save(transactionActivatedEvent)
+                            .thenReturn(transactionActivatedEvent);
+                } else {
+                    TransactionActivationRequestedData data = new TransactionActivationRequestedData();
+                    data.setAmount(paymentRequestInfo.amount());
+                    data.setDescription(paymentRequestInfo.description());
+                    data.setEmail(newTransactionRequestDto.getEmail());
+
+                    TransactionEvent<TransactionActivationRequestedData> transactionActivationRequestedEvent =
+                            new TransactionActivationRequestedEvent(
+                                    transactionId,
+                                    newTransactionRequestDto.getRptId(),
+                                    paymentRequestInfo.paymentToken(),
+                                    data);
+
+                    log.info(
+                            "Generated event TRANSACTION_INITIALIZED_EVENT for payment token {}",
+                            paymentRequestInfo.paymentToken());
+
+                    return transactionEventActivationRequestedStoreRepository
+                            .save(transactionActivationRequestedEvent)
+                            .thenReturn(transactionActivationRequestedEvent);
+                }
             })
         .flatMap(
-            transactionInitializedEvent -> {
+            transactionActivatedEvent -> {
               SessionRequestDto sessionRequest =
                   new SessionRequestDto()
-                      .email(transactionInitializedEvent.getData().getEmail())
-                      .paymentToken(transactionInitializedEvent.getPaymentToken())
-                      .rptId(transactionInitializedEvent.getRptId())
-                      .transactionId(transactionInitializedEvent.getTransactionId());
+                      .email(transactionActivatedEvent.getData().getEmail())
+                      .paymentToken(transactionActivatedEvent.getPaymentToken())
+                      .rptId(transactionActivatedEvent.getRptId())
+                      .transactionId(transactionActivatedEvent.getTransactionId());
 
               return ecommerceSessionsClient
                   .createSessionToken(sessionRequest)
-                  .map(sessionData -> Tuples.of(sessionData, transactionInitializedEvent));
+                  .map(sessionData -> Tuples.of(sessionData, transactionActivatedEvent));
             })
         .map(
             args -> {

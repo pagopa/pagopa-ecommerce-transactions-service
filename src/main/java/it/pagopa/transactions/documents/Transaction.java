@@ -1,5 +1,6 @@
 package it.pagopa.transactions.documents;
 
+import it.pagopa.transactions.domain.TransactionActivateRequested;
 import it.pagopa.transactions.domain.TransactionActivated;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
@@ -47,6 +48,17 @@ public class Transaction {
         return new Transaction(
                 transaction.getTransactionId().value().toString(),
                 transaction.getPaymentToken().value(),
+                transaction.getRptId().value(),
+                transaction.getDescription().value(),
+                transaction.getAmount().value(),
+                transaction.getStatus(),
+                transaction.getCreationDate().toString());
+    }
+
+    public static Transaction from(TransactionActivateRequested transaction) {
+        return new Transaction(
+                transaction.getTransactionId().value().toString(),
+                null,
                 transaction.getRptId().value(),
                 transaction.getDescription().value(),
                 transaction.getAmount().value(),

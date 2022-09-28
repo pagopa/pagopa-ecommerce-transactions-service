@@ -41,7 +41,7 @@ import static org.mockito.Mockito.when;
 		TransactionsService.class,
 		PaymentRequestsService.class,
 		TransactionRequestAuthorizationHandler.class,
-		TransactionsProjectionHandler.class,
+		TransactionsActivationRequestedProjectionHandler.class,
 		AuthorizationRequestProjectionHandler.class,
 		TransactionActivateResultHandler.class,
 		TransactionsEventStoreRepository.class,

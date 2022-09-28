@@ -6,7 +6,7 @@ import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
 import it.pagopa.transactions.domain.*;
-import it.pagopa.transactions.projections.handlers.TransactionsProjectionHandler;
+import it.pagopa.transactions.projections.handlers.TransactionsActivationRequestedProjectionHandler;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,7 +29,7 @@ class TransactionServiceTest {
     private TransactionActivateHandler transactionActivateHandler;
 
     @Mock
-    private TransactionsProjectionHandler transactionsProjectionHandler;
+    private TransactionsActivationRequestedProjectionHandler transactionsProjectionHandler;
 
     @Test
     void shouldHandleNewTransaction() {
