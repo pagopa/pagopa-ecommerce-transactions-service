@@ -66,7 +66,7 @@ public class TransactionsService {
         new TransactionActivateCommand(
             new RptId(newTransactionRequestDto.getRptId()), newTransactionRequestDto);
 
-    Mono<Tuple2<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>>>
+    Mono<Tuple2<TransactionActivatedEvent, TransactionActivationRequestedEvent>>
         events =
             transactionActivateHandler
                 .handle(command)
@@ -76,32 +76,36 @@ public class TransactionsService {
                             "Transaction initialized for rptId: {}",
                             newTransactionRequestDto.getRptId()));
 
-    events
-        .flatMap(es -> es.getT1())
-        .switchIfEmpty(
-            Mono.defer(
-                () -> {
-                    TransactionActivationRequestedEvent activationRequested = events.flatMap(es -> es.getT2());
 
-                    transactionsActivationRequestedProjectionHandler.handle(events.flatMap(es -> es.getT2()));
-                  return null;
-                }))
-        .flatMap(
-            transactionActivatedEvent -> {
-              return null;
-            });
-
-    return event.flatMap(
-        data ->
-            transactionsActivationRequestedProjectionHandler
-                .handle(data)
-                .cast(TransactionActivated.class)
-                .map(
-                    t -> {
-                      data.setStatus(t.getStatus());
-                      return data;
-                    }));
+    return events
+        .flatMap(es ->
+            es.getT1() == null ? processActivationRequest(es.getT2()) : processActivated(es.getT1())
+        );
   }
+
+  private Mono<NewTransactionResponseDto> processActivationRequest(TransactionActivationRequestedEvent transactionActivateRequestedEvent) {
+      return transactionsActivationRequestedProjectionHandler.handle(transactionActivateRequestedEvent).map(t ->
+           new NewTransactionResponseDto()
+                  .amount(transactionActivateRequestedEvent.getData().getAmount())
+                  .reason(transactionActivateRequestedEvent.getData().getDescription())
+                  .transactionId(transactionActivateRequestedEvent.getTransactionId())
+                  .rptId(transactionActivateRequestedEvent.getRptId())
+                   .status(TransactionStatusDto.ACTIVATION_REQUESTED)
+                    //.sessionToken
+      );
+  }
+
+    private Mono<NewTransactionResponseDto> processActivated(TransactionActivatedEvent transactionActivatedEvent) {
+        return transactionsActivationProjectionHandler.handle(transactionActivatedEvent).map(t ->
+                        new NewTransactionResponseDto()
+                                .amount(t.getAmount().value())
+                                .reason(t.getDescription().value())
+                                .transactionId(t.getTransactionId().value().toString())
+                                .rptId(t.getRptId().value())
+                                .status(t.getStatus()) //ACTIVATED
+                //.sessionToken
+        );
+    }
 
   public Mono<TransactionInfoDto> getTransactionInfo(String transactionId) {
     return transactionsViewRepository

@@ -19,11 +19,9 @@ public final class TransactionActivateRequested extends BaseTransaction implemen
         super(transactionId, paymentToken, rptId, description, amount, now(), status);
     }
 
-    @Override
-    public TransactionActivated apply(TransactionActivatedEvent event) {
-        // return new TransactionActivated(this, event);
-        //FIXME add implementation for transaction activated constructor starting from TransactionActivateRequested
-        return null;
+     @Override
+   public TransactionActivated apply(TransactionActivatedEvent event) {
+        return new TransactionActivated(this, event);
     }
 
     @Override

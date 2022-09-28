@@ -3,7 +3,6 @@ package it.pagopa.transactions.commands.handlers;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
-import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.documents.*;
@@ -11,21 +10,23 @@ import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.repositories.*;
 import it.pagopa.transactions.utils.NodoOperations;
 import lombok.extern.slf4j.Slf4j;
-import org.javatuples.Tuple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Component
 public class TransactionActivateHandler
     implements CommandHandler<
         TransactionActivateCommand,
-        Mono<Tuple2<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>>>> {
+        Mono<Tuple2<TransactionActivatedEvent, TransactionActivationRequestedEvent>>> {
 
   @Autowired PaymentRequestsInfoRepository paymentRequestsInfoRepository;
 
@@ -41,7 +42,7 @@ public class TransactionActivateHandler
 
   @Autowired NodoOperations nodoOperations;
 
-  public Mono<Tuple2<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>>> handle(
+  public Mono<Tuple2<TransactionActivatedEvent, TransactionActivationRequestedEvent>> handle(
       TransactionActivateCommand command) {
     final RptId rptId = command.getRptId();
     final NewTransactionRequestDto newTransactionRequestDto = command.getData();
@@ -119,9 +120,9 @@ public class TransactionActivateHandler
                                       sessionDataDto.getTransactionId(),
                                       sessionDataDto.getRptId(),
                                       paymentToken),
-                                  Mono.empty()))
+                                  null))
                               : Mono.just(Tuples.of(
-                                  Mono.empty(),
+                                  null,
                                   newTransactionActivationRequestedEvent(
                                       paymentRequestInfo.amount(),
                                       paymentRequestInfo.description(),
@@ -140,7 +141,7 @@ public class TransactionActivateHandler
     return paymentToken != null && paymentToken.trim().isEmpty();
   }
 
-  private Mono<TransactionActivationRequestedEvent> newTransactionActivationRequestedEvent(
+  private TransactionActivationRequestedEvent newTransactionActivationRequestedEvent(
       Integer amount, String description, String email, String transactionId, String rptId) {
 
     TransactionActivationRequestedData data = new TransactionActivationRequestedData();
@@ -156,11 +157,13 @@ public class TransactionActivateHandler
         rptId,
         transactionId);
 
-    return transactionEventActivationRequestedStoreRepository.save(
+    transactionEventActivationRequestedStoreRepository.save(
         transactionActivationRequestedEvent);
+
+    return transactionActivationRequestedEvent;
   }
 
-  private Mono<TransactionActivatedEvent> newTransactionActivatedEvent(
+  private TransactionActivatedEvent newTransactionActivatedEvent(
       Integer amount,
       String description,
       String email,
@@ -182,6 +185,9 @@ public class TransactionActivateHandler
         rptId,
         transactionId);
 
-    return transactionEventActivatedStoreRepository.save(transactionActivationRequestedEvent).map(e -> e);
+    transactionEventActivatedStoreRepository
+            .save(transactionActivationRequestedEvent);
+
+    return transactionActivationRequestedEvent;
   }
 }

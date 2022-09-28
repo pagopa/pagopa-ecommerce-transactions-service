@@ -40,7 +40,7 @@ public class TransactionActivateResultHandler
 
 		return Mono.just(command)
 				.filterWhen(commandData -> Mono
-						.just(commandData.getData().transactionInitialized().getStatus() == TransactionStatusDto.INIT_REQUESTED))
+						.just(commandData.getData().transactionInitialized().getStatus() == TransactionStatusDto.ACTIVATION_REQUESTED))
 				.switchIfEmpty(Mono.error(new AlreadyProcessedException(command.getRptId())))
 				.flatMap(commandData -> {
 					final String paymentToken = commandData.getData().activationResultData().getPaymentToken();
