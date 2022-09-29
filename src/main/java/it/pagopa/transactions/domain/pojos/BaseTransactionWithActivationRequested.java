@@ -1,21 +1,32 @@
 package it.pagopa.transactions.domain.pojos;
 
-import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.documents.TransactionActivatedData;
-import it.pagopa.transactions.documents.TransactionActivatedEvent;
-import it.pagopa.transactions.documents.TransactionActivationRequestedData;
-import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdateData;
-import it.pagopa.transactions.domain.*;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
+import lombok.experimental.FieldDefaults;
 
-import java.time.ZonedDateTime;
+@ToString
+@EqualsAndHashCode(callSuper = true)
+@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
+@Getter
+public abstract class BaseTransactionWithActivationRequested extends BaseTransaction {
 
-public abstract class BaseTransactionWithActivationRequested extends BaseTransaction{
+  TransactionActivatedData transactionActivationRequestedData;
 
-    TransactionActivatedData transactionActivationRequestedData;
+  protected BaseTransactionWithActivationRequested(
+      BaseTransaction baseTransaction,
+      TransactionActivatedData transactionActivationRequestedData) {
+    super(
+        baseTransaction.getTransactionId(),
+        baseTransaction.getPaymentToken(),
+        baseTransaction.getRptId(),
+        baseTransaction.getDescription(),
+        baseTransaction.getAmount(),
+        baseTransaction.getCreationDate(),
+        baseTransaction.getStatus());
 
-
-    public BaseTransactionWithActivationRequested(BaseTransaction baseTransaction, TransactionActivatedEvent transactionActivatedEvent) {
-        super(baseTransaction.getTransactionId(), baseTransaction.getPaymentToken(), baseTransaction.getRptId(), baseTransaction.getDescription(), baseTransaction.getAmount(), baseTransaction.getCreationDate(), baseTransaction.getStatus());
-        this.transactionActivationRequestedData = transactionActivatedEvent.getData();
-    }
+    this.transactionActivationRequestedData = transactionActivationRequestedData;
+  }
 }

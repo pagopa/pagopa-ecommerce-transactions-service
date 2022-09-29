@@ -1,6 +1,7 @@
 package it.pagopa.transactions.services;
 
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
+import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.commands.*;
@@ -17,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
+import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
 import java.util.UUID;
@@ -66,46 +67,28 @@ public class TransactionsService {
         new TransactionActivateCommand(
             new RptId(newTransactionRequestDto.getRptId()), newTransactionRequestDto);
 
-    Mono<Tuple2<TransactionActivatedEvent, TransactionActivationRequestedEvent>>
-        events =
-            transactionActivateHandler
-                .handle(command)
-                .doOnNext(
-                    tx ->
-                        log.info(
-                            "Transaction initialized for rptId: {}",
-                            newTransactionRequestDto.getRptId()));
+    return transactionActivateHandler
+        .handle(command)
+        .doOnNext(
+            args ->
+                log.info(
+                    "Transaction initialized for rptId: {}", newTransactionRequestDto.getRptId()))
+        .flatMap(
+            es -> {
+              final Mono<TransactionActivatedEvent> transactionActivatedEvent = es.getT1();
+              final Mono<TransactionActivationRequestedEvent> transactionActivationRequestedEvent =
+                  es.getT2();
+              final SessionDataDto sessionDataDto = es.getT3();
 
-
-    return events
-        .flatMap(es ->
-            es.getT1() == null ? processActivationRequest(es.getT2()) : processActivated(es.getT1())
-        );
+              return transactionActivatedEvent
+                  .flatMap(t -> projectActivatedEvent(t, sessionDataDto))
+                  .switchIfEmpty(
+                      Mono.defer(
+                          () ->
+                              transactionActivationRequestedEvent.flatMap(
+                                  t -> projectActivationEvent(t, sessionDataDto))));
+            });
   }
-
-  private Mono<NewTransactionResponseDto> processActivationRequest(TransactionActivationRequestedEvent transactionActivateRequestedEvent) {
-      return transactionsActivationRequestedProjectionHandler.handle(transactionActivateRequestedEvent).map(t ->
-           new NewTransactionResponseDto()
-                  .amount(transactionActivateRequestedEvent.getData().getAmount())
-                  .reason(transactionActivateRequestedEvent.getData().getDescription())
-                  .transactionId(transactionActivateRequestedEvent.getTransactionId())
-                  .rptId(transactionActivateRequestedEvent.getRptId())
-                   .status(TransactionStatusDto.ACTIVATION_REQUESTED)
-                    //.sessionToken
-      );
-  }
-
-    private Mono<NewTransactionResponseDto> processActivated(TransactionActivatedEvent transactionActivatedEvent) {
-        return transactionsActivationProjectionHandler.handle(transactionActivatedEvent).map(t ->
-                        new NewTransactionResponseDto()
-                                .amount(t.getAmount().value())
-                                .reason(t.getDescription().value())
-                                .transactionId(t.getTransactionId().value().toString())
-                                .rptId(t.getRptId().value())
-                                .status(t.getStatus()) //ACTIVATED
-                //.sessionToken
-        );
-    }
 
   public Mono<TransactionInfoDto> getTransactionInfo(String transactionId) {
     return transactionsViewRepository
@@ -352,8 +335,8 @@ public class TransactionsService {
                     "TRANSACTION_ACTIVATED_EVENT for transactionId: {}",
                     transactionActivatedEvent.getTransactionId()))
         .flatMap(
-            transactionInitializedEvent ->
-                transactionsActivationProjectionHandler.handle(transactionInitializedEvent))
+            transactionActivatedEvent ->
+                transactionsActivationProjectionHandler.handle(transactionActivatedEvent))
         .map(
             transactionInitializedEvent ->
                 new ActivationResultResponseDto()
@@ -363,5 +346,38 @@ public class TransactionsService {
                 log.info(
                     "Transaction status updated INITIALIZED after nodoAttivaRPT for transactionId: {}",
                     transactionId));
+  }
+
+  private Mono<NewTransactionResponseDto> projectActivationEvent(
+      TransactionActivationRequestedEvent transactionActivateRequestedEvent,
+      SessionDataDto sessionDataDto) {
+    return
+            transactionsActivationRequestedProjectionHandler
+                .handle(transactionActivateRequestedEvent)
+                .map(
+                    transaction ->
+                        new NewTransactionResponseDto()
+                            .amount(transaction.getAmount().value())
+                            .reason(transaction.getDescription().value())
+                            .transactionId(transaction.getTransactionId().value().toString())
+                            .rptId(transaction.getRptId().value())
+                            .status(transaction.getStatus())
+                            .authToken(sessionDataDto.getSessionToken()));
+  }
+
+  private Mono<NewTransactionResponseDto> projectActivatedEvent(
+      TransactionActivatedEvent transactionActivatedEvent, SessionDataDto sessionDataDto) {
+    return
+            transactionsActivationProjectionHandler
+                .handle(transactionActivatedEvent)
+                .map(
+                    transaction ->
+                        new NewTransactionResponseDto()
+                            .amount(transaction.getAmount().value())
+                            .reason(transaction.getDescription().value())
+                            .transactionId(transaction.getTransactionId().value().toString())
+                            .rptId(transaction.getRptId().value())
+                            .status(transaction.getStatus())
+                            .authToken(sessionDataDto.getSessionToken()));
   }
 }

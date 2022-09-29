@@ -33,7 +33,7 @@ public class TransactionActivateResultHandler
 
 		final TransactionActivated transactionInitialized = command.getData().transactionInitialized();
 
-		final String transactionId = command.getData().transactionInitialized().getTransactionId().toString();
+		final String transactionId = command.getData().transactionInitialized().getTransactionId().value().toString();
 		TransactionActivatedData data = new TransactionActivatedData();
 		data.setAmount(transactionInitialized.getAmount().value());
 		data.setDescription(transactionInitialized.getDescription().value());

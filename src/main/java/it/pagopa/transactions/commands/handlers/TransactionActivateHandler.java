@@ -13,20 +13,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
+import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
-import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Slf4j
 @Component
 public class TransactionActivateHandler
     implements CommandHandler<
         TransactionActivateCommand,
-        Mono<Tuple2<TransactionActivatedEvent, TransactionActivationRequestedEvent>>> {
+        Mono<
+            Tuple3<
+                Mono<TransactionActivatedEvent>,
+                Mono<TransactionActivationRequestedEvent>,
+                SessionDataDto>>> {
 
   @Autowired PaymentRequestsInfoRepository paymentRequestsInfoRepository;
 
@@ -42,8 +43,12 @@ public class TransactionActivateHandler
 
   @Autowired NodoOperations nodoOperations;
 
-  public Mono<Tuple2<TransactionActivatedEvent, TransactionActivationRequestedEvent>> handle(
-      TransactionActivateCommand command) {
+  public Mono<
+          Tuple3<
+              Mono<TransactionActivatedEvent>,
+              Mono<TransactionActivationRequestedEvent>,
+              SessionDataDto>>
+      handle(TransactionActivateCommand command) {
     final RptId rptId = command.getRptId();
     final NewTransactionRequestDto newTransactionRequestDto = command.getData();
 
@@ -97,7 +102,8 @@ public class TransactionActivateHandler
                   new SessionRequestDto()
                       .email(newTransactionRequestDto.getEmail())
                       .rptId(paymentRequestInfo.id().value())
-                      .transactionId(transactionId);
+                      .transactionId(transactionId)
+                      .paymentToken(paymentRequestInfo.paymentToken());
 
               return ecommerceSessionsClient
                   .createSessionToken(sessionRequest)
@@ -107,28 +113,29 @@ public class TransactionActivateHandler
             args -> {
               final SessionDataDto sessionDataDto = args.getT1();
               final PaymentRequestInfo paymentRequestInfo = args.getT2();
-
-              return Mono.just(paymentRequestInfo.paymentToken())
-                  .flatMap(
-                      paymentToken ->
-                          isValidPaymentToken(paymentToken)
-                              ? Mono.just(Tuples.of(
-                                  newTransactionActivatedEvent(
-                                      paymentRequestInfo.amount(),
-                                      paymentRequestInfo.description(),
-                                      sessionDataDto.getEmail(),
-                                      sessionDataDto.getTransactionId(),
-                                      sessionDataDto.getRptId(),
-                                      paymentToken),
-                                  null))
-                              : Mono.just(Tuples.of(
-                                  null,
-                                  newTransactionActivationRequestedEvent(
-                                      paymentRequestInfo.amount(),
-                                      paymentRequestInfo.description(),
-                                      sessionDataDto.getEmail(),
-                                      sessionDataDto.getTransactionId(),
-                                      sessionDataDto.getRptId()))));
+              final String paymentToken = paymentRequestInfo.paymentToken();
+              return isValidPaymentToken(paymentToken)
+                  ? Mono.just(
+                      Tuples.of(
+                          newTransactionActivatedEvent(
+                              paymentRequestInfo.amount(),
+                              paymentRequestInfo.description(),
+                              sessionDataDto.getEmail(),
+                              sessionDataDto.getTransactionId(),
+                              sessionDataDto.getRptId(),
+                              paymentToken),
+                          Mono.empty(),
+                          sessionDataDto))
+                  : Mono.just(
+                      Tuples.of(
+                          Mono.empty(),
+                          newTransactionActivationRequestedEvent(
+                              paymentRequestInfo.amount(),
+                              paymentRequestInfo.description(),
+                              sessionDataDto.getEmail(),
+                              sessionDataDto.getTransactionId(),
+                              sessionDataDto.getRptId()),
+                          sessionDataDto));
             });
   }
 
@@ -138,10 +145,10 @@ public class TransactionActivateHandler
   }
 
   private boolean isValidPaymentToken(String paymentToken) {
-    return paymentToken != null && paymentToken.trim().isEmpty();
+    return paymentToken != null && !paymentToken.trim().isEmpty();
   }
 
-  private TransactionActivationRequestedEvent newTransactionActivationRequestedEvent(
+  private Mono<TransactionActivationRequestedEvent> newTransactionActivationRequestedEvent(
       Integer amount, String description, String email, String transactionId, String rptId) {
 
     TransactionActivationRequestedData data = new TransactionActivationRequestedData();
@@ -157,13 +164,11 @@ public class TransactionActivateHandler
         rptId,
         transactionId);
 
-    transactionEventActivationRequestedStoreRepository.save(
+    return transactionEventActivationRequestedStoreRepository.save(
         transactionActivationRequestedEvent);
-
-    return transactionActivationRequestedEvent;
   }
 
-  private TransactionActivatedEvent newTransactionActivatedEvent(
+  private Mono<TransactionActivatedEvent> newTransactionActivatedEvent(
       Integer amount,
       String description,
       String email,
@@ -185,9 +190,6 @@ public class TransactionActivateHandler
         rptId,
         transactionId);
 
-    transactionEventActivatedStoreRepository
-            .save(transactionActivationRequestedEvent);
-
-    return transactionActivationRequestedEvent;
+    return transactionEventActivatedStoreRepository.save(transactionActivationRequestedEvent);
   }
 }

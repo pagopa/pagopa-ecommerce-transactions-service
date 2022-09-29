@@ -1,22 +1,19 @@
 package it.pagopa.transactions.domain;
 
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
-import it.pagopa.transactions.annotations.AggregateRoot;
-import it.pagopa.transactions.documents.TransactionActivatedEvent;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestedEvent;
 import it.pagopa.transactions.domain.pojos.BaseTransaction;
-import it.pagopa.transactions.domain.pojos.BaseTransactionWithActivationRequested;
 
 import java.time.ZonedDateTime;
 
 import static java.time.ZonedDateTime.now;
 
-public final class TransactionActivated extends BaseTransaction implements EventUpdatable<TransactionWithRequestedAuthorization, TransactionAuthorizationRequestedEvent>, Transaction {
-    public TransactionActivated(TransactionId transactionId, PaymentToken paymentToken, RptId rptId, TransactionDescription description, TransactionAmount amount, ZonedDateTime creationDate, TransactionStatusDto status) {
+public final class TransactionActivationRequested extends BaseTransaction implements EventUpdatable<TransactionWithRequestedAuthorization, TransactionAuthorizationRequestedEvent>, Transaction {
+    public TransactionActivationRequested(TransactionId transactionId, PaymentToken paymentToken, RptId rptId, TransactionDescription description, TransactionAmount amount, ZonedDateTime creationDate, TransactionStatusDto status) {
         super(transactionId, paymentToken, rptId, description, amount, creationDate, status);
     }
 
-    public TransactionActivated(TransactionId transactionId, PaymentToken paymentToken, RptId rptId, TransactionDescription description, TransactionAmount amount, TransactionStatusDto status) {
+    public TransactionActivationRequested(TransactionId transactionId, PaymentToken paymentToken, RptId rptId, TransactionDescription description, TransactionAmount amount, TransactionStatusDto status) {
         super(transactionId, paymentToken, rptId, description, amount, now(), status);
     }
 

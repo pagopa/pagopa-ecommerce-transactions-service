@@ -19,12 +19,12 @@ import reactor.core.publisher.Mono;
 @Component
 @Slf4j
 public class TransactionsActivationRequestedProjectionHandler
-    implements ProjectionHandler<TransactionActivationRequestedEvent, Mono<TransactionActivateRequested>> {
+    implements ProjectionHandler<TransactionActivationRequestedEvent, Mono<TransactionActivationRequested>> {
 
   @Autowired private TransactionsViewRepository viewEventStoreRepository;
 
   @Override
-  public Mono<TransactionActivateRequested> handle(TransactionActivationRequestedEvent transactionActivationRequestedEvent) {
+  public Mono<TransactionActivationRequested> handle(TransactionActivationRequestedEvent transactionActivationRequestedEvent) {
 
     TransactionId transactionId = new TransactionId(UUID.fromString(transactionActivationRequestedEvent.getTransactionId()));
     PaymentToken paymentToken = new PaymentToken(transactionActivationRequestedEvent.getPaymentToken());
@@ -32,8 +32,8 @@ public class TransactionsActivationRequestedProjectionHandler
     TransactionDescription description = new TransactionDescription(transactionActivationRequestedEvent.getData().getDescription());
     TransactionAmount amount = new TransactionAmount(transactionActivationRequestedEvent.getData().getAmount());
 
-    TransactionActivateRequested transaction =
-        new TransactionActivateRequested(transactionId, paymentToken, rptId, description, amount, TransactionStatusDto.ACTIVATION_REQUESTED);
+    TransactionActivationRequested transaction =
+        new TransactionActivationRequested(transactionId, paymentToken, rptId, description, amount, TransactionStatusDto.ACTIVATION_REQUESTED);
 
     it.pagopa.transactions.documents.Transaction transactionDocument =
         it.pagopa.transactions.documents.Transaction.from(transaction);

@@ -6,7 +6,7 @@ import it.pagopa.transactions.annotations.AggregateRoot;
 public sealed interface Transaction permits
         EmptyTransaction,
         TransactionActivated,
-        TransactionActivateRequested,
+        TransactionActivationRequested,
         TransactionWithRequestedAuthorization,
         TransactionWithCompletedAuthorization,
         TransactionClosed

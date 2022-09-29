@@ -1,7 +1,7 @@
 package it.pagopa.transactions.documents;
 
-import it.pagopa.transactions.domain.TransactionActivateRequested;
 import it.pagopa.transactions.domain.TransactionActivated;
+import it.pagopa.transactions.domain.TransactionActivationRequested;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
@@ -55,7 +55,7 @@ public class Transaction {
                 transaction.getCreationDate().toString());
     }
 
-    public static Transaction from(TransactionActivateRequested transaction) {
+    public static Transaction from(TransactionActivationRequested transaction) {
         return new Transaction(
                 transaction.getTransactionId().value().toString(),
                 null,
