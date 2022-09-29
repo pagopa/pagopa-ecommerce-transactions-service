@@ -1,0 +1,426 @@
+{
+	"info": {
+		"_postman_id": "c80646d2-c139-4647-b0ab-2c99b035d59a",
+		"name": "payment-transactions-service - gestione attivazione NM3 / no NM3",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Payment Request Info no NM3",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200 with sessionToken\", () => {",
+							"",
+							"  const responseJson = pm.response.json();",
+							"  pm.environment.set(\"RPT_ID\", responseJson.rptId);",
+							"  pm.environment.set(\"PAYMENT_CONTEXT_CODE\", responseJson.paymentContextCode);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "ocp-apim-subscription-key",
+						"value": "965de97ce89047758835a73a75215ead",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8080/payment-requests/777777777773111199999999995",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"payment-requests",
+						"777777777773111199999999995"
+					]
+				},
+				"description": "1. recupero info relativi alla request payment con verificaRPT se non presente in cache dato rptId\n2. cache info su redis dato rptId"
+			},
+			"response": []
+		},
+		{
+			"name": "2. Payment Request Info NM3",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"\", () => {",
+							"",
+							"  const responseJson = pm.response.json();",
+							"  pm.environment.set(\"PAYMENT_TOKEN\", responseJson.paymentToken);",
+							"  pm.environment.set(\"RPT_ID\", responseJson.rptId);",
+							"  pm.environment.set(\"PAYMENT_CONTEXT_CODE\", responseJson.paymentContextCode);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "ocp-apim-subscription-key",
+						"value": "965de97ce89047758835a73a75215ead",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8080/payment-requests/77777777777330200222242222222",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"payment-requests",
+						"77777777777330200222242222222"
+					]
+				},
+				"description": "1. recupero info relativi alla request payment con verifyPaymentNotice se non presente in cache dato rptId\n2. cache info su redis dato rptId"
+			},
+			"response": []
+		},
+		{
+			"name": "4. Nuova transaction NM3",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"\", () => {",
+							"",
+							"  const responseJson = pm.response.json();",
+							"  pm.environment.set(\"TRANSACTION_ID\", responseJson.transactionId);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"rptId\": \"{{RPT_ID}}\",\n    \"paymentContextCode\" : \"{{PAYMENT_CONTEXT_CODE}}\",\n    \"email\": \"test@example.com\",\n    \"amount\" : 1200\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/ecommerce/transactions-service/v1/transactions",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"ecommerce",
+						"transactions-service",
+						"v1",
+						"transactions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "3. Payment Request Info PPT_ERRORE_EMESSO_DA_PAA",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"\", () => {",
+							"",
+							"  const responseJson = pm.response.json();",
+							"  pm.environment.set(\"PAYMENT_TOKEN\", responseJson.paymentToken);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/payment-requests/77777777777330201110000001112",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"payment-requests",
+						"77777777777330201110000001112"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "5. Get transaction",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"\", () => {",
+							"",
+							"  const responseJson = pm.response.json();",
+							"  pm.environment.set(\"TRANSACTION_ID\", responseJson.transactionId);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"rptId\": \"77777777777330201210000001112\",\n    \"paymentContextCode\" : \"12fb19444e4049c8806979044e64cd5c\",\n    \"email\": \"test@example.com\",\n    \"amount\" : 1200\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/transactions/{{TRANSACTION_ID}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"transactions",
+						"{{TRANSACTION_ID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "5. POST transaction activation-results",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"\", () => {",
+							"",
+							"  const responseJson = pm.response.json();",
+							"  pm.environment.set(\"TRANSACTION_ID\", responseJson.transactionId);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"paymentContextCode\" : \"12fb19444e4049c8806979044e64cd5c\",\n    \"paymentToken\": \"12fb19444e4049c8806979044e64cd5c\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/transactions/{{TRANSACTION_ID}}/activation-results",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"transactions",
+						"{{TRANSACTION_ID}}",
+						"activation-results"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "5. Nuova transaction no NM3",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"\", () => {",
+							"",
+							"  const responseJson = pm.response.json();",
+							"  pm.environment.set(\"TRANSACTION_ID\", responseJson.transactionId);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"rptId\": \"77777777777330201210000001112\",\n    \"paymentContextCode\" : \"12fb19444e4049c8806979044e64cd5c\",\n    \"email\": \"test@example.com\",\n    \"amount\" : 1200\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/transactions",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"transactions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "5. Get transaction",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"\", () => {",
+							"",
+							"  const responseJson = pm.response.json();",
+							"  pm.environment.set(\"TRANSACTION_ID\", responseJson.transactionId);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"rptId\": \"77777777777330201210000001112\",\n    \"paymentContextCode\" : \"12fb19444e4049c8806979044e64cd5c\",\n    \"email\": \"test@example.com\",\n    \"amount\" : 1200\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/transactions/{{TRANSACTION_ID}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"transactions",
+						"{{TRANSACTION_ID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "5. Activation completed (cdinfowisp)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"\", () => {",
+							"",
+							"  const responseJson = pm.response.json();",
+							"  pm.environment.set(\"TRANSACTION_ID\", responseJson.transactionId);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"activationResult\": \"OK\",\n    \"paymentToken\": \"aaaea8ee-ba65-42e8-bf40-f2d0a318cd93\",\n    \"timestampOperation\": \"2022-09-12T13:00:00+01:00\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/transactions/{{TRANSACTION_ID}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"transactions",
+						"{{TRANSACTION_ID}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
