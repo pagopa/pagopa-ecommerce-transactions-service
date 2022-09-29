@@ -145,7 +145,7 @@ public class TransactionActivateHandler
   }
 
   private boolean isValidPaymentToken(String paymentToken) {
-    return paymentToken != null && !paymentToken.trim().isEmpty();
+    return paymentToken != null && !paymentToken.isBlank();
   }
 
   private Mono<TransactionActivationRequestedEvent> newTransactionActivationRequestedEvent(
