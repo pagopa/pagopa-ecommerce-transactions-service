@@ -62,7 +62,6 @@ class TransactionActivateResultHandlerTest {
 
         TransactionActivationRequested transaction = new TransactionActivationRequested(
                 new TransactionId(UUID.fromString(transactionId)),
-                new PaymentToken(paymentToken),
                 rptId,
                 new TransactionDescription("testTransactionDescription"),
                 new TransactionAmount(amount),
@@ -108,7 +107,6 @@ class TransactionActivateResultHandlerTest {
 
             TransactionActivationRequested transaction = new TransactionActivationRequested(
                 new TransactionId(UUID.fromString(transactionId)),
-                new PaymentToken(paymentToken),
                 rptId,
                 new TransactionDescription("testTransactionDescription"),
                 new TransactionAmount(amount),
@@ -193,7 +191,6 @@ class TransactionActivateResultHandlerTest {
 
         TransactionActivationRequested transactionActivationRequested = new TransactionActivationRequested(
                 new TransactionId(UUID.fromString(transactionId)),
-                new PaymentToken(paymentToken),
                 rptId,
                 new TransactionDescription("testTransactionDescription"),
                 new TransactionAmount(amount),
@@ -240,7 +237,6 @@ class TransactionActivateResultHandlerTest {
 
         TransactionActivationRequested transactionActivationRequested = new TransactionActivationRequested(
                 new TransactionId(UUID.fromString(transactionId)),
-                new PaymentToken(paymentToken),
                 rptId,
                 new TransactionDescription("testTransactionDescription"),
                 new TransactionAmount(amount),

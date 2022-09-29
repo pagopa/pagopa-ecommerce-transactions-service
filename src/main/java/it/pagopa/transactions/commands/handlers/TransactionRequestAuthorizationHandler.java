@@ -43,7 +43,7 @@ public class TransactionRequestAuthorizationHandler
 
         if (transaction.getStatus() != TransactionStatusDto.ACTIVATED) {
             log.warn("Invalid state transition: requested authorization for transaction {} from status {}",
-                    transaction.getPaymentToken().value(), transaction.getStatus());
+                    transaction.getTransactionActivatedData().getPaymentToken(), transaction.getStatus());
             return Mono.error(new AlreadyProcessedException(transaction.getRptId()));
         }
 
@@ -54,7 +54,7 @@ public class TransactionRequestAuthorizationHandler
                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                             transaction.getTransactionId().value().toString(),
                             transaction.getRptId().value(),
-                            transaction.getPaymentToken().value(),
+                            transaction.getTransactionActivatedData().getPaymentToken(),
                             new TransactionAuthorizationRequestData(
                                     command.getData().transaction().getAmount().value(),
                                     command.getData().fee(),

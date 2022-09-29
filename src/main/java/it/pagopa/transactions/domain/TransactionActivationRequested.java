@@ -1,6 +1,7 @@
 package it.pagopa.transactions.domain;
 
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
+import it.pagopa.transactions.documents.TransactionActivatedEvent;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestedEvent;
 import it.pagopa.transactions.domain.pojos.BaseTransaction;
 
@@ -8,24 +9,24 @@ import java.time.ZonedDateTime;
 
 import static java.time.ZonedDateTime.now;
 
-public final class TransactionActivationRequested extends BaseTransaction implements EventUpdatable<TransactionWithRequestedAuthorization, TransactionAuthorizationRequestedEvent>, Transaction {
-    public TransactionActivationRequested(TransactionId transactionId, PaymentToken paymentToken, RptId rptId, TransactionDescription description, TransactionAmount amount, ZonedDateTime creationDate, TransactionStatusDto status) {
-        super(transactionId, paymentToken, rptId, description, amount, creationDate, status);
+public final class TransactionActivationRequested extends BaseTransaction implements EventUpdatable<TransactionActivated, TransactionActivatedEvent>, Transaction {
+    public TransactionActivationRequested(TransactionId transactionId, RptId rptId, TransactionDescription description, TransactionAmount amount, ZonedDateTime creationDate, TransactionStatusDto status) {
+        super(transactionId, rptId, description, amount, creationDate, status);
     }
 
-    public TransactionActivationRequested(TransactionId transactionId, PaymentToken paymentToken, RptId rptId, TransactionDescription description, TransactionAmount amount, TransactionStatusDto status) {
-        super(transactionId, paymentToken, rptId, description, amount, now(), status);
+    public TransactionActivationRequested(TransactionId transactionId, RptId rptId, TransactionDescription description, TransactionAmount amount, TransactionStatusDto status) {
+        super(transactionId, rptId, description, amount, now(), status);
     }
 
     @Override
-    public TransactionWithRequestedAuthorization apply(TransactionAuthorizationRequestedEvent event) {
-        return new TransactionWithRequestedAuthorization(this, event);
+    public TransactionActivated apply(TransactionActivatedEvent event) {
+        return new TransactionActivated(this, event);
     }
 
     @Override
     public <E> Transaction applyEvent(E event) {
-        if (event instanceof TransactionAuthorizationRequestedEvent) {
-            return this.apply((TransactionAuthorizationRequestedEvent) event);
+        if (event instanceof TransactionActivatedEvent) {
+            return this.apply((TransactionActivatedEvent) event);
         } else {
             return this;
         }

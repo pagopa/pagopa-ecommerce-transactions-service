@@ -77,7 +77,7 @@ class TransactionDocumentTest {
 
         Transaction transactionDocument = Transaction.from(transaction);
 
-        assertEquals(transactionDocument.getPaymentToken(), transaction.getPaymentToken().value());
+        assertEquals(transactionDocument.getPaymentToken(), transaction.getTransactionActivatedData().getPaymentToken());
         assertEquals(transactionDocument.getRptId(), transaction.getRptId().value());
         assertEquals(transactionDocument.getDescription(), transaction.getDescription().value());
         assertEquals(transactionDocument.getAmount(), transaction.getAmount().value());

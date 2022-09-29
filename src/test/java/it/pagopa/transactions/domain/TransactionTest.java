@@ -33,7 +33,7 @@ class TransactionTest {
                 status
         );
 
-        assertEquals(transaction.getPaymentToken(), paymentToken);
+        assertEquals(new PaymentToken(transaction.getTransactionActivatedData().getPaymentToken()), paymentToken);
         assertEquals(transaction.getRptId(), rptId);
         assertEquals(transaction.getDescription(), description);
         assertEquals(transaction.getAmount(), amount);

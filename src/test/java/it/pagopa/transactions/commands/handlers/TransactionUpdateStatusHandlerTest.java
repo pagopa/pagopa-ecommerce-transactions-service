@@ -68,7 +68,7 @@ class TransactionUpdateStatusHandlerTest {
         TransactionStatusUpdatedEvent event = new TransactionStatusUpdatedEvent(
                 transactionId.toString(),
                 transaction.getRptId().toString(),
-                transaction.getPaymentToken().toString(),
+                transaction.getTransactionActivatedData().getPaymentToken(),
                 transactionAuthorizationStatusUpdateData);
 
         /* preconditions */
@@ -117,7 +117,7 @@ class TransactionUpdateStatusHandlerTest {
         TransactionStatusUpdatedEvent event = new TransactionStatusUpdatedEvent(
                 transactionId.toString(),
                 transaction.getRptId().toString(),
-                transaction.getPaymentToken().toString(),
+                transaction.getTransactionActivatedData().getPaymentToken(),
                 transactionAuthorizationStatusUpdateData);
 
         /* preconditions */

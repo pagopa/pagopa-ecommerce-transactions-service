@@ -116,7 +116,7 @@ class TransactionSendClosureHandlerTest {
         TransactionClosureSentEvent event = new TransactionClosureSentEvent(
                 transactionId.toString(),
                 transaction.getRptId().toString(),
-                transaction.getPaymentToken().toString(),
+                transaction.getTransactionActivatedData().getPaymentToken(),
                 transactionClosureSendData
         );
 
@@ -138,7 +138,7 @@ class TransactionSendClosureHandlerTest {
                 );
 
         ClosePaymentRequestDto closePaymentRequest = new ClosePaymentRequestDto()
-                .paymentTokens(List.of(transaction.getPaymentToken().value()))
+                .paymentTokens(List.of(transaction.getTransactionActivatedData().getPaymentToken()))
                 .outcome(ClosePaymentRequestDto.OutcomeEnum.OK)
                 .identificativoPsp(authorizationRequestData.getPspId())
                 .tipoVersamento(ClosePaymentRequestDto.TipoVersamentoEnum.fromValue(authorizationRequestData.getPaymentTypeCode()))

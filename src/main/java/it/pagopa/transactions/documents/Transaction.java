@@ -47,7 +47,7 @@ public class Transaction {
     public static Transaction from(TransactionActivated transaction) {
         return new Transaction(
                 transaction.getTransactionId().value().toString(),
-                transaction.getPaymentToken().value(),
+                transaction.getTransactionActivatedData().getPaymentToken(),
                 transaction.getRptId().value(),
                 transaction.getDescription().value(),
                 transaction.getAmount().value(),

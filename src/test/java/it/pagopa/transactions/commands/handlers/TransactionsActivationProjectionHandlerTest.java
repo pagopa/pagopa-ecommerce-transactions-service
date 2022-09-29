@@ -67,7 +67,7 @@ class TransactionsActivationProjectionHandlerTest {
         Assert.assertEquals(transactionResult.getAmount(),transaction.getAmount());
         Assert.assertEquals(transactionResult.getDescription(),transaction.getDescription());
         Assert.assertEquals(transactionResult.getRptId(),transaction.getRptId());
-        Assert.assertEquals(transactionResult.getPaymentToken(),transaction.getPaymentToken());
+        Assert.assertEquals(transactionResult.getTransactionActivatedData().getPaymentToken(),transaction.getTransactionActivatedData().getPaymentToken());
 
 
     }

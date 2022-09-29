@@ -33,7 +33,7 @@ public class TransactionsActivationRequestedProjectionHandler
     TransactionAmount amount = new TransactionAmount(transactionActivationRequestedEvent.getData().getAmount());
 
     TransactionActivationRequested transaction =
-        new TransactionActivationRequested(transactionId, paymentToken, rptId, description, amount, TransactionStatusDto.ACTIVATION_REQUESTED);
+        new TransactionActivationRequested(transactionId, rptId, description, amount, TransactionStatusDto.ACTIVATION_REQUESTED);
 
     it.pagopa.transactions.documents.Transaction transactionDocument =
         it.pagopa.transactions.documents.Transaction.from(transaction);

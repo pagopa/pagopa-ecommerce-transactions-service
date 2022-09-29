@@ -52,7 +52,6 @@ class TransactionProjectionHandlerTest {
 
         TransactionActivationRequested expected = new TransactionActivationRequested(
                 transactionId,
-                paymentToken,
                 rptId,
                 description,
                 amount,

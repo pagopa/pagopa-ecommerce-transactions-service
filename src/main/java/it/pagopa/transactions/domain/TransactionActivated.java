@@ -1,23 +1,28 @@
 package it.pagopa.transactions.domain;
 
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
-import it.pagopa.transactions.annotations.AggregateRoot;
+import it.pagopa.transactions.documents.TransactionActivatedData;
 import it.pagopa.transactions.documents.TransactionActivatedEvent;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestedEvent;
-import it.pagopa.transactions.domain.pojos.BaseTransaction;
-import it.pagopa.transactions.domain.pojos.BaseTransactionWithActivationRequested;
+import it.pagopa.transactions.domain.pojos.BaseTransactionWithPaymentToken;
 
 import java.time.ZonedDateTime;
 
 import static java.time.ZonedDateTime.now;
 
-public final class TransactionActivated extends BaseTransaction implements EventUpdatable<TransactionWithRequestedAuthorization, TransactionAuthorizationRequestedEvent>, Transaction {
+public final class TransactionActivated extends BaseTransactionWithPaymentToken implements EventUpdatable<TransactionWithRequestedAuthorization, TransactionAuthorizationRequestedEvent>, Transaction {
     public TransactionActivated(TransactionId transactionId, PaymentToken paymentToken, RptId rptId, TransactionDescription description, TransactionAmount amount, ZonedDateTime creationDate, TransactionStatusDto status) {
-        super(transactionId, paymentToken, rptId, description, amount, creationDate, status);
+        //FIXME Fix null value after PR EMail merged
+        super(new TransactionActivationRequested(transactionId, rptId, description, amount, creationDate, status), new TransactionActivatedData(description.value(), amount.value(), null, null, null, paymentToken.value()));
     }
 
     public TransactionActivated(TransactionId transactionId, PaymentToken paymentToken, RptId rptId, TransactionDescription description, TransactionAmount amount, TransactionStatusDto status) {
-        super(transactionId, paymentToken, rptId, description, amount, now(), status);
+        //FIXME Fix null value after PR EMail merged
+        super(new TransactionActivationRequested(transactionId, rptId, description, amount, now(), status), new TransactionActivatedData(description.value(), amount.value(), null, null, null, paymentToken.value()));
+    }
+
+    public TransactionActivated(TransactionActivationRequested transactionActivationRequested, TransactionActivatedEvent event) {
+        super(transactionActivationRequested, event.getData());
     }
 
     @Override

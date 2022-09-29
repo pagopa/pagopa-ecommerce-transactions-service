@@ -95,7 +95,6 @@ class TransactionServiceTest {
 
         TransactionActivationRequested transactionActivationRequested = new TransactionActivationRequested(
                 new TransactionId(TRANSACTION_ID),
-                new PaymentToken(TEST_TOKEN),
                 new RptId(TEST_RPTID),
                 new TransactionDescription("desc"),
                 new TransactionAmount(0),

@@ -56,12 +56,12 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                             transaction.getTransactionId().value().toString(),
                             TransactionEventCode.TRANSACTION_AUTHORIZATION_REQUESTED_EVENT
                     )
-                    .switchIfEmpty(Mono.error(new TransactionNotFoundException(transaction.getPaymentToken().value())))
+                    .switchIfEmpty(Mono.error(new TransactionNotFoundException(transaction.getTransactionActivatedData().getPaymentToken())))
                     .flatMap(authorizationRequestedEvent -> {
                         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
                         ClosePaymentRequestDto closePaymentRequest = new ClosePaymentRequestDto()
-                                .paymentTokens(List.of(transaction.getPaymentToken().value()))
+                                .paymentTokens(List.of(transaction.getTransactionActivatedData().getPaymentToken()))
                                 .outcome(authorizationResultToOutcome(updateAuthorizationRequest.getAuthorizationResult()))
                                 .identificativoPsp(authorizationRequestData.getPspId())
                                 .tipoVersamento(ClosePaymentRequestDto.TipoVersamentoEnum.fromValue(authorizationRequestData.getPaymentTypeCode()))
@@ -100,7 +100,7 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                         TransactionClosureSentEvent event = new TransactionClosureSentEvent(
                                 transaction.getTransactionId().value().toString(),
                                 transaction.getRptId().value(),
-                                transaction.getPaymentToken().value(),
+                                transaction.getTransactionActivatedData().getPaymentToken(),
                                 closureSendData
                         );
 

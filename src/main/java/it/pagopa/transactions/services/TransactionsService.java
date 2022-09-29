@@ -292,16 +292,16 @@ public class TransactionsService {
             transaction ->
                 new TransactionInfoDto()
                     .transactionId(transaction.getTransactionId().value().toString())
+                    .paymentToken(transaction.getTransactionActivatedData().getPaymentToken())
                     .amount(transaction.getAmount().value())
                     .reason(transaction.getDescription().value())
-                    .paymentToken(transaction.getPaymentToken().value())
                     .rptId(transaction.getRptId().value())
                     .status(transaction.getStatus())
                     .authToken(null))
         .doOnNext(
             transaction ->
                 log.info(
-                    "Transaction status updated NOTIFIED for transactionId: {}",
+                    "Transaction status updated {} for transactionId: {}",
                     transaction.getStatus(),
                     transaction.getTransactionId()));
   }
@@ -316,7 +316,6 @@ public class TransactionsService {
               TransactionActivationRequested transaction =
                   new TransactionActivationRequested(
                       new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
-                      new PaymentToken(transactionDocument.getPaymentToken()),
                       new RptId(transactionDocument.getRptId()),
                       new TransactionDescription(transactionDocument.getDescription()),
                       new TransactionAmount(transactionDocument.getAmount()),

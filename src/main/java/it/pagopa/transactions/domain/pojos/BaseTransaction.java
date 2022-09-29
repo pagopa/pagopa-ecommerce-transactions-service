@@ -19,7 +19,6 @@ import java.time.ZonedDateTime;
 public abstract class BaseTransaction {
     @AggregateRootId
     TransactionId transactionId;
-    PaymentToken paymentToken;
     RptId rptId;
     TransactionDescription description;
     TransactionAmount amount;

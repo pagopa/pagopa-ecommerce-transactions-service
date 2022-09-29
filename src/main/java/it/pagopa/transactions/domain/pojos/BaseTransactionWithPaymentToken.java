@@ -1,6 +1,7 @@
 package it.pagopa.transactions.domain.pojos;
 
 import it.pagopa.transactions.documents.TransactionActivatedData;
+import it.pagopa.transactions.domain.PaymentToken;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -11,22 +12,21 @@ import lombok.experimental.FieldDefaults;
 @EqualsAndHashCode(callSuper = true)
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @Getter
-public abstract class BaseTransactionWithActivationRequested extends BaseTransaction {
+public abstract class BaseTransactionWithPaymentToken extends BaseTransaction {
 
-  TransactionActivatedData transactionActivationRequestedData;
+  TransactionActivatedData transactionActivatedData;
 
-  protected BaseTransactionWithActivationRequested(
+  protected BaseTransactionWithPaymentToken(
       BaseTransaction baseTransaction,
-      TransactionActivatedData transactionActivationRequestedData) {
+      TransactionActivatedData transactionActivatedData) {
     super(
         baseTransaction.getTransactionId(),
-        baseTransaction.getPaymentToken(),
         baseTransaction.getRptId(),
         baseTransaction.getDescription(),
         baseTransaction.getAmount(),
         baseTransaction.getCreationDate(),
         baseTransaction.getStatus());
 
-    this.transactionActivationRequestedData = transactionActivationRequestedData;
+    this.transactionActivatedData = transactionActivatedData;
   }
 }
