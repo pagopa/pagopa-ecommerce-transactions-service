@@ -60,7 +60,7 @@ class TransactionActivateResultHandlerTest {
                 new ActivationResultRequestDto()
                         .paymentToken(paymentToken);
 
-        TransactionActivated transaction = new TransactionActivated(
+        TransactionActivationRequested transaction = new TransactionActivationRequested(
                 new TransactionId(UUID.fromString(transactionId)),
                 new PaymentToken(paymentToken),
                 rptId,
@@ -106,7 +106,7 @@ class TransactionActivateResultHandlerTest {
                 new ActivationResultRequestDto()
                         .paymentToken(paymentToken);
 
-            TransactionActivated transaction = new TransactionActivated(
+            TransactionActivationRequested transaction = new TransactionActivationRequested(
                 new TransactionId(UUID.fromString(transactionId)),
                 new PaymentToken(paymentToken),
                 rptId,
@@ -120,7 +120,7 @@ class TransactionActivateResultHandlerTest {
         TransactionActivateResultCommand command = new TransactionActivateResultCommand(rptId, activationResultData);
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                command.getData().transactionInitialized().getTransactionId().toString(),
+                command.getData().transactionActivationRequested().getTransactionId().toString(),
                 rptId.value(),
                 paymentToken,
                 new TransactionActivatedData(transaction.getDescription().value(), transaction.getAmount().value(), null, null, null, null)
@@ -191,7 +191,7 @@ class TransactionActivateResultHandlerTest {
                 new ActivationResultRequestDto()
                         .paymentToken(paymentToken);
 
-        TransactionActivated transactionInitialized = new TransactionActivated(
+        TransactionActivationRequested transactionActivationRequested = new TransactionActivationRequested(
                 new TransactionId(UUID.fromString(transactionId)),
                 new PaymentToken(paymentToken),
                 rptId,
@@ -201,7 +201,7 @@ class TransactionActivateResultHandlerTest {
         );
 
 
-        ActivationResultData activationResultData = new ActivationResultData(transactionInitialized, activationResultRequestDto);
+        ActivationResultData activationResultData = new ActivationResultData(transactionActivationRequested, activationResultRequestDto);
 
         TransactionActivateResultCommand command = new TransactionActivateResultCommand(rptId, activationResultData);
 
@@ -238,7 +238,7 @@ class TransactionActivateResultHandlerTest {
                 new ActivationResultRequestDto()
                         .paymentToken(paymentToken);
 
-        TransactionActivated transactionInitialized = new TransactionActivated(
+        TransactionActivationRequested transactionActivationRequested = new TransactionActivationRequested(
                 new TransactionId(UUID.fromString(transactionId)),
                 new PaymentToken(paymentToken),
                 rptId,
@@ -247,7 +247,7 @@ class TransactionActivateResultHandlerTest {
                 TransactionStatusDto.ACTIVATION_REQUESTED
         );
 
-        ActivationResultData activationResultData = new ActivationResultData(transactionInitialized, activationResultRequestDto);
+        ActivationResultData activationResultData = new ActivationResultData(transactionActivationRequested, activationResultRequestDto);
 
         TransactionActivateResultCommand command = new TransactionActivateResultCommand(rptId, activationResultData);
 

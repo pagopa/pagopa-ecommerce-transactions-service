@@ -6,6 +6,7 @@ import it.pagopa.transactions.commands.TransactionActivateResultCommand;
 import it.pagopa.transactions.documents.TransactionActivatedData;
 import it.pagopa.transactions.documents.TransactionActivatedEvent;
 import it.pagopa.transactions.domain.TransactionActivated;
+import it.pagopa.transactions.domain.TransactionActivationRequested;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.PaymentRequestInfo;
@@ -31,16 +32,16 @@ public class TransactionActivateResultHandler
 	@Override
 	public Mono<TransactionActivatedEvent> handle(TransactionActivateResultCommand command) {
 
-		final TransactionActivated transactionInitialized = command.getData().transactionInitialized();
+		final TransactionActivationRequested transactionActivationRequested = command.getData().transactionActivationRequested();
 
-		final String transactionId = command.getData().transactionInitialized().getTransactionId().value().toString();
+		final String transactionId = command.getData().transactionActivationRequested().getTransactionId().value().toString();
 		TransactionActivatedData data = new TransactionActivatedData();
-		data.setAmount(transactionInitialized.getAmount().value());
-		data.setDescription(transactionInitialized.getDescription().value());
+		data.setAmount(transactionActivationRequested.getAmount().value());
+		data.setDescription(transactionActivationRequested.getDescription().value());
 
 		return Mono.just(command)
 				.filterWhen(commandData -> Mono
-						.just(commandData.getData().transactionInitialized().getStatus() == TransactionStatusDto.ACTIVATION_REQUESTED))
+						.just(commandData.getData().transactionActivationRequested().getStatus() == TransactionStatusDto.ACTIVATION_REQUESTED))
 				.switchIfEmpty(Mono.error(new AlreadyProcessedException(command.getRptId())))
 				.flatMap(commandData -> {
 					final String paymentToken = commandData.getData().activationResultData().getPaymentToken();
@@ -72,7 +73,7 @@ public class TransactionActivateResultHandler
 					TransactionActivatedEvent transactionInitializedEvent =
 							new TransactionActivatedEvent(
 									transactionId,
-									command.getData().transactionInitialized().getRptId().value(),
+									command.getData().transactionActivationRequested().getRptId().value(),
 									saved.paymentToken(),
 									data);
 					log.info("Saving transactionInitializedevent {}", transactionInitializedEvent);

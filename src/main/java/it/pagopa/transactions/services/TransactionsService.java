@@ -313,8 +313,8 @@ public class TransactionsService {
         .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
         .map(
             transactionDocument -> {
-              TransactionActivated transaction =
-                  new TransactionActivated(
+              TransactionActivationRequested transaction =
+                  new TransactionActivationRequested(
                       new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
                       new PaymentToken(transactionDocument.getPaymentToken()),
                       new RptId(transactionDocument.getRptId()),
