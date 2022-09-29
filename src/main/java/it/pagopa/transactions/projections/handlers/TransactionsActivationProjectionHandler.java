@@ -38,7 +38,7 @@ public class TransactionsActivationProjectionHandler
 
 		return viewEventStoreRepository
 				.save(transactionDocument)
-				.doOnNext(e -> log.info("Transactions update view for rptId: {}", e.getRptId()))
+				.doOnNext(t -> log.info("Transactions update view for rptId: {}", t.getRptId()))
 				.thenReturn(transaction);
 	}
 }
