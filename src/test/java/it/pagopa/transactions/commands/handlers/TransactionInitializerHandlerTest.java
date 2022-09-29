@@ -8,6 +8,8 @@ import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.documents.TransactionActivatedData;
+import it.pagopa.transactions.documents.TransactionActivatedEvent;
+import it.pagopa.transactions.documents.TransactionActivationRequestedEvent;
 import it.pagopa.transactions.domain.IdempotencyKey;
 import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.projections.TransactionsProjection;
@@ -23,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple3;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -95,15 +98,18 @@ class TransactionInitializerHandlerTest {
         .thenReturn(Mono.just(sessionDataDto));
 
     /** preconditions */
-    NewTransactionResponseDto response = handler.handle(command).block();
+    Tuple3<
+            Mono<TransactionActivatedEvent>,
+            Mono<TransactionActivationRequestedEvent>,
+            SessionDataDto> response = handler.handle(command).block();
 
     /** asserts */
     Mockito.verify(paymentRequestInfoRepository, Mockito.times(1)).findById(rptId);
     Mockito.verify(ecommerceSessionsClient, Mockito.times(1)).createSessionToken(Mockito.any());
 
-    assertEquals(sessionDataDto.getRptId(), response.getRptId());
-    assertEquals(sessionDataDto.getPaymentToken(), response.getPaymentToken());
-    assertEquals(paymentRequestInfoCached.paymentToken(), response.getPaymentToken());
+    assertEquals(sessionDataDto.getRptId(), response.getT3().getRptId());
+    assertEquals(sessionDataDto.getPaymentToken(), response.getT3().getPaymentToken());
+    assertEquals(paymentRequestInfoCached.paymentToken(), response.getT3().getPaymentToken());
     assertNotNull(paymentRequestInfoCached.id());
   }
 

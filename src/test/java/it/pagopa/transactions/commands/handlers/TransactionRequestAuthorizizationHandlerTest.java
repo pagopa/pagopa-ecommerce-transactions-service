@@ -59,13 +59,13 @@ class TransactionRequestAuthorizizationHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
 
-        TransactionInitialized transaction = new TransactionInitialized(
+        TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 paymentToken,
                 rptId,
                 description,
                 amount,
-                TransactionStatusDto.INITIALIZED
+                TransactionStatusDto.ACTIVATED
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -110,7 +110,7 @@ class TransactionRequestAuthorizizationHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
 
-        TransactionInitialized transaction = new TransactionInitialized(
+        TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 paymentToken,
                 rptId,

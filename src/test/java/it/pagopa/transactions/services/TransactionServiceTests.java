@@ -102,7 +102,7 @@ public class TransactionServiceTests {
 	void getTransactionReturnsTransactionData() {
 
 		final Transaction transaction = new Transaction(TRANSACION_ID, PAYMENT_TOKEN, "rptId", "reason", 100,
-				TransactionStatusDto.INITIALIZED);
+				TransactionStatusDto.ACTIVATED);
 		final TransactionInfoDto expected = new TransactionInfoDto()
 		        .transactionId(TRANSACION_ID)
 				.amount(transaction.getAmount())
@@ -110,7 +110,7 @@ public class TransactionServiceTests {
 				.paymentToken(PAYMENT_TOKEN)
 				.authToken(null)
 				.rptId("rptId")
-				.status(TransactionStatusDto.INITIALIZED);
+				.status(TransactionStatusDto.ACTIVATED);
 
 		when(repository.findById(TRANSACION_ID)).thenReturn(Mono.just(transaction));
 
@@ -152,7 +152,7 @@ public class TransactionServiceTests {
 				"rptId",
 				"description",
 				100,
-				TransactionStatusDto.INITIALIZED);
+				TransactionStatusDto.ACTIVATED);
 
 		/* preconditions */
 		List<PspDto> pspDtoList = new ArrayList<>();
@@ -217,7 +217,7 @@ public class TransactionServiceTests {
 				100,
 				TransactionStatusDto.AUTHORIZATION_REQUESTED);
 
-		TransactionInitialized transaction = new TransactionInitialized(
+		TransactionActivated transaction = new TransactionActivated(
 				new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
 				new PaymentToken(transactionDocument.getPaymentToken()),
 				new RptId(transactionDocument.getRptId()),
@@ -321,7 +321,7 @@ public class TransactionServiceTests {
 				100,
 				TransactionStatusDto.CLOSED);
 
-		TransactionInitialized transaction = new TransactionInitialized(
+		TransactionActivated transaction = new TransactionActivated(
 				new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
 				new PaymentToken(transactionDocument.getPaymentToken()),
 				new RptId(transactionDocument.getRptId()),
@@ -419,25 +419,25 @@ public class TransactionServiceTests {
 				"RtpID",
 				"Description",
 				100,
-				TransactionStatusDto.INIT_REQUESTED
+				TransactionStatusDto.ACTIVATION_REQUESTED
 		);
 
 		RptId rtpId = new RptId("RtpID");
 
-		it.pagopa.transactions.domain.TransactionInitialized transactionInitializedDomain = new it.pagopa.transactions.domain.TransactionInitialized(
+		it.pagopa.transactions.domain.TransactionActivated transactionInitializedDomain = new it.pagopa.transactions.domain.TransactionActivated(
 				new TransactionId(UUID.fromString(TRANSACION_ID)),
 				new PaymentToken(PAYMENT_TOKEN),
 				rtpId,
 				new TransactionDescription("Description"),
 				new TransactionAmount(100),
-				TransactionStatusDto.INIT_REQUESTED
+				TransactionStatusDto.AUTHORIZATION_REQUESTED
 		);
 
 		TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
 				TRANSACION_ID,
 				"rptId",
 				PAYMENT_TOKEN,
-				new TransactionActivatedData(TRANSACION_ID, transactionInitializedDomain.getAmount().value(), null, null, null)
+				new TransactionActivatedData(TRANSACION_ID, transactionInitializedDomain.getAmount().value(), null, null, null, null)
 		);
 
 		Mockito.when(repository.findById(TRANSACION_ID)).thenReturn(Mono.just(transaction));

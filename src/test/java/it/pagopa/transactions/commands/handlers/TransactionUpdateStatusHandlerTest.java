@@ -42,7 +42,7 @@ class TransactionUpdateStatusHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
 
-        TransactionInitialized transaction = new TransactionInitialized(
+        TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 paymentToken,
                 rptId,
@@ -91,7 +91,7 @@ class TransactionUpdateStatusHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
 
-        TransactionInitialized transaction = new TransactionInitialized(
+        TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 paymentToken,
                 rptId,
@@ -140,13 +140,13 @@ class TransactionUpdateStatusHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
 
-        TransactionInitialized transaction = new TransactionInitialized(
+        TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 paymentToken,
                 rptId,
                 description,
                 amount,
-                TransactionStatusDto.INITIALIZED);
+                TransactionStatusDto.ACTIVATED);
 
         UpdateTransactionStatusRequestDto updateStatusRequest = new UpdateTransactionStatusRequestDto()
                 .authorizationResult(AuthorizationResultDto.OK)
