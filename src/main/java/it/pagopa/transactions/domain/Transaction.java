@@ -12,7 +12,5 @@ public sealed interface Transaction permits
         TransactionWithCompletedAuthorization,
         TransactionClosed
 {
-    <E> Transaction applyEvent(E event);
-
-    Transaction applyEvent2(TransactionEvent<?> event);
+    Transaction applyEvent(TransactionEvent<?> event);
 }

@@ -11,12 +11,7 @@ public final class TransactionClosed extends BaseTransactionClosed implements Tr
     }
 
     @Override
-    public <E> Transaction applyEvent(E event) {
-        return this;
-    }
-
-    @Override
-    public Transaction applyEvent2(TransactionEvent<?> event) {
+    public Transaction applyEvent(TransactionEvent<?> event) {
         return this;
     }
 }
