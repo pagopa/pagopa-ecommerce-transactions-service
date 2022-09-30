@@ -3,7 +3,8 @@ package it.pagopa.transactions.client;
 import javax.xml.bind.JAXBElement;
 
 import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentRequestDto;
-import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentResponseDto;
+import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
+import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.transactions.model.VerifyPaymentNoticeReq;
 import it.pagopa.generated.transactions.model.VerifyPaymentNoticeRes;
 import it.pagopa.transactions.exceptions.BadGatewayException;
@@ -70,11 +71,33 @@ public class NodeForPspClient {
 						(Exception error) -> log.error("Generic Error : {}", new Object[] { error }));
 	}
 
-	public Mono<ClosePaymentResponseDto> closePayment(ClosePaymentRequestDto request) {
+	public Mono<it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentResponseDto> closePayment(ClosePaymentRequestDto request) {
 		return nodoWebClient.post()
 				.uri("/v2/closepayment")
 				.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
 				.body(Mono.just(request), ClosePaymentRequestDto.class)
+				.retrieve()
+				.onStatus(HttpStatus::isError, clientResponse ->
+						clientResponse
+								.bodyToMono(String.class)
+								.flatMap(errorResponseBody ->
+										Mono.error(new ResponseStatusException(clientResponse.statusCode(), errorResponseBody))))
+				.bodyToMono(it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentResponseDto.class)
+				.doOnSuccess(closePaymentResponse ->
+						log.debug("Requested closePayment for paymentTokens {}", request.getPaymentTokens()))
+				.onErrorMap(ResponseStatusException.class,
+						error -> {
+							log.error("ResponseStatus Error:", error);
+							return new BadGatewayException("");
+						})
+				.doOnError(Exception.class, error -> log.error("Generic Error:", error));
+	}
+
+	public Mono<ClosePaymentResponseDto> closePaymentV2(ClosePaymentRequestV2Dto request) {
+		return nodoWebClient.post()
+				.uri("/v2/closepayment")
+				.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+				.body(Mono.just(request), ClosePaymentRequestV2Dto.class)
 				.retrieve()
 				.onStatus(HttpStatus::isError, clientResponse ->
 						clientResponse

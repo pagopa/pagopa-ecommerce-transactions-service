@@ -31,6 +31,9 @@ These are all environment variables needed by the application:
 | NOTIFICATIONS_SERVICE_READ_TIMEOUT             | Timeout for requests towards Notifications service                                 | number |         |
 | NOTIFICATIONS_SERVICE_CONNECTION_TIMEOUT       | Timeout for establishing connections towards Notifications service                 | number |         |
 | NOTIFICATIONS_SERVICE_API_KEY                  | Notifications service API Key                                                      | string |         |
+| NODOPERPM_URI                                  | NodoPerPM connection URI                                                           | string |         |
+| NODOPERPM_READ_TIMEOUT                         | NodoPerPM read timeout                                                             | number |         |
+| NODOPERPM_CONNECTION_TIMEOUT                   | NodoPerPM connection timeout                                                       | number |         |
 
 An example configuration of these environment variables is in the `.env.example` file.
 

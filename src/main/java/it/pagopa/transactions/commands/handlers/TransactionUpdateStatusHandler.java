@@ -47,7 +47,7 @@ public class TransactionUpdateStatusHandler
                     TransactionStatusUpdatedEvent event = new TransactionStatusUpdatedEvent(
                             commandData.getData().transaction().getTransactionId().value().toString(),
                             commandData.getData().transaction().getRptId().value(),
-                            commandData.getData().transaction().getPaymentToken().value(),
+                            commandData.getData().transaction().getTransactionActivatedData().getPaymentToken(),
                             statusUpdateData);
 
                     return transactionEventStoreRepository.save(event);

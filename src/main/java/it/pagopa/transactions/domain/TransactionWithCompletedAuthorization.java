@@ -2,6 +2,7 @@ package it.pagopa.transactions.domain;
 
 import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdatedEvent;
 import it.pagopa.transactions.documents.TransactionClosureSentEvent;
+import it.pagopa.transactions.documents.TransactionEvent;
 import it.pagopa.transactions.domain.pojos.BaseTransactionWithCompletedAuthorization;
 import it.pagopa.transactions.domain.pojos.BaseTransactionWithRequestedAuthorization;
 
@@ -16,7 +17,7 @@ public final class TransactionWithCompletedAuthorization extends BaseTransaction
     }
 
     @Override
-    public <E> Transaction applyEvent(E event) {
+    public Transaction applyEvent(TransactionEvent<?> event) {
         if (event instanceof TransactionClosureSentEvent) {
             return this.apply((TransactionClosureSentEvent) event);
         } else {

@@ -11,18 +11,13 @@ import lombok.experimental.FieldDefaults;
 @EqualsAndHashCode(callSuper = true)
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @Getter
-public abstract class BaseTransactionWithRequestedAuthorization extends BaseTransaction {
+public abstract class BaseTransactionWithRequestedAuthorization extends BaseTransactionWithPaymentToken {
     TransactionAuthorizationRequestData transactionAuthorizationRequestData;
 
-    protected BaseTransactionWithRequestedAuthorization(BaseTransaction baseTransaction, TransactionAuthorizationRequestData transactionAuthorizationRequestData) {
+    protected BaseTransactionWithRequestedAuthorization(BaseTransactionWithPaymentToken baseTransaction, TransactionAuthorizationRequestData transactionAuthorizationRequestData) {
         super(
-                baseTransaction.getTransactionId(),
-                baseTransaction.getPaymentToken(),
-                baseTransaction.getRptId(),
-                baseTransaction.getDescription(),
-                baseTransaction.getAmount(),
-                baseTransaction.getCreationDate(),
-                baseTransaction.getStatus()
+                baseTransaction,
+                baseTransaction.getTransactionActivatedData()
         );
 
         this.transactionAuthorizationRequestData = transactionAuthorizationRequestData;

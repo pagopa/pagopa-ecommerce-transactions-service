@@ -1,9 +1,9 @@
 package it.pagopa.transactions.commands.data;
 
-import it.pagopa.transactions.domain.TransactionInitialized;
+import it.pagopa.transactions.domain.TransactionActivated;
 
 public record AuthorizationRequestData(
-        TransactionInitialized transaction,
+		TransactionActivated transaction,
         int fee,
         String paymentInstrumentId,
         String pspId,

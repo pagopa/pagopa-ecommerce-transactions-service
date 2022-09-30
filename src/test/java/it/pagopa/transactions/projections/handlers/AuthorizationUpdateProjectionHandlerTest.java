@@ -38,7 +38,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 .authorizationCode("OK")
                 .timestampOperation(OffsetDateTime.now());
 
-        TransactionInitialized transaction = new TransactionInitialized(
+        TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(UUID.randomUUID()),
                 new PaymentToken("paymentToken"),
                 new RptId("rptId"),
@@ -49,7 +49,7 @@ class AuthorizationUpdateProjectionHandlerTest {
 
         it.pagopa.transactions.documents.Transaction expectedDocument = new it.pagopa.transactions.documents.Transaction(
                 transaction.getTransactionId().value().toString(),
-                transaction.getPaymentToken().value(),
+                transaction.getTransactionActivatedData().getPaymentToken(),
                 transaction.getRptId().value(),
                 transaction.getDescription().value(),
                 transaction.getAmount().value(),
@@ -66,13 +66,13 @@ class AuthorizationUpdateProjectionHandlerTest {
         TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
                 transaction.getTransactionId().value().toString(),
                 transaction.getRptId().value(),
-                transaction.getPaymentToken().value(),
+                transaction.getTransactionActivatedData().getPaymentToken(),
                 statusUpdateData
         );
 
-        TransactionInitialized expected = new TransactionInitialized(
+        TransactionActivated expected = new TransactionActivated(
                 transaction.getTransactionId(),
-                transaction.getPaymentToken(),
+                new PaymentToken(transaction.getTransactionActivatedData().getPaymentToken()),
                 transaction.getRptId(),
                 transaction.getDescription(),
                 transaction.getAmount(),

@@ -2,6 +2,8 @@ package it.pagopa.transactions.projections.handlers;
 
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
+import it.pagopa.transactions.documents.TransactionActivationRequestedData;
+import it.pagopa.transactions.documents.TransactionActivationRequestedEvent;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
@@ -22,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class TransactionProjectionHandlerTest {
 
     @InjectMocks
-    private TransactionsProjectionHandler transactionsProjectionHandler;
+    private TransactionsActivationRequestedProjectionHandler transactionsProjectionHandler;
 
     @Mock
     private TransactionsViewRepository viewEventStoreRepository;
@@ -32,26 +34,28 @@ class TransactionProjectionHandlerTest {
 
         UUID transactionUUID = UUID.randomUUID();
 
-        NewTransactionResponseDto data = new NewTransactionResponseDto()
-                .transactionId(transactionUUID.toString())
-                .paymentToken("token")
-                .rptId("77777777777302016723749670035")
-                .reason("reason")
-                .amount(1);
+        TransactionActivationRequestedData transactionActivationRequestedData = new TransactionActivationRequestedData();
+        transactionActivationRequestedData.setPaymentContextCode("ccpcode");
+        transactionActivationRequestedData.setEmail("email@test.it");
+        transactionActivationRequestedData.setDescription("reason");
+        transactionActivationRequestedData.setAmount(1);
+        transactionActivationRequestedData.setFaultCode("faultCode");
+        transactionActivationRequestedData.setFaultCodeString("faulteCodeString");
+
+        TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(transactionUUID.toString(), "77777777777302016723749670035", transactionActivationRequestedData);
 
         TransactionId transactionId = new TransactionId(transactionUUID);
-        PaymentToken paymentToken = new PaymentToken(data.getPaymentToken());
-        RptId rptId = new RptId(data.getRptId());
-        TransactionDescription description = new TransactionDescription(data.getReason());
-        TransactionAmount amount = new TransactionAmount(data.getAmount());
+        PaymentToken paymentToken = new PaymentToken(transactionActivationRequestedEvent.getPaymentToken());
+        RptId rptId = new RptId(transactionActivationRequestedEvent.getRptId());
+        TransactionDescription description = new TransactionDescription(transactionActivationRequestedEvent.getData().getDescription());
+        TransactionAmount amount = new TransactionAmount(transactionActivationRequestedEvent.getData().getAmount());
 
-        TransactionInitialized expected = new TransactionInitialized(
+        TransactionActivationRequested expected = new TransactionActivationRequested(
                 transactionId,
-                paymentToken,
                 rptId,
                 description,
                 amount,
-                TransactionStatusDto.INITIALIZED);
+                TransactionStatusDto.ACTIVATION_REQUESTED);
 
         try (
                 MockedStatic<ZonedDateTime> zonedDateTime = Mockito.mockStatic(ZonedDateTime.class)) {
@@ -67,7 +71,7 @@ class TransactionProjectionHandlerTest {
             /*
              * Test
              */
-            TransactionInitialized result = transactionsProjectionHandler.handle(data).cast(TransactionInitialized.class).block();
+            TransactionActivationRequested result = transactionsProjectionHandler.handle(transactionActivationRequestedEvent).cast(TransactionActivationRequested.class).block();
 
             /*
              * Assertions

@@ -10,7 +10,7 @@ class TransactionUtilTest {
 
     @Test
     void transactionUtilitiesTest(){
-        assertEquals("TRANSACTION_INITIALIZED_EVENT", TransactionEventCode.TRANSACTION_INITIALIZED_EVENT.toString());
-        assertEquals("INITIALIZED", TransactionStatusDto.INITIALIZED.getValue());
+        assertEquals("TRANSACTION_ACTIVATED_EVENT", TransactionEventCode.TRANSACTION_ACTIVATED_EVENT.toString());
+        assertEquals("ACTIVATED", TransactionStatusDto.ACTIVATED.getValue());
     }
 }
