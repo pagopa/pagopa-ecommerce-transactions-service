@@ -125,7 +125,7 @@ class TransactionSendClosureHandlerTest {
                 1,
                 "paymentInstrumentId",
                 "pspId",
-                null,
+                "",
                 "brokerName",
                 "pspChannelCode"
         );
@@ -147,6 +147,7 @@ class TransactionSendClosureHandlerTest {
                 .totalAmount(new BigDecimal(transaction.getAmount().value() + authorizationRequestData.getFee()))
                 .fee(new BigDecimal(authorizationRequestData.getFee()))
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
+                .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcome_payment_gateway", updateAuthorizationRequest.getAuthorizationResult().toString(),
