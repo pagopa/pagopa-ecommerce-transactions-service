@@ -1,8 +1,7 @@
 package it.pagopa.transactions.commands.handlers;
 
-import it.pagopa.generated.ecommerce.nodo.v1.dto.AdditionalPaymentInformationsDto;
-import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentRequestDto;
-import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentResponseDto;
+import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
+import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
@@ -24,6 +23,7 @@ import reactor.test.StepVerifier;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -111,7 +111,7 @@ class TransactionSendClosureHandlerTest {
 
         TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(transaction.getRptId(), closureSendData);
 
-        TransactionClosureSendData transactionClosureSendData = new TransactionClosureSendData(ClosePaymentResponseDto.EsitoEnum.KO, TransactionStatusDto.CLOSURE_FAILED);
+        TransactionClosureSendData transactionClosureSendData = new TransactionClosureSendData(ClosePaymentResponseDto.OutcomeEnum.KO, TransactionStatusDto.CLOSURE_FAILED);
 
         TransactionClosureSentEvent event = new TransactionClosureSentEvent(
                 transactionId.toString(),
@@ -125,7 +125,7 @@ class TransactionSendClosureHandlerTest {
                 1,
                 "paymentInstrumentId",
                 "pspId",
-                ClosePaymentRequestDto.TipoVersamentoEnum.BP.toString(),
+                null,
                 "brokerName",
                 "pspChannelCode"
         );
@@ -137,26 +137,25 @@ class TransactionSendClosureHandlerTest {
                         authorizationRequestData
                 );
 
-        ClosePaymentRequestDto closePaymentRequest = new ClosePaymentRequestDto()
+        ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(List.of(transaction.getTransactionActivatedData().getPaymentToken()))
-                .outcome(ClosePaymentRequestDto.OutcomeEnum.OK)
-                .identificativoPsp(authorizationRequestData.getPspId())
-                .tipoVersamento(ClosePaymentRequestDto.TipoVersamentoEnum.fromValue(authorizationRequestData.getPaymentTypeCode()))
-                .identificativoIntermediario(authorizationRequestData.getBrokerName())
-                .identificativoCanale(authorizationRequestData.getPspChannelCode())
-                .pspTransactionId(transaction.getTransactionId().value().toString())
+                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
+                .idPSP(authorizationRequestData.getPspId())
+                .idBrokerPSP(authorizationRequestData.getBrokerName())
+                .idChannel(authorizationRequestData.getPspChannelCode())
+                .transactionId(transaction.getTransactionId().value().toString())
                 .totalAmount(new BigDecimal(transaction.getAmount().value() + authorizationRequestData.getFee()))
                 .fee(new BigDecimal(authorizationRequestData.getFee()))
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
                 .additionalPaymentInformations(
-                        new AdditionalPaymentInformationsDto()
-                                .outcomePaymentGateway(updateAuthorizationRequest.getAuthorizationResult().toString())
-                                .transactionId(transaction.getTransactionId().value().toString())
-                                .authorizationCode(updateAuthorizationRequest.getAuthorizationCode())
+                        Map.of(
+                                "outcome_payment_gateway", updateAuthorizationRequest.getAuthorizationResult().toString(),
+                                "authorization_code", updateAuthorizationRequest.getAuthorizationCode()
+                        )
                 );
 
         ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
-                .esito(ClosePaymentResponseDto.EsitoEnum.KO);
+                .outcome(ClosePaymentResponseDto.OutcomeEnum.KO);
 
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
@@ -164,7 +163,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(transactionAuthorizationEventStoreRepository.findByTransactionIdAndEventCode(transactionId.value().toString(), TransactionEventCode.TRANSACTION_AUTHORIZATION_REQUESTED_EVENT))
                 .thenReturn(Mono.just(transactionAuthorizationRequestedEvent));
 
-        Mockito.when(nodeForPspClient.closePayment(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
+        Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))

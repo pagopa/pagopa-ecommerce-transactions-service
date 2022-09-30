@@ -1,7 +1,7 @@
 package it.pagopa.transactions.commands.handlers;
 
-import it.pagopa.generated.ecommerce.nodo.v1.dto.AdditionalPaymentInformationsDto;
 import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentRequestDto;
+import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
@@ -26,6 +26,7 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Component
 @Slf4j
@@ -60,30 +61,30 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                     .flatMap(authorizationRequestedEvent -> {
                         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
-                        ClosePaymentRequestDto closePaymentRequest = new ClosePaymentRequestDto()
+                        ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                                 .paymentTokens(List.of(transaction.getTransactionActivatedData().getPaymentToken()))
-                                .outcome(authorizationResultToOutcome(updateAuthorizationRequest.getAuthorizationResult()))
-                                .identificativoPsp(authorizationRequestData.getPspId())
-                                .tipoVersamento(ClosePaymentRequestDto.TipoVersamentoEnum.fromValue(authorizationRequestData.getPaymentTypeCode()))
-                                .identificativoIntermediario(authorizationRequestData.getBrokerName())
-                                .identificativoCanale(authorizationRequestData.getPspChannelCode())
-                                .pspTransactionId(transaction.getTransactionId().value().toString())
+                                .outcome(authorizationResultToOutcomeV2(updateAuthorizationRequest.getAuthorizationResult()))
+                                .idPSP(authorizationRequestData.getPspId())
+                                .idBrokerPSP(authorizationRequestData.getBrokerName())
+                                .idChannel(authorizationRequestData.getPspChannelCode())
+                                .transactionId(transaction.getTransactionId().value().toString())
                                 .totalAmount(new BigDecimal(transaction.getAmount().value() + authorizationRequestData.getFee()))
                                 .fee(new BigDecimal(authorizationRequestData.getFee()))
                                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
+                                .paymentMethod("") // FIXME
                                 .additionalPaymentInformations(
-                                        new AdditionalPaymentInformationsDto()
-                                                .outcomePaymentGateway(updateAuthorizationRequest.getAuthorizationResult().toString())
-                                                .transactionId(transaction.getTransactionId().value().toString())
-                                                .authorizationCode(updateAuthorizationRequest.getAuthorizationCode())
+                                        Map.of(
+                                                "outcome_payment_gateway", updateAuthorizationRequest.getAuthorizationResult().toString(),
+                                                "authorization_code", updateAuthorizationRequest.getAuthorizationCode()
+                                        )
                                 );
 
-                        return nodeForPspClient.closePayment(closePaymentRequest);
+                        return nodeForPspClient.closePaymentV2(closePaymentRequest);
                     })
                     .flatMap(response -> {
                         TransactionStatusDto newStatus;
 
-                        switch (response.getEsito()) {
+                        switch (response.getOutcome()) {
                             case OK -> newStatus = TransactionStatusDto.CLOSED;
                             case KO -> newStatus = TransactionStatusDto.CLOSURE_FAILED;
                             default -> {
@@ -93,7 +94,7 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
 
                         TransactionClosureSendData closureSendData =
                                 new TransactionClosureSendData(
-                                        response.getEsito(),
+                                        response.getOutcome(),
                                         newStatus
                                 );
 
@@ -116,6 +117,19 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
             }
             case KO -> {
                 return ClosePaymentRequestDto.OutcomeEnum.KO;
+            }
+            default ->
+                    throw new RuntimeException("Missing authorization result enum value mapping to Nodo closePayment outcome");
+        }
+    }
+
+    private ClosePaymentRequestV2Dto.OutcomeEnum authorizationResultToOutcomeV2(AuthorizationResultDto authorizationResult) {
+        switch (authorizationResult) {
+            case OK -> {
+                return ClosePaymentRequestV2Dto.OutcomeEnum.OK;
+            }
+            case KO -> {
+                return ClosePaymentRequestV2Dto.OutcomeEnum.KO;
             }
             default ->
                     throw new RuntimeException("Missing authorization result enum value mapping to Nodo closePayment outcome");

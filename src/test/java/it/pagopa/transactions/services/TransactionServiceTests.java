@@ -1,6 +1,6 @@
 package it.pagopa.transactions.services;
 
-import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentResponseDto;
+import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PSPsResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
 import it.pagopa.generated.transactions.server.model.*;
@@ -244,7 +244,7 @@ public class TransactionServiceTests {
 				statusUpdateData
 		);
 
-		TransactionClosureSendData closureSendData = new TransactionClosureSendData(ClosePaymentResponseDto.EsitoEnum.OK, TransactionStatusDto.CLOSED);
+		TransactionClosureSendData closureSendData = new TransactionClosureSendData(ClosePaymentResponseDto.OutcomeEnum.OK, TransactionStatusDto.CLOSED);
 
 		TransactionClosureSentEvent closureSentEvent = new TransactionClosureSentEvent(
 				transactionDocument.getTransactionId(),

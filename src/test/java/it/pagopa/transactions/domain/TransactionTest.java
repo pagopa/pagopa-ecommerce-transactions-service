@@ -1,6 +1,6 @@
 package it.pagopa.transactions.domain;
 
-import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentResponseDto;
+import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.documents.*;
@@ -489,7 +489,7 @@ class TransactionTest {
                 rptId,
                 paymentToken,
                 new TransactionClosureSendData(
-                        ClosePaymentResponseDto.EsitoEnum.OK,
+                        ClosePaymentResponseDto.OutcomeEnum.OK,
                         TransactionStatusDto.CLOSED
                 )
         );
@@ -578,7 +578,7 @@ class TransactionTest {
                 rptId,
                 paymentToken,
                 new TransactionClosureSendData(
-                        ClosePaymentResponseDto.EsitoEnum.OK,
+                        ClosePaymentResponseDto.OutcomeEnum.OK,
                         TransactionStatusDto.CLOSED
                 )
         );
