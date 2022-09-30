@@ -1,6 +1,7 @@
 package it.pagopa.transactions.documents;
 
-import it.pagopa.transactions.domain.TransactionInitialized;
+import it.pagopa.transactions.domain.TransactionActivated;
+import it.pagopa.transactions.domain.TransactionActivationRequested;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
@@ -43,10 +44,21 @@ public class Transaction {
         this.creationDate = creationDate;
     }
 
-    public static Transaction from(TransactionInitialized transaction) {
+    public static Transaction from(TransactionActivated transaction) {
         return new Transaction(
                 transaction.getTransactionId().value().toString(),
-                transaction.getPaymentToken().value(),
+                transaction.getTransactionActivatedData().getPaymentToken(),
+                transaction.getRptId().value(),
+                transaction.getDescription().value(),
+                transaction.getAmount().value(),
+                transaction.getStatus(),
+                transaction.getCreationDate().toString());
+    }
+
+    public static Transaction from(TransactionActivationRequested transaction) {
+        return new Transaction(
+                transaction.getTransactionId().value().toString(),
+                null,
                 transaction.getRptId().value(),
                 transaction.getDescription().value(),
                 transaction.getAmount().value(),

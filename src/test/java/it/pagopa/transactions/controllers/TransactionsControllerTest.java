@@ -291,7 +291,32 @@ class TransactionsControllerTest {
         assertEquals(responseCheck.getStatusCode(), response.getStatusCode());
     }
 
+
     @Test
+    void shouldReturnActivationResultResponseDto() {
+        String paymentToken = UUID.randomUUID().toString();
+        String transactionId = UUID.randomUUID().toString();
+
+        ActivationResultRequestDto activationResultRequestDto =
+                new ActivationResultRequestDto()
+                        .paymentToken(paymentToken);
+
+        /* preconditions */
+
+        ActivationResultResponseDto resultResponseDto = new ActivationResultResponseDto().outcome(ActivationResultResponseDto.OutcomeEnum.OK);
+
+        Mockito.when(transactionsService.activateTransaction(transactionId, activationResultRequestDto))
+                .thenReturn(Mono.just(resultResponseDto));
+
+        /* test */
+        ResponseEntity<ActivationResultResponseDto> response = transactionsController
+                .transactionActivationResult(transactionId, Mono.just(activationResultRequestDto), null).block();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(resultResponseDto, response.getBody());
+    }
+
+        @Test
     void shouldReturnTransactionInfoOnCorrectNotify() {
         String paymentToken = UUID.randomUUID().toString();
         String transactionId = UUID.randomUUID().toString();

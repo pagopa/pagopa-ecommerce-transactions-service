@@ -1,6 +1,7 @@
 package it.pagopa.transactions.domain;
 
 import it.pagopa.transactions.documents.TransactionClosureSentEvent;
+import it.pagopa.transactions.documents.TransactionEvent;
 import it.pagopa.transactions.domain.pojos.BaseTransactionClosed;
 import it.pagopa.transactions.domain.pojos.BaseTransactionWithCompletedAuthorization;
 
@@ -10,7 +11,7 @@ public final class TransactionClosed extends BaseTransactionClosed implements Tr
     }
 
     @Override
-    public <E> Transaction applyEvent(E event) {
+    public Transaction applyEvent(TransactionEvent<?> event) {
         return this;
     }
 }

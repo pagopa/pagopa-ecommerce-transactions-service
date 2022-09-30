@@ -42,7 +42,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
 
-        TransactionInitialized transaction = new TransactionInitialized(
+        TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 paymentToken,
                 rptId,
@@ -68,7 +68,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
                 transactionId.toString(),
                 transaction.getRptId().toString(),
-                transaction.getPaymentToken().toString(),
+                transaction.getTransactionActivatedData().getPaymentToken(),
                 transactionAuthorizationStatusUpdateData
         );
 
@@ -90,13 +90,13 @@ class TransactionUpdateAuthorizationHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
 
-        TransactionInitialized transaction = new TransactionInitialized(
+        TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 paymentToken,
                 rptId,
                 description,
                 amount,
-                TransactionStatusDto.INITIALIZED
+                TransactionStatusDto.ACTIVATED
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -126,7 +126,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
 
-        TransactionInitialized transaction = new TransactionInitialized(
+        TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 paymentToken,
                 rptId,
@@ -152,7 +152,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
                 transactionId.toString(),
                 transaction.getRptId().toString(),
-                transaction.getPaymentToken().toString(),
+                transaction.getTransactionActivatedData().getPaymentToken(),
                 transactionAuthorizationStatusUpdateData
         );
 

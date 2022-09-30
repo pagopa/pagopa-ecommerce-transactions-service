@@ -13,11 +13,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Generated
 
-public class TransactionInitData {
+public class TransactionActivatedData {
 
     private String description;
     private Integer amount;
     private String email;
     private String faultCode; // TODO enum with all PAA & PTT
     private String faultCodeString;
+    private String paymentToken;
 }

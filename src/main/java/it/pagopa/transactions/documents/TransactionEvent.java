@@ -2,7 +2,6 @@ package it.pagopa.transactions.documents;
 
 import com.azure.spring.data.cosmos.core.mapping.PartitionKey;
 import it.pagopa.transactions.utils.TransactionEventCode;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Generated;
 import org.springframework.data.annotation.Id;
@@ -17,7 +16,8 @@ import static java.time.ZonedDateTime.now;
 @Generated
 public abstract sealed class TransactionEvent<T>
         permits
-        TransactionInitEvent,
+        TransactionActivatedEvent,
+        TransactionActivationRequestedEvent,
         TransactionAuthorizationRequestedEvent,
         TransactionAuthorizationStatusUpdatedEvent,
         TransactionClosureSentEvent,
