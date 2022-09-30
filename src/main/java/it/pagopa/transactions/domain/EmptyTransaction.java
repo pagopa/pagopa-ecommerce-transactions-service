@@ -2,6 +2,7 @@ package it.pagopa.transactions.domain;
 
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.documents.TransactionActivatedEvent;
+import it.pagopa.transactions.documents.TransactionEvent;
 import lombok.EqualsAndHashCode;
 
 import java.time.ZonedDateTime;
@@ -24,6 +25,15 @@ public final class EmptyTransaction implements EventUpdatable<TransactionActivat
 
     @Override
     public <E> Transaction applyEvent(E event) {
+        if (event instanceof TransactionActivatedEvent) {
+            return this.apply((TransactionActivatedEvent) event);
+        } else {
+            return this;
+        }
+    }
+
+    @Override
+    public Transaction applyEvent2(TransactionEvent<?> event) {
         if (event instanceof TransactionActivatedEvent) {
             return this.apply((TransactionActivatedEvent) event);
         } else {

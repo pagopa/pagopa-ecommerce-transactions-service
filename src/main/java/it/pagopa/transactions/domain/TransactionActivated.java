@@ -4,6 +4,7 @@ import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.documents.TransactionActivatedData;
 import it.pagopa.transactions.documents.TransactionActivatedEvent;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestedEvent;
+import it.pagopa.transactions.documents.TransactionEvent;
 import it.pagopa.transactions.domain.pojos.BaseTransactionWithPaymentToken;
 
 import java.time.ZonedDateTime;
@@ -32,6 +33,15 @@ public final class TransactionActivated extends BaseTransactionWithPaymentToken 
 
     @Override
     public <E> Transaction applyEvent(E event) {
+        if (event instanceof TransactionAuthorizationRequestedEvent) {
+            return this.apply((TransactionAuthorizationRequestedEvent) event);
+        } else {
+            return this;
+        }
+    }
+
+    @Override
+    public Transaction applyEvent2(TransactionEvent<?> event) {
         if (event instanceof TransactionAuthorizationRequestedEvent) {
             return this.apply((TransactionAuthorizationRequestedEvent) event);
         } else {

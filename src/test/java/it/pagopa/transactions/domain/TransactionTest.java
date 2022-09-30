@@ -68,7 +68,7 @@ class TransactionTest {
 
         EmptyTransaction expected = new EmptyTransaction();
 
-        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent);
+        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent2);
 
         StepVerifier.create(actual)
                 .expectNext(expected)
@@ -110,7 +110,7 @@ class TransactionTest {
                 TransactionStatusDto.ACTIVATED
         );
 
-        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent);
+        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent2);
 
         StepVerifier.create(actual)
                 .expectNext(expected)
@@ -151,7 +151,7 @@ class TransactionTest {
                 TransactionStatusDto.ACTIVATED
         );
 
-        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent);
+        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent2);
 
         StepVerifier.create(actual)
                 .expectNext(expected)
@@ -213,7 +213,7 @@ class TransactionTest {
                 authorizationRequestedEvent
         );
 
-        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent);
+        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent2);
 
         StepVerifier.create(actual)
                 .expectNext(expected)
@@ -275,7 +275,7 @@ class TransactionTest {
                 authorizationRequestedEvent
         );
 
-        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent);
+        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent2);
 
         StepVerifier.create(actual)
                 .expectNext(expected)
@@ -352,7 +352,7 @@ class TransactionTest {
                 authorizationStatusUpdatedEvent
         );
 
-        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent);
+        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent2);
 
         StepVerifier.create(actual)
                 .expectNext(expected)
@@ -429,7 +429,7 @@ class TransactionTest {
                 authorizationStatusUpdatedEvent
         );
 
-        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent);
+        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent2);
 
         StepVerifier.create(actual)
                 .expectNext(expected)
@@ -518,7 +518,7 @@ class TransactionTest {
 
         TransactionClosed expected = new TransactionClosed(transactionWithCompletedAuthorization, closureSentEvent);
 
-        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent);
+        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent2);
 
         StepVerifier.create(actual)
                 .expectNext(expected)
@@ -613,7 +613,7 @@ class TransactionTest {
 
         TransactionClosed expected = new TransactionClosed(transactionWithCompletedAuthorization, closureSentEvent);
 
-        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent);
+        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent2);
 
         StepVerifier.create(actual)
                 .expectNext(expected)
