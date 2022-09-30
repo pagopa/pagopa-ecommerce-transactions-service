@@ -9,6 +9,7 @@ import it.pagopa.generated.transactions.model.VerifyPaymentNoticeReq;
 import it.pagopa.generated.transactions.model.VerifyPaymentNoticeRes;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -29,9 +30,12 @@ public class NodeForPspClient {
 	@Autowired
 	private WebClient nodoWebClient;
 
+	@Value("${nodo.nodeforpsp.uri}")
+	private String nodoPerPspUri;
+
 	public Mono<VerifyPaymentNoticeRes> verifyPaymentNotice(JAXBElement<VerifyPaymentNoticeReq> request) {
 		return nodoWebClient.post()
-				.uri("/webservices/pof/PagamentiTelematiciPspNodoservice")
+				.uri(nodoPerPspUri)
 				.header("Content-Type", MediaType.TEXT_XML_VALUE)
 				.header("SOAPAction", "verifyPaymentNotice")
 				.body(Mono.just(new SoapEnvelope("", request)), SoapEnvelope.class)

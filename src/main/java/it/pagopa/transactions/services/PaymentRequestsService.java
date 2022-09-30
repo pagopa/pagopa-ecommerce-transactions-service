@@ -45,6 +45,7 @@ public class PaymentRequestsService {
   public Mono<PaymentRequestsGetResponseDto> getPaymentRequestInfo(String rptId) {
 
     final RptId rptIdRecord = new RptId(rptId);
+    final String paymentContextCode = UUID.randomUUID().toString().replace("-", "");
 
     return getPaymentInfoFromCache(rptIdRecord)
         .doOnNext(
@@ -56,7 +57,7 @@ public class PaymentRequestsService {
         .switchIfEmpty(
             Mono.defer(
                 () ->
-                    getPaymentInfoFromNodo(rptIdRecord)
+                    getPaymentInfoFromNodo(rptIdRecord, paymentContextCode)
                         .doOnNext(
                             paymentRequestFromNodo ->
                                 log.info(
@@ -75,7 +76,7 @@ public class PaymentRequestsService {
                     .description(paymentInfo.description())
                     .amount(paymentInfo.amount())
                     .dueDate(paymentInfo.dueDate())
-                    .paymentContextCode(UUID.randomUUID().toString().replace("-", "")))
+                    .paymentContextCode(paymentContextCode))
         .doOnNext(
             paymentInfo ->
                 log.info("PaymentRequestInfo retrived for {}: {}", rptId, paymentInfo != null));
@@ -88,7 +89,7 @@ public class PaymentRequestsService {
     return paymentRequestInfoOptional.map(Mono::just).orElseGet(Mono::empty);
   }
 
-  private Mono<PaymentRequestInfo> getPaymentInfoFromNodo(RptId rptId) {
+  private Mono<PaymentRequestInfo> getPaymentInfoFromNodo(RptId rptId, String paymentContextCode) {
 
     return Mono.just(rptId)
         .flatMap(
@@ -101,9 +102,8 @@ public class PaymentRequestsService {
               qrCode.setCodIUV(rptId.getNoticeId().substring(1));
               qrCode.setAuxDigit(rptId.getNoticeId().substring(0, 1));
               nodoTipoCodiceIdRPT.setQrCode(qrCode);
-
               nodoVerificaRPTRequest.setCodiceIdRPT(nodoTipoCodiceIdRPT);
-
+              nodoVerificaRPTRequest.setCodiceContestoPagamento(paymentContextCode);
               return nodoPerPspClient.verificaRPT(
                   objectFactoryNodoPerPsp.createNodoVerificaRPT(nodoVerificaRPTRequest));
             })
@@ -116,8 +116,7 @@ public class PaymentRequestsService {
               final boolean isNM3 = isNm3(nodoVerificaRPTRResponse);
               final boolean isNodoErrorException = isNodoError(nodoVerificaRPTRResponse);
               return isNodoErrorException
-                  ? Mono.error(
-                      new NodoErrorException(faultBean.getFaultCode()))
+                  ? Mono.error(new NodoErrorException(faultBean.getFaultCode()))
                   : Mono.just(Tuples.of(nodoVerificaRPTRResponse, isNM3));
             })
         .flatMap(
@@ -153,11 +152,13 @@ public class PaymentRequestsService {
                                             .getPaymentOptionDescription()
                                             .get(0)
                                             .getAmount()),
-                                    getDueDateString(verifyPaymentNoticeRes
-                                                .getPaymentList()
-                                                .getPaymentOptionDescription()
-                                                .get(0)
-                                                .getDueDate()),                                    true,
+                                    getDueDateString(
+                                        verifyPaymentNoticeRes
+                                            .getPaymentList()
+                                            .getPaymentOptionDescription()
+                                            .get(0)
+                                            .getDueDate()),
+                                    true,
                                     null,
                                     null));
 
@@ -193,18 +194,20 @@ public class PaymentRequestsService {
   }
 
   private Boolean isNm3(EsitoNodoVerificaRPTRisposta nodoVerificaRPTRResponse) {
-      final String outcome = nodoVerificaRPTRResponse.getEsito();
-      final Boolean ko = StOutcome.KO.value().equals(outcome);
-      return ko && nodoVerificaRPTRResponse.getFault().getFaultCode().equals("PPT_MULTI_BENEFICIARIO");
+    final String outcome = nodoVerificaRPTRResponse.getEsito();
+    final Boolean ko = StOutcome.KO.value().equals(outcome);
+    return ko
+        && nodoVerificaRPTRResponse.getFault().getFaultCode().equals("PPT_MULTI_BENEFICIARIO");
   }
 
   private Boolean isNodoError(EsitoNodoVerificaRPTRisposta nodoVerificaRPTRResponse) {
-      final String outcome = nodoVerificaRPTRResponse.getEsito();
-      final Boolean ko = StOutcome.KO.value().equals(outcome);
-      return ko && !nodoVerificaRPTRResponse.getFault().getFaultCode().equals("PPT_MULTI_BENEFICIARIO");
+    final String outcome = nodoVerificaRPTRResponse.getEsito();
+    final Boolean ko = StOutcome.KO.value().equals(outcome);
+    return ko
+        && !nodoVerificaRPTRResponse.getFault().getFaultCode().equals("PPT_MULTI_BENEFICIARIO");
   }
 
   private String getDueDateString(XMLGregorianCalendar date) {
-      return date != null ? date.toString() : null;
+    return date != null ? date.toString() : null;
   }
 }

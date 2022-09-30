@@ -56,7 +56,7 @@ public class WebClientsConfig {
     }
 
     @Bean(name = "nodoWebClient")
-    public WebClient nodoWebClient(@Value("${nodo.uri}") String nodoUri,
+    public WebClient nodoWebClient(@Value("${nodo.hostname}") String nodoHostname,
                                    @Value("${nodo.readTimeout}") int nodoReadTimeout,
                                    @Value("${nodo.connectionTimeout}") int nodoConnectionTimeout) {
 
@@ -76,7 +76,7 @@ public class WebClientsConfig {
             clientCodecConfigurer.customCodecs().register(new Jackson2JsonEncoder(mapper, MediaType.APPLICATION_JSON));
         }).build();
 
-        return WebClient.builder().baseUrl(nodoUri)
+        return WebClient.builder().baseUrl(nodoHostname)
                 .clientConnector(new ReactorClientHttpConnector(httpClient)).exchangeStrategies(exchangeStrategies)
                 .build();
     }

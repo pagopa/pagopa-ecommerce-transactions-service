@@ -7,6 +7,7 @@ import it.pagopa.generated.nodoperpsp.model.NodoAttivaRPTRisposta;
 import it.pagopa.generated.nodoperpsp.model.NodoVerificaRPT;
 import it.pagopa.generated.nodoperpsp.model.NodoVerificaRPTRisposta;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -24,9 +25,12 @@ public class NodoPerPspClient {
     @Autowired
     private WebClient nodoWebClient;
 
+    @Value("${nodo.nodoperpsp.uri}")
+    private String nodoPerPspUri;
+
     public Mono<NodoVerificaRPTRisposta> verificaRPT(JAXBElement<NodoVerificaRPT> request) {
         return nodoWebClient.post()
-                .uri("/webservices/pof/PagamentiTelematiciPspNodoservice")
+                .uri(nodoPerPspUri)
                 .header("Content-Type", MediaType.TEXT_XML_VALUE)
                 .header("SOAPAction", "nodoVerificaRPT")
                 .body(Mono.just(new SoapEnvelope("", request)), SoapEnvelope.class)
