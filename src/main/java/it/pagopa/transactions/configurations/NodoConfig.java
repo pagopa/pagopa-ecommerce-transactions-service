@@ -36,6 +36,7 @@ public class NodoConfig {
     request.setIdentificativoCanale(nodoConnectionParams.getIdChannel());
     request.setIdentificativoIntermediarioPSP(nodoConnectionParams.getIdBrokerPSP());
     request.setPassword(nodoConnectionParams.getPassword());
+    request.setCodificaInfrastrutturaPSP("QR-CODE");
     return request;
   }
 
