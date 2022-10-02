@@ -101,6 +101,7 @@ public class PaymentRequestsService {
               qrCode.setCF(rptId.getFiscalCode());
               qrCode.setCodIUV(rptId.getNoticeId().substring(1));
               qrCode.setAuxDigit(rptId.getNoticeId().substring(0, 1));
+              qrCode.setCodStazPA(rptId.getNoticeId().substring(1, 3));
               nodoTipoCodiceIdRPT.setQrCode(qrCode);
               nodoVerificaRPTRequest.setCodiceIdRPT(nodoTipoCodiceIdRPT);
               nodoVerificaRPTRequest.setCodiceContestoPagamento(paymentContextCode);

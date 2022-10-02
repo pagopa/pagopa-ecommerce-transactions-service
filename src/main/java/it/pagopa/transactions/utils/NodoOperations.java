@@ -124,12 +124,12 @@ public class NodoOperations {
     NodoAttivaRPT nodoAttivaRPTReq = baseNodoAttivaRPT;
 
     NodoTipoCodiceIdRPT nodoTipoCodiceIdRPT = objectFactoryNodoPerPsp.createNodoTipoCodiceIdRPT();
-    QrCode qrCodeVerificaRPT = new QrCode();
-    qrCodeVerificaRPT.setCF(fiscalCode);
-    qrCodeVerificaRPT.setCodIUV(noticeCode.substring(1));
-    qrCodeVerificaRPT.setAuxDigit(noticeCode.substring(0, 1));
-    qrCodeVerificaRPT.setCodStazPA(noticeCode.substring(1, 3));
-    nodoTipoCodiceIdRPT.setQrCode(qrCodeVerificaRPT);
+    QrCode qrCode = new QrCode();
+    qrCode.setCF(fiscalCode);
+    qrCode.setCodIUV(noticeCode.substring(1));
+    qrCode.setAuxDigit(noticeCode.substring(0, 1));
+    qrCode.setCodStazPA(noticeCode.substring(1, 3));
+    nodoTipoCodiceIdRPT.setQrCode(qrCode);
     NodoTipoDatiPagamentoPSP datiPagamentoPsp =
         objectFactoryNodoPerPsp.createNodoTipoDatiPagamentoPSP();
     datiPagamentoPsp.setImportoSingoloVersamento(amount);
