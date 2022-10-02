@@ -123,12 +123,16 @@ public class NodoOperations {
       String paymentContextCode) {
     NodoAttivaRPT nodoAttivaRPTReq = baseNodoAttivaRPT;
 
+    final String iuv = noticeCode.substring(1);
+    final String auxDigit = noticeCode.substring(0, 1);
+    final String applicationCode = noticeCode.substring(1, 3);
+
     NodoTipoCodiceIdRPT nodoTipoCodiceIdRPT = objectFactoryNodoPerPsp.createNodoTipoCodiceIdRPT();
     QrCode qrCode = new QrCode();
     qrCode.setCF(fiscalCode);
-    qrCode.setCodIUV(noticeCode.substring(1));
-    qrCode.setAuxDigit(noticeCode.substring(0, 1));
-    qrCode.setCodStazPA(noticeCode.substring(1, 3));
+    qrCode.setCodIUV(iuv);
+    qrCode.setAuxDigit(auxDigit);
+    qrCode.setCodStazPA("0".equals(auxDigit) ? applicationCode : null);
     nodoTipoCodiceIdRPT.setQrCode(qrCode);
     NodoTipoDatiPagamentoPSP datiPagamentoPsp =
         objectFactoryNodoPerPsp.createNodoTipoDatiPagamentoPSP();
