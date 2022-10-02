@@ -17,16 +17,46 @@
     <wsdl:types>
 
         <xsd:schema version="1.0" targetNamespace="http://www.digitpa.gov.it/schemas/2011/Pagamenti/">
+            <xsd:simpleType name="stNazioneProvincia">
+                <xsd:restriction base="xsd:string">
+                    <xsd:pattern value="[A-Z]{2,2}"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+            <xsd:simpleType name="stText70">
+                <xsd:restriction base="xsd:string">
+                    <xsd:minLength value="1"/>
+                    <xsd:maxLength value="70"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+            <xsd:simpleType name="stText35">
+                <xsd:restriction base="xsd:string">
+                    <xsd:minLength value="1"/>
+                    <xsd:maxLength value="35"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+            <xsd:simpleType name="stText16">
+                <xsd:restriction base="xsd:string">
+                    <xsd:minLength value="1"/>
+                    <xsd:maxLength value="16"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+            <xsd:simpleType name="stTipoIdentificativoUnivocoPersG">
+                <xsd:restriction base="xsd:string">
+                    <xsd:enumeration value="G"/>
+                    <!-- Persona Giuridica -->
+                    <xsd:length value="1"/>
+                </xsd:restriction>
+            </xsd:simpleType>
             <!-- Ente Beneficiario-->
             <xsd:complexType name="ctIdentificativoUnivocoPersonaG">
                 <xsd:sequence>
-                    <xsd:element name="tipoIdentificativoUnivoco" type="ppt:stTipoIdentificativoUnivocoPersG" minOccurs="1">
+                    <xsd:element name="tipoIdentificativoUnivoco" type="pay_i:stTipoIdentificativoUnivocoPersG" minOccurs="1">
                         <xsd:annotation>
                             <xsd:documentation>Campo alfanumerico che indica la natura del soggetto,  può assumere i seguenti valori:</xsd:documentation>
                             <xsd:documentation>G - Persona Giuridica</xsd:documentation>
                         </xsd:annotation>
                     </xsd:element>
-                    <xsd:element name="codiceIdentificativoUnivoco" type="ppt:stText35" minOccurs="1">
+                    <xsd:element name="codiceIdentificativoUnivoco" type="pay_i:stText35" minOccurs="1">
                         <xsd:annotation>
                             <xsd:documentation>Campo alfanumerico che può contenere il codice fiscale o, in alternativa, la partita IVA del soggetto.</xsd:documentation>
                         </xsd:annotation>
@@ -42,52 +72,52 @@
                             <xsd:documentation>codice_identificativo_univoco - contenente il codice fiscale dell’amministrazione destinataria del pagamento.</xsd:documentation>
                         </xsd:annotation>
                     </xsd:element>
-                    <xsd:element name="denominazioneBeneficiario" type="ppt:stText70" minOccurs="1">
+                    <xsd:element name="denominazioneBeneficiario" type="pay_i:stText70" minOccurs="1">
                         <xsd:annotation>
                             <xsd:documentation>Contiene la denominazione della PA.</xsd:documentation>
                         </xsd:annotation>
                     </xsd:element>
-                    <xsd:element name="codiceUnitOperBeneficiario" type="ppt:stText35" minOccurs="0">
+                    <xsd:element name="codiceUnitOperBeneficiario" type="pay_i:stText35" minOccurs="0">
                         <xsd:annotation>
                             <xsd:documentation>Indica il codice dell’unità operativa destinataria.</xsd:documentation>
                         </xsd:annotation>
                     </xsd:element>
-                    <xsd:element name="denomUnitOperBeneficiario" type="ppt:stText70" minOccurs="0">
+                    <xsd:element name="denomUnitOperBeneficiario" type="pay_i:stText70" minOccurs="0">
                         <xsd:annotation>
                             <xsd:documentation>Contiene la denominazione dell’unità operativa destinataria.</xsd:documentation>
                         </xsd:annotation>
                     </xsd:element>
-                    <xsd:element name="indirizzoBeneficiario" type="ppt:stText70" minOccurs="0">
+                    <xsd:element name="indirizzoBeneficiario" type="pay_i:stText70" minOccurs="0">
                         <xsd:annotation>
                             <xsd:documentation>Indica l’indirizzo dell’ente beneficiario.</xsd:documentation>
                             <xsd:documentation>Può coincidere con quello dell’unità operativa destinataria.</xsd:documentation>
                         </xsd:annotation>
                     </xsd:element>
-                    <xsd:element name="civicoBeneficiario" type="ppt:stText16" minOccurs="0">
+                    <xsd:element name="civicoBeneficiario" type="pay_i:stText16" minOccurs="0">
                         <xsd:annotation>
                             <xsd:documentation>Indica il numero civico del beneficiario.</xsd:documentation>
                             <xsd:documentation>Può coincidere con quello dell’unità operativa destinataria.</xsd:documentation>
                         </xsd:annotation>
                     </xsd:element>
-                    <xsd:element name="capBeneficiario" type="ppt:stText16" minOccurs="0">
+                    <xsd:element name="capBeneficiario" type="pay_i:stText16" minOccurs="0">
                         <xsd:annotation>
                             <xsd:documentation>Indica il CAP dell’ente beneficiario.</xsd:documentation>
                             <xsd:documentation>Può coincidere con quello dell’unità operativa destinataria.</xsd:documentation>
                         </xsd:annotation>
                     </xsd:element>
-                    <xsd:element name="localitaBeneficiario" type="ppt:stText35" minOccurs="0">
+                    <xsd:element name="localitaBeneficiario" type="pay_i:stText35" minOccurs="0">
                         <xsd:annotation>
                             <xsd:documentation>Indica la località dell’ente beneficiario.</xsd:documentation>
                             <xsd:documentation>Può coincidere con quello dell’unità operativa destinataria.</xsd:documentation>
                         </xsd:annotation>
                     </xsd:element>
-                    <xsd:element name="provinciaBeneficiario" type="ppt:stText35" minOccurs="0">
+                    <xsd:element name="provinciaBeneficiario" type="pay_i:stText35" minOccurs="0">
                         <xsd:annotation>
                             <xsd:documentation>Indica la provincia del beneficiario.</xsd:documentation>
                             <xsd:documentation>Può coincidere con quello dell’unità operativa destinataria.</xsd:documentation>
                         </xsd:annotation>
                     </xsd:element>
-                    <xsd:element name="nazioneBeneficiario" type="ppt:stNazioneProvincia" minOccurs="0">
+                    <xsd:element name="nazioneBeneficiario" type="pay_i:stNazioneProvincia" minOccurs="0">
                         <xsd:annotation>
                             <xsd:documentation>Indica il codice nazione dell’ente beneficiario secondo lo standard ISO 3166.</xsd:documentation>
                             <xsd:documentation>Può coincidere con quello dell’unità operativa destinataria.</xsd:documentation>
@@ -302,14 +332,6 @@
                 </xsd:restriction>
             </xsd:simpleType>
 
-            <xsd:simpleType name="stTipoIdentificativoUnivocoPersG">
-                <xsd:restriction base="xsd:string">
-                    <xsd:enumeration value="G"/>
-                    <!-- Persona Giuridica -->
-                    <xsd:length value="1"/>
-                </xsd:restriction>
-            </xsd:simpleType>
-
             <xsd:simpleType name="stBICIdentifier">
                 <xsd:restriction base="xsd:string">
                     <xsd:pattern value="[A-Z]{6,6}[A-Z2-9][A-NP-Z0-9]([A-Z0-9]{3,3}){0,1}"/>
@@ -410,11 +432,6 @@
                             <xsd:documentation>G - Persona Giuridica</xsd:documentation>
                             <xsd:documentation>A - Codice ABI</xsd:documentation>
                             <xsd:documentation>B - Codice BIC</xsd:documentation>
-                        </xsd:annotation>
-                    </xsd:element>
-                    <xsd:element name="codiceIdentificativoUnivoco" type="ppt:stText35" minOccurs="1">
-                        <xsd:annotation>
-                            <xsd:documentation>Campo alfanumerico che può contenere il codice fiscale o la partita IVA del soggetto o il codice ABI o il codice BIC</xsd:documentation>
                         </xsd:annotation>
                     </xsd:element>
                 </xsd:sequence>
