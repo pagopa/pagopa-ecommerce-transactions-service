@@ -173,6 +173,8 @@ public class PaymentRequestsService {
                         new PaymentRequestInfo(
                             rptId,
                             enteBeneficiario != null
+                                    && enteBeneficiario.getIdentificativoUnivocoBeneficiario()
+                                        != null
                                 ? enteBeneficiario
                                     .getIdentificativoUnivocoBeneficiario()
                                     .getCodiceIdentificativoUnivoco()
