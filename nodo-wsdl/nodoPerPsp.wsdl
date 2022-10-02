@@ -18,9 +18,24 @@
 
         <xsd:schema version="1.0" targetNamespace="http://www.digitpa.gov.it/schemas/2011/Pagamenti/">
             <!-- Ente Beneficiario-->
+            <xsd:complexType name="ctIdentificativoUnivocoPersonaG">
+                <xsd:sequence>
+                    <xsd:element name="tipoIdentificativoUnivoco" type="ppt:stTipoIdentificativoUnivocoPersG" minOccurs="1">
+                        <xsd:annotation>
+                            <xsd:documentation>Campo alfanumerico che indica la natura del soggetto,  può assumere i seguenti valori:</xsd:documentation>
+                            <xsd:documentation>G - Persona Giuridica</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="codiceIdentificativoUnivoco" type="ppt:stText35" minOccurs="1">
+                        <xsd:annotation>
+                            <xsd:documentation>Campo alfanumerico che può contenere il codice fiscale o, in alternativa, la partita IVA del soggetto.</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:complexType>
             <xsd:complexType name="ctEnteBeneficiario">
                 <xsd:sequence>
-                    <xsd:element name="identificativoUnivocoBeneficiario" type="ppt:ctIdentificativoUnivocoPersonaG" minOccurs="1">
+                    <xsd:element name="identificativoUnivocoBeneficiario" type="pay_i:ctIdentificativoUnivocoPersonaG" minOccurs="1">
                         <xsd:annotation>
                             <xsd:documentation>Aggregazione che riporta le informazioni concernenti l’identificazione fiscale dell’ente beneficiario.</xsd:documentation>
                             <xsd:documentation>tipo_identificativo_univoco - se presente deve assumere il valore ‘G’, Persona Giuridica.</xsd:documentation>
@@ -422,21 +437,6 @@
                 </xsd:sequence>
             </xsd:complexType>
 
-            <xsd:complexType name="ctIdentificativoUnivocoPersonaG">
-                <xsd:sequence>
-                    <xsd:element name="tipoIdentificativoUnivoco" type="ppt:stTipoIdentificativoUnivocoPersG" minOccurs="1">
-                        <xsd:annotation>
-                            <xsd:documentation>Campo alfanumerico che indica la natura del soggetto,  può assumere i seguenti valori:</xsd:documentation>
-                            <xsd:documentation>G - Persona Giuridica</xsd:documentation>
-                        </xsd:annotation>
-                    </xsd:element>
-                    <xsd:element name="codiceIdentificativoUnivoco" type="ppt:stText35" minOccurs="1">
-                        <xsd:annotation>
-                            <xsd:documentation>Campo alfanumerico che può contenere il codice fiscale o, in alternativa, la partita IVA del soggetto.</xsd:documentation>
-                        </xsd:annotation>
-                    </xsd:element>
-                </xsd:sequence>
-            </xsd:complexType>
             <!-- **** END: Identificativi univoci dei soggetti-->
 
             <!-- **** BEGIN: Soggetti-->
