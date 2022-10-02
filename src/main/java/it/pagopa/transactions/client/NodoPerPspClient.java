@@ -51,7 +51,7 @@ public class NodoPerPspClient {
 
     public Mono<NodoAttivaRPTRisposta> attivaRPT(JAXBElement<NodoAttivaRPT> request) {
         return nodoWebClient.post()
-                .uri("/webservices/pof/PagamentiTelematiciPspNodoservice")
+                .uri(nodoPerPspUri)
                 .header("Content-Type", MediaType.TEXT_XML_VALUE)
                 .header("SOAPAction", "nodoAttivaRPT")
                 .body(Mono.just(new SoapEnvelope("", request)), SoapEnvelope.class)
