@@ -7,6 +7,7 @@
                   xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata"
                   xmlns:ppt="http://ws.pagamenti.telematici.gov/"
                   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                  xmlns:pay_i="http://www.digitpa.gov.it/schemas/2011/Pagamenti/"
                   xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
                   xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
                   xmlns:qrc="http://PuntoAccessoPSP.spcoop.gov.it/QrCode"
@@ -14,6 +15,72 @@
                   targetNamespace="http://PuntoAccessoPSP.spcoop.gov.it/servizi/PagamentiTelematiciPspNodo">
 
     <wsdl:types>
+
+        <xsd:schema version="1.0" targetNamespace="http://www.digitpa.gov.it/schemas/2011/Pagamenti/">
+            <!-- Ente Beneficiario-->
+            <xsd:complexType name="ctEnteBeneficiario">
+                <xsd:sequence>
+                    <xsd:element name="identificativoUnivocoBeneficiario" type="ppt:ctIdentificativoUnivocoPersonaG" minOccurs="1">
+                        <xsd:annotation>
+                            <xsd:documentation>Aggregazione che riporta le informazioni concernenti l’identificazione fiscale dell’ente beneficiario.</xsd:documentation>
+                            <xsd:documentation>tipo_identificativo_univoco - se presente deve assumere il valore ‘G’, Persona Giuridica.</xsd:documentation>
+                            <xsd:documentation>codice_identificativo_univoco - contenente il codice fiscale dell’amministrazione destinataria del pagamento.</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="denominazioneBeneficiario" type="ppt:stText70" minOccurs="1">
+                        <xsd:annotation>
+                            <xsd:documentation>Contiene la denominazione della PA.</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="codiceUnitOperBeneficiario" type="ppt:stText35" minOccurs="0">
+                        <xsd:annotation>
+                            <xsd:documentation>Indica il codice dell’unità operativa destinataria.</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="denomUnitOperBeneficiario" type="ppt:stText70" minOccurs="0">
+                        <xsd:annotation>
+                            <xsd:documentation>Contiene la denominazione dell’unità operativa destinataria.</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="indirizzoBeneficiario" type="ppt:stText70" minOccurs="0">
+                        <xsd:annotation>
+                            <xsd:documentation>Indica l’indirizzo dell’ente beneficiario.</xsd:documentation>
+                            <xsd:documentation>Può coincidere con quello dell’unità operativa destinataria.</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="civicoBeneficiario" type="ppt:stText16" minOccurs="0">
+                        <xsd:annotation>
+                            <xsd:documentation>Indica il numero civico del beneficiario.</xsd:documentation>
+                            <xsd:documentation>Può coincidere con quello dell’unità operativa destinataria.</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="capBeneficiario" type="ppt:stText16" minOccurs="0">
+                        <xsd:annotation>
+                            <xsd:documentation>Indica il CAP dell’ente beneficiario.</xsd:documentation>
+                            <xsd:documentation>Può coincidere con quello dell’unità operativa destinataria.</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="localitaBeneficiario" type="ppt:stText35" minOccurs="0">
+                        <xsd:annotation>
+                            <xsd:documentation>Indica la località dell’ente beneficiario.</xsd:documentation>
+                            <xsd:documentation>Può coincidere con quello dell’unità operativa destinataria.</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="provinciaBeneficiario" type="ppt:stText35" minOccurs="0">
+                        <xsd:annotation>
+                            <xsd:documentation>Indica la provincia del beneficiario.</xsd:documentation>
+                            <xsd:documentation>Può coincidere con quello dell’unità operativa destinataria.</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="nazioneBeneficiario" type="ppt:stNazioneProvincia" minOccurs="0">
+                        <xsd:annotation>
+                            <xsd:documentation>Indica il codice nazione dell’ente beneficiario secondo lo standard ISO 3166.</xsd:documentation>
+                            <xsd:documentation>Può coincidere con quello dell’unità operativa destinataria.</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:complexType>
+        </xsd:schema>
 
         <xsd:schema version="1.0" targetNamespace="http://ws.pagamenti.telematici.gov/">
             <xsd:import schemaLocation="IdRPT_QR_Code_v04.xsd" namespace="http://PuntoAccessoPSP.spcoop.gov.it/QrCode"/>
@@ -475,70 +542,6 @@
                 </xsd:sequence>
             </xsd:complexType>
 
-            <!-- Ente Beneficiario-->
-            <xsd:complexType name="ctEnteBeneficiario">
-                <xsd:sequence>
-                    <xsd:element name="identificativoUnivocoBeneficiario" type="ppt:ctIdentificativoUnivocoPersonaG" minOccurs="1">
-                        <xsd:annotation>
-                            <xsd:documentation>Aggregazione che riporta le informazioni concernenti l’identificazione fiscale dell’ente beneficiario.</xsd:documentation>
-                            <xsd:documentation>tipo_identificativo_univoco - se presente deve assumere il valore ‘G’, Persona Giuridica.</xsd:documentation>
-                            <xsd:documentation>codice_identificativo_univoco - contenente il codice fiscale dell’amministrazione destinataria del pagamento.</xsd:documentation>
-                        </xsd:annotation>
-                    </xsd:element>
-                    <xsd:element name="denominazioneBeneficiario" type="ppt:stText70" minOccurs="1">
-                        <xsd:annotation>
-                            <xsd:documentation>Contiene la denominazione della PA.</xsd:documentation>
-                        </xsd:annotation>
-                    </xsd:element>
-                    <xsd:element name="codiceUnitOperBeneficiario" type="ppt:stText35" minOccurs="0">
-                        <xsd:annotation>
-                            <xsd:documentation>Indica il codice dell’unità operativa destinataria.</xsd:documentation>
-                        </xsd:annotation>
-                    </xsd:element>
-                    <xsd:element name="denomUnitOperBeneficiario" type="ppt:stText70" minOccurs="0">
-                        <xsd:annotation>
-                            <xsd:documentation>Contiene la denominazione dell’unità operativa destinataria.</xsd:documentation>
-                        </xsd:annotation>
-                    </xsd:element>
-                    <xsd:element name="indirizzoBeneficiario" type="ppt:stText70" minOccurs="0">
-                        <xsd:annotation>
-                            <xsd:documentation>Indica l’indirizzo dell’ente beneficiario.</xsd:documentation>
-                            <xsd:documentation>Può coincidere con quello dell’unità operativa destinataria.</xsd:documentation>
-                        </xsd:annotation>
-                    </xsd:element>
-                    <xsd:element name="civicoBeneficiario" type="ppt:stText16" minOccurs="0">
-                        <xsd:annotation>
-                            <xsd:documentation>Indica il numero civico del beneficiario.</xsd:documentation>
-                            <xsd:documentation>Può coincidere con quello dell’unità operativa destinataria.</xsd:documentation>
-                        </xsd:annotation>
-                    </xsd:element>
-                    <xsd:element name="capBeneficiario" type="ppt:stText16" minOccurs="0">
-                        <xsd:annotation>
-                            <xsd:documentation>Indica il CAP dell’ente beneficiario.</xsd:documentation>
-                            <xsd:documentation>Può coincidere con quello dell’unità operativa destinataria.</xsd:documentation>
-                        </xsd:annotation>
-                    </xsd:element>
-                    <xsd:element name="localitaBeneficiario" type="ppt:stText35" minOccurs="0">
-                        <xsd:annotation>
-                            <xsd:documentation>Indica la località dell’ente beneficiario.</xsd:documentation>
-                            <xsd:documentation>Può coincidere con quello dell’unità operativa destinataria.</xsd:documentation>
-                        </xsd:annotation>
-                    </xsd:element>
-                    <xsd:element name="provinciaBeneficiario" type="ppt:stText35" minOccurs="0">
-                        <xsd:annotation>
-                            <xsd:documentation>Indica la provincia del beneficiario.</xsd:documentation>
-                            <xsd:documentation>Può coincidere con quello dell’unità operativa destinataria.</xsd:documentation>
-                        </xsd:annotation>
-                    </xsd:element>
-                    <xsd:element name="nazioneBeneficiario" type="ppt:stNazioneProvincia" minOccurs="0">
-                        <xsd:annotation>
-                            <xsd:documentation>Indica il codice nazione dell’ente beneficiario secondo lo standard ISO 3166.</xsd:documentation>
-                            <xsd:documentation>Può coincidere con quello dell’unità operativa destinataria.</xsd:documentation>
-                        </xsd:annotation>
-                    </xsd:element>
-                </xsd:sequence>
-            </xsd:complexType>
-
             <!-- Istituto Attestante-->
             <xsd:complexType name="ctIstitutoAttestante">
                 <xsd:sequence>
@@ -857,7 +860,7 @@
                             <xsd:documentation>Aggregazione “soggetto pagatore” che riporta le informazioni concernenti il soggetto che effettua il pagamento.</xsd:documentation>
                         </xsd:annotation>
                     </xsd:element>
-                    <xsd:element name="enteBeneficiario" type="ppt:ctEnteBeneficiario" minOccurs="1">
+                    <xsd:element name="enteBeneficiario" type="pay_i:ctEnteBeneficiario" minOccurs="1">
                         <xsd:annotation>
                             <xsd:documentation>Aggregazione “ente beneficiario” creditore di somme nei confronti del soggetto pagatore.</xsd:documentation>
                         </xsd:annotation>
@@ -910,7 +913,7 @@
                             <xsd:documentation>Aggregazione relativa al soggetto Prestatore dei servizi di Pagamento che emette il documento di attestazione dell’avvenuto versamento. </xsd:documentation>
                         </xsd:annotation>
                     </xsd:element>
-                    <xsd:element name="enteBeneficiario" type="ppt:ctEnteBeneficiario" minOccurs="1">
+                    <xsd:element name="enteBeneficiario" type="pay_i:ctEnteBeneficiario" minOccurs="1">
                         <xsd:annotation>
                             <xsd:documentation>Riporta le stesse informazioni presenti nel blocco “Ente Beneficiario” della Richiesta di Pagamento Telematico (RPT) cui si riferisce il messaggio di Ricevuta Telematica.</xsd:documentation>
                         </xsd:annotation>
@@ -1007,7 +1010,7 @@
                     </xsd:element>
                     <xsd:element name="bicAccredito" type="ppt:stBICIdentifier" minOccurs="0">
                     </xsd:element>
-                    <xsd:element name="enteBeneficiario" type="ppt:ctEnteBeneficiario" minOccurs="0" />
+                    <xsd:element name="enteBeneficiario" type="pay_i:ctEnteBeneficiario" minOccurs="0" />
                     <xsd:element name="credenzialiPagatore" type="ppt:stText35" minOccurs="0">
                     </xsd:element>
                     <xsd:choice minOccurs="1">
