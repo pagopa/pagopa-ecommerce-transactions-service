@@ -52,6 +52,7 @@ public class NodoConfig {
     request.setIdentificativoPSP(nodoConnectionParams.getIdPSP());
     request.setIdentificativoCanale(nodoConnectionParams.getIdChannel());
     request.setIdentificativoIntermediarioPSP(nodoConnectionParams.getIdBrokerPSP());
+    request.setIdentificativoIntermediarioPSPPagamento(nodoConnectionParams.getIdBrokerPSP());
     request.setPassword(nodoConnectionParams.getPassword());
     return request;
   }
