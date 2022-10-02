@@ -9,12 +9,14 @@
                   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
                   xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
                   xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+                  xmlns:qrc="http://PuntoAccessoPSP.spcoop.gov.it/QrCode"
                   xmlns:tns="http://PuntoAccessoPSP.spcoop.gov.it/servizi/PagamentiTelematiciPspNodo"
                   targetNamespace="http://PuntoAccessoPSP.spcoop.gov.it/servizi/PagamentiTelematiciPspNodo">
 
     <wsdl:types>
 
         <xsd:schema version="1.0" targetNamespace="http://ws.pagamenti.telematici.gov/">
+            <xsd:import schemaLocation="IdRPT_QR_Code_v04.xsd" namespace="http://PuntoAccessoPSP.spcoop.gov.it/QrCode"/>
             <xsd:simpleType name="stCF">
                 <xsd:restriction base="xsd:string">
                     <xsd:length value="11"/>
@@ -46,16 +48,7 @@
 
             <xsd:complexType name="nodoTipoCodiceIdRPT">
                 <xsd:choice minOccurs="1" maxOccurs="1" >
-                    <xsd:element name="QrCode">
-                        <xsd:complexType>
-                            <xsd:sequence>
-                                <xsd:element type="ppt:stCF" name="CF" minOccurs="1"/>
-                                <xsd:element type="ppt:stCodStazPA" name="CodStazPA" minOccurs="0"/>
-                                <xsd:element type="ppt:stAuxDigit" name="AuxDigit" minOccurs="1"/>
-                                <xsd:element type="ppt:stCodIUV" name="CodIUV" minOccurs="1"/>
-                            </xsd:sequence>
-                        </xsd:complexType>
-                    </xsd:element>
+                    <xsd:element ref="qrc:QrCode"></xsd:element>
                 </xsd:choice>
             </xsd:complexType>
 

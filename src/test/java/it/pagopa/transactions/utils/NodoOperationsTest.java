@@ -198,7 +198,7 @@ class NodoOperationsTest {
 
     NodoTipoCodiceIdRPT nodoTipoCodiceIdRPT =
         objectFactoryUtilNodoPerPsp.createNodoTipoCodiceIdRPT();
-    NodoTipoCodiceIdRPT.QrCode qrCodeVerificaRPT = new NodoTipoCodiceIdRPT.QrCode();
+    QrCode qrCodeVerificaRPT = new QrCode();
     qrCodeVerificaRPT.setCF(paTaxCode);
     qrCodeVerificaRPT.setCodIUV(paymentNotice.substring(1));
     qrCodeVerificaRPT.setAuxDigit(paymentNotice.substring(0, 1));
@@ -284,7 +284,7 @@ class NodoOperationsTest {
 
     NodoTipoCodiceIdRPT nodoTipoCodiceIdRPT =
         objectFactoryUtilNodoPerPsp.createNodoTipoCodiceIdRPT();
-    NodoTipoCodiceIdRPT.QrCode qrCodeVerificaRPT = new NodoTipoCodiceIdRPT.QrCode();
+    QrCode qrCodeVerificaRPT = new QrCode();
     qrCodeVerificaRPT.setCF(paTaxCode);
     qrCodeVerificaRPT.setCodIUV(paymentNotice.substring(1));
     qrCodeVerificaRPT.setAuxDigit(paymentNotice.substring(0, 1));
@@ -367,7 +367,7 @@ class NodoOperationsTest {
 
     NodoTipoCodiceIdRPT nodoTipoCodiceIdRPT =
         objectFactoryUtilNodoPerPsp.createNodoTipoCodiceIdRPT();
-    NodoTipoCodiceIdRPT.QrCode qrCodeVerificaRPT = new NodoTipoCodiceIdRPT.QrCode();
+    QrCode qrCodeVerificaRPT = new QrCode();
     qrCodeVerificaRPT.setCF(paTaxCode);
     qrCodeVerificaRPT.setCodIUV(paymentNotice.substring(1));
     qrCodeVerificaRPT.setAuxDigit(paymentNotice.substring(0, 1));

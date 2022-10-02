@@ -3,6 +3,7 @@ package it.pagopa.transactions.utils;
 import it.pagopa.generated.nodoperpsp.model.*;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
 import it.pagopa.generated.transactions.model.CtQrCode;
+import it.pagopa.generated.nodoperpsp.model.QrCode;
 import it.pagopa.generated.transactions.model.StOutcome;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
@@ -123,7 +124,7 @@ public class NodoOperations {
     NodoAttivaRPT nodoAttivaRPTReq = baseNodoAttivaRPT;
 
     NodoTipoCodiceIdRPT nodoTipoCodiceIdRPT = objectFactoryNodoPerPsp.createNodoTipoCodiceIdRPT();
-    NodoTipoCodiceIdRPT.QrCode qrCodeVerificaRPT = new NodoTipoCodiceIdRPT.QrCode();
+    QrCode qrCodeVerificaRPT = new QrCode();
     qrCodeVerificaRPT.setCF(fiscalCode);
     qrCodeVerificaRPT.setCodIUV(noticeCode.substring(1));
     qrCodeVerificaRPT.setAuxDigit(noticeCode.substring(0, 1));
