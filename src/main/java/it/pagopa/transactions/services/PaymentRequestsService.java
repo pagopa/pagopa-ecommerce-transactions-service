@@ -99,7 +99,7 @@ public class PaymentRequestsService {
                   objectFactoryNodoPerPsp.createNodoTipoCodiceIdRPT();
               QrCode qrCode = new QrCode();
               qrCode.setCF(rptId.getFiscalCode());
-              qrCode.setCodIUV(rptId.getNoticeId().substring(1));
+              qrCode.setCodIUV(rptId.getNoticeId().substring(3));
               qrCode.setAuxDigit(rptId.getNoticeId().substring(0, 1));
               qrCode.setCodStazPA(rptId.getNoticeId().substring(1, 3));
               nodoTipoCodiceIdRPT.setQrCode(qrCode);
