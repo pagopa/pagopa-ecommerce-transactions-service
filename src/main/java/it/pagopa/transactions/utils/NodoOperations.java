@@ -128,6 +128,7 @@ public class NodoOperations {
     qrCodeVerificaRPT.setCF(fiscalCode);
     qrCodeVerificaRPT.setCodIUV(noticeCode.substring(1));
     qrCodeVerificaRPT.setAuxDigit(noticeCode.substring(0, 1));
+    qrCodeVerificaRPT.setCodStazPA(noticeCode.substring(1, 3));
     nodoTipoCodiceIdRPT.setQrCode(qrCodeVerificaRPT);
     NodoTipoDatiPagamentoPSP datiPagamentoPsp =
         objectFactoryNodoPerPsp.createNodoTipoDatiPagamentoPSP();
