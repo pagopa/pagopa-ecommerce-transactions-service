@@ -12,6 +12,7 @@ import it.pagopa.transactions.exceptions.NodoErrorException;
 import it.pagopa.transactions.repositories.PaymentRequestInfo;
 import it.pagopa.transactions.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.transactions.utils.NodoOperations;
+import it.pagopa.transactions.utils.NodoUtilities;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,6 +55,7 @@ class PaymentRequestsServiceTest {
   @Mock private VerifyPaymentNoticeReq baseVerifyPaymentNoticeReq;
 
   @Mock private NodoOperations nodoOperations;
+  @Mock private NodoUtilities nodoUtilities;
 
   @Test
   void shouldReturnPaymentInfoRequestFromCache() {
@@ -111,8 +113,6 @@ class PaymentRequestsServiceTest {
     /** Preconditions */
     Mockito.when(paymentRequestsInfoRepository.findById(rptIdAsObject))
         .thenReturn(Optional.empty());
-    Mockito.when(objectFactoryNodoPerPsp.createNodoTipoCodiceIdRPT())
-        .thenReturn(new NodoTipoCodiceIdRPT());
     Mockito.when(nodoPerPspClient.verificaRPT(Mockito.any()))
         .thenReturn(Mono.just(verificaRPTRIsposta));
     Mockito.when(nodoOperations.getEuroCentsFromNodoAmount(amountForNodo))
@@ -157,8 +157,6 @@ class PaymentRequestsServiceTest {
     /** Preconditions */
     Mockito.when(paymentRequestsInfoRepository.findById(rptIdAsObject))
         .thenReturn(Optional.empty());
-    Mockito.when(objectFactoryNodoPerPsp.createNodoTipoCodiceIdRPT())
-        .thenReturn(new NodoTipoCodiceIdRPT());
     Mockito.when(nodoPerPspClient.verificaRPT(Mockito.any()))
         .thenReturn(Mono.just(verificaRPTRIsposta));
     Mockito.when(nodoOperations.getEuroCentsFromNodoAmount(amountForNodo))
@@ -211,8 +209,6 @@ class PaymentRequestsServiceTest {
     /** Preconditions */
     Mockito.when(paymentRequestsInfoRepository.findById(rptIdAsObject))
         .thenReturn(Optional.empty());
-    Mockito.when(objectFactoryNodoPerPsp.createNodoTipoCodiceIdRPT())
-        .thenReturn(new NodoTipoCodiceIdRPT());
     Mockito.when(nodoPerPspClient.verificaRPT(Mockito.any()))
         .thenReturn(Mono.just(verificaRPTRIsposta));
     Mockito.when(nodeForPspClient.verifyPaymentNotice(Mockito.any()))
@@ -247,7 +243,7 @@ class PaymentRequestsServiceTest {
     /** Preconditions */
     Mockito.when(paymentRequestsInfoRepository.findById(rptIdAsObject))
         .thenReturn(Optional.empty());
-    Mockito.when(objectFactoryNodoPerPsp.createNodoTipoCodiceIdRPT())
+    Mockito.when(nodoUtilities.getCodiceIdRpt(Mockito.any(RptId.class)))
         .thenReturn(new NodoTipoCodiceIdRPT());
     Mockito.when(nodoPerPspClient.verificaRPT(Mockito.any()))
         .thenReturn(Mono.just(verificaRPTRIsposta));
@@ -274,8 +270,6 @@ class PaymentRequestsServiceTest {
     /** Preconditions */
     Mockito.when(paymentRequestsInfoRepository.findById(rptIdAsObject))
         .thenReturn(Optional.empty());
-    Mockito.when(objectFactoryNodoPerPsp.createNodoTipoCodiceIdRPT())
-        .thenReturn(new NodoTipoCodiceIdRPT());
     Mockito.when(nodoPerPspClient.verificaRPT(Mockito.any()))
         .thenReturn(Mono.just(verificaRPTRIsposta));
 
@@ -322,8 +316,6 @@ class PaymentRequestsServiceTest {
     /** Preconditions */
     Mockito.when(paymentRequestsInfoRepository.findById(rptIdAsObject))
         .thenReturn(Optional.empty());
-    Mockito.when(objectFactoryNodoPerPsp.createNodoTipoCodiceIdRPT())
-        .thenReturn(new NodoTipoCodiceIdRPT());
     Mockito.when(nodoPerPspClient.verificaRPT(Mockito.any()))
         .thenReturn(Mono.just(verificaRPTRIsposta));
     Mockito.when(nodeForPspClient.verifyPaymentNotice(Mockito.any()))

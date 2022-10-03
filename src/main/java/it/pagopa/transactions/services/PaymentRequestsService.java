@@ -12,6 +12,7 @@ import it.pagopa.transactions.exceptions.NodoErrorException;
 import it.pagopa.transactions.repositories.PaymentRequestInfo;
 import it.pagopa.transactions.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.transactions.utils.NodoOperations;
+import it.pagopa.transactions.utils.NodoUtilities;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,8 @@ public class PaymentRequestsService {
   @Autowired private VerifyPaymentNoticeReq baseVerifyPaymentNoticeReq;
 
   @Autowired private NodoOperations nodoOperations;
+
+  @Autowired private NodoUtilities nodoUtilities;
 
   public Mono<PaymentRequestsGetResponseDto> getPaymentRequestInfo(String rptId) {
 
@@ -95,14 +98,7 @@ public class PaymentRequestsService {
         .flatMap(
             request -> {
               NodoVerificaRPT nodoVerificaRPTRequest = baseNodoVerificaRPTRequest;
-              NodoTipoCodiceIdRPT nodoTipoCodiceIdRPT =
-                  objectFactoryNodoPerPsp.createNodoTipoCodiceIdRPT();
-              QrCode qrCode = new QrCode();
-              qrCode.setCF(rptId.getFiscalCode());
-              qrCode.setCodIUV(rptId.getNoticeId().substring(3));
-              qrCode.setAuxDigit(rptId.getNoticeId().substring(0, 1));
-              qrCode.setCodStazPA(rptId.getNoticeId().substring(1, 3));
-              nodoTipoCodiceIdRPT.setQrCode(qrCode);
+              NodoTipoCodiceIdRPT nodoTipoCodiceIdRPT = nodoUtilities.getCodiceIdRpt(rptId);
               nodoVerificaRPTRequest.setCodiceIdRPT(nodoTipoCodiceIdRPT);
               nodoVerificaRPTRequest.setCodiceContestoPagamento(paymentContextCode);
               return nodoPerPspClient.verificaRPT(
