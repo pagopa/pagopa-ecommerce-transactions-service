@@ -1,6 +1,5 @@
 package it.pagopa.transactions.domain.pojos;
 
-import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestData;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
@@ -12,19 +11,13 @@ import lombok.experimental.FieldDefaults;
 @EqualsAndHashCode(callSuper = true)
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @Getter
-public abstract class BaseTransactionWithRequestedAuthorization extends BaseTransaction {
+public abstract class BaseTransactionWithRequestedAuthorization extends BaseTransactionWithPaymentToken {
     TransactionAuthorizationRequestData transactionAuthorizationRequestData;
 
-    protected BaseTransactionWithRequestedAuthorization(BaseTransaction baseTransaction, TransactionAuthorizationRequestData transactionAuthorizationRequestData) {
+    protected BaseTransactionWithRequestedAuthorization(BaseTransactionWithPaymentToken baseTransaction, TransactionAuthorizationRequestData transactionAuthorizationRequestData) {
         super(
-                baseTransaction.getTransactionId(),
-                baseTransaction.getPaymentToken(),
-                baseTransaction.getRptId(),
-                baseTransaction.getDescription(),
-                baseTransaction.getAmount(),
-                baseTransaction.getEmail(),
-                baseTransaction.getCreationDate(),
-                baseTransaction.getStatus()
+                baseTransaction,
+                baseTransaction.getTransactionActivatedData()
         );
 
         this.transactionAuthorizationRequestData = transactionAuthorizationRequestData;

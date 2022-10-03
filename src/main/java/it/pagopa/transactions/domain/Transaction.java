@@ -2,14 +2,16 @@ package it.pagopa.transactions.domain;
 
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.annotations.AggregateRoot;
+import it.pagopa.transactions.documents.TransactionEvent;
 
 @AggregateRoot
 public sealed interface Transaction permits
         EmptyTransaction,
-        TransactionInitialized,
+        TransactionActivated,
+        TransactionActivationRequested,
         TransactionWithRequestedAuthorization,
         TransactionWithCompletedAuthorization,
         TransactionClosed
 {
-    <E> Transaction applyEvent(E event);
+    Transaction applyEvent(TransactionEvent<?> event);
 }

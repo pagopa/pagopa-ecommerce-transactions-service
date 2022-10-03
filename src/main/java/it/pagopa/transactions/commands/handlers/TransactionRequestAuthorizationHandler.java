@@ -6,7 +6,7 @@ import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestData;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestedEvent;
-import it.pagopa.transactions.domain.TransactionInitialized;
+import it.pagopa.transactions.domain.TransactionActivated;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -39,11 +39,11 @@ public class TransactionRequestAuthorizationHandler
 
     @Override
     public Mono<RequestAuthorizationResponseDto> handle(TransactionRequestAuthorizationCommand command) {
-        TransactionInitialized transaction = command.getData().transaction();
+        TransactionActivated transaction = command.getData().transaction();
 
-        if (transaction.getStatus() != TransactionStatusDto.INITIALIZED) {
+        if (transaction.getStatus() != TransactionStatusDto.ACTIVATED) {
             log.warn("Invalid state transition: requested authorization for transaction {} from status {}",
-                    transaction.getPaymentToken().value(), transaction.getStatus());
+                    transaction.getTransactionActivatedData().getPaymentToken(), transaction.getStatus());
             return Mono.error(new AlreadyProcessedException(transaction.getRptId()));
         }
 
@@ -54,7 +54,7 @@ public class TransactionRequestAuthorizationHandler
                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                             transaction.getTransactionId().value().toString(),
                             transaction.getRptId().value(),
-                            transaction.getPaymentToken().value(),
+                            transaction.getTransactionActivatedData().getPaymentToken(),
                             new TransactionAuthorizationRequestData(
                                     command.getData().transaction().getAmount().value(),
                                     command.getData().fee(),

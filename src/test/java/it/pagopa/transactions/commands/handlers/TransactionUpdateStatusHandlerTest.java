@@ -43,7 +43,7 @@ class TransactionUpdateStatusHandlerTest {
         TransactionAmount amount = new TransactionAmount(100);
         Email email = new Email("foo@example.com");
 
-        TransactionInitialized transaction = new TransactionInitialized(
+        TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 paymentToken,
                 rptId,
@@ -70,7 +70,7 @@ class TransactionUpdateStatusHandlerTest {
         TransactionStatusUpdatedEvent event = new TransactionStatusUpdatedEvent(
                 transactionId.toString(),
                 transaction.getRptId().toString(),
-                transaction.getPaymentToken().toString(),
+                transaction.getTransactionActivatedData().getPaymentToken(),
                 transactionAuthorizationStatusUpdateData);
 
         /* preconditions */
@@ -94,7 +94,7 @@ class TransactionUpdateStatusHandlerTest {
         TransactionAmount amount = new TransactionAmount(100);
         Email email = new Email("foo@example.com");
 
-        TransactionInitialized transaction = new TransactionInitialized(
+        TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 paymentToken,
                 rptId,
@@ -121,7 +121,7 @@ class TransactionUpdateStatusHandlerTest {
         TransactionStatusUpdatedEvent event = new TransactionStatusUpdatedEvent(
                 transactionId.toString(),
                 transaction.getRptId().toString(),
-                transaction.getPaymentToken().toString(),
+                transaction.getTransactionActivatedData().getPaymentToken(),
                 transactionAuthorizationStatusUpdateData);
 
         /* preconditions */
@@ -145,14 +145,14 @@ class TransactionUpdateStatusHandlerTest {
         TransactionAmount amount = new TransactionAmount(100);
         Email email = new Email("foo@example.com");
 
-        TransactionInitialized transaction = new TransactionInitialized(
+        TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 paymentToken,
                 rptId,
                 description,
                 amount,
                 email,
-                TransactionStatusDto.INITIALIZED);
+                TransactionStatusDto.ACTIVATED);
 
         UpdateTransactionStatusRequestDto updateStatusRequest = new UpdateTransactionStatusRequestDto()
                 .authorizationResult(AuthorizationResultDto.OK)

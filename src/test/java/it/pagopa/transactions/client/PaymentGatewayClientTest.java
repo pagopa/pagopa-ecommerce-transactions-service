@@ -42,14 +42,15 @@ class PaymentGatewayClientTest {
     void shouldReturnAuthorizationResponse() {
 
 
-        TransactionInitialized transaction = new TransactionInitialized(
+        TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
                 new RptId("rptId"),
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
                 new Email("foo@example.com"),
-                TransactionStatusDto.INITIALIZED);
+                TransactionStatusDto.ACTIVATED
+        );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
@@ -86,14 +87,14 @@ class PaymentGatewayClientTest {
 
     @Test
     void shouldThrowAlreadyProcessedOn401() {
-        TransactionInitialized transaction = new TransactionInitialized(
+        TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
                 new RptId("rptId"),
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
                 new Email("foo@example.com"),
-                TransactionStatusDto.INITIALIZED
+                TransactionStatusDto.ACTIVATED
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -128,14 +129,14 @@ class PaymentGatewayClientTest {
 
     @Test
     void shouldThrowGatewayTimeoutOn504() {
-        TransactionInitialized transaction = new TransactionInitialized(
+        TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
                 new RptId("rptId"),
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
                 new Email("foo@example.com"),
-                TransactionStatusDto.INITIALIZED
+                TransactionStatusDto.ACTIVATED
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -168,14 +169,14 @@ class PaymentGatewayClientTest {
 
     @Test
     void shouldThrowBadGatewayOn500() {
-        TransactionInitialized transaction = new TransactionInitialized(
+        TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
                 new RptId("rptId"),
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
                 new Email("foo@example.com"),
-                TransactionStatusDto.INITIALIZED
+                TransactionStatusDto.ACTIVATED
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(

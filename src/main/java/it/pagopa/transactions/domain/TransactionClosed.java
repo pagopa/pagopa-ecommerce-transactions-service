@@ -3,21 +3,20 @@ package it.pagopa.transactions.domain;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestedEvent;
 import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdatedEvent;
-import it.pagopa.transactions.documents.TransactionClosureSendData;
 import it.pagopa.transactions.documents.TransactionClosureSentEvent;
-import it.pagopa.transactions.domain.pojos.BaseTransaction;
+import it.pagopa.transactions.documents.TransactionEvent;
 import it.pagopa.transactions.domain.pojos.BaseTransactionClosed;
 import it.pagopa.transactions.domain.pojos.BaseTransactionWithCompletedAuthorization;
 import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = true)
 public final class TransactionClosed extends BaseTransactionClosed implements Transaction {
-    public TransactionClosed(TransactionWithCompletedAuthorization transaction, TransactionClosureSentEvent event) {
-        super(transaction, event.getData());
+    public TransactionClosed(BaseTransactionWithCompletedAuthorization baseTransaction, TransactionClosureSentEvent event) {
+        super(baseTransaction, event.getData());
     }
 
     @Override
-    public <E> Transaction applyEvent(E event) {
+    public Transaction applyEvent(TransactionEvent<?> event) {
         return this;
     }
 
@@ -26,9 +25,9 @@ public final class TransactionClosed extends BaseTransactionClosed implements Tr
         return new TransactionClosed(
                 new TransactionWithCompletedAuthorization(
                         new TransactionWithRequestedAuthorization(
-                                new TransactionInitialized(
+                                new TransactionActivated(
                                         this.getTransactionId(),
-                                        this.getPaymentToken(),
+                                        new PaymentToken(this.getTransactionActivatedData().getPaymentToken()),
                                         this.getRptId(),
                                         this.getDescription(),
                                         this.getAmount(),
@@ -39,21 +38,21 @@ public final class TransactionClosed extends BaseTransactionClosed implements Tr
                                 new TransactionAuthorizationRequestedEvent(
                                         this.getTransactionId().value().toString(),
                                         this.getRptId().value(),
-                                        this.getPaymentToken().value(),
+                                        this.getTransactionActivatedData().getPaymentToken(),
                                         this.getTransactionAuthorizationRequestData()
                                 )
                         ),
                         new TransactionAuthorizationStatusUpdatedEvent(
                                 this.getTransactionId().value().toString(),
                                 this.getRptId().value(),
-                                this.getPaymentToken().value(),
+                                this.getTransactionActivatedData().getPaymentToken(),
                                 this.getTransactionAuthorizationStatusUpdateData()
                         )
                 ),
                 new TransactionClosureSentEvent(
                         this.getTransactionId().value().toString(),
                         this.getRptId().value(),
-                        this.getPaymentToken().value(),
+                        this.getTransactionActivatedData().getPaymentToken(),
                         this.getTransactionClosureSendData()
                 )
         );

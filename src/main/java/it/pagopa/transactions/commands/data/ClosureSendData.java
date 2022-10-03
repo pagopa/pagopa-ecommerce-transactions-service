@@ -1,10 +1,9 @@
 package it.pagopa.transactions.commands.data;
 
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
-import it.pagopa.transactions.domain.TransactionInitialized;
-import it.pagopa.transactions.domain.pojos.BaseTransaction;
+import it.pagopa.transactions.domain.pojos.BaseTransactionWithPaymentToken;
 
 public record ClosureSendData(
-        BaseTransaction transaction,
+		BaseTransactionWithPaymentToken transaction,
         UpdateAuthorizationRequestDto updateAuthorizationRequest
 ) {}

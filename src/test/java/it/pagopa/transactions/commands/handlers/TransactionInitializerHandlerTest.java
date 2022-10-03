@@ -1,15 +1,15 @@
 package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
-import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionRequestDto;
 import it.pagopa.generated.transactions.model.ObjectFactory;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.client.NodeForPspClient;
-import it.pagopa.transactions.commands.TransactionInitializeCommand;
-import it.pagopa.transactions.documents.TransactionInitData;
-import it.pagopa.transactions.documents.TransactionInitEvent;
+import it.pagopa.transactions.commands.TransactionActivateCommand;
+import it.pagopa.transactions.documents.TransactionActivatedData;
+import it.pagopa.transactions.documents.TransactionActivatedEvent;
+import it.pagopa.transactions.documents.TransactionActivationRequestedEvent;
 import it.pagopa.transactions.domain.IdempotencyKey;
 import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.projections.TransactionsProjection;
@@ -25,9 +25,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
+import reactor.util.function.Tuple3;
 
-import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -38,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @ExtendWith(MockitoExtension.class)
 class TransactionInitializerHandlerTest {
 
-  @InjectMocks private TransactionInizializeHandler handler;
+  @InjectMocks private TransactionActivateHandler handler;
 
   @Mock private PaymentRequestsInfoRepository paymentRequestInfoRepository;
   @Mock private ObjectFactory objectFactory;
@@ -46,7 +45,7 @@ class TransactionInitializerHandlerTest {
   @Mock private EcommerceSessionsClient ecommerceSessionsClient;
 
   @Mock
-  private TransactionsEventStoreRepository<TransactionInitData> transactionEventStoreRepository;
+  private TransactionsEventStoreRepository<TransactionActivatedData> transactionEventStoreRepository;
 
   @Mock private NodoConnectionString nodoConnectionParams;
 
@@ -67,7 +66,7 @@ class TransactionInitializerHandlerTest {
     requestDto.setEmail("jhon.doe@email.com");
     requestDto.setAmount(1200);
 
-    TransactionInitializeCommand command = new TransactionInitializeCommand(rptId, requestDto);
+    TransactionActivateCommand command = new TransactionActivateCommand(rptId, requestDto);
 
     PaymentRequestInfo paymentRequestInfoCached =
         new PaymentRequestInfo(
@@ -99,16 +98,18 @@ class TransactionInitializerHandlerTest {
         .thenReturn(Mono.just(sessionDataDto));
 
     /** preconditions */
-    Tuple2<NewTransactionResponseDto, TransactionInitEvent> handlerResponse = handler.handle(command).block();
-    NewTransactionResponseDto response = handlerResponse.getT1();
+    Tuple3<
+            Mono<TransactionActivatedEvent>,
+            Mono<TransactionActivationRequestedEvent>,
+            SessionDataDto> response = handler.handle(command).block();
 
     /** asserts */
     Mockito.verify(paymentRequestInfoRepository, Mockito.times(1)).findById(rptId);
     Mockito.verify(ecommerceSessionsClient, Mockito.times(1)).createSessionToken(Mockito.any());
 
-    assertEquals(sessionDataDto.getRptId(), response.getRptId());
-    assertEquals(sessionDataDto.getPaymentToken(), response.getPaymentToken());
-    assertEquals(paymentRequestInfoCached.paymentToken(), response.getPaymentToken());
+    assertEquals(sessionDataDto.getRptId(), response.getT3().getRptId());
+    assertEquals(sessionDataDto.getPaymentToken(), response.getT3().getPaymentToken());
+    assertEquals(paymentRequestInfoCached.paymentToken(), response.getT3().getPaymentToken());
     assertNotNull(paymentRequestInfoCached.id());
   }
 

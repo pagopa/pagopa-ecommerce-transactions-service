@@ -1,14 +1,18 @@
 package it.pagopa.transactions.services;
 
+import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
-import it.pagopa.transactions.commands.TransactionInitializeCommand;
-import it.pagopa.transactions.commands.handlers.TransactionInizializeHandler;
-import it.pagopa.transactions.documents.TransactionInitData;
-import it.pagopa.transactions.documents.TransactionInitEvent;
+import it.pagopa.transactions.commands.TransactionActivateCommand;
+import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
+import it.pagopa.transactions.documents.TransactionActivatedData;
+import it.pagopa.transactions.documents.TransactionActivatedEvent;
+import it.pagopa.transactions.documents.TransactionActivationRequestedData;
+import it.pagopa.transactions.documents.TransactionActivationRequestedEvent;
 import it.pagopa.transactions.domain.*;
-import it.pagopa.transactions.projections.handlers.TransactionsProjectionHandler;
+import it.pagopa.transactions.projections.handlers.TransactionsActivationProjectionHandler;
+import it.pagopa.transactions.projections.handlers.TransactionsActivationRequestedProjectionHandler;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,9 +20,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
-import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,57 +34,81 @@ class TransactionServiceTest {
     private TransactionsService transactionsService;
 
     @Mock
-    private TransactionInizializeHandler transactionInizializeHandler;
+    private TransactionActivateHandler transactionActivateHandler;
 
     @Mock
-    private TransactionsProjectionHandler transactionsProjectionHandler;
+    private TransactionsActivationRequestedProjectionHandler transactionsProjectionHandler;
+
+    @Mock
+    private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
 
     @Test
     void shouldHandleNewTransaction() {
         String TEST_EMAIL = "j.doe@mail.com";
         String TEST_RPTID = "77777777777302016723749670035";
         String TEST_TOKEN = "token";
+        UUID TEST_SESSION_TOKEN = UUID.randomUUID();
+        UUID TEST_CPP = UUID.randomUUID();
         UUID TRANSACTION_ID = UUID.randomUUID();
 
         NewTransactionRequestDto transactionRequestDto = new NewTransactionRequestDto()
                 .email(TEST_EMAIL)
                 .rptId(TEST_RPTID);
 
-        NewTransactionResponseDto response = new NewTransactionResponseDto()
-                .amount(1)
-                .rptId(TEST_RPTID)
-                .paymentToken(TEST_TOKEN)
-                .reason("")
-                .authToken(TEST_TOKEN);
+        TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
+        transactionActivatedData.setDescription("dest");
+        transactionActivatedData.setAmount(0);
+        transactionActivatedData.setEmail(TEST_EMAIL);
+        transactionActivatedData.setPaymentToken(TEST_TOKEN);
 
-        TransactionInitEvent event = new TransactionInitEvent(
-                TRANSACTION_ID.toString(),
-                TEST_RPTID,
-                TEST_TOKEN,
-                ZonedDateTime.now().toString(),
-                new TransactionInitData(
-                        "desc",
-                        0,
-                        TEST_EMAIL,
-                        "faultCode",
-                        "faultCodeString"
-                )
+        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(TRANSACTION_ID.toString(), TEST_RPTID, TEST_TOKEN, transactionActivatedData);
+
+        TransactionActivationRequestedData transactionActivationRequestedData = new TransactionActivationRequestedData();
+        transactionActivationRequestedData.setAmount(0);
+        transactionActivationRequestedData.setDescription("desc");
+        transactionActivationRequestedData.setEmail(TEST_EMAIL);
+        transactionActivationRequestedData.setPaymentContextCode(TEST_CPP.toString());
+
+        TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(TRANSACTION_ID.toString(), TEST_RPTID, transactionActivationRequestedData);
+
+        SessionDataDto sessionDataDto = new SessionDataDto();
+        sessionDataDto.setEmail(TEST_EMAIL);
+        sessionDataDto.sessionToken(TEST_SESSION_TOKEN.toString());
+        sessionDataDto.setTransactionId(TRANSACTION_ID.toString());
+        sessionDataDto.setPaymentToken(TEST_TOKEN);
+        sessionDataDto.setRptId(TEST_RPTID);
+
+        Tuple3<
+                Mono<TransactionActivatedEvent>,
+                Mono<TransactionActivationRequestedEvent>,
+                SessionDataDto> response = Tuples.of(Mono.just(transactionActivatedEvent), Mono.just(transactionActivationRequestedEvent), sessionDataDto);
+
+        TransactionActivated transactionActivated = new TransactionActivated(
+                new TransactionId(TRANSACTION_ID),
+                new PaymentToken(TEST_TOKEN),
+                new RptId(TEST_RPTID),
+                new TransactionDescription("desc"),
+                new TransactionAmount(0),
+                new Email("foo@example.com"),
+                TransactionStatusDto.ACTIVATED
         );
 
-      TransactionInitialized transaction = new TransactionInitialized(
-              new TransactionId(TRANSACTION_ID),
-              new PaymentToken(TEST_TOKEN),
-              new RptId(TEST_RPTID),
-              new TransactionDescription("desc"),
-              new TransactionAmount(0),
-              new Email(TEST_EMAIL),
-              TransactionStatusDto.INITIALIZED
-      );
+
+        TransactionActivationRequested transactionActivationRequested = new TransactionActivationRequested(
+                new TransactionId(TRANSACTION_ID),
+                new RptId(TEST_RPTID),
+                new TransactionDescription("desc"),
+                new TransactionAmount(0),
+                new Email("foo@example.com"),
+                TransactionStatusDto.ACTIVATION_REQUESTED
+        );
+
         /**
          * Preconditions
          */
-        Mockito.when(transactionInizializeHandler.handle(Mockito.any(TransactionInitializeCommand.class))).thenReturn(Mono.just(Tuples.of(response, event)));
-        Mockito.when(transactionsProjectionHandler.handle(event)).thenReturn(Mono.just(transaction));
+        Mockito.when(transactionActivateHandler.handle(Mockito.any(TransactionActivateCommand.class))).thenReturn(Mono.just(response));
+//        Mockito.when(transactionsProjectionHandler.handle(transactionActivationRequestedEvent)).thenReturn(Mono.just(transactionActivationRequested));
+        Mockito.when(transactionsActivationProjectionHandler.handle(transactionActivatedEvent)).thenReturn(Mono.just(transactionActivated));
 
         /**
          * Test

@@ -16,7 +16,8 @@ import static java.time.ZonedDateTime.now;
 @Generated
 public abstract sealed class TransactionEvent<T>
         permits
-        TransactionInitEvent,
+        TransactionActivatedEvent,
+        TransactionActivationRequestedEvent,
         TransactionAuthorizationRequestedEvent,
         TransactionAuthorizationStatusUpdatedEvent,
         TransactionClosureSentEvent,

@@ -24,7 +24,7 @@ class TransactionDocumentTest {
         ZonedDateTime TEST_TIME = ZonedDateTime.now();
         String TEST_EMAIL = "foo@example.com";
         int TEST_AMOUNT = 1;
-        TransactionStatusDto TEST_STATUS = TransactionStatusDto.INITIALIZED;
+        TransactionStatusDto TEST_STATUS = TransactionStatusDto.ACTIVATED;
 
         /**
          * Test
@@ -66,10 +66,10 @@ class TransactionDocumentTest {
         RptId rptId = new RptId("77777777777302016723749670035");
         TransactionDescription description = new TransactionDescription("");
         TransactionAmount amount = new TransactionAmount(100);
-        TransactionStatusDto status = TransactionStatusDto.INITIALIZED;
+        TransactionStatusDto status = TransactionStatusDto.ACTIVATED;
         Email email = new Email("foo@example.com");
 
-        TransactionInitialized transaction = new TransactionInitialized(
+        TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 paymentToken,
                 rptId,
@@ -80,7 +80,7 @@ class TransactionDocumentTest {
 
         Transaction transactionDocument = Transaction.from(transaction);
 
-        assertEquals(transactionDocument.getPaymentToken(), transaction.getPaymentToken().value());
+        assertEquals(transactionDocument.getPaymentToken(), transaction.getTransactionActivatedData().getPaymentToken());
         assertEquals(transactionDocument.getRptId(), transaction.getRptId().value());
         assertEquals(transactionDocument.getDescription(), transaction.getDescription().value());
         assertEquals(transactionDocument.getAmount(), transaction.getAmount().value());
