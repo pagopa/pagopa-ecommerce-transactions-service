@@ -24,7 +24,9 @@ public class NodoUtilities {
         qrCode.setCF(rptId.getFiscalCode());
         qrCode.setAuxDigit(rptId.getAuxDigit());
         qrCode.setCodIUV(rptId.getIUV());
-        qrCode.setCodStazPA(auxDigitZero(rptId.getAuxDigit()) ? rptId.getApplicationCode() : null);
+        if(auxDigitZero(rptId.getAuxDigit())) {
+            qrCode.setCodStazPA(rptId.getApplicationCode());
+        }
         nodoTipoCodiceIdRPT.setQrCode(qrCode);
         return nodoTipoCodiceIdRPT;
     }
