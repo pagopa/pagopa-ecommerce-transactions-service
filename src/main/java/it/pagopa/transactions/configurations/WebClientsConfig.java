@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 public class WebClientsConfig {
 
     @Bean(name = "nodoApiClient")
-    public NodoApi nodoApiClient(@Value("${nodoPerPM.uri}") String nodoUri,
+    public NodoApi nodoApiClient(@Value("${nodo.hostname}") String nodoUri,
                                  @Value("${nodoPerPM.readTimeout}") int nodoReadTimeout,
                                  @Value("${nodoPerPM.connectionTimeout}") int nodoConnectionTimeout) {
 
