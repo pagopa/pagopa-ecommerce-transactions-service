@@ -220,7 +220,7 @@ class TransactionsControllerTest {
     @Test
     void testAlreadyProcessedTransactionExceptionHandler() throws NoSuchMethodException, SecurityException,
             IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-        final RptId RPT_ID = new RptId("aaa");
+        final RptId RPT_ID = new RptId("77777777777111111111111111111");
 
         ResponseEntity responseCheck = new ResponseEntity<>(
                 new ProblemJsonDto()

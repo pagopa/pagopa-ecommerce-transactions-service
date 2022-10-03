@@ -3,7 +3,6 @@ package it.pagopa.transactions.utils;
 import it.pagopa.generated.nodoperpsp.model.*;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
 import it.pagopa.generated.transactions.model.CtQrCode;
-import it.pagopa.generated.nodoperpsp.model.QrCode;
 import it.pagopa.generated.transactions.model.StOutcome;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
@@ -45,6 +44,8 @@ public class NodoOperations {
 
   @Autowired it.pagopa.generated.transactions.model.ObjectFactory objectFactoryNodeForPsp;
 
+  @Autowired NodoUtilities nodoUtilities;
+
   public Mono<PaymentRequestInfo> activatePaymentRequest(
           PaymentRequestInfo paymentRequestInfo,
           NewTransactionRequestDto newTransactionRequestDto) {
@@ -65,18 +66,15 @@ public class NodoOperations {
 
     final BigDecimal amountAsBigDecimal =
         BigDecimal.valueOf(amount / 100).setScale(2, RoundingMode.CEILING);
-    final String fiscalCode = rptId.getFiscalCode();
-    final String noticeCode = rptId.getNoticeId();
 
     return Mono.just(isNM3)
         .flatMap(
             validIsNM3 ->
                 Boolean.TRUE.equals(validIsNM3)
                     ? nodoActivationForNM3PaymentRequest(
-                        fiscalCode, noticeCode, amountAsBigDecimal, idempotencyKey.getKey())
+                        rptId, amountAsBigDecimal, idempotencyKey.getKey())
                     : nodoActivationForUnknownPaymentRequest(
-                        fiscalCode,
-                        noticeCode,
+                        rptId,
                         amountAsBigDecimal,
                         idempotencyKey.getKey(),
                         paymentContextCode))
@@ -96,10 +94,10 @@ public class NodoOperations {
   }
 
   private Mono<String> nodoActivationForNM3PaymentRequest(
-      String fiscalCode, String noticeCode, BigDecimal amount, String idempotencyKey) {
+      RptId rptId, BigDecimal amount, String idempotencyKey) {
     CtQrCode qrCode = new CtQrCode();
-    qrCode.setFiscalCode(fiscalCode);
-    qrCode.setNoticeNumber(noticeCode);
+    qrCode.setFiscalCode(rptId.getFiscalCode());
+    qrCode.setNoticeNumber(rptId.getNoticeId());
     ActivatePaymentNoticeReq request = baseActivatePaymentNoticeReq;
     request.setAmount(amount);
     request.setQrCode(qrCode);
@@ -116,24 +114,13 @@ public class NodoOperations {
   }
 
   private Mono<String> nodoActivationForUnknownPaymentRequest(
-      String fiscalCode,
-      String noticeCode,
+      RptId rptId,
       BigDecimal amount,
       String idempotencyKey,
       String paymentContextCode) {
     NodoAttivaRPT nodoAttivaRPTReq = baseNodoAttivaRPT;
 
-    final String iuv = noticeCode.substring(1);
-    final String auxDigit = noticeCode.substring(0, 1);
-    final String applicationCode = noticeCode.substring(1, 3);
-
-    NodoTipoCodiceIdRPT nodoTipoCodiceIdRPT = objectFactoryNodoPerPsp.createNodoTipoCodiceIdRPT();
-    QrCode qrCode = new QrCode();
-    qrCode.setCF(fiscalCode);
-    qrCode.setCodIUV(iuv);
-    qrCode.setAuxDigit(auxDigit);
-    qrCode.setCodStazPA("0".equals(auxDigit) ? applicationCode : null);
-    nodoTipoCodiceIdRPT.setQrCode(qrCode);
+    NodoTipoCodiceIdRPT nodoTipoCodiceIdRPT = nodoUtilities.getCodiceIdRpt(rptId);
     NodoTipoDatiPagamentoPSP datiPagamentoPsp =
         objectFactoryNodoPerPsp.createNodoTipoDatiPagamentoPSP();
     datiPagamentoPsp.setImportoSingoloVersamento(amount);
@@ -154,7 +141,7 @@ public class NodoOperations {
 
               if (Boolean.TRUE.equals(isNM3GivenAttivaRPTRisposta)) {
                 return nodoActivationForNM3PaymentRequest(
-                    fiscalCode, noticeCode, amount, idempotencyKey);
+                    rptId, amount, idempotencyKey);
               }
 
               return StOutcome.OK.value().equals(nodoAttivaRPTRResponse.getEsito())

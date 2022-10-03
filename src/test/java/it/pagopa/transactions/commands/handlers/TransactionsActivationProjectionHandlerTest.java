@@ -31,7 +31,7 @@ class TransactionsActivationProjectionHandlerTest {
         /** preconditions */
 
         String transactionIdString = UUID.randomUUID().toString();
-        String rptIdString = "RtpID";
+        String rptIdString = "77777777777111111111111111111";
         String paymentTokenString = UUID.randomUUID().toString();
         String transactionDescription = "transaction description";
         int amountInt = 100;

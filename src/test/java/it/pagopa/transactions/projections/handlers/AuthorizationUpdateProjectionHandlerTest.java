@@ -41,7 +41,7 @@ class AuthorizationUpdateProjectionHandlerTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(UUID.randomUUID()),
                 new PaymentToken("paymentToken"),
-                new RptId("rptId"),
+                new RptId("77777777777111111111111111111"),
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
                 TransactionStatusDto.AUTHORIZATION_REQUESTED

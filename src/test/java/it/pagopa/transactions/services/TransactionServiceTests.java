@@ -101,7 +101,7 @@ public class TransactionServiceTests {
 	@Test
 	void getTransactionReturnsTransactionData() {
 
-		final Transaction transaction = new Transaction(TRANSACION_ID, PAYMENT_TOKEN, "rptId", "reason", 100,
+		final Transaction transaction = new Transaction(TRANSACION_ID, PAYMENT_TOKEN, "77777777777111111111111111111", "reason", 100,
 				TransactionStatusDto.ACTIVATED);
 		final TransactionInfoDto expected = new TransactionInfoDto()
 		        .transactionId(TRANSACION_ID)
@@ -109,7 +109,7 @@ public class TransactionServiceTests {
 				.reason("reason")
 				.paymentToken(PAYMENT_TOKEN)
 				.authToken(null)
-				.rptId("rptId")
+				.rptId("77777777777111111111111111111")
 				.status(TransactionStatusDto.ACTIVATED);
 
 		when(repository.findById(TRANSACION_ID)).thenReturn(Mono.just(transaction));
@@ -149,7 +149,7 @@ public class TransactionServiceTests {
 		Transaction transaction = new Transaction(
 			    TRANSACION_ID,
 				PAYMENT_TOKEN,
-				"rptId",
+				"77777777777111111111111111111",
 				"description",
 				100,
 				TransactionStatusDto.ACTIVATED);
@@ -212,7 +212,7 @@ public class TransactionServiceTests {
 		Transaction transactionDocument = new Transaction(
 			    transactionId.value().toString(),
 				PAYMENT_TOKEN,
-				"rptId",
+				"77777777777111111111111111111",
 				"description",
 				100,
 				TransactionStatusDto.AUTHORIZATION_REQUESTED);
@@ -316,7 +316,7 @@ public class TransactionServiceTests {
 		Transaction transactionDocument = new Transaction(
 			    transactionId.value().toString(),
 				PAYMENT_TOKEN,
-				"rptId",
+				"77777777777111111111111111111",
 				"description",
 				100,
 				TransactionStatusDto.CLOSED);
@@ -416,13 +416,13 @@ public class TransactionServiceTests {
 		Transaction transaction = new Transaction(
 				TRANSACION_ID,
 				PAYMENT_TOKEN,
-				"RtpID",
+				"77777777777111111111111111111",
 				"Description",
 				100,
 				TransactionStatusDto.ACTIVATION_REQUESTED
 		);
 
-		RptId rtpId = new RptId("RtpID");
+		RptId rtpId = new RptId("77777777777111111111111111111");
 
 		it.pagopa.transactions.domain.TransactionActivated transactionInitializedDomain = new it.pagopa.transactions.domain.TransactionActivated(
 				new TransactionId(UUID.fromString(TRANSACION_ID)),
@@ -435,7 +435,7 @@ public class TransactionServiceTests {
 
 		TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
 				TRANSACION_ID,
-				"rptId",
+				"77777777777111111111111111111",
 				PAYMENT_TOKEN,
 				new TransactionActivatedData(TRANSACION_ID, transactionInitializedDomain.getAmount().value(), null, null, null, null)
 		);
