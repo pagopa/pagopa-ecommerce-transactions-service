@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 @ExtendWith(MockitoExtension.class)
-public class NotificationsServiceClientTest {
+class NotificationsServiceClientTest {
     @InjectMocks
     private NotificationsServiceClient client;
 
@@ -112,7 +112,7 @@ public class NotificationsServiceClientTest {
 
         Mockito.when(defaultApi.sendNotificationEmail(null, request)).thenReturn(Mono.just(expected));
 
-        StepVerifier.create(client.sendNotificationEmail(request))
+        StepVerifier.create(client.sendSuccessEmail(successTemplateRequest))
                 .expectNext(expected)
                 .verifyComplete();
     }

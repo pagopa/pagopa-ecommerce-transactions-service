@@ -342,7 +342,7 @@ public class TransactionsService {
             transactionActivatedEvent ->
                 transactionsActivationProjectionHandler.handle(transactionActivatedEvent))
         .map(
-            TransactionActivatedEvent ->
+            transactionActivated ->
                 new ActivationResultResponseDto()
                     .outcome(ActivationResultResponseDto.OutcomeEnum.OK))
         .doOnNext(

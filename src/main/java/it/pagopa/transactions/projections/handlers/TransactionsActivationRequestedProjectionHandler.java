@@ -27,7 +27,6 @@ public class TransactionsActivationRequestedProjectionHandler
   public Mono<TransactionActivationRequested> handle(TransactionActivationRequestedEvent transactionActivationRequestedEvent) {
 
     TransactionId transactionId = new TransactionId(UUID.fromString(transactionActivationRequestedEvent.getTransactionId()));
-    PaymentToken paymentToken = new PaymentToken(transactionActivationRequestedEvent.getPaymentToken());
     RptId rptId = new RptId(transactionActivationRequestedEvent.getRptId());
     TransactionDescription description = new TransactionDescription(transactionActivationRequestedEvent.getData().getDescription());
     TransactionAmount amount = new TransactionAmount(transactionActivationRequestedEvent.getData().getAmount());

@@ -56,7 +56,6 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
     @Override
     public Mono<TransactionClosureSentEvent> handle(TransactionClosureSendCommand command) {
         Mono<Transaction> transaction = replayTransactionEvents(command.getData().transaction().getTransactionId().value());
-        // TransactionActivated transaction = command.getData().transaction();
 
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
                 .cast(BaseTransaction.class)
@@ -183,19 +182,6 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                 });
     }
 
-    private ClosePaymentRequestDto.OutcomeEnum authorizationResultToOutcome(AuthorizationResultDto authorizationResult) {
-        switch (authorizationResult) {
-            case OK -> {
-                return ClosePaymentRequestDto.OutcomeEnum.OK;
-            }
-            case KO -> {
-                return ClosePaymentRequestDto.OutcomeEnum.KO;
-            }
-            default ->
-                    throw new RuntimeException("Missing authorization result enum value mapping to Nodo closePayment outcome");
-        }
-    }
-
     private ClosePaymentRequestV2Dto.OutcomeEnum authorizationResultToOutcomeV2(AuthorizationResultDto authorizationResult) {
         switch (authorizationResult) {
             case OK -> {
@@ -205,7 +191,7 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                 return ClosePaymentRequestV2Dto.OutcomeEnum.KO;
             }
             default ->
-                    throw new RuntimeException("Missing authorization result enum value mapping to Nodo closePaymentV2 outcome");
+                    throw new IllegalArgumentException("Missing authorization result enum value mapping to Nodo closePaymentV2 outcome");
         }
     }
 

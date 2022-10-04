@@ -70,14 +70,14 @@ public class TransactionActivateResultHandler
 									paymentRequestInfo.idempotencyKey())
 					));
 				}).flatMap(saved -> {
-					TransactionActivatedEvent TransactionActivatedEvent =
+					TransactionActivatedEvent transactionActivatedEvent =
 							new TransactionActivatedEvent(
 									transactionId,
 									command.getData().transactionActivationRequested().getRptId().value(),
 									saved.paymentToken(),
 									data);
-					log.info("Saving TransactionActivatedevent {}", TransactionActivatedEvent);
-					return transactionEventStoreRepository.save(TransactionActivatedEvent);
+					log.info("Saving TransactionActivatedevent {}", transactionActivatedEvent);
+					return transactionEventStoreRepository.save(transactionActivatedEvent);
 				});
 	}
 }
