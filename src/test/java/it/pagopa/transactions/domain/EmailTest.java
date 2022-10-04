@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(MockitoExtension.class)
-public class EmailTest {
+class EmailTest {
     private static final String INVALID_EMAIL = "";
     private static final String VALID_EMAIL = "foo@example.com";
 

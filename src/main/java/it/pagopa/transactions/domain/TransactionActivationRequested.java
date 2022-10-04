@@ -27,8 +27,8 @@ public final class TransactionActivationRequested extends BaseTransaction implem
 
     @Override
     public Transaction applyEvent(TransactionEvent<?> event) {
-        if (event instanceof TransactionActivatedEvent) {
-            return this.apply((TransactionActivatedEvent) event);
+        if (event instanceof TransactionActivatedEvent transactionActivatedEvent) {
+            return this.apply(transactionActivatedEvent);
         } else {
             return this;
         }

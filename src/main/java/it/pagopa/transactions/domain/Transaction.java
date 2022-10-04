@@ -1,6 +1,5 @@
 package it.pagopa.transactions.domain;
 
-import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.annotations.AggregateRoot;
 import it.pagopa.transactions.documents.TransactionEvent;
 
