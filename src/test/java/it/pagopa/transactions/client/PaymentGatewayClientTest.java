@@ -45,7 +45,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
-                new RptId("rptId"),
+                new RptId("77777777777111111111111111111"),
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
                 TransactionStatusDto.ACTIVATED
@@ -89,7 +89,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
-                new RptId("rptId"),
+                new RptId("77777777777111111111111111111"),
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
                 TransactionStatusDto.ACTIVATED
@@ -130,7 +130,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
-                new RptId("rptId"),
+                new RptId("77777777777111111111111111111"),
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
                 TransactionStatusDto.ACTIVATED
@@ -169,7 +169,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
-                new RptId("rptId"),
+                new RptId("77777777777111111111111111111"),
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
                 TransactionStatusDto.ACTIVATED

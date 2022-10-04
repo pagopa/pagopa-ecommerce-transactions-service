@@ -38,7 +38,7 @@ class TransactionUpdateAuthorizationHandlerTest {
     @Test
     void shouldSaveSuccessfulUpdate() {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
-        RptId rptId = new RptId("rptId");
+        RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
 
@@ -86,7 +86,7 @@ class TransactionUpdateAuthorizationHandlerTest {
     @Test
     void shouldRejectTransactionInInvalidState() {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
-        RptId rptId = new RptId("rptId");
+        RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
 
@@ -122,7 +122,7 @@ class TransactionUpdateAuthorizationHandlerTest {
     @Test
     void shouldSetTransactionStatusToAuthorizationFailedOnGatewayKO() {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
-        RptId rptId = new RptId("rptId");
+        RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
 

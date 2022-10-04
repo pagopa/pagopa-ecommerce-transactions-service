@@ -24,7 +24,12 @@ microservice-chart:
       REDIS_HOST: pagopa-u-weu-ecommerce-redis.redis.cache.windows.net
       REDIS_PORT: "6380"
       REDIS_SSL_ENABLED: "true"
-      NODO_URI: https://api.uat.platform.pagopa.it/nodo
+      NODO_HOSTNAME: https://api.uat.platform.pagopa.it
+      NODO_PER_PSP_URI: /nodo/nodo-per-psp/v1
+      NODE_FOR_PSP_URI: /nodo/node-for-psp/v1
+      NODOPERPM_URI: /nodo/nodo-per-pm/v1/informazioniPagamento
+      NODOPERPM_READ_TIMEOUT: "10000"
+      NODOPERPM_CONNECTION_TIMEOUT: "10000"
       NODO_READ_TIMEOUT: "10000"
       NODO_CONNECTION_TIMEOUT: "10000"
       ECOMMERCE_SESSIONS_URI: https://api.uat.platform.pagopa.it/ecommerce/sessions-service/v1
@@ -47,7 +52,7 @@ microservice-chart:
       NODO_CONNECTION_STRING: nodo-connection-string
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.3.7"
+    tag: "0.4.23"
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -114,9 +119,14 @@ microservice-chart:
     REDIS_HOST: pagopa-u-weu-ecommerce-redis.redis.cache.windows.net
     REDIS_PORT: "6380"
     REDIS_SSL_ENABLED: "true"
-    NODO_URI: https://api.uat.platform.pagopa.it/nodo
+    NODO_HOSTNAME: https://api.uat.platform.pagopa.it
+    NODO_PER_PSP_URI: /nodo/nodo-per-psp/v1
+    NODE_FOR_PSP_URI: /nodo/node-for-psp/v1
     NODO_READ_TIMEOUT: "10000"
     NODO_CONNECTION_TIMEOUT: "10000"
+    NODOPERPM_URI: /nodo/nodo-per-pm/v1/informazioniPagamento
+    NODOPERPM_READ_TIMEOUT: "10000"
+    NODOPERPM_CONNECTION_TIMEOUT: "10000"
     ECOMMERCE_SESSIONS_URI: https://api.uat.platform.pagopa.it/ecommerce/sessions-service/v1
     ECOMMERCE_SESSIONS_READ_TIMEOUT: "10000"
     ECOMMERCE_SESSIONS_CONNECTION_TIMEOUT: "10000"

@@ -50,7 +50,7 @@ class TransactionSendClosureHandlerTest {
     void shouldRejectTransactionInWrongState() {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
 
-        RptId rptId = new RptId("rptId");
+        RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
 
@@ -86,7 +86,7 @@ class TransactionSendClosureHandlerTest {
     @Test
     void shouldSetTransactionStatusToClosureFailedOnNodoKO() {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
-        RptId rptId = new RptId("rptId");
+        RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
 
