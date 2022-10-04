@@ -51,8 +51,7 @@ public class WebClientsConfig {
                 .build();
         it.pagopa.generated.ecommerce.nodo.v1.ApiClient apiClient = new it.pagopa.generated.ecommerce.nodo.v1.ApiClient(webClient);
 
-        NodoApi nodoApi = new NodoApi(apiClient);
-        return nodoApi;
+        return new NodoApi(apiClient);
     }
 
     @Bean(name = "nodoWebClient")
