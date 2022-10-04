@@ -36,10 +36,9 @@ class NodoUtilitiesTest {
         Assert.assertEquals("222222222222222",nodoTipoCodiceIdRPT.getQrCode().getCodIUV());
     }
 
-    @Test
-    void shouldGetNodoTipoCodiceIdRPTAux1() {
+    private void shouldGetNodoTipoCodiceIdRPTAux(String auxDigit) {
         ObjectFactory objectFactory = new ObjectFactory();
-        RptId rptId = new RptId("77777777777122222222222222222");
+        RptId rptId = new RptId("77777777777"+auxDigit+"44444444444444444");
 
         Mockito.when(objectFactoryNodoPerPsp.createNodoTipoCodiceIdRPT()).thenReturn(objectFactory.createNodoTipoCodiceIdRPT());
 
@@ -47,41 +46,16 @@ class NodoUtilitiesTest {
 
         Assert.assertNotNull(nodoTipoCodiceIdRPT.getQrCode());
         Assert.assertNull(nodoTipoCodiceIdRPT.getQrCode().getCodStazPA());
-        Assert.assertEquals("1",nodoTipoCodiceIdRPT.getQrCode().getAuxDigit());
+        Assert.assertEquals(auxDigit,nodoTipoCodiceIdRPT.getQrCode().getAuxDigit());
         Assert.assertEquals("77777777777",nodoTipoCodiceIdRPT.getQrCode().getCF());
-        Assert.assertEquals("22222222222222222",nodoTipoCodiceIdRPT.getQrCode().getCodIUV());
+        Assert.assertEquals("44444444444444444",nodoTipoCodiceIdRPT.getQrCode().getCodIUV());
     }
 
     @Test
-    void shouldGetNodoTipoCodiceIdRPTAux2() {
-        ObjectFactory objectFactory = new ObjectFactory();
-        RptId rptId = new RptId("77777777777211111111111111111");
-
-        Mockito.when(objectFactoryNodoPerPsp.createNodoTipoCodiceIdRPT()).thenReturn(objectFactory.createNodoTipoCodiceIdRPT());
-
-        NodoTipoCodiceIdRPT nodoTipoCodiceIdRPT = nodoUtilities.getCodiceIdRpt(rptId);
-
-        Assert.assertNotNull(nodoTipoCodiceIdRPT.getQrCode());
-        Assert.assertNull(nodoTipoCodiceIdRPT.getQrCode().getCodStazPA());
-        Assert.assertEquals("2",nodoTipoCodiceIdRPT.getQrCode().getAuxDigit());
-        Assert.assertEquals("77777777777",nodoTipoCodiceIdRPT.getQrCode().getCF());
-        Assert.assertEquals("11111111111111111",nodoTipoCodiceIdRPT.getQrCode().getCodIUV());
-    }
-
-    @Test
-    void shouldGetNodoTipoCodiceIdRPTAux3() {
-        ObjectFactory objectFactory = new ObjectFactory();
-        RptId rptId = new RptId("77777777777311111111111111111");
-
-        Mockito.when(objectFactoryNodoPerPsp.createNodoTipoCodiceIdRPT()).thenReturn(objectFactory.createNodoTipoCodiceIdRPT());
-
-        NodoTipoCodiceIdRPT nodoTipoCodiceIdRPT = nodoUtilities.getCodiceIdRpt(rptId);
-
-        Assert.assertNotNull(nodoTipoCodiceIdRPT.getQrCode());
-        Assert.assertNull(nodoTipoCodiceIdRPT.getQrCode().getCodStazPA());
-        Assert.assertEquals("3",nodoTipoCodiceIdRPT.getQrCode().getAuxDigit());
-        Assert.assertEquals("77777777777",nodoTipoCodiceIdRPT.getQrCode().getCF());
-        Assert.assertEquals("11111111111111111",nodoTipoCodiceIdRPT.getQrCode().getCodIUV());
+    void shouldGetNodoTipoCodiceIdRPTAuxGreatherThan0() {
+        shouldGetNodoTipoCodiceIdRPTAux("1");
+        shouldGetNodoTipoCodiceIdRPTAux("2");
+        shouldGetNodoTipoCodiceIdRPTAux("3");
     }
 
 }

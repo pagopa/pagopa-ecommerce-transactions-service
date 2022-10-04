@@ -30,7 +30,6 @@ public class NodoPerPM {
 
     public Mono<InformazioniPagamentoDto> chiediInformazioniPagamento(String paymentToken) {
 
-        //TODO Update Path?
         return nodoApiClient
                 .getApiClient()
                 .getWebClient()
