@@ -729,7 +729,108 @@ class TransactionTest {
         Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent);
 
         StepVerifier.create(actual)
-                .expectNextMatches(n -> n.equals(expected))
+                .expectNext(expected)
+                .verifyComplete();
+    }
+
+    @Test
+    void transactionClosedStatusChangeWorks() {
+        EmptyTransaction transaction = new EmptyTransaction();
+
+        String trxId = UUID.randomUUID().toString();
+        String rptId = "rptId";
+        String paymentToken = "paymentToken";
+        String description = "description";
+        int amount = 100;
+        String email = "foo@example.com";
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
+
+        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
+                trxId,
+                rptId,
+                paymentToken,
+                new TransactionActivatedData(
+                        description,
+                        amount,
+                        email,
+                        faultCode,
+                        faultCodeString,
+                        "paymentToken"
+                ));
+
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
+                trxId,
+                rptId,
+                paymentToken,
+                new TransactionAuthorizationRequestData(
+                        amount,
+                        10,
+                        "paymentInstrumentId",
+                        "pspId",
+                        "paymentTypeCode",
+                        "brokerName",
+                        "pspChannelCode"
+                )
+        );
+
+        TransactionAuthorizationStatusUpdatedEvent authorizationStatusUpdatedEvent = new TransactionAuthorizationStatusUpdatedEvent(
+                trxId,
+                rptId,
+                paymentToken,
+                new TransactionAuthorizationStatusUpdateData(
+                        AuthorizationResultDto.OK,
+                        TransactionStatusDto.AUTHORIZED
+                )
+        );
+
+        TransactionClosureSentEvent closureSentEvent = new TransactionClosureSentEvent(
+                trxId,
+                rptId,
+                paymentToken,
+                new TransactionClosureSendData(
+                        ClosePaymentResponseDto.OutcomeEnum.OK,
+                        TransactionStatusDto.CLOSED
+                )
+        );
+
+        Flux<TransactionEvent<?>> events = Flux.just(
+                transactionActivatedEvent,
+                authorizationRequestedEvent,
+                authorizationStatusUpdatedEvent,
+                closureSentEvent,
+                closureSentEvent
+        );
+
+        TransactionActivated TransactionActivated = new TransactionActivated(
+                new TransactionId(UUID.fromString(trxId)),
+                new PaymentToken(paymentToken),
+                new RptId(rptId),
+                new TransactionDescription(description),
+                new TransactionAmount(amount),
+                new Email(email),
+                faultCode,
+                faultCodeString,
+                ZonedDateTime.parse(transactionActivatedEvent.getCreationDate()),
+                TransactionStatusDto.ACTIVATED
+        );
+
+        TransactionWithRequestedAuthorization transactionWithRequestedAuthorization = new TransactionWithRequestedAuthorization(
+                TransactionActivated.withStatus(TransactionStatusDto.AUTHORIZATION_REQUESTED),
+                authorizationRequestedEvent
+        );
+
+        TransactionWithCompletedAuthorization transactionWithCompletedAuthorization = new TransactionWithCompletedAuthorization(
+                transactionWithRequestedAuthorization.withStatus(TransactionStatusDto.AUTHORIZED),
+                authorizationStatusUpdatedEvent
+        );
+
+        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent);
+
+        StepVerifier.create(actual)
+                .expectNextMatches(t ->
+                        t instanceof TransactionClosed &&
+                                ((TransactionClosed) t).withStatus(TransactionStatusDto.AUTHORIZED).getStatus() == TransactionStatusDto.AUTHORIZED)
                 .verifyComplete();
     }
 }
