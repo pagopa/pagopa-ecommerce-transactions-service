@@ -126,9 +126,10 @@ class TransactionsControllerTest {
                 .thenReturn(Mono.error(new TransactionNotFoundException(paymentToken)));
 
         /* test */
+        Mono<ResponseEntity<RequestAuthorizationResponseDto>> mono = transactionsController.requestTransactionAuthorization(paymentToken, Mono.just(authorizationRequest), null);
         assertThrows(
                 TransactionNotFoundException.class,
-                () -> transactionsController.requestTransactionAuthorization(paymentToken, Mono.just(authorizationRequest), null).block()
+                () -> mono.block()
         );
     }
 

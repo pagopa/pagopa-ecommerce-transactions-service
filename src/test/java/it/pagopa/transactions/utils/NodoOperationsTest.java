@@ -151,14 +151,18 @@ class NodoOperationsTest {
     newTransactionRequestDto.setAmount(amount);
 
     /** Test / asserts */
+    Mono<PaymentRequestInfo> paymentRequestInfoMono = nodoOperations
+            .activatePaymentRequest(
+                    paymentRequestInfo,
+                    newTransactionRequestDto);
+
     Assert.assertThrows(
         NodoErrorException.class,
         () ->
-            nodoOperations
-                .activatePaymentRequest(
-                        paymentRequestInfo,
-                        newTransactionRequestDto)
-                .block());
+        {
+          paymentRequestInfoMono
+              .block();
+        });
   }
 
   @Test
@@ -326,14 +330,19 @@ class NodoOperationsTest {
     newTransactionRequestDto.setAmount(amount);
 
     /** Test / asserts */
+
+    Mono<PaymentRequestInfo> paymentRequestInfoMono = nodoOperations
+            .activatePaymentRequest(
+                    paymentRequestInfo,
+                    newTransactionRequestDto);
+
     Assert.assertThrows(
         NodoErrorException.class,
         () ->
-            nodoOperations
-                .activatePaymentRequest(
-                    paymentRequestInfo,
-                    newTransactionRequestDto)
-                .block());
+        {
+          paymentRequestInfoMono
+              .block();
+        });
   }
 
   @Test

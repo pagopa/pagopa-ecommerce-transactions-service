@@ -249,9 +249,12 @@ class PaymentRequestsServiceTest {
         .thenReturn(Mono.just(verificaRPTRIsposta));
 
     /** Test */
+    Mono<PaymentRequestsGetResponseDto> paymentRequestInfoMono = paymentRequestsService.getPaymentRequestInfo(rptIdAsString);
     Assert.assertThrows(
         NodoErrorException.class,
-        () -> paymentRequestsService.getPaymentRequestInfo(rptIdAsString).block());
+        () -> {
+          paymentRequestInfoMono.block();
+        });
   }
 
   @Test
@@ -274,9 +277,12 @@ class PaymentRequestsServiceTest {
         .thenReturn(Mono.just(verificaRPTRIsposta));
 
     /** Test */
+    Mono<PaymentRequestsGetResponseDto> paymentRequestInfoMono = paymentRequestsService.getPaymentRequestInfo(rptIdAsString);
     Assert.assertThrows(
         NodoErrorException.class,
-        () -> paymentRequestsService.getPaymentRequestInfo(rptIdAsString).block());
+        () -> {
+          paymentRequestInfoMono.block();
+        });
   }
 
   @Test

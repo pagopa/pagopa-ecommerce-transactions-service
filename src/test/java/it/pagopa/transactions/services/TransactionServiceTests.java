@@ -200,9 +200,12 @@ public class TransactionServiceTests {
 				.thenReturn(Mono.empty());
 
 		/* test */
+		Mono<RequestAuthorizationResponseDto> requestAuthorizationResponseDtoMono = transactionsService.requestTransactionAuthorization(TRANSACION_ID, authorizationRequest);
 		assertThrows(
 				TransactionNotFoundException.class,
-				() -> transactionsService.requestTransactionAuthorization(TRANSACION_ID, authorizationRequest).block());
+				() -> {
+					requestAuthorizationResponseDtoMono.block();
+				});
 	}
 
 	@Test
