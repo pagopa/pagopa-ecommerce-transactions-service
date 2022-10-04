@@ -123,52 +123,57 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                         );
 
                                 Mono<NotificationEmailResponseDto> emailResponse = notificationsServiceClient.sendSuccessEmail(
-                                        new SuccessTemplate(
-                                                new TransactionTemplate(
-                                                        tx.getTransactionId().value().toString(),
-                                                        tx.getCreationDate().toString(),
-                                                        amountToHumanReadableString(tx.getAmount().value()),
-                                                        new PspTemplate(
-                                                                tx.getTransactionAuthorizationRequestData().getPspId(),
-                                                                new FeeTemplate(amountToHumanReadableString(tx.getTransactionAuthorizationRequestData().getFee()))
-                                                        ),
-                                                        "RRN",
-                                                        "authorizationCode",
-                                                        new PaymentMethodTemplate(
-                                                                tx.getTransactionAuthorizationRequestData().getPaymentInstrumentId(),
-                                                                "paymentMethodLogo", // TODO: Logos
-                                                                null,
-                                                                false
-                                                        )
-                                                ),
-                                                new UserTemplate(
-                                                        new DataTemplate(
-                                                                null,
-                                                                null,
-                                                                null
-                                                        ),
-                                                        tx.getEmail().value()
-                                                ),
-                                                new CartTemplate(
-                                                        List.of(
-                                                                new ItemTemplate(
-                                                                        new RefNumberTemplate(
-                                                                                RefNumberTemplate.Type.CODICE_AVVISO,
-                                                                                tx.getRptId().value()
-                                                                        ),
-                                                                        new DebtorTemplate(
-                                                                              null,
-                                                                                null
-                                                                        ),
-                                                                        new PayeeTemplate(
-                                                                                null,
-                                                                                null
-                                                                        ),
-                                                                        tx.getDescription().value(),
-                                                                        amountToHumanReadableString(tx.getAmount().value())
+                                        new NotificationsServiceClient.SuccessTemplateRequest(
+                                                tx.getEmail().value(),
+                                                "Hai pagato un avviso di pagamento PagoPA",
+                                                "it-IT",
+                                                new SuccessTemplate(
+                                                        new TransactionTemplate(
+                                                                tx.getTransactionId().value().toString(),
+                                                                tx.getCreationDate().toString(),
+                                                                amountToHumanReadableString(tx.getAmount().value()),
+                                                                new PspTemplate(
+                                                                        tx.getTransactionAuthorizationRequestData().getPspId(),
+                                                                        new FeeTemplate(amountToHumanReadableString(tx.getTransactionAuthorizationRequestData().getFee()))
+                                                                ),
+                                                                "RRN",
+                                                                "authorizationCode",
+                                                                new PaymentMethodTemplate(
+                                                                        tx.getTransactionAuthorizationRequestData().getPaymentInstrumentId(),
+                                                                        "paymentMethodLogo", // TODO: Logos
+                                                                        null,
+                                                                        false
                                                                 )
                                                         ),
-                                                        amountToHumanReadableString(tx.getAmount().value())
+                                                        new UserTemplate(
+                                                                new DataTemplate(
+                                                                        null,
+                                                                        null,
+                                                                        null
+                                                                ),
+                                                                tx.getEmail().value()
+                                                        ),
+                                                        new CartTemplate(
+                                                                List.of(
+                                                                        new ItemTemplate(
+                                                                                new RefNumberTemplate(
+                                                                                        RefNumberTemplate.Type.CODICE_AVVISO,
+                                                                                        tx.getRptId().value()
+                                                                                ),
+                                                                                new DebtorTemplate(
+                                                                                        null,
+                                                                                        null
+                                                                                ),
+                                                                                new PayeeTemplate(
+                                                                                        null,
+                                                                                        null
+                                                                                ),
+                                                                                tx.getDescription().value(),
+                                                                                amountToHumanReadableString(tx.getAmount().value())
+                                                                        )
+                                                                ),
+                                                                amountToHumanReadableString(tx.getAmount().value())
+                                                        )
                                                 )
                                         )
                                 );

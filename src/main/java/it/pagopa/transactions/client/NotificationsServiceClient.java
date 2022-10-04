@@ -9,8 +9,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-import java.util.Map;
-
 @Component
 public class NotificationsServiceClient {
     @Value("${notificationsService.apiKey}")
@@ -20,20 +18,25 @@ public class NotificationsServiceClient {
     private DefaultApi notificationsServiceApi;
 
     public Mono<NotificationEmailResponseDto> sendNotificationEmail(NotificationEmailRequestDto notificationEmailRequestDto) {
-        if (!(notificationEmailRequestDto.getParameters() instanceof Map)) {
-            return Mono.error(new IllegalArgumentException("Notifications service `parameters` field in `sendNotificationsEmail` request body must implement `java.util.Map`"));
-        }
-
         return notificationsServiceApi.sendNotificationEmail(notificationsServiceApiKey, notificationEmailRequestDto);
     }
 
-    public Mono<NotificationEmailResponseDto> sendSuccessEmail(SuccessTemplate successTemplate) {
+    public Mono<NotificationEmailResponseDto> sendSuccessEmail(SuccessTemplateRequest successTemplateRequest) {
         return notificationsServiceApi.sendNotificationEmail(notificationsServiceApiKey, new NotificationEmailRequestDto()
-                .language("it-IT")
-                .subject("subject")
-                .to("giovanni.berti@pagopa.it")
-                .templateId("success")
-                .parameters(successTemplate)
+                .language(successTemplateRequest.language)
+                .subject(successTemplateRequest.subject)
+                .to(successTemplateRequest.to)
+                .templateId(SuccessTemplateRequest.TEMPLATE_ID)
+                .parameters(successTemplateRequest.templateParameters)
         );
+    }
+
+    public record SuccessTemplateRequest(
+            String to,
+            String subject,
+            String language,
+            SuccessTemplate templateParameters
+    ) {
+        public static final String TEMPLATE_ID = "success";
     }
 }
