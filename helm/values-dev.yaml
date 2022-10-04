@@ -75,7 +75,7 @@ microservice-chart:
     NODO_HOSTNAME: https://api.dev.platform.pagopa.it
     NODO_PER_PSP_URI: /nodo/nodo-per-psp/v1
     NODE_FOR_PSP_URI: /nodo/node-for-psp/v1
-    NODOPERPM_URI: /nodo/nodo-per-pm/v1
+    NODOPERPM_URI: /nodo/nodo-per-pm/v1/informazioniPagamento
     NODOPERPM_READ_TIMEOUT: "10000"
     NODOPERPM_CONNECTION_TIMEOUT: "10000"
     NODO_READ_TIMEOUT: "10000"

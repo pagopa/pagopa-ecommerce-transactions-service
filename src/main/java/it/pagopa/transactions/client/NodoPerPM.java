@@ -36,7 +36,7 @@ public class NodoPerPM {
                 .getWebClient()
                 .get()
                 .uri(uriBuilder -> uriBuilder
-                        .pathSegment(nodoPerPMUri,"/informazioniPagamento")
+                        .path(nodoPerPMUri)
                         .queryParam("idPagamento", paymentToken)
                         .build())
                 .header("Content-Type", MediaType.APPLICATION_JSON_VALUE)
