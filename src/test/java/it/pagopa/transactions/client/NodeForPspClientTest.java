@@ -74,7 +74,7 @@ class NodeForPspClientTest {
          * preconditions
          */
         when(nodoWebClient.post()).thenReturn((RequestBodyUriSpec) requestBodyUriSpec);
-        when(requestBodyUriSpec.uri(any(String.class), any(Object[].class))).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(any(), any(Object[].class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.header(any(), any())).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(), eq(SoapEnvelope.class))).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
@@ -126,7 +126,7 @@ class NodeForPspClientTest {
          */
         when(nodoWebClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.header(any(),any())).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.uri(any(String.class), any(Object[].class))).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(any(), any(Object[].class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(), eq(SoapEnvelope.class))).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
 
@@ -171,7 +171,7 @@ class NodeForPspClientTest {
          * preconditions
          */
         when(nodoWebClient.post()).thenReturn((RequestBodyUriSpec) requestBodyUriSpec);
-        when(requestBodyUriSpec.uri(any(String.class), any(Object[].class))).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(any(), any(Object[].class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.header(any(), any())).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(), eq(SoapEnvelope.class))).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
@@ -224,7 +224,7 @@ class NodeForPspClientTest {
          */
         when(nodoWebClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.header(any(),any())).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.uri(any(String.class), any(Object[].class))).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(any(), any(Object[].class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(), eq(SoapEnvelope.class))).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
 

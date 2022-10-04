@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 public class WebClientsConfig {
 
     @Bean(name = "nodoApiClient")
-    public NodoApi nodoApiClient(@Value("${nodoPerPM.uri}") String nodoUri,
+    public NodoApi nodoApiClient(@Value("${nodo.hostname}") String nodoUri,
                                  @Value("${nodoPerPM.readTimeout}") int nodoReadTimeout,
                                  @Value("${nodoPerPM.connectionTimeout}") int nodoConnectionTimeout) {
 
@@ -51,12 +51,11 @@ public class WebClientsConfig {
                 .build();
         it.pagopa.generated.ecommerce.nodo.v1.ApiClient apiClient = new it.pagopa.generated.ecommerce.nodo.v1.ApiClient(webClient);
 
-        NodoApi nodoApi = new NodoApi(apiClient);
-        return nodoApi;
+        return new NodoApi(apiClient);
     }
 
     @Bean(name = "nodoWebClient")
-    public WebClient nodoWebClient(@Value("${nodo.uri}") String nodoUri,
+    public WebClient nodoWebClient(@Value("${nodo.hostname}") String nodoHostname,
                                    @Value("${nodo.readTimeout}") int nodoReadTimeout,
                                    @Value("${nodo.connectionTimeout}") int nodoConnectionTimeout) {
 
@@ -76,7 +75,7 @@ public class WebClientsConfig {
             clientCodecConfigurer.customCodecs().register(new Jackson2JsonEncoder(mapper, MediaType.APPLICATION_JSON));
         }).build();
 
-        return WebClient.builder().baseUrl(nodoUri)
+        return WebClient.builder().baseUrl(nodoHostname)
                 .clientConnector(new ReactorClientHttpConnector(httpClient)).exchangeStrategies(exchangeStrategies)
                 .build();
     }

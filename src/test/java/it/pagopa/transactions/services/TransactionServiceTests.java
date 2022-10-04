@@ -101,7 +101,7 @@ public class TransactionServiceTests {
 	@Test
 	void getTransactionReturnsTransactionData() {
 
-		final Transaction transaction = new Transaction(TRANSACION_ID, PAYMENT_TOKEN, "rptId", "reason", 100,
+		final Transaction transaction = new Transaction(TRANSACION_ID, PAYMENT_TOKEN, "77777777777111111111111111111", "reason", 100,
 				"foo@example.com", TransactionStatusDto.ACTIVATED);
 		final TransactionInfoDto expected = new TransactionInfoDto()
 		        .transactionId(TRANSACION_ID)
@@ -109,7 +109,7 @@ public class TransactionServiceTests {
 				.reason("reason")
 				.paymentToken(PAYMENT_TOKEN)
 				.authToken(null)
-				.rptId("rptId")
+				.rptId("77777777777111111111111111111")
 				.status(TransactionStatusDto.ACTIVATED);
 
 		when(repository.findById(TRANSACION_ID)).thenReturn(Mono.just(transaction));
@@ -149,7 +149,7 @@ public class TransactionServiceTests {
 		Transaction transaction = new Transaction(
 			    TRANSACION_ID,
 				PAYMENT_TOKEN,
-				"rptId",
+				"77777777777111111111111111111",
 				"description",
 				100,
 				"foo@example.com",
@@ -201,9 +201,12 @@ public class TransactionServiceTests {
 				.thenReturn(Mono.empty());
 
 		/* test */
+		Mono<RequestAuthorizationResponseDto> requestAuthorizationResponseDtoMono = transactionsService.requestTransactionAuthorization(TRANSACION_ID, authorizationRequest);
 		assertThrows(
 				TransactionNotFoundException.class,
-				() -> transactionsService.requestTransactionAuthorization(TRANSACION_ID, authorizationRequest).block());
+				() -> {
+					requestAuthorizationResponseDtoMono.block();
+				});
 	}
 
 	@Test
@@ -213,7 +216,7 @@ public class TransactionServiceTests {
 		Transaction transactionDocument = new Transaction(
 			    transactionId.value().toString(),
 				PAYMENT_TOKEN,
-				"rptId",
+				"77777777777111111111111111111",
 				"description",
 				100,
 				"foo@example.com",
@@ -226,7 +229,9 @@ public class TransactionServiceTests {
 				new TransactionDescription(transactionDocument.getDescription()),
 				new TransactionAmount(transactionDocument.getAmount()),
 				new Email(transactionDocument.getEmail()),
-                null, null, transactionDocument.getStatus()
+                "faultCode",
+				"faultCodeString",
+				transactionDocument.getStatus()
 		);
 
 		UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -320,7 +325,7 @@ public class TransactionServiceTests {
 		Transaction transactionDocument = new Transaction(
 			    transactionId.value().toString(),
 				PAYMENT_TOKEN,
-				"rptId",
+				"77777777777111111111111111111",
 				"description",
 				100,
 				"foo@example.com",
@@ -422,14 +427,14 @@ public class TransactionServiceTests {
 		Transaction transaction = new Transaction(
 				TRANSACION_ID,
 				PAYMENT_TOKEN,
-				"RtpID",
+				"77777777777111111111111111111",
 				"Description",
 				100,
 				"foo@example.com",
 				TransactionStatusDto.ACTIVATION_REQUESTED
 		);
 
-		RptId rtpId = new RptId("RtpID");
+		RptId rtpId = new RptId("77777777777111111111111111111");
 
 		String faultCode = "faultCode";
 		String faultCodeString = "faultCodeString";
@@ -448,7 +453,7 @@ public class TransactionServiceTests {
 
 		TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
 				TRANSACION_ID,
-				"rptId",
+				"77777777777111111111111111111",
 				PAYMENT_TOKEN,
 				new TransactionActivatedData(TRANSACION_ID,
 						transactionActivated.getAmount().value(),
@@ -467,7 +472,7 @@ public class TransactionServiceTests {
 
 		ActivationResultResponseDto activationResultResponseDto = transactionsService.activateTransaction(TRANSACION_ID, activationResultRequestDto).block();
 
-		assertEquals(ActivationResultResponseDto.OutcomeEnum.OK, activationResultResponseDto.getOutcome());
+		assertEquals( ActivationResultResponseDto.OutcomeEnum.OK, activationResultResponseDto.getOutcome());
 		Mockito.verify(transactionActivateResultHandler, Mockito.times(1)).handle(Mockito.any(TransactionActivateResultCommand.class));
 		Mockito.verify(transactionsActivationProjectionHandler, Mockito.times(1)).handle(Mockito.any(TransactionActivatedEvent.class));
 

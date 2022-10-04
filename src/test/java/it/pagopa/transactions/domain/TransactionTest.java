@@ -46,7 +46,7 @@ class TransactionTest {
         EmptyTransaction transaction = new EmptyTransaction();
 
         String trxId = UUID.randomUUID().toString();
-        String rptId = "rptId";
+        String rptId = "77777777777111111111111111111";
         String paymentToken = "paymentToken";
         int amount = 100;
 
@@ -82,7 +82,7 @@ class TransactionTest {
         EmptyTransaction transaction = new EmptyTransaction();
 
         String trxId = UUID.randomUUID().toString();
-        String rptId = "rptId";
+        String rptId = "77777777777111111111111111111";
         String paymentToken = "paymentToken";
         String description = "description";
         int amount = 100;
@@ -130,7 +130,7 @@ class TransactionTest {
         EmptyTransaction transaction = new EmptyTransaction();
 
         String trxId = UUID.randomUUID().toString();
-        String rptId = "rptId";
+        String rptId = "77777777777111111111111111111";
         String paymentToken = "paymentToken";
         String description = "description";
         int amount = 100;
@@ -178,7 +178,7 @@ class TransactionTest {
         EmptyTransaction transaction = new EmptyTransaction();
 
         String trxId = UUID.randomUUID().toString();
-        String rptId = "rptId";
+        String rptId = "77777777777111111111111111111";
         String paymentToken = "paymentToken";
         String description = "description";
         int amount = 100;
@@ -246,7 +246,7 @@ class TransactionTest {
         EmptyTransaction transaction = new EmptyTransaction();
 
         String trxId = UUID.randomUUID().toString();
-        String rptId = "rptId";
+        String rptId = "77777777777111111111111111111";
         String paymentToken = "paymentToken";
         String description = "description";
         int amount = 100;
@@ -314,7 +314,7 @@ class TransactionTest {
         EmptyTransaction transaction = new EmptyTransaction();
 
         String trxId = UUID.randomUUID().toString();
-        String rptId = "rptId";
+        String rptId = "77777777777111111111111111111";
         String paymentToken = "paymentToken";
         String description = "description";
         int amount = 100;
@@ -397,7 +397,7 @@ class TransactionTest {
         EmptyTransaction transaction = new EmptyTransaction();
 
         String trxId = UUID.randomUUID().toString();
-        String rptId = "rptId";
+        String rptId = "77777777777111111111111111111";
         String paymentToken = "paymentToken";
         String description = "description";
         int amount = 100;
@@ -480,7 +480,7 @@ class TransactionTest {
         EmptyTransaction transaction = new EmptyTransaction();
 
         String trxId = UUID.randomUUID().toString();
-        String rptId = "rptId";
+        String rptId = "77777777777111111111111111111";
         String paymentToken = "paymentToken";
         String description = "description";
         int amount = 100;
@@ -575,7 +575,7 @@ class TransactionTest {
         EmptyTransaction transaction = new EmptyTransaction();
 
         String trxId = UUID.randomUUID().toString();
-        String rptId = "rptId";
+        String rptId = "77777777777111111111111111111";
         String paymentToken = "paymentToken";
         String description = "description";
         int amount = 100;
@@ -676,7 +676,7 @@ class TransactionTest {
         EmptyTransaction transaction = new EmptyTransaction();
 
         String trxId = UUID.randomUUID().toString();
-        String rptId = "rptId";
+        String rptId = "77777777777302016723749670035";
         String paymentToken = "paymentToken";
         String description = "description";
         int amount = 100;
@@ -738,7 +738,7 @@ class TransactionTest {
         EmptyTransaction transaction = new EmptyTransaction();
 
         String trxId = UUID.randomUUID().toString();
-        String rptId = "rptId";
+        String rptId = "77777777777302016723749670035";
         String paymentToken = "paymentToken";
         String description = "description";
         int amount = 100;

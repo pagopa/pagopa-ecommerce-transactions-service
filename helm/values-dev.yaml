@@ -4,7 +4,7 @@ microservice-chart:
   fullnameOverride: ""
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.3.7" #improve
+    tag: "0.4.23" #improve
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -71,7 +71,13 @@ microservice-chart:
     MONGO_PORT: "10255"
     REDIS_HOST: pagopa-d-weu-ecommerce-redis.redis.cache.windows.net
     REDIS_PORT: "6380"
-    NODO_URI: https://api.dev.platform.pagopa.it/nodo/node-for-psp/v1
+    REDIS_SSL_ENABLED: "true"
+    NODO_HOSTNAME: https://api.dev.platform.pagopa.it
+    NODO_PER_PSP_URI: /nodo/nodo-per-psp/v1
+    NODE_FOR_PSP_URI: /nodo/node-for-psp/v1
+    NODOPERPM_URI: /nodo/nodo-per-pm/v1/informazioniPagamento
+    NODOPERPM_READ_TIMEOUT: "10000"
+    NODOPERPM_CONNECTION_TIMEOUT: "10000"
     NODO_READ_TIMEOUT: "10000"
     NODO_CONNECTION_TIMEOUT: "10000"
     ECOMMERCE_SESSIONS_URI: https://api.dev.platform.pagopa.it/ecommerce/sessions-service/v1

@@ -55,7 +55,7 @@ class TransactionRequestAuthorizizationHandlerTest {
     void shouldSaveAuthorizationEvent() {
         TransactionId transactionId = new TransactionId(transactionIdUUID);
         PaymentToken paymentToken = new PaymentToken("paymentToken");
-        RptId rptId = new RptId("rptId");
+        RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
         Email email = new Email("foo@example.com");
@@ -108,7 +108,7 @@ class TransactionRequestAuthorizizationHandlerTest {
     @Test
     void shouldRejectAlreadyProcessedTransaction() {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
-        RptId rptId = new RptId("rptId");
+        RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
         Email email = new Email("foo@example.com");
