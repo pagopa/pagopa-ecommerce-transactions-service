@@ -38,6 +38,9 @@ class TransactionUpdateProjectionHandlerTest {
                 .authorizationCode("OK")
                 .timestampOperation(OffsetDateTime.now());
 
+        String faultCode = null;
+        String faultCodeString = null; // FIXME, make handle pass fault codes correctly
+
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(UUID.randomUUID()),
                 new PaymentToken("paymentToken"),
@@ -45,6 +48,8 @@ class TransactionUpdateProjectionHandlerTest {
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
                 new Email("foo@example.com"),
+                faultCode,
+                faultCodeString,
                 TransactionStatusDto.CLOSED
         );
 
@@ -79,6 +84,8 @@ class TransactionUpdateProjectionHandlerTest {
                 transaction.getDescription(),
                 transaction.getAmount(),
                 transaction.getEmail(),
+                transaction.getTransactionActivatedData().getFaultCode(),
+                transaction.getTransactionActivatedData().getFaultCodeString(),
                 ZonedDateTime.parse(expectedDocument.getCreationDate()),
                 expectedDocument.getStatus()
         );

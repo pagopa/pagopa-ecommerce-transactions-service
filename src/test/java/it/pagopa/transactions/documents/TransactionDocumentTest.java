@@ -68,6 +68,8 @@ class TransactionDocumentTest {
         TransactionAmount amount = new TransactionAmount(100);
         TransactionStatusDto status = TransactionStatusDto.ACTIVATED;
         Email email = new Email("foo@example.com");
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -76,6 +78,8 @@ class TransactionDocumentTest {
                 description,
                 amount,
                 email,
+                faultCode,
+                faultCodeString,
                 status);
 
         Transaction transactionDocument = Transaction.from(transaction);

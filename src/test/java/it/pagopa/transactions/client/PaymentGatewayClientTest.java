@@ -49,7 +49,7 @@ class PaymentGatewayClientTest {
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
                 new Email("foo@example.com"),
-                TransactionStatusDto.ACTIVATED
+                null, null, TransactionStatusDto.ACTIVATED
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -94,7 +94,7 @@ class PaymentGatewayClientTest {
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
                 new Email("foo@example.com"),
-                TransactionStatusDto.ACTIVATED
+                null, null, TransactionStatusDto.ACTIVATED
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -136,6 +136,8 @@ class PaymentGatewayClientTest {
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
                 new Email("foo@example.com"),
+                "faultCode",
+                "faultCodeString",
                 TransactionStatusDto.ACTIVATED
         );
 
@@ -176,7 +178,7 @@ class PaymentGatewayClientTest {
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
                 new Email("foo@example.com"),
-                TransactionStatusDto.ACTIVATED
+                null, null, TransactionStatusDto.ACTIVATED
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(

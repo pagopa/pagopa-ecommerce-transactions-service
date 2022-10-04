@@ -32,6 +32,8 @@ public final class TransactionClosed extends BaseTransactionClosed implements Tr
                                         this.getDescription(),
                                         this.getAmount(),
                                         this.getEmail(),
+                                        this.getTransactionActivatedData().getFaultCode(),
+                                        this.getTransactionActivatedData().getFaultCodeString(),
                                         this.getCreationDate(),
                                         status
                                 ),

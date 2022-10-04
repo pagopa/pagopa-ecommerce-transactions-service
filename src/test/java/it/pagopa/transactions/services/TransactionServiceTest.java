@@ -90,6 +90,8 @@ class TransactionServiceTest {
                 new TransactionDescription("desc"),
                 new TransactionAmount(0),
                 new Email("foo@example.com"),
+                "faultCode",
+                "faultCodeString",
                 TransactionStatusDto.ACTIVATED
         );
 

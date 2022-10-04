@@ -19,6 +19,8 @@ public final class EmptyTransaction implements Transaction {
                 new TransactionDescription(event.getData().getDescription()),
                 new TransactionAmount(event.getData().getAmount()),
                 new Email(event.getData().getEmail()),
+                event.getData().getFaultCode(),
+                event.getData().getFaultCodeString(),
                 ZonedDateTime.parse(event.getCreationDate()),
                 TransactionStatusDto.ACTIVATED
         );

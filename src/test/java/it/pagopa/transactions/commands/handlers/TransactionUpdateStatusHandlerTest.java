@@ -42,6 +42,8 @@ class TransactionUpdateStatusHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
         Email email = new Email("foo@example.com");
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -50,6 +52,8 @@ class TransactionUpdateStatusHandlerTest {
                 description,
                 amount,
                 email,
+                faultCode,
+                faultCodeString,
                 TransactionStatusDto.CLOSED);
 
         UpdateTransactionStatusRequestDto updateTransactionRequest = new UpdateTransactionStatusRequestDto()
@@ -93,6 +97,8 @@ class TransactionUpdateStatusHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
         Email email = new Email("foo@example.com");
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -101,6 +107,8 @@ class TransactionUpdateStatusHandlerTest {
                 description,
                 amount,
                 email,
+                faultCode,
+                faultCodeString,
                 TransactionStatusDto.CLOSED);
 
         UpdateTransactionStatusRequestDto updateTransactionRequest = new UpdateTransactionStatusRequestDto()
@@ -144,6 +152,8 @@ class TransactionUpdateStatusHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
         Email email = new Email("foo@example.com");
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -152,6 +162,8 @@ class TransactionUpdateStatusHandlerTest {
                 description,
                 amount,
                 email,
+                faultCode,
+                faultCodeString,
                 TransactionStatusDto.ACTIVATED);
 
         UpdateTransactionStatusRequestDto updateStatusRequest = new UpdateTransactionStatusRequestDto()

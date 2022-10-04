@@ -7,7 +7,9 @@ import it.pagopa.transactions.documents.TransactionClosureSentEvent;
 import it.pagopa.transactions.documents.TransactionEvent;
 import it.pagopa.transactions.domain.pojos.BaseTransactionWithCompletedAuthorization;
 import it.pagopa.transactions.domain.pojos.BaseTransactionWithRequestedAuthorization;
+import lombok.EqualsAndHashCode;
 
+@EqualsAndHashCode(callSuper = true)
 public final class TransactionWithCompletedAuthorization extends BaseTransactionWithCompletedAuthorization implements EventUpdatable<TransactionClosed, TransactionClosureSentEvent>, Transaction {
     public TransactionWithCompletedAuthorization(BaseTransactionWithRequestedAuthorization baseTransaction, TransactionAuthorizationStatusUpdatedEvent event) {
         super(baseTransaction, event.getData());
@@ -38,6 +40,8 @@ public final class TransactionWithCompletedAuthorization extends BaseTransaction
                                 this.getDescription(),
                                 this.getAmount(),
                                 this.getEmail(),
+                                this.getTransactionActivatedData().getFaultCode(),
+                                this.getTransactionActivatedData().getFaultCodeString(),
                                 this.getCreationDate(),
                                 status
                         ),

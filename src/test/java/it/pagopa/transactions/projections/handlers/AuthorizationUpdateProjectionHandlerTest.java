@@ -45,6 +45,8 @@ class AuthorizationUpdateProjectionHandlerTest {
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
                 new Email("email@example.com"),
+                "faultCode",
+                "faultCodeString",
                 TransactionStatusDto.AUTHORIZATION_REQUESTED);
 
         it.pagopa.transactions.documents.Transaction expectedDocument = new it.pagopa.transactions.documents.Transaction(
@@ -78,7 +80,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 transaction.getDescription(),
                 transaction.getAmount(),
                 transaction.getEmail(),
-                ZonedDateTime.parse(expectedDocument.getCreationDate()),
+                null, null, ZonedDateTime.parse(expectedDocument.getCreationDate()),
                 expectedDocument.getStatus());
 
         /*

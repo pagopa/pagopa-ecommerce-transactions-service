@@ -226,7 +226,7 @@ public class TransactionServiceTests {
 				new TransactionDescription(transactionDocument.getDescription()),
 				new TransactionAmount(transactionDocument.getAmount()),
 				new Email(transactionDocument.getEmail()),
-				transactionDocument.getStatus()
+                null, null, transactionDocument.getStatus()
 		);
 
 		UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -333,7 +333,7 @@ public class TransactionServiceTests {
 				new TransactionDescription(transactionDocument.getDescription()),
 				new TransactionAmount(transactionDocument.getAmount()),
 				new Email(transactionDocument.getEmail()),
-				TransactionStatusDto.NOTIFIED
+                null, null, TransactionStatusDto.NOTIFIED
 		);
 
 		UpdateTransactionStatusRequestDto updateTransactionStatusRequest = new UpdateTransactionStatusRequestDto()
@@ -431,13 +431,18 @@ public class TransactionServiceTests {
 
 		RptId rtpId = new RptId("RtpID");
 
-		it.pagopa.transactions.domain.TransactionActivated TransactionActivatedDomain = new it.pagopa.transactions.domain.TransactionActivated(
+		String faultCode = "faultCode";
+		String faultCodeString = "faultCodeString";
+
+		it.pagopa.transactions.domain.TransactionActivated transactionActivated = new it.pagopa.transactions.domain.TransactionActivated(
 				new TransactionId(UUID.fromString(TRANSACION_ID)),
 				new PaymentToken(PAYMENT_TOKEN),
 				rtpId,
 				new TransactionDescription("Description"),
 				new TransactionAmount(100),
 				new Email("foo@example.com"),
+				faultCode,
+				faultCodeString,
 				TransactionStatusDto.AUTHORIZATION_REQUESTED
 		);
 
@@ -445,12 +450,18 @@ public class TransactionServiceTests {
 				TRANSACION_ID,
 				"rptId",
 				PAYMENT_TOKEN,
-				new TransactionActivatedData(TRANSACION_ID, TransactionActivatedDomain.getAmount().value(), null, null, null, null)
+				new TransactionActivatedData(TRANSACION_ID,
+						transactionActivated.getAmount().value(),
+						transactionActivated.getEmail().value(),
+						transactionActivated.getTransactionActivatedData().getFaultCode(),
+						transactionActivated.getTransactionActivatedData().getFaultCodeString(),
+						PAYMENT_TOKEN
+				)
 		);
 
 		Mockito.when(repository.findById(TRANSACION_ID)).thenReturn(Mono.just(transaction));
 		Mockito.when(transactionActivateResultHandler.handle(Mockito.any(TransactionActivateResultCommand.class))).thenReturn(Mono.just(transactionActivatedEvent));
-		Mockito.when(transactionsActivationProjectionHandler.handle(Mockito.any(TransactionActivatedEvent.class))).thenReturn(Mono.just(TransactionActivatedDomain));
+		Mockito.when(transactionsActivationProjectionHandler.handle(Mockito.any(TransactionActivatedEvent.class))).thenReturn(Mono.just(transactionActivated));
 
 		/** test */
 

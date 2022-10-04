@@ -67,7 +67,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 description,
                 amount,
                 email,
-                TransactionStatusDto.ACTIVATED
+                null, null, TransactionStatusDto.ACTIVATED
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -112,6 +112,8 @@ class TransactionRequestAuthorizizationHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
         Email email = new Email("foo@example.com");
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -120,6 +122,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                 description,
                 amount,
                 email,
+                faultCode,
+                faultCodeString,
                 TransactionStatusDto.AUTHORIZATION_REQUESTED
         );
 

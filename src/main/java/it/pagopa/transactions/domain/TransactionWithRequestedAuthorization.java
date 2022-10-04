@@ -38,6 +38,8 @@ public final class TransactionWithRequestedAuthorization extends BaseTransaction
                         this.getDescription(),
                         this.getAmount(),
                         this.getEmail(),
+                        this.getTransactionActivatedData().getFaultCode(),
+                        this.getTransactionActivatedData().getFaultCodeString(),
                         this.getCreationDate(),
                         status
                 ),

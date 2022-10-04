@@ -12,7 +12,6 @@ import it.pagopa.transactions.documents.*;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.domain.Transaction;
 import it.pagopa.transactions.domain.TransactionActivated;
-import it.pagopa.transactions.domain.pojos.BaseTransaction;
 import it.pagopa.transactions.domain.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -68,6 +67,8 @@ class TransactionSendClosureHandlerTest {
         TransactionAmount amount = new TransactionAmount(100);
         Email email = new Email("foo@example.com");
 
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 paymentToken,
@@ -75,6 +76,8 @@ class TransactionSendClosureHandlerTest {
                 description,
                 amount,
                 email,
+                faultCode,
+                faultCodeString,
                 TransactionStatusDto.AUTHORIZATION_REQUESTED
         );
 
@@ -98,8 +101,8 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         email.value(),
-                        "faultCode",
-                        "faultCodeString",
+                        faultCode,
+                        faultCodeString,
                         "paymentToken"
                 ));
 
@@ -163,6 +166,8 @@ class TransactionSendClosureHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
         Email email = new Email("foo@example.com");
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
@@ -172,8 +177,8 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         email.value(),
-                        "faultCode",
-                        "faultCodeString",
+                        faultCode,
+                        faultCodeString,
                         "paymentToken"
                 ));
 

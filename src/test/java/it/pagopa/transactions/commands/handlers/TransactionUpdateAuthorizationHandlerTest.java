@@ -42,6 +42,8 @@ class TransactionUpdateAuthorizationHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
         Email email = new Email("foo@example.com");
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -50,6 +52,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 description,
                 amount,
                 email,
+                faultCode,
+                faultCodeString,
                 TransactionStatusDto.AUTHORIZATION_REQUESTED
         );
 
@@ -92,6 +96,8 @@ class TransactionUpdateAuthorizationHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
         Email email = new Email("foo@example.com");
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -100,6 +106,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 description,
                 amount,
                 email,
+                faultCode,
+                faultCodeString,
                 TransactionStatusDto.ACTIVATED
         );
 
@@ -130,6 +138,8 @@ class TransactionUpdateAuthorizationHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
         Email email = new Email("foo@example.com");
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -138,6 +148,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 description,
                 amount,
                 email,
+                faultCode,
+                faultCodeString,
                 TransactionStatusDto.AUTHORIZATION_REQUESTED
         );
 

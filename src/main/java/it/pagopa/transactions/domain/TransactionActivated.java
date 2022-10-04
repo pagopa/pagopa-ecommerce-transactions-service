@@ -5,20 +5,19 @@ import it.pagopa.transactions.documents.TransactionActivatedData;
 import it.pagopa.transactions.documents.TransactionActivatedEvent;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestedEvent;
 import it.pagopa.transactions.documents.TransactionEvent;
-import it.pagopa.transactions.domain.pojos.BaseTransaction;
 import it.pagopa.transactions.domain.pojos.BaseTransactionWithPaymentToken;
+import lombok.EqualsAndHashCode;
 
 import java.time.ZonedDateTime;
 
-import static java.time.ZonedDateTime.now;
-
+@EqualsAndHashCode(callSuper = true)
 public final class TransactionActivated extends BaseTransactionWithPaymentToken implements EventUpdatable<TransactionWithRequestedAuthorization, TransactionAuthorizationRequestedEvent>, Transaction {
-    public TransactionActivated(TransactionId transactionId, PaymentToken paymentToken, RptId rptId, TransactionDescription description, TransactionAmount amount, Email email, ZonedDateTime creationDate, TransactionStatusDto status) {
-        super(new TransactionActivationRequested(transactionId, rptId, description, amount, email, creationDate, status), new TransactionActivatedData(description.value(), amount.value(), email.value(), null, null, paymentToken.value()));
+    public TransactionActivated(TransactionId transactionId, PaymentToken paymentToken, RptId rptId, TransactionDescription description, TransactionAmount amount, Email email, String faultCode, String faultCodeString, ZonedDateTime creationDate, TransactionStatusDto status) {
+        super(new TransactionActivationRequested(transactionId, rptId, description, amount, email, creationDate, status), new TransactionActivatedData(description.value(), amount.value(), email.value(), faultCode, faultCodeString, paymentToken.value()));
     }
 
-    public TransactionActivated(TransactionId transactionId, PaymentToken paymentToken, RptId rptId, TransactionDescription description, TransactionAmount amount, Email email, TransactionStatusDto status) {
-        super(new TransactionActivationRequested(transactionId, rptId, description, amount, email, now(), status), new TransactionActivatedData(description.value(), amount.value(), email.value(), null, null, paymentToken.value()));
+    public TransactionActivated(TransactionId transactionId, PaymentToken paymentToken, RptId rptId, TransactionDescription description, TransactionAmount amount, Email email, String faultCode, String faultCodeString, TransactionStatusDto status) {
+        this(transactionId, paymentToken, rptId, description, amount, email, faultCode, faultCodeString, ZonedDateTime.now(), status);
     }
 
     public TransactionActivated(TransactionActivationRequested transactionActivationRequested, TransactionActivatedEvent event) {
@@ -48,6 +47,8 @@ public final class TransactionActivated extends BaseTransactionWithPaymentToken 
                 this.getDescription(),
                 this.getAmount(),
                 this.getEmail(),
+                this.getTransactionActivatedData().getFaultCode(),
+                this.getTransactionActivatedData().getFaultCodeString(),
                 this.getCreationDate(),
                 this.getStatus()
         );

@@ -18,8 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple3;
-import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.util.UUID;
@@ -164,7 +162,7 @@ public class TransactionsService {
                       new TransactionDescription(transactionDocument.getDescription()),
                       new TransactionAmount(transactionDocument.getAmount()),
                           new Email(transactionDocument.getEmail()),
-                          transactionDocument.getStatus());
+                          null, null, transactionDocument.getStatus());
 
               AuthorizationRequestData authorizationData =
                   new AuthorizationRequestData(
@@ -208,7 +206,7 @@ public class TransactionsService {
                       new TransactionDescription(transactionDocument.getDescription()),
                       new TransactionAmount(transactionDocument.getAmount()),
                           new Email(transactionDocument.getEmail()),
-                          transactionDocument.getStatus());
+                          null, null, transactionDocument.getStatus());
 
               UpdateAuthorizationStatusData updateAuthorizationStatusData =
                   new UpdateAuthorizationStatusData(transaction, updateAuthorizationRequestDto);
@@ -274,8 +272,10 @@ public class TransactionsService {
                       new RptId(transactionDocument.getRptId()),
                       new TransactionDescription(transactionDocument.getDescription()),
                       new TransactionAmount(transactionDocument.getAmount()),
-                          new Email(transactionDocument.getEmail()),
-                          transactionDocument.getStatus());
+                      new Email(transactionDocument.getEmail()),
+                      null,
+                      null,
+                      transactionDocument.getStatus());
               UpdateTransactionStatusData updateTransactionStatusData =
                   new UpdateTransactionStatusData(transaction, updateTransactionRequestDto);
               return new TransactionUpdateStatusCommand(

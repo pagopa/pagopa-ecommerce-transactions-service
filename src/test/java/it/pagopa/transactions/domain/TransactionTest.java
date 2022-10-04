@@ -32,7 +32,7 @@ class TransactionTest {
                 description,
                 amount,
                 email,
-                status);
+                null, null, status);
 
         assertEquals(new PaymentToken(transaction.getTransactionActivatedData().getPaymentToken()), paymentToken);
         assertEquals(transaction.getRptId(), rptId);
@@ -87,6 +87,9 @@ class TransactionTest {
         String description = "description";
         int amount = 100;
         String email = "foo@example.com";
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
+
         TransactionActivatedEvent event = new TransactionActivatedEvent(
                 trxId,
                 rptId,
@@ -95,8 +98,8 @@ class TransactionTest {
                         description,
                         amount,
                         email,
-                        "faultCode",
-                        "faultCodeString",
+                        faultCode,
+                        faultCodeString,
                         "paymentToken"
                 ));
 
@@ -109,6 +112,8 @@ class TransactionTest {
                 new TransactionDescription(description),
                 new TransactionAmount(amount),
                 new Email(email),
+                faultCode,
+                faultCodeString,
                 ZonedDateTime.parse(event.getCreationDate()),
                 TransactionStatusDto.ACTIVATED
         );
@@ -130,6 +135,9 @@ class TransactionTest {
         String description = "description";
         int amount = 100;
         String email = "foo@example.com";
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
+
         TransactionActivatedEvent event = new TransactionActivatedEvent(
                 trxId,
                 rptId,
@@ -138,8 +146,8 @@ class TransactionTest {
                         description,
                         amount,
                         "foo@example.com",
-                        "faultCode",
-                        "faultCodeString",
+                        faultCode,
+                        faultCodeString,
                         "paymentToken"
                 ));
 
@@ -152,6 +160,8 @@ class TransactionTest {
                 new TransactionDescription(description),
                 new TransactionAmount(amount),
                 new Email(email),
+                faultCode,
+                faultCodeString,
                 ZonedDateTime.parse(event.getCreationDate()),
                 TransactionStatusDto.ACTIVATED
         );
@@ -173,6 +183,8 @@ class TransactionTest {
         String description = "description";
         int amount = 100;
         String email = "foo@example.com";
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 trxId,
@@ -182,8 +194,8 @@ class TransactionTest {
                         description,
                         amount,
                         email,
-                        "faultCode",
-                        "faultCodeString",
+                        faultCode,
+                        faultCodeString,
                         "paymentToken"
                 ));
 
@@ -211,6 +223,8 @@ class TransactionTest {
                 new TransactionDescription(description),
                 new TransactionAmount(amount),
                 new Email(email),
+                faultCode,
+                faultCodeString,
                 ZonedDateTime.parse(transactionActivatedEvent.getCreationDate()),
                 TransactionStatusDto.ACTIVATED
         );
@@ -237,6 +251,8 @@ class TransactionTest {
         String description = "description";
         int amount = 100;
         String email = "foo@example.com";
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 trxId,
@@ -246,8 +262,8 @@ class TransactionTest {
                         description,
                         amount,
                         email,
-                        "faultCode",
-                        "faultCodeString",
+                        faultCode,
+                        faultCodeString,
                         "paymentToken"
                 ));
 
@@ -275,6 +291,8 @@ class TransactionTest {
                 new TransactionDescription(description),
                 new TransactionAmount(amount),
                 new Email(email),
+                faultCode,
+                faultCodeString,
                 ZonedDateTime.parse(transactionActivatedEvent.getCreationDate()),
                 TransactionStatusDto.ACTIVATED
         );
@@ -301,6 +319,8 @@ class TransactionTest {
         String description = "description";
         int amount = 100;
         String email = "foo@example.com";
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 trxId,
@@ -310,8 +330,8 @@ class TransactionTest {
                         description,
                         amount,
                         email,
-                        "faultCode",
-                        "faultCodeString",
+                        faultCode,
+                        faultCodeString,
                         "paymentToken"
                 ));
 
@@ -349,6 +369,8 @@ class TransactionTest {
                 new TransactionDescription(description),
                 new TransactionAmount(amount),
                 new Email(email),
+                faultCode,
+                faultCodeString,
                 ZonedDateTime.parse(transactionActivatedEvent.getCreationDate()),
                 TransactionStatusDto.ACTIVATED
         );
@@ -380,6 +402,8 @@ class TransactionTest {
         String description = "description";
         int amount = 100;
         String email = "foo@example.com";
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 trxId,
@@ -389,8 +413,8 @@ class TransactionTest {
                         description,
                         amount,
                         email,
-                        "faultCode",
-                        "faultCodeString",
+                        faultCode,
+                        faultCodeString,
                         "paymentToken"
                 ));
 
@@ -428,6 +452,8 @@ class TransactionTest {
                 new TransactionDescription(description),
                 new TransactionAmount(amount),
                 new Email(email),
+                faultCode,
+                faultCodeString,
                 ZonedDateTime.parse(transactionActivatedEvent.getCreationDate()),
                 TransactionStatusDto.ACTIVATED
         );
@@ -459,6 +485,8 @@ class TransactionTest {
         String description = "description";
         int amount = 100;
         String email = "foo@example.com";
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 trxId,
@@ -468,8 +496,8 @@ class TransactionTest {
                         description,
                         amount,
                         email,
-                        "faultCode",
-                        "faultCodeString",
+                        faultCode,
+                        faultCodeString,
                         "paymentToken"
                 ));
 
@@ -517,6 +545,8 @@ class TransactionTest {
                 new TransactionDescription(description),
                 new TransactionAmount(amount),
                 new Email(email),
+                faultCode,
+                faultCodeString,
                 ZonedDateTime.parse(transactionActivatedEvent.getCreationDate()),
                 TransactionStatusDto.ACTIVATED
         );
@@ -550,6 +580,8 @@ class TransactionTest {
         String description = "description";
         int amount = 100;
         String email = "foo@example.com";
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 trxId,
@@ -559,8 +591,8 @@ class TransactionTest {
                         description,
                         amount,
                         email,
-                        "faultCode",
-                        "faultCodeString",
+                        faultCode,
+                        faultCodeString,
                         "paymentToken"
                 ));
 
@@ -614,6 +646,8 @@ class TransactionTest {
                 new TransactionDescription(description),
                 new TransactionAmount(amount),
                 new Email(email),
+                faultCode,
+                faultCodeString,
                 ZonedDateTime.parse(transactionActivatedEvent.getCreationDate()),
                 TransactionStatusDto.ACTIVATED
         );
@@ -634,6 +668,68 @@ class TransactionTest {
 
         StepVerifier.create(actual)
                 .expectNext(expected)
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldUpgradeTransactionActivationRequestedToTransactionActivated() {
+        EmptyTransaction transaction = new EmptyTransaction();
+
+        String trxId = UUID.randomUUID().toString();
+        String rptId = "rptId";
+        String paymentToken = "paymentToken";
+        String description = "description";
+        int amount = 100;
+        String email = "foo@example.com";
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
+
+        TransactionActivationRequestedEvent activationRequestedEvent = new TransactionActivationRequestedEvent(
+                trxId,
+                rptId,
+                ZonedDateTime.now().toString(),
+                new TransactionActivationRequestedData(
+                        description,
+                        amount,
+                        email,
+                        faultCode,
+                        faultCodeString,
+                        "paymentContextCode"
+                )
+        );
+
+        TransactionActivatedEvent activatedEvent = new TransactionActivatedEvent(
+                trxId,
+                rptId,
+                paymentToken,
+                new TransactionActivatedData(
+                        description,
+                        amount,
+                        email,
+                        faultCode,
+                        faultCodeString,
+                        "paymentToken"
+                ));
+
+        Flux<TransactionEvent<?>> events = Flux.just(activationRequestedEvent, activatedEvent);
+
+        TransactionActivated expected = new TransactionActivated(
+                new TransactionId(UUID.fromString(trxId)),
+                new PaymentToken(paymentToken),
+                new RptId(rptId),
+                new TransactionDescription(description),
+                new TransactionAmount(amount),
+                new Email(email),
+                faultCode,
+                faultCodeString,
+                ZonedDateTime.parse(activationRequestedEvent.getCreationDate()),
+                TransactionStatusDto.ACTIVATED
+        );
+
+        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent);
+
+        StepVerifier.create(actual)
+                .expectNextMatches(n -> n.equals(expected))
                 .verifyComplete();
     }
 }

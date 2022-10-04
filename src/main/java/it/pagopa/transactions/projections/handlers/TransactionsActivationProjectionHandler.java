@@ -22,17 +22,18 @@ public class TransactionsActivationProjectionHandler
 
 	@Override
 	public Mono<TransactionActivated> handle(TransactionActivatedEvent event) {
-
 		TransactionActivatedData data = event.getData();
 		TransactionId transactionId = new TransactionId(UUID.fromString(event.getTransactionId()));
 		PaymentToken paymentToken = new PaymentToken(event.getPaymentToken());
 		RptId rptId = new RptId(event.getRptId());
 		TransactionDescription description = new TransactionDescription(data.getDescription());
 		TransactionAmount amount = new TransactionAmount(data.getAmount());
-		Email email = new Email("foo@example.com");
+		Email email = new Email(event.getData().getEmail());
+		String faultCode = event.getData().getFaultCode();
+		String faultCodeString = event.getData().getFaultCodeString();
 
 		TransactionActivated transaction =
-				new TransactionActivated(transactionId, paymentToken, rptId, description, amount, email, TransactionStatusDto.ACTIVATED);
+				new TransactionActivated(transactionId, paymentToken, rptId, description, amount, email, faultCode, faultCodeString, TransactionStatusDto.ACTIVATED);
 
 		it.pagopa.transactions.documents.Transaction transactionDocument =
 				it.pagopa.transactions.documents.Transaction.from(transaction);
