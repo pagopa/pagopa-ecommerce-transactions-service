@@ -1,6 +1,5 @@
 package it.pagopa.transactions.repositories;
 
-import it.pagopa.transactions.documents.TransactionActivationRequestedData;
 import it.pagopa.transactions.utils.TransactionEventCode;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 
