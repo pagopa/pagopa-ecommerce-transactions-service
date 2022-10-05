@@ -13,6 +13,7 @@ import it.pagopa.transactions.documents.Transaction;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.*;
+import it.pagopa.transactions.repositories.TransactionsActivationRequestedEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
@@ -94,6 +95,9 @@ public class TransactionServiceTests {
 
 	@MockBean
 	private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
+
+	@MockBean
+	private TransactionsActivationRequestedEventStoreRepository transactionsActivationRequestedEventStoreRepository;
 
 	final String PAYMENT_TOKEN = "aaa";
 	final String TRANSACION_ID = "833d303a-f857-11ec-b939-0242ac120002";
@@ -400,7 +404,7 @@ public class TransactionServiceTests {
 
 		ActivationResultRequestDto activationResultRequestDto = new ActivationResultRequestDto().paymentToken(UUID.randomUUID().toString());
 
-		Mockito.when(repository.findById(TRANSACION_ID))
+		Mockito.when(transactionsActivationRequestedEventStoreRepository.findByEventCodeAndData_PaymentContextCode(any(),any()))
 				.thenReturn(Mono.empty());
 
 		/** test */
@@ -436,6 +440,13 @@ public class TransactionServiceTests {
 				TransactionStatusDto.AUTHORIZATION_REQUESTED
 		);
 
+		TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
+				TRANSACION_ID,
+				"77777777777111111111111111111",
+				PAYMENT_TOKEN,
+				new TransactionActivationRequestedData(TRANSACION_ID, transactionInitializedDomain.getAmount().value(), null, null, null, null)
+		);
+
 		TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
 				TRANSACION_ID,
 				"77777777777111111111111111111",
@@ -443,7 +454,7 @@ public class TransactionServiceTests {
 				new TransactionActivatedData(TRANSACION_ID, transactionInitializedDomain.getAmount().value(), null, null, null, null)
 		);
 
-		Mockito.when(repository.findById(TRANSACION_ID)).thenReturn(Mono.just(transaction));
+		Mockito.when(transactionsActivationRequestedEventStoreRepository.findByEventCodeAndData_PaymentContextCode(any(),any())).thenReturn(Mono.just(transactionActivationRequestedEvent));
 		Mockito.when(transactionActivateResultHandler.handle(Mockito.any(TransactionActivateResultCommand.class))).thenReturn(Mono.just(transactionActivatedEvent));
 		Mockito.when(transactionsActivationProjectionHandler.handle(Mockito.any(TransactionActivatedEvent.class))).thenReturn(Mono.just(transactionInitializedDomain));
 
