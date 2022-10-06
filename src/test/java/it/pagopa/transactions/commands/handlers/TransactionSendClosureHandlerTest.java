@@ -149,7 +149,7 @@ class TransactionSendClosureHandlerTest {
                 closureSentEvent
         );
 
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
@@ -276,7 +276,7 @@ class TransactionSendClosureHandlerTest {
                 .thenReturn(Mono.just(transactionAuthorizationRequestedEvent));
 
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
         Mockito.when(notificationsServiceClient.sendSuccessEmail(any())).thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
 
         /* test */

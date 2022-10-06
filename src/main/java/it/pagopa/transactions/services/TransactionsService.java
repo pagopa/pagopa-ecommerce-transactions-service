@@ -161,8 +161,10 @@ public class TransactionsService {
                       new RptId(transactionDocument.getRptId()),
                       new TransactionDescription(transactionDocument.getDescription()),
                       new TransactionAmount(transactionDocument.getAmount()),
-                          new Email(transactionDocument.getEmail()),
-                          null, null, transactionDocument.getStatus());
+                      new Email(transactionDocument.getEmail()),
+                      null,
+                      null,
+                      transactionDocument.getStatus());
 
               AuthorizationRequestData authorizationData =
                   new AuthorizationRequestData(
