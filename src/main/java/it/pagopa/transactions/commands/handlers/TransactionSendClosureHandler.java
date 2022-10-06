@@ -1,6 +1,5 @@
 package it.pagopa.transactions.commands.handlers;
 
-import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentRequestDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.notifications.templates.success.*;
 import it.pagopa.generated.notifications.v1.dto.NotificationEmailResponseDto;
@@ -13,13 +12,10 @@ import it.pagopa.transactions.commands.TransactionClosureSendCommand;
 import it.pagopa.transactions.documents.*;
 import it.pagopa.transactions.domain.EmptyTransaction;
 import it.pagopa.transactions.domain.Transaction;
-import it.pagopa.transactions.domain.TransactionActivated;
 import it.pagopa.transactions.domain.TransactionWithCompletedAuthorization;
 import it.pagopa.transactions.domain.pojos.BaseTransaction;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
-import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
-import it.pagopa.transactions.utils.TransactionEventCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -66,57 +62,50 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                 .cast(TransactionWithCompletedAuthorization.class)
                 .flatMap(tx -> {
                     UpdateAuthorizationRequestDto updateAuthorizationRequest = command.getData().updateAuthorizationRequest();
-                    return authorizationRequestedEventStoreRepository.findByTransactionIdAndEventCode(
-                                    tx.getTransactionId().value().toString(),
-                                    TransactionEventCode.TRANSACTION_AUTHORIZATION_REQUESTED_EVENT
-                            )
-                            .switchIfEmpty(Mono.error(new TransactionNotFoundException(tx.getTransactionActivatedData().getPaymentToken())))
-                            .flatMap(authorizationRequestedEvent -> {
-                                TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
+                    TransactionAuthorizationRequestData transactionAuthorizationRequestData = tx.getTransactionAuthorizationRequestData();
+                    TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = tx.getTransactionAuthorizationStatusUpdateData();
 
-                        ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
-                                .paymentTokens(List.of(tx.getTransactionActivatedData().getPaymentToken()))
-                                .outcome(authorizationResultToOutcomeV2(updateAuthorizationRequest.getAuthorizationResult()))
-                                .idPSP(authorizationRequestData.getPspId())
-                                .idBrokerPSP(authorizationRequestData.getBrokerName())
-                                .idChannel(authorizationRequestData.getPspChannelCode())
-                                .transactionId(tx.getTransactionId().value().toString())
-                                .totalAmount(new BigDecimal(tx.getAmount().value() + authorizationRequestData.getFee()))
-                                .fee(new BigDecimal(authorizationRequestData.getFee()))
-                                .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
-                                .paymentMethod(authorizationRequestData.getPaymentTypeCode())
-                                .additionalPaymentInformations(
-                                        Map.of(
-                                                "outcome_payment_gateway", updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                                "authorization_code", updateAuthorizationRequest.getAuthorizationCode()
-                                        )
+                    ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
+                            .paymentTokens(List.of(tx.getTransactionActivatedData().getPaymentToken()))
+                            .outcome(authorizationResultToOutcomeV2(transactionAuthorizationStatusUpdateData.getAuthorizationResult()))
+                            .idPSP(transactionAuthorizationRequestData.getPspId())
+                            .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())
+                            .idChannel(transactionAuthorizationRequestData.getPspChannelCode())
+                            .transactionId(tx.getTransactionId().value().toString())
+                            .totalAmount(new BigDecimal(tx.getAmount().value() + transactionAuthorizationRequestData.getFee()))
+                            .fee(new BigDecimal(transactionAuthorizationRequestData.getFee()))
+                            .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
+                            .paymentMethod(transactionAuthorizationRequestData.getPaymentTypeCode())
+                            .additionalPaymentInformations(
+                                    Map.of(
+                                            "outcome_payment_gateway", transactionAuthorizationStatusUpdateData.getAuthorizationResult().toString(),
+                                            "authorization_code", updateAuthorizationRequest.getAuthorizationCode()
+                                    )
+                            );
+                    return nodeForPspClient.closePaymentV2(closePaymentRequest)
+                            .flatMap(response -> {
+                                TransactionStatusDto newStatus;
+
+                                switch (response.getOutcome()) {
+                                    case OK -> newStatus = TransactionStatusDto.CLOSED;
+                                    case KO -> newStatus = TransactionStatusDto.CLOSURE_FAILED;
+                                    default -> {
+                                        return Mono.error(new RuntimeException("Invalid outcome result enum value"));
+                                    }
+                                }
+
+                                TransactionClosureSendData closureSendData =
+                                        new TransactionClosureSendData(
+                                                response.getOutcome(),
+                                                newStatus
+                                        );
+
+                                TransactionClosureSentEvent event = new TransactionClosureSentEvent(
+                                        tx.getTransactionId().value().toString(),
+                                        tx.getRptId().value(),
+                                        tx.getTransactionActivatedData().getPaymentToken(),
+                                        closureSendData
                                 );
-
-                        return nodeForPspClient.closePaymentV2(closePaymentRequest);
-                    })
-                    .flatMap(response -> {
-                        TransactionStatusDto newStatus;
-
-                        switch (response.getOutcome()) {
-                            case OK -> newStatus = TransactionStatusDto.CLOSED;
-                            case KO -> newStatus = TransactionStatusDto.CLOSURE_FAILED;
-                            default -> {
-                                return Mono.error(new RuntimeException("Invalid outcome result enum value"));
-                            }
-                        }
-
-                        TransactionClosureSendData closureSendData =
-                                new TransactionClosureSendData(
-                                        response.getOutcome(),
-                                        newStatus
-                                );
-
-                        TransactionClosureSentEvent event = new TransactionClosureSentEvent(
-                                tx.getTransactionId().value().toString(),
-                                tx.getRptId().value(),
-                                tx.getTransactionActivatedData().getPaymentToken(),
-                                closureSendData
-                        );
 
                                 Mono<NotificationEmailResponseDto> emailResponse = notificationsServiceClient.sendSuccessEmail(
                                         new NotificationsServiceClient.SuccessTemplateRequest(
@@ -129,13 +118,13 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                                                                 tx.getCreationDate().toString(),
                                                                 amountToHumanReadableString(tx.getAmount().value()),
                                                                 new PspTemplate(
-                                                                        tx.getTransactionAuthorizationRequestData().getPspId(),
-                                                                        new FeeTemplate(amountToHumanReadableString(tx.getTransactionAuthorizationRequestData().getFee()))
+                                                                        transactionAuthorizationRequestData.getPspId(),
+                                                                        new FeeTemplate(amountToHumanReadableString(transactionAuthorizationRequestData.getFee()))
                                                                 ),
                                                                 "RRN",
                                                                 updateAuthorizationRequest.getAuthorizationCode(),
                                                                 new PaymentMethodTemplate(
-                                                                        tx.getTransactionAuthorizationRequestData().getPaymentInstrumentId(),
+                                                                        transactionAuthorizationRequestData.getPaymentInstrumentId(),
                                                                         "paymentMethodLogo", // TODO: Logos
                                                                         null,
                                                                         false
