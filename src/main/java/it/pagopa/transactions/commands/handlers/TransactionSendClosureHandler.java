@@ -10,10 +10,7 @@ import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestD
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NotificationsServiceClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
-import it.pagopa.transactions.documents.TransactionAuthorizationRequestData;
-import it.pagopa.transactions.documents.TransactionClosureSendData;
-import it.pagopa.transactions.documents.TransactionClosureSentEvent;
-import it.pagopa.transactions.documents.TransactionEvent;
+import it.pagopa.transactions.documents.*;
 import it.pagopa.transactions.domain.EmptyTransaction;
 import it.pagopa.transactions.domain.Transaction;
 import it.pagopa.transactions.domain.TransactionActivated;
@@ -124,7 +121,7 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                                 Mono<NotificationEmailResponseDto> emailResponse = notificationsServiceClient.sendSuccessEmail(
                                         new NotificationsServiceClient.SuccessTemplateRequest(
                                                 tx.getEmail().value(),
-                                                "Hai pagato un avviso di pagamento PagoPA",
+                                                "Hai inviato un pagamento di %s € tramite pagoPA".formatted(amountToHumanReadableString(tx.getAmount().value())),
                                                 "it-IT",
                                                 new SuccessTemplate(
                                                         new TransactionTemplate(
@@ -136,7 +133,7 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                                                                         new FeeTemplate(amountToHumanReadableString(tx.getTransactionAuthorizationRequestData().getFee()))
                                                                 ),
                                                                 "RRN",
-                                                                "authorizationCode",
+                                                                updateAuthorizationRequest.getAuthorizationCode(),
                                                                 new PaymentMethodTemplate(
                                                                         tx.getTransactionAuthorizationRequestData().getPaymentInstrumentId(),
                                                                         "paymentMethodLogo", // TODO: Logos
@@ -145,11 +142,7 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                                                                 )
                                                         ),
                                                         new UserTemplate(
-                                                                new DataTemplate(
-                                                                        null,
-                                                                        null,
-                                                                        null
-                                                                ),
+                                                                null,
                                                                 tx.getEmail().value()
                                                         ),
                                                         new CartTemplate(
@@ -157,15 +150,12 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                                                                         new ItemTemplate(
                                                                                 new RefNumberTemplate(
                                                                                         RefNumberTemplate.Type.CODICE_AVVISO,
-                                                                                        tx.getRptId().value()
+                                                                                        tx.getRptId().getNoticeId()
                                                                                 ),
-                                                                                new DebtorTemplate(
-                                                                                        null,
-                                                                                        null
-                                                                                ),
+                                                                                null,
                                                                                 new PayeeTemplate(
-                                                                                        null,
-                                                                                        null
+                                                                                        "payeeName",
+                                                                                        tx.getRptId().getFiscalCode()
                                                                                 ),
                                                                                 tx.getDescription().value(),
                                                                                 amountToHumanReadableString(tx.getAmount().value())
@@ -196,12 +186,26 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
     }
 
     private Mono<Transaction> replayTransactionEvents(UUID transactionId) {
-        Flux<TransactionEvent<Object>> events = eventStoreRepository.findByTransactionId(transactionId);
+        Flux<TransactionEvent<Object>> events = eventStoreRepository.findByTransactionId(transactionId.toString());
 
         return events.reduce(new EmptyTransaction(), Transaction::applyEvent);
     }
 
     private String amountToHumanReadableString(int amount) {
-        return "€ %s".formatted(amount / 100);
+        String repr = String.valueOf(amount);
+        int centsSeparationIndex = Math.max(0, repr.length() - 2);
+
+        String cents = repr.substring(centsSeparationIndex);
+        String euros = repr.substring(0, centsSeparationIndex);
+
+        if (euros.isEmpty()) {
+            euros = "0";
+        }
+
+        if (cents.length() == 1) {
+            cents = "0" + cents;
+        }
+
+        return "%s.%s".formatted(euros, cents);
     }
 }
