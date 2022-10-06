@@ -151,7 +151,7 @@ public class WebClientsConfig {
         WebClient webClient = ApiClient.buildWebClientBuilder().clientConnector(
                 new ReactorClientHttpConnector(httpClient)).baseUrl(notificationsServiceUri).build();
 
-        return new it.pagopa.generated.notifications.v1.api.DefaultApi(new it.pagopa.generated.notifications.v1.ApiClient(webClient));
+        return new it.pagopa.generated.notifications.v1.api.DefaultApi(new it.pagopa.generated.notifications.v1.ApiClient(webClient).setBasePath(notificationsServiceUri));
     }
 
     @Bean
