@@ -23,7 +23,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -106,16 +109,17 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                                         tx.getTransactionActivatedData().getPaymentToken(),
                                         closureSendData
                                 );
+                                String language = "it-IT"; // FIXME: Add language to AuthorizationRequestData
 
                                 Mono<NotificationEmailResponseDto> emailResponse = notificationsServiceClient.sendSuccessEmail(
                                         new NotificationsServiceClient.SuccessTemplateRequest(
                                                 tx.getEmail().value(),
                                                 "Hai inviato un pagamento di %s € tramite pagoPA".formatted(amountToHumanReadableString(tx.getAmount().value())),
-                                                "it-IT",
+                                                language,
                                                 new SuccessTemplate(
                                                         new TransactionTemplate(
                                                                 tx.getTransactionId().value().toString(),
-                                                                tx.getCreationDate().toString(),
+                                                                dateTimeToHumanReadableString(tx.getCreationDate(), Locale.forLanguageTag(language)), // FIXME: auth date, not tx creation date
                                                                 amountToHumanReadableString(tx.getAmount().value()),
                                                                 new PspTemplate(
                                                                         transactionAuthorizationRequestData.getPspId(),
@@ -195,6 +199,11 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
             cents = "0" + cents;
         }
 
-        return "%s.%s".formatted(euros, cents);
+        return "%s,%s".formatted(euros, cents);
+    }
+
+    private String dateTimeToHumanReadableString(ZonedDateTime dateTime, Locale locale) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd LLLL yyyy, kk:mm:ss").withLocale(locale);
+        return dateTime.format(formatter);
     }
 }
