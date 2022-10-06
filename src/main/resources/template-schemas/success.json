@@ -1,5 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
+  "$id": "templates/success/schema.json",
   "title": "success",
   "type": "object",
   "required": ["transaction", "user", "cart"],
@@ -121,11 +122,11 @@
                 "properties": {
                   "type": {
                     "enum": ["codiceAvviso", "IUV"],
-                    "examples": ["codiceAvviso"]
+                    "examples": ["codiceAvviso","IUV"]
                   },
                   "value": {
                     "type": "string",
-                    "examples": ["123456789012345678"]
+                    "examples": ["123456789012345678","RF865613749"]
                   }
                 }
               },
@@ -149,11 +150,11 @@
                 "properties": {
                   "name": {
                     "type": "string",
-                    "examples": ["Comune di Controguerra"]
+                    "examples": ["Comune di Controguerra","Comune di Milano"]
                   },
                   "taxCode": {
-                    "type": "integer",
-                    "examples": [82001760675]
+                    "type": "string",
+                    "examples": ["82001760675","01199250158"]
                   }
                 }
               },
