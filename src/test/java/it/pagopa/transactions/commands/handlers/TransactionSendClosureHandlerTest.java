@@ -2,20 +2,18 @@ package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
-import it.pagopa.generated.notifications.v1.dto.NotificationEmailResponseDto;
-import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
+import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
+import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
-import it.pagopa.transactions.client.NotificationsServiceClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
 import it.pagopa.transactions.commands.data.ClosureSendData;
 import it.pagopa.transactions.documents.*;
-import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.domain.Transaction;
-import it.pagopa.transactions.domain.TransactionActivated;
+import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.domain.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
-import it.pagopa.transactions.utils.TransactionEventCode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -52,9 +50,6 @@ class TransactionSendClosureHandlerTest {
 
     @Mock
     NodeForPspClient nodeForPspClient;
-
-    @Mock
-    NotificationsServiceClient notificationsServiceClient;
 
     private TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
@@ -231,22 +226,7 @@ class TransactionSendClosureHandlerTest {
                 transactionClosureSendData
         );
 
-        TransactionAuthorizationRequestData authorizationRequestData = new TransactionAuthorizationRequestData(
-                amount.value(),
-                1,
-                "paymentInstrumentId",
-                "pspId",
-                "",
-                "brokerName",
-                "pspChannelCode"
-        );
-        TransactionAuthorizationRequestedEvent transactionAuthorizationRequestedEvent =
-                new TransactionAuthorizationRequestedEvent(
-                        transactionId.value().toString(),
-                        rptId.value(),
-                        paymentToken.value(),
-                        authorizationRequestData
-                );
+        TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(List.of(((BaseTransactionWithPaymentToken) transaction).getTransactionActivatedData().getPaymentToken()))
@@ -271,13 +251,8 @@ class TransactionSendClosureHandlerTest {
 
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
-
-        Mockito.when(transactionAuthorizationEventStoreRepository.findByTransactionIdAndEventCode(transactionId.value().toString(), TransactionEventCode.TRANSACTION_AUTHORIZATION_REQUESTED_EVENT))
-                .thenReturn(Mono.just(transactionAuthorizationRequestedEvent));
-
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
-        Mockito.when(notificationsServiceClient.sendSuccessEmail(any())).thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
 
         /* test */
         StepVerifier.create(
