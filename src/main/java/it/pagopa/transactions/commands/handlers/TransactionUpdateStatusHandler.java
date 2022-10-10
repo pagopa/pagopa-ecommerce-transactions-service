@@ -1,5 +1,6 @@
 package it.pagopa.transactions.commands.handlers;
 
+import it.pagopa.generated.notifications.templates.ko.KoTemplate;
 import it.pagopa.generated.notifications.templates.success.*;
 import it.pagopa.generated.notifications.v1.dto.NotificationEmailResponseDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
@@ -66,7 +67,7 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
                         case OK -> newStatus = TransactionStatusDto.NOTIFIED;
                         case KO -> newStatus = TransactionStatusDto.NOTIFIED_FAILED;
                         default -> {
-                            return Mono.error(new RuntimeException("Invalid result enum value"));
+                            return Mono.error(new RuntimeException("Invalid Nodo sendPaymentResultV2 outcome value"));
                         }
                     }
 
@@ -82,10 +83,44 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
                             statusUpdateData);
 
                     String language = "it-IT"; // FIXME: Add language to AuthorizationRequestData
-                    Mono<NotificationEmailResponseDto> emailResponse = sendSuccessEmail(tx, updateTransactionStatusRequestDto, language);
+                    Mono<NotificationEmailResponseDto> emailResponse = Mono.just(newStatus)
+                            .flatMap(status -> {
+                                switch (status) {
+                                    case NOTIFIED -> {
+                                        return sendSuccessEmail(tx, updateTransactionStatusRequestDto, language);
+                                    }
+                                    case NOTIFIED_FAILED -> {
+                                        return sendKoEmail(tx, updateTransactionStatusRequestDto, language);
+                                    }
+                                    default -> {
+                                        return Mono.error(new IllegalStateException("Invalid new status for closure handler: %s".formatted(status)));
+                                    }
+                                }
+                            });
 
                     return emailResponse.flatMap(v -> transactionEventStoreRepository.save(event));
                 });
+    }
+
+    private Mono<NotificationEmailResponseDto> sendKoEmail(
+            TransactionClosed tx,
+            UpdateTransactionStatusRequestDto updateTransactionStatusRequestDto,
+            String language
+    ) {
+        return notificationsServiceClient.sendKoEmail(
+                new NotificationsServiceClient.KoTemplateRequest(
+                        tx.getEmail().value(),
+                        "Ops! Il pagamento di %s € tramite pagoPA non è riuscito".formatted(amountToHumanReadableString(tx.getAmount().value())),
+                        language,
+                        new KoTemplate(
+                                new it.pagopa.generated.notifications.templates.ko.TransactionTemplate(
+                                        amountToHumanReadableString(tx.getAmount().value()),
+                                        tx.getTransactionId().value().toString().toUpperCase(),
+                                        dateTimeToHumanReadableString(updateTransactionStatusRequestDto.getTimestampOperation(), Locale.forLanguageTag(language))
+                                )
+                        )
+                )
+        );
     }
 
     private Mono<NotificationEmailResponseDto> sendSuccessEmail(
