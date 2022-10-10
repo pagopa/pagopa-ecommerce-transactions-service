@@ -11,6 +11,7 @@ public class NodoConnectionString {
 
     String idPSP;
     String idChannel;
+    String idChannelPayment;
     String idBrokerPSP;
     String password;
 }
