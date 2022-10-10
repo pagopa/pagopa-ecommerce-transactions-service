@@ -92,7 +92,7 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
                                     language,
                                     new SuccessTemplate(
                                             new TransactionTemplate(
-                                                    tx.getTransactionId().value().toString(),
+                                                    tx.getTransactionId().value().toString().toUpperCase(),
                                                     dateTimeToHumanReadableString(updateTransactionStatusRequestDto.getTimestampOperation(), Locale.forLanguageTag(language)),
                                                     amountToHumanReadableString(tx.getAmount().value() + transactionAuthorizationRequestData.getFee()),
                                                     new PspTemplate(
