@@ -65,7 +65,7 @@ class TransactionInitializerHandlerTest {
     requestDto.setRptId(rptId.value());
     requestDto.setEmail("jhon.doe@email.com");
     requestDto.setAmount(1200);
-
+    requestDto.setPaymentContextCode(UUID.randomUUID().toString().replace("-",""));
     TransactionActivateCommand command = new TransactionActivateCommand(rptId, requestDto);
 
     PaymentRequestInfo paymentRequestInfoCached =
