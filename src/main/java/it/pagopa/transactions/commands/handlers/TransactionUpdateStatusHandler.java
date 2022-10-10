@@ -60,8 +60,6 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
                 .cast(TransactionClosed.class)
                 .flatMap(tx -> {
                     UpdateTransactionStatusRequestDto updateTransactionStatusRequestDto = command.getData().updateTransactionRequest();
-                    TransactionAuthorizationRequestData transactionAuthorizationRequestData = tx.getTransactionAuthorizationRequestData();
-
                     TransactionStatusDto newStatus;
 
                     switch (command.getData().updateTransactionRequest().getAuthorizationResult()) {
@@ -84,58 +82,67 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
                             statusUpdateData);
 
                     String language = "it-IT"; // FIXME: Add language to AuthorizationRequestData
-
-                    Mono<NotificationEmailResponseDto> emailResponse = notificationsServiceClient.sendSuccessEmail(
-                            new NotificationsServiceClient.SuccessTemplateRequest(
-                                    tx.getEmail().value(),
-                                    "Hai inviato un pagamento di %s € tramite pagoPA".formatted(amountToHumanReadableString(tx.getAmount().value())),
-                                    language,
-                                    new SuccessTemplate(
-                                            new TransactionTemplate(
-                                                    tx.getTransactionId().value().toString().toUpperCase(),
-                                                    dateTimeToHumanReadableString(updateTransactionStatusRequestDto.getTimestampOperation(), Locale.forLanguageTag(language)),
-                                                    amountToHumanReadableString(tx.getAmount().value() + transactionAuthorizationRequestData.getFee()),
-                                                    new PspTemplate(
-                                                            transactionAuthorizationRequestData.getPspId(),
-                                                            new FeeTemplate(amountToHumanReadableString(transactionAuthorizationRequestData.getFee()))
-                                                    ),
-                                                    "RRN",
-                                                    updateTransactionStatusRequestDto.getAuthorizationCode(),
-                                                    new PaymentMethodTemplate(
-                                                            transactionAuthorizationRequestData.getPaymentInstrumentId(),
-                                                            "paymentMethodLogo", // TODO: Logos
-                                                            null,
-                                                            false
-                                                    )
-                                            ),
-                                            new UserTemplate(
-                                                    null,
-                                                    tx.getEmail().value()
-                                            ),
-                                            new CartTemplate(
-                                                    List.of(
-                                                            new ItemTemplate(
-                                                                    new RefNumberTemplate(
-                                                                            RefNumberTemplate.Type.CODICE_AVVISO,
-                                                                            tx.getRptId().getNoticeId()
-                                                                    ),
-                                                                    null,
-                                                                    new PayeeTemplate(
-                                                                            "payeeName",
-                                                                            tx.getRptId().getFiscalCode()
-                                                                    ),
-                                                                    tx.getDescription().value(),
-                                                                    amountToHumanReadableString(tx.getAmount().value())
-                                                            )
-                                                    ),
-                                                    amountToHumanReadableString(tx.getAmount().value())
-                                            )
-                                    )
-                            )
-                    );
+                    Mono<NotificationEmailResponseDto> emailResponse = sendSuccessEmail(tx, updateTransactionStatusRequestDto, language);
 
                     return emailResponse.flatMap(v -> transactionEventStoreRepository.save(event));
                 });
+    }
+
+    private Mono<NotificationEmailResponseDto> sendSuccessEmail(
+            TransactionClosed tx,
+            UpdateTransactionStatusRequestDto updateTransactionStatusRequestDto,
+            String language
+    ) {
+        TransactionAuthorizationRequestData transactionAuthorizationRequestData = tx.getTransactionAuthorizationRequestData();
+
+        return notificationsServiceClient.sendSuccessEmail(
+                new NotificationsServiceClient.SuccessTemplateRequest(
+                        tx.getEmail().value(),
+                        "Hai inviato un pagamento di %s € tramite pagoPA".formatted(amountToHumanReadableString(tx.getAmount().value())),
+                        language,
+                        new SuccessTemplate(
+                                new TransactionTemplate(
+                                        tx.getTransactionId().value().toString().toUpperCase(),
+                                        dateTimeToHumanReadableString(updateTransactionStatusRequestDto.getTimestampOperation(), Locale.forLanguageTag(language)),
+                                        amountToHumanReadableString(tx.getAmount().value() + transactionAuthorizationRequestData.getFee()),
+                                        new PspTemplate(
+                                                transactionAuthorizationRequestData.getPspId(),
+                                                new FeeTemplate(amountToHumanReadableString(transactionAuthorizationRequestData.getFee()))
+                                        ),
+                                        "RRN",
+                                        updateTransactionStatusRequestDto.getAuthorizationCode(),
+                                        new PaymentMethodTemplate(
+                                                transactionAuthorizationRequestData.getPaymentInstrumentId(),
+                                                "paymentMethodLogo", // TODO: Logos
+                                                null,
+                                                false
+                                        )
+                                ),
+                                new UserTemplate(
+                                        null,
+                                        tx.getEmail().value()
+                                ),
+                                new CartTemplate(
+                                        List.of(
+                                                new ItemTemplate(
+                                                        new RefNumberTemplate(
+                                                                RefNumberTemplate.Type.CODICE_AVVISO,
+                                                                tx.getRptId().getNoticeId()
+                                                        ),
+                                                        null,
+                                                        new PayeeTemplate(
+                                                                "payeeName",
+                                                                tx.getRptId().getFiscalCode()
+                                                        ),
+                                                        tx.getDescription().value(),
+                                                        amountToHumanReadableString(tx.getAmount().value())
+                                                )
+                                        ),
+                                        amountToHumanReadableString(tx.getAmount().value())
+                                )
+                        )
+                )
+        );
     }
 
     private Mono<Transaction> replayTransactionEvents(UUID transactionId) {
