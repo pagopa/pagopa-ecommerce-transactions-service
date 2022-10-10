@@ -110,7 +110,7 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
         return notificationsServiceClient.sendKoEmail(
                 new NotificationsServiceClient.KoTemplateRequest(
                         tx.getEmail().value(),
-                        "Ops! Il pagamento di %s € tramite pagoPA non è riuscito".formatted(amountToHumanReadableString(tx.getAmount().value())),
+                        "Ops! Il pagamento di %s € tramite PagoPA non è riuscito".formatted(amountToHumanReadableString(tx.getAmount().value())),
                         language,
                         new KoTemplate(
                                 new it.pagopa.generated.notifications.templates.ko.TransactionTemplate(
@@ -133,7 +133,7 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
         return notificationsServiceClient.sendSuccessEmail(
                 new NotificationsServiceClient.SuccessTemplateRequest(
                         tx.getEmail().value(),
-                        "Hai inviato un pagamento di %s € tramite pagoPA".formatted(amountToHumanReadableString(tx.getAmount().value())),
+                        "Hai inviato un pagamento di %s € tramite PagoPA".formatted(amountToHumanReadableString(tx.getAmount().value())),
                         language,
                         new SuccessTemplate(
                                 new TransactionTemplate(

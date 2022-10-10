@@ -1,5 +1,6 @@
 package it.pagopa.transactions.client;
 
+import it.pagopa.generated.notifications.templates.ko.KoTemplate;
 import it.pagopa.generated.notifications.templates.success.*;
 import it.pagopa.generated.notifications.v1.api.DefaultApi;
 import it.pagopa.generated.notifications.v1.dto.NotificationEmailRequestDto;
@@ -15,7 +16,9 @@ import reactor.test.StepVerifier;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationsServiceClientTest {
@@ -113,6 +116,38 @@ class NotificationsServiceClientTest {
         Mockito.when(defaultApi.sendNotificationEmail(null, request)).thenReturn(Mono.just(expected));
 
         StepVerifier.create(client.sendSuccessEmail(successTemplateRequest))
+                .expectNext(expected)
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldReturnEmailOutcomeWithKoTemplate() {
+        NotificationsServiceClient.KoTemplateRequest koTemplateRequest = new NotificationsServiceClient.KoTemplateRequest(
+                "foo@example.com",
+                "Ops! Il pagamento di € 12,00 tramite PagoPA non è riuscito",
+                "it-IT",
+                new KoTemplate(
+                        new it.pagopa.generated.notifications.templates.ko.TransactionTemplate(
+                                UUID.randomUUID().toString().toUpperCase(),
+                                ZonedDateTime.now().toString(),
+                                "€ 12,00"
+                        )
+                )
+        );
+
+        NotificationEmailRequestDto request = new NotificationEmailRequestDto()
+                .language(koTemplateRequest.language())
+                .subject(koTemplateRequest.subject())
+                .to(koTemplateRequest.to())
+                .templateId(NotificationsServiceClient.SuccessTemplateRequest.TEMPLATE_ID)
+                .parameters(koTemplateRequest.templateParameters());
+
+        NotificationEmailResponseDto expected = new NotificationEmailResponseDto()
+                .outcome("OK");
+
+        Mockito.when(defaultApi.sendNotificationEmail(null, request)).thenReturn(Mono.just(expected));
+
+        StepVerifier.create(client.sendKoEmail(koTemplateRequest))
                 .expectNext(expected)
                 .verifyComplete();
     }
