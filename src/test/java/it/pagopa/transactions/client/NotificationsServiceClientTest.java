@@ -139,7 +139,7 @@ class NotificationsServiceClientTest {
                 .language(koTemplateRequest.language())
                 .subject(koTemplateRequest.subject())
                 .to(koTemplateRequest.to())
-                .templateId(NotificationsServiceClient.SuccessTemplateRequest.TEMPLATE_ID)
+                .templateId(NotificationsServiceClient.KoTemplateRequest.TEMPLATE_ID)
                 .parameters(koTemplateRequest.templateParameters());
 
         NotificationEmailResponseDto expected = new NotificationEmailResponseDto()
