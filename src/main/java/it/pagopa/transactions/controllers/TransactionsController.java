@@ -59,9 +59,9 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @Override
-    public Mono<ResponseEntity<ActivationResultResponseDto>> transactionActivationResult(String transactionId, Mono<ActivationResultRequestDto> activationResultRequestDto, ServerWebExchange exchange) {
+    public Mono<ResponseEntity<ActivationResultResponseDto>> transactionActivationResult(String paymentContextCode, Mono<ActivationResultRequestDto> activationResultRequestDto, ServerWebExchange exchange) {
         return activationResultRequestDto
-                .flatMap(activationResultRequest -> transactionsService.activateTransaction(transactionId, activationResultRequest))
+                .flatMap(activationResultRequest -> transactionsService.activateTransaction(paymentContextCode, activationResultRequest))
                 .map(ResponseEntity::ok);    }
 
     @ExceptionHandler(TransactionNotFoundException.class)

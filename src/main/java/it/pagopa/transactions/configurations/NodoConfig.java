@@ -34,6 +34,7 @@ public class NodoConfig {
     NodoVerificaRPT request = objectFactoryNodoPerPsp.createNodoVerificaRPT();
     request.setIdentificativoPSP(nodoConnectionParams.getIdPSP());
     request.setIdentificativoCanale(nodoConnectionParams.getIdChannel());
+    request.setIdentificativoCanale(nodoConnectionParams.getIdChannel());
     request.setIdentificativoIntermediarioPSP(nodoConnectionParams.getIdBrokerPSP());
     request.setPassword(nodoConnectionParams.getPassword());
     request.setCodificaInfrastrutturaPSP("QR-CODE");
@@ -53,7 +54,7 @@ public class NodoConfig {
     request.setIdentificativoCanale(nodoConnectionParams.getIdChannel());
     request.setIdentificativoIntermediarioPSP(nodoConnectionParams.getIdBrokerPSP());
     request.setIdentificativoIntermediarioPSPPagamento(nodoConnectionParams.getIdBrokerPSP());
-    request.setIdentificativoCanalePagamento(nodoConnectionParams.getIdChannel());
+    request.setIdentificativoCanalePagamento(nodoConnectionParams.getIdChannelPayment());
     request.setPassword(nodoConnectionParams.getPassword());
     request.setCodificaInfrastrutturaPSP("QR-CODE");
     return request;
