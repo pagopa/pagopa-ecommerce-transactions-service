@@ -48,7 +48,8 @@ class PaymentGatewayClientTest {
                 new RptId("77777777777111111111111111111"),
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
-                TransactionStatusDto.ACTIVATED
+                new Email("foo@example.com"),
+                null, null, TransactionStatusDto.ACTIVATED
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -92,7 +93,8 @@ class PaymentGatewayClientTest {
                 new RptId("77777777777111111111111111111"),
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
-                TransactionStatusDto.ACTIVATED
+                new Email("foo@example.com"),
+                null, null, TransactionStatusDto.ACTIVATED
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -133,6 +135,9 @@ class PaymentGatewayClientTest {
                 new RptId("77777777777111111111111111111"),
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
+                new Email("foo@example.com"),
+                "faultCode",
+                "faultCodeString",
                 TransactionStatusDto.ACTIVATED
         );
 
@@ -172,7 +177,8 @@ class PaymentGatewayClientTest {
                 new RptId("77777777777111111111111111111"),
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
-                TransactionStatusDto.ACTIVATED
+                new Email("foo@example.com"),
+                null, null, TransactionStatusDto.ACTIVATED
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(

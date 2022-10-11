@@ -22,7 +22,8 @@ public abstract class BaseTransaction {
     RptId rptId;
     TransactionDescription description;
     TransactionAmount amount;
+    Email email;
     ZonedDateTime creationDate;
 
-    TransactionStatusDto status;
+    @With TransactionStatusDto status;
 }

@@ -11,7 +11,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @AllArgsConstructor
 @NoArgsConstructor
 @Generated
-
 public class TransactionActivationRequestedData {
     //TODO Add other fields?
     private String description;

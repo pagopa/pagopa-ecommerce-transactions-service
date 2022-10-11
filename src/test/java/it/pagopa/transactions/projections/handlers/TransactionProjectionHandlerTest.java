@@ -1,6 +1,5 @@
 package it.pagopa.transactions.projections.handlers;
 
-import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.documents.TransactionActivationRequestedData;
 import it.pagopa.transactions.documents.TransactionActivationRequestedEvent;
@@ -31,7 +30,6 @@ class TransactionProjectionHandlerTest {
 
     @Test
     void shouldHandleTransaction() {
-
         UUID transactionUUID = UUID.randomUUID();
 
         TransactionActivationRequestedData transactionActivationRequestedData = new TransactionActivationRequestedData();
@@ -40,25 +38,43 @@ class TransactionProjectionHandlerTest {
         transactionActivationRequestedData.setDescription("reason");
         transactionActivationRequestedData.setAmount(1);
         transactionActivationRequestedData.setFaultCode("faultCode");
-        transactionActivationRequestedData.setFaultCodeString("faulteCodeString");
+        transactionActivationRequestedData.setFaultCodeString("faultCodeString");
 
         TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(transactionUUID.toString(), "77777777777302016723749670035", transactionActivationRequestedData);
+
+        TransactionActivationRequestedEvent event = new TransactionActivationRequestedEvent(
+                transactionActivationRequestedEvent.getTransactionId(),
+                transactionActivationRequestedEvent.getRptId(),
+                transactionActivationRequestedEvent.getPaymentToken(),
+                new TransactionActivationRequestedData(
+                        transactionActivationRequestedData.getDescription(),
+                        transactionActivationRequestedData.getAmount(),
+                        "foo@example.com",
+                        "faultCode",
+                        "faultCodeString",
+                        "paymentContextCode"
+                )
+        );
 
         TransactionId transactionId = new TransactionId(transactionUUID);
         PaymentToken paymentToken = new PaymentToken(transactionActivationRequestedEvent.getPaymentToken());
         RptId rptId = new RptId(transactionActivationRequestedEvent.getRptId());
-        TransactionDescription description = new TransactionDescription(transactionActivationRequestedEvent.getData().getDescription());
-        TransactionAmount amount = new TransactionAmount(transactionActivationRequestedEvent.getData().getAmount());
-
-        TransactionActivationRequested expected = new TransactionActivationRequested(
-                transactionId,
-                rptId,
-                description,
-                amount,
-                TransactionStatusDto.ACTIVATION_REQUESTED);
+        TransactionDescription description = new TransactionDescription(transactionActivationRequestedData.getDescription());
+        TransactionAmount amount = new TransactionAmount(transactionActivationRequestedData.getAmount());
+        Email email = new Email(transactionActivationRequestedData.getEmail());
+        ZonedDateTime creationDate = ZonedDateTime.now();
 
         try (
                 MockedStatic<ZonedDateTime> zonedDateTime = Mockito.mockStatic(ZonedDateTime.class)) {
+            TransactionActivationRequested expected = new TransactionActivationRequested(
+                    transactionId,
+                    rptId,
+                    description,
+                    amount,
+                    email,
+                    creationDate,
+                    TransactionStatusDto.ACTIVATION_REQUESTED);
+
             /*
              * Preconditions
              */

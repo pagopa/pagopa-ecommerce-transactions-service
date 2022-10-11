@@ -27,13 +27,13 @@ public class TransactionsActivationRequestedProjectionHandler
   public Mono<TransactionActivationRequested> handle(TransactionActivationRequestedEvent transactionActivationRequestedEvent) {
 
     TransactionId transactionId = new TransactionId(UUID.fromString(transactionActivationRequestedEvent.getTransactionId()));
-    PaymentToken paymentToken = new PaymentToken(transactionActivationRequestedEvent.getPaymentToken());
     RptId rptId = new RptId(transactionActivationRequestedEvent.getRptId());
     TransactionDescription description = new TransactionDescription(transactionActivationRequestedEvent.getData().getDescription());
     TransactionAmount amount = new TransactionAmount(transactionActivationRequestedEvent.getData().getAmount());
+    Email email = new Email(transactionActivationRequestedEvent.getData().getEmail());
 
     TransactionActivationRequested transaction =
-        new TransactionActivationRequested(transactionId, rptId, description, amount, TransactionStatusDto.ACTIVATION_REQUESTED);
+        new TransactionActivationRequested(transactionId, rptId, description, amount, email, TransactionStatusDto.ACTIVATION_REQUESTED);
 
     it.pagopa.transactions.documents.Transaction transactionDocument =
         it.pagopa.transactions.documents.Transaction.from(transaction);

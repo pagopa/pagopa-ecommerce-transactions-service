@@ -44,8 +44,10 @@ class AuthorizationUpdateProjectionHandlerTest {
                 new RptId("77777777777111111111111111111"),
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
-                TransactionStatusDto.AUTHORIZATION_REQUESTED
-        );
+                new Email("email@example.com"),
+                "faultCode",
+                "faultCodeString",
+                TransactionStatusDto.AUTHORIZATION_REQUESTED);
 
         it.pagopa.transactions.documents.Transaction expectedDocument = new it.pagopa.transactions.documents.Transaction(
                 transaction.getTransactionId().value().toString(),
@@ -53,6 +55,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 transaction.getRptId().value(),
                 transaction.getDescription().value(),
                 transaction.getAmount().value(),
+                transaction.getEmail().value(),
                 TransactionStatusDto.AUTHORIZED,
                 transaction.getCreationDate()
         );
@@ -76,9 +79,9 @@ class AuthorizationUpdateProjectionHandlerTest {
                 transaction.getRptId(),
                 transaction.getDescription(),
                 transaction.getAmount(),
-                ZonedDateTime.parse(expectedDocument.getCreationDate()),
-                expectedDocument.getStatus()
-        );
+                transaction.getEmail(),
+                null, null, ZonedDateTime.parse(expectedDocument.getCreationDate()),
+                expectedDocument.getStatus());
 
         /*
          * Preconditions

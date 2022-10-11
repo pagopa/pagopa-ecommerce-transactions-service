@@ -20,12 +20,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
 
 import java.util.UUID;
 
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
+import reactor.test.StepVerifier;
 
 import static org.mockito.ArgumentMatchers.any;
 
@@ -58,6 +58,7 @@ class TransactionRequestAuthorizizationHandlerTest {
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
+        Email email = new Email("foo@example.com");
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -65,7 +66,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                 rptId,
                 description,
                 amount,
-                TransactionStatusDto.ACTIVATED
+                email,
+                null, null, TransactionStatusDto.ACTIVATED
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -109,6 +111,9 @@ class TransactionRequestAuthorizizationHandlerTest {
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
+        Email email = new Email("foo@example.com");
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -116,6 +121,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 rptId,
                 description,
                 amount,
+                email,
+                faultCode,
+                faultCodeString,
                 TransactionStatusDto.AUTHORIZATION_REQUESTED
         );
 

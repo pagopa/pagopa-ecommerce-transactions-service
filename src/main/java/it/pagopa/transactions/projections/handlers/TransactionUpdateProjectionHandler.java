@@ -32,8 +32,10 @@ public class TransactionUpdateProjectionHandler implements ProjectionHandler<Tra
                         new RptId(transactionDocument.getRptId()),
                         new TransactionDescription(transactionDocument.getDescription()),
                         new TransactionAmount(transactionDocument.getAmount()),
+                        new Email(transactionDocument.getEmail()),
+                        null,
+                        null,
                         ZonedDateTime.parse(transactionDocument.getCreationDate()),
-                        transactionDocument.getStatus()
-                ));
+                        transactionDocument.getStatus()));
     }
 }

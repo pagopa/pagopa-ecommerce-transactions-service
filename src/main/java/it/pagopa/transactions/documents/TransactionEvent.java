@@ -4,6 +4,8 @@ import com.azure.spring.data.cosmos.core.mapping.PartitionKey;
 import it.pagopa.transactions.utils.TransactionEventCode;
 import lombok.Data;
 import lombok.Generated;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -14,10 +16,12 @@ import static java.time.ZonedDateTime.now;
 @Data
 @Document(collection = "eventstore")
 @Generated
+@NoArgsConstructor
+@ToString
 public abstract sealed class TransactionEvent<T>
         permits
-        TransactionActivatedEvent,
         TransactionActivationRequestedEvent,
+        TransactionActivatedEvent,
         TransactionAuthorizationRequestedEvent,
         TransactionAuthorizationStatusUpdatedEvent,
         TransactionClosureSentEvent,

@@ -48,9 +48,12 @@ class TransactionsActivationProjectionHandlerTest {
         RptId rptId = new RptId(event.getRptId());
         TransactionDescription description = new TransactionDescription(data.getDescription());
         TransactionAmount amount = new TransactionAmount(data.getAmount());
+        Email email = new Email("foo@example.com");
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivated transaction =
-                new TransactionActivated(transactionId, paymentToken, rptId, description, amount, TransactionStatusDto.ACTIVATED);
+                new TransactionActivated(transactionId, paymentToken, rptId, description, amount, email, faultCode, faultCodeString, TransactionStatusDto.ACTIVATED);
 
         it.pagopa.transactions.documents.Transaction transactionDocument =
                 it.pagopa.transactions.documents.Transaction.from(transaction);

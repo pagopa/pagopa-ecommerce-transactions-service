@@ -20,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
 import java.util.UUID;
@@ -167,6 +166,9 @@ public class TransactionsService {
                       new RptId(transactionDocument.getRptId()),
                       new TransactionDescription(transactionDocument.getDescription()),
                       new TransactionAmount(transactionDocument.getAmount()),
+                      new Email(transactionDocument.getEmail()),
+                      null,
+                      null,
                       transactionDocument.getStatus());
 
               AuthorizationRequestData authorizationData =
@@ -210,7 +212,8 @@ public class TransactionsService {
                       new RptId(transactionDocument.getRptId()),
                       new TransactionDescription(transactionDocument.getDescription()),
                       new TransactionAmount(transactionDocument.getAmount()),
-                      transactionDocument.getStatus());
+                      new Email(transactionDocument.getEmail()),
+                      null, null, transactionDocument.getStatus());
 
               UpdateAuthorizationStatusData updateAuthorizationStatusData =
                   new UpdateAuthorizationStatusData(transaction, updateAuthorizationRequestDto);
@@ -276,6 +279,9 @@ public class TransactionsService {
                       new RptId(transactionDocument.getRptId()),
                       new TransactionDescription(transactionDocument.getDescription()),
                       new TransactionAmount(transactionDocument.getAmount()),
+                      new Email(transactionDocument.getEmail()),
+                      null,
+                      null,
                       transactionDocument.getStatus());
               UpdateTransactionStatusData updateTransactionStatusData =
                   new UpdateTransactionStatusData(transaction, updateTransactionRequestDto);
@@ -318,13 +324,14 @@ public class TransactionsService {
             TransactionEventCode.TRANSACTION_ACTIVATION_REQUESTED_EVENT, paymentContextCode)
         .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentContextCode)))
         .map(
-            transactionDocument -> {
+            activationRequestedEvent -> {
               TransactionActivationRequested transaction =
                   new TransactionActivationRequested(
-                      new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
-                      new RptId(transactionDocument.getRptId()),
-                      new TransactionDescription(transactionDocument.getData().getDescription()),
-                      new TransactionAmount(transactionDocument.getData().getAmount()),
+                      new TransactionId(UUID.fromString(activationRequestedEvent.getTransactionId())),
+                      new RptId(activationRequestedEvent.getRptId()),
+                      new TransactionDescription(activationRequestedEvent.getData().getDescription()),
+                      new TransactionAmount(activationRequestedEvent.getData().getAmount()),
+                      new Email(activationRequestedEvent.getData().getEmail()),
                       TransactionStatusDto.ACTIVATION_REQUESTED);
               ActivationResultData activationResultData =
                   new ActivationResultData(transaction, activationResultRequestDto);
@@ -348,7 +355,7 @@ public class TransactionsService {
                     "Transaction status updated ACTIVATED after nodoAttivaRPT for transactionId: {}",
                     transactionActivated.getTransactionId()))
         .map(
-            transactionInitializedEvent ->
+            transactionActivated ->
                 new ActivationResultResponseDto()
                     .outcome(ActivationResultResponseDto.OutcomeEnum.OK));
   }
