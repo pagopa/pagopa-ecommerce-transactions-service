@@ -114,9 +114,9 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
                         language,
                         new KoTemplate(
                                 new it.pagopa.generated.notifications.templates.ko.TransactionTemplate(
-                                        amountToHumanReadableString(tx.getAmount().value()),
                                         tx.getTransactionId().value().toString().toUpperCase(),
-                                        dateTimeToHumanReadableString(updateTransactionStatusRequestDto.getTimestampOperation(), Locale.forLanguageTag(language))
+                                        dateTimeToHumanReadableString(updateTransactionStatusRequestDto.getTimestampOperation(), Locale.forLanguageTag(language)),
+                                        amountToHumanReadableString(tx.getAmount().value())
                                 )
                         )
                 )
