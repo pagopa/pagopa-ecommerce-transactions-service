@@ -182,17 +182,17 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
-  /transactions/{transactionId}/activation-results:
+  /transactions/payment-context-codes/{paymentContextCode}/activation-results:
     summary: PaymentToken related to cdInfoWisp and attivaRPT
     post:
       operationId: transactionActivationResult
       parameters:
         - in: path
-          name: transactionId
+          name: paymentContextCode
           schema:
             type: string
           required: true
-          description: Transaction ID
+          description: Payment context code (codice contesto pagamento)
       requestBody:
         $ref: "#/components/requestBodies/ActivationResultRequest"
       responses:
@@ -203,7 +203,7 @@ paths:
               schema:
                 $ref: "#/components/requestBodies/ActivationResultResponse"
         400:
-          description: Invalid transaction id
+          description: Invalid payment context code
           content:
             application/json:
               schema:

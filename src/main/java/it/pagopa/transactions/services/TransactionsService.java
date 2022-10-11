@@ -13,7 +13,9 @@ import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
 import it.pagopa.transactions.projections.handlers.*;
+import it.pagopa.transactions.repositories.TransactionsActivationRequestedEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
+import it.pagopa.transactions.utils.TransactionEventCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -56,6 +58,9 @@ public class TransactionsService {
 
   @Autowired
   private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
+
+  @Autowired
+  private TransactionsActivationRequestedEventStoreRepository transactionEventStoreRepository;
 
   public Mono<NewTransactionResponseDto> newTransaction(
       NewTransactionRequestDto newTransactionRequestDto) {
@@ -207,8 +212,8 @@ public class TransactionsService {
                       new RptId(transactionDocument.getRptId()),
                       new TransactionDescription(transactionDocument.getDescription()),
                       new TransactionAmount(transactionDocument.getAmount()),
-                          new Email(transactionDocument.getEmail()),
-                          null, null, transactionDocument.getStatus());
+                      new Email(transactionDocument.getEmail()),
+                      null, null, transactionDocument.getStatus());
 
               UpdateAuthorizationStatusData updateAuthorizationStatusData =
                   new UpdateAuthorizationStatusData(transaction, updateAuthorizationRequestDto);
@@ -313,20 +318,21 @@ public class TransactionsService {
   }
 
   public Mono<ActivationResultResponseDto> activateTransaction(
-      String transactionId, ActivationResultRequestDto activationResultRequestDto) {
-    return transactionsViewRepository
-        .findById(transactionId)
-        .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+      String paymentContextCode, ActivationResultRequestDto activationResultRequestDto) {
+    return transactionEventStoreRepository
+        .findByEventCodeAndData_PaymentContextCode(
+            TransactionEventCode.TRANSACTION_ACTIVATION_REQUESTED_EVENT, paymentContextCode)
+        .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentContextCode)))
         .map(
-            transactionDocument -> {
+            activationRequestedEvent -> {
               TransactionActivationRequested transaction =
                   new TransactionActivationRequested(
-                      new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
-                      new RptId(transactionDocument.getRptId()),
-                      new TransactionDescription(transactionDocument.getDescription()),
-                      new TransactionAmount(transactionDocument.getAmount()),
-                      new Email("foo@example.com"),
-                      transactionDocument.getStatus());
+                      new TransactionId(UUID.fromString(activationRequestedEvent.getTransactionId())),
+                      new RptId(activationRequestedEvent.getRptId()),
+                      new TransactionDescription(activationRequestedEvent.getData().getDescription()),
+                      new TransactionAmount(activationRequestedEvent.getData().getAmount()),
+                      new Email(activationRequestedEvent.getData().getEmail()),
+                      TransactionStatusDto.ACTIVATION_REQUESTED);
               ActivationResultData activationResultData =
                   new ActivationResultData(transaction, activationResultRequestDto);
               return new TransactionActivateResultCommand(
@@ -343,15 +349,15 @@ public class TransactionsService {
         .flatMap(
             transactionActivatedEvent ->
                 transactionsActivationProjectionHandler.handle(transactionActivatedEvent))
+        .doOnNext(
+            transactionActivated ->
+                log.info(
+                    "Transaction status updated ACTIVATED after nodoAttivaRPT for transactionId: {}",
+                    transactionActivated.getTransactionId()))
         .map(
             transactionActivated ->
                 new ActivationResultResponseDto()
-                    .outcome(ActivationResultResponseDto.OutcomeEnum.OK))
-        .doOnNext(
-            activationResultResponseDto ->
-                log.info(
-                    "Transaction status updated INITIALIZED after nodoAttivaRPT for transactionId: {}",
-                    transactionId));
+                    .outcome(ActivationResultResponseDto.OutcomeEnum.OK));
   }
 
   private Mono<NewTransactionResponseDto> projectActivationEvent(

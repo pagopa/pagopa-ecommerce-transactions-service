@@ -51,6 +51,7 @@ public class TransactionActivateHandler
       handle(TransactionActivateCommand command) {
     final RptId rptId = command.getRptId();
     final NewTransactionRequestDto newTransactionRequestDto = command.getData();
+    final String paymentContextCode = newTransactionRequestDto.getPaymentContextCode();
 
     return getPaymentRequestInfoFromCache(rptId)
         .doOnNext(
@@ -134,7 +135,8 @@ public class TransactionActivateHandler
                               paymentRequestInfo.description(),
                               sessionDataDto.getEmail(),
                               sessionDataDto.getTransactionId(),
-                              sessionDataDto.getRptId()),
+                              sessionDataDto.getRptId(),
+                              paymentContextCode),
                           sessionDataDto));
             });
   }
@@ -149,13 +151,13 @@ public class TransactionActivateHandler
   }
 
   private Mono<TransactionActivationRequestedEvent> newTransactionActivationRequestedEvent(
-      Integer amount, String description, String email, String transactionId, String rptId) {
+      Integer amount, String description, String email, String transactionId, String rptId, String paymentContextCode) {
 
     TransactionActivationRequestedData data = new TransactionActivationRequestedData();
     data.setAmount(amount);
     data.setDescription(description);
     data.setEmail(email);
-
+    data.setPaymentContextCode(paymentContextCode);
     TransactionActivationRequestedEvent transactionActivationRequestedEvent =
         new TransactionActivationRequestedEvent(transactionId, rptId, data);
 
