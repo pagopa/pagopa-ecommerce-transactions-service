@@ -143,6 +143,12 @@
             <version>1.16.3</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-resolver-dns-native-macos</artifactId>
+            <version>4.1.82.Final</version>
+            <classifier>osx-aarch_64</classifier>
+        </dependency>
 
     </dependencies>
     <dependencyManagement>
