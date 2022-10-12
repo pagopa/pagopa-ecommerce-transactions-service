@@ -4,7 +4,7 @@
     "level": "INFO"
   },
   "role": {
-    "name": "pagopa-ecommerce-transaction-service"
+    "name": "pagopa-ecommerce-transactions-service"
   }
 }
 
