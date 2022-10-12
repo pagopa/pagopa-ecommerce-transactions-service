@@ -1,5 +1,6 @@
 package it.pagopa.transactions.client;
 
+import it.pagopa.generated.notifications.templates.ko.KoTemplate;
 import it.pagopa.generated.notifications.templates.success.SuccessTemplate;
 import it.pagopa.generated.notifications.v1.api.DefaultApi;
 import it.pagopa.generated.notifications.v1.dto.NotificationEmailRequestDto;
@@ -36,6 +37,16 @@ public class NotificationsServiceClient {
         );
     }
 
+    public Mono<NotificationEmailResponseDto> sendKoEmail(KoTemplateRequest koTemplateRequest) {
+        return sendNotificationEmail(new NotificationEmailRequestDto()
+                .language(koTemplateRequest.language)
+                .subject(koTemplateRequest.subject)
+                .to(koTemplateRequest.to)
+                .templateId(KoTemplateRequest.TEMPLATE_ID)
+                .parameters(koTemplateRequest.templateParameters)
+        );
+    }
+
     public record SuccessTemplateRequest(
             String to,
             String subject,
@@ -43,5 +54,14 @@ public class NotificationsServiceClient {
             SuccessTemplate templateParameters
     ) {
         public static final String TEMPLATE_ID = "success";
+    }
+
+    public record KoTemplateRequest(
+            String to,
+            String subject,
+            String language,
+            KoTemplate templateParameters
+    ) {
+        public static final String TEMPLATE_ID = "ko";
     }
 }

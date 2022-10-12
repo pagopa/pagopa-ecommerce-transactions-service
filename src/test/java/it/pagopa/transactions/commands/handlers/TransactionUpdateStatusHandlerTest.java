@@ -249,12 +249,11 @@ class TransactionUpdateStatusHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
-        Mockito.when(notificationsServiceClient.sendSuccessEmail(any())).thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
+        Mockito.when(notificationsServiceClient.sendKoEmail(any())).thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(requestAuthorizationCommand))
-                .expectNextMatches(transactionStatusUpdatedEvent -> transactionStatusUpdatedEvent
-                        .equals(event))
+                .expectNext(event)
                 .verifyComplete();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(argThat(eventArg -> eventArg

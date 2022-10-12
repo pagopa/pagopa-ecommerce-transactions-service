@@ -448,19 +448,34 @@
                 <groupId>org.jsonschema2pojo</groupId>
                 <artifactId>jsonschema2pojo-maven-plugin</artifactId>
                 <version>1.1.2</version>
-                <configuration>
-                    <sourcePaths>
-                        <sourcePath>${basedir}/src/main/resources/template-schemas/success.json</sourcePath>
-                    </sourcePaths>
-                    <targetPackage>it.pagopa.generated.notifications.templates.success</targetPackage>
-                    <classNameSuffix>Template</classNameSuffix>
-                    <includeConstructors>true</includeConstructors>
-                </configuration>
                 <executions>
                     <execution>
+                        <id>success-template</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
+                        <configuration>
+                            <sourcePaths>
+                                <sourcePath>${basedir}/src/main/resources/template-schemas/success.json</sourcePath>
+                            </sourcePaths>
+                            <targetPackage>it.pagopa.generated.notifications.templates.success</targetPackage>
+                            <classNameSuffix>Template</classNameSuffix>
+                            <includeConstructors>true</includeConstructors>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>ko-template</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <sourcePaths>
+                                <sourcePath>${basedir}/src/main/resources/template-schemas/ko.json</sourcePath>
+                            </sourcePaths>
+                            <targetPackage>it.pagopa.generated.notifications.templates.ko</targetPackage>
+                            <classNameSuffix>Template</classNameSuffix>
+                            <includeConstructors>true</includeConstructors>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
