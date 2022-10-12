@@ -22,7 +22,7 @@ WORKDIR /app/
 
 ARG EXTRACTED=/workspace/app/target/extracted
 
-ADD https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.4.1/applicationinsights-agent-3.4.1.jar /applicationinsights-agent.jar
+ADD https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.4.1/applicationinsights-agent-3.4.1.jar ./applicationinsights-agent.jar
 
 COPY --from=build --chown=user ${EXTRACTED}/dependencies/ ./
 RUN true
