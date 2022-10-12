@@ -22,7 +22,8 @@ WORKDIR /app/
 
 ARG EXTRACTED=/workspace/app/target/extracted
 
-ADD https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.4.1/applicationinsights-agent-3.4.1.jar ./applicationinsights-agent.jar
+ADD --chown=user https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.4.1/applicationinsights-agent-3.4.1.jar ./applicationinsights-agent.jar
+COPY --chown=user applicationinsights.json ./applicationinsights.json
 
 COPY --from=build --chown=user ${EXTRACTED}/dependencies/ ./
 RUN true
@@ -33,4 +34,4 @@ RUN true
 COPY --from=build --chown=user ${EXTRACTED}/application/ ./
 RUN true
 
-ENTRYPOINT ["java", "--enable-preview", "org.springframework.boot.loader.JarLauncher","-javaagent:applicationinsights-agent.jar"]
+ENTRYPOINT ["java","-javaagent:applicationinsights-agent.jar","--enable-preview","org.springframework.boot.loader.JarLauncher"]
