@@ -29,8 +29,7 @@ public class PaymentGatewayClient {
                 .grandTotal(BigDecimal.valueOf(authorizationData.transaction().getAmount().value() + authorizationData.fee()))
                 .description(authorizationData.transaction().getDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
-                .idTransaction(0L);
-                //.idTransaction(new Random().nextLong()); //TODO waiting for pgs
+                .idTransaction(authorizationData.transaction().getTransactionId().value().toString());
 
         return paymentTransactionsControllerApi.authRequest(authorizationData.transaction().getTransactionId().value(), postePayAuthRequest, "mdcInfo")
                 .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
