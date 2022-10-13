@@ -5,6 +5,9 @@
   },
   "role": {
     "name": "pagopa-ecommerce-transactions-service"
+  },
+  "sampling": {
+    "percentage": 100
   }
 }
 
