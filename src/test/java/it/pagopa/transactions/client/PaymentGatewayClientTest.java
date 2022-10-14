@@ -70,7 +70,7 @@ class PaymentGatewayClientTest {
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
                 .description(transaction.getDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
-                .idTransaction(transactionIdUUID.toString());
+                .idTransaction("0L");
 
         String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
@@ -117,7 +117,7 @@ class PaymentGatewayClientTest {
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
                 .description(transaction.getDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
-                .idTransaction(transactionIdUUID.toString());
+                .idTransaction("0L");
 
         String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
@@ -164,7 +164,7 @@ class PaymentGatewayClientTest {
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
                 .description(transaction.getDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
-                .idTransaction(transactionIdUUID.toString());
+                .idTransaction("0L");
 
         String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
@@ -207,7 +207,7 @@ class PaymentGatewayClientTest {
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
                 .description(transaction.getDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
-                .idTransaction(transactionIdUUID.toString());
+                .idTransaction("0L");
 
         String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
