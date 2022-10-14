@@ -18,6 +18,7 @@ import it.pagopa.transactions.repositories.TransactionsActivationRequestedEventS
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.TransactionEventCode;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -66,6 +67,7 @@ public class TransactionsService {
   public Mono<NewTransactionResponseDto> newTransaction(
       NewTransactionRequestDto newTransactionRequestDto) {
 
+      MDC.put("RptID", newTransactionRequestDto.getRptId());
     log.info("Initializing transaction for rptId: {}", newTransactionRequestDto.getRptId());
     TransactionActivateCommand command =
         new TransactionActivateCommand(
