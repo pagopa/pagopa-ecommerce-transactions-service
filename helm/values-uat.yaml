@@ -53,7 +53,7 @@ microservice-chart:
       APPLICATIONINSIGHTS_CONNECTION_STRING: applicationinsights-connection-string
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.4.27"
+    tag: "0.4.28"
     pullPolicy: Always
   livenessProbe:
     httpGet:
