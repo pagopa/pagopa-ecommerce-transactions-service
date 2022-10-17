@@ -66,7 +66,7 @@ class PaymentGatewayClientTest {
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
                 .description(transaction.getDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
-                .idTransaction(0L);
+                .idTransaction(transactionIdUUID.toString());
 
         String mdcInfo = "mdcInfo";
 
@@ -111,7 +111,7 @@ class PaymentGatewayClientTest {
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
                 .description(transaction.getDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
-                .idTransaction(0L);
+                .idTransaction(transactionIdUUID.toString());
 
         String mdcInfo = "mdcInfo";
 
@@ -155,7 +155,7 @@ class PaymentGatewayClientTest {
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
                 .description(transaction.getDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
-                .idTransaction(0L);
+                .idTransaction(transactionIdUUID.toString());
 
         String mdcInfo = "mdcInfo";
 
@@ -195,7 +195,7 @@ class PaymentGatewayClientTest {
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
                 .description(transaction.getDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
-                .idTransaction(0L);
+                .idTransaction(transactionIdUUID.toString());
 
         String mdcInfo = "mdcInfo";
 
