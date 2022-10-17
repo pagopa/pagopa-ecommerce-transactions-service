@@ -11,8 +11,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -27,13 +33,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(MockitoExtension.class)
+@WebFluxTest(TransactionsController.class)
 class TransactionsControllerTest {
 
     @InjectMocks
     private TransactionsController transactionsController = new TransactionsController();
 
-    @Mock
+    @MockBean
     private TransactionsService transactionsService;
+
+    @Autowired
+    private WebTestClient webTestClient;
 
     @Test
     void shouldGetOk() {
@@ -343,5 +353,18 @@ class TransactionsControllerTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(transactionInfo, response.getBody());
+    }
+
+    @Test
+    void shouldReturnProblemJsonWith400OnBadInput() {
+        webTestClient.post()
+                .uri("/transactions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue("{}"))
+                .exchange()
+                .expectStatus()
+                .isBadRequest()
+                .expectBody(ProblemJsonDto.class)
+                .value(p -> assertEquals(400, p.getStatus()));
     }
 }

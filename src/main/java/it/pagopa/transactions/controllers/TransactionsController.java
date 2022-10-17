@@ -8,15 +8,22 @@ import it.pagopa.transactions.services.TransactionsService;
 
 import javax.validation.Valid;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.stream.Collectors;
+
 @RestController
+@Slf4j
 public class TransactionsController implements TransactionsApi {
 
     @Autowired
@@ -62,7 +69,23 @@ public class TransactionsController implements TransactionsApi {
     public Mono<ResponseEntity<ActivationResultResponseDto>> transactionActivationResult(String paymentContextCode, Mono<ActivationResultRequestDto> activationResultRequestDto, ServerWebExchange exchange) {
         return activationResultRequestDto
                 .flatMap(activationResultRequest -> transactionsService.activateTransaction(paymentContextCode, activationResultRequest))
-                .map(ResponseEntity::ok);    }
+                .map(ResponseEntity::ok);
+    }
+
+    @ExceptionHandler(WebExchangeBindException.class)
+    private ResponseEntity<ProblemJsonDto> validationExceptionHandler(WebExchangeBindException exception) {
+        String errorMessage = exception.getAllErrors().stream().map(ObjectError::toString).collect(Collectors.joining(", "));
+
+        log.warn("Got invalid input: {}", errorMessage);
+
+        return new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(400)
+                        .title("Bad request")
+                        .detail("Invalid request: %s".formatted(errorMessage)),
+                HttpStatus.BAD_REQUEST
+        );
+    }
 
     @ExceptionHandler(TransactionNotFoundException.class)
     private ResponseEntity<ProblemJsonDto> transactionNotFoundHandler(TransactionNotFoundException exception) {
