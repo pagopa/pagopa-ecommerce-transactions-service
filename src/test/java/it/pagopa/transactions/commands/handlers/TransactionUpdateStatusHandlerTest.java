@@ -2,17 +2,15 @@ package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.notifications.v1.dto.NotificationEmailResponseDto;
+import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
+import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestPaymentsDto;
 import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
-import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
-import it.pagopa.generated.transactions.server.model.UpdateTransactionStatusRequestDto;
 import it.pagopa.transactions.client.NotificationsServiceClient;
 import it.pagopa.transactions.commands.TransactionUpdateStatusCommand;
-import it.pagopa.transactions.commands.data.ClosureSendData;
 import it.pagopa.transactions.commands.data.UpdateTransactionStatusData;
 import it.pagopa.transactions.documents.*;
 import it.pagopa.transactions.domain.*;
-import it.pagopa.transactions.domain.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import org.junit.jupiter.api.Test;
@@ -112,18 +110,28 @@ class TransactionUpdateStatusHandlerTest {
                 transactionActivatedEvent.getData().getPaymentToken(),
                 new TransactionClosureSendData(
                         ClosePaymentResponseDto.OutcomeEnum.OK,
-                        TransactionStatusDto.CLOSED
+                        TransactionStatusDto.CLOSED,
+                        "authorizationCode"
                 )
         );
 
-        UpdateTransactionStatusRequestDto updateTransactionRequest = new UpdateTransactionStatusRequestDto()
-                .authorizationResult(AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
-                .timestampOperation(OffsetDateTime.now());
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(new AddUserReceiptRequestPaymentsDto()
+                        .paymentToken("paymentToken")
+                        .companyName("companyName")
+                        .creditorReferenceId("creditorReferenceId")
+                        .description("description")
+                        .debtor("debtor")
+                        .fiscalCode("fiscalCode")
+                        .officeName("officeName")
+                );
 
         UpdateTransactionStatusData updateTransactionStatusData = new UpdateTransactionStatusData(
                 transaction,
-                updateTransactionRequest);
+                addUserReceiptRequest
+        );
 
         TransactionUpdateStatusCommand requestAuthorizationCommand = new TransactionUpdateStatusCommand(
                 transaction.getRptId(), updateTransactionStatusData);
@@ -219,18 +227,28 @@ class TransactionUpdateStatusHandlerTest {
                 transactionActivatedEvent.getData().getPaymentToken(),
                 new TransactionClosureSendData(
                         ClosePaymentResponseDto.OutcomeEnum.OK,
-                        TransactionStatusDto.CLOSED
+                        TransactionStatusDto.CLOSED,
+                        "authorizationCode"
                 )
         );
 
-        UpdateTransactionStatusRequestDto updateTransactionRequest = new UpdateTransactionStatusRequestDto()
-                .authorizationResult(AuthorizationResultDto.KO)
-                .authorizationCode("authorizationCode")
-                .timestampOperation(OffsetDateTime.now());
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(AddUserReceiptRequestDto.OutcomeEnum.KO)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(new AddUserReceiptRequestPaymentsDto()
+                        .paymentToken("paymentToken")
+                        .companyName("companyName")
+                        .creditorReferenceId("creditorReferenceId")
+                        .description("description")
+                        .debtor("debtor")
+                        .fiscalCode("fiscalCode")
+                        .officeName("officeName")
+                );
 
         UpdateTransactionStatusData updateTransactionStatusData = new UpdateTransactionStatusData(
                 transaction,
-                updateTransactionRequest);
+                addUserReceiptRequest
+        );
 
         TransactionUpdateStatusCommand requestAuthorizationCommand = new TransactionUpdateStatusCommand(
                 transaction.getRptId(), updateTransactionStatusData);
@@ -319,14 +337,23 @@ class TransactionUpdateStatusHandlerTest {
                 )
         );
 
-        UpdateTransactionStatusRequestDto updateStatusRequest = new UpdateTransactionStatusRequestDto()
-                .authorizationResult(AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
-                .timestampOperation(OffsetDateTime.now());
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(new AddUserReceiptRequestPaymentsDto()
+                        .paymentToken("paymentToken")
+                        .companyName("companyName")
+                        .creditorReferenceId("creditorReferenceId")
+                        .description("description")
+                        .debtor("debtor")
+                        .fiscalCode("fiscalCode")
+                        .officeName("officeName")
+                );
 
         UpdateTransactionStatusData updateAuthorizationStatusData = new UpdateTransactionStatusData(
                 transaction,
-                updateStatusRequest);
+                addUserReceiptRequest
+        );
 
         TransactionUpdateStatusCommand requestStatusCommand = new TransactionUpdateStatusCommand(
                 transaction.getRptId(), updateAuthorizationStatusData);

@@ -532,7 +532,8 @@ class TransactionTest {
                 paymentToken,
                 new TransactionClosureSendData(
                         ClosePaymentResponseDto.OutcomeEnum.OK,
-                        TransactionStatusDto.CLOSED
+                        TransactionStatusDto.CLOSED,
+                        "authorizationCode"
                 )
         );
 
@@ -627,7 +628,8 @@ class TransactionTest {
                 paymentToken,
                 new TransactionClosureSendData(
                         ClosePaymentResponseDto.OutcomeEnum.OK,
-                        TransactionStatusDto.CLOSED
+                        TransactionStatusDto.CLOSED,
+                        "authorizationCode"
                 )
         );
 
@@ -790,7 +792,8 @@ class TransactionTest {
                 paymentToken,
                 new TransactionClosureSendData(
                         ClosePaymentResponseDto.OutcomeEnum.OK,
-                        TransactionStatusDto.CLOSED
+                        TransactionStatusDto.CLOSED,
+                        "authorizationCode"
                 )
         );
 

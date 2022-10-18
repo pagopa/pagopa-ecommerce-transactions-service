@@ -56,15 +56,6 @@ public class TransactionsController implements TransactionsApi {
                 .map(ResponseEntity::ok);
     }
 
-
-    @Override
-    public Mono<ResponseEntity<TransactionInfoDto>> patchTransactionStatus(String transactionId,
-                @Valid Mono<UpdateTransactionStatusRequestDto> updateTransactioRequestDto, ServerWebExchange exchange) {
-                        return updateTransactioRequestDto
-                        .flatMap(updateTransactionRequest -> transactionsService.updateTransactionStatus(transactionId, updateTransactionRequest))
-                        .map(ResponseEntity::ok);
-    }
-
     @Override
     public Mono<ResponseEntity<ActivationResultResponseDto>> transactionActivationResult(String paymentContextCode, Mono<ActivationResultRequestDto> activationResultRequestDto, ServerWebExchange exchange) {
         return activationResultRequestDto
@@ -85,6 +76,15 @@ public class TransactionsController implements TransactionsApi {
                         .detail("Invalid request: %s".formatted(errorMessage)),
                 HttpStatus.BAD_REQUEST
         );
+    }
+
+    @Override
+    public Mono<ResponseEntity<AddUserReceiptResponseDto>> addUserReceipt(String transactionId, Mono<AddUserReceiptRequestDto> addUserReceiptRequestDto, ServerWebExchange exchange) {
+        return addUserReceiptRequestDto
+                .flatMap(addUserReceiptRequest -> transactionsService.addUserReceipt(transactionId, addUserReceiptRequest))
+                .map(tx -> new AddUserReceiptResponseDto().outcome(AddUserReceiptResponseDto.OutcomeEnum.OK))
+                .onErrorResume(throwable -> Mono.just(new AddUserReceiptResponseDto().outcome(AddUserReceiptResponseDto.OutcomeEnum.KO)))
+                .map(ResponseEntity::ok);
     }
 
     @ExceptionHandler(TransactionNotFoundException.class)

@@ -2,7 +2,7 @@ package it.pagopa.transactions.projections.handlers;
 
 import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
-import it.pagopa.generated.transactions.server.model.UpdateTransactionStatusRequestDto;
+import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.documents.TransactionStatusUpdateData;
 import it.pagopa.transactions.documents.TransactionStatusUpdatedEvent;
 import it.pagopa.transactions.domain.*;
@@ -33,7 +33,7 @@ class TransactionUpdateProjectionHandlerTest {
 
     @Test
     void shouldHandleTransaction() {
-        UpdateTransactionStatusRequestDto updateAuthorizationRequest = new UpdateTransactionStatusRequestDto()
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .authorizationResult(AuthorizationResultDto.OK)
                 .authorizationCode("OK")
                 .timestampOperation(OffsetDateTime.now());

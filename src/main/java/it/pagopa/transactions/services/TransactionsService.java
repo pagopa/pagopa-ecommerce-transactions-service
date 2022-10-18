@@ -265,8 +265,7 @@ public class TransactionsService {
             });
   }
 
-  public Mono<TransactionInfoDto> updateTransactionStatus(
-      String transactionId, UpdateTransactionStatusRequestDto updateTransactionRequestDto) {
+  public Mono<TransactionInfoDto> addUserReceipt(String transactionId, AddUserReceiptRequestDto addUserReceiptRequest) {
     return transactionsViewRepository
         .findById(transactionId)
         .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
@@ -284,7 +283,7 @@ public class TransactionsService {
                       null,
                       transactionDocument.getStatus());
               UpdateTransactionStatusData updateTransactionStatusData =
-                  new UpdateTransactionStatusData(transaction, updateTransactionRequestDto);
+                  new UpdateTransactionStatusData(transaction, addUserReceiptRequest);
               return new TransactionUpdateStatusCommand(
                   transaction.getRptId(), updateTransactionStatusData);
             })

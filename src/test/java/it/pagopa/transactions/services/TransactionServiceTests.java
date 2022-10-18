@@ -256,7 +256,7 @@ public class TransactionServiceTests {
 				statusUpdateData
 		);
 
-		TransactionClosureSendData closureSendData = new TransactionClosureSendData(ClosePaymentResponseDto.OutcomeEnum.OK, TransactionStatusDto.CLOSED);
+		TransactionClosureSendData closureSendData = new TransactionClosureSendData(ClosePaymentResponseDto.OutcomeEnum.OK, TransactionStatusDto.CLOSED, updateAuthorizationRequest.getAuthorizationCode());
 
 		TransactionClosureSentEvent closureSentEvent = new TransactionClosureSentEvent(
 				transactionDocument.getTransactionId(),
@@ -345,7 +345,7 @@ public class TransactionServiceTests {
                 null, null, TransactionStatusDto.NOTIFIED
 		);
 
-		UpdateTransactionStatusRequestDto updateTransactionStatusRequest = new UpdateTransactionStatusRequestDto()
+		UpdateAuthorizationRequestDto updateTransactionStatusRequest = new UpdateAuthorizationRequestDto()
 				.authorizationResult(AuthorizationResultDto.OK)
 				.authorizationCode("authorizationCode")
 				.timestampOperation(OffsetDateTime.now());
@@ -362,6 +362,19 @@ public class TransactionServiceTests {
 				transactionDocument.getPaymentToken(),
 				statusUpdateData
 		);
+
+		AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+				.outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+				.paymentDate(OffsetDateTime.now())
+				.addPaymentsItem(new AddUserReceiptRequestPaymentsDto()
+						.paymentToken("paymentToken")
+						.companyName("companyName")
+						.creditorReferenceId("creditorReferenceId")
+						.description("description")
+						.debtor("debtor")
+						.fiscalCode("fiscalCode")
+						.officeName("officeName")
+				);
 
 		TransactionInfoDto expectedResponse = new TransactionInfoDto()
 				.transactionId(transactionDocument.getTransactionId())
@@ -382,25 +395,32 @@ public class TransactionServiceTests {
 		Mockito.when(transactionUpdateProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
 
 		/* test */
-		TransactionInfoDto transactionInfoResponse = transactionsService.updateTransactionStatus(transactionId.value().toString(), updateTransactionStatusRequest).block();
+		TransactionInfoDto transactionInfoResponse = transactionsService.addUserReceipt(transactionId.value().toString(), addUserReceiptRequest).block();
 
 		assertEquals(expectedResponse, transactionInfoResponse);
 	}
 
 	@Test
-	void shouldReturnNotFoundExceptionForNonExistingToUpdateTransaction() {
-
-		UpdateTransactionStatusRequestDto updateTransactionStatusRequest = new UpdateTransactionStatusRequestDto()
-				.authorizationResult(AuthorizationResultDto.OK)
-				.authorizationCode("authorizationCode")
-				.timestampOperation(OffsetDateTime.now());
+	void shouldReturnNotFoundExceptionForNonExistingToAddUserReceipt() {
+		AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+				.outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+				.paymentDate(OffsetDateTime.now())
+				.addPaymentsItem(new AddUserReceiptRequestPaymentsDto()
+						.paymentToken("paymentToken")
+						.companyName("companyName")
+						.creditorReferenceId("creditorReferenceId")
+						.description("description")
+						.debtor("debtor")
+						.fiscalCode("fiscalCode")
+						.officeName("officeName")
+				);
 
 		/* preconditions */
 		Mockito.when(repository.findById(TRANSACION_ID))
 				.thenReturn(Mono.empty());
 
 		/* test */
-		StepVerifier.create(transactionsService.updateTransactionStatus(TRANSACION_ID, updateTransactionStatusRequest))
+		StepVerifier.create(transactionsService.addUserReceipt(TRANSACION_ID, addUserReceiptRequest))
 				.expectErrorMatches(error -> error instanceof TransactionNotFoundException)
 				.verify();
 	}
@@ -483,7 +503,7 @@ public class TransactionServiceTests {
 
 		ActivationResultResponseDto activationResultResponseDto = transactionsService.activateTransaction(TRANSACION_ID, activationResultRequestDto).block();
 
-		assertEquals( ActivationResultResponseDto.OutcomeEnum.OK, activationResultResponseDto.getOutcome());
+		assertEquals(ActivationResultResponseDto.OutcomeEnum.OK, activationResultResponseDto.getOutcome());
 		Mockito.verify(transactionActivateResultHandler, Mockito.times(1)).handle(Mockito.any(TransactionActivateResultCommand.class));
 		Mockito.verify(transactionsActivationProjectionHandler, Mockito.times(1)).handle(Mockito.any(TransactionActivatedEvent.class));
 

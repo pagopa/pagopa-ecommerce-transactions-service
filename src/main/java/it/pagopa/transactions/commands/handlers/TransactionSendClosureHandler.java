@@ -93,7 +93,8 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                                         command.getData().transaction().getTransactionActivatedData().getPaymentToken(),
                                         new TransactionClosureSendData(
                                                 response.getOutcome(),
-                                                updatedStatus
+                                                updatedStatus,
+                                                updateTransactionStatusRequestDto.getAuthorizationCode()
                                         )
                                 );
 

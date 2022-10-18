@@ -3,8 +3,9 @@ package it.pagopa.transactions.commands.handlers;
 import it.pagopa.generated.notifications.templates.ko.KoTemplate;
 import it.pagopa.generated.notifications.templates.success.*;
 import it.pagopa.generated.notifications.v1.dto.NotificationEmailResponseDto;
+import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
+import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
-import it.pagopa.generated.transactions.server.model.UpdateTransactionStatusRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NotificationsServiceClient;
 import it.pagopa.transactions.commands.TransactionUpdateStatusCommand;
@@ -60,10 +61,10 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(TransactionClosed.class)
                 .flatMap(tx -> {
-                    UpdateTransactionStatusRequestDto updateTransactionStatusRequestDto = command.getData().updateTransactionRequest();
+                    AddUserReceiptRequestDto addUserReceiptRequestDto = command.getData().addUserReceiptRequest();
                     TransactionStatusDto newStatus;
 
-                    switch (command.getData().updateTransactionRequest().getAuthorizationResult()) {
+                    switch (command.getData().addUserReceiptRequest().getOutcome()) {
                         case OK -> newStatus = TransactionStatusDto.NOTIFIED;
                         case KO -> newStatus = TransactionStatusDto.NOTIFIED_FAILED;
                         default -> {
@@ -72,25 +73,26 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
                     }
 
                     TransactionStatusUpdateData statusUpdateData = new TransactionStatusUpdateData(
-                            command.getData()
-                                    .updateTransactionRequest().getAuthorizationResult(),
-                            newStatus);
+                            tx.getTransactionAuthorizationStatusUpdateData().getAuthorizationResult(),
+                            newStatus
+                    );
 
                     TransactionStatusUpdatedEvent event = new TransactionStatusUpdatedEvent(
                             command.getData().transaction().getTransactionId().value().toString(),
                             command.getData().transaction().getRptId().value(),
                             command.getData().transaction().getTransactionActivatedData().getPaymentToken(),
-                            statusUpdateData);
+                            statusUpdateData
+                    );
 
                     String language = "it-IT"; // FIXME: Add language to AuthorizationRequestData
                     Mono<NotificationEmailResponseDto> emailResponse = Mono.just(newStatus)
                             .flatMap(status -> {
                                 switch (status) {
                                     case NOTIFIED -> {
-                                        return sendSuccessEmail(tx, updateTransactionStatusRequestDto, language);
+                                        return sendSuccessEmail(tx, addUserReceiptRequestDto, language);
                                     }
                                     case NOTIFIED_FAILED -> {
-                                        return sendKoEmail(tx, updateTransactionStatusRequestDto, language);
+                                        return sendKoEmail(tx, addUserReceiptRequestDto, language);
                                     }
                                     default -> {
                                         return Mono.error(new IllegalStateException("Invalid new status for closure handler: %s".formatted(status)));
@@ -104,7 +106,7 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
 
     private Mono<NotificationEmailResponseDto> sendKoEmail(
             TransactionClosed tx,
-            UpdateTransactionStatusRequestDto updateTransactionStatusRequestDto,
+            AddUserReceiptRequestDto addUserReceiptRequestDto,
             String language
     ) {
         return notificationsServiceClient.sendKoEmail(
@@ -115,7 +117,7 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
                         new KoTemplate(
                                 new it.pagopa.generated.notifications.templates.ko.TransactionTemplate(
                                         tx.getTransactionId().value().toString().toUpperCase(),
-                                        dateTimeToHumanReadableString(updateTransactionStatusRequestDto.getTimestampOperation(), Locale.forLanguageTag(language)),
+                                        dateTimeToHumanReadableString(addUserReceiptRequestDto.getPaymentDate(), Locale.forLanguageTag(language)),
                                         amountToHumanReadableString(tx.getAmount().value())
                                 )
                         )
@@ -125,7 +127,7 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
 
     private Mono<NotificationEmailResponseDto> sendSuccessEmail(
             TransactionClosed tx,
-            UpdateTransactionStatusRequestDto updateTransactionStatusRequestDto,
+            AddUserReceiptRequestDto addUserReceiptRequestDto,
             String language
     ) {
         TransactionAuthorizationRequestData transactionAuthorizationRequestData = tx.getTransactionAuthorizationRequestData();
@@ -138,14 +140,14 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
                         new SuccessTemplate(
                                 new TransactionTemplate(
                                         tx.getTransactionId().value().toString().toUpperCase(),
-                                        dateTimeToHumanReadableString(updateTransactionStatusRequestDto.getTimestampOperation(), Locale.forLanguageTag(language)),
+                                        dateTimeToHumanReadableString(addUserReceiptRequestDto.getPaymentDate(), Locale.forLanguageTag(language)),
                                         amountToHumanReadableString(tx.getAmount().value() + transactionAuthorizationRequestData.getFee()),
                                         new PspTemplate(
                                                 transactionAuthorizationRequestData.getPspId(),
                                                 new FeeTemplate(amountToHumanReadableString(transactionAuthorizationRequestData.getFee()))
                                         ),
                                         "RRN",
-                                        updateTransactionStatusRequestDto.getAuthorizationCode(),
+                                        tx.getTransactionClosureSendData().getAuthorizationCode(),
                                         new PaymentMethodTemplate(
                                                 transactionAuthorizationRequestData.getPaymentInstrumentId(),
                                                 "paymentMethodLogo", // TODO: Logos
@@ -166,7 +168,7 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
                                                         ),
                                                         null,
                                                         new PayeeTemplate(
-                                                                "payeeName",
+                                                                addUserReceiptRequestDto.getPayments().get(0).getOfficeName(),
                                                                 tx.getRptId().getFiscalCode()
                                                         ),
                                                         tx.getDescription().value(),

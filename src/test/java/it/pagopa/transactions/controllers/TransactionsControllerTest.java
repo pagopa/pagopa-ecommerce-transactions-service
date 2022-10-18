@@ -338,21 +338,32 @@ class TransactionsControllerTest {
                 .status(TransactionStatusDto.NOTIFIED)
                 .paymentToken(paymentToken);
 
-        UpdateTransactionStatusRequestDto updateStatusRequest = new UpdateTransactionStatusRequestDto()
-                .authorizationResult(AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
-                .timestampOperation(OffsetDateTime.now());
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(new AddUserReceiptRequestPaymentsDto()
+                        .paymentToken("paymentToken")
+                        .companyName("companyName")
+                        .creditorReferenceId("creditorReferenceId")
+                        .description("description")
+                        .debtor("debtor")
+                        .fiscalCode("fiscalCode")
+                        .officeName("officeName")
+                );
+
+        AddUserReceiptResponseDto expected = new AddUserReceiptResponseDto()
+                .outcome(AddUserReceiptResponseDto.OutcomeEnum.OK);
 
         /* preconditions */
-        Mockito.when(transactionsService.updateTransactionStatus(transactionId, updateStatusRequest))
+        Mockito.when(transactionsService.addUserReceipt(transactionId, addUserReceiptRequest))
                 .thenReturn(Mono.just(transactionInfo));
 
         /* test */
-        ResponseEntity<TransactionInfoDto> response = transactionsController
-                .patchTransactionStatus(transactionId, Mono.just(updateStatusRequest), null).block();
+        ResponseEntity<AddUserReceiptResponseDto> response = transactionsController
+                .addUserReceipt(transactionId, Mono.just(addUserReceiptRequest), null).block();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(transactionInfo, response.getBody());
+        assertEquals(expected, response.getBody());
     }
 
     @Test
