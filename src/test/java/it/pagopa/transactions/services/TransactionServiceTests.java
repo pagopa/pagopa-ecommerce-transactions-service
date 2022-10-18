@@ -345,22 +345,13 @@ public class TransactionServiceTests {
                 null, null, TransactionStatusDto.NOTIFIED
 		);
 
-		UpdateAuthorizationRequestDto updateTransactionStatusRequest = new UpdateAuthorizationRequestDto()
-				.authorizationResult(AuthorizationResultDto.OK)
-				.authorizationCode("authorizationCode")
-				.timestampOperation(OffsetDateTime.now());
-
-		TransactionAddReceiptData statusUpdateData =
-				new TransactionAddReceiptData(
-					updateTransactionStatusRequest.getAuthorizationResult(),
-						TransactionStatusDto.NOTIFIED
-				);
+		TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(TransactionStatusDto.NOTIFIED);
 
 		TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
 				transactionDocument.getTransactionId(),
 				transactionDocument.getRptId(),
 				transactionDocument.getPaymentToken(),
-				statusUpdateData
+				transactionAddReceiptData
 		);
 
 		AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()

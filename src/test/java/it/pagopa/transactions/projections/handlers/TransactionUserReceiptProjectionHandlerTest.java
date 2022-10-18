@@ -64,17 +64,13 @@ class TransactionUserReceiptProjectionHandlerTest {
                 transaction.getCreationDate()
         );
 
-        TransactionAddReceiptData statusUpdateData =
-                new TransactionAddReceiptData(
-                        updateAuthorizationRequest.getAuthorizationResult(),
-                        expectedDocument.getStatus()
-                );
+        TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(expectedDocument.getStatus());
 
         TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                 transaction.getTransactionId().value().toString(),
                 transaction.getRptId().value(),
                 transaction.getTransactionActivatedData().getPaymentToken(),
-                statusUpdateData
+                transactionAddReceiptData
         );
 
         TransactionActivated expected = new TransactionActivated(

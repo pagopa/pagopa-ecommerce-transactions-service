@@ -137,14 +137,13 @@ class TransactionAddUserReceiptHandlerTest {
         TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
                 transaction.getRptId(), addUserReceiptData);
 
-        TransactionAddReceiptData transactionAuthorizationStatusUpdateData = new TransactionAddReceiptData(
-                AuthorizationResultDto.OK, TransactionStatusDto.AUTHORIZED);
+        TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(TransactionStatusDto.NOTIFIED);
 
         TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                 transactionId.toString(),
                 transaction.getRptId().toString(),
                 transaction.getTransactionActivatedData().getPaymentToken(),
-                transactionAuthorizationStatusUpdateData);
+                transactionAddReceiptData);
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(transactionActivatedEvent, authorizationRequestedEvent, authorizationStatusUpdatedEvent, closureSentEvent, event));
 
@@ -155,8 +154,7 @@ class TransactionAddUserReceiptHandlerTest {
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
-                .expectNextMatches(transacttionStatusUpdatedEvent -> transacttionStatusUpdatedEvent
-                        .equals(event))
+                .expectNext(event)
                 .verifyComplete();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(argThat(eventArg -> eventArg
@@ -251,17 +249,16 @@ class TransactionAddUserReceiptHandlerTest {
                 addUserReceiptRequest
         );
 
-        TransactionAddUserReceiptCommand requestAuthorizationCommand = new TransactionAddUserReceiptCommand(
+        TransactionAddUserReceiptCommand transactionAddUserReceiptCommand = new TransactionAddUserReceiptCommand(
                 transaction.getRptId(), addUserReceiptData);
 
-        TransactionAddReceiptData transactionAuthorizationStatusUpdateData = new TransactionAddReceiptData(
-                AuthorizationResultDto.KO, TransactionStatusDto.CLOSED);
+        TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(TransactionStatusDto.NOTIFIED);
 
         TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                 transactionId.toString(),
                 transaction.getRptId().toString(),
                 transaction.getTransactionActivatedData().getPaymentToken(),
-                transactionAuthorizationStatusUpdateData);
+                transactionAddReceiptData);
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(transactionActivatedEvent, authorizationRequestedEvent, authorizationStatusUpdatedEvent, closureSentEvent, event));
 
@@ -271,7 +268,7 @@ class TransactionAddUserReceiptHandlerTest {
         Mockito.when(notificationsServiceClient.sendKoEmail(any())).thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
 
         /* test */
-        StepVerifier.create(updateStatusHandler.handle(requestAuthorizationCommand))
+        StepVerifier.create(updateStatusHandler.handle(transactionAddUserReceiptCommand))
                 .expectNext(event)
                 .verifyComplete();
 
@@ -351,13 +348,13 @@ class TransactionAddUserReceiptHandlerTest {
                         .officeName("officeName")
                 );
 
-        AddUserReceiptData updateAuthorizationStatusData = new AddUserReceiptData(
+        AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
                 transaction,
                 addUserReceiptRequest
         );
 
         TransactionAddUserReceiptCommand requestStatusCommand = new TransactionAddUserReceiptCommand(
-                transaction.getRptId(), updateAuthorizationStatusData);
+                transaction.getRptId(), addUserReceiptData);
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(transactionActivatedEvent, authorizationRequestedEvent, authorizationStatusUpdatedEvent));
 

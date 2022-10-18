@@ -71,10 +71,7 @@ public class TransactionAddUserReceiptHandler implements CommandHandler<Transact
                         }
                     }
 
-                    TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(
-                            tx.getTransactionAuthorizationStatusUpdateData().getAuthorizationResult(),
-                            newStatus
-                    );
+                    TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(newStatus);
 
                     TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                             command.getData().transaction().getTransactionId().value().toString(),

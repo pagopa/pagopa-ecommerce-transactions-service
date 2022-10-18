@@ -53,7 +53,7 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(TransactionWithCompletedAuthorization.class)
                 .flatMap(tx -> {
-                    UpdateAuthorizationRequestDto updateTransactionStatusRequestDto = command.getData().updateAuthorizationRequest();
+                    UpdateAuthorizationRequestDto updateAuthorizationRequestDto = command.getData().updateAuthorizationRequest();
                     TransactionAuthorizationRequestData transactionAuthorizationRequestData = tx.getTransactionAuthorizationRequestData();
                     TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = tx.getTransactionAuthorizationStatusUpdateData();
 
@@ -66,12 +66,12 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                             .transactionId(tx.getTransactionId().value().toString())
                             .totalAmount(new BigDecimal(tx.getAmount().value() + transactionAuthorizationRequestData.getFee()))
                             .fee(new BigDecimal(transactionAuthorizationRequestData.getFee()))
-                            .timestampOperation(updateTransactionStatusRequestDto.getTimestampOperation())
+                            .timestampOperation(updateAuthorizationRequestDto.getTimestampOperation())
                             .paymentMethod(transactionAuthorizationRequestData.getPaymentTypeCode())
                             .additionalPaymentInformations(
                                     Map.of(
                                             "outcome_payment_gateway", transactionAuthorizationStatusUpdateData.getAuthorizationResult().toString(),
-                                            "authorization_code", updateTransactionStatusRequestDto.getAuthorizationCode()
+                                            "authorization_code", updateAuthorizationRequestDto.getAuthorizationCode()
                                     )
                             );
 
@@ -94,7 +94,7 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                                         new TransactionClosureSendData(
                                                 response.getOutcome(),
                                                 updatedStatus,
-                                                updateTransactionStatusRequestDto.getAuthorizationCode()
+                                                updateAuthorizationRequestDto.getAuthorizationCode()
                                         )
                                 );
 
