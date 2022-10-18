@@ -34,7 +34,7 @@ public class TransactionsService {
 
   @Autowired private TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandler;
 
-  @Autowired private TransactionUpdateStatusHandler transactionUpdateHandler;
+  @Autowired private TransactionAddUserReceiptHandler transactionAddUserReceiptHandler;
 
   @Autowired private TransactionSendClosureHandler transactionSendClosureHandler;
 
@@ -46,7 +46,7 @@ public class TransactionsService {
 
   @Autowired private AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandler;
 
-  @Autowired private TransactionUpdateProjectionHandler transactionUpdateProjectionHandler;
+  @Autowired private TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandler;
 
   @Autowired private ClosureSendProjectionHandler closureSendProjectionHandler;
 
@@ -282,21 +282,23 @@ public class TransactionsService {
                       null,
                       null,
                       transactionDocument.getStatus());
-              UpdateTransactionStatusData updateTransactionStatusData =
-                  new UpdateTransactionStatusData(transaction, addUserReceiptRequest);
-              return new TransactionUpdateStatusCommand(
-                  transaction.getRptId(), updateTransactionStatusData);
+              AddUserReceiptData addUserReceiptData = new AddUserReceiptData(transaction, addUserReceiptRequest);
+
+              return new TransactionAddUserReceiptCommand(transaction.getRptId(), addUserReceiptData);
             })
         .flatMap(
-            transactionUpdateCommand -> transactionUpdateHandler.handle(transactionUpdateCommand))
+            transactionAddUserReceiptCommand -> transactionAddUserReceiptHandler.handle(transactionAddUserReceiptCommand))
         .doOnNext(
-            transactionStatusUpdatedEvent ->
+            transactionUserReceiptAddedEvent ->
                 log.info(
-                    "TRANSACTION_STATUS_UPDATED_EVENT for transactionId: {}",
-                    transactionStatusUpdatedEvent.getTransactionId()))
+                        "{} for transactionId: {}",
+                        TransactionEventCode.TRANSACTION_USER_RECEIPT_ADDED_EVENT,
+                        transactionUserReceiptAddedEvent.getTransactionId()
+                )
+        )
         .flatMap(
-            transactionStatusUpdatedEvent ->
-                transactionUpdateProjectionHandler.handle(transactionStatusUpdatedEvent))
+            transactionUserReceiptAddedEvent ->
+                transactionUserReceiptProjectionHandler.handle(transactionUserReceiptAddedEvent))
         .cast(TransactionActivated.class)
         .map(
             transaction ->

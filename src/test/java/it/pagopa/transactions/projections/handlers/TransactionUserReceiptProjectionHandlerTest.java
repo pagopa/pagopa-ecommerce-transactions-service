@@ -3,8 +3,8 @@ package it.pagopa.transactions.projections.handlers;
 import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
-import it.pagopa.transactions.documents.TransactionStatusUpdateData;
-import it.pagopa.transactions.documents.TransactionStatusUpdatedEvent;
+import it.pagopa.transactions.documents.TransactionAddReceiptData;
+import it.pagopa.transactions.documents.TransactionUserReceiptAddedEvent;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
@@ -23,10 +23,10 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.argThat;
 
 @ExtendWith(MockitoExtension.class)
-class TransactionUpdateProjectionHandlerTest {
+class TransactionUserReceiptProjectionHandlerTest {
 
     @InjectMocks
-    private TransactionUpdateProjectionHandler transactionUpdateProjectionHandler;
+    private TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandler;
 
     @Mock
     private TransactionsViewRepository viewRepository;
@@ -64,13 +64,13 @@ class TransactionUpdateProjectionHandlerTest {
                 transaction.getCreationDate()
         );
 
-        TransactionStatusUpdateData statusUpdateData =
-                new TransactionStatusUpdateData(
+        TransactionAddReceiptData statusUpdateData =
+                new TransactionAddReceiptData(
                         updateAuthorizationRequest.getAuthorizationResult(),
                         expectedDocument.getStatus()
                 );
 
-        TransactionStatusUpdatedEvent event = new TransactionStatusUpdatedEvent(
+        TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                 transaction.getTransactionId().value().toString(),
                 transaction.getRptId().value(),
                 transaction.getTransactionActivatedData().getPaymentToken(),
@@ -101,7 +101,7 @@ class TransactionUpdateProjectionHandlerTest {
         /*
          * Test
          */
-        StepVerifier.create(transactionUpdateProjectionHandler.handle(event))
+        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(event))
                 .expectNext(expected)
                 .verifyComplete();
 

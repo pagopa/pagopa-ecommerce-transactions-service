@@ -9,7 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @AllArgsConstructor
 @Data
 @Document
-public class TransactionStatusUpdateData {
+public class TransactionAddReceiptData {
     private AuthorizationResultDto authorizationResult;
     private TransactionStatusDto newTransactionStatus;
 }

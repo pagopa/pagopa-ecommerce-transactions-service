@@ -4,15 +4,14 @@ import it.pagopa.generated.notifications.templates.ko.KoTemplate;
 import it.pagopa.generated.notifications.templates.success.*;
 import it.pagopa.generated.notifications.v1.dto.NotificationEmailResponseDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
-import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NotificationsServiceClient;
-import it.pagopa.transactions.commands.TransactionUpdateStatusCommand;
+import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestData;
 import it.pagopa.transactions.documents.TransactionEvent;
-import it.pagopa.transactions.documents.TransactionStatusUpdateData;
-import it.pagopa.transactions.documents.TransactionStatusUpdatedEvent;
+import it.pagopa.transactions.documents.TransactionAddReceiptData;
+import it.pagopa.transactions.documents.TransactionUserReceiptAddedEvent;
 import it.pagopa.transactions.domain.EmptyTransaction;
 import it.pagopa.transactions.domain.Transaction;
 import it.pagopa.transactions.domain.TransactionClosed;
@@ -33,13 +32,13 @@ import java.util.UUID;
 
 @Component
 @Slf4j
-public class TransactionUpdateStatusHandler implements CommandHandler<TransactionUpdateStatusCommand, Mono<TransactionStatusUpdatedEvent>> {
+public class TransactionAddUserReceiptHandler implements CommandHandler<TransactionAddUserReceiptCommand, Mono<TransactionUserReceiptAddedEvent>> {
 
     @Autowired
     NodeForPspClient nodeForPspClient;
 
     @Autowired
-    private TransactionsEventStoreRepository<TransactionStatusUpdateData> transactionEventStoreRepository;
+    private TransactionsEventStoreRepository<TransactionAddReceiptData> transactionEventStoreRepository;
     @Autowired
     private TransactionsEventStoreRepository<Object> eventStoreRepository;
 
@@ -47,7 +46,7 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
     NotificationsServiceClient notificationsServiceClient;
 
     @Override
-    public Mono<TransactionStatusUpdatedEvent> handle(TransactionUpdateStatusCommand command) {
+    public Mono<TransactionUserReceiptAddedEvent> handle(TransactionAddUserReceiptCommand command) {
         Mono<Transaction> transaction = replayTransactionEvents(command.getData().transaction().getTransactionId().value());
 
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
@@ -72,16 +71,16 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
                         }
                     }
 
-                    TransactionStatusUpdateData statusUpdateData = new TransactionStatusUpdateData(
+                    TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(
                             tx.getTransactionAuthorizationStatusUpdateData().getAuthorizationResult(),
                             newStatus
                     );
 
-                    TransactionStatusUpdatedEvent event = new TransactionStatusUpdatedEvent(
+                    TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                             command.getData().transaction().getTransactionId().value().toString(),
                             command.getData().transaction().getRptId().value(),
                             command.getData().transaction().getTransactionActivatedData().getPaymentToken(),
-                            statusUpdateData
+                            transactionAddReceiptData
                     );
 
                     String language = "it-IT"; // FIXME: Add language to AuthorizationRequestData
@@ -95,7 +94,7 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
                                         return sendKoEmail(tx, addUserReceiptRequestDto, language);
                                     }
                                     default -> {
-                                        return Mono.error(new IllegalStateException("Invalid new status for closure handler: %s".formatted(status)));
+                                        return Mono.error(new IllegalStateException("Invalid new status for user receipt handler: %s".formatted(status)));
                                     }
                                 }
                             });

@@ -79,10 +79,10 @@ public class TransactionServiceTests {
 	private ClosureSendProjectionHandler closureSendProjectionHandler;
 
 	@MockBean
-	private TransactionUpdateStatusHandler transactionUpdateStatusHandler;
+	private TransactionAddUserReceiptHandler transactionUpdateStatusHandler;
 
 	@MockBean
-	private TransactionUpdateProjectionHandler transactionUpdateProjectionHandler;
+	private TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandler;
 
 	@MockBean
 	private PaymentRequestsService paymentRequestsService;
@@ -350,13 +350,13 @@ public class TransactionServiceTests {
 				.authorizationCode("authorizationCode")
 				.timestampOperation(OffsetDateTime.now());
 
-		TransactionStatusUpdateData statusUpdateData =
-				new TransactionStatusUpdateData(
+		TransactionAddReceiptData statusUpdateData =
+				new TransactionAddReceiptData(
 					updateTransactionStatusRequest.getAuthorizationResult(),
 						TransactionStatusDto.NOTIFIED
 				);
 
-		TransactionStatusUpdatedEvent event = new TransactionStatusUpdatedEvent(
+		TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
 				transactionDocument.getTransactionId(),
 				transactionDocument.getRptId(),
 				transactionDocument.getPaymentToken(),
@@ -392,7 +392,7 @@ public class TransactionServiceTests {
 		Mockito.when(transactionUpdateStatusHandler.handle(any()))
 				.thenReturn(Mono.just(event));
 
-		Mockito.when(transactionUpdateProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
+		Mockito.when(transactionUserReceiptProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
 
 		/* test */
 		TransactionInfoDto transactionInfoResponse = transactionsService.addUserReceipt(transactionId.value().toString(), addUserReceiptRequest).block();
