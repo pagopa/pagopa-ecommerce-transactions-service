@@ -6,19 +6,24 @@ import it.pagopa.generated.payment.requests.model.*;
 import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
 import it.pagopa.transactions.exceptions.NodoErrorException;
 import it.pagopa.transactions.services.PaymentRequestsService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.RedisSystemException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 @RestController
+@Slf4j
 public class PaymentRequestsController implements PaymentRequestsApi {
 
   @Autowired private PaymentRequestsService paymentRequestsService;
