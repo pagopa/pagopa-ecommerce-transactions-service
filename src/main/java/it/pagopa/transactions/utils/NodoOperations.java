@@ -109,8 +109,7 @@ public class NodoOperations {
                 StOutcome.OK.value().equals(activatePaymentNoticeRes.getOutcome().value())
                     ? Mono.just(activatePaymentNoticeRes.getPaymentToken())
                     : Mono.error(
-                        new NodoErrorException(
-                            activatePaymentNoticeRes.getFault().getFaultCode())));
+                        new NodoErrorException(activatePaymentNoticeRes.getFault())));
   }
 
   private Mono<String> nodoActivationForUnknownPaymentRequest(
@@ -147,7 +146,7 @@ public class NodoOperations {
               return StOutcome.OK.value().equals(nodoAttivaRPTRResponse.getEsito())
                   ? Mono.just("")
                   : Mono.error(
-                      new NodoErrorException(nodoAttivaRPTRResponse.getFault().getFaultCode()));
+                      new NodoErrorException(nodoAttivaRPTRResponse.getFault()));
             });
   }
 
