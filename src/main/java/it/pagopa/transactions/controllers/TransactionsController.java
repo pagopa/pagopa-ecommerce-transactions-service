@@ -14,8 +14,7 @@ import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.ObjectError;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -63,27 +62,14 @@ public class TransactionsController implements TransactionsApi {
                 .map(ResponseEntity::ok);
     }
 
-    @ExceptionHandler(WebExchangeBindException.class)
-    private ResponseEntity<ProblemJsonDto> validationExceptionHandler(WebExchangeBindException exception) {
-        String errorMessage = exception.getAllErrors().stream().map(ObjectError::toString).collect(Collectors.joining(", "));
-
-        log.warn("Got invalid input: {}", errorMessage);
-
-        return new ResponseEntity<>(
-                new ProblemJsonDto()
-                        .status(400)
-                        .title("Bad request")
-                        .detail("Invalid request: %s".formatted(errorMessage)),
-                HttpStatus.BAD_REQUEST
-        );
-    }
-
     @Override
     public Mono<ResponseEntity<AddUserReceiptResponseDto>> addUserReceipt(String transactionId, Mono<AddUserReceiptRequestDto> addUserReceiptRequestDto, ServerWebExchange exchange) {
         return addUserReceiptRequestDto
-                .flatMap(addUserReceiptRequest -> transactionsService.addUserReceipt(transactionId, addUserReceiptRequest))
-                .map(tx -> new AddUserReceiptResponseDto().outcome(AddUserReceiptResponseDto.OutcomeEnum.OK))
-                .onErrorResume(throwable -> Mono.just(new AddUserReceiptResponseDto().outcome(AddUserReceiptResponseDto.OutcomeEnum.KO)))
+                .flatMap(addUserReceiptRequest ->
+                        transactionsService.addUserReceipt(transactionId, addUserReceiptRequest)
+                                .map(_v -> new AddUserReceiptResponseDto().outcome(AddUserReceiptResponseDto.OutcomeEnum.OK))
+                                .onErrorReturn(new AddUserReceiptResponseDto().outcome(AddUserReceiptResponseDto.OutcomeEnum.KO))
+                )
                 .map(ResponseEntity::ok);
     }
 
@@ -136,5 +122,20 @@ public class TransactionsController implements TransactionsApi {
                         .title("Gateway timeout")
                         .detail(null),
                 HttpStatus.GATEWAY_TIMEOUT);
+    }
+
+    @ExceptionHandler(WebExchangeBindException.class)
+    private ResponseEntity<ProblemJsonDto> validationExceptionHandler(WebExchangeBindException exception) {
+        String errorMessage = exception.getAllErrors().stream().map(ObjectError::toString).collect(Collectors.joining(", "));
+
+        log.warn("Got invalid input: {}", errorMessage);
+
+        return new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(400)
+                        .title("Bad request")
+                        .detail("Invalid request: %s".formatted(errorMessage)),
+                HttpStatus.BAD_REQUEST
+        );
     }
 }

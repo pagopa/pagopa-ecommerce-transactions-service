@@ -167,7 +167,7 @@ public class TransactionAddUserReceiptHandler implements CommandHandler<Transact
                                                                 addUserReceiptRequestDto.getPayments().get(0).getOfficeName(),
                                                                 tx.getRptId().getFiscalCode()
                                                         ),
-                                                        tx.getDescription().value(),
+                                                        addUserReceiptRequestDto.getPayments().get(0).getDescription(),
                                                         amountToHumanReadableString(tx.getAmount().value())
                                                 )
                                         ),
