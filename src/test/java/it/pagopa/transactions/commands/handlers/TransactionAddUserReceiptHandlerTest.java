@@ -2,17 +2,15 @@ package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.notifications.v1.dto.NotificationEmailResponseDto;
+import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
+import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestPaymentsDto;
 import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
-import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
-import it.pagopa.generated.transactions.server.model.UpdateTransactionStatusRequestDto;
 import it.pagopa.transactions.client.NotificationsServiceClient;
-import it.pagopa.transactions.commands.TransactionUpdateStatusCommand;
-import it.pagopa.transactions.commands.data.ClosureSendData;
-import it.pagopa.transactions.commands.data.UpdateTransactionStatusData;
+import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
+import it.pagopa.transactions.commands.data.AddUserReceiptData;
 import it.pagopa.transactions.documents.*;
 import it.pagopa.transactions.domain.*;
-import it.pagopa.transactions.domain.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import org.junit.jupiter.api.Test;
@@ -32,12 +30,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 
 @ExtendWith(MockitoExtension.class)
-class TransactionUpdateStatusHandlerTest {
+class TransactionAddUserReceiptHandlerTest {
 
     @InjectMocks
-    private TransactionUpdateStatusHandler updateStatusHandler;
+    private TransactionAddUserReceiptHandler updateStatusHandler;
+
     @Mock
-    private TransactionsEventStoreRepository<TransactionStatusUpdateData> transactionEventStoreRepository;
+    private TransactionsEventStoreRepository<TransactionAddReceiptData> transactionEventStoreRepository;
 
     @Mock
     private TransactionsEventStoreRepository<Object> eventStoreRepository;
@@ -112,30 +111,39 @@ class TransactionUpdateStatusHandlerTest {
                 transactionActivatedEvent.getData().getPaymentToken(),
                 new TransactionClosureSendData(
                         ClosePaymentResponseDto.OutcomeEnum.OK,
-                        TransactionStatusDto.CLOSED
+                        TransactionStatusDto.CLOSED,
+                        "authorizationCode"
                 )
         );
 
-        UpdateTransactionStatusRequestDto updateTransactionRequest = new UpdateTransactionStatusRequestDto()
-                .authorizationResult(AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
-                .timestampOperation(OffsetDateTime.now());
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(new AddUserReceiptRequestPaymentsDto()
+                        .paymentToken("paymentToken")
+                        .companyName("companyName")
+                        .creditorReferenceId("creditorReferenceId")
+                        .description("description")
+                        .debtor("debtor")
+                        .fiscalCode("fiscalCode")
+                        .officeName("officeName")
+                );
 
-        UpdateTransactionStatusData updateTransactionStatusData = new UpdateTransactionStatusData(
+        AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
                 transaction,
-                updateTransactionRequest);
+                addUserReceiptRequest
+        );
 
-        TransactionUpdateStatusCommand requestAuthorizationCommand = new TransactionUpdateStatusCommand(
-                transaction.getRptId(), updateTransactionStatusData);
+        TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
+                transaction.getRptId(), addUserReceiptData);
 
-        TransactionStatusUpdateData transactionAuthorizationStatusUpdateData = new TransactionStatusUpdateData(
-                AuthorizationResultDto.OK, TransactionStatusDto.AUTHORIZED);
+        TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(TransactionStatusDto.NOTIFIED);
 
-        TransactionStatusUpdatedEvent event = new TransactionStatusUpdatedEvent(
+        TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                 transactionId.toString(),
                 transaction.getRptId().toString(),
                 transaction.getTransactionActivatedData().getPaymentToken(),
-                transactionAuthorizationStatusUpdateData);
+                transactionAddReceiptData);
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(transactionActivatedEvent, authorizationRequestedEvent, authorizationStatusUpdatedEvent, closureSentEvent, event));
 
@@ -145,9 +153,8 @@ class TransactionUpdateStatusHandlerTest {
         Mockito.when(notificationsServiceClient.sendSuccessEmail(any())).thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
 
         /* test */
-        StepVerifier.create(updateStatusHandler.handle(requestAuthorizationCommand))
-                .expectNextMatches(transacttionStatusUpdatedEvent -> transacttionStatusUpdatedEvent
-                        .equals(event))
+        StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
+                .expectNext(event)
                 .verifyComplete();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(argThat(eventArg -> eventArg
@@ -219,30 +226,39 @@ class TransactionUpdateStatusHandlerTest {
                 transactionActivatedEvent.getData().getPaymentToken(),
                 new TransactionClosureSendData(
                         ClosePaymentResponseDto.OutcomeEnum.OK,
-                        TransactionStatusDto.CLOSED
+                        TransactionStatusDto.CLOSED,
+                        "authorizationCode"
                 )
         );
 
-        UpdateTransactionStatusRequestDto updateTransactionRequest = new UpdateTransactionStatusRequestDto()
-                .authorizationResult(AuthorizationResultDto.KO)
-                .authorizationCode("authorizationCode")
-                .timestampOperation(OffsetDateTime.now());
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(AddUserReceiptRequestDto.OutcomeEnum.KO)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(new AddUserReceiptRequestPaymentsDto()
+                        .paymentToken("paymentToken")
+                        .companyName("companyName")
+                        .creditorReferenceId("creditorReferenceId")
+                        .description("description")
+                        .debtor("debtor")
+                        .fiscalCode("fiscalCode")
+                        .officeName("officeName")
+                );
 
-        UpdateTransactionStatusData updateTransactionStatusData = new UpdateTransactionStatusData(
+        AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
                 transaction,
-                updateTransactionRequest);
+                addUserReceiptRequest
+        );
 
-        TransactionUpdateStatusCommand requestAuthorizationCommand = new TransactionUpdateStatusCommand(
-                transaction.getRptId(), updateTransactionStatusData);
+        TransactionAddUserReceiptCommand transactionAddUserReceiptCommand = new TransactionAddUserReceiptCommand(
+                transaction.getRptId(), addUserReceiptData);
 
-        TransactionStatusUpdateData transactionAuthorizationStatusUpdateData = new TransactionStatusUpdateData(
-                AuthorizationResultDto.KO, TransactionStatusDto.CLOSED);
+        TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(TransactionStatusDto.NOTIFIED);
 
-        TransactionStatusUpdatedEvent event = new TransactionStatusUpdatedEvent(
+        TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                 transactionId.toString(),
                 transaction.getRptId().toString(),
                 transaction.getTransactionActivatedData().getPaymentToken(),
-                transactionAuthorizationStatusUpdateData);
+                transactionAddReceiptData);
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(transactionActivatedEvent, authorizationRequestedEvent, authorizationStatusUpdatedEvent, closureSentEvent, event));
 
@@ -252,7 +268,7 @@ class TransactionUpdateStatusHandlerTest {
         Mockito.when(notificationsServiceClient.sendKoEmail(any())).thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
 
         /* test */
-        StepVerifier.create(updateStatusHandler.handle(requestAuthorizationCommand))
+        StepVerifier.create(updateStatusHandler.handle(transactionAddUserReceiptCommand))
                 .expectNext(event)
                 .verifyComplete();
 
@@ -319,17 +335,26 @@ class TransactionUpdateStatusHandlerTest {
                 )
         );
 
-        UpdateTransactionStatusRequestDto updateStatusRequest = new UpdateTransactionStatusRequestDto()
-                .authorizationResult(AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
-                .timestampOperation(OffsetDateTime.now());
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(new AddUserReceiptRequestPaymentsDto()
+                        .paymentToken("paymentToken")
+                        .companyName("companyName")
+                        .creditorReferenceId("creditorReferenceId")
+                        .description("description")
+                        .debtor("debtor")
+                        .fiscalCode("fiscalCode")
+                        .officeName("officeName")
+                );
 
-        UpdateTransactionStatusData updateAuthorizationStatusData = new UpdateTransactionStatusData(
+        AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
                 transaction,
-                updateStatusRequest);
+                addUserReceiptRequest
+        );
 
-        TransactionUpdateStatusCommand requestStatusCommand = new TransactionUpdateStatusCommand(
-                transaction.getRptId(), updateAuthorizationStatusData);
+        TransactionAddUserReceiptCommand requestStatusCommand = new TransactionAddUserReceiptCommand(
+                transaction.getRptId(), addUserReceiptData);
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(transactionActivatedEvent, authorizationRequestedEvent, authorizationStatusUpdatedEvent));
 

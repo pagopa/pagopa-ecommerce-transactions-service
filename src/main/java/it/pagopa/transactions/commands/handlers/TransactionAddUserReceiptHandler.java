@@ -3,15 +3,15 @@ package it.pagopa.transactions.commands.handlers;
 import it.pagopa.generated.notifications.templates.ko.KoTemplate;
 import it.pagopa.generated.notifications.templates.success.*;
 import it.pagopa.generated.notifications.v1.dto.NotificationEmailResponseDto;
+import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
-import it.pagopa.generated.transactions.server.model.UpdateTransactionStatusRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NotificationsServiceClient;
-import it.pagopa.transactions.commands.TransactionUpdateStatusCommand;
+import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestData;
 import it.pagopa.transactions.documents.TransactionEvent;
-import it.pagopa.transactions.documents.TransactionStatusUpdateData;
-import it.pagopa.transactions.documents.TransactionStatusUpdatedEvent;
+import it.pagopa.transactions.documents.TransactionAddReceiptData;
+import it.pagopa.transactions.documents.TransactionUserReceiptAddedEvent;
 import it.pagopa.transactions.domain.EmptyTransaction;
 import it.pagopa.transactions.domain.Transaction;
 import it.pagopa.transactions.domain.TransactionClosed;
@@ -32,13 +32,13 @@ import java.util.UUID;
 
 @Component
 @Slf4j
-public class TransactionUpdateStatusHandler implements CommandHandler<TransactionUpdateStatusCommand, Mono<TransactionStatusUpdatedEvent>> {
+public class TransactionAddUserReceiptHandler implements CommandHandler<TransactionAddUserReceiptCommand, Mono<TransactionUserReceiptAddedEvent>> {
 
     @Autowired
     NodeForPspClient nodeForPspClient;
 
     @Autowired
-    private TransactionsEventStoreRepository<TransactionStatusUpdateData> transactionEventStoreRepository;
+    private TransactionsEventStoreRepository<TransactionAddReceiptData> transactionEventStoreRepository;
     @Autowired
     private TransactionsEventStoreRepository<Object> eventStoreRepository;
 
@@ -46,7 +46,7 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
     NotificationsServiceClient notificationsServiceClient;
 
     @Override
-    public Mono<TransactionStatusUpdatedEvent> handle(TransactionUpdateStatusCommand command) {
+    public Mono<TransactionUserReceiptAddedEvent> handle(TransactionAddUserReceiptCommand command) {
         Mono<Transaction> transaction = replayTransactionEvents(command.getData().transaction().getTransactionId().value());
 
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
@@ -60,10 +60,10 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(TransactionClosed.class)
                 .flatMap(tx -> {
-                    UpdateTransactionStatusRequestDto updateTransactionStatusRequestDto = command.getData().updateTransactionRequest();
+                    AddUserReceiptRequestDto addUserReceiptRequestDto = command.getData().addUserReceiptRequest();
                     TransactionStatusDto newStatus;
 
-                    switch (command.getData().updateTransactionRequest().getAuthorizationResult()) {
+                    switch (command.getData().addUserReceiptRequest().getOutcome()) {
                         case OK -> newStatus = TransactionStatusDto.NOTIFIED;
                         case KO -> newStatus = TransactionStatusDto.NOTIFIED_FAILED;
                         default -> {
@@ -71,29 +71,27 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
                         }
                     }
 
-                    TransactionStatusUpdateData statusUpdateData = new TransactionStatusUpdateData(
-                            command.getData()
-                                    .updateTransactionRequest().getAuthorizationResult(),
-                            newStatus);
+                    TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(newStatus);
 
-                    TransactionStatusUpdatedEvent event = new TransactionStatusUpdatedEvent(
+                    TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                             command.getData().transaction().getTransactionId().value().toString(),
                             command.getData().transaction().getRptId().value(),
                             command.getData().transaction().getTransactionActivatedData().getPaymentToken(),
-                            statusUpdateData);
+                            transactionAddReceiptData
+                    );
 
                     String language = "it-IT"; // FIXME: Add language to AuthorizationRequestData
                     Mono<NotificationEmailResponseDto> emailResponse = Mono.just(newStatus)
                             .flatMap(status -> {
                                 switch (status) {
                                     case NOTIFIED -> {
-                                        return sendSuccessEmail(tx, updateTransactionStatusRequestDto, language);
+                                        return sendSuccessEmail(tx, addUserReceiptRequestDto, language);
                                     }
                                     case NOTIFIED_FAILED -> {
-                                        return sendKoEmail(tx, updateTransactionStatusRequestDto, language);
+                                        return sendKoEmail(tx, addUserReceiptRequestDto, language);
                                     }
                                     default -> {
-                                        return Mono.error(new IllegalStateException("Invalid new status for closure handler: %s".formatted(status)));
+                                        return Mono.error(new IllegalStateException("Invalid new status for user receipt handler: %s".formatted(status)));
                                     }
                                 }
                             });
@@ -104,7 +102,7 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
 
     private Mono<NotificationEmailResponseDto> sendKoEmail(
             TransactionClosed tx,
-            UpdateTransactionStatusRequestDto updateTransactionStatusRequestDto,
+            AddUserReceiptRequestDto addUserReceiptRequestDto,
             String language
     ) {
         return notificationsServiceClient.sendKoEmail(
@@ -115,7 +113,7 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
                         new KoTemplate(
                                 new it.pagopa.generated.notifications.templates.ko.TransactionTemplate(
                                         tx.getTransactionId().value().toString().toUpperCase(),
-                                        dateTimeToHumanReadableString(updateTransactionStatusRequestDto.getTimestampOperation(), Locale.forLanguageTag(language)),
+                                        dateTimeToHumanReadableString(addUserReceiptRequestDto.getPaymentDate(), Locale.forLanguageTag(language)),
                                         amountToHumanReadableString(tx.getAmount().value())
                                 )
                         )
@@ -125,7 +123,7 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
 
     private Mono<NotificationEmailResponseDto> sendSuccessEmail(
             TransactionClosed tx,
-            UpdateTransactionStatusRequestDto updateTransactionStatusRequestDto,
+            AddUserReceiptRequestDto addUserReceiptRequestDto,
             String language
     ) {
         TransactionAuthorizationRequestData transactionAuthorizationRequestData = tx.getTransactionAuthorizationRequestData();
@@ -138,14 +136,14 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
                         new SuccessTemplate(
                                 new TransactionTemplate(
                                         tx.getTransactionId().value().toString().toUpperCase(),
-                                        dateTimeToHumanReadableString(updateTransactionStatusRequestDto.getTimestampOperation(), Locale.forLanguageTag(language)),
+                                        dateTimeToHumanReadableString(addUserReceiptRequestDto.getPaymentDate(), Locale.forLanguageTag(language)),
                                         amountToHumanReadableString(tx.getAmount().value() + transactionAuthorizationRequestData.getFee()),
                                         new PspTemplate(
                                                 transactionAuthorizationRequestData.getPspId(),
                                                 new FeeTemplate(amountToHumanReadableString(transactionAuthorizationRequestData.getFee()))
                                         ),
                                         "RRN",
-                                        updateTransactionStatusRequestDto.getAuthorizationCode(),
+                                        tx.getTransactionClosureSendData().getAuthorizationCode(),
                                         new PaymentMethodTemplate(
                                                 transactionAuthorizationRequestData.getPaymentInstrumentId(),
                                                 "paymentMethodLogo", // TODO: Logos
@@ -166,10 +164,10 @@ public class TransactionUpdateStatusHandler implements CommandHandler<Transactio
                                                         ),
                                                         null,
                                                         new PayeeTemplate(
-                                                                "payeeName",
+                                                                addUserReceiptRequestDto.getPayments().get(0).getOfficeName(),
                                                                 tx.getRptId().getFiscalCode()
                                                         ),
-                                                        tx.getDescription().value(),
+                                                        addUserReceiptRequestDto.getPayments().get(0).getDescription(),
                                                         amountToHumanReadableString(tx.getAmount().value())
                                                 )
                                         ),

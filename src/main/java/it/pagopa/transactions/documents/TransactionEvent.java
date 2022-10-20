@@ -25,7 +25,7 @@ public abstract sealed class TransactionEvent<T>
         TransactionAuthorizationRequestedEvent,
         TransactionAuthorizationStatusUpdatedEvent,
         TransactionClosureSentEvent,
-        TransactionStatusUpdatedEvent {
+        TransactionUserReceiptAddedEvent {
 
     @Id
     private String id;
