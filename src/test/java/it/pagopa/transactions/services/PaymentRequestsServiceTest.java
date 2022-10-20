@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
@@ -338,5 +339,64 @@ class PaymentRequestsServiceTest {
     assertEquals(responseDto.getDescription(), description);
     assertEquals("2022-04-24", responseDto.getDueDate());
     assertEquals(responseDto.getAmount(), amount);
+  }
+
+  @Test
+  void shouldGetFaultFromCode() {
+    final String rptIdAsString = "77777777777302016723749670035";
+    final RptId rptIdAsObject = new RptId(rptIdAsString);
+
+    NodoVerificaRPTRisposta verificaRPTRIsposta = new NodoVerificaRPTRisposta();
+    EsitoNodoVerificaRPTRisposta esitoVerificaRPT = new EsitoNodoVerificaRPTRisposta();
+    esitoVerificaRPT.setEsito(StOutcome.KO.value());
+    FaultBean fault = new FaultBean();
+    fault.setFaultCode("PPT_ERRORE_EMESSO_DA_PAA");
+
+    esitoVerificaRPT.setFault(fault);
+    verificaRPTRIsposta.setNodoVerificaRPTRisposta(esitoVerificaRPT);
+
+    /** Preconditions */
+    Mockito.when(paymentRequestsInfoRepository.findById(rptIdAsObject))
+            .thenReturn(Optional.empty());
+    Mockito.when(nodoPerPspClient.verificaRPT(Mockito.any()))
+            .thenReturn(Mono.just(verificaRPTRIsposta));
+
+    /** Assertions */
+    StepVerifier
+            .create(paymentRequestsService.getPaymentRequestInfo(rptIdAsString))
+            .expectErrorMatches(t -> t instanceof NodoErrorException && ((NodoErrorException) t).getFaultCode().equals("PPT_ERRORE_EMESSO_DA_PAA"))
+            .verify();
+  }
+
+  @Test
+  void shouldGetFaultFromDescriptionIfPresent() {
+    final String rptIdAsString = "77777777777302016723749670035";
+    final RptId rptIdAsObject = new RptId(rptIdAsString);
+
+    NodoVerificaRPTRisposta verificaRPTRIsposta = new NodoVerificaRPTRisposta();
+    EsitoNodoVerificaRPTRisposta esitoVerificaRPT = new EsitoNodoVerificaRPTRisposta();
+    esitoVerificaRPT.setEsito(StOutcome.KO.value());
+    FaultBean fault = new FaultBean();
+    fault.setFaultCode("PPT_ERRORE_EMESSO_DA_PAA");
+    fault.setDescription("""
+            FaultString PA: Pagamento in attesa risulta concluso all’Ente Creditore
+            FaultCode PA: PAA_PAGAMENTO_DUPLICATO
+            Description PA:
+            """);
+
+    esitoVerificaRPT.setFault(fault);
+    verificaRPTRIsposta.setNodoVerificaRPTRisposta(esitoVerificaRPT);
+
+    /** Preconditions */
+    Mockito.when(paymentRequestsInfoRepository.findById(rptIdAsObject))
+            .thenReturn(Optional.empty());
+    Mockito.when(nodoPerPspClient.verificaRPT(Mockito.any()))
+            .thenReturn(Mono.just(verificaRPTRIsposta));
+
+    /** Assertions */
+    StepVerifier
+            .create(paymentRequestsService.getPaymentRequestInfo(rptIdAsString))
+            .expectErrorMatches(t -> t instanceof NodoErrorException && ((NodoErrorException) t).getFaultCode().equals("PAA_PAGAMENTO_DUPLICATO"))
+            .verify();
   }
 }

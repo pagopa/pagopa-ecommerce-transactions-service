@@ -1,5 +1,6 @@
 package it.pagopa.transactions.controllers;
 
+import it.pagopa.generated.nodoperpsp.model.FaultBean;
 import it.pagopa.generated.payment.requests.model.*;
 import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
 import it.pagopa.transactions.exceptions.NodoErrorException;
@@ -17,7 +18,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -26,6 +26,14 @@ class PaymentRequestsControllerTest {
   @InjectMocks private PaymentRequestsController paymentRequestsController;
 
   @Mock private PaymentRequestsService paymentRequestsService;
+
+
+  private static FaultBean faultBeanWithCode(String faultCode) {
+    FaultBean fault = new FaultBean();
+    fault.setFaultCode(faultCode);
+
+    return fault;
+  }
 
   @Test
   void shouldGetPaymentInfoGivenValidRptid() {
@@ -62,6 +70,7 @@ class PaymentRequestsControllerTest {
   @Test
   void shouldReturnResponseEntityWithPartyConfigurationFault()
       throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    FaultBean faultBean = faultBeanWithCode(PartyConfigurationFaultDto.PPT_DOMINIO_DISABILITATO.getValue());
 
     Method method =
         PaymentRequestsController.class.getDeclaredMethod(
@@ -72,8 +81,7 @@ class PaymentRequestsControllerTest {
         (ResponseEntity<PartyConfigurationFaultPaymentProblemJsonDto>)
             method.invoke(
                 paymentRequestsController,
-                new NodoErrorException(
-                    PartyConfigurationFaultDto.PPT_DOMINIO_DISABILITATO.getValue()));
+                new NodoErrorException(faultBean));
 
     assertEquals(Boolean.TRUE, responseEntity != null);
     assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
@@ -87,6 +95,7 @@ class PaymentRequestsControllerTest {
   @Test
   void shouldReturnResponseEntityWithValidationFault()
       throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    FaultBean faultBean = faultBeanWithCode(ValidationFaultDto.PPT_DOMINIO_SCONOSCIUTO.getValue());
 
     Method method =
         PaymentRequestsController.class.getDeclaredMethod(
@@ -97,7 +106,7 @@ class PaymentRequestsControllerTest {
         (ResponseEntity<ValidationFaultPaymentProblemJsonDto>)
             method.invoke(
                 paymentRequestsController,
-                new NodoErrorException(ValidationFaultDto.PPT_DOMINIO_SCONOSCIUTO.getValue()));
+                new NodoErrorException(faultBean));
 
     assertEquals(Boolean.TRUE, responseEntity != null);
     assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
@@ -110,6 +119,7 @@ class PaymentRequestsControllerTest {
   @Test
   void shouldReturnResponseEntityWithGatewayFault()
       throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    FaultBean faultBean = faultBeanWithCode(GatewayFaultDto.PAA_SYSTEM_ERROR.getValue());
 
     Method method =
         PaymentRequestsController.class.getDeclaredMethod(
@@ -120,7 +130,7 @@ class PaymentRequestsControllerTest {
         (ResponseEntity<GatewayFaultPaymentProblemJsonDto>)
             method.invoke(
                 paymentRequestsController,
-                new NodoErrorException(GatewayFaultDto.PAA_SYSTEM_ERROR.getValue()));
+                new NodoErrorException(faultBean));
 
     assertEquals(Boolean.TRUE, responseEntity != null);
     assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
@@ -133,6 +143,7 @@ class PaymentRequestsControllerTest {
   @Test
   void shouldReturnResponseEntityWithPartyTimeoutFault()
       throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    FaultBean faultBean = faultBeanWithCode(PartyTimeoutFaultDto.PPT_STAZIONE_INT_PA_IRRAGGIUNGIBILE.getValue());
 
     Method method =
         PaymentRequestsController.class.getDeclaredMethod(
@@ -143,8 +154,7 @@ class PaymentRequestsControllerTest {
         (ResponseEntity<PartyTimeoutFaultPaymentProblemJsonDto>)
             method.invoke(
                 paymentRequestsController,
-                new NodoErrorException(
-                    PartyTimeoutFaultDto.PPT_STAZIONE_INT_PA_IRRAGGIUNGIBILE.getValue()));
+                new NodoErrorException(faultBean));
 
     assertEquals(Boolean.TRUE, responseEntity != null);
     assertEquals(HttpStatus.GATEWAY_TIMEOUT, responseEntity.getStatusCode());
@@ -157,6 +167,7 @@ class PaymentRequestsControllerTest {
   @Test
   void shouldReturnResponseEntityWithPaymentStatusFault()
       throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    FaultBean faultBean = faultBeanWithCode(PaymentStatusFaultDto.PAA_PAGAMENTO_IN_CORSO.getValue());
 
     Method method =
         PaymentRequestsController.class.getDeclaredMethod(
@@ -167,7 +178,7 @@ class PaymentRequestsControllerTest {
         (ResponseEntity<PaymentStatusFaultPaymentProblemJsonDto>)
             method.invoke(
                 paymentRequestsController,
-                new NodoErrorException(PaymentStatusFaultDto.PAA_PAGAMENTO_IN_CORSO.getValue()));
+                new NodoErrorException(faultBean));
 
     assertEquals(Boolean.TRUE, responseEntity != null);
     assertEquals(HttpStatus.CONFLICT, responseEntity.getStatusCode());
@@ -181,6 +192,7 @@ class PaymentRequestsControllerTest {
   @Test
   void shouldReturnResponseEntityWithGenericGatewayFault()
       throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    FaultBean faultBean = faultBeanWithCode("UNKNOWN_ERROR");
 
     Method method =
         PaymentRequestsController.class.getDeclaredMethod(
@@ -189,7 +201,7 @@ class PaymentRequestsControllerTest {
 
     ResponseEntity<ProblemJsonDto> responseEntity =
         (ResponseEntity<ProblemJsonDto>)
-            method.invoke(paymentRequestsController, new NodoErrorException("UKNOWK_ERROR"));
+            method.invoke(paymentRequestsController, new NodoErrorException(faultBean));
 
     assertEquals(Boolean.TRUE, responseEntity != null);
     assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
