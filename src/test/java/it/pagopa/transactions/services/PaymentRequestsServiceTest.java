@@ -369,6 +369,34 @@ class PaymentRequestsServiceTest {
   }
 
   @Test
+  void shouldFallbackOnFaultCodeOnDescriptionWithoutFaultCode() {
+    final String rptIdAsString = "77777777777302016723749670035";
+    final RptId rptIdAsObject = new RptId(rptIdAsString);
+
+    NodoVerificaRPTRisposta verificaRPTRIsposta = new NodoVerificaRPTRisposta();
+    EsitoNodoVerificaRPTRisposta esitoVerificaRPT = new EsitoNodoVerificaRPTRisposta();
+    esitoVerificaRPT.setEsito(StOutcome.KO.value());
+    FaultBean fault = new FaultBean();
+    fault.setFaultCode("PPT_ERRORE_EMESSO_DA_PAA");
+    fault.setDescription("");
+
+    esitoVerificaRPT.setFault(fault);
+    verificaRPTRIsposta.setNodoVerificaRPTRisposta(esitoVerificaRPT);
+
+    /** Preconditions */
+    Mockito.when(paymentRequestsInfoRepository.findById(rptIdAsObject))
+            .thenReturn(Optional.empty());
+    Mockito.when(nodoPerPspClient.verificaRPT(Mockito.any()))
+            .thenReturn(Mono.just(verificaRPTRIsposta));
+
+    /** Assertions */
+    StepVerifier
+            .create(paymentRequestsService.getPaymentRequestInfo(rptIdAsString))
+            .expectErrorMatches(t -> t instanceof NodoErrorException && ((NodoErrorException) t).getFaultCode().equals("PPT_ERRORE_EMESSO_DA_PAA"))
+            .verify();
+  }
+
+  @Test
   void shouldGetFaultFromDescriptionIfPresent() {
     final String rptIdAsString = "77777777777302016723749670035";
     final RptId rptIdAsObject = new RptId(rptIdAsString);
