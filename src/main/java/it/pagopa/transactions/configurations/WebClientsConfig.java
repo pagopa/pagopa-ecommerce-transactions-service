@@ -104,7 +104,7 @@ public class WebClientsConfig {
     public PaymentTransactionsControllerApi
     paymentTransactionGateayWebClient(@Value("${paymentTransactionsGateway.uri}") String paymentTransactionGatewayUri,
                                @Value("${paymentTransactionsGateway.readTimeout}") int paymentTransactionGatewayReadTimeout,
-                               @Value("${paymentTransactionsGateway.connectionTimeout}") int paymentTransactionGatewayConnectionTimeout) {
+                               @Value("${paymentTransactionsGateway.connectionTimeout}") int paymentTransactionGatewayConnectionTimeout, @Value("${paymentTransactionsGateway.apiKey}") String apiKey) {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, paymentTransactionGatewayConnectionTimeout)
                 .doOnConnected(connection ->
@@ -116,8 +116,10 @@ public class WebClientsConfig {
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .baseUrl(paymentTransactionGatewayUri)
                 .build();
-
-        return new PaymentTransactionsControllerApi(new it.pagopa.generated.ecommerce.gateway.v1.ApiClient(webClient).setBasePath(paymentTransactionGatewayUri));
+        it.pagopa.generated.ecommerce.gateway.v1.ApiClient apiClient = new it.pagopa.generated.ecommerce.gateway.v1.ApiClient(webClient);
+        apiClient.setBasePath(paymentTransactionGatewayUri);
+        apiClient.setApiKey(apiKey);
+        return new PaymentTransactionsControllerApi(apiClient);
     }
 
     @Bean(name = "ecommercePaymentInstrumentsWebClient")
