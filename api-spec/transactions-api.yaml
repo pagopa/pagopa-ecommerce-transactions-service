@@ -328,8 +328,12 @@ components:
           type: string
           format: url
           description: URL where to redirect clients to continue the authorization process
+        authorizationRequestId:
+          type: string
+          description: Authorization request id
       required:
         - authorizationUrl
+        - authorizationRequestId
       example:
         authorizationUrl: https://example.com
     UpdateAuthorizationRequest:

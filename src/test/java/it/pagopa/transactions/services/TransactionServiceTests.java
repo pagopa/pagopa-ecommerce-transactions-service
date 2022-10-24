@@ -169,7 +169,8 @@ public class TransactionServiceTests {
 		pspResponseDto.psp(pspDtoList);
 
 		RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
-				.authorizationUrl("https://example.com");
+				.authorizationUrl("https://example.com")
+				.authorizationRequestId("authorizationRequestId");
 
 		Mockito.when(ecommercePaymentInstrumentsClient.getPSPs(any(), any())).thenReturn(
 				Mono.just(pspResponseDto));

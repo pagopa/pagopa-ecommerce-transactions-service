@@ -90,7 +90,8 @@ class TransactionRequestAuthorizizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);
 
         RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
-                .authorizationUrl("https://example.com");
+                .authorizationUrl("https://example.com")
+                .authorizationRequestId("authorizationRequestId");
 
         ReflectionTestUtils.setField(requestAuthorizationHandler, "queueVisibilityTimeout", "300");
 
