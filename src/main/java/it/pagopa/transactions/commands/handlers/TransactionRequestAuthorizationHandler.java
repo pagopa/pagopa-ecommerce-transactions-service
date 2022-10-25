@@ -70,7 +70,8 @@ public class TransactionRequestAuthorizationHandler
                     return transactionEventStoreRepository.save(authorizationEvent)
                             .thenReturn(gatewayResponse)
                             .map(auth -> new RequestAuthorizationResponseDto()
-                                    .authorizationUrl(auth.getUrlRedirect()));
+                                    .authorizationUrl(auth.getUrlRedirect())
+                                    .authorizationRequestId(auth.getRequestId()));
                 })
                 .doOnNext(authorizationEvent -> queueAsyncClient.sendMessageWithResponse(
                         BinaryData.fromObject(authorizationEvent),
