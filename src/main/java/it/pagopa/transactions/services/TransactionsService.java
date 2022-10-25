@@ -131,7 +131,8 @@ public class TransactionsService {
               return ecommercePaymentInstrumentsClient
                   .getPSPs(
                       transaction.getAmount(),
-                      requestAuthorizationRequestDto.getLanguage().getValue())
+                      requestAuthorizationRequestDto.getLanguage().getValue(),
+                          requestAuthorizationRequestDto.getPaymentInstrumentId())
                   .mapNotNull(
                       pspResponse ->
                           pspResponse.getPsp().stream()

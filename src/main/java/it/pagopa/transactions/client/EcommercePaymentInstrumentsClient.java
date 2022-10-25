@@ -17,9 +17,9 @@ public class EcommercePaymentInstrumentsClient {
     @Qualifier("ecommercePaymentInstrumentsWebClient")
     private DefaultApi ecommercePaymentInstrumentsWebClient;
 
-    public Mono<PSPsResponseDto> getPSPs(Integer amount, String language) {
+    public Mono<PSPsResponseDto> getPSPs(Integer amount, String language, String idPaymentMethod) {
         return ecommercePaymentInstrumentsWebClient
-                .getPSPs(amount, language, null);
+                .getPaymentMethodsPSPs(idPaymentMethod, amount, language);
     }
 
     public Mono<PaymentMethodResponseDto> getPaymentMethod(String paymentMethodId) {
