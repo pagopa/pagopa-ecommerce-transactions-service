@@ -38,6 +38,9 @@ public class PaymentGatewayClient {
                     case INTERNAL_SERVER_ERROR -> new BadGatewayException("");
                     default -> exception;
                 })
-                .map(response -> new RequestAuthorizationResponseDto().authorizationUrl(response.getUrlRedirect()));
+                .map(response -> new RequestAuthorizationResponseDto()
+                        .authorizationUrl(response.getUrlRedirect())
+                        .authorizationRequestId(response.getRequestId())
+                );
     }
 }
