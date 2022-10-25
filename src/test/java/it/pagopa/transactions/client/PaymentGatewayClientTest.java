@@ -40,8 +40,6 @@ class PaymentGatewayClientTest {
 
     @Test
     void shouldReturnAuthorizationResponse() {
-
-
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
@@ -73,16 +71,12 @@ class PaymentGatewayClientTest {
         PostePayAuthResponseEntityDto apiResponse = new PostePayAuthResponseEntityDto()
                 .channel("")
                 .urlRedirect("https://example.com");
-
-        RequestAuthorizationResponseDto expected = new RequestAuthorizationResponseDto()
-                .authorizationUrl("https://example.com");
-
-        /* preconditions */
+/* preconditions */
         Mockito.when(paymentTransactionsControllerApi.authRequest(any(), eq(postePayAuthRequest), eq(mdcInfo)))
                 .thenReturn(Mono.just(apiResponse));
 
         /* test */
-        assertEquals(expected, client.requestAuthorization(authorizationData).block());
+        assertEquals(apiResponse, client.requestAuthorization(authorizationData).block());
     }
 
     @Test

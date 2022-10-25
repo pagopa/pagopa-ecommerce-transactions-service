@@ -2,7 +2,7 @@ package it.pagopa.transactions.client;
 
 import it.pagopa.generated.ecommerce.gateway.v1.api.PaymentTransactionsControllerApi;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthRequestDto;
-import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
+import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
@@ -14,8 +14,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.util.Random;
-import java.util.UUID;
 
 @Component
 public class PaymentGatewayClient {
@@ -24,7 +22,7 @@ public class PaymentGatewayClient {
     PaymentTransactionsControllerApi paymentTransactionsControllerApi;
 
 
-    public Mono<RequestAuthorizationResponseDto> requestAuthorization(AuthorizationRequestData authorizationData) {
+    public Mono<PostePayAuthResponseEntityDto> requestAuthorization(AuthorizationRequestData authorizationData) {
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(BigDecimal.valueOf(authorizationData.transaction().getAmount().value() + authorizationData.fee()))
                 .description(authorizationData.transaction().getDescription().value())
@@ -37,7 +35,6 @@ public class PaymentGatewayClient {
                     case GATEWAY_TIMEOUT -> new GatewayTimeoutException();
                     case INTERNAL_SERVER_ERROR -> new BadGatewayException("");
                     default -> exception;
-                })
-                .map(response -> new RequestAuthorizationResponseDto().authorizationUrl(response.getUrlRedirect()));
+                });
     }
 }
