@@ -9,5 +9,7 @@ public record AuthorizationRequestData(
         String pspId,
         String paymentTypeCode,
         String brokerName,
-        String pspChannelCode
+        String pspChannelCode,
+        String paymentMethodName,
+        String pspBusinessName
 ) {}

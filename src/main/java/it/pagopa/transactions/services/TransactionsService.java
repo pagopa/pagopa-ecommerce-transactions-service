@@ -1,5 +1,6 @@
 package it.pagopa.transactions.services;
 
+import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PaymentMethodResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
 import it.pagopa.generated.transactions.server.model.*;
@@ -146,6 +147,11 @@ public class TransactionsService {
                               .orElse(null))
                   .map(psp -> Tuples.of(transaction, psp));
             })
+        .flatMap(transactionAndPsp -> {
+            log.info("Requesting payment instrument data for id {}", requestAuthorizationRequestDto.getPaymentInstrumentId());
+            return ecommercePaymentInstrumentsClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId())
+                    .map(paymentMethod -> Tuples.of(transactionAndPsp.getT1(), transactionAndPsp.getT2(), paymentMethod));
+        })
         .switchIfEmpty(
             Mono.error(
                 new UnsatisfiablePspRequestException(
@@ -156,6 +162,7 @@ public class TransactionsService {
             args -> {
               it.pagopa.transactions.documents.Transaction transactionDocument = args.getT1();
               PspDto psp = args.getT2();
+              PaymentMethodResponseDto paymentMethod = args.getT3();
 
               log.info("Requesting authorization for rptId: {}", transactionDocument.getRptId());
 
@@ -179,7 +186,9 @@ public class TransactionsService {
                       requestAuthorizationRequestDto.getPspId(),
                       psp.getPaymentTypeCode(),
                       psp.getBrokerName(),
-                      psp.getChannelCode());
+                      psp.getChannelCode(),
+                      paymentMethod.getName(),
+                      psp.getBusinessName());
 
               TransactionRequestAuthorizationCommand command =
                   new TransactionRequestAuthorizationCommand(

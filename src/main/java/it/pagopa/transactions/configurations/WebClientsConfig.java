@@ -123,7 +123,7 @@ public class WebClientsConfig {
     }
 
     @Bean(name = "ecommercePaymentInstrumentsWebClient")
-    public DefaultApi
+    public it.pagopa.generated.ecommerce.paymentinstruments.v1.api.DefaultApi
     ecommercePaymentInstrumentsWebClient(@Value("${ecommercePaymentInstruments.uri}") String ecommercePaymentInstrumentsUri,
                                @Value("${ecommercePaymentInstruments.readTimeout}") int ecommercePaymentInstrumentsReadTimeout,
                                @Value("${ecommercePaymentInstruments.connectionTimeout}") int ecommercePaymentInstrumentsConnectionTimeout) {
@@ -134,10 +134,13 @@ public class WebClientsConfig {
                                 ecommercePaymentInstrumentsReadTimeout,
                                 TimeUnit.MILLISECONDS)));
 
-        WebClient webClient = ApiClient.buildWebClientBuilder().clientConnector(
+        WebClient webClient = it.pagopa.generated.ecommerce.paymentinstruments.v1.ApiClient.buildWebClientBuilder().clientConnector(
                 new ReactorClientHttpConnector(httpClient)).baseUrl(ecommercePaymentInstrumentsUri).build();
 
-        return new DefaultApi(new ApiClient(webClient));
+        it.pagopa.generated.ecommerce.paymentinstruments.v1.ApiClient apiClient =
+                new it.pagopa.generated.ecommerce.paymentinstruments.v1.ApiClient(webClient).setBasePath(ecommercePaymentInstrumentsUri);
+
+        return new it.pagopa.generated.ecommerce.paymentinstruments.v1.api.DefaultApi(apiClient);
     }
 
     @Bean(name = "notificationsServiceWebClient")

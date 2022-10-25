@@ -48,7 +48,7 @@ public class TransactionRequestAuthorizationHandler
         }
 
         return paymentGatewayClient.requestAuthorization(command.getData())
-                .flatMap(auth -> {
+                .flatMap(gatewayResponse -> {
                     log.info("Logging authorization event for rpt id {}", transaction.getRptId().value());
 
                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
@@ -62,9 +62,16 @@ public class TransactionRequestAuthorizationHandler
                                     command.getData().pspId(),
                                     command.getData().paymentTypeCode(),
                                     command.getData().brokerName(),
-                                    command.getData().pspChannelCode()));
+                                    command.getData().pspChannelCode(),
+                                    command.getData().paymentMethodName(),
+                                    command.getData().pspBusinessName(),
+                                    gatewayResponse.getRequestId()));
 
-                    return transactionEventStoreRepository.save(authorizationEvent).thenReturn(auth);
+                    return transactionEventStoreRepository.save(authorizationEvent)
+                            .thenReturn(gatewayResponse)
+                            .map(auth -> new RequestAuthorizationResponseDto()
+                                    .authorizationUrl(auth.getUrlRedirect())
+                                    .authorizationRequestId(auth.getRequestId()));
                 })
                 .doOnNext(authorizationEvent -> queueAsyncClient.sendMessageWithResponse(
                         BinaryData.fromObject(authorizationEvent),

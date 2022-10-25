@@ -112,7 +112,10 @@ class TransactionSendClosureHandlerTest {
                         "pspId",
                         "paymentTypeCode",
                         "brokerName",
-                        "pspChannelCode"
+                        "pspChannelCode",
+                        "paymentMethodName",
+                        "pspBusinessName",
+                        "authorizationRequestId"
                 )
         );
 
@@ -189,7 +192,10 @@ class TransactionSendClosureHandlerTest {
                         "pspId",
                         "paymentTypeCode",
                         "brokerName",
-                        "pspChannelCode"
+                        "pspChannelCode",
+                        "paymentMethodName",
+                        "pspBusinessName",
+                        "authorizationRequestId"
                 )
         );
 

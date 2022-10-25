@@ -40,8 +40,6 @@ class PaymentGatewayClientTest {
 
     @Test
     void shouldReturnAuthorizationResponse() {
-
-
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
@@ -59,7 +57,9 @@ class PaymentGatewayClientTest {
                 "pspId",
                 "paymentTypeCode",
                 "brokerName",
-                "pspChannelCode"
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName"
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
@@ -72,19 +72,13 @@ class PaymentGatewayClientTest {
 
         PostePayAuthResponseEntityDto apiResponse = new PostePayAuthResponseEntityDto()
                 .channel("")
-                .urlRedirect("https://example.com")
-                .requestId("authorizationRequestId");
-
-        RequestAuthorizationResponseDto expected = new RequestAuthorizationResponseDto()
-                .authorizationUrl("https://example.com")
-                .authorizationRequestId("authorizationRequestId");
-
+                .urlRedirect("https://example.com");
         /* preconditions */
         Mockito.when(paymentTransactionsControllerApi.authRequest(any(), eq(postePayAuthRequest), eq(mdcInfo)))
                 .thenReturn(Mono.just(apiResponse));
 
         /* test */
-        assertEquals(expected, client.requestAuthorization(authorizationData).block());
+        assertEquals(apiResponse, client.requestAuthorization(authorizationData).block());
     }
 
     @Test
@@ -106,7 +100,9 @@ class PaymentGatewayClientTest {
                 "pspId",
                 "paymentTypeCode",
                 "brokerName",
-                "pspChannelCode"
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName"
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
@@ -150,7 +146,9 @@ class PaymentGatewayClientTest {
                 "pspId",
                 "paymentTypeCode",
                 "brokerName",
-                "pspChannelCode"
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName"
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
@@ -190,7 +188,9 @@ class PaymentGatewayClientTest {
                 "pspId",
                 "paymentTypeCode",
                 "brokerName",
-                "pspChannelCode"
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName"
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
