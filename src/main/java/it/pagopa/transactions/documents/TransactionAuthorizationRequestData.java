@@ -4,8 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.UUID;
-
 @AllArgsConstructor
 @Data
 @Document
@@ -17,4 +15,7 @@ public class TransactionAuthorizationRequestData {
     private String paymentTypeCode;
     private String brokerName;
     private String pspChannelCode;
+    private String paymentMethodName;
+    private String pspBusinessName;
+    private String authorizationRequestId;
 }

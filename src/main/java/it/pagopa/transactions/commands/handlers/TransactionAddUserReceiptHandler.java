@@ -139,13 +139,13 @@ public class TransactionAddUserReceiptHandler implements CommandHandler<Transact
                                         dateTimeToHumanReadableString(addUserReceiptRequestDto.getPaymentDate(), Locale.forLanguageTag(language)),
                                         amountToHumanReadableString(tx.getAmount().value() + transactionAuthorizationRequestData.getFee()),
                                         new PspTemplate(
-                                                transactionAuthorizationRequestData.getPspId(),
+                                                transactionAuthorizationRequestData.getPspBusinessName(),
                                                 new FeeTemplate(amountToHumanReadableString(transactionAuthorizationRequestData.getFee()))
                                         ),
-                                        "RRN",
+                                        transactionAuthorizationRequestData.getAuthorizationRequestId(),
                                         tx.getTransactionClosureSendData().getAuthorizationCode(),
                                         new PaymentMethodTemplate(
-                                                transactionAuthorizationRequestData.getPaymentInstrumentId(),
+                                                transactionAuthorizationRequestData.getPaymentMethodName(),
                                                 "paymentMethodLogo", // TODO: Logos
                                                 null,
                                                 false

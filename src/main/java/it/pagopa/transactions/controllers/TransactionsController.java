@@ -68,6 +68,7 @@ public class TransactionsController implements TransactionsApi {
                 .flatMap(addUserReceiptRequest ->
                         transactionsService.addUserReceipt(transactionId, addUserReceiptRequest)
                                 .map(_v -> new AddUserReceiptResponseDto().outcome(AddUserReceiptResponseDto.OutcomeEnum.OK))
+                                .doOnError(e -> log.error("Got error while trying to add user receipt", e))
                                 .onErrorReturn(new AddUserReceiptResponseDto().outcome(AddUserReceiptResponseDto.OutcomeEnum.KO))
                 )
                 .map(ResponseEntity::ok);

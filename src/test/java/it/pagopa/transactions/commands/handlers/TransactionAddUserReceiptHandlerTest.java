@@ -91,7 +91,10 @@ class TransactionAddUserReceiptHandlerTest {
                         "pspId",
                         "paymentTypeCode",
                         "brokerName",
-                        "pspChannelCode"
+                        "pspChannelCode",
+                        "paymentMethodName",
+                        "pspBusinessName",
+                        "authorizationRequestId"
                 )
         );
 
@@ -206,7 +209,10 @@ class TransactionAddUserReceiptHandlerTest {
                         "pspId",
                         "paymentTypeCode",
                         "brokerName",
-                        "pspChannelCode"
+                        "pspChannelCode",
+                        "paymentMethodName",
+                        "pspBusinessName",
+                        "authorizationRequestId"
                 )
         );
 
@@ -321,7 +327,10 @@ class TransactionAddUserReceiptHandlerTest {
                         "pspId",
                         "paymentTypeCode",
                         "brokerName",
-                        "pspChannelCode"
+                        "pspChannelCode",
+                        "paymentMethodName",
+                        "pspBusinessName",
+                        "authorizationRequestId"
                 )
         );
 

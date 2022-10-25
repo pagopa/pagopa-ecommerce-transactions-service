@@ -61,7 +61,10 @@ class TransactionTest {
                         "pspId",
                         "paymentTypeCode",
                         "brokerName",
-                        "pspChannelCode"
+                        "pspChannelCode",
+                        "paymentMethodName",
+                        "pspBusinessName",
+                        "authorizationRequestId"
                 )
         );
 
@@ -210,7 +213,10 @@ class TransactionTest {
                         "pspId",
                         "paymentTypeCode",
                         "brokerName",
-                        "pspChannelCode"
+                        "pspChannelCode",
+                        "paymentMethodName",
+                        "pspBusinessName",
+                        "authorizationRequestId"
                 )
         );
 
@@ -278,7 +284,10 @@ class TransactionTest {
                         "pspId",
                         "paymentTypeCode",
                         "brokerName",
-                        "pspChannelCode"
+                        "pspChannelCode",
+                        "paymentMethodName",
+                        "pspBusinessName",
+                        "authorizationRequestId"
                 )
         );
 
@@ -346,7 +355,10 @@ class TransactionTest {
                         "pspId",
                         "paymentTypeCode",
                         "brokerName",
-                        "pspChannelCode"
+                        "pspChannelCode",
+                        "paymentMethodName",
+                        "pspBusinessName",
+                        "authorizationRequestId"
                 )
         );
 
@@ -429,7 +441,10 @@ class TransactionTest {
                         "pspId",
                         "paymentTypeCode",
                         "brokerName",
-                        "pspChannelCode"
+                        "pspChannelCode",
+                        "paymentMethodName",
+                        "pspBusinessName",
+                        "authorizationRequestId"
                 )
         );
 
@@ -512,7 +527,10 @@ class TransactionTest {
                         "pspId",
                         "paymentTypeCode",
                         "brokerName",
-                        "pspChannelCode"
+                        "pspChannelCode",
+                        "paymentMethodName",
+                        "pspBusinessName",
+                        "authorizationRequestId"
                 )
         );
 
@@ -608,7 +626,10 @@ class TransactionTest {
                         "pspId",
                         "paymentTypeCode",
                         "brokerName",
-                        "pspChannelCode"
+                        "pspChannelCode",
+                        "paymentMethodName",
+                        "pspBusinessName",
+                        "authorizationRequestId"
                 )
         );
 
@@ -772,7 +793,10 @@ class TransactionTest {
                         "pspId",
                         "paymentTypeCode",
                         "brokerName",
-                        "pspChannelCode"
+                        "pspChannelCode",
+                        "paymentMethodName",
+                        "pspBusinessName",
+                        "authorizationRequestId"
                 )
         );
 
