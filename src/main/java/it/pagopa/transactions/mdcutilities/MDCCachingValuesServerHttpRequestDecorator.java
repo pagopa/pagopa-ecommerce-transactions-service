@@ -37,6 +37,7 @@ public class MDCCachingValuesServerHttpRequestDecorator extends ServerHttpReques
 
     @SneakyThrows
     private void cache(DataBuffer buffer) {
+        //TODO Enumerate dto to cache more value as possible if needed
         Map objectAsMap = getValue(UTF_8.decode(buffer.asByteBuffer()).toString());
         Optional.ofNullable(objectAsMap.get("rptId")).ifPresent(v -> MDC.put("RTP_ID", v.toString()));
     }

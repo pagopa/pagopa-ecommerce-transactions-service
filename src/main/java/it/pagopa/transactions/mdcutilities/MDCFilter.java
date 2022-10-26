@@ -48,6 +48,7 @@ public class MDCFilter implements WebFilter {
     }
 
     private Map<String, String> getTransactionId(ServerHttpRequest request) {
+        //TODO Enumerate url to cache more value as possible if needed
         return new UriTemplate("/transactions/{transactionId}").match(request.getPath().value());
     }
 
