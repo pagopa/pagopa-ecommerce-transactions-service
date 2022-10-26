@@ -26,8 +26,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 @Slf4j
 public class MDCCachingValuesServerHttpRequestDecorator extends ServerHttpRequestDecorator {
 
-    private final StringBuilder cachedBody = new StringBuilder();
-
     public MDCCachingValuesServerHttpRequestDecorator(ServerHttpRequest delegate) {
         super(delegate);
     }
@@ -39,21 +37,15 @@ public class MDCCachingValuesServerHttpRequestDecorator extends ServerHttpReques
 
     @SneakyThrows
     private void cache(DataBuffer buffer) {
-        getValue(UTF_8.decode(buffer.asByteBuffer()).toString(),"rptId")
-                .ifPresent(v ->  MDC.put("RTP_ID", v.toString()));
-       ;
+        Map objectAsMap = getValue(UTF_8.decode(buffer.asByteBuffer()).toString());
+        Optional.ofNullable(objectAsMap.get("rptId")).ifPresent(v -> MDC.put("RTP_ID", v.toString()));
     }
 
-    private Optional<Object> getValue(String data, String searchKey) throws JsonProcessingException {
-        Map<String, String> result;
-        ObjectMapper mapper;
-        TypeFactory factory;
-        MapType type;
-
-        factory = TypeFactory.defaultInstance();
-        type    = factory.constructMapType(HashMap.class, String.class, Object.class);
-        mapper  = new ObjectMapper();
-        return  Optional.ofNullable(((HashMap)mapper.readValue(data, type)).get(searchKey));
+    private Map<String, Object> getValue(String data) throws JsonProcessingException {
+        TypeFactory factory = TypeFactory.defaultInstance();
+        MapType type    = factory.constructMapType(HashMap.class, String.class, Object.class);
+        ObjectMapper mapper  = new ObjectMapper();
+        return  mapper.readValue(data, type);
     }
 
 }
