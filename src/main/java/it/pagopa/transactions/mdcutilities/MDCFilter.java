@@ -44,11 +44,7 @@ public class MDCFilter implements WebFilter {
         Map<String,String> transactionMap = getTransactionId(exchange.getRequest());
         MDC.put("CONTEXT_KEY", requestId);
         MDC.put("TRANSACTION_ID", transactionMap.getOrDefault("transactionId",""));
-        return chain
-                .filter(decorate(exchange));
-                //.doOnEach(logOnEach(r -> log.info("{} {} {}", request.getMethod(), request.getURI(), request.getBody())));
-                //.contextWrite(Context.of("CONTEXT_KEY", requestId))
-                //.contextWrite(Context.of("TRANSACTION_ID", transactionMap.getOrDefault("transactionId", "")));
+        return chain.filter(decorate(exchange));
     }
 
     private Map<String, String> getTransactionId(ServerHttpRequest request) {
