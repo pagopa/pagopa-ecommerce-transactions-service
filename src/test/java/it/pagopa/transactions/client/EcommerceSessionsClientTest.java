@@ -81,7 +81,7 @@ class EcommerceSessionsClientTest {
         /**
          * asserts
          */
-        assertThat(testResponse.getPaymentToken()).isEqualTo(testResponse.getPaymentToken());
+        assertThat(tokenDto.getPaymentToken()).isEqualTo(testResponse.getPaymentToken());
     }
 
 }
