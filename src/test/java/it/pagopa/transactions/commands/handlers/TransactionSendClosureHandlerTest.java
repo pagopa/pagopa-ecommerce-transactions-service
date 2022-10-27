@@ -244,7 +244,7 @@ class TransactionSendClosureHandlerTest {
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
                 .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
-                .totalAmount(EuroUtils.euroCentsToEuro(((BaseTransactionWithPaymentToken) transaction).getAmount().value() + authorizationRequestData.getFee()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP))
+                .totalAmount(EuroUtils.euroCentsToEuro(((BaseTransactionWithPaymentToken) transaction).getAmount().value() + authorizationRequestData.getFee()))
                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
