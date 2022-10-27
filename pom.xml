@@ -413,6 +413,7 @@
                         <exclude>it/pagopa/transactions/server/api/ApiUtil</exclude>
                         <exclude>it/pagopa/transactions/utils/soap/**</exclude>
                         <exclude>it/pagopa/transactions/PagopaEcommerceTransactionsApplication.class</exclude>
+                        <exclude>it/pagopa/transactions/mdcutilities/**</exclude>
                     </excludes>
                 </configuration>
                 <version>${jacoco.version}</version>

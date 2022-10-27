@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.ServerWebExchangeDecorator;
@@ -26,12 +27,18 @@ public class MDCFilter implements WebFilter {
     private ServerWebExchange decorate(ServerWebExchange exchange) {
 
         final ServerHttpRequest decoratedRequest = new MDCCachingValuesServerHttpRequestDecorator(exchange.getRequest());
+        final ServerHttpResponse decoratedResponse = new MDCCachingValuesServerHttpResponseDecorator(exchange.getResponse());
 
         return new ServerWebExchangeDecorator(exchange) {
 
             @Override
             public ServerHttpRequest getRequest() {
                 return decoratedRequest;
+            }
+
+            @Override
+            public ServerHttpResponse getResponse() {
+                return decoratedResponse;
             }
 
         };
@@ -43,8 +50,8 @@ public class MDCFilter implements WebFilter {
         ServerHttpRequest request = exchange.getRequest();;
         Map<String,String> transactionMap = getTransactionId(exchange.getRequest());
         MDC.put("contextKey", getRequestId(request.getHeaders()));
-        Optional.ofNullable(transactionMap.get("transactionId")).ifPresent(v -> MDC.put("transactionId", v));
-        Optional.ofNullable(transactionMap.get("paymentContextCode")).ifPresent(v -> MDC.put("paymentContextCode", v));
+        MDC.put("transactionId", transactionMap.getOrDefault("transactionId",""));
+        MDC.put("paymentContextCode", transactionMap.getOrDefault("paymentContextCode",""));
         return chain.filter(decorate(exchange));
     }
 
