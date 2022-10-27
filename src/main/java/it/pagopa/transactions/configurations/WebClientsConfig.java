@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
-import it.pagopa.generated.ecommerce.gateway.v1.api.PaymentTransactionsControllerApi;
+import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.nodo.v1.api.NodoApi;
 import it.pagopa.generated.ecommerce.sessions.v1.ApiClient;
 import it.pagopa.generated.ecommerce.sessions.v1.api.DefaultApi;
@@ -100,9 +100,9 @@ public class WebClientsConfig {
         return new DefaultApi(new ApiClient(webClient));
     }
 
-    @Bean(name = "paymentTransactionGatewayWebClient")
-    public PaymentTransactionsControllerApi
-    paymentTransactionGateayWebClient(@Value("${paymentTransactionsGateway.uri}") String paymentTransactionGatewayUri,
+    @Bean(name = "paymentTransactionGatewayPostepayWebClient")
+    public PostePayInternalApi
+    paymentTransactionGatewayPostepayWebClient(@Value("${paymentTransactionsGateway.uri}") String paymentTransactionGatewayUri,
                                @Value("${paymentTransactionsGateway.readTimeout}") int paymentTransactionGatewayReadTimeout,
                                @Value("${paymentTransactionsGateway.connectionTimeout}") int paymentTransactionGatewayConnectionTimeout, @Value("${paymentTransactionsGateway.apiKey}") String apiKey) {
         HttpClient httpClient = HttpClient.create()
@@ -119,7 +119,7 @@ public class WebClientsConfig {
         it.pagopa.generated.ecommerce.gateway.v1.ApiClient apiClient = new it.pagopa.generated.ecommerce.gateway.v1.ApiClient(webClient);
         apiClient.setBasePath(paymentTransactionGatewayUri);
         apiClient.setApiKey(apiKey);
-        return new PaymentTransactionsControllerApi(apiClient);
+        return new PostePayInternalApi(apiClient);
     }
 
     @Bean(name = "ecommercePaymentInstrumentsWebClient")
