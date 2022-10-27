@@ -40,7 +40,7 @@ public class MDCCachingValuesServerHttpRequestDecorator extends ServerHttpReques
 
     private Map<String, Object> getValue(String data) throws JsonProcessingException {
         TypeFactory factory = TypeFactory.defaultInstance();
-        MapType type    = factory.constructMapType(HashMap.class, String.class, Object.class);
+        MapType type = factory.constructMapType(HashMap.class, String.class, Object.class);
         ObjectMapper mapper  = new ObjectMapper();
         return  mapper.readValue(data, type);
     }

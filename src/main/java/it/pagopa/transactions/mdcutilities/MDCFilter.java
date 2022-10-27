@@ -55,8 +55,8 @@ public class MDCFilter implements WebFilter {
     }
 
     private String getRequestId(HttpHeaders headers) {
-        //FIXME put here appInsight id in place of "X-Request-ID"
-        List<String> requestIdHeaders = headers.get("X-Request-ID");
+        //FIXME put here appInsight id in place of "Request-Id"
+        List<String> requestIdHeaders = headers.get("Request-Id");
         return requestIdHeaders == null || requestIdHeaders.isEmpty()
                 ? UUID.randomUUID().toString()
                 : requestIdHeaders.get(0);
