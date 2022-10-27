@@ -9,9 +9,11 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.ServerWebExchangeDecorator;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
+import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.UriTemplate;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Signal;
+import reactor.util.context.Context;
 
 import java.util.List;
 import java.util.Map;
@@ -42,8 +44,15 @@ public class MDCFilter implements WebFilter {
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
         Map<String,String> transactionMap = getTransactionId(exchange.getRequest());
-        MDC.put("TRANSACTION_ID", transactionMap.getOrDefault("transactionId",""));
-        return chain.filter(decorate(exchange));
+
+        //MDC.put("contextKey", getRequestId(request.getHeaders()));
+        //Optional.ofNullable(transactionMap.get("transactionId")).ifPresent(v -> MDC.put("transactionId", v));
+        //Optional.ofNullable(transactionMap.get("paymentContextCode")).ifPresent(v -> MDC.put("paymentContextCode", v));
+        return chain.filter(decorate(exchange))
+                .doOnEach(logOnEach(r -> log.info("{} {} {}", request.getMethod(), request.getURI(), request.getBody())))
+                .contextWrite(Context.of("contextKey", getRequestId(request.getHeaders())))
+                .contextWrite(Context.of("transactionId", transactionMap.getOrDefault("transactionId", "")))
+                .contextWrite(Context.of("paymentContextCode", transactionMap.getOrDefault("paymentContextCode", "")));
     }
 
     private Map<String, String> getTransactionId(ServerHttpRequest request) {

@@ -11,6 +11,7 @@ import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 import reactor.core.publisher.Flux;
+import reactor.util.context.Context;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,13 +21,16 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 @Slf4j
 public class MDCCachingValuesServerHttpRequestDecorator extends ServerHttpRequestDecorator {
 
+    public final StringBuilder value;
     public MDCCachingValuesServerHttpRequestDecorator(ServerHttpRequest delegate) {
         super(delegate);
+        value = new StringBuilder();
     }
 
     @Override
     public Flux<DataBuffer> getBody() {
-        return super.getBody().doOnNext(this::cache);
+        //FIXME caching is done after than needed.
+        return super.getBody().doOnNext(this::cache).contextWrite(Context.of("rptId",value.toString()));
     }
 
     @SneakyThrows
