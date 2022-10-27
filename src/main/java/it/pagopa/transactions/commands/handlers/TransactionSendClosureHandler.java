@@ -21,6 +21,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -64,7 +65,7 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                             .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())
                             .idChannel(transactionAuthorizationRequestData.getPspChannelCode())
                             .transactionId(tx.getTransactionId().value().toString())
-                            .totalAmount(new BigDecimal(tx.getAmount().value() + transactionAuthorizationRequestData.getFee()))
+                            .totalAmount(new BigDecimal(tx.getAmount().value() + transactionAuthorizationRequestData.getFee()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP))
                             .fee(new BigDecimal(transactionAuthorizationRequestData.getFee()))
                             .timestampOperation(updateAuthorizationRequestDto.getTimestampOperation())
                             .paymentMethod(transactionAuthorizationRequestData.getPaymentTypeCode())
