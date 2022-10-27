@@ -15,6 +15,7 @@ import reactor.core.publisher.Signal;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -39,44 +40,26 @@ public class MDCFilter implements WebFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        ServerHttpRequest request = exchange.getRequest();
-        String requestId = getRequestId(request.getHeaders());
+        ServerHttpRequest request = exchange.getRequest();;
         Map<String,String> transactionMap = getTransactionId(exchange.getRequest());
-        MDC.put("CONTEXT_KEY", requestId);
-        MDC.put("TRANSACTION_ID", transactionMap.getOrDefault("transactionId",""));
+        MDC.put("contextKey", getRequestId(request.getHeaders()));
+        Optional.ofNullable(transactionMap.get("transactionId")).ifPresent(v -> MDC.put("transactionId", v));
+        Optional.ofNullable(transactionMap.get("paymentContextCode")).ifPresent(v -> MDC.put("paymentContextCode", v));
         return chain.filter(decorate(exchange));
     }
 
     private Map<String, String> getTransactionId(ServerHttpRequest request) {
-        //TODO Enumerate url to cache more value as possible if needed
-        return new UriTemplate("/transactions/{transactionId}").match(request.getPath().value());
+        UriTemplate uriTemplatePCC = new UriTemplate("/transactions/payment-context-codes/{paymentContextCode}/activation-results");
+        UriTemplate uriTemplateStandard = new UriTemplate("/transactions/{transactionId}");
+        return uriTemplatePCC.matches(request.getPath().value()) ? uriTemplatePCC.match(request.getPath().value()) : uriTemplateStandard.match(request.getPath().value());
     }
 
     private String getRequestId(HttpHeaders headers) {
+        //FIXME put here appInsight id in place of "X-Request-ID"
         List<String> requestIdHeaders = headers.get("X-Request-ID");
         return requestIdHeaders == null || requestIdHeaders.isEmpty()
                 ? UUID.randomUUID().toString()
                 : requestIdHeaders.get(0);
     }
-
-    public static <T> Consumer<Signal<T>> logOnEach(Consumer<T> logStatement) {
-        return signal -> {
-            String contextValue = signal.getContextView().get("CONTEXT_KEY");
-            try (MDC.MDCCloseable cMdc = MDC.putCloseable("MDC_KEY", contextValue)) {
-                logStatement.accept(signal.get());
-            }
-        };
-    }
-
-    public static <T> Consumer<Signal<T>> logOnNext(Consumer<T> logStatement) {
-        return signal -> {
-            if (!signal.isOnNext()) return;
-            String contextValue = signal.getContextView().get("CONTEXT_KEY");
-            try (MDC.MDCCloseable cMdc = MDC.putCloseable("MDC_KEY", contextValue)) {
-                logStatement.accept(signal.get());
-            }
-        };
-    }
-
 
 }
