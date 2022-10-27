@@ -1,9 +1,8 @@
 package it.pagopa.transactions.client;
 
-import it.pagopa.generated.ecommerce.gateway.v1.api.PaymentTransactionsControllerApi;
+import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
-import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.domain.*;
@@ -34,7 +33,7 @@ class PaymentGatewayClientTest {
     private PaymentGatewayClient client;
 
     @Mock
-    PaymentTransactionsControllerApi paymentTransactionsControllerApi;
+    PostePayInternalApi paymentTransactionsControllerApi;
 
     private final UUID transactionIdUUID = UUID.randomUUID();
 
@@ -68,13 +67,13 @@ class PaymentGatewayClientTest {
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(transactionIdUUID.toString());
 
-        String mdcInfo = "mdcInfo";
+        String mdcInfo = transactionIdUUID.toString();
 
         PostePayAuthResponseEntityDto apiResponse = new PostePayAuthResponseEntityDto()
                 .channel("")
                 .urlRedirect("https://example.com");
         /* preconditions */
-        Mockito.when(paymentTransactionsControllerApi.authRequest(any(), eq(postePayAuthRequest), eq(mdcInfo)))
+        Mockito.when(paymentTransactionsControllerApi.authRequest( eq(postePayAuthRequest), eq(false), eq(mdcInfo)))
                 .thenReturn(Mono.just(apiResponse));
 
         /* test */
@@ -111,10 +110,10 @@ class PaymentGatewayClientTest {
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(transactionIdUUID.toString());
 
-        String mdcInfo = "mdcInfo";
+        String mdcInfo = transactionIdUUID.toString();
 
         /* preconditions */
-        Mockito.when(paymentTransactionsControllerApi.authRequest(any(), eq(postePayAuthRequest), eq(mdcInfo)))
+        Mockito.when(paymentTransactionsControllerApi.authRequest(eq(postePayAuthRequest), eq(false), eq(mdcInfo)))
                 .thenReturn(Mono.error(new WebClientResponseException("api error", HttpStatus.UNAUTHORIZED.value(), "Unauthorized", null, null, null)));
 
         /* test */
@@ -157,10 +156,10 @@ class PaymentGatewayClientTest {
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(transactionIdUUID.toString());
 
-        String mdcInfo = "mdcInfo";
+        String mdcInfo = transactionIdUUID.toString();
 
         /* preconditions */
-        Mockito.when(paymentTransactionsControllerApi.authRequest(any(), eq(postePayAuthRequest), eq(mdcInfo)))
+        Mockito.when(paymentTransactionsControllerApi.authRequest( eq(postePayAuthRequest), eq(false), eq(mdcInfo)))
                 .thenReturn(Mono.error(new WebClientResponseException("api error", HttpStatus.GATEWAY_TIMEOUT.value(), "Gateway timeout", null, null, null)));
 
         /* test */
@@ -199,10 +198,10 @@ class PaymentGatewayClientTest {
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(transactionIdUUID.toString());
 
-        String mdcInfo = "mdcInfo";
+        String mdcInfo = transactionIdUUID.toString();
 
         /* preconditions */
-        Mockito.when(paymentTransactionsControllerApi.authRequest(any(), eq(postePayAuthRequest), eq(mdcInfo)))
+        Mockito.when(paymentTransactionsControllerApi.authRequest(eq(postePayAuthRequest), eq(false), eq(mdcInfo)))
                 .thenReturn(Mono.error(new WebClientResponseException("api error", HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error", null, null, null)));
 
         /* test */

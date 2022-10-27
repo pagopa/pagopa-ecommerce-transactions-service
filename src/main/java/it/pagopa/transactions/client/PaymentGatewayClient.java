@@ -1,6 +1,6 @@
 package it.pagopa.transactions.client;
 
-import it.pagopa.generated.ecommerce.gateway.v1.api.PaymentTransactionsControllerApi;
+import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
@@ -18,8 +18,8 @@ import java.math.BigDecimal;
 @Component
 public class PaymentGatewayClient {
     @Autowired
-    @Qualifier("paymentTransactionGatewayWebClient")
-    PaymentTransactionsControllerApi paymentTransactionsControllerApi;
+    @Qualifier("paymentTransactionGatewayPostepayWebClient")
+    PostePayInternalApi paymentTransactionGatewayPostepayWebClient;
 
 
     public Mono<PostePayAuthResponseEntityDto> requestAuthorization(AuthorizationRequestData authorizationData) {
@@ -29,7 +29,7 @@ public class PaymentGatewayClient {
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(authorizationData.transaction().getTransactionId().value().toString());
 
-        return paymentTransactionsControllerApi.authRequest(authorizationData.transaction().getTransactionId().value(), postePayAuthRequest, "mdcInfo")
+        return paymentTransactionGatewayPostepayWebClient.authRequest( postePayAuthRequest, false, authorizationData.transaction().getTransactionId().value().toString())
                 .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
                     case UNAUTHORIZED -> new AlreadyProcessedException(authorizationData.transaction().getRptId());
                     case GATEWAY_TIMEOUT -> new GatewayTimeoutException();
