@@ -9,19 +9,17 @@ import it.pagopa.transactions.commands.TransactionClosureSendCommand;
 import it.pagopa.transactions.documents.*;
 import it.pagopa.transactions.domain.EmptyTransaction;
 import it.pagopa.transactions.domain.Transaction;
-import it.pagopa.transactions.domain.TransactionClosed;
 import it.pagopa.transactions.domain.TransactionWithCompletedAuthorization;
 import it.pagopa.transactions.domain.pojos.BaseTransaction;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import it.pagopa.transactions.utils.EuroUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -65,8 +63,8 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                             .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())
                             .idChannel(transactionAuthorizationRequestData.getPspChannelCode())
                             .transactionId(tx.getTransactionId().value().toString())
-                            .totalAmount(new BigDecimal(tx.getAmount().value() + transactionAuthorizationRequestData.getFee()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP))
-                            .fee(new BigDecimal(transactionAuthorizationRequestData.getFee()))
+                            .totalAmount(EuroUtils.euroCentsToEuro(tx.getAmount().value() + transactionAuthorizationRequestData.getFee()))
+                            .fee(EuroUtils.euroCentsToEuro(transactionAuthorizationRequestData.getFee()))
                             .timestampOperation(updateAuthorizationRequestDto.getTimestampOperation())
                             .paymentMethod(transactionAuthorizationRequestData.getPaymentTypeCode())
                             .additionalPaymentInformations(
