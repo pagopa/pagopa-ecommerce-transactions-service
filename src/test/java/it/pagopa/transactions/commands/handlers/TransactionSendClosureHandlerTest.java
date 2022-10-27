@@ -14,6 +14,7 @@ import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.domain.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import it.pagopa.transactions.utils.EuroUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -243,8 +244,8 @@ class TransactionSendClosureHandlerTest {
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
                 .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
-                .totalAmount(new BigDecimal(((BaseTransactionWithPaymentToken) transaction).getAmount().value() + authorizationRequestData.getFee()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP))
-                .fee(new BigDecimal(authorizationRequestData.getFee()))
+                .totalAmount(EuroUtils.euroCentsToEuro(((BaseTransactionWithPaymentToken) transaction).getAmount().value() + authorizationRequestData.getFee()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP))
+                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
