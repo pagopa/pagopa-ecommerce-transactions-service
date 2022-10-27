@@ -187,7 +187,7 @@ public class TransactionServiceTests {
 		RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
 				.authorizationUrl(gatewayResponse.getUrlRedirect());
 
-		Mockito.when(ecommercePaymentInstrumentsClient.getPSPs(any(), any())).thenReturn(
+		Mockito.when(ecommercePaymentInstrumentsClient.getPSPs(any(), any(), any())).thenReturn(
 				Mono.just(pspResponseDto));
 
 		Mockito.when(ecommercePaymentInstrumentsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
