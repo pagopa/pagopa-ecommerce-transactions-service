@@ -9,7 +9,7 @@
     </parent>
     <groupId>it.pagopa</groupId>
     <artifactId>pagopa-ecommerce-transactions-service</artifactId>
-    <version>0.4.34</version>
+    <version>0.4.35</version>
     <name>pagopa-ecommerce-transactions-service</name>
     <description>pagopa-ecommerce-transactions-service</description>
     <properties>
@@ -278,7 +278,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-infra/api-key-for-pgs/src/core/api/payment_transactions_gateway_api/internal/v1/_openapi.json.tpl</inputSpec>
+                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-infra/main/src/core/api/payment_transactions_gateway_api/internal/v1/_openapi.json.tpl</inputSpec>
                             <generatorName>java</generatorName>
                             <library>webclient</library>
                             <generateApiDocumentation>false</generateApiDocumentation>
