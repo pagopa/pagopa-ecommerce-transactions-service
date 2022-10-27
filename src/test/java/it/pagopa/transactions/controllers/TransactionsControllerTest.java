@@ -11,8 +11,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -27,13 +33,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(MockitoExtension.class)
+@WebFluxTest(TransactionsController.class)
 class TransactionsControllerTest {
 
     @InjectMocks
     private TransactionsController transactionsController = new TransactionsController();
 
-    @Mock
+    @MockBean
     private TransactionsService transactionsService;
+
+    @Autowired
+    private WebTestClient webTestClient;
 
     @Test
     void shouldGetOk() {
@@ -328,20 +338,44 @@ class TransactionsControllerTest {
                 .status(TransactionStatusDto.NOTIFIED)
                 .paymentToken(paymentToken);
 
-        UpdateTransactionStatusRequestDto updateStatusRequest = new UpdateTransactionStatusRequestDto()
-                .authorizationResult(AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
-                .timestampOperation(OffsetDateTime.now());
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(new AddUserReceiptRequestPaymentsDto()
+                        .paymentToken("paymentToken")
+                        .companyName("companyName")
+                        .creditorReferenceId("creditorReferenceId")
+                        .description("description")
+                        .debtor("debtor")
+                        .fiscalCode("fiscalCode")
+                        .officeName("officeName")
+                );
+
+        AddUserReceiptResponseDto expected = new AddUserReceiptResponseDto()
+                .outcome(AddUserReceiptResponseDto.OutcomeEnum.OK);
 
         /* preconditions */
-        Mockito.when(transactionsService.updateTransactionStatus(transactionId, updateStatusRequest))
+        Mockito.when(transactionsService.addUserReceipt(transactionId, addUserReceiptRequest))
                 .thenReturn(Mono.just(transactionInfo));
 
         /* test */
-        ResponseEntity<TransactionInfoDto> response = transactionsController
-                .patchTransactionStatus(transactionId, Mono.just(updateStatusRequest), null).block();
+        ResponseEntity<AddUserReceiptResponseDto> response = transactionsController
+                .addUserReceipt(transactionId, Mono.just(addUserReceiptRequest), null).block();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(transactionInfo, response.getBody());
+        assertEquals(expected, response.getBody());
+    }
+
+    @Test
+    void shouldReturnProblemJsonWith400OnBadInput() {
+        webTestClient.post()
+                .uri("/transactions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue("{}"))
+                .exchange()
+                .expectStatus()
+                .isBadRequest()
+                .expectBody(ProblemJsonDto.class)
+                .value(p -> assertEquals(400, p.getStatus()));
     }
 }

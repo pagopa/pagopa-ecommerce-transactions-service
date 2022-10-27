@@ -22,6 +22,7 @@ class TransactionDocumentTest {
         String TEST_RPTID = "77777777777302016723749670035";
         String TEST_DESC = "";
         ZonedDateTime TEST_TIME = ZonedDateTime.now();
+        String TEST_EMAIL = "foo@example.com";
         int TEST_AMOUNT = 1;
         TransactionStatusDto TEST_STATUS = TransactionStatusDto.ACTIVATED;
 
@@ -29,15 +30,15 @@ class TransactionDocumentTest {
          * Test
          */
         Transaction transaction = new Transaction(TEST_TRANSACTIONID, TEST_TOKEN, TEST_RPTID, TEST_DESC, TEST_AMOUNT,
-                TEST_STATUS, TEST_TIME);
+                TEST_EMAIL, TEST_STATUS, TEST_TIME);
 
         Transaction sameTransaction = new Transaction(TEST_TRANSACTIONID, TEST_TOKEN, TEST_RPTID, TEST_DESC,
-                TEST_AMOUNT, TEST_STATUS, TEST_TIME);
+                TEST_AMOUNT, TEST_EMAIL, TEST_STATUS, TEST_TIME);
         sameTransaction.setCreationDate(transaction.getCreationDate());
 
         // Different transaction (creation date)
         Transaction differentTransaction = new Transaction("",
-                "", "", "", 1, null, ZonedDateTime.now());
+                "", "", "", 1, "", null, ZonedDateTime.now());
         differentTransaction.setPaymentToken(TEST_TOKEN);
         differentTransaction.setRptId(TEST_RPTID);
         differentTransaction.setDescription(TEST_DESC);
@@ -66,6 +67,9 @@ class TransactionDocumentTest {
         TransactionDescription description = new TransactionDescription("");
         TransactionAmount amount = new TransactionAmount(100);
         TransactionStatusDto status = TransactionStatusDto.ACTIVATED;
+        Email email = new Email("foo@example.com");
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -73,6 +77,9 @@ class TransactionDocumentTest {
                 rptId,
                 description,
                 amount,
+                email,
+                faultCode,
+                faultCodeString,
                 status);
 
         Transaction transactionDocument = Transaction.from(transaction);

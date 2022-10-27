@@ -1,9 +1,8 @@
 package it.pagopa.transactions.client;
 
-import it.pagopa.generated.ecommerce.gateway.v1.api.PaymentTransactionsControllerApi;
+import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
-import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.domain.*;
@@ -34,21 +33,20 @@ class PaymentGatewayClientTest {
     private PaymentGatewayClient client;
 
     @Mock
-    PaymentTransactionsControllerApi paymentTransactionsControllerApi;
+    PostePayInternalApi paymentTransactionsControllerApi;
 
     private final UUID transactionIdUUID = UUID.randomUUID();
 
     @Test
     void shouldReturnAuthorizationResponse() {
-
-
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
                 new RptId("77777777777111111111111111111"),
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
-                TransactionStatusDto.ACTIVATED
+                new Email("foo@example.com"),
+                null, null, TransactionStatusDto.ACTIVATED
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -58,30 +56,28 @@ class PaymentGatewayClientTest {
                 "pspId",
                 "paymentTypeCode",
                 "brokerName",
-                "pspChannelCode"
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName"
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
                 .description(transaction.getDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
-                .idTransaction(0L);
+                .idTransaction(transactionIdUUID.toString());
 
-        String mdcInfo = "mdcInfo";
+        String mdcInfo = transactionIdUUID.toString();
 
         PostePayAuthResponseEntityDto apiResponse = new PostePayAuthResponseEntityDto()
                 .channel("")
                 .urlRedirect("https://example.com");
-
-        RequestAuthorizationResponseDto expected = new RequestAuthorizationResponseDto()
-                .authorizationUrl("https://example.com");
-
         /* preconditions */
-        Mockito.when(paymentTransactionsControllerApi.authRequest(any(), eq(postePayAuthRequest), eq(mdcInfo)))
+        Mockito.when(paymentTransactionsControllerApi.authRequest( eq(postePayAuthRequest), eq(false), eq(mdcInfo)))
                 .thenReturn(Mono.just(apiResponse));
 
         /* test */
-        assertEquals(expected, client.requestAuthorization(authorizationData).block());
+        assertEquals(apiResponse, client.requestAuthorization(authorizationData).block());
     }
 
     @Test
@@ -92,7 +88,8 @@ class PaymentGatewayClientTest {
                 new RptId("77777777777111111111111111111"),
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
-                TransactionStatusDto.ACTIVATED
+                new Email("foo@example.com"),
+                null, null, TransactionStatusDto.ACTIVATED
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -102,19 +99,21 @@ class PaymentGatewayClientTest {
                 "pspId",
                 "paymentTypeCode",
                 "brokerName",
-                "pspChannelCode"
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName"
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
                 .description(transaction.getDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
-                .idTransaction(0L);
+                .idTransaction(transactionIdUUID.toString());
 
-        String mdcInfo = "mdcInfo";
+        String mdcInfo = transactionIdUUID.toString();
 
         /* preconditions */
-        Mockito.when(paymentTransactionsControllerApi.authRequest(any(), eq(postePayAuthRequest), eq(mdcInfo)))
+        Mockito.when(paymentTransactionsControllerApi.authRequest(eq(postePayAuthRequest), eq(false), eq(mdcInfo)))
                 .thenReturn(Mono.error(new WebClientResponseException("api error", HttpStatus.UNAUTHORIZED.value(), "Unauthorized", null, null, null)));
 
         /* test */
@@ -133,6 +132,9 @@ class PaymentGatewayClientTest {
                 new RptId("77777777777111111111111111111"),
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
+                new Email("foo@example.com"),
+                "faultCode",
+                "faultCodeString",
                 TransactionStatusDto.ACTIVATED
         );
 
@@ -143,19 +145,21 @@ class PaymentGatewayClientTest {
                 "pspId",
                 "paymentTypeCode",
                 "brokerName",
-                "pspChannelCode"
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName"
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
                 .description(transaction.getDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
-                .idTransaction(0L);
+                .idTransaction(transactionIdUUID.toString());
 
-        String mdcInfo = "mdcInfo";
+        String mdcInfo = transactionIdUUID.toString();
 
         /* preconditions */
-        Mockito.when(paymentTransactionsControllerApi.authRequest(any(), eq(postePayAuthRequest), eq(mdcInfo)))
+        Mockito.when(paymentTransactionsControllerApi.authRequest( eq(postePayAuthRequest), eq(false), eq(mdcInfo)))
                 .thenReturn(Mono.error(new WebClientResponseException("api error", HttpStatus.GATEWAY_TIMEOUT.value(), "Gateway timeout", null, null, null)));
 
         /* test */
@@ -172,7 +176,8 @@ class PaymentGatewayClientTest {
                 new RptId("77777777777111111111111111111"),
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
-                TransactionStatusDto.ACTIVATED
+                new Email("foo@example.com"),
+                null, null, TransactionStatusDto.ACTIVATED
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -182,19 +187,21 @@ class PaymentGatewayClientTest {
                 "pspId",
                 "paymentTypeCode",
                 "brokerName",
-                "pspChannelCode"
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName"
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
                 .description(transaction.getDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
-                .idTransaction(0L);
+                .idTransaction(transactionIdUUID.toString());
 
-        String mdcInfo = "mdcInfo";
+        String mdcInfo = transactionIdUUID.toString();
 
         /* preconditions */
-        Mockito.when(paymentTransactionsControllerApi.authRequest(any(), eq(postePayAuthRequest), eq(mdcInfo)))
+        Mockito.when(paymentTransactionsControllerApi.authRequest(eq(postePayAuthRequest), eq(false), eq(mdcInfo)))
                 .thenReturn(Mono.error(new WebClientResponseException("api error", HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error", null, null, null)));
 
         /* test */

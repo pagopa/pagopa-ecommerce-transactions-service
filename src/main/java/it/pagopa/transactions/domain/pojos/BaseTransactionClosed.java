@@ -11,7 +11,7 @@ import lombok.experimental.FieldDefaults;
 @EqualsAndHashCode(callSuper = true)
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @Getter
-public class BaseTransactionClosed extends BaseTransactionWithCompletedAuthorization {
+public abstract class BaseTransactionClosed extends BaseTransactionWithCompletedAuthorization {
     TransactionClosureSendData transactionClosureSendData;
 
     protected BaseTransactionClosed(BaseTransactionWithCompletedAuthorization baseTransaction, TransactionClosureSendData transactionClosureSendData) {

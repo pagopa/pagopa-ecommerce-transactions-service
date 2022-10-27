@@ -47,44 +47,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
-    patch:
-      operationId: patchTransactionStatus
-      parameters:
-        - in: path
-          name: transactionId
-          schema:
-            type: string
-          required: true
-          description: Transaction ID
-      summary: Patch status of specific transaction
-      requestBody:
-        $ref: "#/components/requestBodies/UpdateTransactionStatusRequest"
-      responses:
-        200:
-          description: Transaction data successfully updated
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TransactionInfo"
-        400:
-          description: Invalid transaction id
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProblemJson"
-        404:
-          description: Transaction not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProblemJson"   
-        409:
-          description: Illegal transaction status
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProblemJson"                 
-  /transactions/{transactionId}/auth-request:
+  /transactions/{transactionId}/auth-requests:
     summary: Request authorization for the transaction identified by payment token
     post:
       operationId: requestTransactionAuthorization
@@ -238,6 +201,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
+  /transactions/{transactionId}/user-receipts:
+    post:
+      operationId: addUserReceipt
+      parameters:
+        - in: path
+          name: transactionId
+          schema:
+            type: string
+          required: true
+          description: Transaction ID
+      summary: Add receipt for user to specific transaction
+      requestBody:
+        $ref: "#/components/requestBodies/AddUserReceiptRequest"
+      responses:
+        200:
+          description: Receipt successfully added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AddUserReceiptResponse"
+        400:
+          description: Invalid transaction id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        404:
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        422:
+          description: Unprocessable entity (most likely the transaction is in an invalid state)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
 components:
   schemas:
     RptId:
@@ -327,8 +328,12 @@ components:
           type: string
           format: url
           description: URL where to redirect clients to continue the authorization process
+        authorizationRequestId:
+          type: string
+          description: Authorization request id
       required:
         - authorizationUrl
+        - authorizationRequestId
       example:
         authorizationUrl: https://example.com
     UpdateAuthorizationRequest:
@@ -351,23 +356,62 @@ components:
       example:
         authorizationResult: OK
         timestampOperation: 2022-02-11T13:00:00+01:00
-    UpdateTransactionStatusRequest:
+    AddUserReceiptRequest:
       type: object
-      description: Request body for updating a transaction
+      description: Request body for adding a user receipt to a transaction
       properties:
-        authorizationResult:
-          $ref: '#/components/schemas/AuthorizationResult'
-        timestampOperation:
+        outcome:
           type: string
+          description: Nodo outcome enum
+          enum:
+            - OK
+            - KO
+        paymentDate:
+          type: string
+          description: Timestamp of transaction verification/activation
           format: date-time
-          description: Payment timestamp
-        authorizationCode:
-          type: string
-          description: Payment gateway-specific authorization code related to the transaction
+        payments:
+          type: array
+          description: Payments associated to this transaction
+          items:
+            type: object
+            description: Payment
+            properties:
+              paymentToken:
+                type: string
+                description: Payment token associated to this payment
+              description:
+                type: string
+                description: Payment description
+              creditorReferenceId:
+                type: string
+                description: Creditor reference id
+              fiscalCode:
+                type: string
+                description: Receiving body fiscal code
+              companyName:
+                type: string
+                description: Receiving body public name
+              officeName:
+                type: string
+                description: Receiving office name
+              debtor:
+                type: string
+                description: Debtor's id
+            required:
+              - paymentToken
+              - description
+              - creditorReferenceId
+              - fiscalCode
+              - companyName
+              - officeName
+              - debtor
+          minItems: 1
+          maxItems: 5
       required:
-        - authorizationResult
-        - timestampOperation
-        - authorizationCode
+        - outcome
+        - paymentDate
+        - payments
     ActivationResultRequest:
       type: object
       description: Request body for activation result
@@ -382,6 +426,18 @@ components:
       properties:
         outcome:
           type: string
+          enum:
+            - OK
+            - KO
+      required:
+        - outcome
+    AddUserReceiptResponse:
+      type: object
+      description: Response body for adding user receipt
+      properties:
+        outcome:
+          type: string
+          description: Nodo outcome enum
           enum:
             - OK
             - KO
@@ -556,12 +612,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/UpdateAuthorizationRequest"
-    UpdateTransactionStatusRequest:
+    AddUserReceiptRequest:
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/UpdateTransactionStatusRequest"
+            $ref: "#/components/schemas/AddUserReceiptRequest"
     ActivationResultRequest:
       required: true
       content:

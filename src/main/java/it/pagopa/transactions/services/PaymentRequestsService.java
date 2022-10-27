@@ -113,7 +113,7 @@ public class PaymentRequestsService {
               final boolean isNM3 = isNm3(nodoVerificaRPTRResponse);
               final boolean isNodoErrorException = isNodoError(nodoVerificaRPTRResponse);
               return isNodoErrorException
-                  ? Mono.error(new NodoErrorException(faultBean.getFaultCode()))
+                  ? Mono.error(new NodoErrorException(faultBean))
                   : Mono.just(Tuples.of(nodoVerificaRPTRResponse, isNM3));
             })
         .flatMap(

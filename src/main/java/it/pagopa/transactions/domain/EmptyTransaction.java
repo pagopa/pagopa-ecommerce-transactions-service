@@ -18,6 +18,9 @@ public final class EmptyTransaction implements Transaction {
                 new RptId(event.getRptId()),
                 new TransactionDescription(event.getData().getDescription()),
                 new TransactionAmount(event.getData().getAmount()),
+                new Email(event.getData().getEmail()),
+                event.getData().getFaultCode(),
+                event.getData().getFaultCodeString(),
                 ZonedDateTime.parse(event.getCreationDate()),
                 TransactionStatusDto.ACTIVATED
         );
@@ -29,6 +32,7 @@ public final class EmptyTransaction implements Transaction {
                 new RptId(event.getRptId()),
                 new TransactionDescription(event.getData().getDescription()),
                 new TransactionAmount(event.getData().getAmount()),
+                new Email(event.getData().getEmail()),
                 ZonedDateTime.parse(event.getCreationDate()),
                 TransactionStatusDto.ACTIVATION_REQUESTED
         );

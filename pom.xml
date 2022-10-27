@@ -9,7 +9,7 @@
     </parent>
     <groupId>it.pagopa</groupId>
     <artifactId>pagopa-ecommerce-transactions-service</artifactId>
-    <version>0.4.27</version>
+    <version>0.4.36</version>
     <name>pagopa-ecommerce-transactions-service</name>
     <description>pagopa-ecommerce-transactions-service</description>
     <properties>
@@ -21,6 +21,10 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -125,6 +129,12 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
+        </dependency>
+
         <dependency>
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
@@ -443,6 +453,41 @@
                 <configuration>
                     <argLine>${argLine} --enable-preview</argLine>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.jsonschema2pojo</groupId>
+                <artifactId>jsonschema2pojo-maven-plugin</artifactId>
+                <version>1.1.2</version>
+                <executions>
+                    <execution>
+                        <id>success-template</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <sourcePaths>
+                                <sourcePath>${basedir}/src/main/resources/template-schemas/success.json</sourcePath>
+                            </sourcePaths>
+                            <targetPackage>it.pagopa.generated.notifications.templates.success</targetPackage>
+                            <classNameSuffix>Template</classNameSuffix>
+                            <includeConstructors>true</includeConstructors>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>ko-template</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <sourcePaths>
+                                <sourcePath>${basedir}/src/main/resources/template-schemas/ko.json</sourcePath>
+                            </sourcePaths>
+                            <targetPackage>it.pagopa.generated.notifications.templates.ko</targetPackage>
+                            <classNameSuffix>Template</classNameSuffix>
+                            <includeConstructors>true</includeConstructors>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

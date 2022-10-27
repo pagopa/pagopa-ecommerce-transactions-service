@@ -12,4 +12,5 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class TransactionClosureSendData {
     private ClosePaymentResponseDto.OutcomeEnum nodeClosePaymentOutcome;
     private TransactionStatusDto newTransactionStatus;
+    private String authorizationCode;
 }

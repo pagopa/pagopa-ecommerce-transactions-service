@@ -23,6 +23,7 @@ class TransactionTest {
         TransactionDescription description = new TransactionDescription("");
         TransactionAmount amount = new TransactionAmount(100);
         TransactionStatusDto status = TransactionStatusDto.ACTIVATED;
+        Email email = new Email("foo@example.com");
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -30,8 +31,8 @@ class TransactionTest {
                 rptId,
                 description,
                 amount,
-                status
-        );
+                email,
+                null, null, status);
 
         assertEquals(new PaymentToken(transaction.getTransactionActivatedData().getPaymentToken()), paymentToken);
         assertEquals(transaction.getRptId(), rptId);
@@ -60,7 +61,10 @@ class TransactionTest {
                         "pspId",
                         "paymentTypeCode",
                         "brokerName",
-                        "pspChannelCode"
+                        "pspChannelCode",
+                        "paymentMethodName",
+                        "pspBusinessName",
+                        "authorizationRequestId"
                 )
         );
 
@@ -85,6 +89,10 @@ class TransactionTest {
         String paymentToken = "paymentToken";
         String description = "description";
         int amount = 100;
+        String email = "foo@example.com";
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
+
         TransactionActivatedEvent event = new TransactionActivatedEvent(
                 trxId,
                 rptId,
@@ -92,9 +100,9 @@ class TransactionTest {
                 new TransactionActivatedData(
                         description,
                         amount,
-                        "email",
-                        "faultCode",
-                        "faultCodeString",
+                        email,
+                        faultCode,
+                        faultCodeString,
                         "paymentToken"
                 ));
 
@@ -106,6 +114,9 @@ class TransactionTest {
                 new RptId(rptId),
                 new TransactionDescription(description),
                 new TransactionAmount(amount),
+                new Email(email),
+                faultCode,
+                faultCodeString,
                 ZonedDateTime.parse(event.getCreationDate()),
                 TransactionStatusDto.ACTIVATED
         );
@@ -126,6 +137,10 @@ class TransactionTest {
         String paymentToken = "paymentToken";
         String description = "description";
         int amount = 100;
+        String email = "foo@example.com";
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
+
         TransactionActivatedEvent event = new TransactionActivatedEvent(
                 trxId,
                 rptId,
@@ -133,9 +148,9 @@ class TransactionTest {
                 new TransactionActivatedData(
                         description,
                         amount,
-                        "email",
-                        "faultCode",
-                        "faultCodeString",
+                        "foo@example.com",
+                        faultCode,
+                        faultCodeString,
                         "paymentToken"
                 ));
 
@@ -147,6 +162,9 @@ class TransactionTest {
                 new RptId(rptId),
                 new TransactionDescription(description),
                 new TransactionAmount(amount),
+                new Email(email),
+                faultCode,
+                faultCodeString,
                 ZonedDateTime.parse(event.getCreationDate()),
                 TransactionStatusDto.ACTIVATED
         );
@@ -167,6 +185,9 @@ class TransactionTest {
         String paymentToken = "paymentToken";
         String description = "description";
         int amount = 100;
+        String email = "foo@example.com";
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 trxId,
@@ -175,9 +196,9 @@ class TransactionTest {
                 new TransactionActivatedData(
                         description,
                         amount,
-                        "email",
-                        "faultCode",
-                        "faultCodeString",
+                        email,
+                        faultCode,
+                        faultCodeString,
                         "paymentToken"
                 ));
 
@@ -192,24 +213,30 @@ class TransactionTest {
                         "pspId",
                         "paymentTypeCode",
                         "brokerName",
-                        "pspChannelCode"
+                        "pspChannelCode",
+                        "paymentMethodName",
+                        "pspBusinessName",
+                        "authorizationRequestId"
                 )
         );
 
         Flux<TransactionEvent<?>> events = Flux.just(transactionActivatedEvent, authorizationRequestedEvent);
 
-        TransactionActivated transactionInitialized = new TransactionActivated(
+        TransactionActivated TransactionActivated = new TransactionActivated(
                 new TransactionId(UUID.fromString(trxId)),
                 new PaymentToken(paymentToken),
                 new RptId(rptId),
                 new TransactionDescription(description),
                 new TransactionAmount(amount),
+                new Email(email),
+                faultCode,
+                faultCodeString,
                 ZonedDateTime.parse(transactionActivatedEvent.getCreationDate()),
                 TransactionStatusDto.ACTIVATED
         );
 
         TransactionWithRequestedAuthorization expected = new TransactionWithRequestedAuthorization(
-                transactionInitialized,
+                TransactionActivated.withStatus(TransactionStatusDto.AUTHORIZATION_REQUESTED),
                 authorizationRequestedEvent
         );
 
@@ -229,6 +256,9 @@ class TransactionTest {
         String paymentToken = "paymentToken";
         String description = "description";
         int amount = 100;
+        String email = "foo@example.com";
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 trxId,
@@ -237,9 +267,9 @@ class TransactionTest {
                 new TransactionActivatedData(
                         description,
                         amount,
-                        "email",
-                        "faultCode",
-                        "faultCodeString",
+                        email,
+                        faultCode,
+                        faultCodeString,
                         "paymentToken"
                 ));
 
@@ -254,24 +284,30 @@ class TransactionTest {
                         "pspId",
                         "paymentTypeCode",
                         "brokerName",
-                        "pspChannelCode"
+                        "pspChannelCode",
+                        "paymentMethodName",
+                        "pspBusinessName",
+                        "authorizationRequestId"
                 )
         );
 
         Flux<TransactionEvent<?>> events = Flux.just(transactionActivatedEvent, authorizationRequestedEvent, authorizationRequestedEvent);
 
-        TransactionActivated transactionInitialized = new TransactionActivated(
+        TransactionActivated TransactionActivated = new TransactionActivated(
                 new TransactionId(UUID.fromString(trxId)),
                 new PaymentToken(paymentToken),
                 new RptId(rptId),
                 new TransactionDescription(description),
                 new TransactionAmount(amount),
+                new Email(email),
+                faultCode,
+                faultCodeString,
                 ZonedDateTime.parse(transactionActivatedEvent.getCreationDate()),
                 TransactionStatusDto.ACTIVATED
         );
 
         TransactionWithRequestedAuthorization expected = new TransactionWithRequestedAuthorization(
-                transactionInitialized,
+                TransactionActivated.withStatus(TransactionStatusDto.AUTHORIZATION_REQUESTED),
                 authorizationRequestedEvent
         );
 
@@ -291,6 +327,9 @@ class TransactionTest {
         String paymentToken = "paymentToken";
         String description = "description";
         int amount = 100;
+        String email = "foo@example.com";
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 trxId,
@@ -299,9 +338,9 @@ class TransactionTest {
                 new TransactionActivatedData(
                         description,
                         amount,
-                        "email",
-                        "faultCode",
-                        "faultCodeString",
+                        email,
+                        faultCode,
+                        faultCodeString,
                         "paymentToken"
                 ));
 
@@ -316,7 +355,10 @@ class TransactionTest {
                         "pspId",
                         "paymentTypeCode",
                         "brokerName",
-                        "pspChannelCode"
+                        "pspChannelCode",
+                        "paymentMethodName",
+                        "pspBusinessName",
+                        "authorizationRequestId"
                 )
         );
 
@@ -332,23 +374,26 @@ class TransactionTest {
 
         Flux<TransactionEvent<?>> events = Flux.just(transactionActivatedEvent, authorizationRequestedEvent, authorizationStatusUpdatedEvent);
 
-        TransactionActivated transactionInitialized = new TransactionActivated(
+        TransactionActivated TransactionActivated = new TransactionActivated(
                 new TransactionId(UUID.fromString(trxId)),
                 new PaymentToken(paymentToken),
                 new RptId(rptId),
                 new TransactionDescription(description),
                 new TransactionAmount(amount),
+                new Email(email),
+                faultCode,
+                faultCodeString,
                 ZonedDateTime.parse(transactionActivatedEvent.getCreationDate()),
                 TransactionStatusDto.ACTIVATED
         );
 
         TransactionWithRequestedAuthorization transactionWithRequestedAuthorization = new TransactionWithRequestedAuthorization(
-                transactionInitialized,
+                TransactionActivated.withStatus(TransactionStatusDto.AUTHORIZATION_REQUESTED),
                 authorizationRequestedEvent
         );
 
         TransactionWithCompletedAuthorization expected = new TransactionWithCompletedAuthorization(
-                transactionWithRequestedAuthorization,
+                transactionWithRequestedAuthorization.withStatus(TransactionStatusDto.AUTHORIZED),
                 authorizationStatusUpdatedEvent
         );
 
@@ -368,6 +413,9 @@ class TransactionTest {
         String paymentToken = "paymentToken";
         String description = "description";
         int amount = 100;
+        String email = "foo@example.com";
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 trxId,
@@ -376,9 +424,9 @@ class TransactionTest {
                 new TransactionActivatedData(
                         description,
                         amount,
-                        "email",
-                        "faultCode",
-                        "faultCodeString",
+                        email,
+                        faultCode,
+                        faultCodeString,
                         "paymentToken"
                 ));
 
@@ -393,7 +441,10 @@ class TransactionTest {
                         "pspId",
                         "paymentTypeCode",
                         "brokerName",
-                        "pspChannelCode"
+                        "pspChannelCode",
+                        "paymentMethodName",
+                        "pspBusinessName",
+                        "authorizationRequestId"
                 )
         );
 
@@ -409,23 +460,26 @@ class TransactionTest {
 
         Flux<TransactionEvent<?>> events = Flux.just(transactionActivatedEvent, authorizationRequestedEvent, authorizationStatusUpdatedEvent, authorizationStatusUpdatedEvent);
 
-        TransactionActivated transactionInitialized = new TransactionActivated(
+        TransactionActivated TransactionActivated = new TransactionActivated(
                 new TransactionId(UUID.fromString(trxId)),
                 new PaymentToken(paymentToken),
                 new RptId(rptId),
                 new TransactionDescription(description),
                 new TransactionAmount(amount),
+                new Email(email),
+                faultCode,
+                faultCodeString,
                 ZonedDateTime.parse(transactionActivatedEvent.getCreationDate()),
                 TransactionStatusDto.ACTIVATED
         );
 
         TransactionWithRequestedAuthorization transactionWithRequestedAuthorization = new TransactionWithRequestedAuthorization(
-                transactionInitialized,
+                TransactionActivated.withStatus(TransactionStatusDto.AUTHORIZATION_REQUESTED),
                 authorizationRequestedEvent
         );
 
         TransactionWithCompletedAuthorization expected = new TransactionWithCompletedAuthorization(
-                transactionWithRequestedAuthorization,
+                transactionWithRequestedAuthorization.withStatus(TransactionStatusDto.AUTHORIZED),
                 authorizationStatusUpdatedEvent
         );
 
@@ -445,6 +499,9 @@ class TransactionTest {
         String paymentToken = "paymentToken";
         String description = "description";
         int amount = 100;
+        String email = "foo@example.com";
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 trxId,
@@ -453,9 +510,9 @@ class TransactionTest {
                 new TransactionActivatedData(
                         description,
                         amount,
-                        "email",
-                        "faultCode",
-                        "faultCodeString",
+                        email,
+                        faultCode,
+                        faultCodeString,
                         "paymentToken"
                 ));
 
@@ -470,7 +527,10 @@ class TransactionTest {
                         "pspId",
                         "paymentTypeCode",
                         "brokerName",
-                        "pspChannelCode"
+                        "pspChannelCode",
+                        "paymentMethodName",
+                        "pspBusinessName",
+                        "authorizationRequestId"
                 )
         );
 
@@ -490,33 +550,37 @@ class TransactionTest {
                 paymentToken,
                 new TransactionClosureSendData(
                         ClosePaymentResponseDto.OutcomeEnum.OK,
-                        TransactionStatusDto.CLOSED
+                        TransactionStatusDto.CLOSED,
+                        "authorizationCode"
                 )
         );
 
         Flux<TransactionEvent<?>> events = Flux.just(transactionActivatedEvent, authorizationRequestedEvent, authorizationStatusUpdatedEvent, closureSentEvent);
 
-        TransactionActivated transactionInitialized = new TransactionActivated(
+        TransactionActivated TransactionActivated = new TransactionActivated(
                 new TransactionId(UUID.fromString(trxId)),
                 new PaymentToken(paymentToken),
                 new RptId(rptId),
                 new TransactionDescription(description),
                 new TransactionAmount(amount),
+                new Email(email),
+                faultCode,
+                faultCodeString,
                 ZonedDateTime.parse(transactionActivatedEvent.getCreationDate()),
                 TransactionStatusDto.ACTIVATED
         );
 
         TransactionWithRequestedAuthorization transactionWithRequestedAuthorization = new TransactionWithRequestedAuthorization(
-                transactionInitialized,
+                TransactionActivated.withStatus(TransactionStatusDto.AUTHORIZATION_REQUESTED),
                 authorizationRequestedEvent
         );
 
         TransactionWithCompletedAuthorization transactionWithCompletedAuthorization = new TransactionWithCompletedAuthorization(
-                transactionWithRequestedAuthorization,
+                transactionWithRequestedAuthorization.withStatus(TransactionStatusDto.AUTHORIZED),
                 authorizationStatusUpdatedEvent
         );
 
-        TransactionClosed expected = new TransactionClosed(transactionWithCompletedAuthorization, closureSentEvent);
+        TransactionClosed expected = new TransactionClosed(transactionWithCompletedAuthorization.withStatus(TransactionStatusDto.CLOSED), closureSentEvent);
 
         Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent);
 
@@ -534,6 +598,9 @@ class TransactionTest {
         String paymentToken = "paymentToken";
         String description = "description";
         int amount = 100;
+        String email = "foo@example.com";
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 trxId,
@@ -542,9 +609,9 @@ class TransactionTest {
                 new TransactionActivatedData(
                         description,
                         amount,
-                        "email",
-                        "faultCode",
-                        "faultCodeString",
+                        email,
+                        faultCode,
+                        faultCodeString,
                         "paymentToken"
                 ));
 
@@ -559,7 +626,10 @@ class TransactionTest {
                         "pspId",
                         "paymentTypeCode",
                         "brokerName",
-                        "pspChannelCode"
+                        "pspChannelCode",
+                        "paymentMethodName",
+                        "pspBusinessName",
+                        "authorizationRequestId"
                 )
         );
 
@@ -579,7 +649,8 @@ class TransactionTest {
                 paymentToken,
                 new TransactionClosureSendData(
                         ClosePaymentResponseDto.OutcomeEnum.OK,
-                        TransactionStatusDto.CLOSED
+                        TransactionStatusDto.CLOSED,
+                        "authorizationCode"
                 )
         );
 
@@ -591,32 +662,202 @@ class TransactionTest {
                 closureSentEvent
         );
 
-        TransactionActivated transactionInitialized = new TransactionActivated(
+        TransactionActivated TransactionActivated = new TransactionActivated(
                 new TransactionId(UUID.fromString(trxId)),
                 new PaymentToken(paymentToken),
                 new RptId(rptId),
                 new TransactionDescription(description),
                 new TransactionAmount(amount),
+                new Email(email),
+                faultCode,
+                faultCodeString,
                 ZonedDateTime.parse(transactionActivatedEvent.getCreationDate()),
                 TransactionStatusDto.ACTIVATED
         );
 
         TransactionWithRequestedAuthorization transactionWithRequestedAuthorization = new TransactionWithRequestedAuthorization(
-                transactionInitialized,
+                TransactionActivated.withStatus(TransactionStatusDto.AUTHORIZATION_REQUESTED),
                 authorizationRequestedEvent
         );
 
         TransactionWithCompletedAuthorization transactionWithCompletedAuthorization = new TransactionWithCompletedAuthorization(
-                transactionWithRequestedAuthorization,
+                transactionWithRequestedAuthorization.withStatus(TransactionStatusDto.AUTHORIZED),
                 authorizationStatusUpdatedEvent
         );
 
-        TransactionClosed expected = new TransactionClosed(transactionWithCompletedAuthorization, closureSentEvent);
+        TransactionClosed expected = new TransactionClosed(transactionWithCompletedAuthorization.withStatus(TransactionStatusDto.CLOSED), closureSentEvent);
 
         Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent);
 
         StepVerifier.create(actual)
                 .expectNext(expected)
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldUpgradeTransactionActivationRequestedToTransactionActivated() {
+        EmptyTransaction transaction = new EmptyTransaction();
+
+        String trxId = UUID.randomUUID().toString();
+        String rptId = "77777777777302016723749670035";
+        String paymentToken = "paymentToken";
+        String description = "description";
+        int amount = 100;
+        String email = "foo@example.com";
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
+
+        TransactionActivationRequestedEvent activationRequestedEvent = new TransactionActivationRequestedEvent(
+                trxId,
+                rptId,
+                ZonedDateTime.now().toString(),
+                new TransactionActivationRequestedData(
+                        description,
+                        amount,
+                        email,
+                        faultCode,
+                        faultCodeString,
+                        "paymentContextCode"
+                )
+        );
+
+        TransactionActivatedEvent activatedEvent = new TransactionActivatedEvent(
+                trxId,
+                rptId,
+                paymentToken,
+                new TransactionActivatedData(
+                        description,
+                        amount,
+                        email,
+                        faultCode,
+                        faultCodeString,
+                        "paymentToken"
+                ));
+
+        Flux<TransactionEvent<?>> events = Flux.just(activationRequestedEvent, activatedEvent);
+
+        TransactionActivated expected = new TransactionActivated(
+                new TransactionId(UUID.fromString(trxId)),
+                new PaymentToken(paymentToken),
+                new RptId(rptId),
+                new TransactionDescription(description),
+                new TransactionAmount(amount),
+                new Email(email),
+                faultCode,
+                faultCodeString,
+                ZonedDateTime.parse(activationRequestedEvent.getCreationDate()),
+                TransactionStatusDto.ACTIVATED
+        );
+
+        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent);
+
+        StepVerifier.create(actual)
+                .expectNext(expected)
+                .verifyComplete();
+    }
+
+    @Test
+    void transactionClosedStatusChangeWorks() {
+        EmptyTransaction transaction = new EmptyTransaction();
+
+        String trxId = UUID.randomUUID().toString();
+        String rptId = "77777777777302016723749670035";
+        String paymentToken = "paymentToken";
+        String description = "description";
+        int amount = 100;
+        String email = "foo@example.com";
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
+
+        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
+                trxId,
+                rptId,
+                paymentToken,
+                new TransactionActivatedData(
+                        description,
+                        amount,
+                        email,
+                        faultCode,
+                        faultCodeString,
+                        "paymentToken"
+                ));
+
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
+                trxId,
+                rptId,
+                paymentToken,
+                new TransactionAuthorizationRequestData(
+                        amount,
+                        10,
+                        "paymentInstrumentId",
+                        "pspId",
+                        "paymentTypeCode",
+                        "brokerName",
+                        "pspChannelCode",
+                        "paymentMethodName",
+                        "pspBusinessName",
+                        "authorizationRequestId"
+                )
+        );
+
+        TransactionAuthorizationStatusUpdatedEvent authorizationStatusUpdatedEvent = new TransactionAuthorizationStatusUpdatedEvent(
+                trxId,
+                rptId,
+                paymentToken,
+                new TransactionAuthorizationStatusUpdateData(
+                        AuthorizationResultDto.OK,
+                        TransactionStatusDto.AUTHORIZED
+                )
+        );
+
+        TransactionClosureSentEvent closureSentEvent = new TransactionClosureSentEvent(
+                trxId,
+                rptId,
+                paymentToken,
+                new TransactionClosureSendData(
+                        ClosePaymentResponseDto.OutcomeEnum.OK,
+                        TransactionStatusDto.CLOSED,
+                        "authorizationCode"
+                )
+        );
+
+        Flux<TransactionEvent<?>> events = Flux.just(
+                transactionActivatedEvent,
+                authorizationRequestedEvent,
+                authorizationStatusUpdatedEvent,
+                closureSentEvent,
+                closureSentEvent
+        );
+
+        TransactionActivated TransactionActivated = new TransactionActivated(
+                new TransactionId(UUID.fromString(trxId)),
+                new PaymentToken(paymentToken),
+                new RptId(rptId),
+                new TransactionDescription(description),
+                new TransactionAmount(amount),
+                new Email(email),
+                faultCode,
+                faultCodeString,
+                ZonedDateTime.parse(transactionActivatedEvent.getCreationDate()),
+                TransactionStatusDto.ACTIVATED
+        );
+
+        TransactionWithRequestedAuthorization transactionWithRequestedAuthorization = new TransactionWithRequestedAuthorization(
+                TransactionActivated.withStatus(TransactionStatusDto.AUTHORIZATION_REQUESTED),
+                authorizationRequestedEvent
+        );
+
+        TransactionWithCompletedAuthorization transactionWithCompletedAuthorization = new TransactionWithCompletedAuthorization(
+                transactionWithRequestedAuthorization.withStatus(TransactionStatusDto.AUTHORIZED),
+                authorizationStatusUpdatedEvent
+        );
+
+        Mono<Transaction> actual = events.reduce(transaction, Transaction::applyEvent);
+
+        StepVerifier.create(actual)
+                .expectNextMatches(t ->
+                        t instanceof TransactionClosed &&
+                                ((TransactionClosed) t).withStatus(TransactionStatusDto.AUTHORIZED).getStatus() == TransactionStatusDto.AUTHORIZED)
                 .verifyComplete();
     }
 }

@@ -89,6 +89,9 @@ class TransactionServiceTest {
                 new RptId(TEST_RPTID),
                 new TransactionDescription("desc"),
                 new TransactionAmount(0),
+                new Email("foo@example.com"),
+                "faultCode",
+                "faultCodeString",
                 TransactionStatusDto.ACTIVATED
         );
 
@@ -98,6 +101,7 @@ class TransactionServiceTest {
                 new RptId(TEST_RPTID),
                 new TransactionDescription("desc"),
                 new TransactionAmount(0),
+                new Email("foo@example.com"),
                 TransactionStatusDto.ACTIVATION_REQUESTED
         );
 

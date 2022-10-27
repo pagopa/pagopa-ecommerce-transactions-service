@@ -2,7 +2,6 @@ package it.pagopa.transactions.utils;
 
 import it.pagopa.generated.nodoperpsp.model.*;
 import it.pagopa.generated.transactions.model.*;
-import it.pagopa.generated.transactions.model.ObjectFactory;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NodoPerPspClient;
@@ -22,7 +21,7 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
 class NodoOperationsTest {

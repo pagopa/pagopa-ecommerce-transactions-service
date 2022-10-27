@@ -99,7 +99,7 @@ public class NodeForPspClient {
 
 	public Mono<ClosePaymentResponseDto> closePaymentV2(ClosePaymentRequestV2Dto request) {
 		return nodoWebClient.post()
-				.uri("/v2/closepayment")
+				.uri("/nodo/nodo-per-pm/v2/closepayment")
 				.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
 				.body(Mono.just(request), ClosePaymentRequestV2Dto.class)
 				.retrieve()

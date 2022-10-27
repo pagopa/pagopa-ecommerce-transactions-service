@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
-import it.pagopa.generated.ecommerce.gateway.v1.api.PaymentTransactionsControllerApi;
+import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.nodo.v1.api.NodoApi;
 import it.pagopa.generated.ecommerce.sessions.v1.ApiClient;
 import it.pagopa.generated.ecommerce.sessions.v1.api.DefaultApi;
@@ -100,11 +100,11 @@ public class WebClientsConfig {
         return new DefaultApi(new ApiClient(webClient));
     }
 
-    @Bean(name = "paymentTransactionGatewayWebClient")
-    public PaymentTransactionsControllerApi
-    paymentTransactionGateayWebClient(@Value("${paymentTransactionsGateway.uri}") String paymentTransactionGatewayUri,
+    @Bean(name = "paymentTransactionGatewayPostepayWebClient")
+    public PostePayInternalApi
+    paymentTransactionGatewayPostepayWebClient(@Value("${paymentTransactionsGateway.uri}") String paymentTransactionGatewayUri,
                                @Value("${paymentTransactionsGateway.readTimeout}") int paymentTransactionGatewayReadTimeout,
-                               @Value("${paymentTransactionsGateway.connectionTimeout}") int paymentTransactionGatewayConnectionTimeout) {
+                               @Value("${paymentTransactionsGateway.connectionTimeout}") int paymentTransactionGatewayConnectionTimeout, @Value("${paymentTransactionsGateway.apiKey}") String apiKey) {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, paymentTransactionGatewayConnectionTimeout)
                 .doOnConnected(connection ->
@@ -116,12 +116,14 @@ public class WebClientsConfig {
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .baseUrl(paymentTransactionGatewayUri)
                 .build();
-
-        return new PaymentTransactionsControllerApi(new it.pagopa.generated.ecommerce.gateway.v1.ApiClient(webClient).setBasePath(paymentTransactionGatewayUri));
+        it.pagopa.generated.ecommerce.gateway.v1.ApiClient apiClient = new it.pagopa.generated.ecommerce.gateway.v1.ApiClient(webClient);
+        apiClient.setBasePath(paymentTransactionGatewayUri);
+        apiClient.setApiKey(apiKey);
+        return new PostePayInternalApi(apiClient);
     }
 
     @Bean(name = "ecommercePaymentInstrumentsWebClient")
-    public DefaultApi
+    public it.pagopa.generated.ecommerce.paymentinstruments.v1.api.DefaultApi
     ecommercePaymentInstrumentsWebClient(@Value("${ecommercePaymentInstruments.uri}") String ecommercePaymentInstrumentsUri,
                                @Value("${ecommercePaymentInstruments.readTimeout}") int ecommercePaymentInstrumentsReadTimeout,
                                @Value("${ecommercePaymentInstruments.connectionTimeout}") int ecommercePaymentInstrumentsConnectionTimeout) {
@@ -132,10 +134,13 @@ public class WebClientsConfig {
                                 ecommercePaymentInstrumentsReadTimeout,
                                 TimeUnit.MILLISECONDS)));
 
-        WebClient webClient = ApiClient.buildWebClientBuilder().clientConnector(
+        WebClient webClient = it.pagopa.generated.ecommerce.paymentinstruments.v1.ApiClient.buildWebClientBuilder().clientConnector(
                 new ReactorClientHttpConnector(httpClient)).baseUrl(ecommercePaymentInstrumentsUri).build();
 
-        return new DefaultApi(new ApiClient(webClient));
+        it.pagopa.generated.ecommerce.paymentinstruments.v1.ApiClient apiClient =
+                new it.pagopa.generated.ecommerce.paymentinstruments.v1.ApiClient(webClient).setBasePath(ecommercePaymentInstrumentsUri);
+
+        return new it.pagopa.generated.ecommerce.paymentinstruments.v1.api.DefaultApi(apiClient);
     }
 
     @Bean(name = "notificationsServiceWebClient")
@@ -153,7 +158,7 @@ public class WebClientsConfig {
         WebClient webClient = ApiClient.buildWebClientBuilder().clientConnector(
                 new ReactorClientHttpConnector(httpClient)).baseUrl(notificationsServiceUri).build();
 
-        return new it.pagopa.generated.notifications.v1.api.DefaultApi(new it.pagopa.generated.notifications.v1.ApiClient(webClient));
+        return new it.pagopa.generated.notifications.v1.api.DefaultApi(new it.pagopa.generated.notifications.v1.ApiClient(webClient).setBasePath(notificationsServiceUri));
     }
 
     @Bean

@@ -14,12 +14,12 @@ import java.util.UUID;
 
 @Component
 @Slf4j
-public class AuthorizationUpdateProjectionHandler implements ProjectionHandler<TransactionAuthorizationStatusUpdatedEvent, Mono<Transaction>> {
+public class AuthorizationUpdateProjectionHandler implements ProjectionHandler<TransactionAuthorizationStatusUpdatedEvent, Mono<TransactionActivated>> {
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
 
     @Override
-    public Mono<Transaction> handle(TransactionAuthorizationStatusUpdatedEvent data) {
+    public Mono<TransactionActivated> handle(TransactionAuthorizationStatusUpdatedEvent data) {
         return transactionsViewRepository.findById(data.getTransactionId())
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(data.getPaymentToken())))
                 .flatMap(transactionDocument -> {
@@ -32,8 +32,10 @@ public class AuthorizationUpdateProjectionHandler implements ProjectionHandler<T
                         new RptId(transactionDocument.getRptId()),
                         new TransactionDescription(transactionDocument.getDescription()),
                         new TransactionAmount(transactionDocument.getAmount()),
+                        new Email(transactionDocument.getEmail()),
+                        null,
+                        null,
                         ZonedDateTime.parse(transactionDocument.getCreationDate()),
-                        transactionDocument.getStatus()
-                ));
+                        transactionDocument.getStatus()));
     }
 }

@@ -65,6 +65,7 @@ class TransactionActivateResultHandlerTest {
                 rptId,
                 new TransactionDescription("testTransactionDescription"),
                 new TransactionAmount(amount),
+                new Email(requestDto.getEmail()),
                 TransactionStatusDto.ACTIVATION_REQUESTED
         );
 
@@ -110,8 +111,9 @@ class TransactionActivateResultHandlerTest {
                 rptId,
                 new TransactionDescription("testTransactionDescription"),
                 new TransactionAmount(amount),
+                new Email(requestDto.getEmail()),
                 TransactionStatusDto.ACTIVATION_REQUESTED
-                );
+            );
 
         ActivationResultData activationResultData = new ActivationResultData(transaction, activationResultRequestDto);
 
@@ -194,6 +196,7 @@ class TransactionActivateResultHandlerTest {
                 rptId,
                 new TransactionDescription("testTransactionDescription"),
                 new TransactionAmount(amount),
+                new Email(requestDto.getEmail()),
                 TransactionStatusDto.AUTHORIZED
         );
 
@@ -240,6 +243,7 @@ class TransactionActivateResultHandlerTest {
                 rptId,
                 new TransactionDescription("testTransactionDescription"),
                 new TransactionAmount(amount),
+                new Email(requestDto.getEmail()),
                 TransactionStatusDto.ACTIVATION_REQUESTED
         );
 

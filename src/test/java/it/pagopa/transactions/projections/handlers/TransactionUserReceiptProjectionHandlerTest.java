@@ -2,9 +2,9 @@ package it.pagopa.transactions.projections.handlers;
 
 import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
-import it.pagopa.generated.transactions.server.model.UpdateTransactionStatusRequestDto;
-import it.pagopa.transactions.documents.TransactionStatusUpdateData;
-import it.pagopa.transactions.documents.TransactionStatusUpdatedEvent;
+import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
+import it.pagopa.transactions.documents.TransactionAddReceiptData;
+import it.pagopa.transactions.documents.TransactionUserReceiptAddedEvent;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
@@ -23,20 +23,23 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.argThat;
 
 @ExtendWith(MockitoExtension.class)
-class TransactionUpdateProjectionHandlerTest {
+class TransactionUserReceiptProjectionHandlerTest {
 
     @InjectMocks
-    private TransactionUpdateProjectionHandler transactionUpdateProjectionHandler;
+    private TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandler;
 
     @Mock
     private TransactionsViewRepository viewRepository;
 
     @Test
     void shouldHandleTransaction() {
-        UpdateTransactionStatusRequestDto updateAuthorizationRequest = new UpdateTransactionStatusRequestDto()
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .authorizationResult(AuthorizationResultDto.OK)
                 .authorizationCode("OK")
                 .timestampOperation(OffsetDateTime.now());
+
+        String faultCode = null;
+        String faultCodeString = null; // FIXME, make handle pass fault codes correctly
 
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(UUID.randomUUID()),
@@ -44,6 +47,9 @@ class TransactionUpdateProjectionHandlerTest {
                 new RptId("77777777777111111111111111111"),
                 new TransactionDescription("description"),
                 new TransactionAmount(100),
+                new Email("foo@example.com"),
+                faultCode,
+                faultCodeString,
                 TransactionStatusDto.CLOSED
         );
 
@@ -53,21 +59,18 @@ class TransactionUpdateProjectionHandlerTest {
                 transaction.getRptId().value(),
                 transaction.getDescription().value(),
                 transaction.getAmount().value(),
+                transaction.getEmail().value(),
                 TransactionStatusDto.NOTIFIED,
                 transaction.getCreationDate()
         );
 
-        TransactionStatusUpdateData statusUpdateData =
-                new TransactionStatusUpdateData(
-                        updateAuthorizationRequest.getAuthorizationResult(),
-                        expectedDocument.getStatus()
-                );
+        TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(expectedDocument.getStatus());
 
-        TransactionStatusUpdatedEvent event = new TransactionStatusUpdatedEvent(
+        TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                 transaction.getTransactionId().value().toString(),
                 transaction.getRptId().value(),
                 transaction.getTransactionActivatedData().getPaymentToken(),
-                statusUpdateData
+                transactionAddReceiptData
         );
 
         TransactionActivated expected = new TransactionActivated(
@@ -76,6 +79,9 @@ class TransactionUpdateProjectionHandlerTest {
                 transaction.getRptId(),
                 transaction.getDescription(),
                 transaction.getAmount(),
+                transaction.getEmail(),
+                transaction.getTransactionActivatedData().getFaultCode(),
+                transaction.getTransactionActivatedData().getFaultCodeString(),
                 ZonedDateTime.parse(expectedDocument.getCreationDate()),
                 expectedDocument.getStatus()
         );
@@ -91,7 +97,7 @@ class TransactionUpdateProjectionHandlerTest {
         /*
          * Test
          */
-        StepVerifier.create(transactionUpdateProjectionHandler.handle(event))
+        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(event))
                 .expectNext(expected)
                 .verifyComplete();
 

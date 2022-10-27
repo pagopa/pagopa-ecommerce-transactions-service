@@ -1,5 +1,6 @@
 package it.pagopa.transactions.commands.handlers;
 
+import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
@@ -20,12 +21,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
 
 import java.util.UUID;
 
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
+import reactor.test.StepVerifier;
 
 import static org.mockito.ArgumentMatchers.any;
 
@@ -58,6 +59,7 @@ class TransactionRequestAuthorizizationHandlerTest {
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
+        Email email = new Email("foo@example.com");
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -65,7 +67,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                 rptId,
                 description,
                 amount,
-                TransactionStatusDto.ACTIVATED
+                email,
+                null, null, TransactionStatusDto.ACTIVATED
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -82,18 +85,22 @@ class TransactionRequestAuthorizizationHandlerTest {
                 authorizationRequest.getPspId(),
                 "paymentTypeCode",
                 "brokerName",
-                "pspChannelCode"
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName"
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);
 
-        RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
-                .authorizationUrl("https://example.com");
+        PostePayAuthResponseEntityDto gatewayResponse = new PostePayAuthResponseEntityDto()
+                .channel("channel")
+                .requestId("requestId")
+                .urlRedirect("http://example.com");
 
         ReflectionTestUtils.setField(requestAuthorizationHandler, "queueVisibilityTimeout", "300");
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestAuthorization(authorizationData)).thenReturn(Mono.just(requestAuthorizationResponse));
+        Mockito.when(paymentGatewayClient.requestAuthorization(authorizationData)).thenReturn(Mono.just(gatewayResponse));
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.empty());
         Mockito.when(queueAsyncClient.sendMessageWithResponse(BinaryData.fromObject(any()),any(),any())).thenReturn(Mono.empty());
 
@@ -109,6 +116,9 @@ class TransactionRequestAuthorizizationHandlerTest {
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
+        Email email = new Email("foo@example.com");
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -116,6 +126,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 rptId,
                 description,
                 amount,
+                email,
+                faultCode,
+                faultCodeString,
                 TransactionStatusDto.AUTHORIZATION_REQUESTED
         );
 
@@ -133,7 +146,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 authorizationRequest.getPspId(),
                 "paymentTypeCode",
                 "brokerName",
-                "pspChannelCode"
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName"
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);

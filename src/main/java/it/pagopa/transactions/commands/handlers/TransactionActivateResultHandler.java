@@ -35,9 +35,6 @@ public class TransactionActivateResultHandler
 		final TransactionActivationRequested transactionActivationRequested = command.getData().transactionActivationRequested();
 
 		final String transactionId = command.getData().transactionActivationRequested().getTransactionId().value().toString();
-		TransactionActivatedData data = new TransactionActivatedData();
-		data.setAmount(transactionActivationRequested.getAmount().value());
-		data.setDescription(transactionActivationRequested.getDescription().value());
 
 		return Mono.just(command)
 				.filterWhen(commandData -> Mono
@@ -70,14 +67,25 @@ public class TransactionActivateResultHandler
 									paymentRequestInfo.idempotencyKey())
 					));
 				}).flatMap(saved -> {
-					TransactionActivatedEvent transactionInitializedEvent =
+					TransactionActivatedData data = new TransactionActivatedData(
+							transactionActivationRequested.getDescription().value(),
+							transactionActivationRequested.getAmount().value(),
+							transactionActivationRequested.getEmail().value(),
+							null,
+							null,
+							saved.paymentToken()
+					);
+
+					TransactionActivatedEvent transactionActivatedEvent =
 							new TransactionActivatedEvent(
 									transactionId,
 									command.getData().transactionActivationRequested().getRptId().value(),
 									saved.paymentToken(),
-									data);
-					log.info("Saving transactionInitializedevent {}", transactionInitializedEvent);
-					return transactionEventStoreRepository.save(transactionInitializedEvent);
+									data
+							);
+
+					log.info("Saving TransactionActivatedevent {}", transactionActivatedEvent);
+					return transactionEventStoreRepository.save(transactionActivatedEvent);
 				});
 	}
 }
