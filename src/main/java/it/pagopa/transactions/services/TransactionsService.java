@@ -96,7 +96,7 @@ public class TransactionsService {
   }
 
   public Mono<TransactionInfoDto> getTransactionInfo(String transactionId) {
-      log.info("Get Transaction Invoked wiht id {} ", transactionId);
+      log.info("Get Transaction Invoked with id {} ", transactionId);
     return transactionsViewRepository
         .findById(transactionId)
         .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))

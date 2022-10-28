@@ -12,13 +12,10 @@ import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import org.springframework.web.util.UriTemplate;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.Signal;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Consumer;
 
 @Component
 @Slf4j
@@ -27,18 +24,12 @@ public class MDCFilter implements WebFilter {
     private ServerWebExchange decorate(ServerWebExchange exchange) {
 
         final ServerHttpRequest decoratedRequest = new MDCCachingValuesServerHttpRequestDecorator(exchange.getRequest());
-        final ServerHttpResponse decoratedResponse = new MDCCachingValuesServerHttpResponseDecorator(exchange.getResponse());
 
         return new ServerWebExchangeDecorator(exchange) {
 
             @Override
             public ServerHttpRequest getRequest() {
                 return decoratedRequest;
-            }
-
-            @Override
-            public ServerHttpResponse getResponse() {
-                return decoratedResponse;
             }
 
         };
