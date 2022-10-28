@@ -14,6 +14,8 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 @Component
 public class PaymentGatewayClient {
@@ -29,7 +31,10 @@ public class PaymentGatewayClient {
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(authorizationData.transaction().getTransactionId().value().toString());
 
-        return paymentTransactionGatewayPostepayWebClient.authRequest( postePayAuthRequest, false, authorizationData.transaction().getTransactionId().value().toString())
+        String mdcData = "{ \"ecommerceTransactionId\": \"%s\" }".formatted(authorizationData.transaction().getTransactionId().value().toString());
+        String encodedMdcFields = Base64.getEncoder().encodeToString(mdcData.getBytes(StandardCharsets.UTF_8));
+
+        return paymentTransactionGatewayPostepayWebClient.authRequest( postePayAuthRequest, false, encodedMdcFields)
                 .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
                     case UNAUTHORIZED -> new AlreadyProcessedException(authorizationData.transaction().getRptId());
                     case GATEWAY_TIMEOUT -> new GatewayTimeoutException();
