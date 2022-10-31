@@ -38,7 +38,6 @@ public class MDCFilter implements WebFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        ServerHttpRequest request = exchange.getRequest();;
         Map<String,String> transactionMap = getTransactionId(exchange.getRequest());
         MDC.put("diagnosticContextKey", UUID.randomUUID().toString());
         MDC.put("transactionId", transactionMap.getOrDefault("transactionId",""));
