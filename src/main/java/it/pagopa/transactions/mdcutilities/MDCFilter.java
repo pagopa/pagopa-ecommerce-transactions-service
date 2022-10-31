@@ -40,7 +40,7 @@ public class MDCFilter implements WebFilter {
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();;
         Map<String,String> transactionMap = getTransactionId(exchange.getRequest());
-        MDC.put("contextKey", getRequestId(request.getHeaders()));
+        MDC.put("diagnosticContextKey", UUID.randomUUID().toString());
         MDC.put("transactionId", transactionMap.getOrDefault("transactionId",""));
         MDC.put("paymentContextCode", transactionMap.getOrDefault("paymentContextCode",""));
         return chain.filter(decorate(exchange));
@@ -50,14 +50,6 @@ public class MDCFilter implements WebFilter {
         UriTemplate uriTemplatePCC = new UriTemplate("/transactions/payment-context-codes/{paymentContextCode}/activation-results");
         UriTemplate uriTemplateStandard = new UriTemplate("/transactions/{transactionId}");
         return uriTemplatePCC.matches(request.getPath().value()) ? uriTemplatePCC.match(request.getPath().value()) : uriTemplateStandard.match(request.getPath().value());
-    }
-
-    private String getRequestId(HttpHeaders headers) {
-        //FIXME put here appInsight id in place of "Request-Id"
-        List<String> requestIdHeaders = headers.get("Request-Id");
-        return requestIdHeaders == null || requestIdHeaders.isEmpty()
-                ? UUID.randomUUID().toString()
-                : requestIdHeaders.get(0);
     }
 
 }

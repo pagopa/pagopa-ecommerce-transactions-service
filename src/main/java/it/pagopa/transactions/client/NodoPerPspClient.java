@@ -29,6 +29,7 @@ public class NodoPerPspClient {
     private String nodoPerPspUri;
 
     public Mono<NodoVerificaRPTRisposta> verificaRPT(JAXBElement<NodoVerificaRPT> request) {
+        log.info("verificaRPT idRpt {} ", request.getValue().getCodiceIdRPT());
         return nodoWebClient.post()
                 .uri(nodoPerPspUri)
                 .header("Content-Type", MediaType.TEXT_XML_VALUE)
@@ -40,8 +41,8 @@ public class NodoPerPspClient {
                                 .flatMap(errorResponseBody -> Mono.error(
                                         new ResponseStatusException(clientResponse.statusCode(), errorResponseBody))))
                 .bodyToMono(NodoVerificaRPTRisposta.class)
-                .doOnSuccess((NodoVerificaRPTRisposta verificaRPTResponse) -> log.debug(
-                        "Payment info for {}",
+                .doOnSuccess((NodoVerificaRPTRisposta verificaRPTResponse) -> log.info(
+                        "Payment info for idRpt {}",
                         new Object[]{request.getValue().getCodiceIdRPT()}))
                 .doOnError(ResponseStatusException.class,
                         error -> log.error("ResponseStatus Error : {}", new Object[]{error}))
@@ -50,6 +51,7 @@ public class NodoPerPspClient {
     }
 
     public Mono<NodoAttivaRPTRisposta> attivaRPT(JAXBElement<NodoAttivaRPT> request) {
+        log.info("attivaRPT idRpt {} ", request.getValue().getCodiceIdRPT());
         return nodoWebClient.post()
                 .uri(nodoPerPspUri)
                 .header("Content-Type", MediaType.TEXT_XML_VALUE)
@@ -61,8 +63,8 @@ public class NodoPerPspClient {
                                 .flatMap(errorResponseBody -> Mono.error(
                                         new ResponseStatusException(clientResponse.statusCode(), errorResponseBody))))
                 .bodyToMono(NodoAttivaRPTRisposta.class)
-                .doOnSuccess((NodoAttivaRPTRisposta attivaRPTResponse) -> log.debug(
-                        "Payment info for {}",
+                .doOnSuccess((NodoAttivaRPTRisposta attivaRPTResponse) -> log.info(
+                        "Payment info for idRpt {}",
                         new Object[]{request.getValue().getCodiceIdRPT()}))
                 .doOnError(ResponseStatusException.class,
                         error -> log.error("ResponseStatus Error : {}", new Object[]{error}))
