@@ -142,8 +142,7 @@ public class TransactionsService {
                                               .equals(requestAuthorizationRequestDto.getPspId())
                                           && psp.getFixedCost()
                                               .equals(
-                                                  (double) requestAuthorizationRequestDto.getFee()
-                                                      / 100))
+                                                  Long.valueOf(requestAuthorizationRequestDto.getFee())))
                               .findFirst()
                               .orElse(null))
                   .map(psp -> Tuples.of(transaction, psp));
