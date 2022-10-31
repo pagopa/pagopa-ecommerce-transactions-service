@@ -2,9 +2,7 @@ package it.pagopa.transactions.mdcutilities;
 
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.ServerWebExchangeDecorator;
@@ -13,7 +11,6 @@ import org.springframework.web.server.WebFilterChain;
 import org.springframework.web.util.UriTemplate;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
