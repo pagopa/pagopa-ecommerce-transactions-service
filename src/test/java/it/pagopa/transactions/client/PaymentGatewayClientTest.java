@@ -29,9 +29,6 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.eq;
-
 @ExtendWith(SpringExtension.class)
 class PaymentGatewayClientTest {
     @InjectMocks
@@ -83,7 +80,7 @@ class PaymentGatewayClientTest {
                 .urlRedirect("https://example.com");
 
         /* preconditions */
-        Mockito.when(paymentTransactionsControllerApi.authRequest(eq(postePayAuthRequest), eq(false), eq(encodedMdcFields)))
+        Mockito.when(paymentTransactionsControllerApi.authRequest(postePayAuthRequest, false, encodedMdcFields))
                 .thenReturn(Mono.just(apiResponse));
 
         /* test */
@@ -126,7 +123,7 @@ class PaymentGatewayClientTest {
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
 
         /* preconditions */
-        Mockito.when(paymentTransactionsControllerApi.authRequest(eq(postePayAuthRequest), eq(false), eq(encodedMdcFields)))
+        Mockito.when(paymentTransactionsControllerApi.authRequest(postePayAuthRequest, false, encodedMdcFields))
                 .thenReturn(Mono.error(new WebClientResponseException("api error", HttpStatus.UNAUTHORIZED.value(), "Unauthorized", null, null, null)));
 
         /* test */
@@ -173,7 +170,7 @@ class PaymentGatewayClientTest {
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
 
         /* preconditions */
-        Mockito.when(paymentTransactionsControllerApi.authRequest( eq(postePayAuthRequest), eq(false), eq(encodedMdcFields)))
+        Mockito.when(paymentTransactionsControllerApi.authRequest(postePayAuthRequest, false, encodedMdcFields))
                 .thenReturn(Mono.error(new WebClientResponseException("api error", HttpStatus.GATEWAY_TIMEOUT.value(), "Gateway timeout", null, null, null)));
 
         /* test */
@@ -216,7 +213,7 @@ class PaymentGatewayClientTest {
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
 
         /* preconditions */
-        Mockito.when(paymentTransactionsControllerApi.authRequest(eq(postePayAuthRequest), eq(false), eq(encodedMdcFields)))
+        Mockito.when(paymentTransactionsControllerApi.authRequest(postePayAuthRequest, false, encodedMdcFields))
                 .thenReturn(Mono.error(new WebClientResponseException("api error", HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error", null, null, null)));
 
         /* test */
@@ -263,7 +260,7 @@ class PaymentGatewayClientTest {
 
         /* preconditions */
         Mockito.when(objectMapper.writeValueAsString(Map.of("ecommerceTransactionId", transactionIdUUID))).thenThrow(new JsonProcessingException(""){});
-        Mockito.when(paymentTransactionsControllerApi.authRequest(eq(postePayAuthRequest), eq(false), eq(encodedMdcFields)))
+        Mockito.when(paymentTransactionsControllerApi.authRequest(postePayAuthRequest, false, encodedMdcFields))
                 .thenReturn(Mono.just(apiResponse));
 
         /* test */

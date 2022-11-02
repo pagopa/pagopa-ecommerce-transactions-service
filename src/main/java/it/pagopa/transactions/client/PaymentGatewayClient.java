@@ -32,7 +32,7 @@ public class PaymentGatewayClient {
 
     public Mono<PostePayAuthResponseEntityDto> requestAuthorization(AuthorizationRequestData authorizationData) {
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
-                .grandTotal(BigDecimal.valueOf(authorizationData.transaction().getAmount().value() + authorizationData.fee()))
+                .grandTotal(BigDecimal.valueOf(((long) authorizationData.transaction().getAmount().value()) + authorizationData.fee()))
                 .description(authorizationData.transaction().getDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(authorizationData.transaction().getTransactionId().value().toString());
