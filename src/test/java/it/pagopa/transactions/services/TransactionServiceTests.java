@@ -167,7 +167,7 @@ public class TransactionServiceTests {
 		pspDtoList.add(
 				new PspDto()
 						.code("PSP_CODE")
-						.fixedCost(2.0));
+						.fixedCost(200l));
 		PSPsResponseDto pspResponseDto = new PSPsResponseDto();
 		pspResponseDto.psp(pspDtoList);
 

@@ -9,7 +9,7 @@
     </parent>
     <groupId>it.pagopa</groupId>
     <artifactId>pagopa-ecommerce-transactions-service</artifactId>
-    <version>0.4.36</version>
+    <version>0.5.0</version>
     <name>pagopa-ecommerce-transactions-service</name>
     <description>pagopa-ecommerce-transactions-service</description>
     <properties>
@@ -413,6 +413,7 @@
                         <exclude>it/pagopa/transactions/server/api/ApiUtil</exclude>
                         <exclude>it/pagopa/transactions/utils/soap/**</exclude>
                         <exclude>it/pagopa/transactions/PagopaEcommerceTransactionsApplication.class</exclude>
+                        <exclude>it/pagopa/transactions/mdcutilities/**</exclude>
                     </excludes>
                 </configuration>
                 <version>${jacoco.version}</version>
