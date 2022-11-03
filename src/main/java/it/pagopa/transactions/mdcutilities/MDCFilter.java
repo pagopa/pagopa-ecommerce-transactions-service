@@ -50,9 +50,10 @@ public class MDCFilter implements WebFilter {
         //Optional.ofNullable(transactionMap.get("paymentContextCode")).ifPresent(v -> MDC.put("paymentContextCode", v));
         return chain.filter(decorate(exchange))
                 .doOnEach(logOnEach(r -> log.info("{} {} {}", request.getMethod(), request.getURI(), request.getBody())))
-                .contextWrite(Context.of("contextKey", getRequestId(request.getHeaders())))
+                .contextWrite(Context.of("contextKey", UUID.randomUUID().toString()))
                 .contextWrite(Context.of("transactionId", transactionMap.getOrDefault("transactionId", "")))
-                .contextWrite(Context.of("paymentContextCode", transactionMap.getOrDefault("paymentContextCode", "")));
+                .contextWrite(Context.of("paymentContextCode", transactionMap.getOrDefault("paymentContextCode", "")))
+                .contextWrite(Context.of("rptId", transactionMap.getOrDefault("rptId", "")));
     }
 
     private Map<String, String> getTransactionId(ServerHttpRequest request) {
@@ -63,8 +64,8 @@ public class MDCFilter implements WebFilter {
 
     public static <T> Consumer<Signal<T>> logOnEach(Consumer<T> logStatement) {
         return signal -> {
-            String contextValue = signal.getContextView().get("CONTEXT_KEY");
-            try (MDC.MDCCloseable cMdc = MDC.putCloseable("MDC_KEY", contextValue)) {
+            String contextValue = signal.getContextView().get("contextKey");
+            try (MDC.MDCCloseable cMdc = MDC.putCloseable("contextKey", contextValue)) {
                 logStatement.accept(signal.get());
             }
         };
@@ -73,8 +74,8 @@ public class MDCFilter implements WebFilter {
     public static <T> Consumer<Signal<T>> logOnNext(Consumer<T> logStatement) {
         return signal -> {
             if (!signal.isOnNext()) return;
-            String contextValue = signal.getContextView().get("CONTEXT_KEY");
-            try (MDC.MDCCloseable cMdc = MDC.putCloseable("MDC_KEY", contextValue)) {
+            String contextValue = signal.getContextView().get("contextKey");
+            try (MDC.MDCCloseable cMdc = MDC.putCloseable("contextKey", contextValue)) {
                 logStatement.accept(signal.get());
             }
         };

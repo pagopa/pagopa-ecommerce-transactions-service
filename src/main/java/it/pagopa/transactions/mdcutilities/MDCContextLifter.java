@@ -59,8 +59,8 @@ class MDCContextLifter<T> implements CoreSubscriber<T> {
         if (!context.isEmpty()) {
             Map<String, String> map = context.stream()
                     .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString()));
-            Optional<Map<String,String>> val = Optional.ofNullable(MDC.getCopyOfContextMap());
-            val.ifPresent(v -> map.putAll(v));
+            //Optional<Map<String,String>> val = Optional.ofNullable(MDC.getCopyOfContextMap());
+            //val.ifPresent(v -> map.putAll(v));
             MDC.setContextMap(map);
         } else {
             MDC.clear();
