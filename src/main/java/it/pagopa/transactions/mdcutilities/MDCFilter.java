@@ -45,9 +45,6 @@ public class MDCFilter implements WebFilter {
         ServerHttpRequest request = exchange.getRequest();
         Map<String,String> transactionMap = getTransactionId(exchange.getRequest());
 
-        //MDC.put("contextKey", getRequestId(request.getHeaders()));
-        //Optional.ofNullable(transactionMap.get("transactionId")).ifPresent(v -> MDC.put("transactionId", v));
-        //Optional.ofNullable(transactionMap.get("paymentContextCode")).ifPresent(v -> MDC.put("paymentContextCode", v));
         ServerWebExchange serverWebExchange = decorate(exchange);
         return chain.filter(serverWebExchange)
                 .doOnEach(logOnEach(r -> {
@@ -73,10 +70,7 @@ public class MDCFilter implements WebFilter {
             String paymentContextCode = signal.getContextView().get("paymentContextCode");
             String transactionId = signal.getContextView().get("transactionId");
             try {
-                MDC.putCloseable("contextKey", contextValue);
-                MDC.putCloseable("rptId", rptId);
-                MDC.putCloseable("paymentContextCode", paymentContextCode);
-                MDC.putCloseable("transactionId", transactionId);
+                fillMDC(contextValue, rptId, paymentContextCode, transactionId);
             } finally {
                 logStatement.accept(signal.get());
             }
@@ -91,14 +85,18 @@ public class MDCFilter implements WebFilter {
             String paymentContextCode = signal.getContextView().get("paymentContextCode");
             String transactionId = signal.getContextView().get("transactionId");
             try {
-                MDC.putCloseable("contextKey", contextValue);
-                MDC.putCloseable("rptId", rptId);
-                MDC.putCloseable("paymentContextCode", paymentContextCode);
-                MDC.putCloseable("transactionId", transactionId);
+                fillMDC(contextValue, rptId, paymentContextCode, transactionId);
             } finally {
                 logStatement.accept(signal.get());
             }
         };
+    }
+
+    private static void fillMDC(String contextValue, String rptId, String paymentContextCode, String transactionId) {
+        MDC.putCloseable("contextKey", contextValue);
+        MDC.putCloseable("rptId", rptId);
+        MDC.putCloseable("paymentContextCode", paymentContextCode);
+        MDC.putCloseable("transactionId", transactionId);
     }
 
 }
