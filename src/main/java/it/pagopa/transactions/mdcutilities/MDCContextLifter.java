@@ -5,6 +5,7 @@ import org.slf4j.MDC;
 import reactor.core.CoreSubscriber;
 import reactor.util.context.Context;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -55,13 +56,18 @@ class MDCContextLifter<T> implements CoreSubscriber<T> {
      * One thread-local access only.
      */
     private void copyToMdc(Context context) {
-
         if (!context.isEmpty()) {
+            Map<String,String> val = Optional.ofNullable(MDC.getCopyOfContextMap()).orElseGet(() -> new HashMap<>());
             Map<String, String> map = context.stream()
                     .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString()));
-            //Optional<Map<String,String>> val = Optional.ofNullable(MDC.getCopyOfContextMap());
-            //val.ifPresent(v -> map.putAll(v));
-            MDC.setContextMap(map);
+
+            if(map.getOrDefault("contextKey","").equals(val.getOrDefault("contextKey",""))) {
+                map.putAll(val);
+                MDC.setContextMap(map);
+            } else {
+                val.putAll(map);
+                MDC.setContextMap(val);
+            }
         } else {
             MDC.clear();
         }

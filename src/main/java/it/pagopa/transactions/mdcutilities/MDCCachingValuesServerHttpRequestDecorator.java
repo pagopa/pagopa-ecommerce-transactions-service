@@ -13,6 +13,7 @@ import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 import reactor.core.publisher.Flux;
 import reactor.util.context.Context;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,24 +22,34 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 @Slf4j
 public class MDCCachingValuesServerHttpRequestDecorator extends ServerHttpRequestDecorator {
 
-    public final StringBuilder value;
+    public final  Map<String, Object>  objectAsMap;
+
+    public Map<String, Object> getObjectAsMap() {
+        return objectAsMap;
+    }
+
     public MDCCachingValuesServerHttpRequestDecorator(ServerHttpRequest delegate) {
         super(delegate);
-        value = new StringBuilder();
+        objectAsMap = new HashMap<>();
     }
 
     @Override
     public Flux<DataBuffer> getBody() {
-        //FIXME caching is done after than needed.
-        return super.getBody().doOnNext(this::cache).contextWrite(Context.of("rptId",value.toString()));
+        return super.getBody().doOnNext(this::cache);
     }
 
     @SneakyThrows
     private void cache(DataBuffer buffer) {
         //TODO Enumerate dto values of interest to cache more value as possible if needed
-        Map<String, Object>  objectAsMap = getValue(UTF_8.decode(buffer.asByteBuffer()).toString());
+        objectAsMap.putAll(getValue(UTF_8.decode(buffer.asByteBuffer()).toString()));
         MDC.put("rptId", objectAsMap.getOrDefault("rptId","").toString());
         MDC.put("paymentContextCode", objectAsMap.getOrDefault("paymentContextCode","").toString());
+    }
+
+    public String getInfoFromValuesMap() {
+        StringBuilder builder = new StringBuilder();
+        Arrays.stream(new String[]{"rptId", "paymentContextCode"}).forEach(key -> objectAsMap.computeIfPresent(key, (k, v) -> builder.append(k + ": " + v + " ")));
+        return builder.toString().trim();
     }
 
     private Map<String, Object> getValue(String data) throws JsonProcessingException {

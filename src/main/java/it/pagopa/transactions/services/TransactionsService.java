@@ -68,7 +68,7 @@ public class TransactionsService {
       NewTransactionRequestDto newTransactionRequestDto) {
 
       //This allows us to have custom fields in custom dimensions. In this case we have "RtpID" field in custom dimensions with value specified
-      MDC.put("RptID", newTransactionRequestDto.getRptId());
+      //MDC.put("RptID", newTransactionRequestDto.getRptId());
     log.info("Initializing transaction for rptId: {}", newTransactionRequestDto.getRptId());
     TransactionActivateCommand command =
         new TransactionActivateCommand(

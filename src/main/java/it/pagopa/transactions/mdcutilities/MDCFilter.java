@@ -48,8 +48,12 @@ public class MDCFilter implements WebFilter {
         //MDC.put("contextKey", getRequestId(request.getHeaders()));
         //Optional.ofNullable(transactionMap.get("transactionId")).ifPresent(v -> MDC.put("transactionId", v));
         //Optional.ofNullable(transactionMap.get("paymentContextCode")).ifPresent(v -> MDC.put("paymentContextCode", v));
-        return chain.filter(decorate(exchange))
-                .doOnEach(logOnEach(r -> log.info("{} {} {}", request.getMethod(), request.getURI(), request.getBody())))
+        ServerWebExchange serverWebExchange = decorate(exchange);
+        return chain.filter(serverWebExchange)
+                .doOnEach(logOnEach(r -> {
+                        log.info("{} {} {}", request.getMethod(), request.getURI(), ((MDCCachingValuesServerHttpRequestDecorator)serverWebExchange.getRequest()).getInfoFromValuesMap());
+                        ((MDCCachingValuesServerHttpRequestDecorator)serverWebExchange.getRequest()).getObjectAsMap().forEach((k,v) -> transactionMap.put(k,v.toString()));
+                }))
                 .contextWrite(Context.of("contextKey", UUID.randomUUID().toString()))
                 .contextWrite(Context.of("transactionId", transactionMap.getOrDefault("transactionId", "")))
                 .contextWrite(Context.of("paymentContextCode", transactionMap.getOrDefault("paymentContextCode", "")))
@@ -65,7 +69,15 @@ public class MDCFilter implements WebFilter {
     public static <T> Consumer<Signal<T>> logOnEach(Consumer<T> logStatement) {
         return signal -> {
             String contextValue = signal.getContextView().get("contextKey");
-            try (MDC.MDCCloseable cMdc = MDC.putCloseable("contextKey", contextValue)) {
+            String rptId = signal.getContextView().get("rptId");
+            String paymentContextCode = signal.getContextView().get("paymentContextCode");
+            String transactionId = signal.getContextView().get("transactionId");
+            try {
+                MDC.putCloseable("contextKey", contextValue);
+                MDC.putCloseable("rptId", rptId);
+                MDC.putCloseable("paymentContextCode", paymentContextCode);
+                MDC.putCloseable("transactionId", transactionId);
+            } finally {
                 logStatement.accept(signal.get());
             }
         };
@@ -75,7 +87,15 @@ public class MDCFilter implements WebFilter {
         return signal -> {
             if (!signal.isOnNext()) return;
             String contextValue = signal.getContextView().get("contextKey");
-            try (MDC.MDCCloseable cMdc = MDC.putCloseable("contextKey", contextValue)) {
+            String rptId = signal.getContextView().get("rptId");
+            String paymentContextCode = signal.getContextView().get("paymentContextCode");
+            String transactionId = signal.getContextView().get("transactionId");
+            try {
+                MDC.putCloseable("contextKey", contextValue);
+                MDC.putCloseable("rptId", rptId);
+                MDC.putCloseable("paymentContextCode", paymentContextCode);
+                MDC.putCloseable("transactionId", transactionId);
+            } finally {
                 logStatement.accept(signal.get());
             }
         };
