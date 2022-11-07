@@ -1,11 +1,12 @@
 package it.pagopa.transactions.commands.handlers;
 
+import com.azure.core.util.BinaryData;
+import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.client.NodoPerPM;
 import it.pagopa.transactions.commands.TransactionActivateResultCommand;
 import it.pagopa.transactions.documents.TransactionActivatedData;
 import it.pagopa.transactions.documents.TransactionActivatedEvent;
-import it.pagopa.transactions.domain.TransactionActivated;
 import it.pagopa.transactions.domain.TransactionActivationRequested;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
@@ -14,78 +15,140 @@ import it.pagopa.transactions.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+
+import java.time.Duration;
 
 @Component
 @Slf4j
 public class TransactionActivateResultHandler
-		implements CommandHandler<TransactionActivateResultCommand, Mono<TransactionActivatedEvent>> {
+    implements CommandHandler<TransactionActivateResultCommand, Mono<TransactionActivatedEvent>> {
 
-	@Autowired
-	private TransactionsEventStoreRepository<TransactionActivatedData> transactionEventStoreRepository;
+  @Autowired
+  private TransactionsEventStoreRepository<TransactionActivatedData>
+      transactionEventStoreRepository;
 
-	@Autowired private NodoPerPM nodoPerPM;
+  @Autowired private NodoPerPM nodoPerPM;
 
-	@Autowired private PaymentRequestsInfoRepository paymentRequestsInfoRepository;
+  @Autowired private PaymentRequestsInfoRepository paymentRequestsInfoRepository;
 
-	@Override
-	public Mono<TransactionActivatedEvent> handle(TransactionActivateResultCommand command) {
+  @Autowired
+  @Qualifier("transactionActivatedQueueAsyncClient")
+  QueueAsyncClient transactionActivatedQueueAsyncClient;
 
-		final TransactionActivationRequested transactionActivationRequested = command.getData().transactionActivationRequested();
+  @Value("${payment.token.timeout}")
+  String paymentTokenTimeout;
 
-		final String transactionId = command.getData().transactionActivationRequested().getTransactionId().value().toString();
+  @Override
+  public Mono<TransactionActivatedEvent> handle(TransactionActivateResultCommand command) {
 
-		return Mono.just(command)
-				.filterWhen(commandData -> Mono
-						.just(commandData.getData().transactionActivationRequested().getStatus() == TransactionStatusDto.ACTIVATION_REQUESTED))
-				.switchIfEmpty(Mono.error(new AlreadyProcessedException(command.getRptId())))
-				.flatMap(commandData -> {
-					final String paymentToken = commandData.getData().activationResultData().getPaymentToken();
+    final TransactionActivationRequested transactionActivationRequested =
+        command.getData().transactionActivationRequested();
 
-					return nodoPerPM.chiediInformazioniPagamento(paymentToken)
-							.doOnError(throwable -> {
-								log.error("chiediInformazioniPagamento failed for paymentToken {}", paymentToken);
-								throw new TransactionNotFoundException("chiediInformazioniPagamento failed for paymentToken " +paymentToken);
-							})
-							.doOnSuccess(a -> log.info("chiediInformazioniPagamento succeded for paymentToken {}", paymentToken));
-				}).flatMap(informazioniPagamentoDto -> paymentRequestsInfoRepository.findById(command.getRptId()).map(Mono::just).orElseGet(Mono::empty))
-				.switchIfEmpty(Mono.error(new TransactionNotFoundException("Transaction not found for rptID " + command.getRptId().value() + " with paymentToken "+ command.getData().activationResultData().getPaymentToken())))
-				.flatMap(paymentRequestInfo -> {
-					log.info("paymentRequestsInfoRepository findById info for rptID {} succeeded", command.getRptId().value());
-					//FIXME check why this repository is not a reactive repository
-					return Mono.just(paymentRequestsInfoRepository.save(
-							new PaymentRequestInfo(
-									paymentRequestInfo.id(),
-									paymentRequestInfo.paFiscalCode(),
-									paymentRequestInfo.paName(),
-									paymentRequestInfo.description(),
-									paymentRequestInfo.amount(),
-									paymentRequestInfo.dueDate(),
-									paymentRequestInfo.isNM3(),
-									command.getData().activationResultData().getPaymentToken(),
-									paymentRequestInfo.idempotencyKey())
-					));
-				}).flatMap(saved -> {
-					TransactionActivatedData data = new TransactionActivatedData(
-							transactionActivationRequested.getDescription().value(),
-							transactionActivationRequested.getAmount().value(),
-							transactionActivationRequested.getEmail().value(),
-							null,
-							null,
-							saved.paymentToken()
-					);
+    final String transactionId =
+        command.getData().transactionActivationRequested().getTransactionId().value().toString();
 
-					TransactionActivatedEvent transactionActivatedEvent =
-							new TransactionActivatedEvent(
-									transactionId,
-									command.getData().transactionActivationRequested().getRptId().value(),
-									saved.paymentToken(),
-									data
-							);
+    return Mono.just(command)
+        .filterWhen(
+            commandData ->
+                Mono.just(
+                    commandData.getData().transactionActivationRequested().getStatus()
+                        == TransactionStatusDto.ACTIVATION_REQUESTED))
+        .switchIfEmpty(Mono.error(new AlreadyProcessedException(command.getRptId())))
+        .flatMap(
+            commandData -> {
+              final String paymentToken =
+                  commandData.getData().activationResultData().getPaymentToken();
 
-					log.info("Saving TransactionActivatedevent {}", transactionActivatedEvent);
-					return transactionEventStoreRepository.save(transactionActivatedEvent);
-				});
-	}
+              return nodoPerPM
+                  .chiediInformazioniPagamento(paymentToken)
+                  .doOnError(
+                      throwable -> {
+                        log.error(
+                            "chiediInformazioniPagamento failed for paymentToken {}", paymentToken);
+                        throw new TransactionNotFoundException(
+                            "chiediInformazioniPagamento failed for paymentToken " + paymentToken);
+                      })
+                  .doOnSuccess(
+                      a ->
+                          log.info(
+                              "chiediInformazioniPagamento succeded for paymentToken {}",
+                              paymentToken));
+            })
+        .flatMap(
+            informazioniPagamentoDto ->
+                paymentRequestsInfoRepository
+                    .findById(command.getRptId())
+                    .map(Mono::just)
+                    .orElseGet(Mono::empty))
+        .switchIfEmpty(
+            Mono.error(
+                new TransactionNotFoundException(
+                    "Transaction not found for rptID "
+                        + command.getRptId().value()
+                        + " with paymentToken "
+                        + command.getData().activationResultData().getPaymentToken())))
+        .flatMap(
+            paymentRequestInfo -> {
+              log.info(
+                  "paymentRequestsInfoRepository findById info for rptID {} succeeded",
+                  command.getRptId().value());
+              // FIXME check why this repository is not a reactive repository
+              return Mono.just(
+                  paymentRequestsInfoRepository.save(
+                      new PaymentRequestInfo(
+                          paymentRequestInfo.id(),
+                          paymentRequestInfo.paFiscalCode(),
+                          paymentRequestInfo.paName(),
+                          paymentRequestInfo.description(),
+                          paymentRequestInfo.amount(),
+                          paymentRequestInfo.dueDate(),
+                          paymentRequestInfo.isNM3(),
+                          command.getData().activationResultData().getPaymentToken(),
+                          paymentRequestInfo.idempotencyKey())));
+            })
+        .flatMap(
+            saved -> {
+              TransactionActivatedData data =
+                  new TransactionActivatedData(
+                      transactionActivationRequested.getDescription().value(),
+                      transactionActivationRequested.getAmount().value(),
+                      transactionActivationRequested.getEmail().value(),
+                      null,
+                      null,
+                      saved.paymentToken());
+
+              TransactionActivatedEvent transactionActivatedEvent =
+                  new TransactionActivatedEvent(
+                      transactionId,
+                      command.getData().transactionActivationRequested().getRptId().value(),
+                      saved.paymentToken(),
+                      data);
+
+              log.info("Saving TransactionActivatedevent {}", transactionActivatedEvent);
+              return transactionEventStoreRepository.save(transactionActivatedEvent);
+            })
+        .doOnNext(
+            transactionActivatedEvent ->
+                transactionActivatedQueueAsyncClient
+                    .sendMessageWithResponse(
+                        BinaryData.fromObject(transactionActivatedEvent),
+                        Duration.ofSeconds(Integer.valueOf(paymentTokenTimeout)),
+                        null)
+                    .subscribe(
+                        response ->
+                            log.debug(
+                                "TransactionActivatedEvent {} expires at {} for transactionId {}",
+                                response.getValue().getMessageId(),
+                                response.getValue().getExpirationTime(),
+                                transactionId),
+                        error -> log.error(error.toString()),
+                        () ->
+                            log.debug(
+                                "Complete enqueuing the message TransactionActivatedEvent for transactionId {}!",
+                                transactionId)));
+  }
 }
