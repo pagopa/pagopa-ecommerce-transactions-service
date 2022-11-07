@@ -1,5 +1,7 @@
 package it.pagopa.transactions.commands.handlers;
 
+import com.azure.core.util.BinaryData;
+import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.generated.ecommerce.nodo.v1.dto.InformazioniPagamentoDto;
 import it.pagopa.generated.transactions.server.model.ActivationResultRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
@@ -21,6 +23,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -28,6 +31,7 @@ import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,6 +47,8 @@ class TransactionActivateResultHandlerTest {
     @Mock
     private TransactionsEventStoreRepository<TransactionActivatedData> transactionEventStoreRepository;
 
+    @Mock
+    private QueueAsyncClient queueAsyncClient;
     @Test
     void shouldThrowsTransactionNotFoundOnNodoPerPMError() {
 
@@ -101,6 +107,8 @@ class TransactionActivateResultHandlerTest {
         requestDto.setRptId(rptId.value());
         requestDto.setEmail("jhon.doe@email.com");
         requestDto.setAmount(1200);
+
+        ReflectionTestUtils.setField(handler, "paymentTokenTimeout", "300");
 
         ActivationResultRequestDto activationResultRequestDto =
                 new ActivationResultRequestDto()
@@ -165,6 +173,7 @@ class TransactionActivateResultHandlerTest {
         Mockito.when(nodoPerPM.chiediInformazioniPagamento(Mockito.any(String.class)))
                 .thenReturn(Mono.just(informazioniPagamentoDto));
         Mockito.when(transactionEventStoreRepository.save(Mockito.any(TransactionActivatedEvent.class))).thenReturn(Mono.just(transactionActivatedEvent));
+        Mockito.when(queueAsyncClient.sendMessageWithResponse(BinaryData.fromObject(any()),any(),any())).thenReturn(Mono.empty());
 
         handler.handle(command).block();
 
