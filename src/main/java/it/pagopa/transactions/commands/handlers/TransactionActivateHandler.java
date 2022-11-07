@@ -1,5 +1,7 @@
 package it.pagopa.transactions.commands.handlers;
 
+git statusimport com.azure.core.util.BinaryData;
+import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
@@ -11,11 +13,14 @@ import it.pagopa.transactions.repositories.*;
 import it.pagopa.transactions.utils.NodoOperations;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
+import java.time.Duration;
 import java.util.UUID;
 
 @Slf4j
@@ -42,6 +47,13 @@ public class TransactionActivateHandler
   @Autowired EcommerceSessionsClient ecommerceSessionsClient;
 
   @Autowired NodoOperations nodoOperations;
+
+  @Autowired
+  @Qualifier("transactionActivatedQueueAsyncClient")
+  QueueAsyncClient transactionActivatedQueueAsyncClient;
+
+  @Value("${payment.token.timeout}")
+  String paymentTokenTimeout;
 
   public Mono<
           Tuple3<
@@ -119,12 +131,33 @@ public class TransactionActivateHandler
                   ? Mono.just(
                       Tuples.of(
                           newTransactionActivatedEvent(
-                              paymentRequestInfo.amount(),
-                              paymentRequestInfo.description(),
-                              sessionDataDto.getEmail(),
-                              sessionDataDto.getTransactionId(),
-                              sessionDataDto.getRptId(),
-                              paymentToken),
+                                  paymentRequestInfo.amount(),
+                                  paymentRequestInfo.description(),
+                                  sessionDataDto.getEmail(),
+                                  sessionDataDto.getTransactionId(),
+                                  sessionDataDto.getRptId(),
+                                  paymentToken)
+                              .doOnNext(
+                                  transactionActivatedEvent ->
+                                      transactionActivatedQueueAsyncClient
+                                          .sendMessageWithResponse(
+                                              BinaryData.fromObject(transactionActivatedEvent),
+                                              Duration.ofSeconds(
+                                                  Integer.valueOf(paymentTokenTimeout)),
+                                              null)
+                                          .subscribe(
+                                              response ->
+                                                  log.debug(
+                                                      "TransactionActivatedEvent {} expires at {} for transactionId {}",
+                                                      response.getValue().getMessageId(),
+                                                      response.getValue().getExpirationTime(),
+                                                      transactionActivatedEvent.getTransactionId()),
+                                              error -> log.error(error.toString()),
+                                              () ->
+                                                  log.debug(
+                                                      "Complete enqueuing the message TransactionActivatedEvent for transactionId {}!",
+                                                      transactionActivatedEvent
+                                                          .getTransactionId()))),
                           Mono.empty(),
                           sessionDataDto))
                   : Mono.just(
@@ -151,7 +184,12 @@ public class TransactionActivateHandler
   }
 
   private Mono<TransactionActivationRequestedEvent> newTransactionActivationRequestedEvent(
-      Integer amount, String description, String email, String transactionId, String rptId, String paymentContextCode) {
+      Integer amount,
+      String description,
+      String email,
+      String transactionId,
+      String rptId,
+      String paymentContextCode) {
 
     TransactionActivationRequestedData data = new TransactionActivationRequestedData();
     data.setAmount(amount);
