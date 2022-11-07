@@ -1,6 +1,6 @@
 package it.pagopa.transactions.commands.handlers;
 
-git statusimport com.azure.core.util.BinaryData;
+import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionRequestDto;
