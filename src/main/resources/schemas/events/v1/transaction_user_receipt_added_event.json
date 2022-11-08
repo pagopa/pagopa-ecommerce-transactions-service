@@ -2,6 +2,10 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "$id": "templates/events/transaction_user_receipt_added_event/schema.json",
   "properties": {
+    "version": {
+      "type": "string",
+      "default": "v1"
+    },
     "id": {
       "type": "string"
     },
@@ -44,6 +48,7 @@
     }
   },
   "required": [
+    "version",
     "authorizationResult"
   ],
   "additionalProperties": false

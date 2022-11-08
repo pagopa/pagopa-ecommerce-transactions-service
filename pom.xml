@@ -483,7 +483,7 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>transaction-activated-event</id>
+                        <id>event-schemas</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
@@ -498,11 +498,12 @@
                             </sourcePaths>
                             <targetPackage>it.pagopa.generated.ecommerce.events.v1</targetPackage>
                             <includeConstructors>true</includeConstructors>
+                            <generateBuilders>true</generateBuilders>
+                            <usePrimitives>true</usePrimitives>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
         </plugins>
     </build>
-
 </project>

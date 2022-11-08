@@ -2,6 +2,10 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "$id": "templates/events/transaction_authorization_requested_event/schema.json",
   "properties": {
+    "version": {
+      "type": "string",
+      "default": "v1"
+    },
     "id": {
       "type": "string"
     },
@@ -72,6 +76,7 @@
     }
   },
   "required": [
+    "version",
     "id",
     "transactionId",
     "rptId",
