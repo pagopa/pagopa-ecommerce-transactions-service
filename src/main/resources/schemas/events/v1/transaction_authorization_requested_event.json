@@ -19,7 +19,8 @@
       "type": "string"
     },
     "transactionEventCode": {
-      "const": "TRANSACTION_AUTHORIZATION_REQUESTED"
+      "type": "string",
+      "default": "TRANSACTION_AUTHORIZATION_REQUESTED"
     },
     "creationDate": {
       "type": "string",
@@ -29,10 +30,10 @@
       "type": "object",
       "properties": {
         "amount": {
-          "type": "number"
+          "type": "integer"
         },
         "fee": {
-          "type": "number"
+          "type": "integer"
         },
         "paymentInstrumentId": {
           "type": "string"

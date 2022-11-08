@@ -19,7 +19,8 @@
       "type": "string"
     },
     "transactionEventCode": {
-      "const": "TRANSACTION_ACTIVATION_REQUESTED"
+      "type": "string",
+      "default": "TRANSACTION_ACTIVATION_REQUESTED"
     },
     "creationDate": {
       "type": "string",
@@ -33,7 +34,7 @@
           "type": "string"
         },
         "amount": {
-          "type": "number"
+          "type": "integer"
         },
         "email": {
           "type": "string",

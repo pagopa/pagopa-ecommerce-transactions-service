@@ -19,7 +19,8 @@
       "type": "string"
     },
     "transactionEventCode": {
-      "const": "TRANSACTION_AUTHORIZATION_STATUS_UPDATED"
+      "type": "string",
+      "default": "TRANSACTION_AUTHORIZATION_STATUS_UPDATED"
     },
     "creationDate": {
       "type": "string",
