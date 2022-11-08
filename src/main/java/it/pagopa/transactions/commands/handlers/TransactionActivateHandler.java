@@ -131,33 +131,12 @@ public class TransactionActivateHandler
                   ? Mono.just(
                       Tuples.of(
                           newTransactionActivatedEvent(
-                                  paymentRequestInfo.amount(),
-                                  paymentRequestInfo.description(),
-                                  sessionDataDto.getEmail(),
-                                  sessionDataDto.getTransactionId(),
-                                  sessionDataDto.getRptId(),
-                                  paymentToken)
-                              .doOnNext(
-                                  transactionActivatedEvent ->
-                                      transactionActivatedQueueAsyncClient
-                                          .sendMessageWithResponse(
-                                              BinaryData.fromObject(transactionActivatedEvent),
-                                              Duration.ofSeconds(
-                                                  Integer.valueOf(paymentTokenTimeout)),
-                                              null)
-                                          .subscribe(
-                                              response ->
-                                                  log.debug(
-                                                      "TransactionActivatedEvent {} expires at {} for transactionId {}",
-                                                      response.getValue().getMessageId(),
-                                                      response.getValue().getExpirationTime(),
-                                                      transactionActivatedEvent.getTransactionId()),
-                                              error -> log.error(error.toString()),
-                                              () ->
-                                                  log.debug(
-                                                      "Complete enqueuing the message TransactionActivatedEvent for transactionId {}!",
-                                                      transactionActivatedEvent
-                                                          .getTransactionId()))),
+                              paymentRequestInfo.amount(),
+                              paymentRequestInfo.description(),
+                              sessionDataDto.getEmail(),
+                              sessionDataDto.getTransactionId(),
+                              sessionDataDto.getRptId(),
+                              paymentToken),
                           Mono.empty(),
                           sessionDataDto))
                   : Mono.just(
@@ -230,6 +209,26 @@ public class TransactionActivateHandler
         rptId,
         transactionId);
 
-    return transactionEventActivatedStoreRepository.save(transactionActivationRequestedEvent);
+    return transactionEventActivatedStoreRepository
+        .save(transactionActivationRequestedEvent)
+        .doOnNext(
+            transactionActivatedEvent ->
+                transactionActivatedQueueAsyncClient
+                    .sendMessageWithResponse(
+                        BinaryData.fromObject(transactionActivatedEvent),
+                        Duration.ofSeconds(Integer.valueOf(paymentTokenTimeout)),
+                        null)
+                    .subscribe(
+                        response ->
+                            log.debug(
+                                "TransactionActivatedEvent {} expires at {} for transactionId {}",
+                                response.getValue().getMessageId(),
+                                response.getValue().getExpirationTime(),
+                                transactionActivatedEvent.getTransactionId()),
+                        error -> log.error(error.toString()),
+                        () ->
+                            log.debug(
+                                "Complete enqueuing the message TransactionActivatedEvent for transactionId {}!",
+                                transactionActivatedEvent.getTransactionId())));
   }
 }
