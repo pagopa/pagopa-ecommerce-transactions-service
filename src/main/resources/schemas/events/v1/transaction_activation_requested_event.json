@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$id": "templates/events/transaction_activation_requested_event/schema.json",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "transactionId": {
+      "type": "string"
+    },
+    "rptId": {
+      "type": "string"
+    },
+    "paymentToken": {
+      "type": "string"
+    },
+    "transactionEventCode": {
+      "const": "TRANSACTION_ACTIVATION_REQUESTED"
+    },
+    "creationDate": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "data": {
+      "type": "object",
+      "javaType" : "it.pagopa.generated.ecommerce.events.v1.TransactionActivationRequestedData",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "faultCode": {
+          "type": "string"
+        },
+        "faultCodeString": {
+          "type": "string"
+        },
+        "paymentContextCode": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "description",
+        "amount",
+        "email",
+        "faultCode",
+        "faultCodeString",
+        "paymentContextCode"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "id",
+    "transactionId",
+    "rptId",
+    "paymentToken",
+    "transactionEventCode",
+    "creationDate",
+    "data"
+  ],
+  "additionalProperties": false
+}

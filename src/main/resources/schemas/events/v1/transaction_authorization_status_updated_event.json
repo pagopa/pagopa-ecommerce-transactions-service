@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$id": "templates/events/transaction_authorization_status_updated_event/schema.json",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "transactionId": {
+      "type": "string"
+    },
+    "rptId": {
+      "type": "string"
+    },
+    "paymentToken": {
+      "type": "string"
+    },
+    "transactionEventCode": {
+      "const": "TRANSACTION_AUTHORIZATION_STATUS_UPDATED"
+    },
+    "creationDate": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "data": {
+      "type": "object",
+      "javaType" : "it.pagopa.generated.ecommerce.events.v1.TransactionAuthorizationStatusUpdatedData",
+      "properties": {
+        "authorizationResult": {
+          "$ref": "./authorization_result.json"
+        },
+        "newTransactionStatus": {
+          "$ref": "./transaction_status.json"
+        }
+      },
+      "required": [
+        "authorizationResult",
+        "newTransactionStatus"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "authorizationResult"
+  ],
+  "additionalProperties": false
+}
