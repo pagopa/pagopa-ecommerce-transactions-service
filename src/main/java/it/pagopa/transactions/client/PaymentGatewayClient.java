@@ -1,5 +1,7 @@
 package it.pagopa.transactions.client;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
@@ -14,6 +16,9 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Map;
 
 @Component
 public class PaymentGatewayClient {
@@ -21,20 +26,36 @@ public class PaymentGatewayClient {
     @Qualifier("paymentTransactionGatewayPostepayWebClient")
     PostePayInternalApi paymentTransactionGatewayPostepayWebClient;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
 
     public Mono<PostePayAuthResponseEntityDto> requestAuthorization(AuthorizationRequestData authorizationData) {
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
-                .grandTotal(BigDecimal.valueOf(authorizationData.transaction().getAmount().value() + authorizationData.fee()))
+                .grandTotal(BigDecimal.valueOf(((long) authorizationData.transaction().getAmount().value()) + authorizationData.fee()))
                 .description(authorizationData.transaction().getDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(authorizationData.transaction().getTransactionId().value().toString());
 
-        return paymentTransactionGatewayPostepayWebClient.authRequest( postePayAuthRequest, false, authorizationData.transaction().getTransactionId().value().toString())
+        String encodedMdcFields = encodeMdcFields(authorizationData);
+
+        return paymentTransactionGatewayPostepayWebClient.authRequest(postePayAuthRequest, false, encodedMdcFields)
                 .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
                     case UNAUTHORIZED -> new AlreadyProcessedException(authorizationData.transaction().getRptId());
                     case GATEWAY_TIMEOUT -> new GatewayTimeoutException();
                     case INTERNAL_SERVER_ERROR -> new BadGatewayException("");
                     default -> exception;
                 });
+    }
+
+    private String encodeMdcFields(AuthorizationRequestData authorizationData) {
+        String mdcData;
+        try {
+            mdcData = objectMapper.writeValueAsString(Map.of("transactionId", authorizationData.transaction().getTransactionId().value()));
+        } catch (JsonProcessingException e) {
+            mdcData = "";
+        }
+
+        return Base64.getEncoder().encodeToString(mdcData.getBytes(StandardCharsets.UTF_8));
     }
 }
