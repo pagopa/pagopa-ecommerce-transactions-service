@@ -51,7 +51,7 @@ public class PaymentGatewayClient {
     private String encodeMdcFields(AuthorizationRequestData authorizationData) {
         String mdcData;
         try {
-            mdcData = objectMapper.writeValueAsString(Map.of("ecommerceTransactionId", authorizationData.transaction().getTransactionId().value()));
+            mdcData = objectMapper.writeValueAsString(Map.of("transactionId", authorizationData.transaction().getTransactionId().value()));
         } catch (JsonProcessingException e) {
             mdcData = "";
         }

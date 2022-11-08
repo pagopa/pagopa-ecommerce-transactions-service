@@ -72,7 +72,7 @@ class PaymentGatewayClientTest {
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(transactionIdUUID.toString());
 
-        String mdcInfo = objectMapper.writeValueAsString(Map.of("ecommerceTransactionId", transactionIdUUID));
+        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
 
         PostePayAuthResponseEntityDto apiResponse = new PostePayAuthResponseEntityDto()
@@ -119,7 +119,7 @@ class PaymentGatewayClientTest {
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(transactionIdUUID.toString());
 
-        String mdcInfo = objectMapper.writeValueAsString(Map.of("ecommerceTransactionId", transactionIdUUID));
+        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
 
         /* preconditions */
@@ -166,7 +166,7 @@ class PaymentGatewayClientTest {
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(transactionIdUUID.toString());
 
-        String mdcInfo = objectMapper.writeValueAsString(Map.of("ecommerceTransactionId", transactionIdUUID));
+        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
 
         /* preconditions */
@@ -209,7 +209,7 @@ class PaymentGatewayClientTest {
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(transactionIdUUID.toString());
 
-        String mdcInfo = objectMapper.writeValueAsString(Map.of("ecommerceTransactionId", transactionIdUUID));
+        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
 
         /* preconditions */
@@ -259,7 +259,7 @@ class PaymentGatewayClientTest {
                 .urlRedirect("https://example.com");
 
         /* preconditions */
-        Mockito.when(objectMapper.writeValueAsString(Map.of("ecommerceTransactionId", transactionIdUUID))).thenThrow(new JsonProcessingException(""){});
+        Mockito.when(objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID))).thenThrow(new JsonProcessingException(""){});
         Mockito.when(paymentTransactionsControllerApi.authRequest(postePayAuthRequest, false, encodedMdcFields))
                 .thenReturn(Mono.just(apiResponse));
 
