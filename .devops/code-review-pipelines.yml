@@ -71,6 +71,7 @@ stages:
           displayName: 'Publish Code Coverage on Azure Devops'
 
   - stage: IntegrationTest
+    dependsOn: []
     jobs: 
       - job: make_integration_test  
         steps:
