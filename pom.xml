@@ -489,6 +489,7 @@
                         </goals>
                         <configuration>
                             <sourcePaths>
+                                <sourcePath>${basedir}/src/main/resources/schemas/events/v1/event_version.json</sourcePath>
                                 <sourcePath>${basedir}/src/main/resources/schemas/events/v1/transaction_activated_event.json</sourcePath>
                                 <sourcePath>${basedir}/src/main/resources/schemas/events/v1/transaction_activation_requested_event.json</sourcePath>
                                 <sourcePath>${basedir}/src/main/resources/schemas/events/v1/transaction_authorization_requested_event.json</sourcePath>

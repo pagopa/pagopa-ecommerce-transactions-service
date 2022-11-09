@@ -1,0 +1,9 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$id": "templates/events/version/schema.json",
+  "type": "string",
+  "javaType": "it.pagopa.generated.ecommerce.events.v1.Version",
+  "enum": [
+    "v1"
+  ]
+}

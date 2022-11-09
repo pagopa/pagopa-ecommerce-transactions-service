@@ -3,8 +3,7 @@
   "$id": "templates/events/transaction_activation_requested_event/schema.json",
   "properties": {
     "version": {
-      "type": "string",
-      "default": "v1"
+      "$ref": "./event_version.json"
     },
     "id": {
       "type": "string"
@@ -20,7 +19,7 @@
     },
     "transactionEventCode": {
       "type": "string",
-      "default": "TRANSACTION_ACTIVATION_REQUESTED"
+      "enum": ["TRANSACTION_ACTIVATION_REQUESTED"]
     },
     "creationDate": {
       "type": "string",

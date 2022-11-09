@@ -3,8 +3,7 @@
   "$id": "templates/events/transaction_authorization_status_updated_event/schema.json",
   "properties": {
     "version": {
-      "type": "string",
-      "default": "v1"
+      "$ref": "./event_version.json"
     },
     "id": {
       "type": "string"
@@ -20,7 +19,7 @@
     },
     "transactionEventCode": {
       "type": "string",
-      "default": "TRANSACTION_AUTHORIZATION_STATUS_UPDATED"
+      "enum": ["TRANSACTION_AUTHORIZATION_STATUS_UPDATED"]
     },
     "creationDate": {
       "type": "string",
