@@ -128,27 +128,29 @@ public class TransactionActivateResultHandler
                       saved.paymentToken(),
                       data);
 
-              log.info("Saving TransactionActivatedevent {}", transactionActivatedEvent);
-              return transactionEventStoreRepository.save(transactionActivatedEvent);
-            })
-        .doOnNext(
-            transactionActivatedEvent ->
-                transactionActivatedQueueAsyncClient
-                    .sendMessageWithResponse(
-                        BinaryData.fromObject(transactionActivatedEvent),
-                        Duration.ofSeconds(Integer.valueOf(paymentTokenTimeout)),
-                        null)
-                    .subscribe(
-                        response ->
-                            log.debug(
-                                "TransactionActivatedEvent {} expires at {} for transactionId {}",
-                                response.getValue().getMessageId(),
-                                response.getValue().getExpirationTime(),
-                                transactionId),
-                        error -> log.error(error.toString()),
-                        () ->
-                            log.debug(
-                                "Complete enqueuing the message TransactionActivatedEvent for transactionId {}!",
-                                transactionId)));
+              log.info("Saving TransactionActivatedEvent {}", transactionActivatedEvent);
+              return transactionEventStoreRepository
+                  .save(transactionActivatedEvent)
+                  .thenReturn(transactionActivatedEvent)
+                  .doOnNext(
+                      event ->
+                          transactionActivatedQueueAsyncClient
+                              .sendMessageWithResponse(
+                                  BinaryData.fromObject(event),
+                                  Duration.ofSeconds(Integer.valueOf(paymentTokenTimeout)),
+                                  null)
+                              .subscribe(
+                                  response ->
+                                      log.debug(
+                                          "TransactionActivatedEvent {} expires at {} for transactionId {}",
+                                          response.getValue().getMessageId(),
+                                          response.getValue().getExpirationTime(),
+                                          transactionActivatedEvent.getTransactionId()),
+                                  error -> log.error(error.toString()),
+                                  () ->
+                                      log.debug(
+                                          "Complete enqueuing the message TransactionActivatedEvent for transactionId {}!",
+                                          transactionActivatedEvent.getTransactionId())));
+            });
   }
 }

@@ -201,7 +201,7 @@ public class TransactionActivateHandler
     data.setEmail(email);
     data.setPaymentToken(paymentToken);
 
-    TransactionActivatedEvent transactionActivationRequestedEvent =
+    TransactionActivatedEvent transactionActivatedEvent =
         new TransactionActivatedEvent(transactionId, rptId, paymentToken, data);
 
     log.info(
@@ -210,12 +210,13 @@ public class TransactionActivateHandler
         transactionId);
 
     return transactionEventActivatedStoreRepository
-        .save(transactionActivationRequestedEvent)
+        .save(transactionActivatedEvent)
+        .thenReturn(transactionActivatedEvent)
         .doOnNext(
-            transactionActivatedEvent ->
+            event ->
                 transactionActivatedQueueAsyncClient
                     .sendMessageWithResponse(
-                        BinaryData.fromObject(transactionActivatedEvent),
+                        BinaryData.fromObject(event),
                         Duration.ofSeconds(Integer.valueOf(paymentTokenTimeout)),
                         null)
                     .subscribe(
