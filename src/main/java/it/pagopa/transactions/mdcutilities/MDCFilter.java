@@ -25,6 +25,11 @@ import java.util.function.Consumer;
 @Slf4j
 public class MDCFilter implements WebFilter {
 
+    public static final String CONTEXT_KEY = "contextKey";
+    public static final String TRANSACTION_ID = "transactionId";
+    public static final String PAYMENT_CONTEXT_CODE = "paymentContextCode";
+    public static final String RPT_ID = "rptId";
+
     private ServerWebExchange decorate(ServerWebExchange exchange) {
 
         final ServerHttpRequest decoratedRequest = new MDCCachingValuesServerHttpRequestDecorator(exchange.getRequest());
@@ -51,10 +56,10 @@ public class MDCFilter implements WebFilter {
                         log.info("{} {} {}", request.getMethod(), request.getURI(), ((MDCCachingValuesServerHttpRequestDecorator)serverWebExchange.getRequest()).getInfoFromValuesMap());
                         ((MDCCachingValuesServerHttpRequestDecorator)serverWebExchange.getRequest()).getObjectAsMap().forEach((k,v) -> transactionMap.put(k,v.toString()));
                 }))
-                .contextWrite(Context.of("contextKey", UUID.randomUUID().toString()))
-                .contextWrite(Context.of("transactionId", transactionMap.getOrDefault("transactionId", "")))
-                .contextWrite(Context.of("paymentContextCode", transactionMap.getOrDefault("paymentContextCode", "")))
-                .contextWrite(Context.of("rptId", transactionMap.getOrDefault("rptId", "")));
+                .contextWrite(Context.of(CONTEXT_KEY, UUID.randomUUID().toString()))
+                .contextWrite(Context.of(TRANSACTION_ID, transactionMap.getOrDefault(TRANSACTION_ID, "")))
+                .contextWrite(Context.of(PAYMENT_CONTEXT_CODE, transactionMap.getOrDefault(PAYMENT_CONTEXT_CODE, "")))
+                .contextWrite(Context.of(RPT_ID, transactionMap.getOrDefault(RPT_ID, "")));
     }
 
     private Map<String, String> getTransactionId(ServerHttpRequest request) {
@@ -65,10 +70,10 @@ public class MDCFilter implements WebFilter {
 
     public static <T> Consumer<Signal<T>> logOnEach(Consumer<T> logStatement) {
         return signal -> {
-            String contextValue = signal.getContextView().get("contextKey");
-            String rptId = signal.getContextView().get("rptId");
-            String paymentContextCode = signal.getContextView().get("paymentContextCode");
-            String transactionId = signal.getContextView().get("transactionId");
+            String contextValue = signal.getContextView().get(CONTEXT_KEY);
+            String rptId = signal.getContextView().get(RPT_ID);
+            String paymentContextCode = signal.getContextView().get(PAYMENT_CONTEXT_CODE);
+            String transactionId = signal.getContextView().get(TRANSACTION_ID);
             try {
                 fillMDC(contextValue, rptId, paymentContextCode, transactionId);
             } finally {
@@ -80,10 +85,10 @@ public class MDCFilter implements WebFilter {
     public static <T> Consumer<Signal<T>> logOnNext(Consumer<T> logStatement) {
         return signal -> {
             if (!signal.isOnNext()) return;
-            String contextValue = signal.getContextView().get("contextKey");
-            String rptId = signal.getContextView().get("rptId");
-            String paymentContextCode = signal.getContextView().get("paymentContextCode");
-            String transactionId = signal.getContextView().get("transactionId");
+            String contextValue = signal.getContextView().get(CONTEXT_KEY);
+            String rptId = signal.getContextView().get(RPT_ID);
+            String paymentContextCode = signal.getContextView().get(PAYMENT_CONTEXT_CODE);
+            String transactionId = signal.getContextView().get(TRANSACTION_ID);
             try {
                 fillMDC(contextValue, rptId, paymentContextCode, transactionId);
             } finally {
@@ -93,10 +98,10 @@ public class MDCFilter implements WebFilter {
     }
 
     private static void fillMDC(String contextValue, String rptId, String paymentContextCode, String transactionId) {
-        MDC.putCloseable("contextKey", contextValue);
-        MDC.putCloseable("rptId", rptId);
-        MDC.putCloseable("paymentContextCode", paymentContextCode);
-        MDC.putCloseable("transactionId", transactionId);
+        MDC.putCloseable(CONTEXT_KEY, contextValue);
+        MDC.putCloseable(RPT_ID, rptId);
+        MDC.putCloseable(PAYMENT_CONTEXT_CODE, paymentContextCode);
+        MDC.putCloseable(TRANSACTION_ID, transactionId);
     }
 
 }

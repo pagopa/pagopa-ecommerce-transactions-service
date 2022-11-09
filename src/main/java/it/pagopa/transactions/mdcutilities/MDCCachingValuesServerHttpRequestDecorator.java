@@ -22,6 +22,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 @Slf4j
 public class MDCCachingValuesServerHttpRequestDecorator extends ServerHttpRequestDecorator {
 
+    public static final String RPT_ID = "rptId";
+    public static final String PAYMENT_CONTEXT_CODE = "paymentContextCode";
     public final  Map<String, Object>  objectAsMap;
 
     public Map<String, Object> getObjectAsMap() {
@@ -42,13 +44,13 @@ public class MDCCachingValuesServerHttpRequestDecorator extends ServerHttpReques
     private void cache(DataBuffer buffer) {
         //TODO Enumerate dto values of interest to cache more value as possible if needed
         objectAsMap.putAll(getValue(UTF_8.decode(buffer.asByteBuffer()).toString()));
-        MDC.put("rptId", objectAsMap.getOrDefault("rptId","").toString());
-        MDC.put("paymentContextCode", objectAsMap.getOrDefault("paymentContextCode","").toString());
+        MDC.put(RPT_ID, objectAsMap.getOrDefault(RPT_ID,"").toString());
+        MDC.put(PAYMENT_CONTEXT_CODE, objectAsMap.getOrDefault(PAYMENT_CONTEXT_CODE,"").toString());
     }
 
     public String getInfoFromValuesMap() {
         StringBuilder builder = new StringBuilder();
-        Arrays.stream(new String[]{"rptId", "paymentContextCode"}).forEach(key -> objectAsMap.computeIfPresent(key, (k, v) -> builder.append(k + ": " + v + " ")));
+        Arrays.stream(new String[]{RPT_ID, PAYMENT_CONTEXT_CODE}).forEach(key -> objectAsMap.computeIfPresent(key, (k, v) -> builder.append(k + ": " + v + " ")));
         return builder.toString().trim();
     }
 
