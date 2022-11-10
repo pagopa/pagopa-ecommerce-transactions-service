@@ -7,15 +7,15 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 @Configuration
 public class MDCContextLifterConfiguration {
-    private String MDC_CONTEXT_REACTOR_KEY = MDCContextLifterConfiguration.class.getName();
+    private String mdcContextReactorKey = MDCContextLifterConfiguration.class.getName();
     @PostConstruct
     private void contextOperatorHook() {
-        Hooks.onEachOperator(MDC_CONTEXT_REACTOR_KEY,
+        Hooks.onEachOperator(mdcContextReactorKey,
                 Operators.lift((scannable, coreSubscriber) -> new MDCContextLifter<>(coreSubscriber))
         );
     }
     @PreDestroy
     private void cleanupHook() {
-        Hooks.resetOnEachOperator(MDC_CONTEXT_REACTOR_KEY);
+        Hooks.resetOnEachOperator(mdcContextReactorKey);
     }
 }

@@ -39,9 +39,11 @@ public class MDCCachingValuesServerHttpRequestDecorator extends ServerHttpReques
         return super.getBody().doOnNext(this::cache);
     }
 
+
+    /** Cache body values and search for json object with listed properties.
+     * Enrich this list of properties as needed to cache more value as possible if needed */
     @SneakyThrows
     private void cache(DataBuffer buffer) {
-        //TODO Enumerate dto values of interest to cache more value as possible if needed
         objectAsMap.putAll(getValue(UTF_8.decode(buffer.asByteBuffer()).toString()));
         MDC.put(RPT_ID, objectAsMap.getOrDefault(RPT_ID,"").toString());
         MDC.put(PAYMENT_CONTEXT_CODE, objectAsMap.getOrDefault(PAYMENT_CONTEXT_CODE,"").toString());
