@@ -67,7 +67,6 @@ public class TransactionsService {
       NewTransactionRequestDto newTransactionRequestDto) {
 
     log.info("Initializing transaction for rptId: {}", newTransactionRequestDto.getRptId());
-
     TransactionActivateCommand command =
         new TransactionActivateCommand(
             new RptId(newTransactionRequestDto.getRptId()), newTransactionRequestDto);
@@ -96,6 +95,7 @@ public class TransactionsService {
   }
 
   public Mono<TransactionInfoDto> getTransactionInfo(String transactionId) {
+      log.info("Get Transaction Invoked with id {} ", transactionId);
     return transactionsViewRepository
         .findById(transactionId)
         .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
@@ -142,8 +142,7 @@ public class TransactionsService {
                                               .equals(requestAuthorizationRequestDto.getPspId())
                                           && psp.getFixedCost()
                                               .equals(
-                                                  (double) requestAuthorizationRequestDto.getFee()
-                                                      / 100))
+                                                  Long.valueOf(requestAuthorizationRequestDto.getFee())))
                               .findFirst()
                               .orElse(null))
                   .map(psp -> Tuples.of(transaction, psp));

@@ -38,11 +38,11 @@ class EcommercePaymentMethodsClientTest {
                 .code("AA")
                 .language(PspDto.LanguageEnum.IT)
                 .paymentTypeCode("PO")
-                .fixedCost(100.0)
+                .fixedCost(100l)
                 .brokerName("brokerName")
                 .description("")
-                .maxAmount(0.0)
-                .maxAmount(1000.0)
+                .maxAmount(0l)
+                .maxAmount(1000l)
                 .channelCode("CH1")
                 .status(PspDto.StatusEnum.ENABLED)));
 

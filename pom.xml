@@ -9,7 +9,7 @@
     </parent>
     <groupId>it.pagopa</groupId>
     <artifactId>pagopa-ecommerce-transactions-service</artifactId>
-    <version>0.4.36</version>
+    <version>0.5.0</version>
     <name>pagopa-ecommerce-transactions-service</name>
     <description>pagopa-ecommerce-transactions-service</description>
     <properties>
@@ -350,7 +350,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-infra/main/src/domains/ecommerce-app/api/ecommerce-notifications-service/v1/_openapi.json.tpl</inputSpec>
+                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-infra/main/src/domains/ecommerce-app/api/ecommerce-notifications-service/v1/_swagger.json.tpl</inputSpec>
                             <generatorName>java</generatorName>
                             <library>webclient</library>
                             <generateApiDocumentation>false</generateApiDocumentation>
@@ -419,6 +419,7 @@
                         <exclude>it/pagopa/transactions/server/api/ApiUtil</exclude>
                         <exclude>it/pagopa/transactions/utils/soap/**</exclude>
                         <exclude>it/pagopa/transactions/PagopaEcommerceTransactionsApplication.class</exclude>
+                        <exclude>it/pagopa/transactions/mdcutilities/**</exclude>
                     </excludes>
                 </configuration>
                 <version>${jacoco.version}</version>

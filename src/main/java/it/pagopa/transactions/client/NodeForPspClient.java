@@ -34,6 +34,7 @@ public class NodeForPspClient {
 	private String nodoPerPspUri;
 
 	public Mono<VerifyPaymentNoticeRes> verifyPaymentNotice(JAXBElement<VerifyPaymentNoticeReq> request) {
+		log.info("verifyPaymentNotice idPSP: {} ", request.getValue().getIdPSP());
 		return nodoWebClient.post()
 				.uri(nodoPerPspUri)
 				.header("Content-Type", MediaType.TEXT_XML_VALUE)
@@ -45,8 +46,8 @@ public class NodeForPspClient {
 								.flatMap(errorResponseBody -> Mono.error(
 										new ResponseStatusException(clientResponse.statusCode(), errorResponseBody))))
 				.bodyToMono(VerifyPaymentNoticeRes.class)
-				.doOnSuccess((VerifyPaymentNoticeRes paymentInfo) -> log.debug(
-						"Payment activated with paymentToken {}",
+				.doOnSuccess((VerifyPaymentNoticeRes paymentInfo) -> log.info(
+						"Payment activated with noticeNumber {}",
 						new Object[] { request.getValue().getQrCode().getNoticeNumber() }))
 				.doOnError(ResponseStatusException.class,
 						error -> log.error("ResponseStatus Error : {}", new Object[] { error }))
@@ -55,6 +56,8 @@ public class NodeForPspClient {
 	}
 
 	public Mono<ActivatePaymentNoticeRes> activatePaymentNotice(JAXBElement<ActivatePaymentNoticeReq> request) {
+		log.info("activatePaymentNotice idPSP: {} ", request.getValue().getIdPSP());
+		log.info("activatePaymentNotice IdemPK: {} ", request.getValue().getIdempotencyKey());
 		return nodoWebClient.post()
 				.uri(nodoPerPspUri)
 				.header("Content-Type", MediaType.TEXT_XML_VALUE)
@@ -66,8 +69,8 @@ public class NodeForPspClient {
 								.flatMap(errorResponseBody -> Mono.error(
 										new ResponseStatusException(clientResponse.statusCode(), errorResponseBody))))
 				.bodyToMono(ActivatePaymentNoticeRes.class)
-				.doOnSuccess((ActivatePaymentNoticeRes paymentActivedDetail) -> log.debug(
-						"Payment activated with paymentToken {}",
+				.doOnSuccess((ActivatePaymentNoticeRes paymentActivedDetail) -> log.info(
+						"Payment activated with paymentToken {} ",
 						new Object[] { paymentActivedDetail.getPaymentToken() }))
 				.doOnError(ResponseStatusException.class,
 						error -> log.error("ResponseStatus Error : {}", new Object[] { error }))
@@ -76,6 +79,7 @@ public class NodeForPspClient {
 	}
 
 	public Mono<it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentResponseDto> closePayment(ClosePaymentRequestDto request) {
+		log.info("closePayment paymentTokens: {} ", request.getPaymentTokens());
 		return nodoWebClient.post()
 				.uri("/v2/closepayment")
 				.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
@@ -88,7 +92,7 @@ public class NodeForPspClient {
 										Mono.error(new ResponseStatusException(clientResponse.statusCode(), errorResponseBody))))
 				.bodyToMono(it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentResponseDto.class)
 				.doOnSuccess(closePaymentResponse ->
-						log.debug("Requested closePayment for paymentTokens {}", request.getPaymentTokens()))
+						log.info("Requested closePayment for paymentTokens {}", request.getPaymentTokens()))
 				.onErrorMap(ResponseStatusException.class,
 						error -> {
 							log.error("ResponseStatus Error:", error);
@@ -98,6 +102,7 @@ public class NodeForPspClient {
 	}
 
 	public Mono<ClosePaymentResponseDto> closePaymentV2(ClosePaymentRequestV2Dto request) {
+		log.info("Requested closePaymentV2 for paymentTokens {}", request.getPaymentTokens());
 		return nodoWebClient.post()
 				.uri("/nodo/nodo-per-pm/v2/closepayment")
 				.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
@@ -110,7 +115,7 @@ public class NodeForPspClient {
 										Mono.error(new ResponseStatusException(clientResponse.statusCode(), errorResponseBody))))
 				.bodyToMono(ClosePaymentResponseDto.class)
 				.doOnSuccess(closePaymentResponse ->
-						log.debug("Requested closePayment for paymentTokens {}", request.getPaymentTokens()))
+						log.info("Requested closePayment for paymentTokens {}", request.getPaymentTokens()))
 				.onErrorMap(ResponseStatusException.class,
 						error -> {
 							log.error("ResponseStatus Error:", error);

@@ -29,7 +29,7 @@ public class NodoPerPM {
     @Value("${nodoPerPM.uri}") String nodoPerPMUri;
 
     public Mono<InformazioniPagamentoDto> chiediInformazioniPagamento(String paymentToken) {
-
+        log.info("chiediInformazioniPagamento paymentToken: {} ", paymentToken);
         return nodoApiClient
                 .getApiClient()
                 .getWebClient()
@@ -45,8 +45,8 @@ public class NodoPerPM {
                                 .flatMap(errorResponseBody -> Mono.error(
                                         new ResponseStatusException(clientResponse.statusCode(), errorResponseBody))))
                 .bodyToMono(InformazioniPagamentoDto.class)
-                .doOnSuccess((InformazioniPagamentoDto informazioniPagamentoDto) -> log.debug(
-                        "Payment info for {}",
+                .doOnSuccess((InformazioniPagamentoDto informazioniPagamentoDto) -> log.info(
+                        "Payment info for paymentToken {}",
                         new Object[]{paymentToken}))
                 .doOnError(ResponseStatusException.class,
                         error -> log.error("ResponseStatus Error : {}", new Object[]{error}))

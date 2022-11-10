@@ -31,18 +31,22 @@ public class TransactionsController implements TransactionsApi {
     @Override
     public Mono<ResponseEntity<NewTransactionResponseDto>> newTransaction(Mono<NewTransactionRequestDto> newTransactionRequest, ServerWebExchange exchange) {
         return newTransactionRequest
-                .flatMap(transactionsService::newTransaction)
+                .flatMap(ntr -> {
+                    log.info("newTransaction rptID {} ", ntr.getRptId() );
+                    return transactionsService.newTransaction(ntr);
+                })
                 .map(ResponseEntity::ok);
     }
 
     @Override
     public Mono<ResponseEntity<TransactionInfoDto>> getTransactionInfo(String transactionId, ServerWebExchange exchange) {
-        return transactionsService.getTransactionInfo(transactionId).map(ResponseEntity::ok);
+        return transactionsService.getTransactionInfo(transactionId).doOnEach(t -> log.info("getTransactionInfo for transactionId: {} ", transactionId)).map(ResponseEntity::ok);
     }
 
     @Override
     public Mono<ResponseEntity<RequestAuthorizationResponseDto>> requestTransactionAuthorization(String transactionId, Mono<RequestAuthorizationRequestDto> requestAuthorizationRequestDto, ServerWebExchange exchange) {
         return requestAuthorizationRequestDto
+                .doOnEach(t -> log.info("requestTransactionAuthorization for transactionId: {} ", transactionId))
                 .flatMap(requestAuthorizationRequest -> transactionsService.requestTransactionAuthorization(transactionId, requestAuthorizationRequest))
                 .map(ResponseEntity::ok);
     }
@@ -51,6 +55,7 @@ public class TransactionsController implements TransactionsApi {
     @Override
     public Mono<ResponseEntity<TransactionInfoDto>> updateTransactionAuthorization(String transactionId, Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto, ServerWebExchange exchange) {
         return updateAuthorizationRequestDto
+                .doOnEach(t -> log.info("updateTransactionAuthorization for transactionId: {} ", transactionId))
                 .flatMap(updateAuthorizationRequest -> transactionsService.updateTransactionAuthorization(transactionId, updateAuthorizationRequest))
                 .map(ResponseEntity::ok);
     }
@@ -58,6 +63,7 @@ public class TransactionsController implements TransactionsApi {
     @Override
     public Mono<ResponseEntity<ActivationResultResponseDto>> transactionActivationResult(String paymentContextCode, Mono<ActivationResultRequestDto> activationResultRequestDto, ServerWebExchange exchange) {
         return activationResultRequestDto
+                .doOnEach(t -> log.info("transactionActivationResult for paymentContextCode: {} ", paymentContextCode))
                 .flatMap(activationResultRequest -> transactionsService.activateTransaction(paymentContextCode, activationResultRequest))
                 .map(ResponseEntity::ok);
     }
@@ -65,6 +71,7 @@ public class TransactionsController implements TransactionsApi {
     @Override
     public Mono<ResponseEntity<AddUserReceiptResponseDto>> addUserReceipt(String transactionId, Mono<AddUserReceiptRequestDto> addUserReceiptRequestDto, ServerWebExchange exchange) {
         return addUserReceiptRequestDto
+                .doOnEach(t -> log.info("addUserReceipt for transactionId: {} ", transactionId))
                 .flatMap(addUserReceiptRequest ->
                         transactionsService.addUserReceipt(transactionId, addUserReceiptRequest)
                                 .map(_v -> new AddUserReceiptResponseDto().outcome(AddUserReceiptResponseDto.OutcomeEnum.OK))
