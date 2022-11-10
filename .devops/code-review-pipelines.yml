@@ -76,13 +76,9 @@ stages:
       - job: make_integration_test  
         steps:
         - checkout: pagopaEcommerceLocal
-        - targetType: "inline"
         - script: sed -i.bak  "s/\${ECOMMERCE_TRANSACTIONS_COMMIT_SHA}/$(BRANCH_NAME)/" global-transaction-service.env 
         - script: cp global-transaction-service.env .env 
         - script: rm global-transaction-service.env.bak 
-              
-                                                              
-              
         - script: docker-compose up --scale mongo-express=0 --scale redis-insight=0 -d
         - displayName: 'Run app with docker-compose'
         - script: |
