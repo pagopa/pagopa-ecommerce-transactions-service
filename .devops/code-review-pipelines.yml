@@ -1,7 +1,7 @@
 variables:
   MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
   MAVEN_OPTS: '-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
-
+  BRANCH_NAME: $[ replace(variables['System.PullRequest.SourceBranch'], 'refs/heads/', '') ]
 trigger: none
 
 pool:
@@ -76,12 +76,15 @@ stages:
       - job: make_integration_test  
         steps:
         - checkout: pagopaEcommerceLocal
-        - script: |
-              sed -i.bak  "s/\${ECOMMERCE_TRANSACTIONS_COMMIT_SHA}/$(Build.SourceBranchName)/" global-transaction-service.env
-              cp global-transaction-service.env .env                                                 
-              rm global-transaction-service.env.bak 
+        - targetType: "inline"
+        - script: sed -i.bak  "s/\${ECOMMERCE_TRANSACTIONS_COMMIT_SHA}/$(BRANCH_NAME)/" global-transaction-service.env 
+        - script: cp global-transaction-service.env .env 
+        - script: rm global-transaction-service.env.bak 
+              
+                                                              
+              
         - script: docker-compose up --scale mongo-express=0 --scale redis-insight=0 -d
-          displayName: 'Run app with docker-compose'
+        - displayName: 'Run app with docker-compose'
         - script: |
               timeout 180 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:8080/actuator/health/liveness)" != "200" ]]; do sleep 5; done' || exit 1
           displayName: 'Health check'
