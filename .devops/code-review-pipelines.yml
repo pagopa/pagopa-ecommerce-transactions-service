@@ -76,7 +76,7 @@ stages:
       - job: make_integration_test  
         steps:
         - checkout: pagopaEcommerceLocal
-        - script: 
+        - script: |
               sed -i.bak  "s/\${ECOMMERCE_TRANSACTIONS_COMMIT_SHA}/$(Build.SourceBranchName)/" global-transaction-service.env
               cp global-transaction-service.env .env                                                 
               rm global-transaction-service.env.bak 
