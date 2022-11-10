@@ -82,7 +82,7 @@ stages:
             cp global-transaction-service.env .env 
             rm global-transaction-service.env.bak 
           displayName: 'Change transaction branch name ecommerce-local .env'
-        - script: docker-compose up --scale mongo-express=0 --scale redis-insight=0 -d
+        - script: docker-compose up --scale mongo-express=0 --scale redis-insight=0 --scale pagopa-notifications-service=0 -d
           displayName: 'Run app with docker-compose'
         - script: |
               timeout 180 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:8080/actuator/health/liveness)" != "200" ]]; do sleep 5; done' || exit 1
