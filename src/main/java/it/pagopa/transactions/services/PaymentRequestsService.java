@@ -1,6 +1,10 @@
 package it.pagopa.transactions.services;
 
-import it.pagopa.generated.nodoperpsp.model.*;
+import it.pagopa.generated.nodoperpsp.model.CtEnteBeneficiario;
+import it.pagopa.generated.nodoperpsp.model.EsitoNodoVerificaRPTRisposta;
+import it.pagopa.generated.nodoperpsp.model.FaultBean;
+import it.pagopa.generated.nodoperpsp.model.NodoTipoCodiceIdRPT;
+import it.pagopa.generated.nodoperpsp.model.NodoVerificaRPT;
 import it.pagopa.generated.payment.requests.model.PaymentRequestsGetResponseDto;
 import it.pagopa.generated.transactions.model.CtQrCode;
 import it.pagopa.generated.transactions.model.StOutcome;
@@ -8,6 +12,8 @@ import it.pagopa.generated.transactions.model.VerifyPaymentNoticeReq;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NodoPerPspClient;
 import it.pagopa.transactions.domain.RptId;
+import it.pagopa.transactions.exceptions.BadGatewayException;
+import it.pagopa.transactions.exceptions.GatewayTimeoutException;
 import it.pagopa.transactions.exceptions.NodoErrorException;
 import it.pagopa.transactions.repositories.PaymentRequestInfo;
 import it.pagopa.transactions.repositories.PaymentRequestsInfoRepository;
@@ -16,6 +22,7 @@ import it.pagopa.transactions.utils.NodoUtilities;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
@@ -189,6 +196,15 @@ public class PaymentRequestsService {
                             null));
               }
               return paymentRequestInfo;
+            })
+            .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
+              case GATEWAY_TIMEOUT -> new GatewayTimeoutException();
+              case INTERNAL_SERVER_ERROR -> new BadGatewayException("");
+              default -> exception;
+            })
+            .onErrorMap(Exception.class, exception -> {
+              log.error("Generic Error : {}", new Object[]{exception});
+              return new BadGatewayException("Error during information retrieval from Nodo");
             });
   }
 
