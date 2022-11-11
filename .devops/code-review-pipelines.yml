@@ -87,6 +87,18 @@ stages:
         - script: |
               timeout 180 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:8080/actuator/health/liveness)" != "200" ]]; do sleep 5; done' || exit 1
           displayName: 'Health check'
+        - script: yarn global add newman
+          displayName: 'newman installation'
+        - script: newman run api-tests/ecommerce-for-checkout/transaction-service/transaction-service_ecommerce_local.postman_collection.json --environment=api-tests/ecommerce-for-checkout/transaction-service/transaction-service_ecommerce_local.postman_environment.json --reporters cli,junit --reporter-junit-export Results/checkout-api-TEST.xml
+          displayName: 'Run api test'
+          continueOnError: true 
+        - task: PublishTestResults@2
+          inputs:
+            testResultsFormat: 'JUnit'
+            testResultsFiles: '**/*-TEST.xml' 
+            searchFolder: '$(System.DefaultWorkingDirectory)'
+      
+
 
 
 
