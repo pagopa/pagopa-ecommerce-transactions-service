@@ -108,7 +108,7 @@ class TransactionActivateResultHandlerTest {
         requestDto.setEmail("jhon.doe@email.com");
         requestDto.setAmount(1200);
 
-        ReflectionTestUtils.setField(handler, "paymentTokenTimeout", "300");
+        ReflectionTestUtils.setField(handler, "paymentTokenTimeout", 300);
 
         ActivationResultRequestDto activationResultRequestDto =
                 new ActivationResultRequestDto()

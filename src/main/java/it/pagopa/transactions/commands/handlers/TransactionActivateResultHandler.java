@@ -40,7 +40,7 @@ public class TransactionActivateResultHandler
   QueueAsyncClient transactionActivatedQueueAsyncClient;
 
   @Value("${payment.token.timeout}")
-  String paymentTokenTimeout;
+  Integer paymentTokenTimeout;
 
   @Override
   public Mono<TransactionActivatedEvent> handle(TransactionActivateResultCommand command) {
@@ -129,28 +129,29 @@ public class TransactionActivateResultHandler
                       data);
 
               log.info("Saving TransactionActivatedEvent {}", transactionActivatedEvent);
-              return transactionEventStoreRepository
-                  .save(transactionActivatedEvent)
-                  .thenReturn(transactionActivatedEvent)
-                  .doOnNext(
-                      event ->
-                          transactionActivatedQueueAsyncClient
-                              .sendMessageWithResponse(
-                                  BinaryData.fromObject(event),
-                                  Duration.ofSeconds(Integer.valueOf(paymentTokenTimeout)),
-                                  null)
-                              .subscribe(
-                                  response ->
-                                      log.debug(
-                                          "TransactionActivatedEvent {} expires at {} for transactionId {}",
-                                          response.getValue().getMessageId(),
-                                          response.getValue().getExpirationTime(),
-                                          transactionActivatedEvent.getTransactionId()),
-                                  error -> log.error(error.toString()),
-                                  () ->
-                                      log.debug(
-                                          "Complete enqueuing the message TransactionActivatedEvent for transactionId {}!",
-                                          transactionActivatedEvent.getTransactionId())));
+                return transactionEventStoreRepository
+                        .save(transactionActivatedEvent)
+                        .then(
+                                transactionActivatedQueueAsyncClient.sendMessageWithResponse(
+                                        BinaryData.fromObject(transactionActivatedEvent),
+                                        Duration.ofSeconds(paymentTokenTimeout),
+                                        null))
+                        .then(Mono.just(transactionActivatedEvent))
+                        .onErrorResume(
+                                exception -> {
+                                    log.error(
+                                            "Error to generate event TRANSACTION_ACTIVATED_EVENT for rptId {} and transactionId {} - error {}",
+                                            transactionActivatedEvent.getRptId(),
+                                            transactionActivatedEvent.getTransactionId(),
+                                            exception.getMessage());
+                                    return Mono.error(exception);
+                                })
+                        .doOnNext(
+                                event ->
+                                        log.info(
+                                                "Generated event TRANSACTION_ACTIVATED_EVENT for rptId {} and transactionId {}",
+                                                event.getRptId(),
+                                                event.getTransactionId()));
             });
   }
 }

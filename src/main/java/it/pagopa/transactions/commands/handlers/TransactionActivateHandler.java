@@ -34,26 +34,43 @@ public class TransactionActivateHandler
                 Mono<TransactionActivationRequestedEvent>,
                 SessionDataDto>>> {
 
-  @Autowired PaymentRequestsInfoRepository paymentRequestsInfoRepository;
+  private final PaymentRequestsInfoRepository paymentRequestsInfoRepository;
 
-  @Autowired
-  TransactionsEventStoreRepository<TransactionActivatedData>
+  private final TransactionsEventStoreRepository<TransactionActivatedData>
       transactionEventActivatedStoreRepository;
 
-  @Autowired
-  TransactionsEventStoreRepository<TransactionActivationRequestedData>
+  private final TransactionsEventStoreRepository<TransactionActivationRequestedData>
       transactionEventActivationRequestedStoreRepository;
 
-  @Autowired EcommerceSessionsClient ecommerceSessionsClient;
+  private final EcommerceSessionsClient ecommerceSessionsClient;
 
-  @Autowired NodoOperations nodoOperations;
+  private final NodoOperations nodoOperations;
+
+  private final QueueAsyncClient transactionActivatedQueueAsyncClient;
+
+  private final Integer paymentTokenTimeout;
 
   @Autowired
-  @Qualifier("transactionActivatedQueueAsyncClient")
-  QueueAsyncClient transactionActivatedQueueAsyncClient;
-
-  @Value("${payment.token.timeout}")
-  String paymentTokenTimeout;
+  public TransactionActivateHandler(
+      PaymentRequestsInfoRepository paymentRequestsInfoRepository,
+      TransactionsEventStoreRepository<TransactionActivatedData>
+          transactionEventActivatedStoreRepository,
+      TransactionsEventStoreRepository<TransactionActivationRequestedData>
+          transactionEventActivationRequestedStoreRepository,
+      EcommerceSessionsClient ecommerceSessionsClient,
+      NodoOperations nodoOperations,
+      @Qualifier("transactionActivatedQueueAsyncClient")
+          QueueAsyncClient transactionActivatedQueueAsyncClient,
+      @Value("${payment.token.timeout}") Integer paymentTokenTimeout) {
+    this.paymentRequestsInfoRepository = paymentRequestsInfoRepository;
+    this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
+    this.transactionEventActivationRequestedStoreRepository =
+        transactionEventActivationRequestedStoreRepository;
+    this.ecommerceSessionsClient = ecommerceSessionsClient;
+    this.nodoOperations = nodoOperations;
+    this.paymentTokenTimeout = paymentTokenTimeout;
+    this.transactionActivatedQueueAsyncClient = transactionActivatedQueueAsyncClient;
+  }
 
   public Mono<
           Tuple3<
@@ -204,32 +221,28 @@ public class TransactionActivateHandler
     TransactionActivatedEvent transactionActivatedEvent =
         new TransactionActivatedEvent(transactionId, rptId, paymentToken, data);
 
-    log.info(
-        "Generated event TRANSACTION_ACTIVATED_EVENT for rptId {} and transactionId {}",
-        rptId,
-        transactionId);
-
     return transactionEventActivatedStoreRepository
         .save(transactionActivatedEvent)
-        .thenReturn(transactionActivatedEvent)
+        .then(
+            transactionActivatedQueueAsyncClient.sendMessageWithResponse(
+                BinaryData.fromObject(transactionActivatedEvent),
+                Duration.ofSeconds(paymentTokenTimeout),
+                null))
+        .then(Mono.just(transactionActivatedEvent))
+        .onErrorResume(
+            exception -> {
+              log.error(
+                  "Error to generate event TRANSACTION_ACTIVATED_EVENT for rptId {} and transactionId {} - error {}",
+                  transactionActivatedEvent.getRptId(),
+                  transactionActivatedEvent.getTransactionId(),
+                  exception.getMessage());
+              return Mono.error(exception);
+            })
         .doOnNext(
             event ->
-                transactionActivatedQueueAsyncClient
-                    .sendMessageWithResponse(
-                        BinaryData.fromObject(event),
-                        Duration.ofSeconds(Integer.valueOf(paymentTokenTimeout)),
-                        null)
-                    .subscribe(
-                        response ->
-                            log.debug(
-                                "TransactionActivatedEvent {} expires at {} for transactionId {}",
-                                response.getValue().getMessageId(),
-                                response.getValue().getExpirationTime(),
-                                transactionActivatedEvent.getTransactionId()),
-                        error -> log.error(error.toString()),
-                        () ->
-                            log.debug(
-                                "Complete enqueuing the message TransactionActivatedEvent for transactionId {}!",
-                                transactionActivatedEvent.getTransactionId())));
+                log.info(
+                    "Generated event TRANSACTION_ACTIVATED_EVENT for rptId {} and transactionId {}",
+                    event.getRptId(),
+                    event.getTransactionId()));
   }
 }
