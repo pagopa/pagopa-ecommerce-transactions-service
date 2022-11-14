@@ -20,8 +20,17 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 @Slf4j
 public class MDCCachingValuesServerHttpRequestDecorator extends ServerHttpRequestDecorator {
 
+    public static final String RPT_ID = "rptId";
+    public static final String PAYMENT_CONTEXT_CODE = "paymentContextCode";
+    public final  Map<String, Object>  objectAsMap;
+
+    public Map<String, Object> getObjectAsMap() {
+        return objectAsMap;
+    }
+
     public MDCCachingValuesServerHttpRequestDecorator(ServerHttpRequest delegate) {
         super(delegate);
+        objectAsMap = new HashMap<>();
     }
 
     @Override
@@ -29,12 +38,20 @@ public class MDCCachingValuesServerHttpRequestDecorator extends ServerHttpReques
         return super.getBody().doOnNext(this::cache);
     }
 
+
+    /** Cache body values and search for json object with listed properties.
+     * Enrich this list of properties as needed to cache more value as possible if needed */
     @SneakyThrows
     private void cache(DataBuffer buffer) {
-        //TODO Enumerate dto values of interest to cache more value as possible if needed
-        Map<String, Object>  objectAsMap = getValue(UTF_8.decode(buffer.asByteBuffer()).toString());
-        MDC.put("rptId", objectAsMap.getOrDefault("rptId","").toString());
-        MDC.put("paymentContextCode", objectAsMap.getOrDefault("paymentContextCode","").toString());
+        objectAsMap.putAll(getValue(UTF_8.decode(buffer.asByteBuffer()).toString()));
+        MDC.put(RPT_ID, objectAsMap.getOrDefault(RPT_ID,"").toString());
+        MDC.put(PAYMENT_CONTEXT_CODE, objectAsMap.getOrDefault(PAYMENT_CONTEXT_CODE,"").toString());
+    }
+
+    public String getInfoFromValuesMap() {
+        StringBuilder builder = new StringBuilder();
+        objectAsMap.keySet().stream().filter(k -> k.equals(RPT_ID) || k.equals(PAYMENT_CONTEXT_CODE)).forEach(filteredKey -> builder.append(String.format("[%s]: [%s] ", filteredKey, objectAsMap.get(filteredKey))));
+        return builder.toString().trim();
     }
 
     private Map<String, Object> getValue(String data) throws JsonProcessingException {
