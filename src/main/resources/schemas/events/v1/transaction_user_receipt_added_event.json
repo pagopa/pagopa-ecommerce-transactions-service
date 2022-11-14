@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$id": "templates/events/transaction_user_receipt_added_event/schema.json",
+  "properties": {
+    "version": {
+      "$ref": "./event_version.json"
+    },
+    "id": {
+      "type": "string"
+    },
+    "transactionId": {
+      "type": "string"
+    },
+    "rptId": {
+      "type": "string"
+    },
+    "paymentToken": {
+      "type": "string"
+    },
+    "transactionEventCode": {
+      "type": "string",
+      "enum": ["TRANSACTION_AUTHORIZATION_STATUS_UPDATED"]
+    },
+    "creationDate": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "data": {
+      "type": "object",
+      "javaType" : "it.pagopa.generated.ecommerce.events.v1.TransactionClosureSentEventData",
+      "properties": {
+        "nodeClosePaymentOutcome": {
+          "$ref": "./closepayment_response_outcome.json"
+        },
+        "newTransactionStatus": {
+          "$ref": "./transaction_status.json"
+        },
+        "authorizationCode": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodeClosePaymentOutcome",
+        "newTransactionStatus",
+        "authorizationCode"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "version",
+    "authorizationResult"
+  ],
+  "additionalProperties": false
+}
