@@ -51,7 +51,7 @@ public class MDCCachingValuesServerHttpRequestDecorator extends ServerHttpReques
 
     public String getInfoFromValuesMap() {
         StringBuilder builder = new StringBuilder();
-        Arrays.stream(new String[]{RPT_ID, PAYMENT_CONTEXT_CODE}).forEach(key -> objectAsMap.computeIfPresent(key, (k, v) -> builder.append(k + ": " + v + " ")));
+        objectAsMap.keySet().stream().filter(k -> k.equals(RPT_ID) || k.equals(PAYMENT_CONTEXT_CODE)).forEach(filteredKey -> builder.append(String.format("[%s]: [%s] ", filteredKey, objectAsMap.get(filteredKey))));
         return builder.toString().trim();
     }
 

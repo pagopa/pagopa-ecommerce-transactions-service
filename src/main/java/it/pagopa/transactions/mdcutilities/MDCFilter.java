@@ -70,38 +70,19 @@ public class MDCFilter implements WebFilter {
 
     public static <T> Consumer<Signal<T>> logOnEach(Consumer<T> logStatement) {
         return signal -> {
-            String contextValue = signal.getContextView().get(CONTEXT_KEY);
-            String rptId = signal.getContextView().get(RPT_ID);
-            String paymentContextCode = signal.getContextView().get(PAYMENT_CONTEXT_CODE);
-            String transactionId = signal.getContextView().get(TRANSACTION_ID);
-            try {
-                fillMDC(contextValue, rptId, paymentContextCode, transactionId);
-            } finally {
+            String contextValue = signal.getContextView().getOrDefault(CONTEXT_KEY,"");
+            String rptId = signal.getContextView().getOrDefault(RPT_ID,"");
+            String paymentContextCode = signal.getContextView().getOrDefault(PAYMENT_CONTEXT_CODE, "");
+            String transactionId = signal.getContextView().getOrDefault(TRANSACTION_ID, "");
+            try (
+                    MDC.MDCCloseable mdcCloseable1 = MDC.putCloseable(CONTEXT_KEY, contextValue);
+                    MDC.MDCCloseable mdcCloseable2 = MDC.putCloseable(RPT_ID, rptId);
+                    MDC.MDCCloseable mdcCloseable3 = MDC.putCloseable(PAYMENT_CONTEXT_CODE, paymentContextCode);
+                    MDC.MDCCloseable mdcCloseable4 = MDC.putCloseable(TRANSACTION_ID, transactionId);
+                    ) {
                 logStatement.accept(signal.get());
             }
         };
-    }
-
-    public static <T> Consumer<Signal<T>> logOnNext(Consumer<T> logStatement) {
-        return signal -> {
-            if (!signal.isOnNext()) return;
-            String contextValue = signal.getContextView().get(CONTEXT_KEY);
-            String rptId = signal.getContextView().get(RPT_ID);
-            String paymentContextCode = signal.getContextView().get(PAYMENT_CONTEXT_CODE);
-            String transactionId = signal.getContextView().get(TRANSACTION_ID);
-            try {
-                fillMDC(contextValue, rptId, paymentContextCode, transactionId);
-            } finally {
-                logStatement.accept(signal.get());
-            }
-        };
-    }
-
-    private static void fillMDC(String contextValue, String rptId, String paymentContextCode, String transactionId) {
-        MDC.putCloseable(CONTEXT_KEY, contextValue);
-        MDC.putCloseable(RPT_ID, rptId);
-        MDC.putCloseable(PAYMENT_CONTEXT_CODE, paymentContextCode);
-        MDC.putCloseable(TRANSACTION_ID, transactionId);
     }
 
 }
