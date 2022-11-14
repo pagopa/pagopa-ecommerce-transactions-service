@@ -16,10 +16,12 @@ import it.pagopa.transactions.utils.soap.Jaxb2SoapEncoder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.codec.StringDecoder;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.http.codec.json.Jackson2JsonDecoder;
 import org.springframework.http.codec.json.Jackson2JsonEncoder;
+import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
@@ -72,6 +74,7 @@ public class WebClientsConfig {
             mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
             clientCodecConfigurer.registerDefaults(false);
+            clientCodecConfigurer.customCodecs().register(StringDecoder.allMimeTypes());
             clientCodecConfigurer.customCodecs().register(new Jaxb2SoapDecoder());
             clientCodecConfigurer.customCodecs().register(new Jaxb2SoapEncoder());
             clientCodecConfigurer.customCodecs().register(new Jackson2JsonDecoder(mapper, MediaType.APPLICATION_JSON));
