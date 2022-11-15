@@ -2,6 +2,7 @@ package it.pagopa.transactions.commands.handlers;
 
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
+import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.*;
 import it.pagopa.ecommerce.commons.domain.EmptyTransaction;
 import it.pagopa.ecommerce.commons.domain.Transaction;
@@ -32,7 +33,7 @@ import java.util.UUID;
 
 @Component
 @Slf4j
-public class TransactionSendClosureHandler implements CommandHandler<TransactionClosureSendCommand, Mono<TransactionClosureSentEvent>> {
+public class TransactionSendClosureHandler implements CommandHandler<TransactionClosureSendCommand, Mono<Either<TransactionClosureErrorEvent, TransactionClosureSentEvent>>> {
 
     private final TransactionsEventStoreRepository<TransactionClosureSendData> transactionEventStoreRepository;
 
@@ -64,7 +65,7 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
     }
 
     @Override
-    public Mono<TransactionClosureSentEvent> handle(TransactionClosureSendCommand command) {
+    public Mono<Either<TransactionClosureErrorEvent, TransactionClosureSentEvent>> handle(TransactionClosureSendCommand command) {
         Mono<Transaction> transaction = replayTransactionEvents(command.getData().transaction().getTransactionId().value());
 
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
@@ -102,12 +103,13 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
 
                     /*
                      * ClosePayment (either OK or KO): save to event store and return event
-                     * On error: save TransactionClosureErrorEvent to event store, enqueue and return error
+                     * On error: save TransactionClosureErrorEvent to event store, enqueue and return error event
                      */
-                    log.error("Invoking closepayment");
+                    log.info("Invoking closePaymentV2 for RptId: {}", tx.getRptId());
                     return nodeForPspClient.closePaymentV2(closePaymentRequest)
                             .flatMap(response -> buildEventFromOutcome(response.getOutcome(), command, updateAuthorizationRequestDto))
                             .flatMap(transactionEventStoreRepository::save)
+                            .map(Either::<TransactionClosureErrorEvent, TransactionClosureSentEvent>right)
                             .onErrorResume(exception -> {
                                 log.error("Got exception while invoking closePaymentV2", exception);
                                 TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
@@ -124,7 +126,7 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                                                         null
                                                 )
                                         )
-                                        .then(Mono.error(exception));
+                                        .map(_response -> Either.left(errorEvent));
                             });
                 });
     }

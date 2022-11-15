@@ -6,6 +6,7 @@ import com.azure.core.http.rest.Response;
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
 import com.azure.storage.queue.models.SendMessageResult;
+import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.*;
 import it.pagopa.ecommerce.commons.domain.Transaction;
 import it.pagopa.ecommerce.commons.domain.*;
@@ -271,7 +272,7 @@ class TransactionSendClosureHandlerTest {
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
-                .expectNext(event)
+                .expectNext(Either.right(event))
                 .verifyComplete();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(argThat(closureSendDataEvent -> closureSendDataEvent.getData().getNewTransactionStatus().equals(TransactionStatusDto.CLOSURE_FAILED)));

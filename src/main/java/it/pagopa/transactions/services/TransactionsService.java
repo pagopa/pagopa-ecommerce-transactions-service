@@ -53,6 +53,8 @@ public class TransactionsService {
 
   @Autowired private ClosureSendProjectionHandler closureSendProjectionHandler;
 
+  @Autowired private ClosureErrorProjectionHandler closureErrorProjectionHandler;
+
   @Autowired private TransactionsViewRepository transactionsViewRepository;
 
   @Autowired private EcommercePaymentInstrumentsClient ecommercePaymentInstrumentsClient;
@@ -272,9 +274,11 @@ public class TransactionsService {
                                 closureSentEvent ->
                                         log.info(
                                                 "Requested transaction closure for rptId: {}",
-                                                closureSentEvent.getRptId()))
+                                                transaction.getRptId()))
                         .flatMap(
-                                closureSentEvent -> closureSendProjectionHandler.handle(closureSentEvent))
+                                result -> result.fold(
+                                        errorEvent -> closureErrorProjectionHandler.handle(errorEvent),
+                                        closureSentEvent -> closureSendProjectionHandler.handle(closureSentEvent)))
                         .map(
                                 transactionDocument ->
                                         new TransactionInfoDto()

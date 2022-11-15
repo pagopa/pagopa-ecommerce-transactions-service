@@ -661,6 +661,7 @@ components:
         - AUTHORIZATION_FAILED
         - CLOSED
         - CLOSURE_FAILED
+        - CLOSURE_ERROR
         - NOTIFIED
         - NOTIFIED_FAILED
         - EXPIRED
