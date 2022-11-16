@@ -19,6 +19,7 @@ import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.EuroUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +28,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -45,7 +47,11 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
 
     private final QueueAsyncClient transactionClosureSentEventQueueClient;
 
-    private final Integer paymentTokenTimeout;
+    private final Integer paymentTokenValidity;
+
+    private final Integer retryTimeoutInterval;
+
+    private final Integer softTimeoutOffset;
 
     @Autowired
     public TransactionSendClosureHandler(
@@ -54,14 +60,18 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
             TransactionsEventStoreRepository<Object> eventStoreRepository,
             NodeForPspClient nodeForPspClient,
             @Qualifier("transactionClosureSentEventQueueAsyncClient") QueueAsyncClient transactionClosureSentEventQueueClient,
-            @Value("${payment.token.timeout}") Integer paymentTokenTimeout
+            @Value("${payment.token.validity}") Integer paymentTokenValidity,
+            @Value("${transactions.ecommerce.retry.offset}") Integer softTimeoutOffset,
+            @Value("${transactions.closure_handler.retry_interval}") Integer retryTimeoutInterval
     ) {
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionClosureErrorEventStoreRepository = transactionClosureErrorEventStoreRepository;
         this.eventStoreRepository = eventStoreRepository;
         this.nodeForPspClient = nodeForPspClient;
         this.transactionClosureSentEventQueueClient = transactionClosureSentEventQueueClient;
-        this.paymentTokenTimeout = paymentTokenTimeout;
+        this.paymentTokenValidity = paymentTokenValidity;
+        this.softTimeoutOffset = softTimeoutOffset;
+        this.retryTimeoutInterval = retryTimeoutInterval;
     }
 
     @Override
@@ -118,15 +128,54 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                                         tx.getTransactionActivatedData().getPaymentToken()
                                 );
 
-                                return transactionClosureErrorEventStoreRepository.save(errorEvent)
-                                        .then(transactionClosureSentEventQueueClient
-                                                .sendMessageWithResponse(
-                                                        BinaryData.fromObject(errorEvent),
-                                                        Duration.ofSeconds(paymentTokenTimeout),
-                                                        null
-                                                )
-                                        )
-                                        .map(_response -> Either.left(errorEvent));
+                                /*
+                                Conceptual view of visibility timeout computation:
+
+                                end = start + paymentTokenTimeout
+                                If (end - now) >= offset
+                                    Visibility timeout = min(retryTimeoutInterval, (end - offset) - now)
+                                Else do nothing
+
+                                Meaning that:
+                                  * We set a visibility timeout to either the retry timeout (if now + retryTimeout is inside the validity window of the token)
+                                    or at (start + paymentTokenTimeout - offset) where `start` is the creation time of the transaction
+                                  * If we're at less than `offset` from the token validity end it's not worth rescheduling a retry, so we don't :)
+
+                                                  ┌─────────────┐
+                                                  ▼             │
+                                                 t2             │
+                                                  │             │
+                                start             │       end   │
+                                  │   now         │        │    │ (now + retryTimeoutInterval)
+                                ──┴────┬──────────┼────────┴────┼──────
+                                       │          │ <offset>    │
+                                       │
+                                       │                        ▲
+                                       └────────────────────────┘
+                                */
+
+                                Instant validityEnd = tx.getCreationDate().plusSeconds(paymentTokenValidity).toInstant();
+                                Instant softValidityEnd = validityEnd.minusSeconds(softTimeoutOffset);
+
+                                Mono<TransactionClosureErrorEvent> eventSaved = transactionClosureErrorEventStoreRepository.save(errorEvent);
+                                if (softValidityEnd.isAfter(Instant.now())) {
+                                    Duration latestAllowedVisibilityTimeout = Duration.between(Instant.now(), softValidityEnd);
+                                    Duration candidateVisibilityTimeout = Duration.ofSeconds(retryTimeoutInterval);
+
+                                    Duration visibilityTimeout = ObjectUtils.min(candidateVisibilityTimeout, latestAllowedVisibilityTimeout);
+
+                                    eventSaved = eventSaved
+                                            .flatMap(e -> transactionClosureSentEventQueueClient
+                                                    .sendMessageWithResponse(
+                                                            BinaryData.fromObject(e),
+                                                            visibilityTimeout,
+                                                            null
+                                                    )
+                                                    .thenReturn(e)
+                                            );
+                                }
+
+                                return eventSaved.map(Either::left);
                             });
                 });
     }

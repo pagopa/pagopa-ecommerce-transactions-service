@@ -31,6 +31,7 @@ import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -50,13 +51,19 @@ class TransactionSendClosureHandlerTest {
 
     private final QueueAsyncClient transactionClosureSentEventQueueClient = Mockito.mock(QueueAsyncClient.class);
 
+    private static final int PAYMENT_TOKEN_VALIDITY = 120;
+    private static final int SOFT_TIMEOUT_OFFSET = 10;
+    private static final int RETRY_TIMEOUT_INTERVAL = 5;
+
     private final TransactionSendClosureHandler transactionSendClosureHandler = new TransactionSendClosureHandler(
             transactionEventStoreRepository,
             transactionClosureErrorEventStoreRepository,
             eventStoreRepository,
             nodeForPspClient,
             transactionClosureSentEventQueueClient,
-            120
+            PAYMENT_TOKEN_VALIDITY,
+            SOFT_TIMEOUT_OFFSET,
+            RETRY_TIMEOUT_INTERVAL
     );
 
     private final TransactionId transactionId = new TransactionId(UUID.randomUUID());
@@ -393,13 +400,18 @@ class TransactionSendClosureHandlerTest {
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
-                .expectErrorMatches(e -> e.equals(closePaymentError))
-                .verify();
+                .expectNext(Either.left(errorEvent))
+                .verifyComplete();
 
-        Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1)).save(any());
+        Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
+                .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT)));
+        Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
+                .sendMessageWithResponse(
+                        argThat((BinaryData b) -> b.toByteBuffer().equals(BinaryData.fromObject(errorEvent).toByteBuffer())),
+                        argThat(d -> d.compareTo(Duration.ofSeconds(RETRY_TIMEOUT_INTERVAL)) <= 0),
+                        isNull());
     }
 
-    // TODO
     @Test
     void shouldEnqueueErrorEventOnRedisFailure() {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
@@ -511,14 +523,21 @@ class TransactionSendClosureHandlerTest {
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
-                .expectErrorMatches(e -> e.equals(redisError))
-                .verify();
+                .expectNext(Either.left(errorEvent))
+                .verifyComplete();
 
-        Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1)).save(any());
-        Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1)).sendMessageWithResponse(any(BinaryData.class), any(), any());
+        Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
+                .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT)));
+
+        Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
+                .sendMessageWithResponse(
+                        argThat((BinaryData b) -> b.toByteBuffer().equals(BinaryData.fromObject(errorEvent).toByteBuffer())),
+                        argThat(d -> d.compareTo(Duration.ofSeconds(RETRY_TIMEOUT_INTERVAL)) <= 0),
+                        isNull()
+                );
     }
 
-    private Mono<Response<SendMessageResult>> queueSuccessfulResponse() {
+    private static Mono<Response<SendMessageResult>> queueSuccessfulResponse() {
         return Mono.just(new Response<>() {
             @Override
             public int getStatusCode() {

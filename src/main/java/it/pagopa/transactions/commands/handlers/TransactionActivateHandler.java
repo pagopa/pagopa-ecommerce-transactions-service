@@ -66,7 +66,7 @@ public class TransactionActivateHandler
       NodoOperations nodoOperations,
       @Qualifier("transactionActivatedQueueAsyncClient")
           QueueAsyncClient transactionActivatedQueueAsyncClient,
-      @Value("${payment.token.timeout}") Integer paymentTokenTimeout) {
+      @Value("${payment.token.validity}") Integer paymentTokenTimeout) {
     this.paymentRequestsInfoRepository = paymentRequestsInfoRepository;
     this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
     this.transactionEventActivationRequestedStoreRepository =

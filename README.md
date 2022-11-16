@@ -34,6 +34,9 @@ These are all environment variables needed by the application:
 | NODOPERPM_URI                                  | NodoPerPM connection URI                                                           | string |         |
 | NODOPERPM_READ_TIMEOUT                         | NodoPerPM read timeout                                                             | number |         |
 | NODOPERPM_CONNECTION_TIMEOUT                   | NodoPerPM connection timeout                                                       | number |         |
+| PAYMENT_TOKEN_VALIDITY_TIME                    | Validity time in seconds of a payment token                                        | number |         |
+| TRANSACTIONS_RETRY_OFFSET                      | Seconds to offset validity end to account for more retries                         | number |         |
+| CLOSURE_RETRY_INTERVAL                         | Seconds to wait at closing the transaction before making a retry                   | number |         |
 
 An example configuration of these environment variables is in the `.env.example` file.
 

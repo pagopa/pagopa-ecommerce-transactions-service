@@ -39,7 +39,7 @@ public class TransactionActivateResultHandler
   @Qualifier("transactionActivatedQueueAsyncClient")
   QueueAsyncClient transactionActivatedQueueAsyncClient;
 
-  @Value("${payment.token.timeout}")
+  @Value("${payment.token.validity}")
   Integer paymentTokenTimeout;
 
   @Override

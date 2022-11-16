@@ -143,7 +143,7 @@
         <dependency>
             <groupId>io.vavr</groupId>
             <artifactId>vavr</artifactId>
-            <version>1.0.0-alpha-4</version>
+            <version>0.10.4</version>
         </dependency>
 
         <dependency>
