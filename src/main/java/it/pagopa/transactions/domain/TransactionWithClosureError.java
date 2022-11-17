@@ -15,7 +15,11 @@ public final class TransactionWithClosureError extends BaseTransactionWithClosur
 
     @Override
     public Transaction applyEvent(TransactionEvent<?> event) {
-        return this;
+        if (event instanceof TransactionClosureSentEvent closureSentEvent) {
+            return new TransactionClosed(this.withStatus(closureSentEvent.getData().getNewTransactionStatus()), closureSentEvent);
+        } else {
+            return this;
+        }
     }
 
     @Override
