@@ -1,0 +1,9 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$id": "templates/events/authorization-result/schema.json",
+  "type": "string",
+  "enum": [
+    "OK",
+    "KO"
+  ]
+}
