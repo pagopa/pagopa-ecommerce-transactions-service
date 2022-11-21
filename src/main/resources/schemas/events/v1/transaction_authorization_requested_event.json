@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$id": "templates/events/transaction_authorization_requested_event/schema.json",
+  "properties": {
+    "version": {
+      "$ref": "./event_version.json"
+    },
+    "id": {
+      "type": "string"
+    },
+    "transactionId": {
+      "type": "string"
+    },
+    "rptId": {
+      "type": "string"
+    },
+    "paymentToken": {
+      "type": "string"
+    },
+    "transactionEventCode": {
+      "type": "string",
+      "enum": ["TRANSACTION_AUTHORIZATION_REQUESTED"]
+    },
+    "creationDate": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "data": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "integer"
+        },
+        "fee": {
+          "type": "integer"
+        },
+        "paymentInstrumentId": {
+          "type": "string"
+        },
+        "pspId": {
+          "type": "string"
+        },
+        "paymentTypeCode": {
+          "type": "string"
+        },
+        "brokerName": {
+          "type": "string"
+        },
+        "pspChannelCode": {
+          "type": "string"
+        },
+        "paymentMethodName": {
+          "type": "string"
+        },
+        "pspBusinessName": {
+          "type": "string"
+        },
+        "authorizationRequestId": {
+          "type": "string"
+        }
+      },
+      "javaType" : "it.pagopa.generated.ecommerce.events.v1.TransactionAuthorizationRequestedData",
+      "required": [
+        "amount",
+        "fee",
+        "paymentInstrumentId",
+        "pspId",
+        "paymentTypeCode",
+        "brokerName",
+        "pspChannelCode",
+        "paymentMethodName",
+        "pspBusinessName",
+        "authorizationRequestId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "version",
+    "id",
+    "transactionId",
+    "rptId",
+    "paymentToken",
+    "transactionEventCode",
+    "creationDate",
+    "data"
+  ],
+  "additionalProperties": false
+}
