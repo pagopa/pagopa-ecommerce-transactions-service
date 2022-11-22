@@ -163,6 +163,7 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                                     Duration candidateVisibilityTimeout = Duration.ofSeconds(retryTimeoutInterval);
 
                                     Duration visibilityTimeout = ObjectUtils.min(candidateVisibilityTimeout, latestAllowedVisibilityTimeout);
+                                    log.info("Enqueued closure error retry event with visibility timeout {}", visibilityTimeout);
 
                                     eventSaved = eventSaved
                                             .flatMap(e -> transactionClosureSentEventQueueClient
@@ -173,6 +174,8 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                                                     )
                                                     .thenReturn(e)
                                             );
+                                } else {
+                                    log.info("Skipped enqueueing of closure error retry event: too near payment token expiry (offset={}, expiration at {})", softTimeoutOffset, validityEnd);
                                 }
 
                                 return eventSaved.map(Either::left);
