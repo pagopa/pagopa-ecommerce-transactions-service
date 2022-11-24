@@ -52,11 +52,10 @@ public class TransactionActivateResultHandler
         command.getData().transactionActivationRequested().getTransactionId().value().toString();
 
     return Mono.just(command)
-        .filterWhen(
+        .filter(
             commandData ->
-                Mono.just(
-                    commandData.getData().transactionActivationRequested().getStatus()
-                        == TransactionStatusDto.ACTIVATION_REQUESTED))
+                commandData.getData().transactionActivationRequested().getStatus()
+                    == TransactionStatusDto.ACTIVATION_REQUESTED)
         .switchIfEmpty(Mono.error(new AlreadyProcessedException(command.getRptId())))
         .flatMap(
             commandData -> {
