@@ -229,14 +229,13 @@ public class TransactionActivateHandler
                 Duration.ofSeconds(paymentTokenTimeout),
                 null))
         .then(Mono.just(transactionActivatedEvent))
-        .onErrorResume(
+        .doOnError(
             exception -> {
               log.error(
                   "Error to generate event TRANSACTION_ACTIVATED_EVENT for rptId {} and transactionId {} - error {}",
                   transactionActivatedEvent.getRptId(),
                   transactionActivatedEvent.getTransactionId(),
                   exception.getMessage());
-              return Mono.error(exception);
             })
         .doOnNext(
             event ->
