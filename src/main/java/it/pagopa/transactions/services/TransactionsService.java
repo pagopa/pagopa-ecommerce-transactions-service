@@ -1,19 +1,56 @@
 package it.pagopa.transactions.services;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PaymentMethodResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
-import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.generated.transactions.server.model.ActivationResultRequestDto;
+import it.pagopa.generated.transactions.server.model.ActivationResultResponseDto;
+import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
+import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
+import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
+import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
+import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
+import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
+import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
+import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
-import it.pagopa.transactions.commands.*;
-import it.pagopa.transactions.commands.data.*;
-import it.pagopa.transactions.commands.handlers.*;
+import it.pagopa.transactions.commands.TransactionActivateCommand;
+import it.pagopa.transactions.commands.TransactionActivateResultCommand;
+import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
+import it.pagopa.transactions.commands.TransactionClosureSendCommand;
+import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
+import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
+import it.pagopa.transactions.commands.data.ActivationResultData;
+import it.pagopa.transactions.commands.data.AddUserReceiptData;
+import it.pagopa.transactions.commands.data.AuthorizationRequestData;
+import it.pagopa.transactions.commands.data.ClosureSendData;
+import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
+import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
+import it.pagopa.transactions.commands.handlers.TransactionActivateResultHandler;
+import it.pagopa.transactions.commands.handlers.TransactionAddUserReceiptHandler;
+import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandler;
+import it.pagopa.transactions.commands.handlers.TransactionSendClosureHandler;
+import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHandler;
 import it.pagopa.transactions.documents.TransactionActivatedEvent;
 import it.pagopa.transactions.documents.TransactionActivationRequestedEvent;
-import it.pagopa.transactions.domain.*;
+import it.pagopa.transactions.domain.Email;
+import it.pagopa.transactions.domain.PaymentToken;
+import it.pagopa.transactions.domain.RptId;
+import it.pagopa.transactions.domain.TransactionActivated;
+import it.pagopa.transactions.domain.TransactionActivationRequested;
+import it.pagopa.transactions.domain.TransactionAmount;
+import it.pagopa.transactions.domain.TransactionDescription;
+import it.pagopa.transactions.domain.TransactionId;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
-import it.pagopa.transactions.projections.handlers.*;
+import it.pagopa.transactions.projections.handlers.AuthorizationRequestProjectionHandler;
+import it.pagopa.transactions.projections.handlers.AuthorizationUpdateProjectionHandler;
+import it.pagopa.transactions.projections.handlers.ClosureSendProjectionHandler;
+import it.pagopa.transactions.projections.handlers.TransactionUserReceiptProjectionHandler;
+import it.pagopa.transactions.projections.handlers.TransactionsActivationProjectionHandler;
+import it.pagopa.transactions.projections.handlers.TransactionsActivationRequestedProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsActivationRequestedEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.TransactionEventCode;
@@ -63,6 +100,8 @@ public class TransactionsService {
   @Autowired
   private TransactionsActivationRequestedEventStoreRepository transactionEventStoreRepository;
 
+  @CircuitBreaker(name = "node-backend")
+  @Retry(name = "newTransaction")
   public Mono<NewTransactionResponseDto> newTransaction(
       NewTransactionRequestDto newTransactionRequestDto) {
 
@@ -94,6 +133,8 @@ public class TransactionsService {
             });
   }
 
+  @CircuitBreaker(name = "node-backend")
+  @Retry(name = "getTransactionInfo")
   public Mono<TransactionInfoDto> getTransactionInfo(String transactionId) {
       log.info("Get Transaction Invoked with id {} ", transactionId);
     return transactionsViewRepository
@@ -111,6 +152,8 @@ public class TransactionsService {
                     .status(transaction.getStatus()));
   }
 
+  @CircuitBreaker(name = "transactions-backend")
+  @Retry(name = "requestTransactionAuthorization")
   public Mono<RequestAuthorizationResponseDto> requestTransactionAuthorization(
       String transactionId, RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
     return transactionsViewRepository
@@ -207,6 +250,8 @@ public class TransactionsService {
             });
   }
 
+  @CircuitBreaker(name = "node-backend")
+  @Retry(name = "updateTransactionAuthorization")
   public Mono<TransactionInfoDto> updateTransactionAuthorization(
       String transactionId, UpdateAuthorizationRequestDto updateAuthorizationRequestDto) {
     return transactionsViewRepository
@@ -273,7 +318,8 @@ public class TransactionsService {
                               .authToken(null));
             });
   }
-
+  @CircuitBreaker(name = "transactions-backend")
+  @Retry(name = "addUserReceipt")
   public Mono<TransactionInfoDto> addUserReceipt(String transactionId, AddUserReceiptRequestDto addUserReceiptRequest) {
     return transactionsViewRepository
         .findById(transactionId)
@@ -327,6 +373,8 @@ public class TransactionsService {
                     transaction.getTransactionId()));
   }
 
+  @CircuitBreaker(name = "node-backend")
+  @Retry(name = "activateTransaction")
   public Mono<ActivationResultResponseDto> activateTransaction(
       String paymentContextCode, ActivationResultRequestDto activationResultRequestDto) {
     return transactionEventStoreRepository

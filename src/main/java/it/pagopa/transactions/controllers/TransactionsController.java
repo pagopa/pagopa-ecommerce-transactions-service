@@ -1,5 +1,6 @@
 package it.pagopa.transactions.controllers;
 
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
@@ -27,6 +28,12 @@ public class TransactionsController implements TransactionsApi {
 
     @Autowired
     private TransactionsService transactionsService;
+
+    @ExceptionHandler({ CallNotPermittedException.class })
+    public Mono<Object> openStateHandler(){
+        log.error("Error - OPEN circuit breaker");
+        return Mono.just(ResponseEntity.status(503).build());
+    }
 
     @Override
     public Mono<ResponseEntity<NewTransactionResponseDto>> newTransaction(Mono<NewTransactionRequestDto> newTransactionRequest, ServerWebExchange exchange) {
