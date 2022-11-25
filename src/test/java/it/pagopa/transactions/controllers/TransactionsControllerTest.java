@@ -1,9 +1,27 @@
 package it.pagopa.transactions.controllers;
 
-import it.pagopa.generated.transactions.server.model.*;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import it.pagopa.generated.transactions.server.model.ActivationResultRequestDto;
+import it.pagopa.generated.transactions.server.model.ActivationResultResponseDto;
+import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
+import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestPaymentsDto;
+import it.pagopa.generated.transactions.server.model.AddUserReceiptResponseDto;
+import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
+import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
+import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
+import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
+import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
+import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
+import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
+import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
+import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.domain.PaymentToken;
 import it.pagopa.transactions.domain.RptId;
-import it.pagopa.transactions.exceptions.*;
+import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.BadGatewayException;
+import it.pagopa.transactions.exceptions.GatewayTimeoutException;
+import it.pagopa.transactions.exceptions.TransactionNotFoundException;
+import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
 import it.pagopa.transactions.services.TransactionsService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -377,5 +395,14 @@ class TransactionsControllerTest {
                 .isBadRequest()
                 .expectBody(ProblemJsonDto.class)
                 .value(p -> assertEquals(400, p.getStatus()));
+    }
+
+    @Test
+    void shouldReturnErrorCircuitBreakerOpen(){
+
+        ResponseEntity error = transactionsController.openStateHandler().block();
+
+        // Verify status code and response
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, error.getStatusCode());
     }
 }
