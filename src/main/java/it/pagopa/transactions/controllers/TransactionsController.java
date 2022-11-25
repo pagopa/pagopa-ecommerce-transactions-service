@@ -30,7 +30,7 @@ public class TransactionsController implements TransactionsApi {
     private TransactionsService transactionsService;
 
     @ExceptionHandler({ CallNotPermittedException.class })
-    public Mono<Object> openStateHandler(){
+    public Mono<ResponseEntity> openStateHandler(){
         log.error("Error - OPEN circuit breaker");
         return Mono.just(ResponseEntity.status(503).build());
     }
