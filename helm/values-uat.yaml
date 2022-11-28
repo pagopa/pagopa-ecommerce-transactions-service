@@ -47,7 +47,7 @@ microservice-chart:
       TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_NAME: transaction-events
       TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_VISIBILITY_TIMEOUT: "600"
       TRANSACTION_ACTIVATED_EVENT_QUEUE_NAME: transactionactivatedevents
-      PAYMENT_TOKEN_TIMEOUT: "1800"
+      PAYMENT_TOKEN_TIMEOUT: "120"
     envSecret:
       MONGO_PASSWORD: mongo-ecommerce-password
       REDIS_PASSWORD: redis-ecommerce-password
@@ -146,7 +146,7 @@ microservice-chart:
     TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_NAME: transaction-events
     TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_VISIBILITY_TIMEOUT: "600"
     TRANSACTION_ACTIVATED_EVENT_QUEUE_NAME: transactionactivatedevents
-    PAYMENT_TOKEN_TIMEOUT: "1800"
+    PAYMENT_TOKEN_TIMEOUT: "120"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password
