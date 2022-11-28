@@ -1,5 +1,7 @@
 package it.pagopa.transactions.commands.handlers;
 
+import com.azure.core.util.BinaryData;
+import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
@@ -11,11 +13,14 @@ import it.pagopa.transactions.repositories.*;
 import it.pagopa.transactions.utils.NodoOperations;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
+import java.time.Duration;
 import java.util.UUID;
 
 @Slf4j
@@ -29,19 +34,43 @@ public class TransactionActivateHandler
                 Mono<TransactionActivationRequestedEvent>,
                 SessionDataDto>>> {
 
-  @Autowired PaymentRequestsInfoRepository paymentRequestsInfoRepository;
+  private final PaymentRequestsInfoRepository paymentRequestsInfoRepository;
 
-  @Autowired
-  TransactionsEventStoreRepository<TransactionActivatedData>
+  private final TransactionsEventStoreRepository<TransactionActivatedData>
       transactionEventActivatedStoreRepository;
 
-  @Autowired
-  TransactionsEventStoreRepository<TransactionActivationRequestedData>
+  private final TransactionsEventStoreRepository<TransactionActivationRequestedData>
       transactionEventActivationRequestedStoreRepository;
 
-  @Autowired EcommerceSessionsClient ecommerceSessionsClient;
+  private final EcommerceSessionsClient ecommerceSessionsClient;
 
-  @Autowired NodoOperations nodoOperations;
+  private final NodoOperations nodoOperations;
+
+  private final QueueAsyncClient transactionActivatedQueueAsyncClient;
+
+  private final Integer paymentTokenTimeout;
+
+  @Autowired
+  public TransactionActivateHandler(
+      PaymentRequestsInfoRepository paymentRequestsInfoRepository,
+      TransactionsEventStoreRepository<TransactionActivatedData>
+          transactionEventActivatedStoreRepository,
+      TransactionsEventStoreRepository<TransactionActivationRequestedData>
+          transactionEventActivationRequestedStoreRepository,
+      EcommerceSessionsClient ecommerceSessionsClient,
+      NodoOperations nodoOperations,
+      @Qualifier("transactionActivatedQueueAsyncClient")
+          QueueAsyncClient transactionActivatedQueueAsyncClient,
+      @Value("${payment.token.timeout}") Integer paymentTokenTimeout) {
+    this.paymentRequestsInfoRepository = paymentRequestsInfoRepository;
+    this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
+    this.transactionEventActivationRequestedStoreRepository =
+        transactionEventActivationRequestedStoreRepository;
+    this.ecommerceSessionsClient = ecommerceSessionsClient;
+    this.nodoOperations = nodoOperations;
+    this.paymentTokenTimeout = paymentTokenTimeout;
+    this.transactionActivatedQueueAsyncClient = transactionActivatedQueueAsyncClient;
+  }
 
   public Mono<
           Tuple3<
@@ -151,7 +180,12 @@ public class TransactionActivateHandler
   }
 
   private Mono<TransactionActivationRequestedEvent> newTransactionActivationRequestedEvent(
-      Integer amount, String description, String email, String transactionId, String rptId, String paymentContextCode) {
+      Integer amount,
+      String description,
+      String email,
+      String transactionId,
+      String rptId,
+      String paymentContextCode) {
 
     TransactionActivationRequestedData data = new TransactionActivationRequestedData();
     data.setAmount(amount);
@@ -184,14 +218,30 @@ public class TransactionActivateHandler
     data.setEmail(email);
     data.setPaymentToken(paymentToken);
 
-    TransactionActivatedEvent transactionActivationRequestedEvent =
+    TransactionActivatedEvent transactionActivatedEvent =
         new TransactionActivatedEvent(transactionId, rptId, paymentToken, data);
 
-    log.info(
-        "Generated event TRANSACTION_ACTIVATED_EVENT for rptId {} and transactionId {}",
-        rptId,
-        transactionId);
-
-    return transactionEventActivatedStoreRepository.save(transactionActivationRequestedEvent);
+    return transactionEventActivatedStoreRepository
+        .save(transactionActivatedEvent)
+        .then(
+            transactionActivatedQueueAsyncClient.sendMessageWithResponse(
+                BinaryData.fromObject(transactionActivatedEvent),
+                Duration.ofSeconds(paymentTokenTimeout),
+                null))
+        .then(Mono.just(transactionActivatedEvent))
+        .doOnError(
+            exception -> {
+              log.error(
+                  "Error to generate event TRANSACTION_ACTIVATED_EVENT for rptId {} and transactionId {} - error {}",
+                  transactionActivatedEvent.getRptId(),
+                  transactionActivatedEvent.getTransactionId(),
+                  exception.getMessage());
+            })
+        .doOnNext(
+            event ->
+                log.info(
+                    "Generated event TRANSACTION_ACTIVATED_EVENT for rptId {} and transactionId {}",
+                    event.getRptId(),
+                    event.getTransactionId()));
   }
 }

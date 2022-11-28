@@ -46,6 +46,8 @@ microservice-chart:
       NOTIFICATIONS_SERVICE_CONNECTION_TIMEOUT: "10000"
       TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_NAME: transaction-events
       TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_VISIBILITY_TIMEOUT: "600"
+      TRANSACTION_ACTIVATED_EVENT_QUEUE_NAME: pagopa-u-weu-ecommerce-activated-events-queue
+      PAYMENT_TOKEN_TIMEOUT: "120"
     envSecret:
       MONGO_PASSWORD: mongo-ecommerce-password
       REDIS_PASSWORD: redis-ecommerce-password
@@ -54,7 +56,7 @@ microservice-chart:
       PAYMENT_TRANSACTIONS_GATEWAY_API_KEY: payment-transactions-gateway-api-key
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.5.0"
+    tag: "0.5.3"
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -143,6 +145,8 @@ microservice-chart:
     NOTIFICATIONS_SERVICE_CONNECTION_TIMEOUT: "10000"
     TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_NAME: transaction-events
     TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_VISIBILITY_TIMEOUT: "600"
+    TRANSACTION_ACTIVATED_EVENT_QUEUE_NAME: pagopa-u-weu-ecommerce-activated-events-queue
+    PAYMENT_TOKEN_TIMEOUT: "120"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password

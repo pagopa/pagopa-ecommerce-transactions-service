@@ -551,6 +551,8 @@ components:
         - CLOSURE_FAILED
         - NOTIFIED
         - NOTIFIED_FAILED
+        - EXPIRED
+        - REFUNDED
     ProblemJson:
       type: object
       properties:
