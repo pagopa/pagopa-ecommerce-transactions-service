@@ -4,6 +4,7 @@ import it.pagopa.generated.transactions.server.model.RequestAuthorizationRespons
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
+import it.pagopa.transactions.commands.data.AuthResponseEntityDto;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestData;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestedEvent;
 import it.pagopa.transactions.domain.TransactionActivated;
@@ -47,7 +48,7 @@ public class TransactionRequestAuthorizationHandler
             return Mono.error(new AlreadyProcessedException(transaction.getRptId()));
         }
 
-        return paymentGatewayClient.requestAuthorization(command.getData())
+        return paymentGatewayClient.requestGeneralAuthorization(command.getData())
                 .flatMap(gatewayResponse -> {
                     log.info("Logging authorization event for rpt id {}", transaction.getRptId().value());
 

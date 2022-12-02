@@ -6,6 +6,7 @@ import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
+import it.pagopa.transactions.commands.data.AuthResponseEntityDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
@@ -63,7 +64,11 @@ class PaymentGatewayClientTest {
                 "brokerName",
                 "pspChannelCode",
                 "paymentMethodName",
-                "pspBusinessName"
+                "pspBusinessName",
+                null,
+                null,
+                null,
+                null
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
@@ -75,16 +80,18 @@ class PaymentGatewayClientTest {
         String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
 
-        PostePayAuthResponseEntityDto apiResponse = new PostePayAuthResponseEntityDto()
+        PostePayAuthResponseEntityDto postePayResponse = new PostePayAuthResponseEntityDto()
                 .channel("")
                 .urlRedirect("https://example.com");
 
+        AuthResponseEntityDto apiResponse = new AuthResponseEntityDto().postePayAuth(postePayResponse);
+
         /* preconditions */
         Mockito.when(paymentTransactionsControllerApi.authRequest(postePayAuthRequest, false, encodedMdcFields))
-                .thenReturn(Mono.just(apiResponse));
+                .thenReturn(Mono.just(postePayResponse));
 
         /* test */
-        StepVerifier.create(client.requestAuthorization(authorizationData))
+        StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
                 .expectNext(apiResponse)
                 .verifyComplete();
     }
@@ -110,7 +117,11 @@ class PaymentGatewayClientTest {
                 "brokerName",
                 "pspChannelCode",
                 "paymentMethodName",
-                "pspBusinessName"
+                "pspBusinessName",
+                null,
+                null,
+                null,
+                null
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
@@ -127,7 +138,7 @@ class PaymentGatewayClientTest {
                 .thenReturn(Mono.error(new WebClientResponseException("api error", HttpStatus.UNAUTHORIZED.value(), "Unauthorized", null, null, null)));
 
         /* test */
-        StepVerifier.create(client.requestAuthorization(authorizationData))
+        StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
                 .expectErrorMatches(error ->
                         error instanceof AlreadyProcessedException &&
                                 ((AlreadyProcessedException) error).getRptId().equals(transaction.getRptId()))
@@ -157,7 +168,11 @@ class PaymentGatewayClientTest {
                 "brokerName",
                 "pspChannelCode",
                 "paymentMethodName",
-                "pspBusinessName"
+                "pspBusinessName",
+                null,
+                null,
+                null,
+                null
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
@@ -174,7 +189,7 @@ class PaymentGatewayClientTest {
                 .thenReturn(Mono.error(new WebClientResponseException("api error", HttpStatus.GATEWAY_TIMEOUT.value(), "Gateway timeout", null, null, null)));
 
         /* test */
-        StepVerifier.create(client.requestAuthorization(authorizationData))
+        StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
                 .expectErrorMatches(error -> error instanceof GatewayTimeoutException)
                 .verify();
     }
@@ -200,7 +215,11 @@ class PaymentGatewayClientTest {
                 "brokerName",
                 "pspChannelCode",
                 "paymentMethodName",
-                "pspBusinessName"
+                "pspBusinessName",
+                null,
+                null,
+                null,
+                null
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
@@ -217,7 +236,7 @@ class PaymentGatewayClientTest {
                 .thenReturn(Mono.error(new WebClientResponseException("api error", HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error", null, null, null)));
 
         /* test */
-        StepVerifier.create(client.requestAuthorization(authorizationData))
+        StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
                 .expectErrorMatches(error -> error instanceof BadGatewayException)
                 .verify();
     }
@@ -243,7 +262,11 @@ class PaymentGatewayClientTest {
                 "brokerName",
                 "pspChannelCode",
                 "paymentMethodName",
-                "pspBusinessName"
+                "pspBusinessName",
+                null,
+                null,
+                null,
+                null
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
@@ -254,17 +277,19 @@ class PaymentGatewayClientTest {
 
         String encodedMdcFields = "";
 
-        PostePayAuthResponseEntityDto apiResponse = new PostePayAuthResponseEntityDto()
+        PostePayAuthResponseEntityDto postePayResponse = new PostePayAuthResponseEntityDto()
                 .channel("")
                 .urlRedirect("https://example.com");
+
+        AuthResponseEntityDto apiResponse = new AuthResponseEntityDto().postePayAuth(postePayResponse);
 
         /* preconditions */
         Mockito.when(objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID))).thenThrow(new JsonProcessingException(""){});
         Mockito.when(paymentTransactionsControllerApi.authRequest(postePayAuthRequest, false, encodedMdcFields))
-                .thenReturn(Mono.just(apiResponse));
+                .thenReturn(Mono.just(postePayResponse));
 
         /* test */
-        StepVerifier.create(client.requestAuthorization(authorizationData))
+        StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
                 .expectNext(apiResponse)
                 .verifyComplete();
 

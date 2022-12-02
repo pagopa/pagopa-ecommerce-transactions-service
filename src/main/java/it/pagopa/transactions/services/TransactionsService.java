@@ -188,7 +188,11 @@ public class TransactionsService {
                       psp.getBrokerName(),
                       psp.getChannelCode(),
                       paymentMethod.getName(),
-                      psp.getBusinessName());
+                      psp.getBusinessName(),
+                          null,
+                          null,
+                          null,
+                          null);
 
               TransactionRequestAuthorizationCommand command =
                   new TransactionRequestAuthorizationCommand(

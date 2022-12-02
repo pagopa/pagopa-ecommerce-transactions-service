@@ -11,5 +11,9 @@ public record AuthorizationRequestData(
         String brokerName,
         String pspChannelCode,
         String paymentMethodName,
-        String pspBusinessName
+        String pspBusinessName,
+		String gatewayId,
+		String cvv,
+		String pan,
+		String expiryDate
 ) {}

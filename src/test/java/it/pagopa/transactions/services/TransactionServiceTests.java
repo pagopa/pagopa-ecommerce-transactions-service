@@ -10,6 +10,7 @@ import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionActivateResultCommand;
+import it.pagopa.transactions.commands.data.AuthResponseEntityDto;
 import it.pagopa.transactions.commands.handlers.*;
 import it.pagopa.transactions.documents.*;
 import it.pagopa.transactions.documents.Transaction;
@@ -184,8 +185,10 @@ public class TransactionServiceTests {
 				.requestId("requestId")
 				.urlRedirect("http://example.com");
 
+		AuthResponseEntityDto authResponseEntityDto = new AuthResponseEntityDto().postePayAuth(gatewayResponse);
+
 		RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
-				.authorizationUrl(gatewayResponse.getUrlRedirect());
+				.authorizationUrl(authResponseEntityDto.getUrlRedirect());
 
 		Mockito.when(ecommercePaymentInstrumentsClient.getPSPs(any(), any(), any())).thenReturn(
 				Mono.just(pspResponseDto));
@@ -195,8 +198,8 @@ public class TransactionServiceTests {
 		Mockito.when(repository.findById(TRANSACION_ID))
 				.thenReturn(Mono.just(transaction));
 
-		Mockito.when(paymentGatewayClient.requestAuthorization(any())).thenReturn(
-				Mono.just(gatewayResponse));
+		Mockito.when(paymentGatewayClient.requestGeneralAuthorization(any())).thenReturn(
+				Mono.just(authResponseEntityDto));
 
 		Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 

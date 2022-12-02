@@ -3,8 +3,12 @@ package it.pagopa.transactions.client;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
+import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
+import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthRequestDto;
+import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
+import it.pagopa.transactions.commands.data.AuthResponseEntityDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
@@ -14,9 +18,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Map;
 
@@ -27,26 +34,66 @@ public class PaymentGatewayClient {
     PostePayInternalApi paymentTransactionGatewayPostepayWebClient;
 
     @Autowired
+    @Qualifier("paymentTransactionGatewayXPayWebClient")
+    XPayInternalApi paymentTransactionGatewayXPayWebClient;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
+    public Mono<AuthResponseEntityDto> requestGeneralAuthorization(AuthorizationRequestData authorizationData) {
+        // FIXME come discriminiamo la richiesta di pagamento verso xpay rispetto a quella di postepay?
+        // FIXME E' sufficente fare un check sul paymentTypeCode e poi fare switch sul client corretto ?
+        // FIXME O anche nel caso di altri strumenti di pagamento (PPAY è totalmente inventato) potrebbe essere necessario dover discrimnare quale
+        // FIXME paymentGateway invocare?
+        return Mono.just(authorizationData).flatMap(a ->
+                switch (a.paymentTypeCode()) {
+                    case "CP" ->
+                        switch (a.gatewayId()) {
+                            case "XPAY" -> requestXPayAuthorization(authorizationData).map(xPay -> new AuthResponseEntityDto().xPay(xPay));
+                            case null, default -> Mono.empty();
+                        };
+                    case "PPAY" -> requestPostepayAuthorization(authorizationData).map(postePayAuth -> new AuthResponseEntityDto().postePayAuth(postePayAuth));
+                    case null, default -> Mono.empty();
+        });
 
-    public Mono<PostePayAuthResponseEntityDto> requestAuthorization(AuthorizationRequestData authorizationData) {
-        PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
-                .grandTotal(BigDecimal.valueOf(((long) authorizationData.transaction().getAmount().value()) + authorizationData.fee()))
-                .description(authorizationData.transaction().getDescription().value())
-                .paymentChannel(authorizationData.pspChannelCode())
-                .idTransaction(authorizationData.transaction().getTransactionId().value().toString());
-
-        String encodedMdcFields = encodeMdcFields(authorizationData);
-
-        return paymentTransactionGatewayPostepayWebClient.authRequest(postePayAuthRequest, false, encodedMdcFields)
-                .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
-                    case UNAUTHORIZED -> new AlreadyProcessedException(authorizationData.transaction().getRptId());
-                    case GATEWAY_TIMEOUT -> new GatewayTimeoutException();
-                    case INTERNAL_SERVER_ERROR -> new BadGatewayException("");
-                    default -> exception;
-                });
     }
+
+    private Mono<PostePayAuthResponseEntityDto> requestPostepayAuthorization(AuthorizationRequestData authorizationData) {
+        return Mono.just(authorizationData)
+            .map(authorizationRequestData ->
+                new PostePayAuthRequestDto()
+                    .grandTotal(BigDecimal.valueOf(((long) authorizationData.transaction().getAmount().value()) + authorizationData.fee()))
+                    .description(authorizationData.transaction().getDescription().value())
+                    .paymentChannel(authorizationData.pspChannelCode())
+                    .idTransaction(authorizationData.transaction().getTransactionId().value().toString()))
+            .flatMap(p ->
+                    paymentTransactionGatewayPostepayWebClient.authRequest(p, false, encodeMdcFields(authorizationData))
+                    .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
+                            case UNAUTHORIZED -> new AlreadyProcessedException(authorizationData.transaction().getRptId());
+                            case GATEWAY_TIMEOUT -> new GatewayTimeoutException();
+                            case INTERNAL_SERVER_ERROR -> new BadGatewayException("");
+                            default -> exception;
+                        }
+                    )
+            );
+    }
+
+    private Mono<XPayAuthResponseEntityDto> requestXPayAuthorization(AuthorizationRequestData authorizationData) {
+        return Mono.just(authorizationData)
+            .map(authorizationRequestData -> new XPayAuthRequestDto()
+                .cvv(authorizationData.cvv())
+                .pan(authorizationData.pan())
+                .exipiryDate(authorizationData.expiryDate())
+                .idTransaction(authorizationData.transaction().getTransactionId().toString())
+                .grandTotal(BigDecimal.valueOf(((long) authorizationData.transaction().getAmount().value()) + authorizationData.fee())))
+            .flatMap( xPayAuthRequestDto ->
+                paymentTransactionGatewayXPayWebClient.authRequestXpay(xPayAuthRequestDto,encodeMdcFields(authorizationData)).onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
+                    case UNAUTHORIZED -> new AlreadyProcessedException(authorizationData.transaction().getRptId()); //401
+                    case INTERNAL_SERVER_ERROR -> new BadGatewayException(""); //500
+                    default -> exception;
+                })
+            );
+        }
 
     private String encodeMdcFields(AuthorizationRequestData authorizationData) {
         String mdcData;
