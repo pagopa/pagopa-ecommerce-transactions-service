@@ -164,7 +164,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/requestBodies/ActivationResultResponse"
+                $ref: "#/components/schemas/ActivationResultResponse"
         400:
           description: Invalid payment context code
           content:

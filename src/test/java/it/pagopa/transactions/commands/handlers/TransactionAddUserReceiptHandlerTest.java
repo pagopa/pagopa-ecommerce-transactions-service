@@ -2,10 +2,7 @@ package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.notifications.v1.dto.NotificationEmailResponseDto;
-import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
-import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestPaymentsDto;
-import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
-import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
+import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.NotificationsServiceClient;
 import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.data.AddUserReceiptData;
@@ -122,7 +119,7 @@ class TransactionAddUserReceiptHandlerTest {
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
                 .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
                 .paymentDate(OffsetDateTime.now())
-                .addPaymentsItem(new AddUserReceiptRequestPaymentsDto()
+                .addPaymentsItem(new AddUserReceiptRequestPaymentsInnerDto()
                         .paymentToken("paymentToken")
                         .companyName("companyName")
                         .creditorReferenceId("creditorReferenceId")
@@ -240,7 +237,7 @@ class TransactionAddUserReceiptHandlerTest {
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
                 .outcome(AddUserReceiptRequestDto.OutcomeEnum.KO)
                 .paymentDate(OffsetDateTime.now())
-                .addPaymentsItem(new AddUserReceiptRequestPaymentsDto()
+                .addPaymentsItem(new AddUserReceiptRequestPaymentsInnerDto()
                         .paymentToken("paymentToken")
                         .companyName("companyName")
                         .creditorReferenceId("creditorReferenceId")
@@ -347,7 +344,7 @@ class TransactionAddUserReceiptHandlerTest {
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
                 .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
                 .paymentDate(OffsetDateTime.now())
-                .addPaymentsItem(new AddUserReceiptRequestPaymentsDto()
+                .addPaymentsItem(new AddUserReceiptRequestPaymentsInnerDto()
                         .paymentToken("paymentToken")
                         .companyName("companyName")
                         .creditorReferenceId("creditorReferenceId")
