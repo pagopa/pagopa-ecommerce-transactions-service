@@ -1,5 +1,7 @@
 package it.pagopa.transactions.commands.handlers;
 
+import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
+import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.client.PaymentGatewayClient;
@@ -21,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuples;
 
 @Component
 @Slf4j
@@ -49,30 +52,38 @@ public class TransactionRequestAuthorizationHandler
         }
 
         return paymentGatewayClient.requestGeneralAuthorization(command.getData())
-                .flatMap(gatewayResponse -> {
+                .flatMap(authResponse -> {
                     log.info("Logging authorization event for rpt id {}", transaction.getRptId().value());
 
-                    TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
-                            transaction.getTransactionId().value().toString(),
-                            transaction.getRptId().value(),
-                            transaction.getTransactionActivatedData().getPaymentToken(),
-                            new TransactionAuthorizationRequestData(
-                                    command.getData().transaction().getAmount().value(),
-                                    command.getData().fee(),
-                                    command.getData().paymentInstrumentId(),
-                                    command.getData().pspId(),
-                                    command.getData().paymentTypeCode(),
-                                    command.getData().brokerName(),
-                                    command.getData().pspChannelCode(),
-                                    command.getData().paymentMethodName(),
-                                    command.getData().pspBusinessName(),
-                                    gatewayResponse.getRequestId()));
+                    Mono<PostePayAuthResponseEntityDto> postePayAuthResponseEntityDtoMono = authResponse.getT1();
+                    Mono<XPayAuthResponseEntityDto> xPayAuthResponseEntityDtoMono = authResponse.getT2();
 
-                    return transactionEventStoreRepository.save(authorizationEvent)
-                            .thenReturn(gatewayResponse)
-                            .map(auth -> new RequestAuthorizationResponseDto()
-                                    .authorizationUrl(auth.getUrlRedirect())
-                                    .authorizationRequestId(auth.getRequestId()));
+                    return postePayAuthResponseEntityDtoMono
+                            .flatMap(postePayResponse -> Mono.just(Tuples.of(postePayResponse.getRequestId(),postePayResponse.getUrlRedirect())))
+                            .switchIfEmpty(xPayAuthResponseEntityDtoMono.flatMap(xPayAuthResponse -> Mono.just(Tuples.of(xPayAuthResponse.getRequestId(),xPayAuthResponse.getUrlRedirect()))))
+                            .flatMap(tuple2 -> {
+                                TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
+                                        transaction.getTransactionId().value().toString(),
+                                        transaction.getRptId().value(),
+                                        transaction.getTransactionActivatedData().getPaymentToken(),
+                                        new TransactionAuthorizationRequestData(
+                                                command.getData().transaction().getAmount().value(),
+                                                command.getData().fee(),
+                                                command.getData().paymentInstrumentId(),
+                                                command.getData().pspId(),
+                                                command.getData().paymentTypeCode(),
+                                                command.getData().brokerName(),
+                                                command.getData().pspChannelCode(),
+                                                command.getData().paymentMethodName(),
+                                                command.getData().pspBusinessName(),
+                                                tuple2.getT1()));
+
+                                return transactionEventStoreRepository.save(authorizationEvent)
+                                        .thenReturn(tuple2)
+                                        .map(auth -> new RequestAuthorizationResponseDto()
+                                                .authorizationUrl(tuple2.getT2())
+                                                .authorizationRequestId(tuple2.getT1()));
+                            });
                 })
                 .doOnNext(authorizationEvent -> queueAsyncClient.sendMessageWithResponse(
                         BinaryData.fromObject(authorizationEvent),

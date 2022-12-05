@@ -40,15 +40,15 @@ public class PaymentGatewayClient {
     @Autowired
     private ObjectMapper objectMapper;
 
-    public Mono<AuthResponseEntityDto> requestGeneralAuthorization(AuthorizationRequestData authorizationData) {
+    public Mono<Tuple2<Mono<PostePayAuthResponseEntityDto>,Mono<XPayAuthResponseEntityDto>>> requestGeneralAuthorization(AuthorizationRequestData authorizationData) {
         return Mono.just(authorizationData).flatMap(a ->
                 switch (a.paymentTypeCode()) {
                     case "CP" ->
                         switch (a.gatewayId()) {
-                            case "XPAY" -> requestXPayAuthorization(authorizationData).map(xPay -> new AuthResponseEntityDto().xPay(xPay));
-                            case null, default -> Mono.empty();
+                            case "XPAY" -> Mono.just(Tuples.of(Mono.empty(), requestXPayAuthorization(authorizationData)));
+                            case null, default -> Mono.just(Tuples.of(Mono.empty(),Mono.empty()));
                         };
-                    case "PPAY" -> requestPostepayAuthorization(authorizationData).map(postePayAuth -> new AuthResponseEntityDto().postePayAuth(postePayAuth));
+                    case "PPAY" -> Mono.just(Tuples.of(requestPostepayAuthorization(authorizationData), Mono.empty()));
                     case null, default -> Mono.empty();
         });
 
@@ -56,6 +56,8 @@ public class PaymentGatewayClient {
 
     private Mono<PostePayAuthResponseEntityDto> requestPostepayAuthorization(AuthorizationRequestData authorizationData) {
         return Mono.just(authorizationData)
+                .filter(authorizationRequestData -> "PPAY".equals(authorizationRequestData.paymentTypeCode()))
+                .switchIfEmpty(Mono.empty())
             .map(authorizationRequestData ->
                 new PostePayAuthRequestDto()
                     .grandTotal(BigDecimal.valueOf(((long) authorizationData.transaction().getAmount().value()) + authorizationData.fee()))
@@ -76,6 +78,8 @@ public class PaymentGatewayClient {
 
     private Mono<XPayAuthResponseEntityDto> requestXPayAuthorization(AuthorizationRequestData authorizationData) {
         return Mono.just(authorizationData)
+                .filter(authorizationRequestData -> "CP".equals(authorizationRequestData.paymentTypeCode()) && "XPAY".equals(authorizationRequestData.gatewayId()))
+                .switchIfEmpty(Mono.empty())
             .map(authorizationRequestData -> new XPayAuthRequestDto()
                 .cvv(authorizationData.cvv())
                 .pan(authorizationData.pan())
