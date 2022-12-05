@@ -60,7 +60,7 @@ class PaymentGatewayClientTest {
                 10,
                 "paymentInstrumentId",
                 "pspId",
-                "paymentTypeCode",
+                "PPAY",
                 "brokerName",
                 "pspChannelCode",
                 "paymentMethodName",
@@ -84,15 +84,13 @@ class PaymentGatewayClientTest {
                 .channel("")
                 .urlRedirect("https://example.com");
 
-        AuthResponseEntityDto apiResponse = new AuthResponseEntityDto().postePayAuth(postePayResponse);
-
         /* preconditions */
         Mockito.when(paymentTransactionsControllerApi.authRequest(postePayAuthRequest, false, encodedMdcFields))
                 .thenReturn(Mono.just(postePayResponse));
 
         /* test */
         StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
-                .expectNext(apiResponse)
+                .assertNext(response -> response.getPostePayAuth().equals(postePayResponse))
                 .verifyComplete();
     }
 
@@ -113,7 +111,7 @@ class PaymentGatewayClientTest {
                 10,
                 "paymentInstrumentId",
                 "pspId",
-                "paymentTypeCode",
+                "PPAY",
                 "brokerName",
                 "pspChannelCode",
                 "paymentMethodName",
@@ -164,7 +162,7 @@ class PaymentGatewayClientTest {
                 10,
                 "paymentInstrumentId",
                 "pspId",
-                "paymentTypeCode",
+                "PPAY",
                 "brokerName",
                 "pspChannelCode",
                 "paymentMethodName",
@@ -211,7 +209,7 @@ class PaymentGatewayClientTest {
                 10,
                 "paymentInstrumentId",
                 "pspId",
-                "paymentTypeCode",
+                "PPAY",
                 "brokerName",
                 "pspChannelCode",
                 "paymentMethodName",
@@ -258,7 +256,7 @@ class PaymentGatewayClientTest {
                 10,
                 "paymentInstrumentId",
                 "pspId",
-                "paymentTypeCode",
+                "PPAY",
                 "brokerName",
                 "pspChannelCode",
                 "paymentMethodName",
@@ -290,7 +288,7 @@ class PaymentGatewayClientTest {
 
         /* test */
         StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
-                .expectNext(apiResponse)
+                .assertNext(response -> response.getPostePayAuth().equals(postePayResponse))
                 .verifyComplete();
 
     }

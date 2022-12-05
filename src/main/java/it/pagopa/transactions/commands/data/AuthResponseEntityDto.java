@@ -5,8 +5,7 @@ import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import reactor.core.publisher.Mono;
 
 //TODO Classe wrapper per tutte le possibili risposte che otteniameo dai pgs client.
-// In realtà ci interessano soltanto la requestId e la redirectUrl,
-// valutare la possibilità di creare un dto con solamente questi due campi.
+// Valutare l'introduzione di tuple e l'eliminazione di questa classe wrapper (pulizia del codice)
 public class AuthResponseEntityDto {
 
     private XPayAuthResponseEntityDto requestXPayAuthorization;

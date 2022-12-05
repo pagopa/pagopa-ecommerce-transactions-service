@@ -41,10 +41,6 @@ public class PaymentGatewayClient {
     private ObjectMapper objectMapper;
 
     public Mono<AuthResponseEntityDto> requestGeneralAuthorization(AuthorizationRequestData authorizationData) {
-        // FIXME come discriminiamo la richiesta di pagamento verso xpay rispetto a quella di postepay?
-        // FIXME E' sufficente fare un check sul paymentTypeCode e poi fare switch sul client corretto ?
-        // FIXME O anche nel caso di altri strumenti di pagamento (PPAY è totalmente inventato) potrebbe essere necessario dover discrimnare quale
-        // FIXME paymentGateway invocare?
         return Mono.just(authorizationData).flatMap(a ->
                 switch (a.paymentTypeCode()) {
                     case "CP" ->
