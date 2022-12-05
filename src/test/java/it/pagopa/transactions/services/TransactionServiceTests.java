@@ -10,7 +10,6 @@ import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionActivateResultCommand;
-import it.pagopa.transactions.commands.data.AuthResponseEntityDto;
 import it.pagopa.transactions.commands.handlers.*;
 import it.pagopa.transactions.documents.*;
 import it.pagopa.transactions.documents.Transaction;
@@ -29,6 +28,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import reactor.util.function.Tuples;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -180,15 +180,13 @@ public class TransactionServiceTests {
 				.paymentTypeCode("PO")
 				.addRangesItem(new RangeDto().min(0L).max(100L));
 
-		PostePayAuthResponseEntityDto gatewayResponse = new PostePayAuthResponseEntityDto()
+		PostePayAuthResponseEntityDto postePayAuthResponseEntityDto = new PostePayAuthResponseEntityDto()
 				.channel("channel")
 				.requestId("requestId")
 				.urlRedirect("http://example.com");
 
-		AuthResponseEntityDto authResponseEntityDto = new AuthResponseEntityDto().postePayAuth(gatewayResponse);
-
 		RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
-				.authorizationUrl(authResponseEntityDto.getUrlRedirect());
+				.authorizationUrl(postePayAuthResponseEntityDto.getUrlRedirect());
 
 		Mockito.when(ecommercePaymentInstrumentsClient.getPSPs(any(), any(), any())).thenReturn(
 				Mono.just(pspResponseDto));
@@ -199,7 +197,7 @@ public class TransactionServiceTests {
 				.thenReturn(Mono.just(transaction));
 
 		Mockito.when(paymentGatewayClient.requestGeneralAuthorization(any())).thenReturn(
-				Mono.just(authResponseEntityDto));
+				Mono.just(Tuples.fromArray(new Mono[]{Mono.just(postePayAuthResponseEntityDto),Mono.empty()})));
 
 		Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 

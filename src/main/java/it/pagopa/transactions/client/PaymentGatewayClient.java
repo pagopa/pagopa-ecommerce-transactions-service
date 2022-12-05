@@ -8,7 +8,6 @@ import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
-import it.pagopa.transactions.commands.data.AuthResponseEntityDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
@@ -41,7 +40,8 @@ public class PaymentGatewayClient {
     private ObjectMapper objectMapper;
 
     public Mono<Tuple2<Mono<PostePayAuthResponseEntityDto>,Mono<XPayAuthResponseEntityDto>>> requestGeneralAuthorization(AuthorizationRequestData authorizationData) {
-        return Mono.just(authorizationData).flatMap(a ->
+        //TODO chech if these monos are ok and check if error handling is right
+        /*return Mono.just(authorizationData).flatMap(a ->
                 switch (a.paymentTypeCode()) {
                     case "CP" ->
                         switch (a.gatewayId()) {
@@ -50,7 +50,8 @@ public class PaymentGatewayClient {
                         };
                     case "PPAY" -> Mono.just(Tuples.of(requestPostepayAuthorization(authorizationData), Mono.empty()));
                     case null, default -> Mono.empty();
-        });
+        });*/
+        return Mono.just(Tuples.of(requestPostepayAuthorization(authorizationData), requestXPayAuthorization(authorizationData)));
 
     }
 

@@ -6,7 +6,6 @@ import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
-import it.pagopa.transactions.commands.data.AuthResponseEntityDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
@@ -90,7 +89,7 @@ class PaymentGatewayClientTest {
 
         /* test */
         StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
-                .assertNext(response -> response.getPostePayAuth().equals(postePayResponse))
+                .assertNext(response -> response.getT1().equals(Mono.just(postePayResponse)))
                 .verifyComplete();
     }
 
@@ -137,9 +136,10 @@ class PaymentGatewayClientTest {
 
         /* test */
         StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
-                .expectErrorMatches(error ->
+                .assertNext(t -> StepVerifier.create(t.getT1()).expectErrorMatches(error ->
                         error instanceof AlreadyProcessedException &&
-                                ((AlreadyProcessedException) error).getRptId().equals(transaction.getRptId()))
+                                ((AlreadyProcessedException) error).getRptId().equals(transaction.getRptId())))
+                .expectComplete()
                 .verify();
     }
 
@@ -188,8 +188,8 @@ class PaymentGatewayClientTest {
 
         /* test */
         StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
-                .expectErrorMatches(error -> error instanceof GatewayTimeoutException)
-                .verify();
+                .assertNext(t -> StepVerifier.create(t.getT1()).expectErrorMatches(error -> error instanceof GatewayTimeoutException))
+                .verifyComplete();
     }
 
     @Test
@@ -235,8 +235,8 @@ class PaymentGatewayClientTest {
 
         /* test */
         StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
-                .expectErrorMatches(error -> error instanceof BadGatewayException)
-                .verify();
+                .assertNext(t -> StepVerifier.create(t.getT1()).expectErrorMatches(error -> error instanceof BadGatewayException))
+                .verifyComplete();
     }
 
     @Test
@@ -279,7 +279,6 @@ class PaymentGatewayClientTest {
                 .channel("")
                 .urlRedirect("https://example.com");
 
-        AuthResponseEntityDto apiResponse = new AuthResponseEntityDto().postePayAuth(postePayResponse);
 
         /* preconditions */
         Mockito.when(objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID))).thenThrow(new JsonProcessingException(""){});
@@ -288,7 +287,7 @@ class PaymentGatewayClientTest {
 
         /* test */
         StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
-                .assertNext(response -> response.getPostePayAuth().equals(postePayResponse))
+                .assertNext(response -> response.getT1().equals(Mono.just(postePayResponse)))
                 .verifyComplete();
 
     }
