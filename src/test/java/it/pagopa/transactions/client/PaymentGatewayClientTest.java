@@ -89,7 +89,7 @@ class PaymentGatewayClientTest {
 
         /* test */
         StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
-                .assertNext(response -> response.getT1().equals(Mono.just(postePayResponse)))
+                .assertNext(response -> response.getT1().get().equals(Mono.just(postePayResponse)))
                 .verifyComplete();
     }
 
@@ -136,10 +136,9 @@ class PaymentGatewayClientTest {
 
         /* test */
         StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
-                .assertNext(t -> StepVerifier.create(t.getT1()).expectErrorMatches(error ->
+                .expectErrorMatches(error ->
                         error instanceof AlreadyProcessedException &&
-                                ((AlreadyProcessedException) error).getRptId().equals(transaction.getRptId())))
-                .expectComplete()
+                                ((AlreadyProcessedException) error).getRptId().equals(transaction.getRptId()))
                 .verify();
     }
 
@@ -188,8 +187,10 @@ class PaymentGatewayClientTest {
 
         /* test */
         StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
-                .assertNext(t -> StepVerifier.create(t.getT1()).expectErrorMatches(error -> error instanceof GatewayTimeoutException))
-                .verifyComplete();
+                .expectErrorMatches(error ->
+                        error instanceof  GatewayTimeoutException
+                )
+                .verify();
     }
 
     @Test
@@ -235,8 +236,8 @@ class PaymentGatewayClientTest {
 
         /* test */
         StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
-                .assertNext(t -> StepVerifier.create(t.getT1()).expectErrorMatches(error -> error instanceof BadGatewayException))
-                .verifyComplete();
+                .expectErrorMatches(error -> error instanceof BadGatewayException)
+                .verify();
     }
 
     @Test
@@ -287,7 +288,7 @@ class PaymentGatewayClientTest {
 
         /* test */
         StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
-                .assertNext(response -> response.getT1().equals(Mono.just(postePayResponse)))
+                .assertNext(response -> response.getT1().get().equals(postePayResponse))
                 .verifyComplete();
 
     }

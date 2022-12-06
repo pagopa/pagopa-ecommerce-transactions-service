@@ -14,6 +14,7 @@ import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
+import java.util.Optional;
 
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
@@ -54,12 +55,14 @@ public class TransactionRequestAuthorizationHandler
                 .flatMap(authResponse -> {
                     log.info("Logging authorization event for rpt id {}", transaction.getRptId().value());
 
-                    Mono<PostePayAuthResponseEntityDto> postePayAuthResponseEntityDtoMono = authResponse.getT1();
-                    Mono<XPayAuthResponseEntityDto> xPayAuthResponseEntityDtoMono = authResponse.getT2();
+                    Optional<PostePayAuthResponseEntityDto> postePayAuthResponseEntityDto = authResponse.getT1();
+                    Optional<XPayAuthResponseEntityDto> xPayAuthResponseEntityDto = authResponse.getT2();
+                    String requestId = postePayAuthResponseEntityDto.isPresent() ? postePayAuthResponseEntityDto.get().getRequestId() :
+                            (xPayAuthResponseEntityDto.isPresent() ? xPayAuthResponseEntityDto.get().getRequestId() : null);
+                    String redirectUrl = postePayAuthResponseEntityDto.isPresent() ? postePayAuthResponseEntityDto.get().getUrlRedirect() :
+                            (xPayAuthResponseEntityDto.isPresent() ? xPayAuthResponseEntityDto.get().getUrlRedirect() : null);
 
-                    return postePayAuthResponseEntityDtoMono
-                            .flatMap(postePayResponse -> Mono.just(Tuples.of(postePayResponse.getRequestId(),postePayResponse.getUrlRedirect())))
-                            .switchIfEmpty(xPayAuthResponseEntityDtoMono.flatMap(xPayAuthResponse -> Mono.just(Tuples.of(xPayAuthResponse.getRequestId(),xPayAuthResponse.getUrlRedirect()))))
+                    return Mono.zip(Mono.just(requestId),Mono.just(redirectUrl))
                             .flatMap(tuple2 -> {
                                 TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                                         transaction.getTransactionId().value().toString(),

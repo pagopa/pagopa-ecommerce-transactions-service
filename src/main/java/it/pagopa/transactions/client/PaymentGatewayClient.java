@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 public class PaymentGatewayClient {
@@ -39,19 +40,21 @@ public class PaymentGatewayClient {
     @Autowired
     private ObjectMapper objectMapper;
 
-    public Mono<Tuple2<Mono<PostePayAuthResponseEntityDto>,Mono<XPayAuthResponseEntityDto>>> requestGeneralAuthorization(AuthorizationRequestData authorizationData) {
+    public Mono<Tuple2<Optional<PostePayAuthResponseEntityDto>,Optional<XPayAuthResponseEntityDto>>> requestGeneralAuthorization(AuthorizationRequestData authorizationData) {
         //TODO chech if these monos are ok and check if error handling is right
-        /*return Mono.just(authorizationData).flatMap(a ->
+        /*return Mono.just(authorizationData).map(a ->
                 switch (a.paymentTypeCode()) {
                     case "CP" ->
                         switch (a.gatewayId()) {
-                            case "XPAY" -> Mono.just(Tuples.of(Mono.empty(), requestXPayAuthorization(authorizationData)));
-                            case null, default -> Mono.just(Tuples.of(Mono.empty(),Mono.empty()));
+                            case "XPAY" -> Mono.zip(Mono.empty(), requestXPayAuthorization(authorizationData));
+                            case null, default -> Mono.zip(Mono.empty(),Mono.empty());
                         };
-                    case "PPAY" -> Mono.just(Tuples.of(requestPostepayAuthorization(authorizationData), Mono.empty()));
-                    case null, default -> Mono.empty();
+                    case "PPAY" -> Mono.zip(requestPostepayAuthorization(authorizationData), Mono.empty());
+                    case null, default -> Mono.zip(Mono.empty(),Mono.empty());
         });*/
-        return Mono.just(Tuples.of(requestPostepayAuthorization(authorizationData), requestXPayAuthorization(authorizationData)));
+        Mono<Optional<PostePayAuthResponseEntityDto>> postePayAuthResponseEntityDtoMono = requestPostepayAuthorization(authorizationData).map(p -> Optional.of(p)).switchIfEmpty(Mono.just(Optional.empty()));
+        Mono<Optional<XPayAuthResponseEntityDto>> xPayAuthResponseEntityDtoMono = requestXPayAuthorization(authorizationData).map(x -> Optional.of(x)).switchIfEmpty(Mono.just(Optional.empty()));
+        return Mono.zip(postePayAuthResponseEntityDtoMono,xPayAuthResponseEntityDtoMono);
 
     }
 

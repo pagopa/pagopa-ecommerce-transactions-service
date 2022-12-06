@@ -33,6 +33,7 @@ import reactor.util.function.Tuples;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -197,7 +198,7 @@ public class TransactionServiceTests {
 				.thenReturn(Mono.just(transaction));
 
 		Mockito.when(paymentGatewayClient.requestGeneralAuthorization(any())).thenReturn(
-				Mono.just(Tuples.fromArray(new Mono[]{Mono.just(postePayAuthResponseEntityDto),Mono.empty()})));
+				Mono.zip(Mono.just(Optional.of(postePayAuthResponseEntityDto)),Mono.just(Optional.empty())));
 
 		Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 

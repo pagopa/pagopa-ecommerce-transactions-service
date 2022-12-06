@@ -22,6 +22,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import reactor.core.publisher.Mono;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import com.azure.core.util.BinaryData;
@@ -85,7 +86,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),
-                "paymentTypeCode",
+                "PPAY",
                 "brokerName",
                 "pspChannelCode",
                 "paymentMethodName",
@@ -106,7 +107,8 @@ class TransactionRequestAuthorizizationHandlerTest {
         ReflectionTestUtils.setField(requestAuthorizationHandler, "queueVisibilityTimeout", "300");
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestGeneralAuthorization(authorizationData)).thenReturn(Mono.just(Tuples.fromArray(new Mono[]{Mono.just(postePayAuthResponseEntityDto), Mono.empty()})));
+        Mockito.when(paymentGatewayClient.requestGeneralAuthorization(authorizationData)).thenReturn(Mono.zip(Mono.just(Optional.of(postePayAuthResponseEntityDto)),
+                Mono.just(Optional.empty())));
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.empty());
         Mockito.when(queueAsyncClient.sendMessageWithResponse(BinaryData.fromObject(any()),any(),any())).thenReturn(Mono.empty());
 
