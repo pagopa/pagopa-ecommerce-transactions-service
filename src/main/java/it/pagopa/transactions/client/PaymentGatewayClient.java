@@ -45,6 +45,7 @@ public class PaymentGatewayClient {
     }
 
     private Mono<PostePayAuthResponseEntityDto> requestPostepayAuthorization(AuthorizationRequestData authorizationData) {
+
         return Mono.just(authorizationData)
                 .filter(authorizationRequestData -> "PPAY".equals(authorizationRequestData.paymentTypeCode()))
                 .switchIfEmpty(Mono.empty())
