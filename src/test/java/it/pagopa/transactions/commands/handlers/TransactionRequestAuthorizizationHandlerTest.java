@@ -2,9 +2,7 @@ package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
-import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
-import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
@@ -40,15 +38,12 @@ class TransactionRequestAuthorizizationHandlerTest {
     private PaymentGatewayClient paymentGatewayClient;
 
     @Mock
-    private EcommerceSessionsClient ecommerceSessionsClient;
-
-    @Mock
     private TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository;
    
     @Mock
     private QueueAsyncClient queueAsyncClient;
 
-    private UUID transactionIdUUID = UUID.randomUUID();
+    private final UUID transactionIdUUID = UUID.randomUUID();
 
     TransactionId transactionId = new TransactionId(transactionIdUUID);
 
@@ -87,7 +82,11 @@ class TransactionRequestAuthorizizationHandlerTest {
                 "brokerName",
                 "pspChannelCode",
                 "paymentMethodName",
-                "pspBusinessName"
+                "pspBusinessName",
+                null,
+                null,
+                null,
+                null
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);
@@ -148,7 +147,11 @@ class TransactionRequestAuthorizizationHandlerTest {
                 "brokerName",
                 "pspChannelCode",
                 "paymentMethodName",
-                "pspBusinessName"
+                "pspBusinessName",
+                null,
+                null,
+                null,
+                null
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);

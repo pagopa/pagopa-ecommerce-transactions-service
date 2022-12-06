@@ -63,7 +63,11 @@ class PaymentGatewayClientTest {
                 "brokerName",
                 "pspChannelCode",
                 "paymentMethodName",
-                "pspBusinessName"
+                "pspBusinessName",
+                null,
+                null,
+                null,
+                null
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
@@ -110,7 +114,11 @@ class PaymentGatewayClientTest {
                 "brokerName",
                 "pspChannelCode",
                 "paymentMethodName",
-                "pspBusinessName"
+                "pspBusinessName",
+                null,
+                null,
+                null,
+                null
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
@@ -157,7 +165,11 @@ class PaymentGatewayClientTest {
                 "brokerName",
                 "pspChannelCode",
                 "paymentMethodName",
-                "pspBusinessName"
+                "pspBusinessName",
+                null,
+                null,
+                null,
+                null
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
@@ -200,7 +212,11 @@ class PaymentGatewayClientTest {
                 "brokerName",
                 "pspChannelCode",
                 "paymentMethodName",
-                "pspBusinessName"
+                "pspBusinessName",
+                null,
+                null,
+                null,
+                null
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
@@ -243,7 +259,11 @@ class PaymentGatewayClientTest {
                 "brokerName",
                 "pspChannelCode",
                 "paymentMethodName",
-                "pspBusinessName"
+                "pspBusinessName",
+                null,
+                null,
+                null,
+                null
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
