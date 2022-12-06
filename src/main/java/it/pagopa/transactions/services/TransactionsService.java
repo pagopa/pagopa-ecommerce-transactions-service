@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -177,7 +178,10 @@ public class TransactionsService {
                       null,
                       null,
                       transactionDocument.getStatus());
-
+              Optional<CardAuthRequestDetailsDto> cardDetails = Optional.empty();
+              if(requestAuthorizationRequestDto.getDetails() instanceof CardAuthRequestDetailsDto details){
+                  cardDetails = Optional.of(details);
+              }
               AuthorizationRequestData authorizationData =
                   new AuthorizationRequestData(
                       transaction,
@@ -188,7 +192,12 @@ public class TransactionsService {
                       psp.getBrokerName(),
                       psp.getChannelCode(),
                       paymentMethod.getName(),
-                      psp.getBusinessName());
+                      psp.getBusinessName(),
+                          null,
+                          cardDetails.map(CardAuthRequestDetailsDto::getCvv).orElse(null),
+                          cardDetails.map(CardAuthRequestDetailsDto::getPan).orElse(null),
+                          cardDetails.map(CardAuthRequestDetailsDto::getExpiryDate).orElse(null)
+                  );
 
               TransactionRequestAuthorizationCommand command =
                   new TransactionRequestAuthorizationCommand(
