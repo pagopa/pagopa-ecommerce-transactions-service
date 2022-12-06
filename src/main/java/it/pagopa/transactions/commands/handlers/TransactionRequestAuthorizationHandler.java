@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
@@ -23,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 @Component
@@ -55,14 +57,15 @@ public class TransactionRequestAuthorizationHandler
                 .flatMap(authResponse -> {
                     log.info("Logging authorization event for rpt id {}", transaction.getRptId().value());
 
-                    Optional<PostePayAuthResponseEntityDto> postePayAuthResponseEntityDto = authResponse.getT1();
-                    Optional<XPayAuthResponseEntityDto> xPayAuthResponseEntityDto = authResponse.getT2();
-                    String requestId = postePayAuthResponseEntityDto.isPresent() ? postePayAuthResponseEntityDto.get().getRequestId() :
-                            (xPayAuthResponseEntityDto.isPresent() ? xPayAuthResponseEntityDto.get().getRequestId() : null);
-                    String redirectUrl = postePayAuthResponseEntityDto.isPresent() ? postePayAuthResponseEntityDto.get().getUrlRedirect() :
-                            (xPayAuthResponseEntityDto.isPresent() ? xPayAuthResponseEntityDto.get().getUrlRedirect() : null);
+                    Mono<Tuple2<String,String>> monoPostePay = Mono.just(authResponse.getT1()).filter(pPayAuth -> pPayAuth.isPresent())
+                            .switchIfEmpty(Mono.empty())
+                            .flatMap(pPay -> Mono.zip(Mono.just(pPay.get().getRequestId()),Mono.just(pPay.get().getUrlRedirect())));
 
-                    return Mono.zip(Mono.just(requestId),Mono.just(redirectUrl))
+                    Mono<Tuple2<String,String>> monoXPay = Mono.just(authResponse.getT2()).filter(xPayAuth -> xPayAuth.isPresent())
+                            .switchIfEmpty(Mono.empty())
+                            .flatMap(xPay -> Mono.zip(Mono.just(xPay.get().getRequestId()),Mono.just(xPay.get().getUrlRedirect())));
+
+                    return monoPostePay.switchIfEmpty(monoXPay)
                             .flatMap(tuple2 -> {
                                 TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                                         transaction.getTransactionId().value().toString(),
