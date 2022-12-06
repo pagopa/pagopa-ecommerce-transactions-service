@@ -54,8 +54,8 @@ public class PaymentGatewayClient {
                     .description(authorizationData.transaction().getDescription().value())
                     .paymentChannel(authorizationData.pspChannelCode())
                     .idTransaction(authorizationData.transaction().getTransactionId().value().toString()))
-            .flatMap(p ->
-                    paymentTransactionGatewayPostepayWebClient.authRequest(p, false, encodeMdcFields(authorizationData))
+            .flatMap(payAuthRequestDto ->
+                    paymentTransactionGatewayPostepayWebClient.authRequest(payAuthRequestDto, false, encodeMdcFields(authorizationData))
                     .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
                             case UNAUTHORIZED -> new AlreadyProcessedException(authorizationData.transaction().getRptId());
                             case GATEWAY_TIMEOUT -> new GatewayTimeoutException();
