@@ -205,11 +205,11 @@ public class TransactionServiceTests {
 		Mockito.when(transactionRequestAuthorizationHandler.handle(any())).thenReturn(Mono.just(requestAuthorizationResponse));
 
 		/* test */
-		RequestAuthorizationResponseDto authorizationResponse = transactionsService
+		RequestAuthorizationResponseDto postePayAuthorizationResponse = transactionsService
 				.requestTransactionAuthorization(TRANSACION_ID, authorizationRequest).block();
 
-		assertNotNull(authorizationResponse);
-		assertFalse(authorizationResponse.getAuthorizationUrl().isEmpty());
+		assertNotNull(postePayAuthorizationResponse);
+		assertFalse(postePayAuthorizationResponse.getAuthorizationUrl().isEmpty());
 	}
 
 	@Test

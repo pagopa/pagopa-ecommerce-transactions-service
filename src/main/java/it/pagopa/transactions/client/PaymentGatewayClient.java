@@ -84,17 +84,19 @@ public class PaymentGatewayClient {
         return Mono.just(authorizationData)
                 .filter(authorizationRequestData -> "CP".equals(authorizationRequestData.paymentTypeCode()) && "XPAY".equals(authorizationRequestData.gatewayId()))
                 .switchIfEmpty(Mono.empty())
-            .map(authorizationRequestData -> new XPayAuthRequestDto()
-                .cvv(authorizationData.cvv())
-                .pan(authorizationData.pan())
-                .exipiryDate(authorizationData.expiryDate())
-                .idTransaction(authorizationData.transaction().getTransactionId().toString())
-                .grandTotal(BigDecimal.valueOf(((long) authorizationData.transaction().getAmount().value()) + authorizationData.fee())))
+            .map(authorizationRequestData ->
+                new XPayAuthRequestDto()
+                    .cvv(authorizationRequestData.cvv())
+                    .pan(authorizationRequestData.pan())
+                    .exipiryDate(authorizationRequestData.expiryDate())
+                    .idTransaction(authorizationRequestData.transaction().getTransactionId().value().toString())
+                    .grandTotal(BigDecimal.valueOf(((long) authorizationRequestData.transaction().getAmount().value()) + authorizationRequestData.fee())))
             .flatMap( xPayAuthRequestDto ->
-                paymentTransactionGatewayXPayWebClient.authRequestXpay(xPayAuthRequestDto,encodeMdcFields(authorizationData)).onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
-                    case UNAUTHORIZED -> new AlreadyProcessedException(authorizationData.transaction().getRptId()); //401
-                    case INTERNAL_SERVER_ERROR -> new BadGatewayException(""); //500
-                    default -> exception;
+                paymentTransactionGatewayXPayWebClient.authRequestXpay(xPayAuthRequestDto, encodeMdcFields(authorizationData))
+                    .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
+                        case UNAUTHORIZED -> new AlreadyProcessedException(authorizationData.transaction().getRptId()); //401
+                        case INTERNAL_SERVER_ERROR -> new BadGatewayException(""); //500
+                        default -> exception;
                 })
             );
         }

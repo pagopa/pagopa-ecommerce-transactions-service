@@ -1,10 +1,14 @@
 package it.pagopa.transactions.client;
 
+import ch.qos.logback.core.net.SyslogOutputStream;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
+import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
+import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthRequestDto;
+import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.domain.*;
@@ -37,13 +41,70 @@ class PaymentGatewayClientTest {
     @Mock
     PostePayInternalApi paymentTransactionsControllerApi;
 
+    @Mock
+    XPayInternalApi xPayInternalApi;
+
     private final UUID transactionIdUUID = UUID.randomUUID();
 
     @Spy
     ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
-    void shouldReturnAuthorizationResponse() throws JsonProcessingException {
+    void shouldReturnAuthorizationResponseCP_XPAY() throws JsonProcessingException {
+        TransactionActivated transaction = new TransactionActivated(
+                new TransactionId(transactionIdUUID),
+                new PaymentToken("paymentToken"),
+                new RptId("77777777777111111111111111111"),
+                new TransactionDescription("description"),
+                new TransactionAmount(100),
+                new Email("foo@example.com"),
+                null, null, TransactionStatusDto.ACTIVATED
+        );
+
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction,
+                10,
+                "paymentInstrumentId",
+                "pspId",
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName",
+                "XPAY",
+                "345",
+                "16589654852",
+                "203012"
+        );
+
+        XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
+                .cvv(authorizationData.cvv())
+                .pan(authorizationData.pan())
+                .exipiryDate(authorizationData.expiryDate())
+                .idTransaction(transactionIdUUID.toString())
+                .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()));
+
+        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
+        String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
+
+        XPayAuthResponseEntityDto xPayResponse = new XPayAuthResponseEntityDto()
+                .requestId("requestId")
+                .urlRedirect("https://example.com");
+
+        /* preconditions */
+        System.out.println(xPayAuthRequestDto);
+        System.out.println(encodedMdcFields);
+        Mockito.when(xPayInternalApi.authRequestXpay(xPayAuthRequestDto, encodedMdcFields))
+                .thenReturn(Mono.just(xPayResponse));
+
+        /* test */
+        StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
+                .assertNext(response -> response.getT2().get().equals(xPayResponse))
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldReturnAuthorizationResponsePPAY() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
@@ -94,7 +155,57 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldThrowAlreadyProcessedOn401() throws JsonProcessingException {
+    void shouldThrowAlreadyProcessedOn401CP_XPAY() throws JsonProcessingException {
+        TransactionActivated transaction = new TransactionActivated(
+                new TransactionId(transactionIdUUID),
+                new PaymentToken("paymentToken"),
+                new RptId("77777777777111111111111111111"),
+                new TransactionDescription("description"),
+                new TransactionAmount(100),
+                new Email("foo@example.com"),
+                null, null, TransactionStatusDto.ACTIVATED
+        );
+
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction,
+                10,
+                "paymentInstrumentId",
+                "pspId",
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName",
+                "XPAY",
+                "345",
+                "16589654852",
+                "203012"
+        );
+
+        XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
+                .cvv(authorizationData.cvv())
+                .pan(authorizationData.pan())
+                .exipiryDate(authorizationData.expiryDate())
+                .idTransaction(transactionIdUUID.toString())
+                .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()));
+
+        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
+        String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
+
+        /* preconditions */
+        Mockito.when(xPayInternalApi.authRequestXpay(xPayAuthRequestDto, encodedMdcFields))
+                .thenReturn(Mono.error(new WebClientResponseException("api error", HttpStatus.UNAUTHORIZED.value(), "Unauthorized", null, null, null)));
+
+        /* test */
+        StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
+                .expectErrorMatches(error ->
+                        error instanceof AlreadyProcessedException &&
+                                ((AlreadyProcessedException) error).getRptId().equals(transaction.getRptId()))
+                .verify();
+    }
+
+    @Test
+    void shouldThrowAlreadyProcessedOn401PPAY() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
@@ -194,7 +305,7 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldThrowBadGatewayOn500() throws JsonProcessingException {
+    void shouldThrowBadGatewayOn500PPAY() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
@@ -241,7 +352,55 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void fallbackOnEmptyMdcInfoOnMapperError() throws JsonProcessingException {
+    void shouldThrowBadGatewayOn500CP_XPAY() throws JsonProcessingException {
+        TransactionActivated transaction = new TransactionActivated(
+                new TransactionId(transactionIdUUID),
+                new PaymentToken("paymentToken"),
+                new RptId("77777777777111111111111111111"),
+                new TransactionDescription("description"),
+                new TransactionAmount(100),
+                new Email("foo@example.com"),
+                null, null, TransactionStatusDto.ACTIVATED
+        );
+
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction,
+                10,
+                "paymentInstrumentId",
+                "pspId",
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName",
+                "XPAY",
+                "345",
+                "16589654852",
+                "203012"
+        );
+
+        XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
+                .cvv(authorizationData.cvv())
+                .pan(authorizationData.pan())
+                .exipiryDate(authorizationData.expiryDate())
+                .idTransaction(transactionIdUUID.toString())
+                .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()));
+
+        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
+        String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
+
+        /* preconditions */
+        Mockito.when(xPayInternalApi.authRequestXpay(xPayAuthRequestDto, encodedMdcFields))
+                .thenReturn(Mono.error(new WebClientResponseException("api error", HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error", null, null, null)));
+
+        /* test */
+        StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
+                .expectErrorMatches(error -> error instanceof BadGatewayException)
+                .verify();
+    }
+
+    @Test
+    void fallbackOnEmptyMdcInfoOnMapperErrorPPAY() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
@@ -289,6 +448,59 @@ class PaymentGatewayClientTest {
         /* test */
         StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
                 .assertNext(response -> response.getT1().get().equals(postePayResponse))
+                .verifyComplete();
+
+    }
+    @Test
+    void fallbackOnEmptyMdcInfoOnMapperErrorCP_XPAY() throws JsonProcessingException {
+        TransactionActivated transaction = new TransactionActivated(
+                new TransactionId(transactionIdUUID),
+                new PaymentToken("paymentToken"),
+                new RptId("77777777777111111111111111111"),
+                new TransactionDescription("description"),
+                new TransactionAmount(100),
+                new Email("foo@example.com"),
+                null, null, TransactionStatusDto.ACTIVATED
+        );
+
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction,
+                10,
+                "paymentInstrumentId",
+                "pspId",
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName",
+                "XPAY",
+                "345",
+                "16589654852",
+                "203012"
+        );
+
+        XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
+                .cvv(authorizationData.cvv())
+                .pan(authorizationData.pan())
+                .exipiryDate(authorizationData.expiryDate())
+                .idTransaction(transactionIdUUID.toString())
+                .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()));
+
+        String encodedMdcFields = "";
+
+        XPayAuthResponseEntityDto xPayResponse = new XPayAuthResponseEntityDto()
+                .requestId("requestId")
+                .urlRedirect("https://example.com");
+
+
+        /* preconditions */
+        Mockito.when(objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID))).thenThrow(new JsonProcessingException(""){});
+        Mockito.when(xPayInternalApi.authRequestXpay(xPayAuthRequestDto, encodedMdcFields))
+                .thenReturn(Mono.just(xPayResponse));
+
+        /* test */
+        StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
+                .assertNext(response -> response.getT2().get().equals(xPayResponse))
                 .verifyComplete();
 
     }
