@@ -354,14 +354,19 @@ components:
           type: string
           description: Credit card expiry date. Note that only the month and year components are taken into account.
           format: date
+        holderName:
+          type: string
+          description: The card holder name
       required:
         - cvv
         - pan
         - expiryDate
+        - holderName
       example:
         cvv: 000
         pan: 0123456789012345
         expiryDate: "2099-01-01"
+        holderName: "Name Surname"
     RequestAuthorizationResponse:
       type: object
       description: Response body for requesting an authorization for a transaction
