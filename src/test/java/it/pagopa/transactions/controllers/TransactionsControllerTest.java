@@ -344,7 +344,7 @@ class TransactionsControllerTest {
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
                 .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
                 .paymentDate(OffsetDateTime.now())
-                .addPaymentsItem(new AddUserReceiptRequestPaymentsDto()
+                .addPaymentsItem(new AddUserReceiptRequestPaymentsInnerDto()
                         .paymentToken("paymentToken")
                         .companyName("companyName")
                         .creditorReferenceId("creditorReferenceId")
