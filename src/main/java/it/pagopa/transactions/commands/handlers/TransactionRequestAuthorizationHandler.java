@@ -1,5 +1,6 @@
 package it.pagopa.transactions.commands.handlers;
 
+import com.azure.cosmos.implementation.BadRequestException;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
@@ -10,6 +11,7 @@ import it.pagopa.transactions.documents.TransactionAuthorizationRequestData;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestedEvent;
 import it.pagopa.transactions.domain.TransactionActivated;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import lombok.extern.slf4j.Slf4j;
 
@@ -57,6 +59,10 @@ public class TransactionRequestAuthorizationHandler
                 .flatMap(authResponse -> {
                     log.info("Logging authorization event for rpt id {}", transaction.getRptId().value());
 
+                    if(!authResponse.getT1().isPresent() && !authResponse.getT2().isPresent()) {
+                        return Mono.error(new BadRequestException("No gateway matched"));
+                    }
+
                     Mono<Tuple2<String,String>> monoPostePay = Mono.just(authResponse.getT1()).filter(pPayAuth -> pPayAuth.isPresent())
                             .switchIfEmpty(Mono.empty())
                             .flatMap(pPay -> Mono.zip(Mono.just(pPay.get().getRequestId()),Mono.just(pPay.get().getUrlRedirect())));
@@ -90,6 +96,7 @@ public class TransactionRequestAuthorizationHandler
                                                 .authorizationRequestId(tuple2.getT1()));
                             });
                 })
+                .doOnError(BadRequestException.class, error -> log.error("No gateway matched"))
                 .doOnNext(authorizationEvent -> queueAsyncClient.sendMessageWithResponse(
                         BinaryData.fromObject(authorizationEvent),
                         Duration.ofSeconds(Integer.valueOf(queueVisibilityTimeout)), null).subscribe(
