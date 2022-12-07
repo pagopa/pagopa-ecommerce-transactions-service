@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -178,6 +177,7 @@ public class TransactionsService {
                       null,
                       null,
                       transactionDocument.getStatus());
+
               AuthorizationRequestData authorizationData =
                   new AuthorizationRequestData(
                       transaction,

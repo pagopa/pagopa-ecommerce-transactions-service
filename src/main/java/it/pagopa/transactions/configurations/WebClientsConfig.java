@@ -7,6 +7,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
+import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
 import it.pagopa.generated.ecommerce.nodo.v1.api.NodoApi;
 import it.pagopa.generated.ecommerce.sessions.v1.ApiClient;
 import it.pagopa.generated.ecommerce.sessions.v1.api.DefaultApi;
@@ -120,6 +121,28 @@ public class WebClientsConfig {
         apiClient.setBasePath(paymentTransactionGatewayUri);
         apiClient.setApiKey(apiKey);
         return new PostePayInternalApi(apiClient);
+    }
+
+    @Bean(name = "paymentTransactionGatewayXPayWebClient")
+    public XPayInternalApi
+    paymentTransactionGatewayXPayWebClient(@Value("${paymentTransactionsGateway.uri}") String paymentTransactionGatewayUri,
+                                               @Value("${paymentTransactionsGateway.readTimeout}") int paymentTransactionGatewayReadTimeout,
+                                               @Value("${paymentTransactionsGateway.connectionTimeout}") int paymentTransactionGatewayConnectionTimeout, @Value("${paymentTransactionsGateway.apiKey}") String apiKey) {
+        HttpClient httpClient = HttpClient.create()
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, paymentTransactionGatewayConnectionTimeout)
+                .doOnConnected(connection ->
+                        connection.addHandlerLast(new ReadTimeoutHandler(
+                                paymentTransactionGatewayReadTimeout,
+                                TimeUnit.MILLISECONDS)));
+
+        WebClient webClient = it.pagopa.generated.ecommerce.gateway.v1.ApiClient.buildWebClientBuilder()
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .baseUrl(paymentTransactionGatewayUri)
+                .build();
+        it.pagopa.generated.ecommerce.gateway.v1.ApiClient apiClient = new it.pagopa.generated.ecommerce.gateway.v1.ApiClient(webClient);
+        apiClient.setBasePath(paymentTransactionGatewayUri);
+        apiClient.setApiKey(apiKey);
+        return new XPayInternalApi(apiClient);
     }
 
     @Bean(name = "ecommercePaymentInstrumentsWebClient")
