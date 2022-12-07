@@ -178,10 +178,6 @@ public class TransactionsService {
                       null,
                       null,
                       transactionDocument.getStatus());
-              Optional<CardAuthRequestDetailsDto> cardDetails = Optional.empty();
-              if(requestAuthorizationRequestDto.getDetails() instanceof CardAuthRequestDetailsDto details){
-                  cardDetails = Optional.of(details);
-              }
               AuthorizationRequestData authorizationData =
                   new AuthorizationRequestData(
                       transaction,
@@ -194,9 +190,7 @@ public class TransactionsService {
                       paymentMethod.getName(),
                       psp.getBusinessName(),
                       null,
-                      cardDetails.map(CardAuthRequestDetailsDto::getCvv).orElse(null),
-                      cardDetails.map(CardAuthRequestDetailsDto::getPan).orElse(null),
-                      cardDetails.map(CardAuthRequestDetailsDto::getExpiryDate).orElse(null)
+                      requestAuthorizationRequestDto.getDetails()
                   );
 
               TransactionRequestAuthorizationCommand command =

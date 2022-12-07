@@ -218,15 +218,13 @@ public class TransactionServiceTests {
 
         assertNotNull(authorizationResponse);
         assertFalse(authorizationResponse.getAuthorizationUrl().isEmpty());
-        assertNull(authData.expiryDate());
-        assertNull(authData.cvv());
-        assertNull(authData.pan());
+        assertNull(authData.authDetails());
 
     }
 
     @Test
     void shouldRedirectToAuthorizationURIForValidRequestWithCardData() {
-        CardAuthRequestDetailsDto cardAuthRequestDetailsDto =new CardAuthRequestDetailsDto()
+        CardAuthRequestDetailsDto cardAuthRequestDetailsDto = new CardAuthRequestDetailsDto()
                 .expiryDate(LocalDate.of(2000, Month.JANUARY, 1))
                 .cvv("000")
                 .pan("0123456789012345")
@@ -292,9 +290,15 @@ public class TransactionServiceTests {
         assertNotNull(authorizationResponse);
         assertFalse(authorizationResponse.getAuthorizationUrl().isEmpty());
         AuthorizationRequestData authData = commandArgumentCaptor.getValue().getData();
-        assertEquals(cardAuthRequestDetailsDto.getCvv(),authData.cvv());
-        assertEquals(cardAuthRequestDetailsDto.getPan(),authData.pan());
-        assertEquals(cardAuthRequestDetailsDto.getExpiryDate(),authData.expiryDate());
+
+        if (authData.authDetails() instanceof CardAuthRequestDetailsDto cardDetails) {
+            assertEquals(cardAuthRequestDetailsDto.getCvv(), cardDetails.getCvv());
+            assertEquals(cardAuthRequestDetailsDto.getPan(), cardDetails.getPan());
+            assertEquals(cardAuthRequestDetailsDto.getExpiryDate(), cardDetails.getExpiryDate());
+            assertEquals(cardAuthRequestDetailsDto.getHolderName(), cardDetails.getHolderName());
+        } else {
+            fail("CardAuthRequestDetailsDto expected to be present");
+        }
     }
 
     @Test

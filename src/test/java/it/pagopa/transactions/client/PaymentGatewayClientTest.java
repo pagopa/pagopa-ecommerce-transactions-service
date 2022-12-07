@@ -65,8 +65,6 @@ class PaymentGatewayClientTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 null,
-                null,
-                null,
                 null
         );
 
@@ -115,8 +113,6 @@ class PaymentGatewayClientTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
-                null,
-                null,
                 null,
                 null
         );
@@ -167,8 +163,6 @@ class PaymentGatewayClientTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 null,
-                null,
-                null,
                 null
         );
 
@@ -214,8 +208,6 @@ class PaymentGatewayClientTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 null,
-                null,
-                null,
                 null
         );
 
@@ -260,8 +252,6 @@ class PaymentGatewayClientTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
-                null,
-                null,
                 null,
                 null
         );

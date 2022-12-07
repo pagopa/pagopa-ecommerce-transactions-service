@@ -84,8 +84,6 @@ class TransactionRequestAuthorizizationHandlerTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 null,
-                null,
-                null,
                 null
         );
 
@@ -148,8 +146,6 @@ class TransactionRequestAuthorizizationHandlerTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
-                null,
-                null,
                 null,
                 null
         );

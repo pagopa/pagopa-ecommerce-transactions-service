@@ -1,8 +1,7 @@
 package it.pagopa.transactions.commands.data;
 
+import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDetailsDto;
 import it.pagopa.transactions.domain.TransactionActivated;
-
-import java.time.LocalDate;
 
 public record AuthorizationRequestData(
 		TransactionActivated transaction,
@@ -15,7 +14,5 @@ public record AuthorizationRequestData(
         String paymentMethodName,
         String pspBusinessName,
         String gatewayId,
-        String cvv,
-        String pan,
-        LocalDate expiryDate
+		RequestAuthorizationRequestDetailsDto authDetails
 ) {}
