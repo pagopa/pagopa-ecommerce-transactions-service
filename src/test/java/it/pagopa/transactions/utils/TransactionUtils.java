@@ -106,7 +106,8 @@ public class TransactionUtils {
                 PAYMENT_TOKEN,
                 new TransactionAuthorizationStatusUpdateData(
                         authorizationResult,
-                        newStatus
+                        newStatus,
+                        "authorizationCode"
                 )
         );
     }
@@ -134,8 +135,7 @@ public class TransactionUtils {
                 PAYMENT_TOKEN,
                 new TransactionClosureSendData(
                         closePaymentOutcome,
-                        newStatus,
-                        "authorizationCode"
+                        newStatus
                 )
         );
     }

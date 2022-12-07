@@ -220,7 +220,6 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                 new TransactionClosureSendData(
                         outcome,
                         updatedStatus
-
                 )
         );
 
