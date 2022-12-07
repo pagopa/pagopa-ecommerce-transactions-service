@@ -12,7 +12,7 @@ public record AuthorizationRequestData(
         String pspChannelCode,
         String paymentMethodName,
         String pspBusinessName,
-		String gatewayId,
+		String paymentGatewayId,
 		String cvv,
 		String pan,
 		String expiryDate
