@@ -52,7 +52,7 @@ class PaymentGatewayClientTest {
     ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
-    void shouldReturnAuthorizationResponseCP_VPOS() throws JsonProcessingException {
+    void shouldReturnAuthorizationEmptyOptionalResponseCP_VPOS() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 new PaymentToken("paymentToken"),
