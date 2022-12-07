@@ -8,10 +8,12 @@ import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
+import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.GatewayTimeoutException;
+import it.pagopa.transactions.exceptions.InvalidRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -21,6 +23,7 @@ import reactor.util.function.Tuple2;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
@@ -68,24 +71,31 @@ public class PaymentGatewayClient {
     }
 
     private Mono<XPayAuthResponseEntityDto> requestXPayAuthorization(AuthorizationRequestData authorizationData) {
+        CardAuthRequestDetailsDto cardDetails;
+        if (authorizationData.authDetails() instanceof CardAuthRequestDetailsDto cardAuthRequestDetailsDto) {
+            cardDetails = cardAuthRequestDetailsDto;
+        } else {
+            throw new InvalidRequestException("Cannot perform XPAY authorization for null input card details");
+        }
         return Mono.just(authorizationData)
                 .filter(authorizationRequestData -> "CP".equals(authorizationRequestData.paymentTypeCode()) && "XPAY".equals(authorizationRequestData.gatewayId()))
                 .switchIfEmpty(Mono.empty())
-            .map(authorizationRequestData ->
-                new XPayAuthRequestDto()
-                    .cvv(authorizationRequestData.cvv())
-                    .pan(authorizationRequestData.pan())
-                    .exipiryDate(authorizationRequestData.expiryDate())
-                    .idTransaction(authorizationRequestData.transaction().getTransactionId().value().toString())
-                    .grandTotal(BigDecimal.valueOf(((long) authorizationRequestData.transaction().getAmount().value()) + authorizationRequestData.fee())))
-            .flatMap( xPayAuthRequestDto ->
-                paymentTransactionGatewayXPayWebClient.authRequestXpay(xPayAuthRequestDto, encodeMdcFields(authorizationData))
-                    .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
-                        case UNAUTHORIZED -> new AlreadyProcessedException(authorizationData.transaction().getRptId()); //401
-                        case INTERNAL_SERVER_ERROR -> new BadGatewayException(""); //500
-                        default -> exception;
-                })
-            );
+                .map(authorizationRequestData ->
+                        new XPayAuthRequestDto()
+                                .cvv(cardDetails.getCvv())
+                                .pan(cardDetails.getPan())
+                                .exipiryDate(cardDetails.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM")))
+                                .idTransaction(authorizationRequestData.transaction().getTransactionId().value().toString())
+                                .grandTotal(BigDecimal.valueOf(((long) authorizationRequestData.transaction().getAmount().value()) + authorizationRequestData.fee())))
+                .flatMap(xPayAuthRequestDto ->
+                        paymentTransactionGatewayXPayWebClient.authRequestXpay(xPayAuthRequestDto, encodeMdcFields(authorizationData))
+                                .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
+                                    case UNAUTHORIZED ->
+                                            new AlreadyProcessedException(authorizationData.transaction().getRptId()); //401
+                                    case INTERNAL_SERVER_ERROR -> new BadGatewayException(""); //500
+                                    default -> exception;
+                                })
+                );
         }
 
     private String encodeMdcFields(AuthorizationRequestData authorizationData) {

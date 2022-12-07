@@ -10,9 +10,11 @@ import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionActivateResultCommand;
+import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
+import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.*;
-import it.pagopa.transactions.documents.*;
 import it.pagopa.transactions.documents.Transaction;
+import it.pagopa.transactions.documents.*;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.*;
@@ -20,6 +22,8 @@ import it.pagopa.transactions.repositories.TransactionsActivationRequestedEventS
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
@@ -28,8 +32,9 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-import reactor.util.function.Tuples;
 
+import java.time.LocalDate;
+import java.time.Month;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +43,6 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @WebFluxTest
@@ -103,6 +107,10 @@ public class TransactionServiceTests {
 
 	@MockBean
 	private TransactionsActivationRequestedEventStoreRepository transactionsActivationRequestedEventStoreRepository;
+
+	@Captor
+	private ArgumentCaptor<TransactionRequestAuthorizationCommand> commandArgumentCaptor;
+
 
 	final String PAYMENT_TOKEN = "aaa";
 	final String TRANSACION_ID = "833d303a-f857-11ec-b939-0242ac120002";
@@ -518,6 +526,83 @@ public class TransactionServiceTests {
 		Mockito.verify(transactionActivateResultHandler, Mockito.times(1)).handle(Mockito.any(TransactionActivateResultCommand.class));
 		Mockito.verify(transactionsActivationProjectionHandler, Mockito.times(1)).handle(Mockito.any(TransactionActivatedEvent.class));
 
+	}
+
+	@Test
+	void shouldRedirectToAuthorizationURIForValidRequestWithCardData() {
+		CardAuthRequestDetailsDto cardAuthRequestDetailsDto = new CardAuthRequestDetailsDto()
+				.expiryDate(LocalDate.of(2000, Month.JANUARY, 1))
+				.cvv("000")
+				.pan("0123456789012345")
+				.holderName("Name Surname");
+		RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+				.amount(100)
+				.paymentInstrumentId("paymentInstrumentId")
+				.language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
+				.pspId("PSP_CODE")
+				.details(cardAuthRequestDetailsDto);
+		Transaction transaction = new Transaction(
+				TRANSACION_ID,
+				PAYMENT_TOKEN,
+				"77777777777111111111111111111",
+				"description",
+				100,
+				"foo@example.com",
+				TransactionStatusDto.ACTIVATED);
+
+		/* preconditions */
+		List<PspDto> pspDtoList = new ArrayList<>();
+		pspDtoList.add(
+				new PspDto()
+						.code("PSP_CODE")
+						.fixedCost(200l));
+		PSPsResponseDto pspResponseDto = new PSPsResponseDto();
+		pspResponseDto.psp(pspDtoList);
+
+		PaymentMethodResponseDto paymentMethod = new PaymentMethodResponseDto()
+				.name("paymentMethodName")
+				.description("desc")
+				.status(PaymentMethodResponseDto.StatusEnum.ENABLED)
+				.id("id")
+				.paymentTypeCode("PO")
+				.addRangesItem(new RangeDto().min(0L).max(100L));
+
+		PostePayAuthResponseEntityDto gatewayResponse = new PostePayAuthResponseEntityDto()
+				.channel("channel")
+				.requestId("requestId")
+				.urlRedirect("http://example.com");
+
+		RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
+				.authorizationUrl(gatewayResponse.getUrlRedirect());
+
+		Mockito.when(ecommercePaymentInstrumentsClient.getPSPs(any(), any(), any())).thenReturn(
+				Mono.just(pspResponseDto));
+
+		Mockito.when(ecommercePaymentInstrumentsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
+
+		Mockito.when(repository.findById(TRANSACION_ID))
+				.thenReturn(Mono.just(transaction));
+
+		Mockito.when(paymentGatewayClient.requestGeneralAuthorization(any())).thenReturn(
+				Mono.zip(Mono.just(Optional.of(gatewayResponse)), Mono.just(Optional.empty())));
+
+		Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
+
+		Mockito.when(transactionRequestAuthorizationHandler.handle(commandArgumentCaptor.capture())).thenReturn(Mono.just(requestAuthorizationResponse));
+		/* test */
+		RequestAuthorizationResponseDto authorizationResponse = transactionsService
+				.requestTransactionAuthorization(TRANSACION_ID, authorizationRequest).block();
+
+		assertNotNull(authorizationResponse);
+		assertFalse(authorizationResponse.getAuthorizationUrl().isEmpty());
+		AuthorizationRequestData authData = commandArgumentCaptor.getValue().getData();
+		if (authData.authDetails() instanceof CardAuthRequestDetailsDto cardDetails) {
+			assertEquals(cardAuthRequestDetailsDto.getCvv(), cardDetails.getCvv());
+			assertEquals(cardAuthRequestDetailsDto.getPan(), cardDetails.getPan());
+			assertEquals(cardAuthRequestDetailsDto.getExpiryDate(), cardDetails.getExpiryDate());
+		} else {
+			fail("AuthorizationRequestData.authDetails null or not instance of CardAuthRequestDetailsDto");
+		}
 	}
 
 }

@@ -9,6 +9,7 @@ import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
+import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.domain.*;
@@ -29,6 +30,9 @@ import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.Month;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Map;
 import java.util.UUID;
@@ -60,7 +64,7 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null, null, TransactionStatusDto.ACTIVATED
         );
-
+        CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto().cvv("345").pan("16589654852").expiryDate(LocalDate.of(2030, Month.DECEMBER,31));
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
@@ -72,15 +76,13 @@ class PaymentGatewayClientTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 "XPAY",
-                "345",
-                "16589654852",
-                "203012"
+                cardDetails
         );
 
         XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
-                .cvv(authorizationData.cvv())
-                .pan(authorizationData.pan())
-                .exipiryDate(authorizationData.expiryDate())
+                .cvv(cardDetails.getCvv())
+                .pan(cardDetails.getPan())
+                .exipiryDate(cardDetails.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM")))
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()));
 
@@ -126,8 +128,6 @@ class PaymentGatewayClientTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 null,
-                null,
-                null,
                 null
         );
 
@@ -165,7 +165,7 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null, null, TransactionStatusDto.ACTIVATED
         );
-
+        CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto().cvv("345").pan("16589654852").expiryDate(LocalDate.of(2030, Month.DECEMBER,31));
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
@@ -177,15 +177,13 @@ class PaymentGatewayClientTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 "XPAY",
-                "345",
-                "16589654852",
-                "203012"
+                cardDetails
         );
 
         XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
-                .cvv(authorizationData.cvv())
-                .pan(authorizationData.pan())
-                .exipiryDate(authorizationData.expiryDate())
+                .cvv(cardDetails.getCvv())
+                .pan(cardDetails.getPan())
+                .exipiryDate(cardDetails.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM")))
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()));
 
@@ -226,8 +224,6 @@ class PaymentGatewayClientTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
-                null,
-                null,
                 null,
                 null
         );
@@ -278,8 +274,6 @@ class PaymentGatewayClientTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 null,
-                null,
-                null,
                 null
         );
 
@@ -327,8 +321,6 @@ class PaymentGatewayClientTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 null,
-                null,
-                null,
                 null
         );
 
@@ -362,7 +354,7 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null, null, TransactionStatusDto.ACTIVATED
         );
-
+        CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto().cvv("345").pan("16589654852").expiryDate(LocalDate.of(2030, Month.DECEMBER,31));
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
@@ -374,15 +366,13 @@ class PaymentGatewayClientTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 "XPAY",
-                "345",
-                "16589654852",
-                "203012"
+                cardDetails
         );
 
         XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
-                .cvv(authorizationData.cvv())
-                .pan(authorizationData.pan())
-                .exipiryDate(authorizationData.expiryDate())
+                .cvv(cardDetails.getCvv())
+                .pan(cardDetails.getPan())
+                .exipiryDate(cardDetails.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM")))
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()));
 
@@ -422,8 +412,6 @@ class PaymentGatewayClientTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 null,
-                null,
-                null,
                 null
         );
 
@@ -462,7 +450,7 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null, null, TransactionStatusDto.ACTIVATED
         );
-
+        CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto().cvv("345").pan("16589654852").expiryDate(LocalDate.of(2030, Month.DECEMBER,31));
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
@@ -474,15 +462,13 @@ class PaymentGatewayClientTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 "XPAY",
-                "345",
-                "16589654852",
-                "203012"
+                cardDetails
         );
 
         XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
-                .cvv(authorizationData.cvv())
-                .pan(authorizationData.pan())
-                .exipiryDate(authorizationData.expiryDate())
+                .cvv(cardDetails.getCvv())
+                .pan(cardDetails.getPan())
+                .exipiryDate(cardDetails.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM")))
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()));
 
