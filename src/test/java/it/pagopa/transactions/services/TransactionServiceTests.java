@@ -28,10 +28,12 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import reactor.util.function.Tuples;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -179,13 +181,13 @@ public class TransactionServiceTests {
 				.paymentTypeCode("PO")
 				.addRangesItem(new RangeDto().min(0L).max(100L));
 
-		PostePayAuthResponseEntityDto gatewayResponse = new PostePayAuthResponseEntityDto()
+		PostePayAuthResponseEntityDto postePayAuthResponseEntityDto = new PostePayAuthResponseEntityDto()
 				.channel("channel")
 				.requestId("requestId")
 				.urlRedirect("http://example.com");
 
 		RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
-				.authorizationUrl(gatewayResponse.getUrlRedirect());
+				.authorizationUrl(postePayAuthResponseEntityDto.getUrlRedirect());
 
 		Mockito.when(ecommercePaymentInstrumentsClient.getPSPs(any(), any(), any())).thenReturn(
 				Mono.just(pspResponseDto));
@@ -195,19 +197,19 @@ public class TransactionServiceTests {
 		Mockito.when(repository.findById(TRANSACION_ID))
 				.thenReturn(Mono.just(transaction));
 
-		Mockito.when(paymentGatewayClient.requestAuthorization(any())).thenReturn(
-				Mono.just(gatewayResponse));
+		Mockito.when(paymentGatewayClient.requestGeneralAuthorization(any())).thenReturn(
+				Mono.zip(Mono.just(Optional.of(postePayAuthResponseEntityDto)),Mono.just(Optional.empty())));
 
 		Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 
 		Mockito.when(transactionRequestAuthorizationHandler.handle(any())).thenReturn(Mono.just(requestAuthorizationResponse));
 
 		/* test */
-		RequestAuthorizationResponseDto authorizationResponse = transactionsService
+		RequestAuthorizationResponseDto postePayAuthorizationResponse = transactionsService
 				.requestTransactionAuthorization(TRANSACION_ID, authorizationRequest).block();
 
-		assertNotNull(authorizationResponse);
-		assertFalse(authorizationResponse.getAuthorizationUrl().isEmpty());
+		assertNotNull(postePayAuthorizationResponse);
+		assertFalse(postePayAuthorizationResponse.getAuthorizationUrl().isEmpty());
 	}
 
 	@Test
