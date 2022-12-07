@@ -2,7 +2,6 @@ package it.pagopa.transactions.commands.data;
 
 import it.pagopa.transactions.domain.TransactionActivated;
 
-//TODO Aggiornare sincronizzando con struttura dati CHK-823 (aggiunta details)
 public record AuthorizationRequestData(
 		TransactionActivated transaction,
         int fee,

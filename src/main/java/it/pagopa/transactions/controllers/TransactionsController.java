@@ -21,7 +21,9 @@ import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -48,9 +50,10 @@ public class TransactionsController implements TransactionsApi {
 
     @Override
     public Mono<ResponseEntity<RequestAuthorizationResponseDto>> requestTransactionAuthorization(String transactionId, Mono<RequestAuthorizationRequestDto> requestAuthorizationRequestDto, ServerWebExchange exchange) {
+        String pgsId = Optional.of(exchange.getRequest().getHeaders().get("x-pgs-id")).orElse(new ArrayList<>()).stream().findFirst().orElse("");
         return requestAuthorizationRequestDto
                 .doOnEach(t -> log.info("requestTransactionAuthorization for transactionId: {} ", transactionId))
-                .flatMap(requestAuthorizationRequest -> transactionsService.requestTransactionAuthorization(transactionId, requestAuthorizationRequest))
+                .flatMap(requestAuthorizationRequest -> transactionsService.requestTransactionAuthorization(transactionId, pgsId, requestAuthorizationRequest))
                 .map(ResponseEntity::ok);
     }
 
