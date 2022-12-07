@@ -10,6 +10,8 @@ import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionActivateResultCommand;
+import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
+import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.*;
 import it.pagopa.transactions.documents.*;
 import it.pagopa.transactions.documents.Transaction;
@@ -20,6 +22,8 @@ import it.pagopa.transactions.repositories.TransactionsActivationRequestedEventS
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
@@ -29,6 +33,8 @@ import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.LocalDate;
+import java.time.Month;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,480 +48,561 @@ import static org.mockito.Mockito.when;
 @WebFluxTest
 @TestPropertySource(locations = "classpath:application-tests.properties")
 @Import({
-		TransactionsService.class,
-		PaymentRequestsService.class,
-		TransactionRequestAuthorizationHandler.class,
-		TransactionsActivationRequestedProjectionHandler.class,
-		AuthorizationRequestProjectionHandler.class,
-		TransactionActivateResultHandler.class,
-		TransactionsEventStoreRepository.class,
-		TransactionsActivationProjectionHandler.class})
+        TransactionsService.class,
+        PaymentRequestsService.class,
+        TransactionRequestAuthorizationHandler.class,
+        TransactionsActivationRequestedProjectionHandler.class,
+        AuthorizationRequestProjectionHandler.class,
+        TransactionActivateResultHandler.class,
+        TransactionsEventStoreRepository.class,
+        TransactionsActivationProjectionHandler.class})
 public class TransactionServiceTests {
-	@MockBean
-	private TransactionsViewRepository repository;
+    @MockBean
+    private TransactionsViewRepository repository;
 
-	@Autowired
-	private TransactionsService transactionsService;
+    @Autowired
+    private TransactionsService transactionsService;
 
-	@MockBean
-	private EcommercePaymentInstrumentsClient ecommercePaymentInstrumentsClient;
+    @MockBean
+    private EcommercePaymentInstrumentsClient ecommercePaymentInstrumentsClient;
 
-	@MockBean
-	private PaymentGatewayClient paymentGatewayClient;
+    @MockBean
+    private PaymentGatewayClient paymentGatewayClient;
 
-	@MockBean
-	private TransactionActivateHandler transactionActivateHandler;
+    @MockBean
+    private TransactionActivateHandler transactionActivateHandler;
 
-	@MockBean
-	private TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandler;
+    @MockBean
+    private TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandler;
 
-	@MockBean
-	private TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandler;
+    @MockBean
+    private TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandler;
 
-	@MockBean
-	private TransactionSendClosureHandler transactionSendClosureHandler;
+    @MockBean
+    private TransactionSendClosureHandler transactionSendClosureHandler;
 
-	@MockBean
-	private AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandler;
+    @MockBean
+    private AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandler;
 
-	@MockBean
-	private ClosureSendProjectionHandler closureSendProjectionHandler;
+    @MockBean
+    private ClosureSendProjectionHandler closureSendProjectionHandler;
 
-	@MockBean
-	private TransactionAddUserReceiptHandler transactionUpdateStatusHandler;
+    @MockBean
+    private TransactionAddUserReceiptHandler transactionUpdateStatusHandler;
 
-	@MockBean
-	private TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandler;
+    @MockBean
+    private TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandler;
 
-	@MockBean
-	private PaymentRequestsService paymentRequestsService;
+    @MockBean
+    private PaymentRequestsService paymentRequestsService;
 
-	@MockBean
-	private TransactionActivateResultHandler transactionActivateResultHandler;
+    @MockBean
+    private TransactionActivateResultHandler transactionActivateResultHandler;
 
-	@MockBean
-	private TransactionsEventStoreRepository transactionsEventStoreRepository;
+    @MockBean
+    private TransactionsEventStoreRepository transactionsEventStoreRepository;
 
-	@MockBean
-	private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
+    @MockBean
+    private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
 
-	@MockBean
-	private TransactionsActivationRequestedEventStoreRepository transactionsActivationRequestedEventStoreRepository;
+    @MockBean
+    private TransactionsActivationRequestedEventStoreRepository transactionsActivationRequestedEventStoreRepository;
 
-	final String PAYMENT_TOKEN = "aaa";
-	final String TRANSACION_ID = "833d303a-f857-11ec-b939-0242ac120002";
+    @Captor
+    private ArgumentCaptor<TransactionRequestAuthorizationCommand> commandArgumentCaptor;
 
-	@Test
-	void getTransactionReturnsTransactionData() {
+    final String PAYMENT_TOKEN = "aaa";
+    final String TRANSACION_ID = "833d303a-f857-11ec-b939-0242ac120002";
 
-		final Transaction transaction = new Transaction(TRANSACION_ID, PAYMENT_TOKEN, "77777777777111111111111111111", "reason", 100,
-				"foo@example.com", TransactionStatusDto.ACTIVATED);
-		final TransactionInfoDto expected = new TransactionInfoDto()
-		        .transactionId(TRANSACION_ID)
-				.amount(transaction.getAmount())
-				.reason("reason")
-				.paymentToken(PAYMENT_TOKEN)
-				.authToken(null)
-				.rptId("77777777777111111111111111111")
-				.status(TransactionStatusDto.ACTIVATED);
+    @Test
+    void getTransactionReturnsTransactionData() {
 
-		when(repository.findById(TRANSACION_ID)).thenReturn(Mono.just(transaction));
+        final Transaction transaction = new Transaction(TRANSACION_ID, PAYMENT_TOKEN, "77777777777111111111111111111", "reason", 100,
+                "foo@example.com", TransactionStatusDto.ACTIVATED);
+        final TransactionInfoDto expected = new TransactionInfoDto()
+                .transactionId(TRANSACION_ID)
+                .amount(transaction.getAmount())
+                .reason("reason")
+                .paymentToken(PAYMENT_TOKEN)
+                .authToken(null)
+                .rptId("77777777777111111111111111111")
+                .status(TransactionStatusDto.ACTIVATED);
 
-		assertEquals(
-				transactionsService.getTransactionInfo(TRANSACION_ID).block(),
-				expected);
-	}
+        when(repository.findById(TRANSACION_ID)).thenReturn(Mono.just(transaction));
 
-	@Test
-	void getTransactionThrowsOnTransactionNotFound() {
-		when(repository.findById(TRANSACION_ID)).thenReturn(Mono.empty());
+        assertEquals(
+                transactionsService.getTransactionInfo(TRANSACION_ID).block(),
+                expected);
+    }
 
-		assertThrows(
-				TransactionNotFoundException.class,
-				() -> transactionsService.getTransactionInfo(TRANSACION_ID).block(), TRANSACION_ID);
-	}
+    @Test
+    void getTransactionThrowsOnTransactionNotFound() {
+        when(repository.findById(TRANSACION_ID)).thenReturn(Mono.empty());
 
-	@Test
-	void getPaymentTokenByTransactionNotFound() {
+        assertThrows(
+                TransactionNotFoundException.class,
+                () -> transactionsService.getTransactionInfo(TRANSACION_ID).block(), TRANSACION_ID);
+    }
 
-		TransactionNotFoundException exception = new TransactionNotFoundException(TRANSACION_ID);
+    @Test
+    void getPaymentTokenByTransactionNotFound() {
 
-		assertEquals(
-				exception.getPaymentToken(),
-				TRANSACION_ID);
-	}
+        TransactionNotFoundException exception = new TransactionNotFoundException(TRANSACION_ID);
 
-	@Test
-	void shouldRedirectToAuthorizationURIForValidRequest() {
-		RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-				.amount(100)
-				.paymentInstrumentId("paymentInstrumentId")
-				.language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
-				.pspId("PSP_CODE");
+        assertEquals(
+                exception.getPaymentToken(),
+                TRANSACION_ID);
+    }
 
-		Transaction transaction = new Transaction(
-			    TRANSACION_ID,
-				PAYMENT_TOKEN,
-				"77777777777111111111111111111",
-				"description",
-				100,
-				"foo@example.com",
-				TransactionStatusDto.ACTIVATED);
+    @Test
+    void shouldRedirectToAuthorizationURIForValidRequest() {
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .paymentInstrumentId("paymentInstrumentId")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
+                .pspId("PSP_CODE");
 
-		/* preconditions */
-		List<PspDto> pspDtoList = new ArrayList<>();
-		pspDtoList.add(
-				new PspDto()
-						.code("PSP_CODE")
-						.fixedCost(200l));
-		PSPsResponseDto pspResponseDto = new PSPsResponseDto();
-		pspResponseDto.psp(pspDtoList);
+        Transaction transaction = new Transaction(
+                TRANSACION_ID,
+                PAYMENT_TOKEN,
+                "77777777777111111111111111111",
+                "description",
+                100,
+                "foo@example.com",
+                TransactionStatusDto.ACTIVATED);
 
-		PaymentMethodResponseDto paymentMethod = new PaymentMethodResponseDto()
-				.name("paymentMethodName")
-				.description("desc")
-				.status(PaymentMethodResponseDto.StatusEnum.ENABLED)
-				.id("id")
-				.paymentTypeCode("PO")
-				.addRangesItem(new RangeDto().min(0L).max(100L));
+        /* preconditions */
+        List<PspDto> pspDtoList = new ArrayList<>();
+        pspDtoList.add(
+                new PspDto()
+                        .code("PSP_CODE")
+                        .fixedCost(200l));
+        PSPsResponseDto pspResponseDto = new PSPsResponseDto();
+        pspResponseDto.psp(pspDtoList);
 
-		PostePayAuthResponseEntityDto gatewayResponse = new PostePayAuthResponseEntityDto()
-				.channel("channel")
-				.requestId("requestId")
-				.urlRedirect("http://example.com");
+        PaymentMethodResponseDto paymentMethod = new PaymentMethodResponseDto()
+                .name("paymentMethodName")
+                .description("desc")
+                .status(PaymentMethodResponseDto.StatusEnum.ENABLED)
+                .id("id")
+                .paymentTypeCode("PO")
+                .addRangesItem(new RangeDto().min(0L).max(100L));
 
-		RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
-				.authorizationUrl(gatewayResponse.getUrlRedirect());
+        PostePayAuthResponseEntityDto gatewayResponse = new PostePayAuthResponseEntityDto()
+                .channel("channel")
+                .requestId("requestId")
+                .urlRedirect("http://example.com");
 
-		Mockito.when(ecommercePaymentInstrumentsClient.getPSPs(any(), any(), any())).thenReturn(
-				Mono.just(pspResponseDto));
+        RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
+                .authorizationUrl(gatewayResponse.getUrlRedirect());
 
-		Mockito.when(ecommercePaymentInstrumentsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
+        Mockito.when(ecommercePaymentInstrumentsClient.getPSPs(any(), any(), any())).thenReturn(
+                Mono.just(pspResponseDto));
 
-		Mockito.when(repository.findById(TRANSACION_ID))
-				.thenReturn(Mono.just(transaction));
+        Mockito.when(ecommercePaymentInstrumentsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
 
-		Mockito.when(paymentGatewayClient.requestAuthorization(any())).thenReturn(
-				Mono.just(gatewayResponse));
+        Mockito.when(repository.findById(TRANSACION_ID))
+                .thenReturn(Mono.just(transaction));
 
-		Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
+        Mockito.when(paymentGatewayClient.requestAuthorization(any())).thenReturn(
+                Mono.just(gatewayResponse));
 
-		Mockito.when(transactionRequestAuthorizationHandler.handle(any())).thenReturn(Mono.just(requestAuthorizationResponse));
+        Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 
-		/* test */
-		RequestAuthorizationResponseDto authorizationResponse = transactionsService
-				.requestTransactionAuthorization(TRANSACION_ID, authorizationRequest).block();
+        Mockito.when(transactionRequestAuthorizationHandler.handle(commandArgumentCaptor.capture())).thenReturn(Mono.just(requestAuthorizationResponse));
 
-		assertNotNull(authorizationResponse);
-		assertFalse(authorizationResponse.getAuthorizationUrl().isEmpty());
-	}
+        /* test */
+        RequestAuthorizationResponseDto authorizationResponse = transactionsService
+                .requestTransactionAuthorization(TRANSACION_ID, authorizationRequest).block();
+        AuthorizationRequestData authData = commandArgumentCaptor.getValue().getData();
 
-	@Test
-	void shouldReturnNotFoundForNonExistingRequest() {
- 		RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-				.amount(100)
-				.fee(0)
-				.paymentInstrumentId("paymentInstrumentId")
-				.pspId("pspId");
+        assertNotNull(authorizationResponse);
+        assertFalse(authorizationResponse.getAuthorizationUrl().isEmpty());
+        assertNull(authData.expiryDate());
+        assertNull(authData.cvv());
+        assertNull(authData.pan());
 
-		/* preconditions */
-		Mockito.when(repository.findById(TRANSACION_ID))
-				.thenReturn(Mono.empty());
+    }
 
-		/* test */
-		Mono<RequestAuthorizationResponseDto> requestAuthorizationResponseDtoMono = transactionsService.requestTransactionAuthorization(TRANSACION_ID, authorizationRequest);
-		assertThrows(
-				TransactionNotFoundException.class,
-				() -> {
-					requestAuthorizationResponseDtoMono.block();
-				});
-	}
+    @Test
+    void shouldRedirectToAuthorizationURIForValidRequestWithCardData() {
+        CardAuthRequestDetailsDto cardAuthRequestDetailsDto =new CardAuthRequestDetailsDto()
+                .expiryDate(LocalDate.of(2000, Month.JANUARY, 1))
+                .cvv("000")
+                .pan("0123456789012345")
+                .holderName("Name Surname");
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .paymentInstrumentId("paymentInstrumentId")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
+                .pspId("PSP_CODE")
+                .details(cardAuthRequestDetailsDto);
+        Transaction transaction = new Transaction(
+                TRANSACION_ID,
+                PAYMENT_TOKEN,
+                "77777777777111111111111111111",
+                "description",
+                100,
+                "foo@example.com",
+                TransactionStatusDto.ACTIVATED);
 
-	@Test
-	void shouldReturnTransactionInfoForSuccessfulAuthAndClosure() {
-	    TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        /* preconditions */
+        List<PspDto> pspDtoList = new ArrayList<>();
+        pspDtoList.add(
+                new PspDto()
+                        .code("PSP_CODE")
+                        .fixedCost(200l));
+        PSPsResponseDto pspResponseDto = new PSPsResponseDto();
+        pspResponseDto.psp(pspDtoList);
 
-		Transaction transactionDocument = new Transaction(
-			    transactionId.value().toString(),
-				PAYMENT_TOKEN,
-				"77777777777111111111111111111",
-				"description",
-				100,
-				"foo@example.com",
-				TransactionStatusDto.AUTHORIZATION_REQUESTED);
+        PaymentMethodResponseDto paymentMethod = new PaymentMethodResponseDto()
+                .name("paymentMethodName")
+                .description("desc")
+                .status(PaymentMethodResponseDto.StatusEnum.ENABLED)
+                .id("id")
+                .paymentTypeCode("PO")
+                .addRangesItem(new RangeDto().min(0L).max(100L));
 
-		TransactionActivated transaction = new TransactionActivated(
-				new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
-				new PaymentToken(transactionDocument.getPaymentToken()),
-				new RptId(transactionDocument.getRptId()),
-				new TransactionDescription(transactionDocument.getDescription()),
-				new TransactionAmount(transactionDocument.getAmount()),
-				new Email(transactionDocument.getEmail()),
+        PostePayAuthResponseEntityDto gatewayResponse = new PostePayAuthResponseEntityDto()
+                .channel("channel")
+                .requestId("requestId")
+                .urlRedirect("http://example.com");
+
+        RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
+                .authorizationUrl(gatewayResponse.getUrlRedirect());
+
+        Mockito.when(ecommercePaymentInstrumentsClient.getPSPs(any(), any(), any())).thenReturn(
+                Mono.just(pspResponseDto));
+
+        Mockito.when(ecommercePaymentInstrumentsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
+
+        Mockito.when(repository.findById(TRANSACION_ID))
+                .thenReturn(Mono.just(transaction));
+
+        Mockito.when(paymentGatewayClient.requestAuthorization(any())).thenReturn(
+                Mono.just(gatewayResponse));
+
+        Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
+
+        Mockito.when(transactionRequestAuthorizationHandler.handle(commandArgumentCaptor.capture())).thenReturn(Mono.just(requestAuthorizationResponse));
+        /* test */
+        RequestAuthorizationResponseDto authorizationResponse = transactionsService
+                .requestTransactionAuthorization(TRANSACION_ID, authorizationRequest).block();
+
+        assertNotNull(authorizationResponse);
+        assertFalse(authorizationResponse.getAuthorizationUrl().isEmpty());
+        AuthorizationRequestData authData = commandArgumentCaptor.getValue().getData();
+        assertEquals(cardAuthRequestDetailsDto.getCvv(),authData.cvv());
+        assertEquals(cardAuthRequestDetailsDto.getPan(),authData.pan());
+        assertEquals(cardAuthRequestDetailsDto.getExpiryDate(),authData.expiryDate());
+    }
+
+    @Test
+    void shouldReturnNotFoundForNonExistingRequest() {
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .fee(0)
+                .paymentInstrumentId("paymentInstrumentId")
+                .pspId("pspId");
+
+        /* preconditions */
+        Mockito.when(repository.findById(TRANSACION_ID))
+                .thenReturn(Mono.empty());
+
+        /* test */
+        Mono<RequestAuthorizationResponseDto> requestAuthorizationResponseDtoMono = transactionsService.requestTransactionAuthorization(TRANSACION_ID, authorizationRequest);
+        assertThrows(
+                TransactionNotFoundException.class,
+                () -> {
+                    requestAuthorizationResponseDtoMono.block();
+                });
+    }
+
+    @Test
+    void shouldReturnTransactionInfoForSuccessfulAuthAndClosure() {
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+
+        Transaction transactionDocument = new Transaction(
+                transactionId.value().toString(),
+                PAYMENT_TOKEN,
+                "77777777777111111111111111111",
+                "description",
+                100,
+                "foo@example.com",
+                TransactionStatusDto.AUTHORIZATION_REQUESTED);
+
+        TransactionActivated transaction = new TransactionActivated(
+                new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
+                new PaymentToken(transactionDocument.getPaymentToken()),
+                new RptId(transactionDocument.getRptId()),
+                new TransactionDescription(transactionDocument.getDescription()),
+                new TransactionAmount(transactionDocument.getAmount()),
+                new Email(transactionDocument.getEmail()),
                 "faultCode",
-				"faultCodeString",
-				transactionDocument.getStatus()
-		);
+                "faultCodeString",
+                transactionDocument.getStatus()
+        );
 
-		UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-				.authorizationResult(AuthorizationResultDto.OK)
-				.authorizationCode("authorizationCode")
-				.timestampOperation(OffsetDateTime.now());
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .authorizationResult(AuthorizationResultDto.OK)
+                .authorizationCode("authorizationCode")
+                .timestampOperation(OffsetDateTime.now());
 
-		TransactionAuthorizationStatusUpdateData statusUpdateData =
-				new TransactionAuthorizationStatusUpdateData(
-						updateAuthorizationRequest.getAuthorizationResult(),
-						TransactionStatusDto.AUTHORIZED
-				);
+        TransactionAuthorizationStatusUpdateData statusUpdateData =
+                new TransactionAuthorizationStatusUpdateData(
+                        updateAuthorizationRequest.getAuthorizationResult(),
+                        TransactionStatusDto.AUTHORIZED
+                );
 
-		TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
-				transactionDocument.getTransactionId(),
-				transactionDocument.getRptId(),
-				transactionDocument.getPaymentToken(),
-				statusUpdateData
-		);
+        TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
+                transactionDocument.getTransactionId(),
+                transactionDocument.getRptId(),
+                transactionDocument.getPaymentToken(),
+                statusUpdateData
+        );
 
-		TransactionClosureSendData closureSendData = new TransactionClosureSendData(ClosePaymentResponseDto.OutcomeEnum.OK, TransactionStatusDto.CLOSED, updateAuthorizationRequest.getAuthorizationCode());
+        TransactionClosureSendData closureSendData = new TransactionClosureSendData(ClosePaymentResponseDto.OutcomeEnum.OK, TransactionStatusDto.CLOSED, updateAuthorizationRequest.getAuthorizationCode());
 
-		TransactionClosureSentEvent closureSentEvent = new TransactionClosureSentEvent(
-				transactionDocument.getTransactionId(),
-				transactionDocument.getRptId(),
-				transactionDocument.getPaymentToken(),
-				closureSendData
-		);
+        TransactionClosureSentEvent closureSentEvent = new TransactionClosureSentEvent(
+                transactionDocument.getTransactionId(),
+                transactionDocument.getRptId(),
+                transactionDocument.getPaymentToken(),
+                closureSendData
+        );
 
-		TransactionInfoDto expectedResponse = new TransactionInfoDto()
-				.transactionId(transactionDocument.getTransactionId())
-				.amount(transactionDocument.getAmount())
-				.authToken(null)
-				.status(TransactionStatusDto.CLOSED)
-				.reason(transactionDocument.getDescription())
-				.paymentToken(transactionDocument.getPaymentToken())
-				.rptId(transactionDocument.getRptId());
+        TransactionInfoDto expectedResponse = new TransactionInfoDto()
+                .transactionId(transactionDocument.getTransactionId())
+                .amount(transactionDocument.getAmount())
+                .authToken(null)
+                .status(TransactionStatusDto.CLOSED)
+                .reason(transactionDocument.getDescription())
+                .paymentToken(transactionDocument.getPaymentToken())
+                .rptId(transactionDocument.getRptId());
 
-		Transaction closedTransactionDocument = new Transaction(
-				transactionDocument.getTransactionId(),
-				transactionDocument.getPaymentToken(),
-				transactionDocument.getRptId(),
-				transactionDocument.getDescription(),
-				transactionDocument.getAmount(),
-				transactionDocument.getEmail(),
-				TransactionStatusDto.CLOSED);
+        Transaction closedTransactionDocument = new Transaction(
+                transactionDocument.getTransactionId(),
+                transactionDocument.getPaymentToken(),
+                transactionDocument.getRptId(),
+                transactionDocument.getDescription(),
+                transactionDocument.getAmount(),
+                transactionDocument.getEmail(),
+                TransactionStatusDto.CLOSED);
 
-		/* preconditions */
-		Mockito.when(repository.findById(transactionId.value().toString()))
-				.thenReturn(Mono.just(transactionDocument));
+        /* preconditions */
+        Mockito.when(repository.findById(transactionId.value().toString()))
+                .thenReturn(Mono.just(transactionDocument));
 
-		Mockito.when(transactionUpdateAuthorizationHandler.handle(any()))
-				.thenReturn(Mono.just(event));
+        Mockito.when(transactionUpdateAuthorizationHandler.handle(any()))
+                .thenReturn(Mono.just(event));
 
-		Mockito.when(authorizationUpdateProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
+        Mockito.when(authorizationUpdateProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
 
-		Mockito.when(transactionSendClosureHandler.handle(any()))
-				.thenReturn(Mono.just(closureSentEvent));
+        Mockito.when(transactionSendClosureHandler.handle(any()))
+                .thenReturn(Mono.just(closureSentEvent));
 
-		Mockito.when(closureSendProjectionHandler.handle(any()))
-				.thenReturn(Mono.just(closedTransactionDocument));
+        Mockito.when(closureSendProjectionHandler.handle(any()))
+                .thenReturn(Mono.just(closedTransactionDocument));
 
-		/* test */
-		TransactionInfoDto transactionInfoResponse = transactionsService.updateTransactionAuthorization(transactionId.value().toString(), updateAuthorizationRequest).block();
+        /* test */
+        TransactionInfoDto transactionInfoResponse = transactionsService.updateTransactionAuthorization(transactionId.value().toString(), updateAuthorizationRequest).block();
 
-		assertEquals(expectedResponse, transactionInfoResponse);
-	}
+        assertEquals(expectedResponse, transactionInfoResponse);
+    }
 
-	@Test
-	void shouldReturnNotFoundExceptionForNonExistingTransaction() {
+    @Test
+    void shouldReturnNotFoundExceptionForNonExistingTransaction() {
 
-		UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-				.authorizationResult(AuthorizationResultDto.OK)
-				.authorizationCode("authorizationCode")
-				.timestampOperation(OffsetDateTime.now());
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .authorizationResult(AuthorizationResultDto.OK)
+                .authorizationCode("authorizationCode")
+                .timestampOperation(OffsetDateTime.now());
 
-		/* preconditions */
-		Mockito.when(repository.findById(TRANSACION_ID))
-				.thenReturn(Mono.empty());
+        /* preconditions */
+        Mockito.when(repository.findById(TRANSACION_ID))
+                .thenReturn(Mono.empty());
 
-		/* test */
-		StepVerifier.create(transactionsService.updateTransactionAuthorization(TRANSACION_ID, updateAuthorizationRequest))
-				.expectErrorMatches(error -> error instanceof TransactionNotFoundException)
-				.verify();
-	}
+        /* test */
+        StepVerifier.create(transactionsService.updateTransactionAuthorization(TRANSACION_ID, updateAuthorizationRequest))
+                .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
+                .verify();
+    }
 
-	@Test
-	void shouldReturnTransactionInfoForSuccessfulNotified() {
-	    TransactionId transactionId = new TransactionId(UUID.randomUUID());
+    @Test
+    void shouldReturnTransactionInfoForSuccessfulNotified() {
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
-		Transaction transactionDocument = new Transaction(
-			    transactionId.value().toString(),
-				PAYMENT_TOKEN,
-				"77777777777111111111111111111",
-				"description",
-				100,
-				"foo@example.com",
-				TransactionStatusDto.CLOSED);
+        Transaction transactionDocument = new Transaction(
+                transactionId.value().toString(),
+                PAYMENT_TOKEN,
+                "77777777777111111111111111111",
+                "description",
+                100,
+                "foo@example.com",
+                TransactionStatusDto.CLOSED);
 
-		TransactionActivated transaction = new TransactionActivated(
-				new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
-				new PaymentToken(transactionDocument.getPaymentToken()),
-				new RptId(transactionDocument.getRptId()),
-				new TransactionDescription(transactionDocument.getDescription()),
-				new TransactionAmount(transactionDocument.getAmount()),
-				new Email(transactionDocument.getEmail()),
+        TransactionActivated transaction = new TransactionActivated(
+                new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
+                new PaymentToken(transactionDocument.getPaymentToken()),
+                new RptId(transactionDocument.getRptId()),
+                new TransactionDescription(transactionDocument.getDescription()),
+                new TransactionAmount(transactionDocument.getAmount()),
+                new Email(transactionDocument.getEmail()),
                 null, null, TransactionStatusDto.NOTIFIED
-		);
+        );
 
-		TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(TransactionStatusDto.NOTIFIED);
+        TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(TransactionStatusDto.NOTIFIED);
 
-		TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
-				transactionDocument.getTransactionId(),
-				transactionDocument.getRptId(),
-				transactionDocument.getPaymentToken(),
-				transactionAddReceiptData
-		);
+        TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
+                transactionDocument.getTransactionId(),
+                transactionDocument.getRptId(),
+                transactionDocument.getPaymentToken(),
+                transactionAddReceiptData
+        );
 
-		AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
-				.outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
-				.paymentDate(OffsetDateTime.now())
-				.addPaymentsItem(new AddUserReceiptRequestPaymentsInnerDto()
-						.paymentToken("paymentToken")
-						.companyName("companyName")
-						.creditorReferenceId("creditorReferenceId")
-						.description("description")
-						.debtor("debtor")
-						.fiscalCode("fiscalCode")
-						.officeName("officeName")
-				);
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(new AddUserReceiptRequestPaymentsInnerDto()
+                        .paymentToken("paymentToken")
+                        .companyName("companyName")
+                        .creditorReferenceId("creditorReferenceId")
+                        .description("description")
+                        .debtor("debtor")
+                        .fiscalCode("fiscalCode")
+                        .officeName("officeName")
+                );
 
-		TransactionInfoDto expectedResponse = new TransactionInfoDto()
-				.transactionId(transactionDocument.getTransactionId())
-				.amount(transactionDocument.getAmount())
-				.authToken(null)
-				.status(TransactionStatusDto.NOTIFIED)
-				.reason(transactionDocument.getDescription())
-				.paymentToken(transactionDocument.getPaymentToken())
-				.rptId(transactionDocument.getRptId());
+        TransactionInfoDto expectedResponse = new TransactionInfoDto()
+                .transactionId(transactionDocument.getTransactionId())
+                .amount(transactionDocument.getAmount())
+                .authToken(null)
+                .status(TransactionStatusDto.NOTIFIED)
+                .reason(transactionDocument.getDescription())
+                .paymentToken(transactionDocument.getPaymentToken())
+                .rptId(transactionDocument.getRptId());
 
-		/* preconditions */
-		Mockito.when(repository.findById(transactionId.value().toString()))
-				.thenReturn(Mono.just(transactionDocument));
+        /* preconditions */
+        Mockito.when(repository.findById(transactionId.value().toString()))
+                .thenReturn(Mono.just(transactionDocument));
 
-		Mockito.when(transactionUpdateStatusHandler.handle(any()))
-				.thenReturn(Mono.just(event));
+        Mockito.when(transactionUpdateStatusHandler.handle(any()))
+                .thenReturn(Mono.just(event));
 
-		Mockito.when(transactionUserReceiptProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
+        Mockito.when(transactionUserReceiptProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
 
-		/* test */
-		TransactionInfoDto transactionInfoResponse = transactionsService.addUserReceipt(transactionId.value().toString(), addUserReceiptRequest).block();
+        /* test */
+        TransactionInfoDto transactionInfoResponse = transactionsService.addUserReceipt(transactionId.value().toString(), addUserReceiptRequest).block();
 
-		assertEquals(expectedResponse, transactionInfoResponse);
-	}
+        assertEquals(expectedResponse, transactionInfoResponse);
+    }
 
-	@Test
-	void shouldReturnNotFoundExceptionForNonExistingToAddUserReceipt() {
-		AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
-				.outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
-				.paymentDate(OffsetDateTime.now())
-				.addPaymentsItem(new AddUserReceiptRequestPaymentsInnerDto()
-						.paymentToken("paymentToken")
-						.companyName("companyName")
-						.creditorReferenceId("creditorReferenceId")
-						.description("description")
-						.debtor("debtor")
-						.fiscalCode("fiscalCode")
-						.officeName("officeName")
-				);
+    @Test
+    void shouldReturnNotFoundExceptionForNonExistingToAddUserReceipt() {
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(new AddUserReceiptRequestPaymentsInnerDto()
+                        .paymentToken("paymentToken")
+                        .companyName("companyName")
+                        .creditorReferenceId("creditorReferenceId")
+                        .description("description")
+                        .debtor("debtor")
+                        .fiscalCode("fiscalCode")
+                        .officeName("officeName")
+                );
 
-		/* preconditions */
-		Mockito.when(repository.findById(TRANSACION_ID))
-				.thenReturn(Mono.empty());
+        /* preconditions */
+        Mockito.when(repository.findById(TRANSACION_ID))
+                .thenReturn(Mono.empty());
 
-		/* test */
-		StepVerifier.create(transactionsService.addUserReceipt(TRANSACION_ID, addUserReceiptRequest))
-				.expectErrorMatches(error -> error instanceof TransactionNotFoundException)
-				.verify();
-	}
+        /* test */
+        StepVerifier.create(transactionsService.addUserReceipt(TRANSACION_ID, addUserReceiptRequest))
+                .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
+                .verify();
+    }
 
-	@Test
-	void shouldThrowTransacrionNotFoundExceptionWhenNotInTransactionRepository() {
+    @Test
+    void shouldThrowTransacrionNotFoundExceptionWhenNotInTransactionRepository() {
 
-		/** preconditions */
+        /** preconditions */
 
-		ActivationResultRequestDto activationResultRequestDto = new ActivationResultRequestDto().paymentToken(UUID.randomUUID().toString());
+        ActivationResultRequestDto activationResultRequestDto = new ActivationResultRequestDto().paymentToken(UUID.randomUUID().toString());
 
-		Mockito.when(transactionsActivationRequestedEventStoreRepository.findByEventCodeAndData_PaymentContextCode(any(),any()))
-				.thenReturn(Mono.empty());
+        Mockito.when(transactionsActivationRequestedEventStoreRepository.findByEventCodeAndData_PaymentContextCode(any(), any()))
+                .thenReturn(Mono.empty());
 
-		/** test */
-		StepVerifier.create(transactionsService.activateTransaction(TRANSACION_ID, activationResultRequestDto))
-				.expectErrorMatches(error -> error instanceof TransactionNotFoundException)
-				.verify();
+        /** test */
+        StepVerifier.create(transactionsService.activateTransaction(TRANSACION_ID, activationResultRequestDto))
+                .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
+                .verify();
 
-	}
+    }
 
-	@Test
-	void shouldReturnTransactionActivationOk() {
-		/** preconditions */
+    @Test
+    void shouldReturnTransactionActivationOk() {
+        /** preconditions */
 
-		ActivationResultRequestDto activationResultRequestDto = new ActivationResultRequestDto().paymentToken(PAYMENT_TOKEN);
+        ActivationResultRequestDto activationResultRequestDto = new ActivationResultRequestDto().paymentToken(PAYMENT_TOKEN);
 
-		Transaction transaction = new Transaction(
-				TRANSACION_ID,
-				PAYMENT_TOKEN,
-				"77777777777111111111111111111",
-				"Description",
-				100,
-				"foo@example.com",
-				TransactionStatusDto.ACTIVATION_REQUESTED
-		);
+        Transaction transaction = new Transaction(
+                TRANSACION_ID,
+                PAYMENT_TOKEN,
+                "77777777777111111111111111111",
+                "Description",
+                100,
+                "foo@example.com",
+                TransactionStatusDto.ACTIVATION_REQUESTED
+        );
 
-		RptId rtpId = new RptId("77777777777111111111111111111");
+        RptId rtpId = new RptId("77777777777111111111111111111");
 
-		String faultCode = "faultCode";
-		String faultCodeString = "faultCodeString";
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
 
-		it.pagopa.transactions.domain.TransactionActivated transactionActivated = new it.pagopa.transactions.domain.TransactionActivated(
-				new TransactionId(UUID.fromString(TRANSACION_ID)),
-				new PaymentToken(PAYMENT_TOKEN),
-				rtpId,
-				new TransactionDescription("Description"),
-				new TransactionAmount(100),
-				new Email("foo@example.com"),
-				faultCode,
-				faultCodeString,
-				TransactionStatusDto.AUTHORIZATION_REQUESTED
-		);
+        it.pagopa.transactions.domain.TransactionActivated transactionActivated = new it.pagopa.transactions.domain.TransactionActivated(
+                new TransactionId(UUID.fromString(TRANSACION_ID)),
+                new PaymentToken(PAYMENT_TOKEN),
+                rtpId,
+                new TransactionDescription("Description"),
+                new TransactionAmount(100),
+                new Email("foo@example.com"),
+                faultCode,
+                faultCodeString,
+                TransactionStatusDto.AUTHORIZATION_REQUESTED
+        );
 
-		TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
-				TRANSACION_ID,
-				"77777777777111111111111111111",
-				PAYMENT_TOKEN,
-				new TransactionActivationRequestedData(TRANSACION_ID, transactionActivated.getAmount().value(), transactionActivated.getEmail().value(), null, null, null)
-		);
+        TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
+                TRANSACION_ID,
+                "77777777777111111111111111111",
+                PAYMENT_TOKEN,
+                new TransactionActivationRequestedData(TRANSACION_ID, transactionActivated.getAmount().value(), transactionActivated.getEmail().value(), null, null, null)
+        );
 
-		TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-				TRANSACION_ID,
-				"77777777777111111111111111111",
-				PAYMENT_TOKEN,
-				new TransactionActivatedData(TRANSACION_ID,
-						transactionActivated.getAmount().value(),
-						transactionActivated.getEmail().value(),
-						transactionActivated.getTransactionActivatedData().getFaultCode(),
-						transactionActivated.getTransactionActivatedData().getFaultCodeString(),
-						PAYMENT_TOKEN
-				)
-		);
+        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
+                TRANSACION_ID,
+                "77777777777111111111111111111",
+                PAYMENT_TOKEN,
+                new TransactionActivatedData(TRANSACION_ID,
+                        transactionActivated.getAmount().value(),
+                        transactionActivated.getEmail().value(),
+                        transactionActivated.getTransactionActivatedData().getFaultCode(),
+                        transactionActivated.getTransactionActivatedData().getFaultCodeString(),
+                        PAYMENT_TOKEN
+                )
+        );
 
-		Mockito.when(transactionsActivationRequestedEventStoreRepository.findByEventCodeAndData_PaymentContextCode(any(),any())).thenReturn(Mono.just(transactionActivationRequestedEvent));
-		Mockito.when(transactionActivateResultHandler.handle(Mockito.any(TransactionActivateResultCommand.class))).thenReturn(Mono.just(transactionActivatedEvent));
-		Mockito.when(transactionsActivationProjectionHandler.handle(Mockito.any(TransactionActivatedEvent.class))).thenReturn(Mono.just(transactionActivated));
+        Mockito.when(transactionsActivationRequestedEventStoreRepository.findByEventCodeAndData_PaymentContextCode(any(), any())).thenReturn(Mono.just(transactionActivationRequestedEvent));
+        Mockito.when(transactionActivateResultHandler.handle(Mockito.any(TransactionActivateResultCommand.class))).thenReturn(Mono.just(transactionActivatedEvent));
+        Mockito.when(transactionsActivationProjectionHandler.handle(Mockito.any(TransactionActivatedEvent.class))).thenReturn(Mono.just(transactionActivated));
 
-		/** test */
+        /** test */
 
-		ActivationResultResponseDto activationResultResponseDto = transactionsService.activateTransaction(TRANSACION_ID, activationResultRequestDto).block();
+        ActivationResultResponseDto activationResultResponseDto = transactionsService.activateTransaction(TRANSACION_ID, activationResultRequestDto).block();
 
-		assertEquals(ActivationResultResponseDto.OutcomeEnum.OK, activationResultResponseDto.getOutcome());
-		Mockito.verify(transactionActivateResultHandler, Mockito.times(1)).handle(Mockito.any(TransactionActivateResultCommand.class));
-		Mockito.verify(transactionsActivationProjectionHandler, Mockito.times(1)).handle(Mockito.any(TransactionActivatedEvent.class));
+        assertEquals(ActivationResultResponseDto.OutcomeEnum.OK, activationResultResponseDto.getOutcome());
+        Mockito.verify(transactionActivateResultHandler, Mockito.times(1)).handle(Mockito.any(TransactionActivateResultCommand.class));
+        Mockito.verify(transactionsActivationProjectionHandler, Mockito.times(1)).handle(Mockito.any(TransactionActivatedEvent.class));
 
-	}
+    }
 
 }
