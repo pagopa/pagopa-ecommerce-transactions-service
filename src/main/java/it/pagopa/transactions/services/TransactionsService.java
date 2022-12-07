@@ -112,7 +112,7 @@ public class TransactionsService {
   }
 
   public Mono<RequestAuthorizationResponseDto> requestTransactionAuthorization(
-      String transactionId, String pgsId, RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
+      String transactionId, String paymentGatewayId, RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
     return transactionsViewRepository
         .findById(transactionId)
         .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
@@ -189,7 +189,7 @@ public class TransactionsService {
                       psp.getChannelCode(),
                       paymentMethod.getName(),
                       psp.getBusinessName(),
-                          pgsId,
+                          paymentGatewayId,
                           null,
                           null,
                           null);
