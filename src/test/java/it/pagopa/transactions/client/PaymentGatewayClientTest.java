@@ -1,6 +1,5 @@
 package it.pagopa.transactions.client;
 
-import ch.qos.logback.core.net.SyslogOutputStream;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
@@ -16,6 +15,7 @@ import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.GatewayTimeoutException;
+import it.pagopa.transactions.exceptions.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -480,7 +480,8 @@ class PaymentGatewayClientTest {
 
 
         /* preconditions */
-        Mockito.when(objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID))).thenThrow(new JsonProcessingException(""){});
+        Mockito.when(objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID))).thenThrow(new JsonProcessingException("") {
+        });
         Mockito.when(xPayInternalApi.authRequestXpay(xPayAuthRequestDto, encodedMdcFields))
                 .thenReturn(Mono.just(xPayResponse));
 
@@ -488,6 +489,39 @@ class PaymentGatewayClientTest {
         StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
                 .assertNext(response -> response.getT2().get().equals(xPayResponse))
                 .verifyComplete();
+
+    }
+
+    @Test
+    void shouldThrowInvalidRequestWhenCardDetailsAreMissing_XPAY() throws JsonProcessingException {
+        TransactionActivated transaction = new TransactionActivated(
+                new TransactionId(transactionIdUUID),
+                new PaymentToken("paymentToken"),
+                new RptId("77777777777111111111111111111"),
+                new TransactionDescription("description"),
+                new TransactionAmount(100),
+                new Email("foo@example.com"),
+                null, null, TransactionStatusDto.ACTIVATED
+        );
+
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction,
+                10,
+                "paymentInstrumentId",
+                "pspId",
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName",
+                "XPAY",
+                null
+        );
+
+
+        /* test */
+        StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
+                .expectErrorMatches(exception -> exception instanceof InvalidRequestException);
 
     }
 }

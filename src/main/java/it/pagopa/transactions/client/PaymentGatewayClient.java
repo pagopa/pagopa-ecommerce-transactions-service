@@ -71,22 +71,24 @@ public class PaymentGatewayClient {
     }
 
     private Mono<XPayAuthResponseEntityDto> requestXPayAuthorization(AuthorizationRequestData authorizationData) {
-        CardAuthRequestDetailsDto cardDetails;
-        if (authorizationData.authDetails() instanceof CardAuthRequestDetailsDto cardAuthRequestDetailsDto) {
-            cardDetails = cardAuthRequestDetailsDto;
-        } else {
-            throw new InvalidRequestException("Cannot perform XPAY authorization for null input card details");
-        }
+
         return Mono.just(authorizationData)
                 .filter(authorizationRequestData -> "CP".equals(authorizationRequestData.paymentTypeCode()) && "XPAY".equals(authorizationRequestData.gatewayId()))
                 .switchIfEmpty(Mono.empty())
-                .map(authorizationRequestData ->
-                        new XPayAuthRequestDto()
-                                .cvv(cardDetails.getCvv())
-                                .pan(cardDetails.getPan())
-                                .exipiryDate(cardDetails.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM")))
-                                .idTransaction(authorizationRequestData.transaction().getTransactionId().value().toString())
-                                .grandTotal(BigDecimal.valueOf(((long) authorizationRequestData.transaction().getAmount().value()) + authorizationRequestData.fee())))
+                .flatMap(authorizationRequestData -> {
+                    final Mono<XPayAuthRequestDto> xPayAuthRequest;
+                    if (authorizationData.authDetails() instanceof CardAuthRequestDetailsDto cardData) {
+                        xPayAuthRequest = Mono.just(new XPayAuthRequestDto()
+                                .cvv(cardData.getCvv())
+                                .pan(cardData.getPan())
+                                .exipiryDate(cardData.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM")))
+                                .idTransaction(authorizationData.transaction().getTransactionId().value().toString())
+                                .grandTotal(BigDecimal.valueOf(((long) authorizationData.transaction().getAmount().value()) + authorizationData.fee())));
+                    } else {
+                        xPayAuthRequest = Mono.error(new InvalidRequestException("Cannot perform XPAY authorization for null input CardAuthRequestDetailsDto"));
+                    }
+                    return xPayAuthRequest;
+                })
                 .flatMap(xPayAuthRequestDto ->
                         paymentTransactionGatewayXPayWebClient.authRequestXpay(xPayAuthRequestDto, encodeMdcFields(authorizationData))
                                 .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {

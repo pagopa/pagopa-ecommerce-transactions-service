@@ -2,8 +2,8 @@ package it.pagopa.transactions.controllers;
 
 import it.pagopa.generated.nodoperpsp.model.FaultBean;
 import it.pagopa.generated.payment.requests.model.*;
-import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
+import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.domain.PaymentToken;
 import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.exceptions.*;
@@ -11,7 +11,6 @@ import it.pagopa.transactions.services.TransactionsService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -382,6 +381,7 @@ class TransactionsControllerTest {
                 .value(p -> assertEquals(400, p.getStatus()));
     }
 
+
     @Test
     void shouldReturnResponseEntityWithPartyConfigurationFault()  throws NoSuchMethodException,
             InvocationTargetException, IllegalAccessException {
@@ -520,6 +520,25 @@ class TransactionsControllerTest {
         assertEquals(Boolean.TRUE, responseEntity != null);
         assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
     }
+
+    @Test
+    void shouldReturnResponseEntityWithBadRequest()
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        FaultBean faultBean = faultBeanWithCode("UNKNOWN_ERROR");
+
+        Method method =
+                TransactionsController.class.getDeclaredMethod(
+                        "validationExceptionHandler", InvalidRequestException.class);
+        method.setAccessible(true);
+
+        ResponseEntity<ProblemJsonDto> responseEntity =
+                (ResponseEntity<ProblemJsonDto>)
+                        method.invoke(transactionsController, new InvalidRequestException("Some message"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertEquals("Invalid request: Some message", responseEntity.getBody().getDetail());
+    }
+
 
     private static FaultBean faultBeanWithCode(String faultCode) {
         FaultBean fault = new FaultBean();
