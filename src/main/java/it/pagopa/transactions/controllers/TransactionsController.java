@@ -30,9 +30,16 @@ public class TransactionsController implements TransactionsApi {
     private TransactionsService transactionsService;
 
     @ExceptionHandler({ CallNotPermittedException.class })
-    public Mono<ResponseEntity> openStateHandler(){
+    public Mono<ResponseEntity<ProblemJsonDto>> openStateHandler(){
         log.error("Error - OPEN circuit breaker");
-        return Mono.just(ResponseEntity.status(503).build());
+        return Mono.just(
+                new ResponseEntity<>(
+                    new ProblemJsonDto()
+                            .status(502)
+                            .title("Bad Gateway")
+                            .detail("Upstream service temporary unavailable. Open circuit breaker."),
+                    HttpStatus.BAD_GATEWAY)
+        );
     }
 
     @Override
