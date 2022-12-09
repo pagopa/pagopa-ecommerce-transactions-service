@@ -1,5 +1,6 @@
 package it.pagopa.transactions.controllers;
 
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.generated.payment.requests.model.*;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
 import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
@@ -26,6 +27,19 @@ public class TransactionsController implements TransactionsApi {
 
     @Autowired
     private TransactionsService transactionsService;
+
+    @ExceptionHandler({ CallNotPermittedException.class })
+    public Mono<ResponseEntity<ProblemJsonDto>> openStateHandler(){
+        log.error("Error - OPEN circuit breaker");
+        return Mono.just(
+                new ResponseEntity<>(
+                    new ProblemJsonDto()
+                            .status(502)
+                            .title("Bad Gateway")
+                            .detail("Upstream service temporary unavailable. Open circuit breaker."),
+                    HttpStatus.BAD_GATEWAY)
+        );
+    }
 
     @Override
     public Mono<ResponseEntity<NewTransactionResponseDto>> newTransaction(Mono<NewTransactionRequestDto> newTransactionRequest, ServerWebExchange exchange) {
