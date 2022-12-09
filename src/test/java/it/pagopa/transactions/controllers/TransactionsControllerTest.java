@@ -1,10 +1,21 @@
 package it.pagopa.transactions.controllers;
 
-import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import it.pagopa.generated.nodoperpsp.model.FaultBean;
+import it.pagopa.generated.payment.requests.model.FaultCategoryDto;
+import it.pagopa.generated.payment.requests.model.GatewayFaultDto;
+import it.pagopa.generated.payment.requests.model.GatewayFaultPaymentProblemJsonDto;
+import it.pagopa.generated.payment.requests.model.PartyConfigurationFaultDto;
+import it.pagopa.generated.payment.requests.model.PartyConfigurationFaultPaymentProblemJsonDto;
+import it.pagopa.generated.payment.requests.model.PartyTimeoutFaultDto;
+import it.pagopa.generated.payment.requests.model.PartyTimeoutFaultPaymentProblemJsonDto;
+import it.pagopa.generated.payment.requests.model.PaymentStatusFaultDto;
+import it.pagopa.generated.payment.requests.model.PaymentStatusFaultPaymentProblemJsonDto;
+import it.pagopa.generated.payment.requests.model.ValidationFaultDto;
+import it.pagopa.generated.payment.requests.model.ValidationFaultPaymentProblemJsonDto;
 import it.pagopa.generated.transactions.server.model.ActivationResultRequestDto;
 import it.pagopa.generated.transactions.server.model.ActivationResultResponseDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
-import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestPaymentsDto;
+import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestPaymentsInnerDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptResponseDto;
 import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
@@ -15,10 +26,6 @@ import it.pagopa.generated.transactions.server.model.RequestAuthorizationRespons
 import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
-import it.pagopa.generated.nodoperpsp.model.FaultBean;
-import it.pagopa.generated.payment.requests.model.*;
-import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
-import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.domain.PaymentToken;
 import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
