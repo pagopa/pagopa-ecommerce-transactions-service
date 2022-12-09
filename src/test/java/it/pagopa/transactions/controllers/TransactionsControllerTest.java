@@ -24,6 +24,8 @@ import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.GatewayTimeoutException;
+import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.exceptions.NodoErrorException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
 import it.pagopa.transactions.services.TransactionsService;
@@ -421,12 +423,13 @@ class TransactionsControllerTest {
 
 
     @Test
-    void shouldReturnErrorCircuitBreakerOpen(){
+    void shouldReturnErrorCircuitBreakerOpen() {
 
         ResponseEntity error = transactionsController.openStateHandler().block();
 
         // Verify status code and response
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE, error.getStatusCode());
+    }
 
     @Test
     void shouldReturnResponseEntityWithPartyConfigurationFault()  throws NoSuchMethodException,
