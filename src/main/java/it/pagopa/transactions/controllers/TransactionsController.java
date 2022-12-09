@@ -1,22 +1,18 @@
 package it.pagopa.transactions.controllers;
 
 import it.pagopa.generated.payment.requests.model.*;
-import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
-import it.pagopa.transactions.exceptions.*;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
-
+import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
+import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.TransactionsService;
-
-import javax.validation.Valid;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.ObjectError;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -47,10 +43,10 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @Override
-    public Mono<ResponseEntity<RequestAuthorizationResponseDto>> requestTransactionAuthorization(String transactionId, Mono<RequestAuthorizationRequestDto> requestAuthorizationRequestDto, ServerWebExchange exchange) {
+    public Mono<ResponseEntity<RequestAuthorizationResponseDto>> requestTransactionAuthorization(String transactionId, String xPgsId, Mono<RequestAuthorizationRequestDto> requestAuthorizationRequestDto, ServerWebExchange exchange) {
         return requestAuthorizationRequestDto
                 .doOnEach(t -> log.info("requestTransactionAuthorization for transactionId: {} ", transactionId))
-                .flatMap(requestAuthorizationRequest -> transactionsService.requestTransactionAuthorization(transactionId, requestAuthorizationRequest))
+                .flatMap(requestAuthorizationRequest -> transactionsService.requestTransactionAuthorization(transactionId, xPgsId, requestAuthorizationRequest))
                 .map(ResponseEntity::ok);
     }
 
@@ -156,33 +152,39 @@ public class TransactionsController implements TransactionsApi {
     private ResponseEntity<?> nodoErrorHandler(NodoErrorException exception) {
 
         return switch (exception.getFaultCode()) {
-            case String s && Arrays.stream(PartyConfigurationFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) -> new ResponseEntity<>(
-                    new PartyConfigurationFaultPaymentProblemJsonDto()
-                            .title("EC error")
-                            .faultCodeCategory(FaultCategoryDto.PAYMENT_UNAVAILABLE)
-                            .faultCodeDetail(PartyConfigurationFaultDto.fromValue(s)), HttpStatus.BAD_GATEWAY);
-            case String s && Arrays.stream(ValidationFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) -> new ResponseEntity<>(
-                    new ValidationFaultPaymentProblemJsonDto()
-                            .title("Validation Fault")
-                            .faultCodeCategory(FaultCategoryDto.PAYMENT_UNKNOWN)
-                            .faultCodeDetail(ValidationFaultDto.fromValue(s)), HttpStatus.NOT_FOUND);
-            case String s && Arrays.stream(GatewayFaultDto.values()).anyMatch( z -> z.getValue().equals(s)) -> new ResponseEntity<>(
-                    new GatewayFaultPaymentProblemJsonDto()
-                            .title("Payment unavailable")
-                            .faultCodeCategory(FaultCategoryDto.GENERIC_ERROR)
-                            .faultCodeDetail(GatewayFaultDto.fromValue(s)), HttpStatus.BAD_GATEWAY);
-            case String s && Arrays.stream(PartyTimeoutFaultDto.values()).anyMatch( z -> z.getValue().equals(s)) -> new ResponseEntity<>(
-                    new PartyTimeoutFaultPaymentProblemJsonDto()
-                            .title("Gateway Timeout")
-                            .faultCodeCategory(FaultCategoryDto.GENERIC_ERROR)
-                            .faultCodeDetail(PartyTimeoutFaultDto.fromValue(s)), HttpStatus.GATEWAY_TIMEOUT);
-            case String s && Arrays.stream(PaymentStatusFaultDto.values()).anyMatch( z -> z.getValue().equals(s)) -> new ResponseEntity<>(
-                    new PaymentStatusFaultPaymentProblemJsonDto()
-                            .title("Payment Status Fault")
-                            .faultCodeCategory(FaultCategoryDto.PAYMENT_UNAVAILABLE)
-                            .faultCodeDetail(PaymentStatusFaultDto.fromValue(s)), HttpStatus.CONFLICT);
+            case String s && Arrays.stream(PartyConfigurationFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
+                    new ResponseEntity<>(
+                            new PartyConfigurationFaultPaymentProblemJsonDto()
+                                    .title("EC error")
+                                    .faultCodeCategory(FaultCategoryDto.PAYMENT_UNAVAILABLE)
+                                    .faultCodeDetail(PartyConfigurationFaultDto.fromValue(s)), HttpStatus.BAD_GATEWAY);
+            case String s && Arrays.stream(ValidationFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
+                    new ResponseEntity<>(
+                            new ValidationFaultPaymentProblemJsonDto()
+                                    .title("Validation Fault")
+                                    .faultCodeCategory(FaultCategoryDto.PAYMENT_UNKNOWN)
+                                    .faultCodeDetail(ValidationFaultDto.fromValue(s)), HttpStatus.NOT_FOUND);
+            case String s && Arrays.stream(GatewayFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
+                    new ResponseEntity<>(
+                            new GatewayFaultPaymentProblemJsonDto()
+                                    .title("Payment unavailable")
+                                    .faultCodeCategory(FaultCategoryDto.GENERIC_ERROR)
+                                    .faultCodeDetail(GatewayFaultDto.fromValue(s)), HttpStatus.BAD_GATEWAY);
+            case String s && Arrays.stream(PartyTimeoutFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
+                    new ResponseEntity<>(
+                            new PartyTimeoutFaultPaymentProblemJsonDto()
+                                    .title("Gateway Timeout")
+                                    .faultCodeCategory(FaultCategoryDto.GENERIC_ERROR)
+                                    .faultCodeDetail(PartyTimeoutFaultDto.fromValue(s)), HttpStatus.GATEWAY_TIMEOUT);
+            case String s && Arrays.stream(PaymentStatusFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
+                    new ResponseEntity<>(
+                            new PaymentStatusFaultPaymentProblemJsonDto()
+                                    .title("Payment Status Fault")
+                                    .faultCodeCategory(FaultCategoryDto.PAYMENT_UNAVAILABLE)
+                                    .faultCodeDetail(PaymentStatusFaultDto.fromValue(s)), HttpStatus.CONFLICT);
             default -> new ResponseEntity<>(
                     new ProblemJsonDto().title("Bad gateway"), HttpStatus.BAD_GATEWAY);
         };
     }
+
 }
