@@ -1,8 +1,8 @@
 package it.pagopa.transactions.commands.handlers;
 
+import com.azure.core.util.BinaryData;
 import com.azure.cosmos.implementation.BadRequestException;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
+import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.client.PaymentGatewayClient;
@@ -11,23 +11,15 @@ import it.pagopa.transactions.documents.TransactionAuthorizationRequestData;
 import it.pagopa.transactions.documents.TransactionAuthorizationRequestedEvent;
 import it.pagopa.transactions.domain.TransactionActivated;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
-import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import lombok.extern.slf4j.Slf4j;
-
-import java.time.Duration;
-import java.util.Optional;
-import java.util.stream.Stream;
-
-import com.azure.core.util.BinaryData;
-import com.azure.storage.queue.QueueAsyncClient;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
+
+import java.time.Duration;
 
 @Component
 @Slf4j
@@ -96,7 +88,7 @@ public class TransactionRequestAuthorizationHandler
                                                 .authorizationRequestId(tuple2.getT1()));
                             });
                 })
-                .doOnError(BadRequestException.class, error -> log.error("No gateway matched"))
+                .doOnError(BadRequestException.class, error -> log.error(error.getMessage()))
                 .doOnNext(authorizationEvent -> queueAsyncClient.sendMessageWithResponse(
                         BinaryData.fromObject(authorizationEvent),
                         Duration.ofSeconds(Integer.valueOf(queueVisibilityTimeout)), null).subscribe(
