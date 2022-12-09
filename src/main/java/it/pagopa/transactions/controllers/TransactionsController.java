@@ -18,6 +18,7 @@ import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import javax.validation.ConstraintViolationException;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -160,8 +161,8 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
-    @ExceptionHandler(InvalidRequestException.class)
-    private ResponseEntity<ProblemJsonDto> validationExceptionHandler(InvalidRequestException exception) {
+    @ExceptionHandler({InvalidRequestException.class, ConstraintViolationException.class})
+    private ResponseEntity<ProblemJsonDto> validationExceptionHandler(Exception exception) {
         log.warn("Got invalid input: {}", exception.getMessage());
         return new ResponseEntity<>(
                 new ProblemJsonDto()
