@@ -1,5 +1,6 @@
 package it.pagopa.transactions.commands.handlers;
 
+import com.azure.cosmos.implementation.BadRequestException;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
@@ -164,6 +165,63 @@ class TransactionRequestAuthorizizationHandlerTest {
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectErrorMatches(error -> error instanceof AlreadyProcessedException)
+                .verify();
+
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(any());
+    }
+
+    @Test
+    void shouldRejectBadGateway() {
+        PaymentToken paymentToken = new PaymentToken("paymentToken");
+        RptId rptId = new RptId("77777777777111111111111111111");
+        TransactionDescription description = new TransactionDescription("description");
+        TransactionAmount amount = new TransactionAmount(100);
+        Email email = new Email("foo@example.com");
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
+
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                paymentToken,
+                rptId,
+                description,
+                amount,
+                email,
+                faultCode,
+                faultCodeString,
+                TransactionStatusDto.ACTIVATED
+        );
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .fee(200)
+                .paymentInstrumentId("paymentInstrumentId")
+                .pspId("VPOS")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
+
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction,
+                authorizationRequest.getFee(),
+                authorizationRequest.getPaymentInstrumentId(),
+                authorizationRequest.getPspId(),
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName",
+                "VPOS",
+                "123",
+                "456",
+                "203012"
+        );
+
+        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);
+
+        Mockito.when(paymentGatewayClient.requestGeneralAuthorization(authorizationData)).thenReturn(Mono.zip(Mono.just(Optional.empty()),
+                Mono.just(Optional.empty())));
+        /* test */
+        StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
+                .expectErrorMatches(error -> error instanceof BadRequestException)
                 .verify();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(any());

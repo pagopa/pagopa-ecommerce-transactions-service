@@ -73,7 +73,7 @@ public class PaymentGatewayClient {
     private Mono<XPayAuthResponseEntityDto> requestXPayAuthorization(AuthorizationRequestData authorizationData) {
 
         return Mono.just(authorizationData)
-                .filter(authorizationRequestData -> "CP".equals(authorizationRequestData.paymentTypeCode()) && "XPAY".equals(authorizationRequestData.gatewayId()))
+                .filter(authorizationRequestData -> "CP".equals(authorizationRequestData.paymentTypeCode()) && "XPAY".equals(authorizationRequestData.paymentGatewayId()))
                 .switchIfEmpty(Mono.empty())
                 .flatMap(authorizationRequestData -> {
                     final Mono<XPayAuthRequestDto> xPayAuthRequest;

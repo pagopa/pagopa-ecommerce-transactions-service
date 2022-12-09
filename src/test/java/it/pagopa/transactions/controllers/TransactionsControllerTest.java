@@ -16,11 +16,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -46,6 +49,16 @@ class TransactionsControllerTest {
 
     @Autowired
     private WebTestClient webTestClient;
+
+
+    @Mock
+    ServerWebExchange mockExchange;
+
+    @Mock
+    ServerHttpRequest mockRequest;
+
+    @Mock
+    HttpHeaders mockHeaders;
 
     @Test
     void shouldGetOk() {
@@ -112,13 +125,16 @@ class TransactionsControllerTest {
 
         RequestAuthorizationResponseDto authorizationResponse = new RequestAuthorizationResponseDto()
                 .authorizationUrl(new URI("https://example.com").toString());
+        String pgsId = "testPgsId";
 
         /* preconditions */
-        Mockito.when(transactionsService.requestTransactionAuthorization(paymentToken, authorizationRequest))
+        Mockito.when(transactionsService.requestTransactionAuthorization(paymentToken, pgsId, authorizationRequest))
                 .thenReturn(Mono.just(authorizationResponse));
 
+
+
         /* test */
-        ResponseEntity<RequestAuthorizationResponseDto> response = transactionsController.requestTransactionAuthorization(paymentToken, Mono.just(authorizationRequest), null).block();
+        ResponseEntity<RequestAuthorizationResponseDto> response = transactionsController.requestTransactionAuthorization(paymentToken, pgsId, Mono.just(authorizationRequest), mockExchange).block();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(authorizationResponse, response.getBody());
@@ -133,12 +149,14 @@ class TransactionsControllerTest {
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("pspId");
 
+        String pgsId = "pgsIdTest";
+
         /* preconditions */
-        Mockito.when(transactionsService.requestTransactionAuthorization(paymentToken, authorizationRequest))
+        Mockito.when(transactionsService.requestTransactionAuthorization(paymentToken, pgsId, authorizationRequest))
                 .thenReturn(Mono.error(new TransactionNotFoundException(paymentToken)));
 
         /* test */
-        Mono<ResponseEntity<RequestAuthorizationResponseDto>> mono = transactionsController.requestTransactionAuthorization(paymentToken, Mono.just(authorizationRequest), null);
+        Mono<ResponseEntity<RequestAuthorizationResponseDto>> mono = transactionsController.requestTransactionAuthorization(paymentToken, pgsId, Mono.just(authorizationRequest), mockExchange);
         assertThrows(
                 TransactionNotFoundException.class,
                 () -> mono.block()

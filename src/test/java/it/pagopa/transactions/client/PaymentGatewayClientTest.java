@@ -27,6 +27,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -35,6 +36,7 @@ import java.time.Month;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @ExtendWith(SpringExtension.class)
@@ -52,6 +54,41 @@ class PaymentGatewayClientTest {
 
     @Spy
     ObjectMapper objectMapper = new ObjectMapper();
+
+    @Test
+    void shouldReturnAuthorizationEmptyOptionalResponseCP_VPOS() throws JsonProcessingException {
+        TransactionActivated transaction = new TransactionActivated(
+                new TransactionId(transactionIdUUID),
+                new PaymentToken("paymentToken"),
+                new RptId("77777777777111111111111111111"),
+                new TransactionDescription("description"),
+                new TransactionAmount(100),
+                new Email("foo@example.com"),
+                null, null, TransactionStatusDto.ACTIVATED
+        );
+
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction,
+                10,
+                "paymentInstrumentId",
+                "pspId",
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName",
+                "VPOS",
+                "345",
+                "16589654852",
+                "203012"
+        );
+
+
+        /* test */
+        StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
+                .expectNextMatches(s -> s.getT1().isEmpty() && s.getT2().isEmpty())
+                .verifyComplete();
+    }
 
     @Test
     void shouldReturnAuthorizationResponseCP_XPAY() throws JsonProcessingException {
@@ -94,8 +131,6 @@ class PaymentGatewayClientTest {
                 .urlRedirect("https://example.com");
 
         /* preconditions */
-        System.out.println(xPayAuthRequestDto);
-        System.out.println(encodedMdcFields);
         Mockito.when(xPayInternalApi.authRequestXpay(xPayAuthRequestDto, encodedMdcFields))
                 .thenReturn(Mono.just(xPayResponse));
 

@@ -214,7 +214,7 @@ public class TransactionServiceTests {
 
 		/* test */
 		RequestAuthorizationResponseDto postePayAuthorizationResponse = transactionsService
-				.requestTransactionAuthorization(TRANSACION_ID, authorizationRequest).block();
+				.requestTransactionAuthorization(TRANSACION_ID, null, authorizationRequest).block();
 
 		assertNotNull(postePayAuthorizationResponse);
 		assertFalse(postePayAuthorizationResponse.getAuthorizationUrl().isEmpty());
@@ -233,7 +233,7 @@ public class TransactionServiceTests {
 				.thenReturn(Mono.empty());
 
 		/* test */
-		Mono<RequestAuthorizationResponseDto> requestAuthorizationResponseDtoMono = transactionsService.requestTransactionAuthorization(TRANSACION_ID, authorizationRequest);
+		Mono<RequestAuthorizationResponseDto> requestAuthorizationResponseDtoMono = transactionsService.requestTransactionAuthorization(TRANSACION_ID, null, authorizationRequest);
 		assertThrows(
 				TransactionNotFoundException.class,
 				() -> {
