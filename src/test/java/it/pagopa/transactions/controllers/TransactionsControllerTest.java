@@ -435,7 +435,7 @@ class TransactionsControllerTest {
         ResponseEntity error = transactionsController.openStateHandler().block();
 
         // Verify status code and response
-        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, error.getStatusCode());
+        assertEquals(HttpStatus.BAD_GATEWAY, error.getStatusCode());
     }
 
     @Test
