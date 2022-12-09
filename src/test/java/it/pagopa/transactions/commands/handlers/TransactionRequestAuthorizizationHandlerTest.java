@@ -1,8 +1,10 @@
 package it.pagopa.transactions.commands.handlers;
 
+import com.azure.core.util.BinaryData;
 import com.azure.cosmos.implementation.BadRequestException;
+import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
+import it.pagopa.generated.transactions.server.model.PostePayAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
@@ -20,17 +22,11 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
-
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.util.Optional;
 import java.util.UUID;
-
-import com.azure.core.util.BinaryData;
-import com.azure.storage.queue.QueueAsyncClient;
-import reactor.test.StepVerifier;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 
 import static org.mockito.ArgumentMatchers.any;
 
@@ -210,9 +206,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 "VPOS",
-                "123",
-                "456",
-                "203012"
+                new PostePayAuthRequestDetailsDto().detailType("VPOS").accountEmail("test@test.it")
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);

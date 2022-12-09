@@ -591,7 +591,7 @@ public class TransactionServiceTests {
 		Mockito.when(transactionRequestAuthorizationHandler.handle(commandArgumentCaptor.capture())).thenReturn(Mono.just(requestAuthorizationResponse));
 		/* test */
 		RequestAuthorizationResponseDto authorizationResponse = transactionsService
-				.requestTransactionAuthorization(TRANSACION_ID, authorizationRequest).block();
+				.requestTransactionAuthorization(TRANSACION_ID, "XPAY", authorizationRequest).block();
 
 		assertNotNull(authorizationResponse);
 		assertFalse(authorizationResponse.getAuthorizationUrl().isEmpty());
