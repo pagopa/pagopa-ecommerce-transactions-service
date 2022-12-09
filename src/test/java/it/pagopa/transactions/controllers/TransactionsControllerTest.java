@@ -400,6 +400,7 @@ class TransactionsControllerTest {
                 .value(p -> assertEquals(400, p.getStatus()));
     }
 
+
     @Test
     void shouldReturnResponseEntityWithPartyConfigurationFault()  throws NoSuchMethodException,
             InvocationTargetException, IllegalAccessException {
@@ -538,6 +539,24 @@ class TransactionsControllerTest {
         assertEquals(Boolean.TRUE, responseEntity != null);
         assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
     }
+
+    @Test
+    void shouldReturnResponseEntityWithBadRequest()
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+
+        Method method =
+                TransactionsController.class.getDeclaredMethod(
+                        "validationExceptionHandler", InvalidRequestException.class);
+        method.setAccessible(true);
+
+        ResponseEntity<ProblemJsonDto> responseEntity =
+                (ResponseEntity<ProblemJsonDto>)
+                        method.invoke(transactionsController, new InvalidRequestException("Some message"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertEquals("Invalid request: Some message", responseEntity.getBody().getDetail());
+    }
+
 
     private static FaultBean faultBeanWithCode(String faultCode) {
         FaultBean fault = new FaultBean();

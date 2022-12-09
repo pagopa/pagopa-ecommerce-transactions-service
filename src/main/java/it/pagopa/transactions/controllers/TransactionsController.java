@@ -146,6 +146,18 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
+    @ExceptionHandler(InvalidRequestException.class)
+    private ResponseEntity<ProblemJsonDto> validationExceptionHandler(InvalidRequestException exception) {
+        log.warn("Got invalid input: {}", exception.getMessage());
+        return new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(400)
+                        .title("Bad request")
+                        .detail("Invalid request: %s".formatted(exception.getMessage())),
+                HttpStatus.BAD_REQUEST
+        );
+    }
+
     @ExceptionHandler({
             NodoErrorException.class,
     })

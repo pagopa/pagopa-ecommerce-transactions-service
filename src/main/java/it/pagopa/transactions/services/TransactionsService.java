@@ -190,9 +190,7 @@ public class TransactionsService {
                       paymentMethod.getName(),
                       psp.getBusinessName(),
                           paymentGatewayId,
-                          null,
-                          null,
-                          null);
+                          requestAuthorizationRequestDto.getDetails());
 
               TransactionRequestAuthorizationCommand command =
                   new TransactionRequestAuthorizationCommand(

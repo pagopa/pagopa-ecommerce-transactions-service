@@ -1,6 +1,5 @@
 package it.pagopa.transactions.client;
 
-import ch.qos.logback.core.net.SyslogOutputStream;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
@@ -9,12 +8,15 @@ import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
+import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
+import it.pagopa.generated.transactions.server.model.PostePayAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.GatewayTimeoutException;
+import it.pagopa.transactions.exceptions.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,13 +28,14 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.Month;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 @ExtendWith(SpringExtension.class)
@@ -74,9 +77,7 @@ class PaymentGatewayClientTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 "VPOS",
-                "345",
-                "16589654852",
-                "203012"
+                new PostePayAuthRequestDetailsDto().detailType("VPOS").accountEmail("test@test.it")
         );
 
 
@@ -97,7 +98,7 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null, null, TransactionStatusDto.ACTIVATED
         );
-
+        CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto().cvv("345").pan("16589654852").expiryDate(LocalDate.of(2030, Month.DECEMBER,31));
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
@@ -109,15 +110,13 @@ class PaymentGatewayClientTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 "XPAY",
-                "345",
-                "16589654852",
-                "203012"
+                cardDetails
         );
 
         XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
-                .cvv(authorizationData.cvv())
-                .pan(authorizationData.pan())
-                .exipiryDate(authorizationData.expiryDate())
+                .cvv(cardDetails.getCvv())
+                .pan(cardDetails.getPan())
+                .exipiryDate(cardDetails.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM")))
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()));
 
@@ -161,8 +160,6 @@ class PaymentGatewayClientTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 null,
-                null,
-                null,
                 null
         );
 
@@ -200,7 +197,7 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null, null, TransactionStatusDto.ACTIVATED
         );
-
+        CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto().cvv("345").pan("16589654852").expiryDate(LocalDate.of(2030, Month.DECEMBER,31));
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
@@ -212,15 +209,13 @@ class PaymentGatewayClientTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 "XPAY",
-                "345",
-                "16589654852",
-                "203012"
+                cardDetails
         );
 
         XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
-                .cvv(authorizationData.cvv())
-                .pan(authorizationData.pan())
-                .exipiryDate(authorizationData.expiryDate())
+                .cvv(cardDetails.getCvv())
+                .pan(cardDetails.getPan())
+                .exipiryDate(cardDetails.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM")))
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()));
 
@@ -261,8 +256,6 @@ class PaymentGatewayClientTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
-                null,
-                null,
                 null,
                 null
         );
@@ -313,8 +306,6 @@ class PaymentGatewayClientTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 null,
-                null,
-                null,
                 null
         );
 
@@ -362,8 +353,6 @@ class PaymentGatewayClientTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 null,
-                null,
-                null,
                 null
         );
 
@@ -397,7 +386,7 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null, null, TransactionStatusDto.ACTIVATED
         );
-
+        CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto().cvv("345").pan("16589654852").expiryDate(LocalDate.of(2030, Month.DECEMBER,31));
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
@@ -409,15 +398,13 @@ class PaymentGatewayClientTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 "XPAY",
-                "345",
-                "16589654852",
-                "203012"
+                cardDetails
         );
 
         XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
-                .cvv(authorizationData.cvv())
-                .pan(authorizationData.pan())
-                .exipiryDate(authorizationData.expiryDate())
+                .cvv(cardDetails.getCvv())
+                .pan(cardDetails.getPan())
+                .exipiryDate(cardDetails.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM")))
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()));
 
@@ -457,8 +444,6 @@ class PaymentGatewayClientTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 null,
-                null,
-                null,
                 null
         );
 
@@ -497,6 +482,59 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null, null, TransactionStatusDto.ACTIVATED
         );
+        CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto().cvv("345").pan("16589654852").expiryDate(LocalDate.of(2030, Month.DECEMBER,31));
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction,
+                10,
+                "paymentInstrumentId",
+                "pspId",
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName",
+                "XPAY",
+                cardDetails
+        );
+
+        XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
+                .cvv(cardDetails.getCvv())
+                .pan(cardDetails.getPan())
+                .exipiryDate(cardDetails.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM")))
+                .idTransaction(transactionIdUUID.toString())
+                .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()));
+
+        String encodedMdcFields = "";
+
+        XPayAuthResponseEntityDto xPayResponse = new XPayAuthResponseEntityDto()
+                .requestId("requestId")
+                .urlRedirect("https://example.com");
+
+
+        /* preconditions */
+        Mockito.when(objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID))).thenThrow(new JsonProcessingException("") {
+        });
+        Mockito.when(xPayInternalApi.authRequestXpay(xPayAuthRequestDto, encodedMdcFields))
+                .thenReturn(Mono.just(xPayResponse));
+
+        /* test */
+        StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
+                .assertNext(response -> response.getT2().get().equals(xPayResponse))
+                .verifyComplete();
+
+    }
+
+    @Test
+    void shouldThrowInvalidRequestWhenCardDetailsAreMissing_XPAY() throws JsonProcessingException {
+        TransactionActivated transaction = new TransactionActivated(
+                new TransactionId(transactionIdUUID),
+                new PaymentToken("paymentToken"),
+                new RptId("77777777777111111111111111111"),
+                new TransactionDescription("description"),
+                new TransactionAmount(100),
+                new Email("foo@example.com"),
+                null, null, TransactionStatusDto.ACTIVATED
+        );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
@@ -509,34 +547,13 @@ class PaymentGatewayClientTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 "XPAY",
-                "345",
-                "16589654852",
-                "203012"
+                null
         );
 
-        XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
-                .cvv(authorizationData.cvv())
-                .pan(authorizationData.pan())
-                .exipiryDate(authorizationData.expiryDate())
-                .idTransaction(transactionIdUUID.toString())
-                .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()));
-
-        String encodedMdcFields = "";
-
-        XPayAuthResponseEntityDto xPayResponse = new XPayAuthResponseEntityDto()
-                .requestId("requestId")
-                .urlRedirect("https://example.com");
-
-
-        /* preconditions */
-        Mockito.when(objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID))).thenThrow(new JsonProcessingException(""){});
-        Mockito.when(xPayInternalApi.authRequestXpay(xPayAuthRequestDto, encodedMdcFields))
-                .thenReturn(Mono.just(xPayResponse));
 
         /* test */
         StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
-                .assertNext(response -> response.getT2().get().equals(xPayResponse))
-                .verifyComplete();
+                .expectErrorMatches(exception -> exception instanceof InvalidRequestException);
 
     }
 }
