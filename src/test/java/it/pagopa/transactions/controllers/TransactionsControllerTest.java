@@ -524,7 +524,6 @@ class TransactionsControllerTest {
     @Test
     void shouldReturnResponseEntityWithBadRequest()
             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        FaultBean faultBean = faultBeanWithCode("UNKNOWN_ERROR");
 
         Method method =
                 TransactionsController.class.getDeclaredMethod(
