@@ -15,6 +15,10 @@ import it.pagopa.generated.transactions.server.model.RequestAuthorizationRespons
 import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
+import it.pagopa.generated.nodoperpsp.model.FaultBean;
+import it.pagopa.generated.payment.requests.model.*;
+import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
+import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.domain.PaymentToken;
 import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
@@ -32,11 +36,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -62,6 +69,16 @@ class TransactionsControllerTest {
 
     @Autowired
     private WebTestClient webTestClient;
+
+
+    @Mock
+    ServerWebExchange mockExchange;
+
+    @Mock
+    ServerHttpRequest mockRequest;
+
+    @Mock
+    HttpHeaders mockHeaders;
 
     @Test
     void shouldGetOk() {
@@ -128,13 +145,16 @@ class TransactionsControllerTest {
 
         RequestAuthorizationResponseDto authorizationResponse = new RequestAuthorizationResponseDto()
                 .authorizationUrl(new URI("https://example.com").toString());
+        String pgsId = "testPgsId";
 
         /* preconditions */
-        Mockito.when(transactionsService.requestTransactionAuthorization(paymentToken, authorizationRequest))
+        Mockito.when(transactionsService.requestTransactionAuthorization(paymentToken, pgsId, authorizationRequest))
                 .thenReturn(Mono.just(authorizationResponse));
 
+
+
         /* test */
-        ResponseEntity<RequestAuthorizationResponseDto> response = transactionsController.requestTransactionAuthorization(paymentToken, Mono.just(authorizationRequest), null).block();
+        ResponseEntity<RequestAuthorizationResponseDto> response = transactionsController.requestTransactionAuthorization(paymentToken, pgsId, Mono.just(authorizationRequest), mockExchange).block();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(authorizationResponse, response.getBody());
@@ -149,12 +169,14 @@ class TransactionsControllerTest {
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("pspId");
 
+        String pgsId = "pgsIdTest";
+
         /* preconditions */
-        Mockito.when(transactionsService.requestTransactionAuthorization(paymentToken, authorizationRequest))
+        Mockito.when(transactionsService.requestTransactionAuthorization(paymentToken, pgsId, authorizationRequest))
                 .thenReturn(Mono.error(new TransactionNotFoundException(paymentToken)));
 
         /* test */
-        Mono<ResponseEntity<RequestAuthorizationResponseDto>> mono = transactionsController.requestTransactionAuthorization(paymentToken, Mono.just(authorizationRequest), null);
+        Mono<ResponseEntity<RequestAuthorizationResponseDto>> mono = transactionsController.requestTransactionAuthorization(paymentToken, pgsId, Mono.just(authorizationRequest), mockExchange);
         assertThrows(
                 TransactionNotFoundException.class,
                 () -> mono.block()
@@ -359,7 +381,7 @@ class TransactionsControllerTest {
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
                 .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
                 .paymentDate(OffsetDateTime.now())
-                .addPaymentsItem(new AddUserReceiptRequestPaymentsDto()
+                .addPaymentsItem(new AddUserReceiptRequestPaymentsInnerDto()
                         .paymentToken("paymentToken")
                         .companyName("companyName")
                         .creditorReferenceId("creditorReferenceId")
@@ -397,6 +419,7 @@ class TransactionsControllerTest {
                 .value(p -> assertEquals(400, p.getStatus()));
     }
 
+
     @Test
     void shouldReturnErrorCircuitBreakerOpen(){
 
@@ -404,5 +427,168 @@ class TransactionsControllerTest {
 
         // Verify status code and response
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE, error.getStatusCode());
+
+    @Test
+    void shouldReturnResponseEntityWithPartyConfigurationFault()  throws NoSuchMethodException,
+            InvocationTargetException, IllegalAccessException {
+        FaultBean faultBean = faultBeanWithCode(PartyConfigurationFaultDto.PPT_DOMINIO_DISABILITATO.getValue());
+        Method method =
+                TransactionsController.class.getDeclaredMethod(
+                        "nodoErrorHandler", NodoErrorException.class);
+        method.setAccessible(true);
+
+        ResponseEntity<PartyConfigurationFaultPaymentProblemJsonDto> responseEntity =
+                (ResponseEntity<PartyConfigurationFaultPaymentProblemJsonDto>)
+                        method.invoke(
+                                transactionsController,
+                                new NodoErrorException(faultBean));
+
+        assertEquals(Boolean.TRUE, responseEntity != null);
+        assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
+        assertEquals(
+                FaultCategoryDto.PAYMENT_UNAVAILABLE, responseEntity.getBody().getFaultCodeCategory());
+        assertEquals(
+                PartyConfigurationFaultDto.PPT_DOMINIO_DISABILITATO.getValue(),
+                responseEntity.getBody().getFaultCodeDetail().getValue());
+    }
+
+    @Test
+    void shouldReturnResponseEntityWithValidationFault()
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        FaultBean faultBean = faultBeanWithCode(ValidationFaultDto.PPT_DOMINIO_SCONOSCIUTO.getValue());
+
+        Method method =
+                TransactionsController.class.getDeclaredMethod(
+                        "nodoErrorHandler", NodoErrorException.class);
+        method.setAccessible(true);
+
+        ResponseEntity<ValidationFaultPaymentProblemJsonDto> responseEntity =
+                (ResponseEntity<ValidationFaultPaymentProblemJsonDto>)
+                        method.invoke(
+                                transactionsController,
+                                new NodoErrorException(faultBean));
+
+        assertEquals(Boolean.TRUE, responseEntity != null);
+        assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+        assertEquals(FaultCategoryDto.PAYMENT_UNKNOWN, responseEntity.getBody().getFaultCodeCategory());
+        assertEquals(
+                ValidationFaultDto.PPT_DOMINIO_SCONOSCIUTO.getValue(),
+                responseEntity.getBody().getFaultCodeDetail().getValue());
+    }
+
+    @Test
+    void shouldReturnResponseEntityWithGatewayFault()
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        FaultBean faultBean = faultBeanWithCode(GatewayFaultDto.PAA_SYSTEM_ERROR.getValue());
+
+        Method method =
+                TransactionsController.class.getDeclaredMethod(
+                        "nodoErrorHandler", NodoErrorException.class);
+        method.setAccessible(true);
+
+        ResponseEntity<GatewayFaultPaymentProblemJsonDto> responseEntity =
+                (ResponseEntity<GatewayFaultPaymentProblemJsonDto>)
+                        method.invoke(
+                                transactionsController,
+                                new NodoErrorException(faultBean));
+
+        assertEquals(Boolean.TRUE, responseEntity != null);
+        assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
+        assertEquals(FaultCategoryDto.GENERIC_ERROR, responseEntity.getBody().getFaultCodeCategory());
+        assertEquals(
+                GatewayFaultDto.PAA_SYSTEM_ERROR.getValue(),
+                responseEntity.getBody().getFaultCodeDetail().getValue());
+    }
+
+    @Test
+    void shouldReturnResponseEntityWithPartyTimeoutFault()
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        FaultBean faultBean = faultBeanWithCode(PartyTimeoutFaultDto.PPT_STAZIONE_INT_PA_IRRAGGIUNGIBILE.getValue());
+
+        Method method =
+                TransactionsController.class.getDeclaredMethod(
+                        "nodoErrorHandler", NodoErrorException.class);
+        method.setAccessible(true);
+
+        ResponseEntity<PartyTimeoutFaultPaymentProblemJsonDto> responseEntity =
+                (ResponseEntity<PartyTimeoutFaultPaymentProblemJsonDto>)
+                        method.invoke(
+                                transactionsController,
+                                new NodoErrorException(faultBean));
+
+        assertEquals(Boolean.TRUE, responseEntity != null);
+        assertEquals(HttpStatus.GATEWAY_TIMEOUT, responseEntity.getStatusCode());
+        assertEquals(FaultCategoryDto.GENERIC_ERROR, responseEntity.getBody().getFaultCodeCategory());
+        assertEquals(
+                PartyTimeoutFaultDto.PPT_STAZIONE_INT_PA_IRRAGGIUNGIBILE.getValue(),
+                responseEntity.getBody().getFaultCodeDetail().getValue());
+    }
+
+    @Test
+    void shouldReturnResponseEntityWithPaymentStatusFault()
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        FaultBean faultBean = faultBeanWithCode(PaymentStatusFaultDto.PAA_PAGAMENTO_IN_CORSO.getValue());
+
+        Method method =
+                TransactionsController.class.getDeclaredMethod(
+                        "nodoErrorHandler", NodoErrorException.class);
+        method.setAccessible(true);
+
+        ResponseEntity<PaymentStatusFaultPaymentProblemJsonDto> responseEntity =
+                (ResponseEntity<PaymentStatusFaultPaymentProblemJsonDto>)
+                        method.invoke(
+                                transactionsController,
+                                new NodoErrorException(faultBean));
+
+        assertEquals(Boolean.TRUE, responseEntity != null);
+        assertEquals(HttpStatus.CONFLICT, responseEntity.getStatusCode());
+        assertEquals(
+                FaultCategoryDto.PAYMENT_UNAVAILABLE, responseEntity.getBody().getFaultCodeCategory());
+        assertEquals(
+                PaymentStatusFaultDto.PAA_PAGAMENTO_IN_CORSO.getValue(),
+                responseEntity.getBody().getFaultCodeDetail().getValue());
+    }
+
+    @Test
+    void shouldReturnResponseEntityWithGenericGatewayFault()
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        FaultBean faultBean = faultBeanWithCode("UNKNOWN_ERROR");
+
+        Method method =
+                TransactionsController.class.getDeclaredMethod(
+                        "nodoErrorHandler", NodoErrorException.class);
+        method.setAccessible(true);
+
+        ResponseEntity<ProblemJsonDto> responseEntity =
+                (ResponseEntity<ProblemJsonDto>)
+                        method.invoke(transactionsController, new NodoErrorException(faultBean));
+
+        assertEquals(Boolean.TRUE, responseEntity != null);
+        assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
+    }
+
+    @Test
+    void shouldReturnResponseEntityWithBadRequest()
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+
+        Method method =
+                TransactionsController.class.getDeclaredMethod(
+                        "validationExceptionHandler", InvalidRequestException.class);
+        method.setAccessible(true);
+
+        ResponseEntity<ProblemJsonDto> responseEntity =
+                (ResponseEntity<ProblemJsonDto>)
+                        method.invoke(transactionsController, new InvalidRequestException("Some message"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertEquals("Invalid request: Some message", responseEntity.getBody().getDetail());
+    }
+
+
+    private static FaultBean faultBeanWithCode(String faultCode) {
+        FaultBean fault = new FaultBean();
+        fault.setFaultCode(faultCode);
+
+        return fault;
     }
 }

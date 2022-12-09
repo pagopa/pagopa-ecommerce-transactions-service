@@ -1,14 +1,19 @@
 package it.pagopa.transactions.commands.handlers;
 
+import com.azure.core.http.HttpHeaders;
+import com.azure.core.http.HttpRequest;
+import com.azure.core.http.rest.Response;
+import com.azure.core.util.BinaryData;
+import com.azure.storage.queue.QueueAsyncClient;
+import com.azure.storage.queue.models.SendMessageResult;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
-import it.pagopa.generated.transactions.model.ObjectFactory;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
-import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.documents.TransactionActivatedData;
 import it.pagopa.transactions.documents.TransactionActivatedEvent;
+import it.pagopa.transactions.documents.TransactionActivationRequestedData;
 import it.pagopa.transactions.documents.TransactionActivationRequestedEvent;
 import it.pagopa.transactions.domain.IdempotencyKey;
 import it.pagopa.transactions.domain.RptId;
@@ -16,12 +21,11 @@ import it.pagopa.transactions.projections.TransactionsProjection;
 import it.pagopa.transactions.repositories.PaymentRequestInfo;
 import it.pagopa.transactions.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
-import it.pagopa.transactions.utils.NodoConnectionString;
 
+import it.pagopa.transactions.utils.NodoOperations;
+import it.pagopa.transactions.utils.TransactionEventCode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
@@ -33,21 +37,39 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionInitializerHandlerTest {
 
-  @InjectMocks private TransactionActivateHandler handler;
+  private final PaymentRequestsInfoRepository paymentRequestInfoRepository =
+      Mockito.mock(PaymentRequestsInfoRepository.class);
 
-  @Mock private PaymentRequestsInfoRepository paymentRequestInfoRepository;
-  @Mock private ObjectFactory objectFactory;
-  @Mock private NodeForPspClient nodeForPspClient;
-  @Mock private EcommerceSessionsClient ecommerceSessionsClient;
+  private final EcommerceSessionsClient ecommerceSessionsClient =
+      Mockito.mock(EcommerceSessionsClient.class);
 
-  @Mock
-  private TransactionsEventStoreRepository<TransactionActivatedData> transactionEventStoreRepository;
+  private final TransactionsEventStoreRepository<TransactionActivatedData>
+      transactionEventActivatedStoreRepository =
+          Mockito.mock(TransactionsEventStoreRepository.class);
 
-  @Mock private NodoConnectionString nodoConnectionParams;
+  private final TransactionsEventStoreRepository<TransactionActivationRequestedData>
+      transactionEventActivationRequestedStoreRepository =
+          Mockito.mock(TransactionsEventStoreRepository.class);
+
+  private final NodoOperations nodoOperations = Mockito.mock(NodoOperations.class);
+
+  private final QueueAsyncClient transactionClosureSentEventQueueClient =
+      Mockito.mock(QueueAsyncClient.class);
+
+  private final TransactionActivateHandler handler =
+      new TransactionActivateHandler(
+          paymentRequestInfoRepository,
+          transactionEventActivatedStoreRepository,
+          transactionEventActivationRequestedStoreRepository,
+          ecommerceSessionsClient,
+          nodoOperations,
+          transactionClosureSentEventQueueClient,
+          120);
 
   @Test
   void shouldHandleCommandForNM3CachedPaymentRequest() {
@@ -65,7 +87,7 @@ class TransactionInitializerHandlerTest {
     requestDto.setRptId(rptId.value());
     requestDto.setEmail("jhon.doe@email.com");
     requestDto.setAmount(1200);
-    requestDto.setPaymentContextCode(UUID.randomUUID().toString().replace("-",""));
+    requestDto.setPaymentContextCode(UUID.randomUUID().toString().replace("-", ""));
     TransactionActivateCommand command = new TransactionActivateCommand(rptId, requestDto);
 
     PaymentRequestInfo paymentRequestInfoCached =
@@ -88,24 +110,36 @@ class TransactionInitializerHandlerTest {
             .rptId(rptId.value())
             .transactionId(transactionId);
 
+    TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
+    transactionActivatedEvent.setTransactionId(transactionId);
+    transactionActivatedEvent.setEventCode(TransactionEventCode.TRANSACTION_ACTIVATED_EVENT);
+    transactionActivatedEvent.setPaymentToken(paymentToken);
+    transactionActivatedEvent.setRptId(rptId.value());
+
     /** preconditions */
     Mockito.when(paymentRequestInfoRepository.findById(rptId))
         .thenReturn(Optional.of(paymentRequestInfoCached));
-    Mockito.when(transactionEventStoreRepository.save(Mockito.any())).thenReturn(Mono.empty());
-    Mockito.when(paymentRequestInfoRepository.save(Mockito.any(PaymentRequestInfo.class)))
+    Mockito.when(transactionEventActivatedStoreRepository.save(any()))
+        .thenReturn(Mono.just(transactionActivatedEvent));
+    Mockito.when(paymentRequestInfoRepository.save(any(PaymentRequestInfo.class)))
         .thenReturn(paymentRequestInfoCached);
-    Mockito.when(ecommerceSessionsClient.createSessionToken(Mockito.any()))
+    Mockito.when(ecommerceSessionsClient.createSessionToken(any()))
         .thenReturn(Mono.just(sessionDataDto));
+    Mockito.when(
+            transactionClosureSentEventQueueClient.sendMessageWithResponse(
+                any(BinaryData.class), any(), any()))
+        .thenReturn(queueSuccessfulResponse());
 
-    /** preconditions */
+    /** run test */
     Tuple3<
             Mono<TransactionActivatedEvent>,
             Mono<TransactionActivationRequestedEvent>,
-            SessionDataDto> response = handler.handle(command).block();
+            SessionDataDto>
+        response = handler.handle(command).block();
 
     /** asserts */
     Mockito.verify(paymentRequestInfoRepository, Mockito.times(1)).findById(rptId);
-    Mockito.verify(ecommerceSessionsClient, Mockito.times(1)).createSessionToken(Mockito.any());
+    Mockito.verify(ecommerceSessionsClient, Mockito.times(1)).createSessionToken(any());
 
     assertEquals(sessionDataDto.getRptId(), response.getT3().getRptId());
     assertEquals(sessionDataDto.getPaymentToken(), response.getT3().getPaymentToken());
@@ -144,5 +178,30 @@ class TransactionInitializerHandlerTest {
     assertEquals(
         Boolean.TRUE,
         transactionsProjection.getData().equals(differentTransactionsProjection.getData()));
+  }
+
+  private Mono<Response<SendMessageResult>> queueSuccessfulResponse() {
+    return Mono.just(
+        new Response<>() {
+          @Override
+          public int getStatusCode() {
+            return 200;
+          }
+
+          @Override
+          public HttpHeaders getHeaders() {
+            return new HttpHeaders();
+          }
+
+          @Override
+          public HttpRequest getRequest() {
+            return null;
+          }
+
+          @Override
+          public SendMessageResult getValue() {
+            return new SendMessageResult();
+          }
+        });
   }
 }

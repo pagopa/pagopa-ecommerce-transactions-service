@@ -1,8 +1,11 @@
 package it.pagopa.transactions.commands.handlers;
 
+import com.azure.core.util.BinaryData;
+import com.azure.cosmos.implementation.BadRequestException;
+import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
+import it.pagopa.generated.transactions.server.model.PostePayAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
-import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
@@ -19,14 +22,11 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
-
 import reactor.core.publisher.Mono;
-
-import java.util.UUID;
-
-import com.azure.core.util.BinaryData;
-import com.azure.storage.queue.QueueAsyncClient;
 import reactor.test.StepVerifier;
+
+import java.util.Optional;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 
@@ -83,16 +83,18 @@ class TransactionRequestAuthorizizationHandlerTest {
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),
-                "paymentTypeCode",
+                "PPAY",
                 "brokerName",
                 "pspChannelCode",
                 "paymentMethodName",
-                "pspBusinessName"
+                "pspBusinessName",
+                null,
+                null
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);
 
-        PostePayAuthResponseEntityDto gatewayResponse = new PostePayAuthResponseEntityDto()
+        PostePayAuthResponseEntityDto postePayAuthResponseEntityDto = new PostePayAuthResponseEntityDto()
                 .channel("channel")
                 .requestId("requestId")
                 .urlRedirect("http://example.com");
@@ -100,7 +102,8 @@ class TransactionRequestAuthorizizationHandlerTest {
         ReflectionTestUtils.setField(requestAuthorizationHandler, "queueVisibilityTimeout", "300");
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestAuthorization(authorizationData)).thenReturn(Mono.just(gatewayResponse));
+        Mockito.when(paymentGatewayClient.requestGeneralAuthorization(authorizationData)).thenReturn(Mono.zip(Mono.just(Optional.of(postePayAuthResponseEntityDto)),
+                Mono.just(Optional.empty())));
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.empty());
         Mockito.when(queueAsyncClient.sendMessageWithResponse(BinaryData.fromObject(any()),any(),any())).thenReturn(Mono.empty());
 
@@ -148,7 +151,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 "brokerName",
                 "pspChannelCode",
                 "paymentMethodName",
-                "pspBusinessName"
+                "pspBusinessName",
+                null,
+                null
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);
@@ -156,6 +161,61 @@ class TransactionRequestAuthorizizationHandlerTest {
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectErrorMatches(error -> error instanceof AlreadyProcessedException)
+                .verify();
+
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(any());
+    }
+
+    @Test
+    void shouldRejectBadGateway() {
+        PaymentToken paymentToken = new PaymentToken("paymentToken");
+        RptId rptId = new RptId("77777777777111111111111111111");
+        TransactionDescription description = new TransactionDescription("description");
+        TransactionAmount amount = new TransactionAmount(100);
+        Email email = new Email("foo@example.com");
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
+
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                paymentToken,
+                rptId,
+                description,
+                amount,
+                email,
+                faultCode,
+                faultCodeString,
+                TransactionStatusDto.ACTIVATED
+        );
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .fee(200)
+                .paymentInstrumentId("paymentInstrumentId")
+                .pspId("VPOS")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
+
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction,
+                authorizationRequest.getFee(),
+                authorizationRequest.getPaymentInstrumentId(),
+                authorizationRequest.getPspId(),
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName",
+                "VPOS",
+                new PostePayAuthRequestDetailsDto().detailType("VPOS").accountEmail("test@test.it")
+        );
+
+        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);
+
+        Mockito.when(paymentGatewayClient.requestGeneralAuthorization(authorizationData)).thenReturn(Mono.zip(Mono.just(Optional.empty()),
+                Mono.just(Optional.empty())));
+        /* test */
+        StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
+                .expectErrorMatches(error -> error instanceof BadRequestException)
                 .verify();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(any());
