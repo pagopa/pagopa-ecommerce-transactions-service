@@ -28,7 +28,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-import reactor.util.function.Tuples;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -38,7 +37,6 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @WebFluxTest
@@ -206,7 +204,7 @@ public class TransactionServiceTests {
 
 		/* test */
 		RequestAuthorizationResponseDto postePayAuthorizationResponse = transactionsService
-				.requestTransactionAuthorization(TRANSACION_ID, authorizationRequest).block();
+				.requestTransactionAuthorization(TRANSACION_ID, null, authorizationRequest).block();
 
 		assertNotNull(postePayAuthorizationResponse);
 		assertFalse(postePayAuthorizationResponse.getAuthorizationUrl().isEmpty());
@@ -225,7 +223,7 @@ public class TransactionServiceTests {
 				.thenReturn(Mono.empty());
 
 		/* test */
-		Mono<RequestAuthorizationResponseDto> requestAuthorizationResponseDtoMono = transactionsService.requestTransactionAuthorization(TRANSACION_ID, authorizationRequest);
+		Mono<RequestAuthorizationResponseDto> requestAuthorizationResponseDtoMono = transactionsService.requestTransactionAuthorization(TRANSACION_ID, null, authorizationRequest);
 		assertThrows(
 				TransactionNotFoundException.class,
 				() -> {
