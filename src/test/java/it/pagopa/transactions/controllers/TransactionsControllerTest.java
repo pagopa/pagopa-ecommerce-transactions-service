@@ -2,8 +2,8 @@ package it.pagopa.transactions.controllers;
 
 import it.pagopa.generated.nodoperpsp.model.FaultBean;
 import it.pagopa.generated.payment.requests.model.*;
-import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
+import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.domain.PaymentToken;
 import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.exceptions.*;
@@ -33,7 +33,6 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.OffsetDateTime;
-import java.util.Arrays;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -133,12 +132,10 @@ class TransactionsControllerTest {
         Mockito.when(transactionsService.requestTransactionAuthorization(paymentToken, pgsId, authorizationRequest))
                 .thenReturn(Mono.just(authorizationResponse));
 
-        Mockito.when(mockExchange.getRequest()).thenReturn(mockRequest);
-        Mockito.when(mockRequest.getHeaders()).thenReturn(mockHeaders);
-        Mockito.when(mockHeaders.get(Mockito.any(String.class))).thenReturn(Arrays.asList("testPgsId"));
+
 
         /* test */
-        ResponseEntity<RequestAuthorizationResponseDto> response = transactionsController.requestTransactionAuthorization(paymentToken, Mono.just(authorizationRequest), mockExchange).block();
+        ResponseEntity<RequestAuthorizationResponseDto> response = transactionsController.requestTransactionAuthorization(paymentToken, pgsId, Mono.just(authorizationRequest), mockExchange).block();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(authorizationResponse, response.getBody());
@@ -159,12 +156,8 @@ class TransactionsControllerTest {
         Mockito.when(transactionsService.requestTransactionAuthorization(paymentToken, pgsId, authorizationRequest))
                 .thenReturn(Mono.error(new TransactionNotFoundException(paymentToken)));
 
-        Mockito.when(mockExchange.getRequest()).thenReturn(mockRequest);
-        Mockito.when(mockRequest.getHeaders()).thenReturn(mockHeaders);
-        Mockito.when(mockHeaders.get(Mockito.any(String.class))).thenReturn(Arrays.asList(pgsId));
-
         /* test */
-        Mono<ResponseEntity<RequestAuthorizationResponseDto>> mono = transactionsController.requestTransactionAuthorization(paymentToken, Mono.just(authorizationRequest), mockExchange);
+        Mono<ResponseEntity<RequestAuthorizationResponseDto>> mono = transactionsController.requestTransactionAuthorization(paymentToken, pgsId, Mono.just(authorizationRequest), mockExchange);
         assertThrows(
                 TransactionNotFoundException.class,
                 () -> mono.block()
