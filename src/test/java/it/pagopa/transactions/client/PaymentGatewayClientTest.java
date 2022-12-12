@@ -84,8 +84,12 @@ class PaymentGatewayClientTest {
 
 
         /* test */
-        StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
-                .expectNextMatches(s -> s.getT1().isEmpty() && s.getT2().isEmpty())
+        StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
+                .expectNextCount(0)
+                .verifyComplete();
+
+        StepVerifier.create(client.requestXPayAuthorization(authorizationData))
+                .expectNextCount(0)
                 .verifyComplete();
     }
 
@@ -135,8 +139,12 @@ class PaymentGatewayClientTest {
                 .thenReturn(Mono.just(xPayResponse));
 
         /* test */
-        StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
-                .assertNext(response -> response.getT2().get().equals(xPayResponse))
+        StepVerifier.create(client.requestXPayAuthorization(authorizationData))
+                .assertNext(response -> response.equals(xPayResponse))
+                .verifyComplete();
+
+        StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
+                .expectNextCount(0)
                 .verifyComplete();
     }
 
@@ -185,8 +193,12 @@ class PaymentGatewayClientTest {
                 .thenReturn(Mono.just(postePayResponse));
 
         /* test */
-        StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
-                .assertNext(response -> response.getT1().get().equals(Mono.just(postePayResponse)))
+        StepVerifier.create(client.requestXPayAuthorization(authorizationData))
+                .expectNextCount(0)
+                .verifyComplete();
+
+        StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
+                .expectNextMatches(t -> t.equals(postePayResponse))
                 .verifyComplete();
     }
 
@@ -232,7 +244,12 @@ class PaymentGatewayClientTest {
                 .thenReturn(Mono.error(new WebClientResponseException("api error", HttpStatus.UNAUTHORIZED.value(), "Unauthorized", null, null, null)));
 
         /* test */
-        StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
+
+        StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
+                    .expectNextCount(0)
+                    .verifyComplete();
+
+        StepVerifier.create(client.requestXPayAuthorization(authorizationData))
                 .expectErrorMatches(error ->
                         error instanceof AlreadyProcessedException &&
                                 ((AlreadyProcessedException) error).getRptId().equals(transaction.getNoticeCodes().get(0).rptId()))
@@ -280,11 +297,15 @@ class PaymentGatewayClientTest {
                 .thenReturn(Mono.error(new WebClientResponseException("api error", HttpStatus.UNAUTHORIZED.value(), "Unauthorized", null, null, null)));
 
         /* test */
-        StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
+        StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
                 .expectErrorMatches(error ->
                         error instanceof AlreadyProcessedException &&
                                 ((AlreadyProcessedException) error).getRptId().equals(transaction.getNoticeCodes().get(0).rptId()))
                 .verify();
+
+        StepVerifier.create(client.requestXPayAuthorization(authorizationData))
+                .expectNextCount(0)
+                .verifyComplete();
     }
 
     @Test
@@ -330,11 +351,15 @@ class PaymentGatewayClientTest {
                 .thenReturn(Mono.error(new WebClientResponseException("api error", HttpStatus.GATEWAY_TIMEOUT.value(), "Gateway timeout", null, null, null)));
 
         /* test */
-        StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
+        StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
                 .expectErrorMatches(error ->
                         error instanceof  GatewayTimeoutException
                 )
                 .verify();
+
+        StepVerifier.create(client.requestXPayAuthorization(authorizationData))
+                .expectNextCount(0)
+                .verifyComplete();
     }
 
     @Test
@@ -378,9 +403,13 @@ class PaymentGatewayClientTest {
                 .thenReturn(Mono.error(new WebClientResponseException("api error", HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error", null, null, null)));
 
         /* test */
-        StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
+        StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
                 .expectErrorMatches(error -> error instanceof BadGatewayException)
                 .verify();
+
+        StepVerifier.create(client.requestXPayAuthorization(authorizationData))
+                .expectNextCount(0)
+                .verifyComplete();
     }
 
     @Test
@@ -425,9 +454,13 @@ class PaymentGatewayClientTest {
                 .thenReturn(Mono.error(new WebClientResponseException("api error", HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error", null, null, null)));
 
         /* test */
-        StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
+        StepVerifier.create(client.requestXPayAuthorization(authorizationData))
                 .expectErrorMatches(error -> error instanceof BadGatewayException)
                 .verify();
+
+        StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
+                .expectNextCount(0)
+                .verifyComplete();
     }
 
     @Test
@@ -476,8 +509,12 @@ class PaymentGatewayClientTest {
                 .thenReturn(Mono.just(postePayResponse));
 
         /* test */
-        StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
-                .assertNext(response -> response.getT1().get().equals(postePayResponse))
+        StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
+                .expectNextMatches(response -> response.equals(postePayResponse))
+                .verifyComplete();
+
+        StepVerifier.create(client.requestXPayAuthorization(authorizationData))
+                .expectNextCount(0)
                 .verifyComplete();
 
     }
@@ -529,8 +566,12 @@ class PaymentGatewayClientTest {
                 .thenReturn(Mono.just(xPayResponse));
 
         /* test */
-        StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
-                .assertNext(response -> response.getT2().get().equals(xPayResponse))
+        StepVerifier.create(client.requestXPayAuthorization(authorizationData))
+                .expectNextMatches(response -> response.equals(xPayResponse))
+                .verifyComplete();
+
+        StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
+                .expectNextCount(0)
                 .verifyComplete();
 
     }
@@ -564,8 +605,12 @@ class PaymentGatewayClientTest {
 
 
         /* test */
-        StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
+        StepVerifier.create(client.requestXPayAuthorization(authorizationData))
                 .expectErrorMatches(exception -> exception instanceof InvalidRequestException);
+
+        StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
+                .expectNextCount(0)
+                .verifyComplete();
 
     }
 }
