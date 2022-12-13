@@ -1,5 +1,8 @@
 package it.pagopa.transactions.services;
 
+import it.pagopa.ecommerce.commons.documents.Transaction;
+import it.pagopa.ecommerce.commons.documents.*;
+import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PSPsResponseDto;
@@ -13,9 +16,6 @@ import it.pagopa.transactions.commands.TransactionActivateResultCommand;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.*;
-import it.pagopa.transactions.documents.Transaction;
-import it.pagopa.transactions.documents.*;
-import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.*;
 import it.pagopa.transactions.repositories.TransactionsActivationRequestedEventStoreRepository;
@@ -274,7 +274,8 @@ public class TransactionServiceTests {
 		TransactionAuthorizationStatusUpdateData statusUpdateData =
 				new TransactionAuthorizationStatusUpdateData(
 						updateAuthorizationRequest.getAuthorizationResult(),
-						TransactionStatusDto.AUTHORIZED
+						TransactionStatusDto.AUTHORIZED,
+						"authorizationCode"
 				);
 
 		TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
@@ -284,7 +285,7 @@ public class TransactionServiceTests {
 				statusUpdateData
 		);
 
-		TransactionClosureSendData closureSendData = new TransactionClosureSendData(ClosePaymentResponseDto.OutcomeEnum.OK, TransactionStatusDto.CLOSED, updateAuthorizationRequest.getAuthorizationCode());
+		TransactionClosureSendData closureSendData = new TransactionClosureSendData(ClosePaymentResponseDto.OutcomeEnum.OK, TransactionStatusDto.CLOSED);
 
 		TransactionClosureSentEvent closureSentEvent = new TransactionClosureSentEvent(
 				transactionDocument.getTransactionId(),
@@ -482,7 +483,7 @@ public class TransactionServiceTests {
 		String faultCode = "faultCode";
 		String faultCodeString = "faultCodeString";
 
-		it.pagopa.transactions.domain.TransactionActivated transactionActivated = new it.pagopa.transactions.domain.TransactionActivated(
+		it.pagopa.ecommerce.commons.domain.TransactionActivated transactionActivated = new it.pagopa.ecommerce.commons.domain.TransactionActivated(
 				new TransactionId(UUID.fromString(TRANSACION_ID)),
 				new PaymentToken(PAYMENT_TOKEN),
 				rtpId,

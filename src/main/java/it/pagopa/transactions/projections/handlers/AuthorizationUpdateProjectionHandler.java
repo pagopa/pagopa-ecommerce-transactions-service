@@ -1,7 +1,7 @@
 package it.pagopa.transactions.projections.handlers;
 
-import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdatedEvent;
-import it.pagopa.transactions.domain.*;
+import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationStatusUpdatedEvent;
+import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;

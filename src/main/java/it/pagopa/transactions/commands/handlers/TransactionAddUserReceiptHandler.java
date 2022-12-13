@@ -1,5 +1,13 @@
 package it.pagopa.transactions.commands.handlers;
 
+import it.pagopa.ecommerce.commons.documents.TransactionAddReceiptData;
+import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationRequestData;
+import it.pagopa.ecommerce.commons.documents.TransactionEvent;
+import it.pagopa.ecommerce.commons.documents.TransactionUserReceiptAddedEvent;
+import it.pagopa.ecommerce.commons.domain.EmptyTransaction;
+import it.pagopa.ecommerce.commons.domain.Transaction;
+import it.pagopa.ecommerce.commons.domain.TransactionClosed;
+import it.pagopa.ecommerce.commons.domain.pojos.BaseTransaction;
 import it.pagopa.generated.notifications.templates.ko.KoTemplate;
 import it.pagopa.generated.notifications.templates.success.*;
 import it.pagopa.generated.notifications.v1.dto.NotificationEmailResponseDto;
@@ -8,14 +16,6 @@ import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NotificationsServiceClient;
 import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
-import it.pagopa.transactions.documents.TransactionAuthorizationRequestData;
-import it.pagopa.transactions.documents.TransactionEvent;
-import it.pagopa.transactions.documents.TransactionAddReceiptData;
-import it.pagopa.transactions.documents.TransactionUserReceiptAddedEvent;
-import it.pagopa.transactions.domain.EmptyTransaction;
-import it.pagopa.transactions.domain.Transaction;
-import it.pagopa.transactions.domain.TransactionClosed;
-import it.pagopa.transactions.domain.pojos.BaseTransaction;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -143,7 +143,7 @@ public class TransactionAddUserReceiptHandler implements CommandHandler<Transact
                                                 new FeeTemplate(amountToHumanReadableString(transactionAuthorizationRequestData.getFee()))
                                         ),
                                         transactionAuthorizationRequestData.getAuthorizationRequestId(),
-                                        tx.getTransactionClosureSendData().getAuthorizationCode(),
+                                        tx.getTransactionAuthorizationStatusUpdateData().getAuthorizationCode(),
                                         new PaymentMethodTemplate(
                                                 transactionAuthorizationRequestData.getPaymentMethodName(),
                                                 "paymentMethodLogo", // TODO: Logos

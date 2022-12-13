@@ -1,13 +1,16 @@
 package it.pagopa.transactions.commands.handlers;
 
+import it.pagopa.ecommerce.commons.documents.*;
+import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.notifications.v1.dto.NotificationEmailResponseDto;
-import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
+import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestPaymentsInnerDto;
+import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
+import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.client.NotificationsServiceClient;
 import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.data.AddUserReceiptData;
-import it.pagopa.transactions.documents.*;
-import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import org.junit.jupiter.api.Test;
@@ -101,7 +104,8 @@ class TransactionAddUserReceiptHandlerTest {
                 paymentToken.value(),
                 new TransactionAuthorizationStatusUpdateData(
                         AuthorizationResultDto.OK,
-                        TransactionStatusDto.AUTHORIZED
+                        TransactionStatusDto.AUTHORIZED,
+                        "authorizationCode"
                 )
         );
 
@@ -111,8 +115,8 @@ class TransactionAddUserReceiptHandlerTest {
                 transactionActivatedEvent.getData().getPaymentToken(),
                 new TransactionClosureSendData(
                         ClosePaymentResponseDto.OutcomeEnum.OK,
-                        TransactionStatusDto.CLOSED,
-                        "authorizationCode"
+                        TransactionStatusDto.CLOSED
+
                 )
         );
 
@@ -219,7 +223,8 @@ class TransactionAddUserReceiptHandlerTest {
                 paymentToken.value(),
                 new TransactionAuthorizationStatusUpdateData(
                         AuthorizationResultDto.OK,
-                        TransactionStatusDto.AUTHORIZED
+                        TransactionStatusDto.AUTHORIZED,
+                        "authorizationCode"
                 )
         );
 
@@ -229,8 +234,7 @@ class TransactionAddUserReceiptHandlerTest {
                 transactionActivatedEvent.getData().getPaymentToken(),
                 new TransactionClosureSendData(
                         ClosePaymentResponseDto.OutcomeEnum.OK,
-                        TransactionStatusDto.CLOSED,
-                        "authorizationCode"
+                        TransactionStatusDto.CLOSED
                 )
         );
 
@@ -337,7 +341,8 @@ class TransactionAddUserReceiptHandlerTest {
                 paymentToken.value(),
                 new TransactionAuthorizationStatusUpdateData(
                         AuthorizationResultDto.OK,
-                        TransactionStatusDto.AUTHORIZED
+                        TransactionStatusDto.AUTHORIZED,
+                        "authorizationCode"
                 )
         );
 

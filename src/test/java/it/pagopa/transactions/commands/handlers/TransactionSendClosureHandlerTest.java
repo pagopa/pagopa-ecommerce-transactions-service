@@ -1,5 +1,9 @@
 package it.pagopa.transactions.commands.handlers;
 
+import it.pagopa.ecommerce.commons.documents.*;
+import it.pagopa.ecommerce.commons.domain.Transaction;
+import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.domain.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
@@ -8,10 +12,6 @@ import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestD
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
 import it.pagopa.transactions.commands.data.ClosureSendData;
-import it.pagopa.transactions.documents.*;
-import it.pagopa.transactions.domain.Transaction;
-import it.pagopa.transactions.domain.*;
-import it.pagopa.transactions.domain.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.EuroUtils;
@@ -125,7 +125,8 @@ class TransactionSendClosureHandlerTest {
                 paymentToken.value(),
                 new TransactionAuthorizationStatusUpdateData(
                         AuthorizationResultDto.OK,
-                        TransactionStatusDto.AUTHORIZED
+                        TransactionStatusDto.AUTHORIZED,
+                        "authorizationCode"
                 )
         );
 
@@ -135,8 +136,7 @@ class TransactionSendClosureHandlerTest {
                 paymentToken.value(),
                 new TransactionClosureSendData(
                         ClosePaymentResponseDto.OutcomeEnum.OK,
-                        TransactionStatusDto.CLOSED,
-                        "authorizationCode"
+                        TransactionStatusDto.CLOSED
                 )
         );
 
@@ -205,7 +205,8 @@ class TransactionSendClosureHandlerTest {
                 paymentToken.value(),
                 new TransactionAuthorizationStatusUpdateData(
                         AuthorizationResultDto.OK,
-                        TransactionStatusDto.AUTHORIZED
+                        TransactionStatusDto.AUTHORIZED,
+                        "authorizationCode"
                 )
         );
 
@@ -216,9 +217,9 @@ class TransactionSendClosureHandlerTest {
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(transactionActivatedEvent, authorizationRequestedEvent, authorizationStatusUpdatedEvent));
 
-        it.pagopa.transactions.domain.Transaction transaction = events.reduce(new EmptyTransaction(), Transaction::applyEvent).block();
+        it.pagopa.ecommerce.commons.domain.Transaction transaction = events.reduce(new EmptyTransaction(), Transaction::applyEvent).block();
 
-        TransactionClosureSendData transactionClosureSendData = new TransactionClosureSendData(ClosePaymentResponseDto.OutcomeEnum.KO, TransactionStatusDto.CLOSURE_FAILED, "authorizationCode");
+        TransactionClosureSendData transactionClosureSendData = new TransactionClosureSendData(ClosePaymentResponseDto.OutcomeEnum.KO, TransactionStatusDto.CLOSURE_FAILED);
         ClosureSendData closureSendData = new ClosureSendData(
                 (BaseTransactionWithPaymentToken) transaction,
                 updateAuthorizationRequest

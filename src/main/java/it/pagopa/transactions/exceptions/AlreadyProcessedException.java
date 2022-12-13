@@ -1,6 +1,6 @@
 package it.pagopa.transactions.exceptions;
 
-import it.pagopa.transactions.domain.RptId;
+import it.pagopa.ecommerce.commons.domain.RptId;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 

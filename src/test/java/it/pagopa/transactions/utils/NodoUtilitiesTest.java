@@ -1,8 +1,8 @@
 package it.pagopa.transactions.utils;
 
+import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.generated.nodoperpsp.model.NodoTipoCodiceIdRPT;
 import it.pagopa.generated.nodoperpsp.model.ObjectFactory;
-import it.pagopa.transactions.domain.RptId;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

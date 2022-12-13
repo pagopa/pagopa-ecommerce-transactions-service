@@ -1,9 +1,9 @@
 package it.pagopa.transactions.projections.handlers;
 
+import it.pagopa.ecommerce.commons.documents.TransactionActivationRequestedData;
+import it.pagopa.ecommerce.commons.documents.TransactionActivationRequestedEvent;
+import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
-import it.pagopa.transactions.documents.TransactionActivationRequestedData;
-import it.pagopa.transactions.documents.TransactionActivationRequestedEvent;
-import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -78,9 +78,9 @@ class TransactionProjectionHandlerTest {
             /*
              * Preconditions
              */
-            it.pagopa.transactions.documents.Transaction transactionDocument = it.pagopa.transactions.documents.Transaction
+            it.pagopa.ecommerce.commons.documents.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.Transaction
                     .from(expected);
-            Mockito.when(viewEventStoreRepository.save(Mockito.any(it.pagopa.transactions.documents.Transaction.class)))
+            Mockito.when(viewEventStoreRepository.save(Mockito.any(it.pagopa.ecommerce.commons.documents.Transaction.class)))
                     .thenReturn(Mono.just(transactionDocument));
             zonedDateTime.when(ZonedDateTime::now).thenReturn(expected.getCreationDate());
 

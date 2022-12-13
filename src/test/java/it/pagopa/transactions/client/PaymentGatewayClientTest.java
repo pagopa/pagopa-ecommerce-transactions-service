@@ -2,6 +2,7 @@ package it.pagopa.transactions.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthRequestDto;
@@ -12,7 +13,6 @@ import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.PostePayAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
-import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.GatewayTimeoutException;

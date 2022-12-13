@@ -1,11 +1,11 @@
 package it.pagopa.transactions.controllers;
 
+import it.pagopa.ecommerce.commons.domain.PaymentToken;
+import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.generated.nodoperpsp.model.FaultBean;
 import it.pagopa.generated.payment.requests.model.*;
 import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
 import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.transactions.domain.PaymentToken;
-import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.TransactionsService;
 import org.junit.jupiter.api.Test;
@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.server.ServerWebExchange;
@@ -40,6 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(MockitoExtension.class)
 @WebFluxTest(TransactionsController.class)
+@TestPropertySource(locations = "classpath:application-tests.properties")
 class TransactionsControllerTest {
 
     @InjectMocks

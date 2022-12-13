@@ -1,11 +1,11 @@
 package it.pagopa.transactions.projections.handlers;
 
+import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationStatusUpdateData;
+import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationStatusUpdatedEvent;
+import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
-import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdateData;
-import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdatedEvent;
-import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,7 +49,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 "faultCodeString",
                 TransactionStatusDto.AUTHORIZATION_REQUESTED);
 
-        it.pagopa.transactions.documents.Transaction expectedDocument = new it.pagopa.transactions.documents.Transaction(
+        it.pagopa.ecommerce.commons.documents.Transaction expectedDocument = new it.pagopa.ecommerce.commons.documents.Transaction(
                 transaction.getTransactionId().value().toString(),
                 transaction.getTransactionActivatedData().getPaymentToken(),
                 transaction.getRptId().value(),
@@ -63,7 +63,8 @@ class AuthorizationUpdateProjectionHandlerTest {
         TransactionAuthorizationStatusUpdateData statusUpdateData =
                 new TransactionAuthorizationStatusUpdateData(
                         updateAuthorizationRequest.getAuthorizationResult(),
-                        expectedDocument.getStatus()
+                        expectedDocument.getStatus(),
+                        "authorizationCode"
                 );
 
         TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
@@ -87,7 +88,7 @@ class AuthorizationUpdateProjectionHandlerTest {
          * Preconditions
          */
         Mockito.when(viewRepository.findById(transaction.getTransactionId().value().toString()))
-                .thenReturn(Mono.just(it.pagopa.transactions.documents.Transaction.from(transaction)));
+                .thenReturn(Mono.just(it.pagopa.ecommerce.commons.documents.Transaction.from(transaction)));
 
         Mockito.when(viewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
 

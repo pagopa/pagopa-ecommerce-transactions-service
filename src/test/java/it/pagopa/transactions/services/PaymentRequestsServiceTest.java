@@ -1,5 +1,7 @@
 package it.pagopa.transactions.services;
 
+import it.pagopa.ecommerce.commons.domain.RptId;
+import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.generated.nodoperpsp.model.*;
 import it.pagopa.generated.payment.requests.model.PaymentRequestsGetResponseDto;
 import it.pagopa.generated.payment.requests.model.PaymentStatusFaultDto;
@@ -7,9 +9,7 @@ import it.pagopa.generated.payment.requests.model.ValidationFaultDto;
 import it.pagopa.generated.transactions.model.*;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NodoPerPspClient;
-import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.exceptions.NodoErrorException;
-import it.pagopa.transactions.repositories.PaymentRequestInfo;
 import it.pagopa.transactions.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.transactions.utils.NodoOperations;
 import it.pagopa.transactions.utils.NodoUtilities;

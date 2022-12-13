@@ -1,12 +1,12 @@
 package it.pagopa.transactions.commands.handlers;
 
+import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationStatusUpdateData;
+import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationStatusUpdatedEvent;
+import it.pagopa.ecommerce.commons.domain.TransactionActivated;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
-import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdateData;
-import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdatedEvent;
-import it.pagopa.transactions.domain.TransactionActivated;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +47,8 @@ public class TransactionUpdateAuthorizationHandler implements CommandHandler<Tra
             TransactionAuthorizationStatusUpdateData statusUpdateData =
                     new TransactionAuthorizationStatusUpdateData(
                             updateAuthorizationRequest.getAuthorizationResult(),
-                            newStatus
+                            newStatus,
+                            updateAuthorizationRequest.getAuthorizationCode()
                     );
 
             TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
