@@ -1,5 +1,8 @@
 package it.pagopa.transactions.utils;
 
+import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
+import it.pagopa.ecommerce.commons.domain.RptId;
+import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.generated.nodoperpsp.model.EsitoNodoAttivaRPTRisposta;
 import it.pagopa.generated.nodoperpsp.model.NodoAttivaRPT;
 import it.pagopa.generated.nodoperpsp.model.NodoTipoCodiceIdRPT;
@@ -10,10 +13,7 @@ import it.pagopa.generated.transactions.model.StOutcome;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NodoPerPspClient;
-import it.pagopa.transactions.domain.IdempotencyKey;
-import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.exceptions.NodoErrorException;
-import it.pagopa.transactions.repositories.PaymentRequestInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -74,11 +74,11 @@ public class NodoOperations {
             validIsNM3 ->
                 Boolean.TRUE.equals(validIsNM3)
                     ? nodoActivationForNM3PaymentRequest(
-                        rptId, amountAsBigDecimal, idempotencyKey.getKey())
+                        rptId, amountAsBigDecimal, idempotencyKey.rawValue())
                     : nodoActivationForUnknownPaymentRequest(
                         rptId,
                         amountAsBigDecimal,
-                        idempotencyKey.getKey(),
+                        idempotencyKey.rawValue(),
                         paymentContextCode))
         .flatMap(
             paymentToken ->

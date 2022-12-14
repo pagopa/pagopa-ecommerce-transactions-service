@@ -2,6 +2,9 @@ package it.pagopa.transactions.services;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
+import it.pagopa.ecommerce.commons.documents.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.TransactionActivationRequestedEvent;
+import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PaymentMethodResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
@@ -10,15 +13,11 @@ import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.commands.*;
 import it.pagopa.transactions.commands.data.*;
 import it.pagopa.transactions.commands.handlers.*;
-import it.pagopa.transactions.documents.TransactionActivatedEvent;
-import it.pagopa.transactions.documents.TransactionActivationRequestedEvent;
-import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
 import it.pagopa.transactions.projections.handlers.*;
 import it.pagopa.transactions.repositories.TransactionsActivationRequestedEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import it.pagopa.transactions.utils.TransactionEventCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -117,7 +116,7 @@ public class TransactionsService {
                                               .authToken(null)
                                               .rptId(transaction.getRptId()))
                               )
-                              .status(transaction.getStatus()));
+                              .status(TransactionStatusDto.fromValue(transaction.getStatus().toString())));
   }
 
   @CircuitBreaker(name = "transactions-backend")
@@ -171,8 +170,8 @@ public class TransactionsService {
                     requestAuthorizationRequestDto.getFee())))
         .flatMap(
             args -> {
-              it.pagopa.transactions.documents.Transaction transactionDocument = args.getT1();
-              PspDto psp = args.getT2();
+                it.pagopa.ecommerce.commons.documents.Transaction transactionDocument = args.getT1();
+                PspDto psp = args.getT2();
               PaymentMethodResponseDto paymentMethod = args.getT3();
 
               log.info("Requesting authorization for rptId: {}", transactionDocument.getRptId());
@@ -354,16 +353,16 @@ public class TransactionsService {
         .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentContextCode)))
         .map(
             activationRequestedEvent -> {
-              TransactionActivationRequested transaction =
-                  new TransactionActivationRequested(
-                      new TransactionId(UUID.fromString(activationRequestedEvent.getTransactionId())),
-                      new RptId(activationRequestedEvent.getRptId()),
-                      new TransactionDescription(activationRequestedEvent.getData().getDescription()),
-                      new TransactionAmount(activationRequestedEvent.getData().getAmount()),
-                      new Email(activationRequestedEvent.getData().getEmail()),
-                      TransactionStatusDto.ACTIVATION_REQUESTED);
-              ActivationResultData activationResultData =
-                  new ActivationResultData(transaction, activationResultRequestDto);
+                TransactionActivationRequested transaction =
+                        new TransactionActivationRequested(
+                                new TransactionId(UUID.fromString(activationRequestedEvent.getTransactionId())),
+                                new RptId(activationRequestedEvent.getRptId()),
+                                new TransactionDescription(activationRequestedEvent.getData().getDescription()),
+                                new TransactionAmount(activationRequestedEvent.getData().getAmount()),
+                                new Email(activationRequestedEvent.getData().getEmail()),
+                                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATION_REQUESTED);
+                ActivationResultData activationResultData =
+                        new ActivationResultData(transaction, activationResultRequestDto);
               return new TransactionActivateResultCommand(
                   transaction.getRptId(), activationResultData);
             })
@@ -421,7 +420,7 @@ public class TransactionsService {
                                                       .reason(transaction.getDescription().value())
                                                       .rptId(transaction.getRptId().value())
                                                       .authToken(sessionDataDto.getSessionToken())))
-                                              .status(transaction.getStatus())
+                                              .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
                       );
   }
 }

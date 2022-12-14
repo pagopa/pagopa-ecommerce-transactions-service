@@ -1,15 +1,15 @@
 package it.pagopa.transactions.utils;
 
+import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
+import it.pagopa.ecommerce.commons.domain.RptId;
+import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.generated.nodoperpsp.model.*;
 import it.pagopa.generated.transactions.model.*;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NodoPerPspClient;
-import it.pagopa.transactions.domain.IdempotencyKey;
-import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.exceptions.NodoErrorException;
-import it.pagopa.transactions.repositories.PaymentRequestInfo;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

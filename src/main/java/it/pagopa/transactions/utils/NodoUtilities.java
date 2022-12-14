@@ -1,8 +1,8 @@
 package it.pagopa.transactions.utils;
 
+import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.generated.nodoperpsp.model.NodoTipoCodiceIdRPT;
 import it.pagopa.generated.nodoperpsp.model.QrCode;
-import it.pagopa.transactions.domain.RptId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

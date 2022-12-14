@@ -1,16 +1,16 @@
 package it.pagopa.transactions.commands.handlers;
 
+import it.pagopa.ecommerce.commons.documents.*;
+import it.pagopa.ecommerce.commons.domain.EmptyTransaction;
+import it.pagopa.ecommerce.commons.domain.Transaction;
+import it.pagopa.ecommerce.commons.domain.TransactionWithCompletedAuthorization;
+import it.pagopa.ecommerce.commons.domain.pojos.BaseTransaction;
+import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
+import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
-import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
-import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
-import it.pagopa.transactions.documents.*;
-import it.pagopa.transactions.domain.EmptyTransaction;
-import it.pagopa.transactions.domain.Transaction;
-import it.pagopa.transactions.domain.TransactionWithCompletedAuthorization;
-import it.pagopa.transactions.domain.pojos.BaseTransaction;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.EuroUtils;
@@ -48,7 +48,7 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
 
         return transaction
                 .cast(BaseTransaction.class)
-                .filter(t -> t.getStatus() == TransactionStatusDto.AUTHORIZED)
+                .filter(t -> t.getStatus() == it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZED)
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(TransactionWithCompletedAuthorization.class)
                 .flatMap(tx -> {
@@ -92,8 +92,7 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                                         command.getData().transaction().getTransactionActivatedData().getPaymentToken(),
                                         new TransactionClosureSendData(
                                                 response.getOutcome(),
-                                                updatedStatus,
-                                                updateAuthorizationRequestDto.getAuthorizationCode()
+                                                updatedStatus
                                         )
                                 );
 

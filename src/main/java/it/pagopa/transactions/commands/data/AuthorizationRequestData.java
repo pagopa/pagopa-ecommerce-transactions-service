@@ -1,7 +1,7 @@
 package it.pagopa.transactions.commands.data;
 
+import it.pagopa.ecommerce.commons.domain.TransactionActivated;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDetailsDto;
-import it.pagopa.transactions.domain.TransactionActivated;
 
 public record AuthorizationRequestData(
 		TransactionActivated transaction,
