@@ -11,6 +11,7 @@ import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.generated.ecommerce.nodo.v1.dto.InformazioniPagamentoDto;
 import it.pagopa.generated.transactions.server.model.ActivationResultRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
+import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.client.NodoPerPM;
 import it.pagopa.transactions.commands.TransactionActivateResultCommand;
 import it.pagopa.transactions.commands.data.ActivationResultData;

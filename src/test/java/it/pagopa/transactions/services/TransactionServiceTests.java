@@ -121,7 +121,7 @@ public class TransactionServiceTests {
 	void getTransactionReturnsTransactionData() {
 
 		final Transaction transaction = new Transaction(TRANSACION_ID, PAYMENT_TOKEN, "77777777777111111111111111111", "reason", 100,
-				"foo@example.com", TransactionStatusDto.ACTIVATED);
+				"foo@example.com", it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED);
 		final TransactionInfoDto expected = new TransactionInfoDto()
 				.transactionId(TRANSACION_ID)
 				.addPaymentsItem(new PaymentInfoDto()

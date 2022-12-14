@@ -283,7 +283,7 @@ public class TransactionsService {
                                                         .reason(transactionDocument.getDescription())
                                                         .paymentToken(transactionDocument.getPaymentToken())
                                                         .rptId(transactionDocument.getRptId())))
-                                                .status(transactionDocument.getStatus())
+                                                .status(TransactionStatusDto.fromValue(transactionDocument.getStatus().toString()))
                         );
             });
   }
@@ -333,7 +333,7 @@ public class TransactionsService {
                                         .amount(transaction.getAmount().value())
                                         .reason(transaction.getDescription().value())
                                         .rptId(transaction.getRptId().value()).authToken(null)))
-                                .status(transaction.getStatus())
+                                .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
         )
         .doOnNext(
             transaction ->
@@ -403,7 +403,7 @@ public class TransactionsService {
                                                       .reason(transaction.getDescription().value())
                                                       .rptId(transaction.getRptId().value())
                                                       .authToken(sessionDataDto.getSessionToken())))
-                                              .status(transaction.getStatus()));
+                                              .status(TransactionStatusDto.fromValue(transaction.getStatus().toString())));
   }
 
   private Mono<NewTransactionResponseDto> projectActivatedEvent(
