@@ -1,6 +1,9 @@
 package it.pagopa.transactions.utils;
 
-import it.pagopa.generated.nodoperpsp.model.*;
+import it.pagopa.generated.nodoperpsp.model.EsitoNodoAttivaRPTRisposta;
+import it.pagopa.generated.nodoperpsp.model.NodoAttivaRPT;
+import it.pagopa.generated.nodoperpsp.model.NodoTipoCodiceIdRPT;
+import it.pagopa.generated.nodoperpsp.model.NodoTipoDatiPagamentoPSP;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
 import it.pagopa.generated.transactions.model.CtQrCode;
 import it.pagopa.generated.transactions.model.StOutcome;
@@ -15,7 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -51,9 +53,9 @@ public class NodoOperations {
           NewTransactionRequestDto newTransactionRequestDto) {
 
     RptId rptId = paymentRequestInfo.id();
-    String paymentContextCode = newTransactionRequestDto.getPaymentContextCode();
+    String paymentContextCode = newTransactionRequestDto.getPaymentNotices().get(0).getPaymentContextCode();
     Boolean isNM3 = paymentRequestInfo.isNM3();
-    Integer amount = newTransactionRequestDto.getAmount();
+    Integer amount = newTransactionRequestDto.getPaymentNotices().get(0).getAmount();
     String paTaxCode = paymentRequestInfo.paFiscalCode();
     String paName = paymentRequestInfo.paName();
     IdempotencyKey idempotencyKey = Optional.ofNullable(paymentRequestInfo.idempotencyKey())

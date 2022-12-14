@@ -276,7 +276,7 @@ components:
         rptId: string
         paymentContextCode: paymentContextCode
         amount: 100
-    PaymentsInfo:
+    PaymentInfo:
       description: Informations about transaction payments
       type: object
       properties:
@@ -330,7 +330,7 @@ components:
         payments:
           type: array
           items:
-            $ref: '#/components/schemas/PaymentsInfo'
+            $ref: '#/components/schemas/PaymentInfo'
           minItems: 1
           maxItems: 5
           example:

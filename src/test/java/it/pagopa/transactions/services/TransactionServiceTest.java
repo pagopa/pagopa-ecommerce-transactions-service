@@ -3,6 +3,7 @@ package it.pagopa.transactions.services;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
+import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
@@ -53,7 +54,7 @@ class TransactionServiceTest {
 
         NewTransactionRequestDto transactionRequestDto = new NewTransactionRequestDto()
                 .email(TEST_EMAIL)
-                .rptId(TEST_RPTID);
+                .addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(TEST_RPTID));
 
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
         transactionActivatedData.setDescription("dest");
@@ -120,6 +121,6 @@ class TransactionServiceTest {
         /**
          * Assertions
          */
-        assertEquals(transactionRequestDto.getRptId(), responseDto.getRptId());
+        assertEquals(transactionRequestDto.getPaymentNotices().get(0).getRptId(), responseDto.getPayments().get(0).getRptId());
     }
 }

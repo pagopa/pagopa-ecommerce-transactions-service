@@ -7,9 +7,14 @@ import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
-import it.pagopa.transactions.documents.*;
+import it.pagopa.transactions.documents.TransactionActivatedData;
+import it.pagopa.transactions.documents.TransactionActivatedEvent;
+import it.pagopa.transactions.documents.TransactionActivationRequestedData;
+import it.pagopa.transactions.documents.TransactionActivationRequestedEvent;
 import it.pagopa.transactions.domain.RptId;
-import it.pagopa.transactions.repositories.*;
+import it.pagopa.transactions.repositories.PaymentRequestInfo;
+import it.pagopa.transactions.repositories.PaymentRequestsInfoRepository;
+import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.NodoOperations;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,7 +85,7 @@ public class TransactionActivateHandler
       handle(TransactionActivateCommand command) {
     final RptId rptId = command.getRptId();
     final NewTransactionRequestDto newTransactionRequestDto = command.getData();
-    final String paymentContextCode = newTransactionRequestDto.getPaymentContextCode();
+    final String paymentContextCode = newTransactionRequestDto.getPaymentNotices().get(0).getPaymentContextCode();
 
     return getPaymentRequestInfoFromCache(rptId)
         .doOnNext(

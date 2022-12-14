@@ -5,52 +5,17 @@ import io.github.resilience4j.retry.annotation.Retry;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PaymentMethodResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
-import it.pagopa.generated.transactions.server.model.ActivationResultRequestDto;
-import it.pagopa.generated.transactions.server.model.ActivationResultResponseDto;
-import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
-import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
-import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
-import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
-import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
-import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
-import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
-import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
+import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
-import it.pagopa.transactions.commands.TransactionActivateCommand;
-import it.pagopa.transactions.commands.TransactionActivateResultCommand;
-import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
-import it.pagopa.transactions.commands.TransactionClosureSendCommand;
-import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
-import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
-import it.pagopa.transactions.commands.data.ActivationResultData;
-import it.pagopa.transactions.commands.data.AddUserReceiptData;
-import it.pagopa.transactions.commands.data.AuthorizationRequestData;
-import it.pagopa.transactions.commands.data.ClosureSendData;
-import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
-import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
-import it.pagopa.transactions.commands.handlers.TransactionActivateResultHandler;
-import it.pagopa.transactions.commands.handlers.TransactionAddUserReceiptHandler;
-import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandler;
-import it.pagopa.transactions.commands.handlers.TransactionSendClosureHandler;
-import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHandler;
+import it.pagopa.transactions.commands.*;
+import it.pagopa.transactions.commands.data.*;
+import it.pagopa.transactions.commands.handlers.*;
 import it.pagopa.transactions.documents.TransactionActivatedEvent;
 import it.pagopa.transactions.documents.TransactionActivationRequestedEvent;
-import it.pagopa.transactions.domain.Email;
-import it.pagopa.transactions.domain.PaymentToken;
-import it.pagopa.transactions.domain.RptId;
-import it.pagopa.transactions.domain.TransactionActivated;
-import it.pagopa.transactions.domain.TransactionActivationRequested;
-import it.pagopa.transactions.domain.TransactionAmount;
-import it.pagopa.transactions.domain.TransactionDescription;
-import it.pagopa.transactions.domain.TransactionId;
+import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
-import it.pagopa.transactions.projections.handlers.AuthorizationRequestProjectionHandler;
-import it.pagopa.transactions.projections.handlers.AuthorizationUpdateProjectionHandler;
-import it.pagopa.transactions.projections.handlers.ClosureSendProjectionHandler;
-import it.pagopa.transactions.projections.handlers.TransactionUserReceiptProjectionHandler;
-import it.pagopa.transactions.projections.handlers.TransactionsActivationProjectionHandler;
-import it.pagopa.transactions.projections.handlers.TransactionsActivationRequestedProjectionHandler;
+import it.pagopa.transactions.projections.handlers.*;
 import it.pagopa.transactions.repositories.TransactionsActivationRequestedEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.TransactionEventCode;
@@ -60,6 +25,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -105,51 +71,53 @@ public class TransactionsService {
   public Mono<NewTransactionResponseDto> newTransaction(
       NewTransactionRequestDto newTransactionRequestDto) {
 
-    log.info("Initializing transaction for rptId: {}", newTransactionRequestDto.getRptId());
-    TransactionActivateCommand command =
-        new TransactionActivateCommand(
-            new RptId(newTransactionRequestDto.getRptId()), newTransactionRequestDto);
+      log.info("Initializing transaction for rptId: {}", newTransactionRequestDto.getPaymentNotices().get(0).getRptId());
+      TransactionActivateCommand command =
+              new TransactionActivateCommand(
+                      new RptId(newTransactionRequestDto.getPaymentNotices().get(0).getRptId()), newTransactionRequestDto);
 
-    return transactionActivateHandler
-        .handle(command)
-        .doOnNext(
-            args ->
-                log.info(
-                    "Transaction initialized for rptId: {}", newTransactionRequestDto.getRptId()))
-        .flatMap(
-            es -> {
-              final Mono<TransactionActivatedEvent> transactionActivatedEvent = es.getT1();
-              final Mono<TransactionActivationRequestedEvent> transactionActivationRequestedEvent =
-                  es.getT2();
-              final SessionDataDto sessionDataDto = es.getT3();
+      return transactionActivateHandler
+              .handle(command)
+              .doOnNext(
+                      args ->
+                              log.info(
+                                      "Transaction initialized for rptId: {}", newTransactionRequestDto.getPaymentNotices().get(0).getRptId()))
+              .flatMap(
+                      es -> {
+                          final Mono<TransactionActivatedEvent> transactionActivatedEvent = es.getT1();
+                          final Mono<TransactionActivationRequestedEvent> transactionActivationRequestedEvent =
+                                  es.getT2();
+                          final SessionDataDto sessionDataDto = es.getT3();
 
-              return transactionActivatedEvent
-                  .flatMap(t -> projectActivatedEvent(t, sessionDataDto))
-                  .switchIfEmpty(
-                      Mono.defer(
-                          () ->
-                              transactionActivationRequestedEvent.flatMap(
-                                  t -> projectActivationEvent(t, sessionDataDto))));
-            });
+                          return transactionActivatedEvent
+                                  .flatMap(t -> projectActivatedEvent(t, sessionDataDto))
+                                  .switchIfEmpty(
+                                          Mono.defer(
+                                                  () ->
+                                                          transactionActivationRequestedEvent.flatMap(
+                                                                  t -> projectActivationEvent(t, sessionDataDto))));
+                      });
   }
 
   @CircuitBreaker(name = "node-backend")
   @Retry(name = "getTransactionInfo")
   public Mono<TransactionInfoDto> getTransactionInfo(String transactionId) {
       log.info("Get Transaction Invoked with id {} ", transactionId);
-    return transactionsViewRepository
-        .findById(transactionId)
-        .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
-        .map(
-            transaction ->
-                new TransactionInfoDto()
-                    .transactionId(transaction.getTransactionId())
-                    .amount(transaction.getAmount())
-                    .reason(transaction.getDescription())
-                    .paymentToken(transaction.getPaymentToken())
-                    .authToken(null)
-                    .rptId(transaction.getRptId())
-                    .status(transaction.getStatus()));
+      return transactionsViewRepository
+              .findById(transactionId)
+              .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+              .map(transaction ->
+                      new TransactionInfoDto()
+                              .transactionId(transaction.getTransactionId())
+                              .payments(
+                                      List.of(new PaymentInfoDto()
+                                              .amount(transaction.getAmount())
+                                              .reason(transaction.getDescription())
+                                              .paymentToken(transaction.getPaymentToken())
+                                              .authToken(null)
+                                              .rptId(transaction.getRptId()))
+                              )
+                              .status(transaction.getStatus()));
   }
 
   @CircuitBreaker(name = "transactions-backend")
@@ -293,31 +261,31 @@ public class TransactionsService {
         .cast(TransactionActivated.class)
         .flatMap(
             transaction -> {
-              ClosureSendData closureSendData =
-                  new ClosureSendData(transaction, updateAuthorizationRequestDto);
+                ClosureSendData closureSendData =
+                        new ClosureSendData(transaction, updateAuthorizationRequestDto);
 
-              TransactionClosureSendCommand transactionClosureSendCommand =
-                  new TransactionClosureSendCommand(transaction.getRptId(), closureSendData);
+                TransactionClosureSendCommand transactionClosureSendCommand =
+                        new TransactionClosureSendCommand(transaction.getRptId(), closureSendData);
 
-              return transactionSendClosureHandler
-                  .handle(transactionClosureSendCommand)
-                  .doOnNext(
-                      closureSentEvent ->
-                          log.info(
-                              "Requested transaction closure for rptId: {}",
-                              closureSentEvent.getRptId()))
-                  .flatMap(
-                      closureSentEvent -> closureSendProjectionHandler.handle(closureSentEvent))
-                  .map(
-                      transactionDocument ->
-                          new TransactionInfoDto()
-                              .transactionId(transactionDocument.getTransactionId())
-                              .amount(transactionDocument.getAmount())
-                              .reason(transactionDocument.getDescription())
-                              .paymentToken(transactionDocument.getPaymentToken())
-                              .rptId(transactionDocument.getRptId())
-                              .status(transactionDocument.getStatus())
-                              .authToken(null));
+                return transactionSendClosureHandler
+                        .handle(transactionClosureSendCommand)
+                        .doOnNext(
+                                closureSentEvent ->
+                                        log.info(
+                                                "Requested transaction closure for rptId: {}",
+                                                closureSentEvent.getRptId()))
+                        .flatMap(
+                                closureSentEvent -> closureSendProjectionHandler.handle(closureSentEvent))
+                        .map(
+                                transactionDocument ->
+                                        new TransactionInfoDto()
+                                                .transactionId(transactionDocument.getTransactionId())
+                                                .payments(List.of(new PaymentInfoDto().amount(transactionDocument.getAmount())
+                                                        .reason(transactionDocument.getDescription())
+                                                        .paymentToken(transactionDocument.getPaymentToken())
+                                                        .rptId(transactionDocument.getRptId())))
+                                                .status(transactionDocument.getStatus())
+                        );
             });
   }
   @CircuitBreaker(name = "transactions-backend")
@@ -358,15 +326,16 @@ public class TransactionsService {
                 transactionUserReceiptProjectionHandler.handle(transactionUserReceiptAddedEvent))
         .cast(TransactionActivated.class)
         .map(
-            transaction ->
-                new TransactionInfoDto()
-                    .transactionId(transaction.getTransactionId().value().toString())
-                    .paymentToken(transaction.getTransactionActivatedData().getPaymentToken())
-                    .amount(transaction.getAmount().value())
-                    .reason(transaction.getDescription().value())
-                    .rptId(transaction.getRptId().value())
-                    .status(transaction.getStatus())
-                    .authToken(null))
+                transaction ->
+                        new TransactionInfoDto()
+                                .transactionId(transaction.getTransactionId().value().toString())
+                                .payments(List.of(new PaymentInfoDto()
+                                        .paymentToken(transaction.getTransactionActivatedData().getPaymentToken())
+                                        .amount(transaction.getAmount().value())
+                                        .reason(transaction.getDescription().value())
+                                        .rptId(transaction.getRptId().value()).authToken(null)))
+                                .status(transaction.getStatus())
+        )
         .doOnNext(
             transaction ->
                 log.info(
@@ -423,33 +392,36 @@ public class TransactionsService {
   private Mono<NewTransactionResponseDto> projectActivationEvent(
       TransactionActivationRequestedEvent transactionActivateRequestedEvent,
       SessionDataDto sessionDataDto) {
-    return
-            transactionsActivationRequestedProjectionHandler
-                .handle(transactionActivateRequestedEvent)
-                .map(
-                    transaction ->
-                        new NewTransactionResponseDto()
-                            .amount(transaction.getAmount().value())
-                            .reason(transaction.getDescription().value())
-                            .transactionId(transaction.getTransactionId().value().toString())
-                            .rptId(transaction.getRptId().value())
-                            .status(transaction.getStatus())
-                            .authToken(sessionDataDto.getSessionToken()));
+      return
+              transactionsActivationRequestedProjectionHandler
+                      .handle(transactionActivateRequestedEvent)
+                      .map(
+                              transaction ->
+                                      new NewTransactionResponseDto()
+                                              .transactionId(transaction.getTransactionId().value().toString())
+                                              .payments(List.of(new PaymentInfoDto()
+                                                      .amount(transaction.getAmount().value())
+                                                      .reason(transaction.getDescription().value())
+                                                      .rptId(transaction.getRptId().value())
+                                                      .authToken(sessionDataDto.getSessionToken())))
+                                              .status(transaction.getStatus()));
   }
 
   private Mono<NewTransactionResponseDto> projectActivatedEvent(
       TransactionActivatedEvent transactionActivatedEvent, SessionDataDto sessionDataDto) {
-    return
-            transactionsActivationProjectionHandler
-                .handle(transactionActivatedEvent)
-                .map(
-                    transaction ->
-                        new NewTransactionResponseDto()
-                            .amount(transaction.getAmount().value())
-                            .reason(transaction.getDescription().value())
-                            .transactionId(transaction.getTransactionId().value().toString())
-                            .rptId(transaction.getRptId().value())
-                            .status(transaction.getStatus())
-                            .authToken(sessionDataDto.getSessionToken()));
+      return
+              transactionsActivationProjectionHandler
+                      .handle(transactionActivatedEvent)
+                      .map(
+                              transaction ->
+                                      new NewTransactionResponseDto()
+                                              .transactionId(transaction.getTransactionId().value().toString())
+                                              .payments(List.of(new PaymentInfoDto()
+                                                      .amount(transaction.getAmount().value())
+                                                      .reason(transaction.getDescription().value())
+                                                      .rptId(transaction.getRptId().value())
+                                                      .authToken(sessionDataDto.getSessionToken())))
+                                              .status(transaction.getStatus())
+                      );
   }
 }

@@ -121,12 +121,13 @@ public class TransactionServiceTests {
 		final Transaction transaction = new Transaction(TRANSACION_ID, PAYMENT_TOKEN, "77777777777111111111111111111", "reason", 100,
 				"foo@example.com", TransactionStatusDto.ACTIVATED);
 		final TransactionInfoDto expected = new TransactionInfoDto()
-		        .transactionId(TRANSACION_ID)
-				.amount(transaction.getAmount())
-				.reason("reason")
-				.paymentToken(PAYMENT_TOKEN)
-				.authToken(null)
-				.rptId("77777777777111111111111111111")
+				.transactionId(TRANSACION_ID)
+				.addPaymentsItem(new PaymentInfoDto()
+						.amount(transaction.getAmount())
+						.reason("reason")
+						.paymentToken(PAYMENT_TOKEN)
+						.authToken(null)
+						.rptId("77777777777111111111111111111"))
 				.status(TransactionStatusDto.ACTIVATED);
 
 		when(repository.findById(TRANSACION_ID)).thenReturn(Mono.just(transaction));
@@ -295,12 +296,13 @@ public class TransactionServiceTests {
 
 		TransactionInfoDto expectedResponse = new TransactionInfoDto()
 				.transactionId(transactionDocument.getTransactionId())
-				.amount(transactionDocument.getAmount())
-				.authToken(null)
-				.status(TransactionStatusDto.CLOSED)
-				.reason(transactionDocument.getDescription())
-				.paymentToken(transactionDocument.getPaymentToken())
-				.rptId(transactionDocument.getRptId());
+				.addPaymentsItem(new PaymentInfoDto()
+						.amount(transactionDocument.getAmount())
+						.authToken(null)
+						.reason(transactionDocument.getDescription())
+						.paymentToken(transactionDocument.getPaymentToken())
+						.rptId(transactionDocument.getRptId()))
+				.status(TransactionStatusDto.CLOSED);
 
 		Transaction closedTransactionDocument = new Transaction(
 				transactionDocument.getTransactionId(),
@@ -397,12 +399,13 @@ public class TransactionServiceTests {
 
 		TransactionInfoDto expectedResponse = new TransactionInfoDto()
 				.transactionId(transactionDocument.getTransactionId())
-				.amount(transactionDocument.getAmount())
-				.authToken(null)
-				.status(TransactionStatusDto.NOTIFIED)
-				.reason(transactionDocument.getDescription())
-				.paymentToken(transactionDocument.getPaymentToken())
-				.rptId(transactionDocument.getRptId());
+				.addPaymentsItem(new PaymentInfoDto()
+						.amount(transactionDocument.getAmount())
+						.authToken(null)
+						.reason(transactionDocument.getDescription())
+						.paymentToken(transactionDocument.getPaymentToken())
+						.rptId(transactionDocument.getRptId()))
+				.status(TransactionStatusDto.NOTIFIED);
 
 		/* preconditions */
 		Mockito.when(repository.findById(transactionId.value().toString()))
