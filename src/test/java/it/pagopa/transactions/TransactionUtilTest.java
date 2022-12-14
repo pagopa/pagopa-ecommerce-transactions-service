@@ -1,7 +1,7 @@
 package it.pagopa.transactions;
 
+import it.pagopa.ecommerce.commons.domain.TransactionEventCode;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
-import it.pagopa.transactions.utils.TransactionEventCode;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

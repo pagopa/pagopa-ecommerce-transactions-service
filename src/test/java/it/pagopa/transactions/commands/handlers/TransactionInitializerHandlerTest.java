@@ -6,24 +6,23 @@ import com.azure.core.http.rest.Response;
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
 import com.azure.storage.queue.models.SendMessageResult;
+import it.pagopa.ecommerce.commons.documents.TransactionActivatedData;
+import it.pagopa.ecommerce.commons.documents.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.TransactionActivationRequestedData;
+import it.pagopa.ecommerce.commons.documents.TransactionActivationRequestedEvent;
+import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
+import it.pagopa.ecommerce.commons.domain.RptId;
+import it.pagopa.ecommerce.commons.domain.TransactionEventCode;
+import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
+import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
-import it.pagopa.transactions.documents.TransactionActivatedData;
-import it.pagopa.transactions.documents.TransactionActivatedEvent;
-import it.pagopa.transactions.documents.TransactionActivationRequestedData;
-import it.pagopa.transactions.documents.TransactionActivationRequestedEvent;
-import it.pagopa.transactions.domain.IdempotencyKey;
-import it.pagopa.transactions.domain.RptId;
 import it.pagopa.transactions.projections.TransactionsProjection;
-import it.pagopa.transactions.repositories.PaymentRequestInfo;
-import it.pagopa.transactions.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
-
 import it.pagopa.transactions.utils.NodoOperations;
-import it.pagopa.transactions.utils.TransactionEventCode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -34,9 +33,7 @@ import reactor.util.function.Tuple3;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)

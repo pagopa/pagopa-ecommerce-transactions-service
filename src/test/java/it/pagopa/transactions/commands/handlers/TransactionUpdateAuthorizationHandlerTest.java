@@ -1,13 +1,13 @@
 package it.pagopa.transactions.commands.handlers;
 
-import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
-import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationStatusUpdateData;
+import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationStatusUpdatedEvent;
+import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
+import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
-import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdateData;
-import it.pagopa.transactions.documents.TransactionAuthorizationStatusUpdatedEvent;
-import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import org.junit.jupiter.api.Test;
@@ -58,7 +58,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(AuthorizationResultDto.OK)
+                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
                 .authorizationCode("authorizationCode")
                 .timestampOperation(OffsetDateTime.now());
 
@@ -69,7 +69,7 @@ class TransactionUpdateAuthorizationHandlerTest {
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(transaction.getRptId(), updateAuthorizationStatusData);
 
-        TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = new TransactionAuthorizationStatusUpdateData(AuthorizationResultDto.KO, TransactionStatusDto.AUTHORIZED);
+        TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = new TransactionAuthorizationStatusUpdateData(AuthorizationResultDto.KO, TransactionStatusDto.AUTHORIZED, "authorizationCode");
 
         TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
                 transactionId.toString(),
@@ -112,7 +112,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(AuthorizationResultDto.OK)
+                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
                 .authorizationCode("authorizationCode")
                 .timestampOperation(OffsetDateTime.now());
 
@@ -154,7 +154,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(AuthorizationResultDto.KO)
+                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.KO)
                 .authorizationCode("authorizationCode")
                 .timestampOperation(OffsetDateTime.now());
 
@@ -165,7 +165,7 @@ class TransactionUpdateAuthorizationHandlerTest {
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(transaction.getRptId(), updateAuthorizationStatusData);
 
-        TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = new TransactionAuthorizationStatusUpdateData(AuthorizationResultDto.KO, TransactionStatusDto.AUTHORIZATION_FAILED);
+        TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = new TransactionAuthorizationStatusUpdateData(AuthorizationResultDto.KO, TransactionStatusDto.AUTHORIZATION_FAILED, "authorizationCode");
 
         TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
                 transactionId.toString(),

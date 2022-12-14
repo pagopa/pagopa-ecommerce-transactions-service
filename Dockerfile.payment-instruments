@@ -13,9 +13,9 @@ COPY --from=clone ${REPO}/ .
 RUN mvn -f ./pom.xml clean package
 
 ### 3. Run stage
-FROM openjdk:17-jdk-alpine
+FROM openjdk:17-slim
 
-RUN addgroup -S spring && adduser -S spring -G spring
+RUN addgroup --system spring && adduser --system spring --ingroup spring
 USER spring:spring
 
 ARG EXTRACTED=/workspace/payment-instrument/target/

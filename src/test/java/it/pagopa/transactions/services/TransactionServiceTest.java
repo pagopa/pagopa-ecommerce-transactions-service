@@ -1,16 +1,16 @@
 package it.pagopa.transactions.services;
 
+import it.pagopa.ecommerce.commons.documents.TransactionActivatedData;
+import it.pagopa.ecommerce.commons.documents.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.TransactionActivationRequestedData;
+import it.pagopa.ecommerce.commons.documents.TransactionActivationRequestedEvent;
+import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
-import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
-import it.pagopa.transactions.documents.TransactionActivatedData;
-import it.pagopa.transactions.documents.TransactionActivatedEvent;
-import it.pagopa.transactions.documents.TransactionActivationRequestedData;
-import it.pagopa.transactions.documents.TransactionActivationRequestedEvent;
-import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.projections.handlers.TransactionsActivationProjectionHandler;
 import it.pagopa.transactions.projections.handlers.TransactionsActivationRequestedProjectionHandler;
 import org.junit.jupiter.api.Test;

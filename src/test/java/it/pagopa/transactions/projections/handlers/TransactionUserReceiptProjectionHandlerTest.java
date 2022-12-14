@@ -1,11 +1,11 @@
 package it.pagopa.transactions.projections.handlers;
 
+import it.pagopa.ecommerce.commons.documents.TransactionAddReceiptData;
+import it.pagopa.ecommerce.commons.documents.TransactionUserReceiptAddedEvent;
+import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
-import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
-import it.pagopa.transactions.documents.TransactionAddReceiptData;
-import it.pagopa.transactions.documents.TransactionUserReceiptAddedEvent;
-import it.pagopa.transactions.domain.*;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,7 +53,7 @@ class TransactionUserReceiptProjectionHandlerTest {
                 TransactionStatusDto.CLOSED
         );
 
-        it.pagopa.transactions.documents.Transaction expectedDocument = new it.pagopa.transactions.documents.Transaction(
+        it.pagopa.ecommerce.commons.documents.Transaction expectedDocument = new it.pagopa.ecommerce.commons.documents.Transaction(
                 transaction.getTransactionId().value().toString(),
                 transaction.getTransactionActivatedData().getPaymentToken(),
                 transaction.getRptId().value(),
@@ -90,7 +90,7 @@ class TransactionUserReceiptProjectionHandlerTest {
          * Preconditions
          */
         Mockito.when(viewRepository.findById(transaction.getTransactionId().value().toString()))
-                .thenReturn(Mono.just(it.pagopa.transactions.documents.Transaction.from(transaction)));
+                .thenReturn(Mono.just(it.pagopa.ecommerce.commons.documents.Transaction.from(transaction)));
 
         Mockito.when(viewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
 

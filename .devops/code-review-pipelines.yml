@@ -55,6 +55,18 @@ stages:
             jdkArchitectureOption: 'x64'
             publishJUnitResults: false
             testResultsFiles: '**/surefire-reports/TEST-*.xml'
+            goals: 'clean validate'
+            sonarQubeRunAnalysis: false
+
+        - task: Maven@3
+          inputs:
+            mavenPomFile: 'pom.xml'
+            mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
+            javaHomeOption: 'JDKVersion'
+            jdkVersionOption: '17'
+            jdkArchitectureOption: 'x64'
+            publishJUnitResults: false
+            testResultsFiles: '**/surefire-reports/TEST-*.xml'
             goals: 'clean verify'
             sonarQubeRunAnalysis: true
 

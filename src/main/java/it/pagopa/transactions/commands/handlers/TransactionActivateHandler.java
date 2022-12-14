@@ -2,14 +2,19 @@ package it.pagopa.transactions.commands.handlers;
 
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
+import it.pagopa.ecommerce.commons.documents.TransactionActivatedData;
+import it.pagopa.ecommerce.commons.documents.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.TransactionActivationRequestedData;
+import it.pagopa.ecommerce.commons.documents.TransactionActivationRequestedEvent;
+import it.pagopa.ecommerce.commons.domain.RptId;
+import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
+import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
-import it.pagopa.transactions.documents.*;
-import it.pagopa.transactions.domain.RptId;
-import it.pagopa.transactions.repositories.*;
+import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.NodoOperations;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -230,13 +235,13 @@ public class TransactionActivateHandler
                 null))
         .then(Mono.just(transactionActivatedEvent))
         .doOnError(
-            exception -> {
+            exception ->
               log.error(
                   "Error to generate event TRANSACTION_ACTIVATED_EVENT for rptId {} and transactionId {} - error {}",
                   transactionActivatedEvent.getRptId(),
                   transactionActivatedEvent.getTransactionId(),
-                  exception.getMessage());
-            })
+                  exception.getMessage())
+            )
         .doOnNext(
             event ->
                 log.info(
