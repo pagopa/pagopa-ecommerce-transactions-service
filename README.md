@@ -90,6 +90,6 @@ export $(grep -v '^#' .env.local | xargs)
 
 Then from current project directory run :
 ```sh
- mvn validate --> used to perform ecommerce-commons library checkout from git repo and install throught maven plugin
+ mvn validate  # --> used to perform ecommerce-commons library checkout from git repo and install throught maven plugin
  mvn spring-boot:run
 ```
