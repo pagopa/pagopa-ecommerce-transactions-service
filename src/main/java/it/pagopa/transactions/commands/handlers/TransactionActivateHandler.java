@@ -235,13 +235,13 @@ public class TransactionActivateHandler
                 null))
         .then(Mono.just(transactionActivatedEvent))
         .doOnError(
-            exception -> {
+            exception ->
               log.error(
                   "Error to generate event TRANSACTION_ACTIVATED_EVENT for rptId {} and transactionId {} - error {}",
                   transactionActivatedEvent.getRptId(),
                   transactionActivatedEvent.getTransactionId(),
-                  exception.getMessage());
-            })
+                  exception.getMessage())
+            )
         .doOnNext(
             event ->
                 log.info(
