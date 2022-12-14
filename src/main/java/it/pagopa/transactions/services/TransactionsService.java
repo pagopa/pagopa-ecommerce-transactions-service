@@ -102,18 +102,18 @@ public class TransactionsService {
   public Mono<TransactionInfoDto> getTransactionInfo(String transactionId) {
       log.info("Get Transaction Invoked with id {} ", transactionId);
     return transactionsViewRepository
-        .findById(transactionId)
-        .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
-        .map(
-            transaction ->
-                new TransactionInfoDto()
-                    .transactionId(transaction.getTransactionId())
-                    .amount(transaction.getAmount())
-                    .reason(transaction.getDescription())
-                    .paymentToken(transaction.getPaymentToken())
-                    .authToken(null)
-                    .rptId(transaction.getRptId())
-                    .status(transaction.getStatus()));
+            .findById(transactionId)
+            .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+            .map(
+                    transaction ->
+                            new TransactionInfoDto()
+                                    .transactionId(transaction.getTransactionId())
+                                    .amount(transaction.getAmount())
+                                    .reason(transaction.getDescription())
+                                    .paymentToken(transaction.getPaymentToken())
+                                    .authToken(null)
+                                    .rptId(transaction.getRptId())
+                                    .status(TransactionStatusDto.fromValue(transaction.getStatus().toString())));
   }
 
   @CircuitBreaker(name = "transactions-backend")
@@ -274,13 +274,13 @@ public class TransactionsService {
                       closureSentEvent -> closureSendProjectionHandler.handle(closureSentEvent))
                   .map(
                       transactionDocument ->
-                          new TransactionInfoDto()
-                              .transactionId(transactionDocument.getTransactionId())
-                              .amount(transactionDocument.getAmount())
-                              .reason(transactionDocument.getDescription())
-                              .paymentToken(transactionDocument.getPaymentToken())
-                              .rptId(transactionDocument.getRptId())
-                              .status(transactionDocument.getStatus())
+                              new TransactionInfoDto()
+                                      .transactionId(transactionDocument.getTransactionId())
+                                      .amount(transactionDocument.getAmount())
+                                      .reason(transactionDocument.getDescription())
+                                      .paymentToken(transactionDocument.getPaymentToken())
+                                      .rptId(transactionDocument.getRptId())
+                                      .status(TransactionStatusDto.fromValue(transactionDocument.getStatus().toString()))
                               .authToken(null));
             });
   }
@@ -323,13 +323,13 @@ public class TransactionsService {
         .cast(TransactionActivated.class)
         .map(
             transaction ->
-                new TransactionInfoDto()
-                    .transactionId(transaction.getTransactionId().value().toString())
-                    .paymentToken(transaction.getTransactionActivatedData().getPaymentToken())
-                    .amount(transaction.getAmount().value())
-                    .reason(transaction.getDescription().value())
-                    .rptId(transaction.getRptId().value())
-                    .status(transaction.getStatus())
+                    new TransactionInfoDto()
+                            .transactionId(transaction.getTransactionId().value().toString())
+                            .paymentToken(transaction.getTransactionActivatedData().getPaymentToken())
+                            .amount(transaction.getAmount().value())
+                            .reason(transaction.getDescription().value())
+                            .rptId(transaction.getRptId().value())
+                            .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
                     .authToken(null))
         .doOnNext(
             transaction ->
@@ -349,16 +349,16 @@ public class TransactionsService {
         .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentContextCode)))
         .map(
             activationRequestedEvent -> {
-              TransactionActivationRequested transaction =
-                  new TransactionActivationRequested(
-                      new TransactionId(UUID.fromString(activationRequestedEvent.getTransactionId())),
-                      new RptId(activationRequestedEvent.getRptId()),
-                      new TransactionDescription(activationRequestedEvent.getData().getDescription()),
-                      new TransactionAmount(activationRequestedEvent.getData().getAmount()),
-                      new Email(activationRequestedEvent.getData().getEmail()),
-                      TransactionStatusDto.ACTIVATION_REQUESTED);
-              ActivationResultData activationResultData =
-                  new ActivationResultData(transaction, activationResultRequestDto);
+                TransactionActivationRequested transaction =
+                        new TransactionActivationRequested(
+                                new TransactionId(UUID.fromString(activationRequestedEvent.getTransactionId())),
+                                new RptId(activationRequestedEvent.getRptId()),
+                                new TransactionDescription(activationRequestedEvent.getData().getDescription()),
+                                new TransactionAmount(activationRequestedEvent.getData().getAmount()),
+                                new Email(activationRequestedEvent.getData().getEmail()),
+                                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATION_REQUESTED);
+                ActivationResultData activationResultData =
+                        new ActivationResultData(transaction, activationResultRequestDto);
               return new TransactionActivateResultCommand(
                   transaction.getRptId(), activationResultData);
             })
@@ -392,12 +392,12 @@ public class TransactionsService {
                 .handle(transactionActivateRequestedEvent)
                 .map(
                     transaction ->
-                        new NewTransactionResponseDto()
-                            .amount(transaction.getAmount().value())
-                            .reason(transaction.getDescription().value())
-                            .transactionId(transaction.getTransactionId().value().toString())
-                            .rptId(transaction.getRptId().value())
-                            .status(transaction.getStatus())
+                            new NewTransactionResponseDto()
+                                    .amount(transaction.getAmount().value())
+                                    .reason(transaction.getDescription().value())
+                                    .transactionId(transaction.getTransactionId().value().toString())
+                                    .rptId(transaction.getRptId().value())
+                                    .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
                             .authToken(sessionDataDto.getSessionToken()));
   }
 
@@ -413,7 +413,7 @@ public class TransactionsService {
                                                 .reason(transaction.getDescription().value())
                                                 .transactionId(transaction.getTransactionId().value().toString())
                                                 .rptId(transaction.getRptId().value())
-                            .status(transaction.getStatus())
+                                                .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
                             .authToken(sessionDataDto.getSessionToken()));
   }
 }

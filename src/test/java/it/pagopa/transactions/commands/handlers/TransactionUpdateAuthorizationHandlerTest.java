@@ -3,8 +3,8 @@ package it.pagopa.transactions.commands.handlers;
 import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationStatusUpdateData;
 import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationStatusUpdatedEvent;
 import it.pagopa.ecommerce.commons.domain.*;
-import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
-import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
+import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
@@ -58,7 +58,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(AuthorizationResultDto.OK)
+                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
                 .authorizationCode("authorizationCode")
                 .timestampOperation(OffsetDateTime.now());
 
@@ -112,7 +112,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(AuthorizationResultDto.OK)
+                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
                 .authorizationCode("authorizationCode")
                 .timestampOperation(OffsetDateTime.now());
 
@@ -154,7 +154,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(AuthorizationResultDto.KO)
+                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.KO)
                 .authorizationCode("authorizationCode")
                 .timestampOperation(OffsetDateTime.now());
 

@@ -3,8 +3,8 @@ package it.pagopa.transactions.projections.handlers;
 import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationStatusUpdateData;
 import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationStatusUpdatedEvent;
 import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
-import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
@@ -47,7 +47,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 new Email("email@example.com"),
                 "faultCode",
                 "faultCodeString",
-                TransactionStatusDto.AUTHORIZATION_REQUESTED);
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_REQUESTED);
 
         it.pagopa.ecommerce.commons.documents.Transaction expectedDocument = new it.pagopa.ecommerce.commons.documents.Transaction(
                 transaction.getTransactionId().value().toString(),
@@ -56,13 +56,13 @@ class AuthorizationUpdateProjectionHandlerTest {
                 transaction.getDescription().value(),
                 transaction.getAmount().value(),
                 transaction.getEmail().value(),
-                TransactionStatusDto.AUTHORIZED,
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZED,
                 transaction.getCreationDate()
         );
 
         TransactionAuthorizationStatusUpdateData statusUpdateData =
                 new TransactionAuthorizationStatusUpdateData(
-                        updateAuthorizationRequest.getAuthorizationResult(),
+                        it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto.fromValue(updateAuthorizationRequest.getAuthorizationResult().toString()),
                         expectedDocument.getStatus(),
                         "authorizationCode"
                 );

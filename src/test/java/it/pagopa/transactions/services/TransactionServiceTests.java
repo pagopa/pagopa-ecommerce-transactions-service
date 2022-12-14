@@ -26,6 +26,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.data.redis.AutoConfigureDataRedis;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
@@ -56,6 +57,7 @@ import static org.mockito.Mockito.when;
 		TransactionActivateResultHandler.class,
 		TransactionsEventStoreRepository.class,
 		TransactionsActivationProjectionHandler.class})
+@AutoConfigureDataRedis
 public class TransactionServiceTests {
 	@MockBean
 	private TransactionsViewRepository repository;
@@ -119,9 +121,9 @@ public class TransactionServiceTests {
 	void getTransactionReturnsTransactionData() {
 
 		final Transaction transaction = new Transaction(TRANSACION_ID, PAYMENT_TOKEN, "77777777777111111111111111111", "reason", 100,
-				"foo@example.com", TransactionStatusDto.ACTIVATED);
+				"foo@example.com", it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED);
 		final TransactionInfoDto expected = new TransactionInfoDto()
-		        .transactionId(TRANSACION_ID)
+				.transactionId(TRANSACION_ID)
 				.amount(transaction.getAmount())
 				.reason("reason")
 				.paymentToken(PAYMENT_TOKEN)
@@ -164,13 +166,13 @@ public class TransactionServiceTests {
 				.pspId("PSP_CODE");
 
 		Transaction transaction = new Transaction(
-			    TRANSACION_ID,
+				TRANSACION_ID,
 				PAYMENT_TOKEN,
 				"77777777777111111111111111111",
 				"description",
 				100,
 				"foo@example.com",
-				TransactionStatusDto.ACTIVATED);
+				it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED);
 
 		/* preconditions */
 		List<PspDto> pspDtoList = new ArrayList<>();
@@ -246,13 +248,13 @@ public class TransactionServiceTests {
 	    TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
 		Transaction transactionDocument = new Transaction(
-			    transactionId.value().toString(),
+				transactionId.value().toString(),
 				PAYMENT_TOKEN,
 				"77777777777111111111111111111",
 				"description",
 				100,
 				"foo@example.com",
-				TransactionStatusDto.AUTHORIZATION_REQUESTED);
+				it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_REQUESTED);
 
 		TransactionActivated transaction = new TransactionActivated(
 				new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
@@ -273,8 +275,8 @@ public class TransactionServiceTests {
 
 		TransactionAuthorizationStatusUpdateData statusUpdateData =
 				new TransactionAuthorizationStatusUpdateData(
-						updateAuthorizationRequest.getAuthorizationResult(),
-						TransactionStatusDto.AUTHORIZED,
+						it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto.fromValue(updateAuthorizationRequest.getAuthorizationResult().toString()),
+						it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZED,
 						"authorizationCode"
 				);
 
@@ -285,7 +287,7 @@ public class TransactionServiceTests {
 				statusUpdateData
 		);
 
-		TransactionClosureSendData closureSendData = new TransactionClosureSendData(ClosePaymentResponseDto.OutcomeEnum.OK, TransactionStatusDto.CLOSED);
+		TransactionClosureSendData closureSendData = new TransactionClosureSendData(ClosePaymentResponseDto.OutcomeEnum.OK, it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSED);
 
 		TransactionClosureSentEvent closureSentEvent = new TransactionClosureSentEvent(
 				transactionDocument.getTransactionId(),
@@ -310,7 +312,7 @@ public class TransactionServiceTests {
 				transactionDocument.getDescription(),
 				transactionDocument.getAmount(),
 				transactionDocument.getEmail(),
-				TransactionStatusDto.CLOSED);
+				it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSED);
 
 		/* preconditions */
 		Mockito.when(repository.findById(transactionId.value().toString()))
@@ -356,13 +358,13 @@ public class TransactionServiceTests {
 	    TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
 		Transaction transactionDocument = new Transaction(
-			    transactionId.value().toString(),
+				transactionId.value().toString(),
 				PAYMENT_TOKEN,
 				"77777777777111111111111111111",
 				"description",
 				100,
 				"foo@example.com",
-				TransactionStatusDto.CLOSED);
+				it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSED);
 
 		TransactionActivated transaction = new TransactionActivated(
 				new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
@@ -371,10 +373,10 @@ public class TransactionServiceTests {
 				new TransactionDescription(transactionDocument.getDescription()),
 				new TransactionAmount(transactionDocument.getAmount()),
 				new Email(transactionDocument.getEmail()),
-                null, null, TransactionStatusDto.NOTIFIED
+				null, null, it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED
 		);
 
-		TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(TransactionStatusDto.NOTIFIED);
+		TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED);
 
 		TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
 				transactionDocument.getTransactionId(),
@@ -475,7 +477,7 @@ public class TransactionServiceTests {
 				"Description",
 				100,
 				"foo@example.com",
-				TransactionStatusDto.ACTIVATION_REQUESTED
+				it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATION_REQUESTED
 		);
 
 		RptId rtpId = new RptId("77777777777111111111111111111");
@@ -492,7 +494,7 @@ public class TransactionServiceTests {
 				new Email("foo@example.com"),
 				faultCode,
 				faultCodeString,
-				TransactionStatusDto.AUTHORIZATION_REQUESTED
+				it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_REQUESTED
 		);
 
 		TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
@@ -549,7 +551,7 @@ public class TransactionServiceTests {
 				"description",
 				100,
 				"foo@example.com",
-				TransactionStatusDto.ACTIVATED);
+				it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED);
 
 		/* preconditions */
 		List<PspDto> pspDtoList = new ArrayList<>();

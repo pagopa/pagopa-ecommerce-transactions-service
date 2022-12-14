@@ -191,6 +191,10 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <jvmArguments>--enable-preview</jvmArguments>
+                </configuration>
+
             </plugin>
             <plugin>
                 <groupId>org.openapitools</groupId>
@@ -499,27 +503,6 @@
                             <targetPackage>it.pagopa.generated.notifications.templates.ko</targetPackage>
                             <classNameSuffix>Template</classNameSuffix>
                             <includeConstructors>true</includeConstructors>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>event-schemas</id>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <sourcePaths>
-                                <sourcePath>${basedir}/src/main/resources/schemas/events/v1/event_version.json</sourcePath>
-                                <sourcePath>${basedir}/src/main/resources/schemas/events/v1/transaction_activated_event.json</sourcePath>
-                                <sourcePath>${basedir}/src/main/resources/schemas/events/v1/transaction_activation_requested_event.json</sourcePath>
-                                <sourcePath>${basedir}/src/main/resources/schemas/events/v1/transaction_authorization_requested_event.json</sourcePath>
-                                <sourcePath>${basedir}/src/main/resources/schemas/events/v1/transaction_authorization_status_updated_event.json</sourcePath>
-                                <sourcePath>${basedir}/src/main/resources/schemas/events/v1/transaction_closure_sent_event.json</sourcePath>
-                                <sourcePath>${basedir}/src/main/resources/schemas/events/v1/transaction_user_receipt_added_event.json</sourcePath>
-                            </sourcePaths>
-                            <targetPackage>it.pagopa.generated.ecommerce.events.v1</targetPackage>
-                            <includeConstructors>true</includeConstructors>
-                            <generateBuilders>true</generateBuilders>
-                            <usePrimitives>true</usePrimitives>
                         </configuration>
                     </execution>
                 </executions>

@@ -5,9 +5,9 @@ import it.pagopa.ecommerce.commons.domain.EmptyTransaction;
 import it.pagopa.ecommerce.commons.domain.Transaction;
 import it.pagopa.ecommerce.commons.domain.TransactionWithCompletedAuthorization;
 import it.pagopa.ecommerce.commons.domain.pojos.BaseTransaction;
+import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
+import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
-import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
-import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
@@ -48,7 +48,7 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
 
         return transaction
                 .cast(BaseTransaction.class)
-                .filter(t -> t.getStatus() == TransactionStatusDto.AUTHORIZED)
+                .filter(t -> t.getStatus() == it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZED)
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(TransactionWithCompletedAuthorization.class)
                 .flatMap(tx -> {

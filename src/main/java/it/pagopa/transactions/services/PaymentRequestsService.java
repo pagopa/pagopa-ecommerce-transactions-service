@@ -2,6 +2,7 @@ package it.pagopa.transactions.services;
 
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
+import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.generated.nodoperpsp.model.*;
 import it.pagopa.generated.payment.requests.model.PaymentRequestsGetResponseDto;
 import it.pagopa.generated.transactions.model.CtQrCode;
@@ -10,7 +11,6 @@ import it.pagopa.generated.transactions.model.VerifyPaymentNoticeReq;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NodoPerPspClient;
 import it.pagopa.transactions.exceptions.NodoErrorException;
-import it.pagopa.transactions.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.transactions.utils.NodoOperations;
 import it.pagopa.transactions.utils.NodoUtilities;
 import lombok.extern.slf4j.Slf4j;

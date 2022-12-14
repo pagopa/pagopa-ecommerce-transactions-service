@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.data.redis.AutoConfigureDataRedis;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
@@ -42,10 +43,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @ExtendWith(MockitoExtension.class)
 @WebFluxTest(TransactionsController.class)
 @TestPropertySource(locations = "classpath:application-tests.properties")
+@AutoConfigureDataRedis
 class TransactionsControllerTest {
 
     @InjectMocks
     private TransactionsController transactionsController = new TransactionsController();
+
 
     @MockBean
     private TransactionsService transactionsService;
