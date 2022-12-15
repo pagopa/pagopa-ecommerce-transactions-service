@@ -3,6 +3,7 @@ package it.pagopa.transactions.commands.handlers;
 import com.azure.core.util.BinaryData;
 import com.azure.cosmos.implementation.BadRequestException;
 import com.azure.storage.queue.QueueAsyncClient;
+import it.pagopa.ecommerce.commons.documents.NoticeCode;
 import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationRequestedEvent;
 import it.pagopa.ecommerce.commons.domain.TransactionActivated;
@@ -20,6 +21,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
 import java.time.Duration;
+import java.util.Arrays;
 
 @Component
 @Slf4j
@@ -43,13 +45,13 @@ public class TransactionRequestAuthorizationHandler
 
         if (transaction.getStatus() != TransactionStatusDto.ACTIVATED) {
             log.warn("Invalid state transition: requested authorization for transaction {} from status {}",
-                    transaction.getTransactionActivatedData().getPaymentToken(), transaction.getStatus());
-            return Mono.error(new AlreadyProcessedException(transaction.getRptId()));
+                    transaction.getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken(), transaction.getStatus());
+            return Mono.error(new AlreadyProcessedException(transaction.getNoticeCodes().get(0).rptId()));
         }
 
         return paymentGatewayClient.requestGeneralAuthorization(command.getData())
                 .flatMap(authResponse -> {
-                    log.info("Logging authorization event for rpt id {}", transaction.getRptId().value());
+                    log.info("Logging authorization event for rpt id {}", transaction.getNoticeCodes().get(0).rptId().value());
 
                     if(!authResponse.getT1().isPresent() && !authResponse.getT2().isPresent()) {
                         return Mono.error(new BadRequestException("No gateway matched"));
@@ -65,12 +67,20 @@ public class TransactionRequestAuthorizationHandler
 
                     return monoPostePay.switchIfEmpty(monoXPay)
                             .flatMap(tuple2 -> {
+
                                 TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                                         transaction.getTransactionId().value().toString(),
-                                        transaction.getRptId().value(),
-                                        transaction.getTransactionActivatedData().getPaymentToken(),
+                                        transaction.getNoticeCodes().stream().map(
+                                                noticeCode ->  new NoticeCode(
+                                                        transaction.getTransactionActivatedData().getNoticeCodes().
+                                                                stream().filter(noticeCode1 -> noticeCode1.getRptId().equals(noticeCode.rptId().value())).findFirst().get()
+                                                                .getPaymentToken(),
+                                                        noticeCode.rptId().value(),
+                                                        noticeCode.transactionDescription().value(),
+                                                        noticeCode.transactionAmount().value()
+                                        )).toList(),
                                         new TransactionAuthorizationRequestData(
-                                                command.getData().transaction().getAmount().value(),
+                                                command.getData().transaction().getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum(),
                                                 command.getData().fee(),
                                                 command.getData().paymentInstrumentId(),
                                                 command.getData().pspId(),

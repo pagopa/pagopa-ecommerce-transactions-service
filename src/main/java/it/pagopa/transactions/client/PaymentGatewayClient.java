@@ -54,14 +54,15 @@ public class PaymentGatewayClient {
                 .switchIfEmpty(Mono.empty())
             .map(authorizationRequestData ->
                 new PostePayAuthRequestDto()
-                    .grandTotal(BigDecimal.valueOf(((long) authorizationData.transaction().getAmount().value()) + authorizationData.fee()))
-                    .description(authorizationData.transaction().getDescription().value())
+                    .grandTotal(BigDecimal.valueOf(((long) authorizationData.transaction().getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()) + authorizationData.fee()))
+                    .description(authorizationData.transaction().getNoticeCodes().get(0).transactionDescription().value())
                     .paymentChannel(authorizationData.pspChannelCode())
                     .idTransaction(authorizationData.transaction().getTransactionId().value().toString()))
             .flatMap(payAuthRequestDto ->
                     paymentTransactionGatewayPostepayWebClient.authRequest(payAuthRequestDto, false, encodeMdcFields(authorizationData))
                     .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
-                            case UNAUTHORIZED -> new AlreadyProcessedException(authorizationData.transaction().getRptId());
+                        //FIXME Handle multiple rptId
+                            case UNAUTHORIZED -> new AlreadyProcessedException(authorizationData.transaction().getNoticeCodes().get(0).rptId());
                             case GATEWAY_TIMEOUT -> new GatewayTimeoutException();
                             case INTERNAL_SERVER_ERROR -> new BadGatewayException("");
                             default -> exception;
@@ -83,7 +84,7 @@ public class PaymentGatewayClient {
                                 .pan(cardData.getPan())
                                 .exipiryDate(cardData.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM")))
                                 .idTransaction(authorizationData.transaction().getTransactionId().value().toString())
-                                .grandTotal(BigDecimal.valueOf(((long) authorizationData.transaction().getAmount().value()) + authorizationData.fee())));
+                                .grandTotal(BigDecimal.valueOf(((long) authorizationData.transaction().getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()) + authorizationData.fee())));
                     } else {
                         xPayAuthRequest = Mono.error(new InvalidRequestException("Cannot perform XPAY authorization for null input CardAuthRequestDetailsDto"));
                     }
@@ -92,8 +93,9 @@ public class PaymentGatewayClient {
                 .flatMap(xPayAuthRequestDto ->
                         paymentTransactionGatewayXPayWebClient.authRequestXpay(xPayAuthRequestDto, encodeMdcFields(authorizationData))
                                 .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
+                                    //FIXME Handle multiple rptId
                                     case UNAUTHORIZED ->
-                                            new AlreadyProcessedException(authorizationData.transaction().getRptId()); //401
+                                            new AlreadyProcessedException(authorizationData.transaction().getNoticeCodes().get(0).rptId()); //401
                                     case INTERNAL_SERVER_ERROR -> new BadGatewayException(""); //500
                                     default -> exception;
                                 })
