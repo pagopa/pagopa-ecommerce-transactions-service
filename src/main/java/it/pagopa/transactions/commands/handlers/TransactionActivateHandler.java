@@ -85,7 +85,7 @@ public class TransactionActivateHandler
       handle(TransactionActivateCommand command) {
     final RptId rptId = command.getRptId();
     final NewTransactionRequestDto newTransactionRequestDto = command.getData();
-    final String paymentContextCode = newTransactionRequestDto.getPaymentContextCode();
+    final String paymentContextCode = newTransactionRequestDto.getPaymentNotices().get(0).getPaymentContextCode();
 
     return getPaymentRequestInfoFromCache(rptId)
         .doOnNext(

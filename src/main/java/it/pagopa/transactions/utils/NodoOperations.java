@@ -53,9 +53,9 @@ public class NodoOperations {
           NewTransactionRequestDto newTransactionRequestDto) {
 
     RptId rptId = paymentRequestInfo.id();
-    String paymentContextCode = newTransactionRequestDto.getPaymentContextCode();
+    String paymentContextCode = newTransactionRequestDto.getPaymentNotices().get(0).getPaymentContextCode();
     Boolean isNM3 = paymentRequestInfo.isNM3();
-    Integer amount = newTransactionRequestDto.getAmount();
+    Integer amount = newTransactionRequestDto.getPaymentNotices().get(0).getAmount();
     String paTaxCode = paymentRequestInfo.paFiscalCode();
     String paName = paymentRequestInfo.paName();
     IdempotencyKey idempotencyKey = Optional.ofNullable(paymentRequestInfo.idempotencyKey())

@@ -72,15 +72,18 @@ class TransactionsControllerTest {
         String EMAIL = "mario.rossi@email.com";
 
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
-        newTransactionRequestDto.setRptId(RPTID);
+        newTransactionRequestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(RPTID));
         newTransactionRequestDto.setEmail(EMAIL);
 
         NewTransactionResponseDto response = new NewTransactionResponseDto();
-        response.setAmount(10);
-        response.setAuthToken("token");
-        response.setReason("Reason");
-        response.setPaymentToken("payment_token");
-        response.setRptId(RPTID);
+        PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
+
+        paymentInfoDto.setAmount(10);
+        paymentInfoDto.setAuthToken("token");
+        paymentInfoDto.setReason("Reason");
+        paymentInfoDto.setPaymentToken("payment_token");
+        paymentInfoDto.setRptId(RPTID);
+        response.addPaymentsItem(paymentInfoDto);
 
         Mockito.lenient().when(transactionsService.newTransaction(newTransactionRequestDto))
                 .thenReturn(Mono.just(response));
@@ -100,10 +103,12 @@ class TransactionsControllerTest {
     void shouldGetTransactionInfoGetPaymentToken() {
 
         TransactionInfoDto response = new TransactionInfoDto();
-        response.setAmount(10);
-        response.setAuthToken("token");
-        response.setReason("Reason");
-        response.setPaymentToken("payment_token");
+        PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
+        paymentInfoDto.setAmount(10);
+        paymentInfoDto.setAuthToken("token");
+        paymentInfoDto.setReason("Reason");
+        paymentInfoDto.setPaymentToken("payment_token");
+        response.addPaymentsItem(paymentInfoDto);
 
         String paymentToken = UUID.randomUUID().toString();
 
@@ -174,10 +179,11 @@ class TransactionsControllerTest {
         String paymentToken = "paymentToken";
 
         TransactionInfoDto transactionInfo = new TransactionInfoDto()
-                .amount(100)
-                .authToken("authToken")
-                .status(TransactionStatusDto.AUTHORIZED)
-                .paymentToken(paymentToken);
+                .addPaymentsItem(new PaymentInfoDto()
+                        .amount(100)
+                        .authToken("authToken")
+                        .paymentToken(paymentToken))
+                .status(TransactionStatusDto.AUTHORIZED);
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .authorizationResult(AuthorizationResultDto.OK)
@@ -355,24 +361,25 @@ class TransactionsControllerTest {
 
         @Test
     void shouldReturnTransactionInfoOnCorrectNotify() {
-        String paymentToken = UUID.randomUUID().toString();
-        String transactionId = UUID.randomUUID().toString();
+            String paymentToken = UUID.randomUUID().toString();
+            String transactionId = UUID.randomUUID().toString();
 
-        TransactionInfoDto transactionInfo = new TransactionInfoDto()
-                .transactionId(transactionId)
-                .amount(100)
-                .status(TransactionStatusDto.NOTIFIED)
-                .paymentToken(paymentToken);
+            TransactionInfoDto transactionInfo = new TransactionInfoDto()
+                    .transactionId(transactionId)
+                    .addPaymentsItem(new PaymentInfoDto()
+                            .amount(100)
+                            .paymentToken(paymentToken))
+                    .status(TransactionStatusDto.NOTIFIED);
 
-        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
-                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
-                .paymentDate(OffsetDateTime.now())
-                .addPaymentsItem(new AddUserReceiptRequestPaymentsInnerDto()
-                        .paymentToken("paymentToken")
-                        .companyName("companyName")
-                        .creditorReferenceId("creditorReferenceId")
-                        .description("description")
-                        .debtor("debtor")
+            AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                    .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                    .paymentDate(OffsetDateTime.now())
+                    .addPaymentsItem(new AddUserReceiptRequestPaymentsInnerDto()
+                            .paymentToken("paymentToken")
+                            .companyName("companyName")
+                            .creditorReferenceId("creditorReferenceId")
+                            .description("description")
+                            .debtor("debtor")
                         .fiscalCode("fiscalCode")
                         .officeName("officeName")
                 );

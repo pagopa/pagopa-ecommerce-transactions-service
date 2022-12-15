@@ -11,6 +11,7 @@ import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.generated.ecommerce.nodo.v1.dto.InformazioniPagamentoDto;
 import it.pagopa.generated.transactions.server.model.ActivationResultRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
+import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.client.NodoPerPM;
 import it.pagopa.transactions.commands.TransactionActivateResultCommand;
 import it.pagopa.transactions.commands.data.ActivationResultData;
@@ -58,10 +59,10 @@ class TransactionActivateResultHandlerTest {
         Integer amount = Integer.valueOf(1000);
 
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
-        requestDto.setRptId(rptId.value());
+        requestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto()
+                .rptId(rptId.value())
+                .amount(1200));
         requestDto.setEmail("jhon.doe@email.com");
-        requestDto.setAmount(1200);
-
         ActivationResultRequestDto activationResultRequestDto =
                 new ActivationResultRequestDto()
                         .paymentToken(paymentToken);
@@ -93,30 +94,31 @@ class TransactionActivateResultHandlerTest {
         @Test
     void shouldHandleCommandForTransactionActivateResultCallingChiediInfoNodo() {
 
-        RptId rptId = new RptId("77777777777302016723749670035");
-        IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
-        String transactionId = UUID.randomUUID().toString();
-        String paymentToken = UUID.randomUUID().toString();
-        String idCarrello = UUID.randomUUID().toString();
-        String paName = "paName";
-        String paTaxcode = "77777777777";
-        String description = "Description";
-        Integer amount = Integer.valueOf(1000);
+            RptId rptId = new RptId("77777777777302016723749670035");
+            IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
+            String transactionId = UUID.randomUUID().toString();
+            String paymentToken = UUID.randomUUID().toString();
+            String idCarrello = UUID.randomUUID().toString();
+            String paName = "paName";
+            String paTaxcode = "77777777777";
+            String description = "Description";
+            Integer amount = Integer.valueOf(1000);
 
-        NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
-        requestDto.setRptId(rptId.value());
-        requestDto.setEmail("jhon.doe@email.com");
-        requestDto.setAmount(1200);
+            NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
+            requestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto()
+                    .rptId(rptId.value())
+                    .amount(1200));
+            requestDto.setEmail("jhon.doe@email.com");
 
-        ReflectionTestUtils.setField(handler, "paymentTokenTimeout", 300);
+            ReflectionTestUtils.setField(handler, "paymentTokenTimeout", 300);
 
-        ActivationResultRequestDto activationResultRequestDto =
-                new ActivationResultRequestDto()
-                        .paymentToken(paymentToken);
+            ActivationResultRequestDto activationResultRequestDto =
+                    new ActivationResultRequestDto()
+                            .paymentToken(paymentToken);
 
             TransactionActivationRequested transaction = new TransactionActivationRequested(
-                new TransactionId(UUID.fromString(transactionId)),
-                rptId,
+                    new TransactionId(UUID.fromString(transactionId)),
+                    rptId,
                 new TransactionDescription("testTransactionDescription"),
                 new TransactionAmount(amount),
                 new Email(requestDto.getEmail()),
@@ -192,9 +194,10 @@ class TransactionActivateResultHandlerTest {
         Integer amount = Integer.valueOf(1000);
 
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
-        requestDto.setRptId(rptId.value());
+        requestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto()
+                .rptId(rptId.value())
+                .amount(1200));
         requestDto.setEmail("jhon.doe@email.com");
-        requestDto.setAmount(1200);
 
         ActivationResultRequestDto activationResultRequestDto =
                 new ActivationResultRequestDto()
@@ -239,9 +242,10 @@ class TransactionActivateResultHandlerTest {
         Integer amount = Integer.valueOf(1000);
 
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
-        requestDto.setRptId(rptId.value());
+        requestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto()
+                .rptId(rptId.value())
+                .amount(1200));
         requestDto.setEmail("jhon.doe@email.com");
-        requestDto.setAmount(1200);
 
         ActivationResultRequestDto activationResultRequestDto =
                 new ActivationResultRequestDto()

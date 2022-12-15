@@ -18,6 +18,8 @@ import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
+import it.pagopa.generated.transactions.server.model.PaymentInfoDto;
+import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.projections.TransactionsProjection;
@@ -81,23 +83,25 @@ class TransactionInitializerHandlerTest {
     Integer amount = Integer.valueOf(1000);
 
     NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
-    requestDto.setRptId(rptId.value());
+    PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto();
+    requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
+    paymentNoticeInfoDto.setRptId(rptId.value());
     requestDto.setEmail("jhon.doe@email.com");
-    requestDto.setAmount(1200);
-    requestDto.setPaymentContextCode(UUID.randomUUID().toString().replace("-", ""));
+    paymentNoticeInfoDto.setAmount(1200);
+    paymentNoticeInfoDto.setPaymentContextCode(UUID.randomUUID().toString().replace("-", ""));
     TransactionActivateCommand command = new TransactionActivateCommand(rptId, requestDto);
 
     PaymentRequestInfo paymentRequestInfoCached =
-        new PaymentRequestInfo(
-            rptId,
-            paTaxcode,
-            paName,
-            description,
-            amount,
-            null,
-            true,
-            paymentToken,
-            idempotencyKey);
+            new PaymentRequestInfo(
+                    rptId,
+                    paTaxcode,
+                    paName,
+                    description,
+                    amount,
+                    null,
+                    true,
+                    paymentToken,
+                    idempotencyKey);
 
     SessionDataDto sessionDataDto =
         new SessionDataDto()
@@ -152,22 +156,24 @@ class TransactionInitializerHandlerTest {
     TransactionsProjection<NewTransactionResponseDto> transactionsProjection =
         new TransactionsProjection<>();
     transactionsProjection.setData(
-        new NewTransactionResponseDto()
-            .amount(1)
-            .rptId(TEST_RPTID)
-            .paymentToken(TEST_TOKEN)
-            .authToken(TEST_TOKEN)
-            .reason(""));
+            new NewTransactionResponseDto()
+                    .addPaymentsItem(new PaymentInfoDto()
+                            .amount(1)
+                            .rptId(TEST_RPTID)
+                            .paymentToken(TEST_TOKEN)
+                            .authToken(TEST_TOKEN)
+                            .reason("")));
 
     TransactionsProjection<NewTransactionResponseDto> differentTransactionsProjection =
         new TransactionsProjection<>();
     differentTransactionsProjection.setData(
-        new NewTransactionResponseDto()
-            .amount(1)
-            .rptId(TEST_RPTID)
-            .paymentToken(TEST_TOKEN)
-            .authToken(TEST_TOKEN)
-            .reason(""));
+            new NewTransactionResponseDto()
+                    .addPaymentsItem(new PaymentInfoDto()
+                            .amount(1)
+                            .rptId(TEST_RPTID)
+                            .paymentToken(TEST_TOKEN)
+                            .authToken(TEST_TOKEN)
+                            .reason("")));
 
     differentTransactionsProjection.setRptId(new RptId(TEST_RPTID));
 
