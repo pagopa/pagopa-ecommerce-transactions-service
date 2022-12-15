@@ -11,7 +11,11 @@ public class UnsatisfiablePspRequestException extends Exception {
     private final RequestAuthorizationRequestDto.LanguageEnum language;
     private final int requestedFee;
 
-    public UnsatisfiablePspRequestException(PaymentToken paymentToken, RequestAuthorizationRequestDto.LanguageEnum language, int requestedFee) {
+    public UnsatisfiablePspRequestException(
+            PaymentToken paymentToken,
+            RequestAuthorizationRequestDto.LanguageEnum language,
+            int requestedFee
+    ) {
         this.paymentToken = paymentToken;
         this.language = language;
         this.requestedFee = requestedFee;

@@ -20,19 +20,31 @@ public class TransactionsActivationRequestedProjectionHandler
     private TransactionsViewRepository viewEventStoreRepository;
 
     @Override
-    public Mono<TransactionActivationRequested> handle(TransactionActivationRequestedEvent transactionActivationRequestedEvent) {
+    public Mono<TransactionActivationRequested> handle(
+                                                       TransactionActivationRequestedEvent transactionActivationRequestedEvent
+    ) {
 
-        TransactionId transactionId = new TransactionId(UUID.fromString(transactionActivationRequestedEvent.getTransactionId()));
+        TransactionId transactionId = new TransactionId(
+                UUID.fromString(transactionActivationRequestedEvent.getTransactionId())
+        );
         RptId rptId = new RptId(transactionActivationRequestedEvent.getRptId());
-        TransactionDescription description = new TransactionDescription(transactionActivationRequestedEvent.getData().getDescription());
+        TransactionDescription description = new TransactionDescription(
+                transactionActivationRequestedEvent.getData().getDescription()
+        );
         TransactionAmount amount = new TransactionAmount(transactionActivationRequestedEvent.getData().getAmount());
         Email email = new Email(transactionActivationRequestedEvent.getData().getEmail());
 
-        TransactionActivationRequested transaction =
-                new TransactionActivationRequested(transactionId, rptId, description, amount, email, TransactionStatusDto.ACTIVATION_REQUESTED);
+        TransactionActivationRequested transaction = new TransactionActivationRequested(
+                transactionId,
+                rptId,
+                description,
+                amount,
+                email,
+                TransactionStatusDto.ACTIVATION_REQUESTED
+        );
 
-        it.pagopa.ecommerce.commons.documents.Transaction transactionDocument =
-                it.pagopa.ecommerce.commons.documents.Transaction.from(transaction);
+        it.pagopa.ecommerce.commons.documents.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.Transaction
+                .from(transaction);
 
         return viewEventStoreRepository
                 .save(transactionDocument)

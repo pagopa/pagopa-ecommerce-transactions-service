@@ -14,7 +14,8 @@ import java.util.UUID;
 
 @Component
 @Slf4j
-public class TransactionUserReceiptProjectionHandler implements ProjectionHandler<TransactionUserReceiptAddedEvent, Mono<Transaction>> {
+public class TransactionUserReceiptProjectionHandler
+        implements ProjectionHandler<TransactionUserReceiptAddedEvent, Mono<Transaction>> {
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
 
@@ -26,16 +27,19 @@ public class TransactionUserReceiptProjectionHandler implements ProjectionHandle
                     transactionDocument.setStatus(data.getData().getNewTransactionStatus());
                     return transactionsViewRepository.save(transactionDocument);
                 })
-                .map(transactionDocument -> new TransactionActivated(
-                        new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
-                        new PaymentToken(transactionDocument.getPaymentToken()),
-                        new RptId(transactionDocument.getRptId()),
-                        new TransactionDescription(transactionDocument.getDescription()),
-                        new TransactionAmount(transactionDocument.getAmount()),
-                        new Email(transactionDocument.getEmail()),
-                        null,
-                        null,
-                        ZonedDateTime.parse(transactionDocument.getCreationDate()),
-                        transactionDocument.getStatus()));
+                .map(
+                        transactionDocument -> new TransactionActivated(
+                                new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
+                                new PaymentToken(transactionDocument.getPaymentToken()),
+                                new RptId(transactionDocument.getRptId()),
+                                new TransactionDescription(transactionDocument.getDescription()),
+                                new TransactionAmount(transactionDocument.getAmount()),
+                                new Email(transactionDocument.getEmail()),
+                                null,
+                                null,
+                                ZonedDateTime.parse(transactionDocument.getCreationDate()),
+                                transactionDocument.getStatus()
+                        )
+                );
     }
 }

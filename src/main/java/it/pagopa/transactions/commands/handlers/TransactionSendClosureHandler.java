@@ -26,7 +26,8 @@ import java.util.UUID;
 
 @Component
 @Slf4j
-public class TransactionSendClosureHandler implements CommandHandler<TransactionClosureSendCommand, Mono<TransactionClosureSentEvent>> {
+public class TransactionSendClosureHandler
+        implements CommandHandler<TransactionClosureSendCommand, Mono<TransactionClosureSentEvent>> {
 
     @Autowired
     private TransactionsEventStoreRepository<TransactionClosureSendData> transactionEventStoreRepository;
@@ -39,7 +40,9 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
 
     @Override
     public Mono<TransactionClosureSentEvent> handle(TransactionClosureSendCommand command) {
-        Mono<Transaction> transaction = replayTransactionEvents(command.getData().transaction().getTransactionId().value());
+        Mono<Transaction> transaction = replayTransactionEvents(
+                command.getData().transaction().getTransactionId().value()
+        );
 
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
                 .cast(BaseTransaction.class)
@@ -48,29 +51,45 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
 
         return transaction
                 .cast(BaseTransaction.class)
-                .filter(t -> t.getStatus() == it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZED)
+                .filter(
+                        t -> t.getStatus() == it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZED
+                )
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(TransactionWithCompletedAuthorization.class)
                 .flatMap(tx -> {
-                    UpdateAuthorizationRequestDto updateAuthorizationRequestDto = command.getData().updateAuthorizationRequest();
-                    TransactionAuthorizationRequestData transactionAuthorizationRequestData = tx.getTransactionAuthorizationRequestData();
-                    TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = tx.getTransactionAuthorizationStatusUpdateData();
+                    UpdateAuthorizationRequestDto updateAuthorizationRequestDto = command.getData()
+                            .updateAuthorizationRequest();
+                    TransactionAuthorizationRequestData transactionAuthorizationRequestData = tx
+                            .getTransactionAuthorizationRequestData();
+                    TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = tx
+                            .getTransactionAuthorizationStatusUpdateData();
 
                     ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                             .paymentTokens(List.of(tx.getTransactionActivatedData().getPaymentToken()))
-                            .outcome(authorizationResultToOutcomeV2(transactionAuthorizationStatusUpdateData.getAuthorizationResult()))
+                            .outcome(
+                                    authorizationResultToOutcomeV2(
+                                            transactionAuthorizationStatusUpdateData.getAuthorizationResult()
+                                    )
+                            )
                             .idPSP(transactionAuthorizationRequestData.getPspId())
                             .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())
                             .idChannel(transactionAuthorizationRequestData.getPspChannelCode())
                             .transactionId(tx.getTransactionId().value().toString())
-                            .totalAmount(EuroUtils.euroCentsToEuro(tx.getAmount().value() + transactionAuthorizationRequestData.getFee()))
+                            .totalAmount(
+                                    EuroUtils.euroCentsToEuro(
+                                            tx.getAmount().value() + transactionAuthorizationRequestData.getFee()
+                                    )
+                            )
                             .fee(EuroUtils.euroCentsToEuro(transactionAuthorizationRequestData.getFee()))
                             .timestampOperation(updateAuthorizationRequestDto.getTimestampOperation())
                             .paymentMethod(transactionAuthorizationRequestData.getPaymentTypeCode())
                             .additionalPaymentInformations(
                                     Map.of(
-                                            "outcome_payment_gateway", transactionAuthorizationStatusUpdateData.getAuthorizationResult().toString(),
-                                            "authorization_code", updateAuthorizationRequestDto.getAuthorizationCode()
+                                            "outcome_payment_gateway",
+                                            transactionAuthorizationStatusUpdateData.getAuthorizationResult()
+                                                    .toString(),
+                                            "authorization_code",
+                                            updateAuthorizationRequestDto.getAuthorizationCode()
                                     )
                             );
 
@@ -102,7 +121,9 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                 });
     }
 
-    private ClosePaymentRequestV2Dto.OutcomeEnum authorizationResultToOutcomeV2(AuthorizationResultDto authorizationResult) {
+    private ClosePaymentRequestV2Dto.OutcomeEnum authorizationResultToOutcomeV2(
+                                                                                AuthorizationResultDto authorizationResult
+    ) {
         switch (authorizationResult) {
             case OK -> {
                 return ClosePaymentRequestV2Dto.OutcomeEnum.OK;
@@ -110,8 +131,9 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
             case KO -> {
                 return ClosePaymentRequestV2Dto.OutcomeEnum.KO;
             }
-            default ->
-                    throw new IllegalArgumentException("Missing authorization result enum value mapping to Nodo closePaymentV2 outcome");
+            default -> throw new IllegalArgumentException(
+                    "Missing authorization result enum value mapping to Nodo closePaymentV2 outcome"
+            );
         }
     }
 

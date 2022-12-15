@@ -67,9 +67,16 @@ class TransactionUpdateAuthorizationHandlerTest {
                 updateAuthorizationRequest
         );
 
-        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(transaction.getRptId(), updateAuthorizationStatusData);
+        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
+                transaction.getRptId(),
+                updateAuthorizationStatusData
+        );
 
-        TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = new TransactionAuthorizationStatusUpdateData(AuthorizationResultDto.KO, TransactionStatusDto.AUTHORIZED, "authorizationCode");
+        TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = new TransactionAuthorizationStatusUpdateData(
+                AuthorizationResultDto.KO,
+                TransactionStatusDto.AUTHORIZED,
+                "authorizationCode"
+        );
 
         TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
                 transactionId.toString(),
@@ -86,7 +93,13 @@ class TransactionUpdateAuthorizationHandlerTest {
                 .expectNextMatches(authorizationStatusUpdatedEvent -> authorizationStatusUpdatedEvent.equals(event))
                 .verifyComplete();
 
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(argThat(eventArg -> eventArg.getData().getNewTransactionStatus().equals(TransactionStatusDto.AUTHORIZED)));
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1))
+                .save(
+                        argThat(
+                                eventArg -> eventArg.getData().getNewTransactionStatus()
+                                        .equals(TransactionStatusDto.AUTHORIZED)
+                        )
+                );
     }
 
     @Test
@@ -121,7 +134,10 @@ class TransactionUpdateAuthorizationHandlerTest {
                 updateAuthorizationRequest
         );
 
-        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(transaction.getRptId(), updateAuthorizationStatusData);
+        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
+                transaction.getRptId(),
+                updateAuthorizationStatusData
+        );
 
         /* test */
         StepVerifier.create(updateAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -163,9 +179,16 @@ class TransactionUpdateAuthorizationHandlerTest {
                 updateAuthorizationRequest
         );
 
-        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(transaction.getRptId(), updateAuthorizationStatusData);
+        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
+                transaction.getRptId(),
+                updateAuthorizationStatusData
+        );
 
-        TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = new TransactionAuthorizationStatusUpdateData(AuthorizationResultDto.KO, TransactionStatusDto.AUTHORIZATION_FAILED, "authorizationCode");
+        TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = new TransactionAuthorizationStatusUpdateData(
+                AuthorizationResultDto.KO,
+                TransactionStatusDto.AUTHORIZATION_FAILED,
+                "authorizationCode"
+        );
 
         TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
                 transactionId.toString(),
@@ -182,6 +205,11 @@ class TransactionUpdateAuthorizationHandlerTest {
                 .expectNextMatches(authorizationStatusUpdatedEvent -> authorizationStatusUpdatedEvent.equals(event))
                 .verifyComplete();
 
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(argThat(eventArg -> eventArg.getData().getNewTransactionStatus().equals(TransactionStatusDto.AUTHORIZATION_FAILED)));
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
+                argThat(
+                        eventArg -> eventArg.getData().getNewTransactionStatus()
+                                .equals(TransactionStatusDto.AUTHORIZATION_FAILED)
+                )
+        );
     }
 }

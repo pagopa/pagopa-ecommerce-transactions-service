@@ -5,7 +5,11 @@ import it.pagopa.ecommerce.commons.domain.TransactionEventCode;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Mono;
 
-public interface TransactionsActivationRequestedEventStoreRepository extends ReactiveCrudRepository<TransactionActivationRequestedEvent, String> {
+public interface TransactionsActivationRequestedEventStoreRepository
+        extends ReactiveCrudRepository<TransactionActivationRequestedEvent, String> {
 
-    Mono<TransactionActivationRequestedEvent> findByEventCodeAndData_PaymentContextCode(TransactionEventCode transactionEventCode, String paymentContextCode);
+    Mono<TransactionActivationRequestedEvent> findByEventCodeAndData_PaymentContextCode(
+                                                                                        TransactionEventCode transactionEventCode,
+                                                                                        String paymentContextCode
+    );
 }

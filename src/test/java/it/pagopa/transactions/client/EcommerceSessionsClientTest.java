@@ -65,13 +65,13 @@ class EcommerceSessionsClientTest {
          * preconditions
          */
         when(ecommerceSessionsWebClient.post()).thenReturn(mockRequestBodyUriSpec);
-        when(mockRequestBodyUriSpec.body(Mockito.any(), Mockito.eq(SessionRequestDto.class))).thenReturn(mockRequestHeadersSpec);
+        when(mockRequestBodyUriSpec.body(Mockito.any(), Mockito.eq(SessionRequestDto.class)))
+                .thenReturn(mockRequestHeadersSpec);
         when(mockRequestHeadersSpec.retrieve()).thenReturn(mockResponseSpec);
         when(mockResponseSpec.onStatus(Mockito.any(), Mockito.any())).thenReturn(mockResponseSpec);
         when(mockResponseSpec.bodyToMono(SessionDataDto.class)).thenReturn(Mono.just(tokenDto));
         when(ecommerceSessionsDefaultApi.getApiClient()).thenReturn(apiClient);
         when(apiClient.getWebClient()).thenReturn(ecommerceSessionsWebClient);
-
 
         /**
          * test

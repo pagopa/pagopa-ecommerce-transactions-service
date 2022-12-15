@@ -29,68 +29,117 @@ public class TransactionsController implements TransactionsApi {
     @Autowired
     private TransactionsService transactionsService;
 
-    @ExceptionHandler({ CallNotPermittedException.class })
-    public Mono<ResponseEntity<ProblemJsonDto>> openStateHandler(){
+    @ExceptionHandler(
+        {
+                CallNotPermittedException.class
+        }
+    )
+    public Mono<ResponseEntity<ProblemJsonDto>> openStateHandler() {
         log.error("Error - OPEN circuit breaker");
         return Mono.just(
                 new ResponseEntity<>(
-                    new ProblemJsonDto()
-                            .status(502)
-                            .title("Bad Gateway")
-                            .detail("Upstream service temporary unavailable. Open circuit breaker."),
-                    HttpStatus.BAD_GATEWAY)
+                        new ProblemJsonDto()
+                                .status(502)
+                                .title("Bad Gateway")
+                                .detail("Upstream service temporary unavailable. Open circuit breaker."),
+                        HttpStatus.BAD_GATEWAY
+                )
         );
     }
 
     @Override
-    public Mono<ResponseEntity<NewTransactionResponseDto>> newTransaction(Mono<NewTransactionRequestDto> newTransactionRequest, ServerWebExchange exchange) {
+    public Mono<ResponseEntity<NewTransactionResponseDto>> newTransaction(
+                                                                          Mono<NewTransactionRequestDto> newTransactionRequest,
+                                                                          ServerWebExchange exchange
+    ) {
         return newTransactionRequest
                 .flatMap(ntr -> {
-                    log.info("newTransaction rptIDs {} ", ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).collect(Collectors.toList()));
+                    log.info(
+                            "newTransaction rptIDs {} ",
+                            ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId)
+                                    .collect(Collectors.toList())
+                    );
                     return transactionsService.newTransaction(ntr);
                 })
                 .map(ResponseEntity::ok);
     }
 
     @Override
-    public Mono<ResponseEntity<TransactionInfoDto>> getTransactionInfo(String transactionId, ServerWebExchange exchange) {
-        return transactionsService.getTransactionInfo(transactionId).doOnEach(t -> log.info("getTransactionInfo for transactionId: {} ", transactionId)).map(ResponseEntity::ok);
+    public Mono<ResponseEntity<TransactionInfoDto>> getTransactionInfo(
+                                                                       String transactionId,
+                                                                       ServerWebExchange exchange
+    ) {
+        return transactionsService.getTransactionInfo(transactionId)
+                .doOnEach(t -> log.info("getTransactionInfo for transactionId: {} ", transactionId))
+                .map(ResponseEntity::ok);
     }
 
     @Override
-    public Mono<ResponseEntity<RequestAuthorizationResponseDto>> requestTransactionAuthorization(String transactionId, String xPgsId, Mono<RequestAuthorizationRequestDto> requestAuthorizationRequestDto, ServerWebExchange exchange) {
+    public Mono<ResponseEntity<RequestAuthorizationResponseDto>> requestTransactionAuthorization(
+                                                                                                 String transactionId,
+                                                                                                 String xPgsId,
+                                                                                                 Mono<RequestAuthorizationRequestDto> requestAuthorizationRequestDto,
+                                                                                                 ServerWebExchange exchange
+    ) {
         return requestAuthorizationRequestDto
                 .doOnEach(t -> log.info("requestTransactionAuthorization for transactionId: {} ", transactionId))
-                .flatMap(requestAuthorizationRequest -> transactionsService.requestTransactionAuthorization(transactionId, xPgsId, requestAuthorizationRequest))
+                .flatMap(
+                        requestAuthorizationRequest -> transactionsService
+                                .requestTransactionAuthorization(transactionId, xPgsId, requestAuthorizationRequest)
+                )
                 .map(ResponseEntity::ok);
     }
 
-
     @Override
-    public Mono<ResponseEntity<TransactionInfoDto>> updateTransactionAuthorization(String transactionId, Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto, ServerWebExchange exchange) {
+    public Mono<ResponseEntity<TransactionInfoDto>> updateTransactionAuthorization(
+                                                                                   String transactionId,
+                                                                                   Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto,
+                                                                                   ServerWebExchange exchange
+    ) {
         return updateAuthorizationRequestDto
                 .doOnEach(t -> log.info("updateTransactionAuthorization for transactionId: {} ", transactionId))
-                .flatMap(updateAuthorizationRequest -> transactionsService.updateTransactionAuthorization(transactionId, updateAuthorizationRequest))
+                .flatMap(
+                        updateAuthorizationRequest -> transactionsService
+                                .updateTransactionAuthorization(transactionId, updateAuthorizationRequest)
+                )
                 .map(ResponseEntity::ok);
     }
 
     @Override
-    public Mono<ResponseEntity<ActivationResultResponseDto>> transactionActivationResult(String paymentContextCode, Mono<ActivationResultRequestDto> activationResultRequestDto, ServerWebExchange exchange) {
+    public Mono<ResponseEntity<ActivationResultResponseDto>> transactionActivationResult(
+                                                                                         String paymentContextCode,
+                                                                                         Mono<ActivationResultRequestDto> activationResultRequestDto,
+                                                                                         ServerWebExchange exchange
+    ) {
         return activationResultRequestDto
                 .doOnEach(t -> log.info("transactionActivationResult for paymentContextCode: {} ", paymentContextCode))
-                .flatMap(activationResultRequest -> transactionsService.activateTransaction(paymentContextCode, activationResultRequest))
+                .flatMap(
+                        activationResultRequest -> transactionsService
+                                .activateTransaction(paymentContextCode, activationResultRequest)
+                )
                 .map(ResponseEntity::ok);
     }
 
     @Override
-    public Mono<ResponseEntity<AddUserReceiptResponseDto>> addUserReceipt(String transactionId, Mono<AddUserReceiptRequestDto> addUserReceiptRequestDto, ServerWebExchange exchange) {
+    public Mono<ResponseEntity<AddUserReceiptResponseDto>> addUserReceipt(
+                                                                          String transactionId,
+                                                                          Mono<AddUserReceiptRequestDto> addUserReceiptRequestDto,
+                                                                          ServerWebExchange exchange
+    ) {
         return addUserReceiptRequestDto
                 .doOnEach(t -> log.info("addUserReceipt for transactionId: {} ", transactionId))
-                .flatMap(addUserReceiptRequest ->
-                        transactionsService.addUserReceipt(transactionId, addUserReceiptRequest)
-                                .map(_v -> new AddUserReceiptResponseDto().outcome(AddUserReceiptResponseDto.OutcomeEnum.OK))
+                .flatMap(
+                        addUserReceiptRequest -> transactionsService
+                                .addUserReceipt(transactionId, addUserReceiptRequest)
+                                .map(
+                                        _v -> new AddUserReceiptResponseDto()
+                                                .outcome(AddUserReceiptResponseDto.OutcomeEnum.OK)
+                                )
                                 .doOnError(e -> log.error("Got error while trying to add user receipt", e))
-                                .onErrorReturn(new AddUserReceiptResponseDto().outcome(AddUserReceiptResponseDto.OutcomeEnum.KO))
+                                .onErrorReturn(
+                                        new AddUserReceiptResponseDto()
+                                                .outcome(AddUserReceiptResponseDto.OutcomeEnum.KO)
+                                )
                 )
                 .map(ResponseEntity::ok);
     }
@@ -102,7 +151,8 @@ public class TransactionsController implements TransactionsApi {
                         .status(404)
                         .title("Transaction not found")
                         .detail("Transaction for payment token '%s' not found".formatted(exception.getPaymentToken())),
-                HttpStatus.NOT_FOUND);
+                HttpStatus.NOT_FOUND
+        );
     }
 
     @ExceptionHandler(UnsatisfiablePspRequestException.class)
@@ -111,9 +161,16 @@ public class TransactionsController implements TransactionsApi {
                 new ProblemJsonDto()
                         .status(409)
                         .title("Cannot find a PSP with the requested parameters")
-                        .detail("Cannot find a PSP with fee %d and language %s for transaction with payment token '%s'"
-                                .formatted(exception.getRequestedFee() / 100, exception.getLanguage(), exception.getPaymentToken().value())),
-                HttpStatus.CONFLICT);
+                        .detail(
+                                "Cannot find a PSP with fee %d and language %s for transaction with payment token '%s'"
+                                        .formatted(
+                                                exception.getRequestedFee() / 100,
+                                                exception.getLanguage(),
+                                                exception.getPaymentToken().value()
+                                        )
+                        ),
+                HttpStatus.CONFLICT
+        );
     }
 
     @ExceptionHandler(AlreadyProcessedException.class)
@@ -122,8 +179,12 @@ public class TransactionsController implements TransactionsApi {
                 new ProblemJsonDto()
                         .status(409)
                         .title("Transaction already processed")
-                        .detail("Transaction for RPT id '%s' has been already processed".formatted(exception.getRptId().value())),
-                HttpStatus.CONFLICT);
+                        .detail(
+                                "Transaction for RPT id '%s' has been already processed"
+                                        .formatted(exception.getRptId().value())
+                        ),
+                HttpStatus.CONFLICT
+        );
     }
 
     @ExceptionHandler(BadGatewayException.class)
@@ -133,7 +194,8 @@ public class TransactionsController implements TransactionsApi {
                         .status(502)
                         .title("Bad gateway")
                         .detail(exception.getDetail()),
-                HttpStatus.BAD_GATEWAY);
+                HttpStatus.BAD_GATEWAY
+        );
     }
 
     @ExceptionHandler(GatewayTimeoutException.class)
@@ -143,12 +205,14 @@ public class TransactionsController implements TransactionsApi {
                         .status(504)
                         .title("Gateway timeout")
                         .detail(null),
-                HttpStatus.GATEWAY_TIMEOUT);
+                HttpStatus.GATEWAY_TIMEOUT
+        );
     }
 
     @ExceptionHandler(WebExchangeBindException.class)
     private ResponseEntity<ProblemJsonDto> validationExceptionHandler(WebExchangeBindException exception) {
-        String errorMessage = exception.getAllErrors().stream().map(ObjectError::toString).collect(Collectors.joining(", "));
+        String errorMessage = exception.getAllErrors().stream().map(ObjectError::toString)
+                .collect(Collectors.joining(", "));
 
         log.warn("Got invalid input: {}", errorMessage);
 
@@ -161,7 +225,12 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
-    @ExceptionHandler({InvalidRequestException.class, ConstraintViolationException.class})
+    @ExceptionHandler(
+        {
+                InvalidRequestException.class,
+                ConstraintViolationException.class
+        }
+    )
     private ResponseEntity<ProblemJsonDto> validationExceptionHandler(Exception exception) {
         log.warn("Got invalid input: {}", exception.getMessage());
         return new ResponseEntity<>(

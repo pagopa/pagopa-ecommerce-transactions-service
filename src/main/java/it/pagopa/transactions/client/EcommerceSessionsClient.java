@@ -25,10 +25,18 @@ public class EcommerceSessionsClient {
                 .post()
                 .body(Mono.just(request), SessionRequestDto.class)
                 .retrieve()
-                .onStatus(HttpStatus::isError,
+                .onStatus(
+                        HttpStatus::isError,
                         clientResponse -> clientResponse.bodyToMono(String.class)
-                                .flatMap(errorResponseBody -> Mono.error(
-                                        new ResponseStatusException(clientResponse.statusCode(), errorResponseBody))))
+                                .flatMap(
+                                        errorResponseBody -> Mono.error(
+                                                new ResponseStatusException(
+                                                        clientResponse.statusCode(),
+                                                        errorResponseBody
+                                                )
+                                        )
+                                )
+                )
                 .bodyToMono(SessionDataDto.class);
     }
 }

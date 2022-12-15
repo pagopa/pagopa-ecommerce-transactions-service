@@ -1,6 +1,5 @@
 package it.pagopa.transactions.documents;
 
-
 import it.pagopa.ecommerce.commons.documents.Transaction;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
@@ -31,16 +30,40 @@ class TransactionDocumentTest {
         /**
          * Test
          */
-        Transaction transaction = new Transaction(TEST_TRANSACTIONID, TEST_TOKEN, TEST_RPTID, TEST_DESC, TEST_AMOUNT,
-                TEST_EMAIL, TEST_STATUS, TEST_TIME);
+        Transaction transaction = new Transaction(
+                TEST_TRANSACTIONID,
+                TEST_TOKEN,
+                TEST_RPTID,
+                TEST_DESC,
+                TEST_AMOUNT,
+                TEST_EMAIL,
+                TEST_STATUS,
+                TEST_TIME
+        );
 
-        Transaction sameTransaction = new Transaction(TEST_TRANSACTIONID, TEST_TOKEN, TEST_RPTID, TEST_DESC,
-                TEST_AMOUNT, TEST_EMAIL, TEST_STATUS, TEST_TIME);
+        Transaction sameTransaction = new Transaction(
+                TEST_TRANSACTIONID,
+                TEST_TOKEN,
+                TEST_RPTID,
+                TEST_DESC,
+                TEST_AMOUNT,
+                TEST_EMAIL,
+                TEST_STATUS,
+                TEST_TIME
+        );
         sameTransaction.setCreationDate(transaction.getCreationDate());
 
         // Different transaction (creation date)
-        Transaction differentTransaction = new Transaction("",
-                "", "", "", 1, "", null, ZonedDateTime.now());
+        Transaction differentTransaction = new Transaction(
+                "",
+                "",
+                "",
+                "",
+                1,
+                "",
+                null,
+                ZonedDateTime.now()
+        );
         differentTransaction.setPaymentToken(TEST_TOKEN);
         differentTransaction.setRptId(TEST_RPTID);
         differentTransaction.setDescription(TEST_DESC);
@@ -82,11 +105,15 @@ class TransactionDocumentTest {
                 email,
                 faultCode,
                 faultCodeString,
-                status);
+                status
+        );
 
         Transaction transactionDocument = Transaction.from(transaction);
 
-        assertEquals(transactionDocument.getPaymentToken(), transaction.getTransactionActivatedData().getPaymentToken());
+        assertEquals(
+                transactionDocument.getPaymentToken(),
+                transaction.getTransactionActivatedData().getPaymentToken()
+        );
         assertEquals(transactionDocument.getRptId(), transaction.getRptId().value());
         assertEquals(transactionDocument.getDescription(), transaction.getDescription().value());
         assertEquals(transactionDocument.getAmount(), transaction.getAmount().value());

@@ -38,9 +38,11 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class TransactionActivateResultHandlerTest {
 
-    @Mock private PaymentRequestsInfoRepository paymentRequestInfoRepository;
+    @Mock
+    private PaymentRequestsInfoRepository paymentRequestInfoRepository;
 
-    @Mock private NodoPerPM nodoPerPM;
+    @Mock
+    private NodoPerPM nodoPerPM;
 
     @InjectMocks
     private TransactionActivateResultHandler handler;
@@ -50,6 +52,7 @@ class TransactionActivateResultHandlerTest {
 
     @Mock
     private QueueAsyncClient queueAsyncClient;
+
     @Test
     void shouldThrowsTransactionNotFoundOnNodoPerPMError() {
 
@@ -59,13 +62,14 @@ class TransactionActivateResultHandlerTest {
         Integer amount = Integer.valueOf(1000);
 
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
-        requestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto()
-                .rptId(rptId.value())
-                .amount(1200));
+        requestDto.addPaymentNoticesItem(
+                new PaymentNoticeInfoDto()
+                        .rptId(rptId.value())
+                        .amount(1200)
+        );
         requestDto.setEmail("jhon.doe@email.com");
-        ActivationResultRequestDto activationResultRequestDto =
-                new ActivationResultRequestDto()
-                        .paymentToken(paymentToken);
+        ActivationResultRequestDto activationResultRequestDto = new ActivationResultRequestDto()
+                .paymentToken(paymentToken);
 
         TransactionActivationRequested transaction = new TransactionActivationRequested(
                 new TransactionId(UUID.fromString(transactionId)),
@@ -80,7 +84,8 @@ class TransactionActivateResultHandlerTest {
 
         TransactionActivateResultCommand command = new TransactionActivateResultCommand(rptId, activationResultData);
 
-        when(nodoPerPM.chiediInformazioniPagamento(Mockito.any(String.class))).thenReturn(Mono.error(new Throwable("test error")));
+        when(nodoPerPM.chiediInformazioniPagamento(Mockito.any(String.class)))
+                .thenReturn(Mono.error(new Throwable("test error")));
 
         StepVerifier.create(handler.handle(command))
                 .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
@@ -88,42 +93,44 @@ class TransactionActivateResultHandlerTest {
 
         Mockito.verify(paymentRequestInfoRepository, Mockito.never()).findById(Mockito.any(RptId.class));
         Mockito.verify(paymentRequestInfoRepository, Mockito.never()).save(Mockito.any(PaymentRequestInfo.class));
-        Mockito.verify(transactionEventStoreRepository, Mockito.never()).save(Mockito.any(TransactionActivatedEvent.class));
+        Mockito.verify(transactionEventStoreRepository, Mockito.never())
+                .save(Mockito.any(TransactionActivatedEvent.class));
     }
 
-        @Test
+    @Test
     void shouldHandleCommandForTransactionActivateResultCallingChiediInfoNodo() {
 
-            RptId rptId = new RptId("77777777777302016723749670035");
-            IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
-            String transactionId = UUID.randomUUID().toString();
-            String paymentToken = UUID.randomUUID().toString();
-            String idCarrello = UUID.randomUUID().toString();
-            String paName = "paName";
-            String paTaxcode = "77777777777";
-            String description = "Description";
-            Integer amount = Integer.valueOf(1000);
+        RptId rptId = new RptId("77777777777302016723749670035");
+        IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
+        String transactionId = UUID.randomUUID().toString();
+        String paymentToken = UUID.randomUUID().toString();
+        String idCarrello = UUID.randomUUID().toString();
+        String paName = "paName";
+        String paTaxcode = "77777777777";
+        String description = "Description";
+        Integer amount = Integer.valueOf(1000);
 
-            NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
-            requestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto()
-                    .rptId(rptId.value())
-                    .amount(1200));
-            requestDto.setEmail("jhon.doe@email.com");
+        NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
+        requestDto.addPaymentNoticesItem(
+                new PaymentNoticeInfoDto()
+                        .rptId(rptId.value())
+                        .amount(1200)
+        );
+        requestDto.setEmail("jhon.doe@email.com");
 
-            ReflectionTestUtils.setField(handler, "paymentTokenTimeout", 300);
+        ReflectionTestUtils.setField(handler, "paymentTokenTimeout", 300);
 
-            ActivationResultRequestDto activationResultRequestDto =
-                    new ActivationResultRequestDto()
-                            .paymentToken(paymentToken);
+        ActivationResultRequestDto activationResultRequestDto = new ActivationResultRequestDto()
+                .paymentToken(paymentToken);
 
-            TransactionActivationRequested transaction = new TransactionActivationRequested(
-                    new TransactionId(UUID.fromString(transactionId)),
-                    rptId,
+        TransactionActivationRequested transaction = new TransactionActivationRequested(
+                new TransactionId(UUID.fromString(transactionId)),
+                rptId,
                 new TransactionDescription("testTransactionDescription"),
                 new TransactionAmount(amount),
                 new Email(requestDto.getEmail()),
                 TransactionStatusDto.ACTIVATION_REQUESTED
-            );
+        );
 
         ActivationResultData activationResultData = new ActivationResultData(transaction, activationResultRequestDto);
 
@@ -133,40 +140,47 @@ class TransactionActivateResultHandlerTest {
                 command.getData().transactionActivationRequested().getTransactionId().toString(),
                 rptId.value(),
                 paymentToken,
-                new TransactionActivatedData(transaction.getDescription().value(), transaction.getAmount().value(), null, null, null, null)
+                new TransactionActivatedData(
+                        transaction.getDescription().value(),
+                        transaction.getAmount().value(),
+                        null,
+                        null,
+                        null,
+                        null
+                )
         );
 
-        PaymentRequestInfo paymentRequestInfoCachedNoToken =
-                new PaymentRequestInfo(
-                        rptId,
-                        paTaxcode,
-                        paName,
-                        description,
-                        amount,
-                        null,
-                        true,
-                        null,
-                        idempotencyKey);
+        PaymentRequestInfo paymentRequestInfoCachedNoToken = new PaymentRequestInfo(
+                rptId,
+                paTaxcode,
+                paName,
+                description,
+                amount,
+                null,
+                true,
+                null,
+                idempotencyKey
+        );
 
-        PaymentRequestInfo paymentRequestInfoCachedWithToken =
-                new PaymentRequestInfo(
-                        rptId,
-                        paTaxcode,
-                        paName,
-                        description,
-                        amount,
-                        null,
-                        true,
-                        paymentToken,
-                        idempotencyKey);
+        PaymentRequestInfo paymentRequestInfoCachedWithToken = new PaymentRequestInfo(
+                rptId,
+                paTaxcode,
+                paName,
+                description,
+                amount,
+                null,
+                true,
+                paymentToken,
+                idempotencyKey
+        );
 
         InformazioniPagamentoDto informazioniPagamentoDto = new InformazioniPagamentoDto()
                 .idCarrello(idCarrello)
-                        .oggettoPagamento("OggettoPagamento")
-                                .email("email@email.test")
-                                        .bolloDigitale(false)
-                                                .codiceFiscale(paTaxcode)
-                                                        .importoTotale(new BigDecimal(amount));
+                .oggettoPagamento("OggettoPagamento")
+                .email("email@email.test")
+                .bolloDigitale(false)
+                .codiceFiscale(paTaxcode)
+                .importoTotale(new BigDecimal(amount));
 
         Mockito.when(paymentRequestInfoRepository.findById(rptId))
                 .thenReturn(Optional.of(paymentRequestInfoCachedNoToken));
@@ -174,14 +188,17 @@ class TransactionActivateResultHandlerTest {
                 .thenReturn(paymentRequestInfoCachedWithToken);
         Mockito.when(nodoPerPM.chiediInformazioniPagamento(Mockito.any(String.class)))
                 .thenReturn(Mono.just(informazioniPagamentoDto));
-        Mockito.when(transactionEventStoreRepository.save(Mockito.any(TransactionActivatedEvent.class))).thenReturn(Mono.just(transactionActivatedEvent));
-        Mockito.when(queueAsyncClient.sendMessageWithResponse(BinaryData.fromObject(any()),any(),any())).thenReturn(Mono.empty());
+        Mockito.when(transactionEventStoreRepository.save(Mockito.any(TransactionActivatedEvent.class)))
+                .thenReturn(Mono.just(transactionActivatedEvent));
+        Mockito.when(queueAsyncClient.sendMessageWithResponse(BinaryData.fromObject(any()), any(), any()))
+                .thenReturn(Mono.empty());
 
         handler.handle(command).block();
 
         Mockito.verify(paymentRequestInfoRepository, Mockito.times(1)).findById(rptId);
         Mockito.verify(paymentRequestInfoRepository, Mockito.times(1)).save(paymentRequestInfoCachedWithToken);
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(Mockito.any(TransactionActivatedEvent.class));
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1))
+                .save(Mockito.any(TransactionActivatedEvent.class));
 
     }
 
@@ -194,14 +211,15 @@ class TransactionActivateResultHandlerTest {
         Integer amount = Integer.valueOf(1000);
 
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
-        requestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto()
-                .rptId(rptId.value())
-                .amount(1200));
+        requestDto.addPaymentNoticesItem(
+                new PaymentNoticeInfoDto()
+                        .rptId(rptId.value())
+                        .amount(1200)
+        );
         requestDto.setEmail("jhon.doe@email.com");
 
-        ActivationResultRequestDto activationResultRequestDto =
-                new ActivationResultRequestDto()
-                        .paymentToken(paymentToken);
+        ActivationResultRequestDto activationResultRequestDto = new ActivationResultRequestDto()
+                .paymentToken(paymentToken);
 
         TransactionActivationRequested transactionActivationRequested = new TransactionActivationRequested(
                 new TransactionId(UUID.fromString(transactionId)),
@@ -212,8 +230,10 @@ class TransactionActivateResultHandlerTest {
                 TransactionStatusDto.AUTHORIZED
         );
 
-
-        ActivationResultData activationResultData = new ActivationResultData(transactionActivationRequested, activationResultRequestDto);
+        ActivationResultData activationResultData = new ActivationResultData(
+                transactionActivationRequested,
+                activationResultRequestDto
+        );
 
         TransactionActivateResultCommand command = new TransactionActivateResultCommand(rptId, activationResultData);
 
@@ -224,7 +244,8 @@ class TransactionActivateResultHandlerTest {
 
         Mockito.verify(paymentRequestInfoRepository, Mockito.times(0)).findById(Mockito.any(RptId.class));
         Mockito.verify(paymentRequestInfoRepository, Mockito.times(0)).save(Mockito.any(PaymentRequestInfo.class));
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(Mockito.any(TransactionActivatedEvent.class));
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(0))
+                .save(Mockito.any(TransactionActivatedEvent.class));
 
     }
 
@@ -242,14 +263,15 @@ class TransactionActivateResultHandlerTest {
         Integer amount = Integer.valueOf(1000);
 
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
-        requestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto()
-                .rptId(rptId.value())
-                .amount(1200));
+        requestDto.addPaymentNoticesItem(
+                new PaymentNoticeInfoDto()
+                        .rptId(rptId.value())
+                        .amount(1200)
+        );
         requestDto.setEmail("jhon.doe@email.com");
 
-        ActivationResultRequestDto activationResultRequestDto =
-                new ActivationResultRequestDto()
-                        .paymentToken(paymentToken);
+        ActivationResultRequestDto activationResultRequestDto = new ActivationResultRequestDto()
+                .paymentToken(paymentToken);
 
         TransactionActivationRequested transactionActivationRequested = new TransactionActivationRequested(
                 new TransactionId(UUID.fromString(transactionId)),
@@ -260,21 +282,24 @@ class TransactionActivateResultHandlerTest {
                 TransactionStatusDto.ACTIVATION_REQUESTED
         );
 
-        ActivationResultData activationResultData = new ActivationResultData(transactionActivationRequested, activationResultRequestDto);
+        ActivationResultData activationResultData = new ActivationResultData(
+                transactionActivationRequested,
+                activationResultRequestDto
+        );
 
         TransactionActivateResultCommand command = new TransactionActivateResultCommand(rptId, activationResultData);
 
-        PaymentRequestInfo paymentRequestInfoCachedWithToken =
-                new PaymentRequestInfo(
-                        rptId,
-                        paTaxcode,
-                        paName,
-                        description,
-                        amount,
-                        null,
-                        true,
-                        paymentToken,
-                        idempotencyKey);
+        PaymentRequestInfo paymentRequestInfoCachedWithToken = new PaymentRequestInfo(
+                rptId,
+                paTaxcode,
+                paName,
+                description,
+                amount,
+                null,
+                true,
+                paymentToken,
+                idempotencyKey
+        );
 
         InformazioniPagamentoDto informazioniPagamentoDto = new InformazioniPagamentoDto()
                 .idCarrello(idCarrello)
@@ -289,19 +314,19 @@ class TransactionActivateResultHandlerTest {
 
         Mockito.when(nodoPerPM.chiediInformazioniPagamento(Mockito.any(String.class)))
                 .thenReturn(Mono.just(informazioniPagamentoDto));
-        //Mockito.when(transactionEventStoreRepository.save(Mockito.any())).thenReturn(Mono.just(transactionInitEvent));
+        // Mockito.when(transactionEventStoreRepository.save(Mockito.any())).thenReturn(Mono.just(transactionInitEvent));
 
         /* test */
         StepVerifier.create(handler.handle(command))
                 .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
                 .verify();
 
-        //handler.handle(command).block();
+        // handler.handle(command).block();
 
         Mockito.verify(paymentRequestInfoRepository, Mockito.times(1)).findById(rptId);
         Mockito.verify(paymentRequestInfoRepository, Mockito.never()).save(paymentRequestInfoCachedWithToken);
-        Mockito.verify(transactionEventStoreRepository, Mockito.never()).save(Mockito.any(TransactionActivatedEvent.class));
+        Mockito.verify(transactionEventStoreRepository, Mockito.never())
+                .save(Mockito.any(TransactionActivatedEvent.class));
     }
-
 
 }

@@ -40,7 +40,11 @@ class TransactionProjectionHandlerTest {
         transactionActivationRequestedData.setFaultCode("faultCode");
         transactionActivationRequestedData.setFaultCodeString("faultCodeString");
 
-        TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(transactionUUID.toString(), "77777777777302016723749670035", transactionActivationRequestedData);
+        TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
+                transactionUUID.toString(),
+                "77777777777302016723749670035",
+                transactionActivationRequestedData
+        );
 
         TransactionActivationRequestedEvent event = new TransactionActivationRequestedEvent(
                 transactionActivationRequestedEvent.getTransactionId(),
@@ -59,7 +63,9 @@ class TransactionProjectionHandlerTest {
         TransactionId transactionId = new TransactionId(transactionUUID);
         PaymentToken paymentToken = new PaymentToken(transactionActivationRequestedEvent.getPaymentToken());
         RptId rptId = new RptId(transactionActivationRequestedEvent.getRptId());
-        TransactionDescription description = new TransactionDescription(transactionActivationRequestedData.getDescription());
+        TransactionDescription description = new TransactionDescription(
+                transactionActivationRequestedData.getDescription()
+        );
         TransactionAmount amount = new TransactionAmount(transactionActivationRequestedData.getAmount());
         Email email = new Email(transactionActivationRequestedData.getEmail());
         ZonedDateTime creationDate = ZonedDateTime.now();
@@ -73,21 +79,25 @@ class TransactionProjectionHandlerTest {
                     amount,
                     email,
                     creationDate,
-                    TransactionStatusDto.ACTIVATION_REQUESTED);
+                    TransactionStatusDto.ACTIVATION_REQUESTED
+            );
 
             /*
              * Preconditions
              */
             it.pagopa.ecommerce.commons.documents.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.Transaction
                     .from(expected);
-            Mockito.when(viewEventStoreRepository.save(Mockito.any(it.pagopa.ecommerce.commons.documents.Transaction.class)))
+            Mockito.when(
+                    viewEventStoreRepository.save(Mockito.any(it.pagopa.ecommerce.commons.documents.Transaction.class))
+            )
                     .thenReturn(Mono.just(transactionDocument));
             zonedDateTime.when(ZonedDateTime::now).thenReturn(expected.getCreationDate());
 
             /*
              * Test
              */
-            TransactionActivationRequested result = transactionsProjectionHandler.handle(transactionActivationRequestedEvent).cast(TransactionActivationRequested.class).block();
+            TransactionActivationRequested result = transactionsProjectionHandler
+                    .handle(transactionActivationRequestedEvent).cast(TransactionActivationRequested.class).block();
 
             /*
              * Assertions

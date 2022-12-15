@@ -65,7 +65,8 @@ class TransactionAddUserReceiptHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.CLOSED);
+                TransactionStatusDto.CLOSED
+        );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
@@ -78,7 +79,8 @@ class TransactionAddUserReceiptHandlerTest {
                         faultCode,
                         faultCodeString,
                         "paymentToken"
-                ));
+                )
+        );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
                 transactionId.value().toString(),
@@ -123,14 +125,15 @@ class TransactionAddUserReceiptHandlerTest {
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
                 .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
                 .paymentDate(OffsetDateTime.now())
-                .addPaymentsItem(new AddUserReceiptRequestPaymentsInnerDto()
-                        .paymentToken("paymentToken")
-                        .companyName("companyName")
-                        .creditorReferenceId("creditorReferenceId")
-                        .description("description")
-                        .debtor("debtor")
-                        .fiscalCode("fiscalCode")
-                        .officeName("officeName")
+                .addPaymentsItem(
+                        new AddUserReceiptRequestPaymentsInnerDto()
+                                .paymentToken("paymentToken")
+                                .companyName("companyName")
+                                .creditorReferenceId("creditorReferenceId")
+                                .description("description")
+                                .debtor("debtor")
+                                .fiscalCode("fiscalCode")
+                                .officeName("officeName")
                 );
 
         AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
@@ -139,30 +142,46 @@ class TransactionAddUserReceiptHandlerTest {
         );
 
         TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getRptId(), addUserReceiptData);
+                transaction.getRptId(),
+                addUserReceiptData
+        );
 
-        TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(TransactionStatusDto.NOTIFIED);
+        TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(
+                TransactionStatusDto.NOTIFIED
+        );
 
         TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                 transactionId.toString(),
                 transaction.getRptId().toString(),
                 transaction.getTransactionActivatedData().getPaymentToken(),
-                transactionAddReceiptData);
+                transactionAddReceiptData
+        );
 
-        Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(transactionActivatedEvent, authorizationRequestedEvent, authorizationStatusUpdatedEvent, closureSentEvent, event));
+        Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(
+                transactionActivatedEvent,
+                authorizationRequestedEvent,
+                authorizationStatusUpdatedEvent,
+                closureSentEvent,
+                event
+        ));
 
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
-        Mockito.when(notificationsServiceClient.sendSuccessEmail(any())).thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
+        Mockito.when(notificationsServiceClient.sendSuccessEmail(any()))
+                .thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
                 .expectNext(event)
                 .verifyComplete();
 
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(argThat(eventArg -> eventArg
-                .getData().getNewTransactionStatus().equals(TransactionStatusDto.NOTIFIED)));
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
+                argThat(
+                        eventArg -> eventArg
+                                .getData().getNewTransactionStatus().equals(TransactionStatusDto.NOTIFIED)
+                )
+        );
     }
 
     @Test
@@ -184,7 +203,8 @@ class TransactionAddUserReceiptHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.CLOSED);
+                TransactionStatusDto.CLOSED
+        );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
@@ -197,7 +217,8 @@ class TransactionAddUserReceiptHandlerTest {
                         faultCode,
                         faultCodeString,
                         "paymentToken"
-                ));
+                )
+        );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
                 transactionId.value().toString(),
@@ -241,14 +262,15 @@ class TransactionAddUserReceiptHandlerTest {
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
                 .outcome(AddUserReceiptRequestDto.OutcomeEnum.KO)
                 .paymentDate(OffsetDateTime.now())
-                .addPaymentsItem(new AddUserReceiptRequestPaymentsInnerDto()
-                        .paymentToken("paymentToken")
-                        .companyName("companyName")
-                        .creditorReferenceId("creditorReferenceId")
-                        .description("description")
-                        .debtor("debtor")
-                        .fiscalCode("fiscalCode")
-                        .officeName("officeName")
+                .addPaymentsItem(
+                        new AddUserReceiptRequestPaymentsInnerDto()
+                                .paymentToken("paymentToken")
+                                .companyName("companyName")
+                                .creditorReferenceId("creditorReferenceId")
+                                .description("description")
+                                .debtor("debtor")
+                                .fiscalCode("fiscalCode")
+                                .officeName("officeName")
                 );
 
         AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
@@ -257,30 +279,46 @@ class TransactionAddUserReceiptHandlerTest {
         );
 
         TransactionAddUserReceiptCommand transactionAddUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getRptId(), addUserReceiptData);
+                transaction.getRptId(),
+                addUserReceiptData
+        );
 
-        TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(TransactionStatusDto.NOTIFIED);
+        TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(
+                TransactionStatusDto.NOTIFIED
+        );
 
         TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                 transactionId.toString(),
                 transaction.getRptId().toString(),
                 transaction.getTransactionActivatedData().getPaymentToken(),
-                transactionAddReceiptData);
+                transactionAddReceiptData
+        );
 
-        Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(transactionActivatedEvent, authorizationRequestedEvent, authorizationStatusUpdatedEvent, closureSentEvent, event));
+        Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(
+                transactionActivatedEvent,
+                authorizationRequestedEvent,
+                authorizationStatusUpdatedEvent,
+                closureSentEvent,
+                event
+        ));
 
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
-        Mockito.when(notificationsServiceClient.sendKoEmail(any())).thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
+        Mockito.when(notificationsServiceClient.sendKoEmail(any()))
+                .thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(transactionAddUserReceiptCommand))
                 .expectNext(event)
                 .verifyComplete();
 
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(argThat(eventArg -> eventArg
-                .getData().getNewTransactionStatus().equals(TransactionStatusDto.NOTIFIED_FAILED)));
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
+                argThat(
+                        eventArg -> eventArg
+                                .getData().getNewTransactionStatus().equals(TransactionStatusDto.NOTIFIED_FAILED)
+                )
+        );
     }
 
     @Test
@@ -302,7 +340,8 @@ class TransactionAddUserReceiptHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.ACTIVATED);
+                TransactionStatusDto.ACTIVATED
+        );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
@@ -315,7 +354,8 @@ class TransactionAddUserReceiptHandlerTest {
                         faultCode,
                         faultCodeString,
                         "paymentToken"
-                ));
+                )
+        );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
                 transactionId.value().toString(),
@@ -349,14 +389,15 @@ class TransactionAddUserReceiptHandlerTest {
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
                 .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
                 .paymentDate(OffsetDateTime.now())
-                .addPaymentsItem(new AddUserReceiptRequestPaymentsInnerDto()
-                        .paymentToken("paymentToken")
-                        .companyName("companyName")
-                        .creditorReferenceId("creditorReferenceId")
-                        .description("description")
-                        .debtor("debtor")
-                        .fiscalCode("fiscalCode")
-                        .officeName("officeName")
+                .addPaymentsItem(
+                        new AddUserReceiptRequestPaymentsInnerDto()
+                                .paymentToken("paymentToken")
+                                .companyName("companyName")
+                                .creditorReferenceId("creditorReferenceId")
+                                .description("description")
+                                .debtor("debtor")
+                                .fiscalCode("fiscalCode")
+                                .officeName("officeName")
                 );
 
         AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
@@ -365,9 +406,12 @@ class TransactionAddUserReceiptHandlerTest {
         );
 
         TransactionAddUserReceiptCommand requestStatusCommand = new TransactionAddUserReceiptCommand(
-                transaction.getRptId(), addUserReceiptData);
+                transaction.getRptId(),
+                addUserReceiptData
+        );
 
-        Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(transactionActivatedEvent, authorizationRequestedEvent, authorizationStatusUpdatedEvent));
+        Flux<TransactionEvent<Object>> events = ((Flux) Flux
+                .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationStatusUpdatedEvent));
 
         /* preconditions */
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);

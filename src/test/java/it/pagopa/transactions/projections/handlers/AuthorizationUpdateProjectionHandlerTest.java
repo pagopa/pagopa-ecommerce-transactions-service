@@ -47,7 +47,8 @@ class AuthorizationUpdateProjectionHandlerTest {
                 new Email("email@example.com"),
                 "faultCode",
                 "faultCodeString",
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_REQUESTED);
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_REQUESTED
+        );
 
         it.pagopa.ecommerce.commons.documents.Transaction expectedDocument = new it.pagopa.ecommerce.commons.documents.Transaction(
                 transaction.getTransactionId().value().toString(),
@@ -60,12 +61,12 @@ class AuthorizationUpdateProjectionHandlerTest {
                 transaction.getCreationDate()
         );
 
-        TransactionAuthorizationStatusUpdateData statusUpdateData =
-                new TransactionAuthorizationStatusUpdateData(
-                        it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto.fromValue(updateAuthorizationRequest.getAuthorizationResult().toString()),
-                        expectedDocument.getStatus(),
-                        "authorizationCode"
-                );
+        TransactionAuthorizationStatusUpdateData statusUpdateData = new TransactionAuthorizationStatusUpdateData(
+                it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto
+                        .fromValue(updateAuthorizationRequest.getAuthorizationResult().toString()),
+                expectedDocument.getStatus(),
+                "authorizationCode"
+        );
 
         TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
                 transaction.getTransactionId().value().toString(),
@@ -81,8 +82,11 @@ class AuthorizationUpdateProjectionHandlerTest {
                 transaction.getDescription(),
                 transaction.getAmount(),
                 transaction.getEmail(),
-                null, null, ZonedDateTime.parse(expectedDocument.getCreationDate()),
-                expectedDocument.getStatus());
+                null,
+                null,
+                ZonedDateTime.parse(expectedDocument.getCreationDate()),
+                expectedDocument.getStatus()
+        );
 
         /*
          * Preconditions
@@ -102,6 +106,8 @@ class AuthorizationUpdateProjectionHandlerTest {
         /*
          * Assertions
          */
-        Mockito.verify(viewRepository, Mockito.times(1)).save(argThat(savedTransaction -> savedTransaction.getStatus().equals(TransactionStatusDto.AUTHORIZED)));
+        Mockito.verify(viewRepository, Mockito.times(1)).save(
+                argThat(savedTransaction -> savedTransaction.getStatus().equals(TransactionStatusDto.AUTHORIZED))
+        );
     }
 }

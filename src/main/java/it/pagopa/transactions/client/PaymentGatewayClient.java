@@ -41,69 +41,113 @@ public class PaymentGatewayClient {
     @Autowired
     private ObjectMapper objectMapper;
 
-    public Mono<Tuple2<Optional<PostePayAuthResponseEntityDto>,Optional<XPayAuthResponseEntityDto>>> requestGeneralAuthorization(AuthorizationRequestData authorizationData) {
-        Mono<Optional<PostePayAuthResponseEntityDto>> postePayAuthResponseEntityDtoMono = requestPostepayAuthorization(authorizationData).map(Optional::of).switchIfEmpty(Mono.just(Optional.empty()));
-        Mono<Optional<XPayAuthResponseEntityDto>> xPayAuthResponseEntityDtoMono = requestXPayAuthorization(authorizationData).map(Optional::of).switchIfEmpty(Mono.just(Optional.empty()));
-        return Mono.zip(postePayAuthResponseEntityDtoMono,xPayAuthResponseEntityDtoMono);
+    public Mono<Tuple2<Optional<PostePayAuthResponseEntityDto>, Optional<XPayAuthResponseEntityDto>>> requestGeneralAuthorization(
+                                                                                                                                  AuthorizationRequestData authorizationData
+    ) {
+        Mono<Optional<PostePayAuthResponseEntityDto>> postePayAuthResponseEntityDtoMono = requestPostepayAuthorization(
+                authorizationData
+        ).map(Optional::of).switchIfEmpty(Mono.just(Optional.empty()));
+        Mono<Optional<XPayAuthResponseEntityDto>> xPayAuthResponseEntityDtoMono = requestXPayAuthorization(
+                authorizationData
+        ).map(Optional::of).switchIfEmpty(Mono.just(Optional.empty()));
+        return Mono.zip(postePayAuthResponseEntityDtoMono, xPayAuthResponseEntityDtoMono);
     }
 
-    private Mono<PostePayAuthResponseEntityDto> requestPostepayAuthorization(AuthorizationRequestData authorizationData) {
+    private Mono<PostePayAuthResponseEntityDto> requestPostepayAuthorization(
+                                                                             AuthorizationRequestData authorizationData
+    ) {
 
         return Mono.just(authorizationData)
                 .filter(authorizationRequestData -> "PPAY".equals(authorizationRequestData.paymentTypeCode()))
                 .switchIfEmpty(Mono.empty())
-            .map(authorizationRequestData ->
-                new PostePayAuthRequestDto()
-                    .grandTotal(BigDecimal.valueOf(((long) authorizationData.transaction().getAmount().value()) + authorizationData.fee()))
-                    .description(authorizationData.transaction().getDescription().value())
-                    .paymentChannel(authorizationData.pspChannelCode())
-                    .idTransaction(authorizationData.transaction().getTransactionId().value().toString()))
-            .flatMap(payAuthRequestDto ->
-                    paymentTransactionGatewayPostepayWebClient.authRequest(payAuthRequestDto, false, encodeMdcFields(authorizationData))
-                    .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
-                            case UNAUTHORIZED -> new AlreadyProcessedException(authorizationData.transaction().getRptId());
-                            case GATEWAY_TIMEOUT -> new GatewayTimeoutException();
-                            case INTERNAL_SERVER_ERROR -> new BadGatewayException("");
-                            default -> exception;
-                        }
-                    )
-            );
+                .map(
+                        authorizationRequestData -> new PostePayAuthRequestDto()
+                                .grandTotal(
+                                        BigDecimal.valueOf(
+                                                ((long) authorizationData.transaction().getAmount().value())
+                                                        + authorizationData.fee()
+                                        )
+                                )
+                                .description(authorizationData.transaction().getDescription().value())
+                                .paymentChannel(authorizationData.pspChannelCode())
+                                .idTransaction(authorizationData.transaction().getTransactionId().value().toString())
+                )
+                .flatMap(
+                        payAuthRequestDto -> paymentTransactionGatewayPostepayWebClient
+                                .authRequest(payAuthRequestDto, false, encodeMdcFields(authorizationData))
+                                .onErrorMap(
+                                        WebClientResponseException.class,
+                                        exception -> switch (exception.getStatusCode()) {
+                                        case UNAUTHORIZED -> new AlreadyProcessedException(
+                                                authorizationData.transaction().getRptId()
+                                        );
+                                        case GATEWAY_TIMEOUT -> new GatewayTimeoutException();
+                                        case INTERNAL_SERVER_ERROR -> new BadGatewayException("");
+                                        default -> exception;
+                                        }
+                                )
+                );
     }
 
     private Mono<XPayAuthResponseEntityDto> requestXPayAuthorization(AuthorizationRequestData authorizationData) {
 
         return Mono.just(authorizationData)
-                .filter(authorizationRequestData -> "CP".equals(authorizationRequestData.paymentTypeCode()) && "XPAY".equals(authorizationRequestData.paymentGatewayId()))
+                .filter(
+                        authorizationRequestData -> "CP".equals(authorizationRequestData.paymentTypeCode())
+                                && "XPAY".equals(authorizationRequestData.paymentGatewayId())
+                )
                 .switchIfEmpty(Mono.empty())
                 .flatMap(authorizationRequestData -> {
                     final Mono<XPayAuthRequestDto> xPayAuthRequest;
-                    if (authorizationData.authDetails() instanceof CardAuthRequestDetailsDto cardData) {
-                        xPayAuthRequest = Mono.just(new XPayAuthRequestDto()
-                                .cvv(cardData.getCvv())
-                                .pan(cardData.getPan())
-                                .exipiryDate(cardData.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM")))
-                                .idTransaction(authorizationData.transaction().getTransactionId().value().toString())
-                                .grandTotal(BigDecimal.valueOf(((long) authorizationData.transaction().getAmount().value()) + authorizationData.fee())));
+                    if (authorizationData.authDetails()instanceof CardAuthRequestDetailsDto cardData) {
+                        xPayAuthRequest = Mono.just(
+                                new XPayAuthRequestDto()
+                                        .cvv(cardData.getCvv())
+                                        .pan(cardData.getPan())
+                                        .exipiryDate(
+                                                cardData.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM"))
+                                        )
+                                        .idTransaction(
+                                                authorizationData.transaction().getTransactionId().value().toString()
+                                        )
+                                        .grandTotal(
+                                                BigDecimal.valueOf(
+                                                        ((long) authorizationData.transaction().getAmount().value())
+                                                                + authorizationData.fee()
+                                                )
+                                        )
+                        );
                     } else {
-                        xPayAuthRequest = Mono.error(new InvalidRequestException("Cannot perform XPAY authorization for null input CardAuthRequestDetailsDto"));
+                        xPayAuthRequest = Mono.error(
+                                new InvalidRequestException(
+                                        "Cannot perform XPAY authorization for null input CardAuthRequestDetailsDto"
+                                )
+                        );
                     }
                     return xPayAuthRequest;
                 })
-                .flatMap(xPayAuthRequestDto ->
-                        paymentTransactionGatewayXPayWebClient.authRequestXpay(xPayAuthRequestDto, encodeMdcFields(authorizationData))
-                                .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
-                                    case UNAUTHORIZED ->
-                                            new AlreadyProcessedException(authorizationData.transaction().getRptId()); //401
-                                    case INTERNAL_SERVER_ERROR -> new BadGatewayException(""); //500
-                                    default -> exception;
-                                })
+                .flatMap(
+                        xPayAuthRequestDto -> paymentTransactionGatewayXPayWebClient
+                                .authRequestXpay(xPayAuthRequestDto, encodeMdcFields(authorizationData))
+                                .onErrorMap(
+                                        WebClientResponseException.class,
+                                        exception -> switch (exception.getStatusCode()) {
+                                        case UNAUTHORIZED -> new AlreadyProcessedException(
+                                                authorizationData.transaction().getRptId()
+                                        ); // 401
+                                        case INTERNAL_SERVER_ERROR -> new BadGatewayException(""); // 500
+                                        default -> exception;
+                                        }
+                                )
                 );
-        }
+    }
 
     private String encodeMdcFields(AuthorizationRequestData authorizationData) {
         String mdcData;
         try {
-            mdcData = objectMapper.writeValueAsString(Map.of("transactionId", authorizationData.transaction().getTransactionId().value()));
+            mdcData = objectMapper.writeValueAsString(
+                    Map.of("transactionId", authorizationData.transaction().getTransactionId().value())
+            );
         } catch (JsonProcessingException e) {
             mdcData = "";
         }

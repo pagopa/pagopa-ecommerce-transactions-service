@@ -64,7 +64,9 @@ class TransactionUserReceiptProjectionHandlerTest {
                 transaction.getCreationDate()
         );
 
-        TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(expectedDocument.getStatus());
+        TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(
+                expectedDocument.getStatus()
+        );
 
         TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                 transaction.getTransactionId().value().toString(),
@@ -104,6 +106,7 @@ class TransactionUserReceiptProjectionHandlerTest {
         /*
          * Assertions
          */
-        Mockito.verify(viewRepository, Mockito.times(1)).save(argThat(savedTransaction -> savedTransaction.getStatus().equals(TransactionStatusDto.NOTIFIED)));
+        Mockito.verify(viewRepository, Mockito.times(1))
+                .save(argThat(savedTransaction -> savedTransaction.getStatus().equals(TransactionStatusDto.NOTIFIED)));
     }
 }

@@ -41,170 +41,172 @@ import static org.mockito.ArgumentMatchers.any;
 @ExtendWith(MockitoExtension.class)
 class TransactionInitializerHandlerTest {
 
-  private final PaymentRequestsInfoRepository paymentRequestInfoRepository =
-      Mockito.mock(PaymentRequestsInfoRepository.class);
+    private final PaymentRequestsInfoRepository paymentRequestInfoRepository = Mockito
+            .mock(PaymentRequestsInfoRepository.class);
 
-  private final EcommerceSessionsClient ecommerceSessionsClient =
-      Mockito.mock(EcommerceSessionsClient.class);
+    private final EcommerceSessionsClient ecommerceSessionsClient = Mockito.mock(EcommerceSessionsClient.class);
 
-  private final TransactionsEventStoreRepository<TransactionActivatedData>
-      transactionEventActivatedStoreRepository =
-          Mockito.mock(TransactionsEventStoreRepository.class);
+    private final TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository = Mockito
+            .mock(TransactionsEventStoreRepository.class);
 
-  private final TransactionsEventStoreRepository<TransactionActivationRequestedData>
-      transactionEventActivationRequestedStoreRepository =
-          Mockito.mock(TransactionsEventStoreRepository.class);
+    private final TransactionsEventStoreRepository<TransactionActivationRequestedData> transactionEventActivationRequestedStoreRepository = Mockito
+            .mock(TransactionsEventStoreRepository.class);
 
-  private final NodoOperations nodoOperations = Mockito.mock(NodoOperations.class);
+    private final NodoOperations nodoOperations = Mockito.mock(NodoOperations.class);
 
-  private final QueueAsyncClient transactionClosureSentEventQueueClient =
-      Mockito.mock(QueueAsyncClient.class);
+    private final QueueAsyncClient transactionClosureSentEventQueueClient = Mockito.mock(QueueAsyncClient.class);
 
-  private final TransactionActivateHandler handler =
-      new TransactionActivateHandler(
-          paymentRequestInfoRepository,
-          transactionEventActivatedStoreRepository,
-          transactionEventActivationRequestedStoreRepository,
-          ecommerceSessionsClient,
-          nodoOperations,
-          transactionClosureSentEventQueueClient,
-          120);
+    private final TransactionActivateHandler handler = new TransactionActivateHandler(
+            paymentRequestInfoRepository,
+            transactionEventActivatedStoreRepository,
+            transactionEventActivationRequestedStoreRepository,
+            ecommerceSessionsClient,
+            nodoOperations,
+            transactionClosureSentEventQueueClient,
+            120
+    );
 
-  @Test
-  void shouldHandleCommandForNM3CachedPaymentRequest() {
-    RptId rptId = new RptId("77777777777302016723749670035");
-    IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
-    String transactionId = UUID.randomUUID().toString();
-    String paymentToken = UUID.randomUUID().toString();
-    String sessionToken = UUID.randomUUID().toString();
-    String paName = "paName";
-    String paTaxcode = "77777777777";
-    String description = "Description";
-    Integer amount = Integer.valueOf(1000);
+    @Test
+    void shouldHandleCommandForNM3CachedPaymentRequest() {
+        RptId rptId = new RptId("77777777777302016723749670035");
+        IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
+        String transactionId = UUID.randomUUID().toString();
+        String paymentToken = UUID.randomUUID().toString();
+        String sessionToken = UUID.randomUUID().toString();
+        String paName = "paName";
+        String paTaxcode = "77777777777";
+        String description = "Description";
+        Integer amount = Integer.valueOf(1000);
 
-    NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
-    PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto();
-    requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
-    paymentNoticeInfoDto.setRptId(rptId.value());
-    requestDto.setEmail("jhon.doe@email.com");
-    paymentNoticeInfoDto.setAmount(1200);
-    paymentNoticeInfoDto.setPaymentContextCode(UUID.randomUUID().toString().replace("-", ""));
-    TransactionActivateCommand command = new TransactionActivateCommand(rptId, requestDto);
+        NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
+        PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto();
+        requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
+        paymentNoticeInfoDto.setRptId(rptId.value());
+        requestDto.setEmail("jhon.doe@email.com");
+        paymentNoticeInfoDto.setAmount(1200);
+        paymentNoticeInfoDto.setPaymentContextCode(UUID.randomUUID().toString().replace("-", ""));
+        TransactionActivateCommand command = new TransactionActivateCommand(rptId, requestDto);
 
-    PaymentRequestInfo paymentRequestInfoCached =
-            new PaymentRequestInfo(
-                    rptId,
-                    paTaxcode,
-                    paName,
-                    description,
-                    amount,
-                    null,
-                    true,
-                    paymentToken,
-                    idempotencyKey);
+        PaymentRequestInfo paymentRequestInfoCached = new PaymentRequestInfo(
+                rptId,
+                paTaxcode,
+                paName,
+                description,
+                amount,
+                null,
+                true,
+                paymentToken,
+                idempotencyKey
+        );
 
-    SessionDataDto sessionDataDto =
-        new SessionDataDto()
-            .email(requestDto.getEmail())
-            .sessionToken(sessionToken)
-            .paymentToken(paymentToken)
-            .rptId(rptId.value())
-            .transactionId(transactionId);
+        SessionDataDto sessionDataDto = new SessionDataDto()
+                .email(requestDto.getEmail())
+                .sessionToken(sessionToken)
+                .paymentToken(paymentToken)
+                .rptId(rptId.value())
+                .transactionId(transactionId);
 
-    TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
-    transactionActivatedEvent.setTransactionId(transactionId);
-    transactionActivatedEvent.setEventCode(TransactionEventCode.TRANSACTION_ACTIVATED_EVENT);
-    transactionActivatedEvent.setPaymentToken(paymentToken);
-    transactionActivatedEvent.setRptId(rptId.value());
+        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
+        transactionActivatedEvent.setTransactionId(transactionId);
+        transactionActivatedEvent.setEventCode(TransactionEventCode.TRANSACTION_ACTIVATED_EVENT);
+        transactionActivatedEvent.setPaymentToken(paymentToken);
+        transactionActivatedEvent.setRptId(rptId.value());
 
-    /** preconditions */
-    Mockito.when(paymentRequestInfoRepository.findById(rptId))
-        .thenReturn(Optional.of(paymentRequestInfoCached));
-    Mockito.when(transactionEventActivatedStoreRepository.save(any()))
-        .thenReturn(Mono.just(transactionActivatedEvent));
-    Mockito.when(paymentRequestInfoRepository.save(any(PaymentRequestInfo.class)))
-        .thenReturn(paymentRequestInfoCached);
-    Mockito.when(ecommerceSessionsClient.createSessionToken(any()))
-        .thenReturn(Mono.just(sessionDataDto));
-    Mockito.when(
-            transactionClosureSentEventQueueClient.sendMessageWithResponse(
-                any(BinaryData.class), any(), any()))
-        .thenReturn(queueSuccessfulResponse());
+        /** preconditions */
+        Mockito.when(paymentRequestInfoRepository.findById(rptId))
+                .thenReturn(Optional.of(paymentRequestInfoCached));
+        Mockito.when(transactionEventActivatedStoreRepository.save(any()))
+                .thenReturn(Mono.just(transactionActivatedEvent));
+        Mockito.when(paymentRequestInfoRepository.save(any(PaymentRequestInfo.class)))
+                .thenReturn(paymentRequestInfoCached);
+        Mockito.when(ecommerceSessionsClient.createSessionToken(any()))
+                .thenReturn(Mono.just(sessionDataDto));
+        Mockito.when(
+                transactionClosureSentEventQueueClient.sendMessageWithResponse(
+                        any(BinaryData.class),
+                        any(),
+                        any()
+                )
+        )
+                .thenReturn(queueSuccessfulResponse());
 
-    /** run test */
-    Tuple3<
-            Mono<TransactionActivatedEvent>,
-            Mono<TransactionActivationRequestedEvent>,
-            SessionDataDto>
-        response = handler.handle(command).block();
+        /** run test */
+        Tuple3<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>, SessionDataDto> response = handler
+                .handle(command).block();
 
-    /** asserts */
-    Mockito.verify(paymentRequestInfoRepository, Mockito.times(1)).findById(rptId);
-    Mockito.verify(ecommerceSessionsClient, Mockito.times(1)).createSessionToken(any());
+        /** asserts */
+        Mockito.verify(paymentRequestInfoRepository, Mockito.times(1)).findById(rptId);
+        Mockito.verify(ecommerceSessionsClient, Mockito.times(1)).createSessionToken(any());
 
-    assertEquals(sessionDataDto.getRptId(), response.getT3().getRptId());
-    assertEquals(sessionDataDto.getPaymentToken(), response.getT3().getPaymentToken());
-    assertEquals(paymentRequestInfoCached.paymentToken(), response.getT3().getPaymentToken());
-    assertNotNull(paymentRequestInfoCached.id());
-  }
+        assertEquals(sessionDataDto.getRptId(), response.getT3().getRptId());
+        assertEquals(sessionDataDto.getPaymentToken(), response.getT3().getPaymentToken());
+        assertEquals(paymentRequestInfoCached.paymentToken(), response.getT3().getPaymentToken());
+        assertNotNull(paymentRequestInfoCached.id());
+    }
 
-  @Test
-  void transactionsProjectionTests() {
-    String TEST_RPTID = "77777777777302016723749670035";
-    String TEST_TOKEN = "token";
+    @Test
+    void transactionsProjectionTests() {
+        String TEST_RPTID = "77777777777302016723749670035";
+        String TEST_TOKEN = "token";
 
-    TransactionsProjection<NewTransactionResponseDto> transactionsProjection =
-        new TransactionsProjection<>();
-    transactionsProjection.setData(
-            new NewTransactionResponseDto()
-                    .addPaymentsItem(new PaymentInfoDto()
-                            .amount(1)
-                            .rptId(TEST_RPTID)
-                            .paymentToken(TEST_TOKEN)
-                            .authToken(TEST_TOKEN)
-                            .reason("")));
+        TransactionsProjection<NewTransactionResponseDto> transactionsProjection = new TransactionsProjection<>();
+        transactionsProjection.setData(
+                new NewTransactionResponseDto()
+                        .addPaymentsItem(
+                                new PaymentInfoDto()
+                                        .amount(1)
+                                        .rptId(TEST_RPTID)
+                                        .paymentToken(TEST_TOKEN)
+                                        .authToken(TEST_TOKEN)
+                                        .reason("")
+                        )
+        );
 
-    TransactionsProjection<NewTransactionResponseDto> differentTransactionsProjection =
-        new TransactionsProjection<>();
-    differentTransactionsProjection.setData(
-            new NewTransactionResponseDto()
-                    .addPaymentsItem(new PaymentInfoDto()
-                            .amount(1)
-                            .rptId(TEST_RPTID)
-                            .paymentToken(TEST_TOKEN)
-                            .authToken(TEST_TOKEN)
-                            .reason("")));
+        TransactionsProjection<NewTransactionResponseDto> differentTransactionsProjection = new TransactionsProjection<>();
+        differentTransactionsProjection.setData(
+                new NewTransactionResponseDto()
+                        .addPaymentsItem(
+                                new PaymentInfoDto()
+                                        .amount(1)
+                                        .rptId(TEST_RPTID)
+                                        .paymentToken(TEST_TOKEN)
+                                        .authToken(TEST_TOKEN)
+                                        .reason("")
+                        )
+        );
 
-    differentTransactionsProjection.setRptId(new RptId(TEST_RPTID));
+        differentTransactionsProjection.setRptId(new RptId(TEST_RPTID));
 
-    assertFalse(transactionsProjection.equals(differentTransactionsProjection));
-    assertEquals(
-        Boolean.TRUE,
-        transactionsProjection.getData().equals(differentTransactionsProjection.getData()));
-  }
+        assertFalse(transactionsProjection.equals(differentTransactionsProjection));
+        assertEquals(
+                Boolean.TRUE,
+                transactionsProjection.getData().equals(differentTransactionsProjection.getData())
+        );
+    }
 
-  private Mono<Response<SendMessageResult>> queueSuccessfulResponse() {
-    return Mono.just(
-        new Response<>() {
-          @Override
-          public int getStatusCode() {
-            return 200;
-          }
+    private Mono<Response<SendMessageResult>> queueSuccessfulResponse() {
+        return Mono.just(
+                new Response<>() {
+                    @Override
+                    public int getStatusCode() {
+                        return 200;
+                    }
 
-          @Override
-          public HttpHeaders getHeaders() {
-            return new HttpHeaders();
-          }
+                    @Override
+                    public HttpHeaders getHeaders() {
+                        return new HttpHeaders();
+                    }
 
-          @Override
-          public HttpRequest getRequest() {
-            return null;
-          }
+                    @Override
+                    public HttpRequest getRequest() {
+                        return null;
+                    }
 
-          @Override
-          public SendMessageResult getValue() {
-            return new SendMessageResult();
-          }
-        });
-  }
+                    @Override
+                    public SendMessageResult getValue() {
+                        return new SendMessageResult();
+                    }
+                }
+        );
+    }
 }

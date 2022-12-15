@@ -69,8 +69,7 @@ class NodoPerPMClientTest {
                 .importoTotale(amount)
                 .bolloDigitale(false)
                 .email(email)
-                .idCarrello(idCarrello)
-                ;
+                .idCarrello(idCarrello);
 
         /**
          * preconditions
@@ -97,7 +96,7 @@ class NodoPerPMClientTest {
 
     @Test
     void shouldReturnInformazioniPagamentoError() {
-        //FIXME How to test it?
+        // FIXME How to test it?
     }
 
 }

@@ -62,7 +62,12 @@ class TransactionServiceTest {
         transactionActivatedData.setEmail(TEST_EMAIL);
         transactionActivatedData.setPaymentToken(TEST_TOKEN);
 
-        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(TRANSACTION_ID.toString(), TEST_RPTID, TEST_TOKEN, transactionActivatedData);
+        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
+                TRANSACTION_ID.toString(),
+                TEST_RPTID,
+                TEST_TOKEN,
+                transactionActivatedData
+        );
 
         TransactionActivationRequestedData transactionActivationRequestedData = new TransactionActivationRequestedData();
         transactionActivationRequestedData.setAmount(0);
@@ -70,7 +75,11 @@ class TransactionServiceTest {
         transactionActivationRequestedData.setEmail(TEST_EMAIL);
         transactionActivationRequestedData.setPaymentContextCode(TEST_CPP.toString());
 
-        TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(TRANSACTION_ID.toString(), TEST_RPTID, transactionActivationRequestedData);
+        TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
+                TRANSACTION_ID.toString(),
+                TEST_RPTID,
+                transactionActivationRequestedData
+        );
 
         SessionDataDto sessionDataDto = new SessionDataDto();
         sessionDataDto.setEmail(TEST_EMAIL);
@@ -79,10 +88,12 @@ class TransactionServiceTest {
         sessionDataDto.setPaymentToken(TEST_TOKEN);
         sessionDataDto.setRptId(TEST_RPTID);
 
-        Tuple3<
-                Mono<TransactionActivatedEvent>,
-                Mono<TransactionActivationRequestedEvent>,
-                SessionDataDto> response = Tuples.of(Mono.just(transactionActivatedEvent), Mono.just(transactionActivationRequestedEvent), sessionDataDto);
+        Tuple3<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>, SessionDataDto> response = Tuples
+                .of(
+                        Mono.just(transactionActivatedEvent),
+                        Mono.just(transactionActivationRequestedEvent),
+                        sessionDataDto
+                );
 
         TransactionActivated transactionActivated = new TransactionActivated(
                 new TransactionId(TRANSACTION_ID),
@@ -96,7 +107,6 @@ class TransactionServiceTest {
                 TransactionStatusDto.ACTIVATED
         );
 
-
         TransactionActivationRequested transactionActivationRequested = new TransactionActivationRequested(
                 new TransactionId(TRANSACTION_ID),
                 new RptId(TEST_RPTID),
@@ -109,9 +119,11 @@ class TransactionServiceTest {
         /**
          * Preconditions
          */
-        Mockito.when(transactionActivateHandler.handle(Mockito.any(TransactionActivateCommand.class))).thenReturn(Mono.just(response));
+        Mockito.when(transactionActivateHandler.handle(Mockito.any(TransactionActivateCommand.class)))
+                .thenReturn(Mono.just(response));
 //        Mockito.when(transactionsProjectionHandler.handle(transactionActivationRequestedEvent)).thenReturn(Mono.just(transactionActivationRequested));
-        Mockito.when(transactionsActivationProjectionHandler.handle(transactionActivatedEvent)).thenReturn(Mono.just(transactionActivated));
+        Mockito.when(transactionsActivationProjectionHandler.handle(transactionActivatedEvent))
+                .thenReturn(Mono.just(transactionActivated));
 
         /**
          * Test
@@ -121,6 +133,9 @@ class TransactionServiceTest {
         /**
          * Assertions
          */
-        assertEquals(transactionRequestDto.getPaymentNotices().get(0).getRptId(), responseDto.getPayments().get(0).getRptId());
+        assertEquals(
+                transactionRequestDto.getPaymentNotices().get(0).getRptId(),
+                responseDto.getPayments().get(0).getRptId()
+        );
     }
 }
