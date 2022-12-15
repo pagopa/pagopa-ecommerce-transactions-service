@@ -1,8 +1,8 @@
 package it.pagopa.transactions.projections.handlers;
 
-import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
-import it.pagopa.transactions.documents.Transaction;
-import it.pagopa.transactions.documents.TransactionClosureErrorEvent;
+import it.pagopa.ecommerce.commons.documents.Transaction;
+import it.pagopa.ecommerce.commons.documents.TransactionClosureErrorEvent;
+import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.jetbrains.annotations.NotNull;
