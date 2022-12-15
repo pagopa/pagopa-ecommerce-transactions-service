@@ -125,7 +125,7 @@ public class TransactionServiceTests {
 		final TransactionInfoDto expected = new TransactionInfoDto()
 				.transactionId(TRANSACION_ID)
 				.addPaymentsItem(new PaymentInfoDto()
-						.amount(transaction.getAmount())
+						.amount(transaction.getNoticeCodes().get(0).getAmount())
 						.reason("reason")
 						.paymentToken(PAYMENT_TOKEN)
 						.authToken(null)
