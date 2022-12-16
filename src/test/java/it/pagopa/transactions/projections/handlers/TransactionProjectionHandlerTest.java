@@ -44,7 +44,7 @@ class TransactionProjectionHandlerTest {
 
         TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
                 transactionUUID.toString(),
-                Arrays.asList(new it.pagopa.ecommerce.commons.documents.NoticeCode(null,"77777777777302016723749670035",null,null)),
+                Arrays.asList(new it.pagopa.ecommerce.commons.documents.NoticeCode(null,"77777777777302016723749670035","reason",1)),
                 transactionActivationRequestedData);
 
         TransactionActivationRequestedEvent event = new TransactionActivationRequestedEvent(

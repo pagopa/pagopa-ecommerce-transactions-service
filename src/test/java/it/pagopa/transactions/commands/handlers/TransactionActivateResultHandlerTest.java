@@ -143,7 +143,7 @@ class TransactionActivateResultHandlerTest {
                         null,
                         transaction.getNoticeCodes().stream().map(noticeCode ->
                                 new it.pagopa.ecommerce.commons.documents.NoticeCode(
-                                        noticeCode.paymentToken().value(),
+                                        paymentToken,
                                         noticeCode.rptId().value(),
                                         noticeCode.transactionDescription().value(),
                                         noticeCode.transactionAmount().value())).toList(),

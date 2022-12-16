@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -120,16 +121,20 @@ public class TransactionActivateResultHandler
                 if(noticeCode.isEmpty()) {
                     throw new RuntimeException();
                 }
-                noticeCode.ifPresent(noticeCode1 -> {
+                /*noticeCode.ifPresent(noticeCode1 -> {
                     transactionActivationRequested.getNoticeCodes().remove(noticeCode);
                     transactionActivationRequested.getNoticeCodes().add(new NoticeCode(new PaymentToken(saved.paymentToken()),noticeCode1.rptId(),noticeCode1.transactionAmount(),noticeCode1.transactionDescription()));
-
-                });
+                });*/
 
                 TransactionActivatedData data =new TransactionActivatedData(
                         transactionActivationRequested.getEmail().value(),
                         transactionActivationRequested.getNoticeCodes().stream()
-                                .map(noticeCode2 -> new it.pagopa.ecommerce.commons.documents.NoticeCode(noticeCode2.paymentToken().value(), noticeCode2.rptId().value(), noticeCode2.transactionDescription().value(), noticeCode2.transactionAmount().value()))
+                                .map(noticeCode2 ->
+                                        new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                                                saved.paymentToken(),
+                                                noticeCode2.rptId().value(),
+                                                noticeCode2.transactionDescription().value(),
+                                                noticeCode2.transactionAmount().value()))
                                 .collect(Collectors.toList()),
                         null,
                         null);
@@ -139,7 +144,11 @@ public class TransactionActivateResultHandler
                   new TransactionActivatedEvent(
                       transactionId,
                       transactionActivationRequested.getNoticeCodes().stream()
-                          .map(noticeCode2 -> new it.pagopa.ecommerce.commons.documents.NoticeCode(noticeCode2.paymentToken().value(), noticeCode2.rptId().value(), noticeCode2.transactionDescription().value(), noticeCode2.transactionAmount().value()))
+                          .map(noticeCode2 -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                                  saved.paymentToken(),
+                                  noticeCode2.rptId().value(),
+                                  noticeCode2.transactionDescription().value(),
+                                  noticeCode2.transactionAmount().value()))
                           .collect(Collectors.toList()),
                       data);
 
