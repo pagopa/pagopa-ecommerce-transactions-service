@@ -348,7 +348,7 @@ public class TransactionsService {
                                         transaction.getNoticeCodes().stream().map(noticeCode ->
                                                 new PaymentInfoDto()
                                                         .amount(transaction.getTransactionActivatedData().getNoticeCodes().stream()
-                                                                .filter(noticeCode1 -> noticeCode1.getRptId().equals(noticeCode.rptId().value()))
+                                                                .filter(noticeCodeData -> noticeCodeData.getRptId().equals(noticeCode.rptId().value()))
                                                                 .findFirst().get()
                                                                 .getAmount())
                                                         .reason(noticeCode.transactionDescription().value())
@@ -378,19 +378,17 @@ public class TransactionsService {
                 TransactionActivationRequested transaction =
                         new TransactionActivationRequested(
                                 new TransactionId(UUID.fromString(activationRequestedEvent.getTransactionId())),
-                                activationRequestedEvent.getNoticeCodes().stream().map(noticeCode ->
-                                        new NoticeCode(
+                                activationRequestedEvent.getNoticeCodes().stream().map(noticeCode -> {
+                                    var noticeCodeDataValue = activationRequestedEvent.getData().getNoticeCodes().stream().filter(
+                                            noticeCodeData -> noticeCodeData.getRptId().equals(noticeCode.getRptId())
+                                    ).findFirst().get();
+                                        return new NoticeCode(
                                                 null,
                                                 new RptId(noticeCode.getRptId()),
-                                                new TransactionAmount(activationRequestedEvent.getData().getNoticeCodes().stream().filter(
-                                                        noticeCode1 -> noticeCode1.getRptId().equals(noticeCode.getRptId())
-                                                ).findFirst().get().getAmount()),
-                                                new TransactionDescription(activationRequestedEvent.getData().getNoticeCodes().stream().filter(
-                                                        noticeCode1 -> noticeCode1.getRptId().equals(noticeCode.getRptId())
-                                                        ).findFirst().get()
-                                                        .getDescription())
-                                        )
-                                ).toList(),
+                                                new TransactionAmount(noticeCodeDataValue.getAmount()),
+                                                new TransactionDescription(noticeCodeDataValue.getDescription())
+                                        );
+                                }).toList(),
                                 new Email(activationRequestedEvent.getData().getEmail()),
                                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATION_REQUESTED);
                 ActivationResultData activationResultData =

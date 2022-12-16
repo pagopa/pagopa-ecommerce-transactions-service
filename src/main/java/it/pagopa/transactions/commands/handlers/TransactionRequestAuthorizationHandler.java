@@ -71,9 +71,7 @@ public class TransactionRequestAuthorizationHandler
                                         transaction.getTransactionId().value().toString(),
                                         transaction.getNoticeCodes().stream().map(
                                                 noticeCode ->  new NoticeCode(
-                                                        transaction.getTransactionActivatedData().getNoticeCodes().
-                                                                stream().filter(noticeCode1 -> noticeCode1.getRptId().equals(noticeCode.rptId().value())).findFirst().get()
-                                                                .getPaymentToken(),
+                                                        noticeCode.paymentToken().value(),
                                                         noticeCode.rptId().value(),
                                                         noticeCode.transactionDescription().value(),
                                                         noticeCode.transactionAmount().value()

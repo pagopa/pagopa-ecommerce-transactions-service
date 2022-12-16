@@ -75,7 +75,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
                 transactionId.toString(),
                 transaction.getNoticeCodes().stream().map(noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
-                    transaction.getTransactionActivatedData().getNoticeCodes().stream().filter(noticeCode1 -> noticeCode1.getRptId().equals(noticeCode.rptId().value())).findFirst().get().getPaymentToken(),
+                    transaction.getTransactionActivatedData().getNoticeCodes().stream().filter(noticeCodeData -> noticeCodeData.getRptId().equals(noticeCode.rptId().value())).findFirst().get().getPaymentToken(),
                     noticeCode.rptId().value(),
                     noticeCode.transactionDescription().value(),
                     noticeCode.transactionAmount().value()

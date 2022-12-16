@@ -52,12 +52,14 @@ public class PaymentGatewayClient {
         return Mono.just(authorizationData)
                 .filter(authorizationRequestData -> "PPAY".equals(authorizationRequestData.paymentTypeCode()))
                 .switchIfEmpty(Mono.empty())
-            .map(authorizationRequestData ->
-                new PostePayAuthRequestDto()
-                    .grandTotal(BigDecimal.valueOf(((long) authorizationData.transaction().getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()) + authorizationData.fee()))
+            .map(authorizationRequestData -> {
+                BigDecimal grandTotal = BigDecimal.valueOf(((long) authorizationData.transaction().getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()) + authorizationData.fee());
+                return new PostePayAuthRequestDto()
+                    .grandTotal(grandTotal)
                     .description(authorizationData.transaction().getNoticeCodes().get(0).transactionDescription().value())
                     .paymentChannel(authorizationData.pspChannelCode())
-                    .idTransaction(authorizationData.transaction().getTransactionId().value().toString()))
+                    .idTransaction(authorizationData.transaction().getTransactionId().value().toString());
+            })
             .flatMap(payAuthRequestDto ->
                     paymentTransactionGatewayPostepayWebClient.authRequest(payAuthRequestDto, false, encodeMdcFields(authorizationData))
                     .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
@@ -79,12 +81,13 @@ public class PaymentGatewayClient {
                 .flatMap(authorizationRequestData -> {
                     final Mono<XPayAuthRequestDto> xPayAuthRequest;
                     if (authorizationData.authDetails() instanceof CardAuthRequestDetailsDto cardData) {
+                        BigDecimal grandTotal = BigDecimal.valueOf(((long) authorizationData.transaction().getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()) + authorizationData.fee());
                         xPayAuthRequest = Mono.just(new XPayAuthRequestDto()
                                 .cvv(cardData.getCvv())
                                 .pan(cardData.getPan())
                                 .exipiryDate(cardData.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM")))
                                 .idTransaction(authorizationData.transaction().getTransactionId().value().toString())
-                                .grandTotal(BigDecimal.valueOf(((long) authorizationData.transaction().getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()) + authorizationData.fee())));
+                                .grandTotal(grandTotal));
                     } else {
                         xPayAuthRequest = Mono.error(new InvalidRequestException("Cannot perform XPAY authorization for null input CardAuthRequestDetailsDto"));
                     }

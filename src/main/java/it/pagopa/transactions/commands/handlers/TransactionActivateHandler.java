@@ -236,7 +236,7 @@ public class TransactionActivateHandler
             exception ->
               log.error(
                   "Error to generate event TRANSACTION_ACTIVATED_EVENT for rptId {} and transactionId {} - error {}",
-                  String.join(",",transactionActivatedEvent.getNoticeCodes().stream().map(noticeCode1 -> noticeCode1.getRptId()).toList()),
+                  String.join(",",transactionActivatedEvent.getNoticeCodes().stream().map(NoticeCode::getRptId).toList()),
                   transactionActivatedEvent.getTransactionId(),
                   exception.getMessage())
             )
@@ -244,7 +244,7 @@ public class TransactionActivateHandler
             event ->
                 log.info(
                     "Generated event TRANSACTION_ACTIVATED_EVENT for rptId {} and transactionId {}",
-                    String.join(",",event.getNoticeCodes().stream().map(noticeCode1 -> noticeCode1.getRptId()).toList()),
+                    String.join(",",event.getNoticeCodes().stream().map(NoticeCode::getRptId).toList()),
                     event.getTransactionId()));
   }
 }

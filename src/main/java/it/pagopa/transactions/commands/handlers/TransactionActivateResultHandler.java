@@ -2,9 +2,9 @@ package it.pagopa.transactions.commands.handlers;
 
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
+import it.pagopa.ecommerce.commons.documents.NoticeCode;
 import it.pagopa.ecommerce.commons.documents.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.domain.NoticeCode;
 import it.pagopa.ecommerce.commons.domain.TransactionActivationRequested;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
@@ -22,7 +22,6 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
-import java.util.Optional;
 
 @Component
 @Slf4j
@@ -113,21 +112,15 @@ public class TransactionActivateResultHandler
             })
         .flatMap(
             saved -> {
-
-                Optional<NoticeCode> noticeCode = transactionActivationRequested.getNoticeCodes().stream().filter(n -> n.rptId().equals(saved.id())).findFirst();
-                if(noticeCode.isEmpty()) {
-                    throw new RuntimeException();
-                }
-
                 TransactionActivatedData data =new TransactionActivatedData(
                         transactionActivationRequested.getEmail().value(),
                         transactionActivationRequested.getNoticeCodes().stream()
-                                .map(noticeCode2 ->
+                                .map(noticeCode ->
                                         new it.pagopa.ecommerce.commons.documents.NoticeCode(
                                                 saved.paymentToken(),
-                                                noticeCode2.rptId().value(),
-                                                noticeCode2.transactionDescription().value(),
-                                                noticeCode2.transactionAmount().value()))
+                                                noticeCode.rptId().value(),
+                                                noticeCode.transactionDescription().value(),
+                                                noticeCode.transactionAmount().value()))
                                 .toList(),
                         null,
                         null);
@@ -137,11 +130,11 @@ public class TransactionActivateResultHandler
                   new TransactionActivatedEvent(
                       transactionId,
                       transactionActivationRequested.getNoticeCodes().stream()
-                          .map(noticeCode2 -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                          .map(noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
                                   saved.paymentToken(),
-                                  noticeCode2.rptId().value(),
-                                  noticeCode2.transactionDescription().value(),
-                                  noticeCode2.transactionAmount().value()))
+                                  noticeCode.rptId().value(),
+                                  noticeCode.transactionDescription().value(),
+                                  noticeCode.transactionAmount().value()))
                           .toList(),
                       data);
 
@@ -158,14 +151,14 @@ public class TransactionActivateResultHandler
                                 exception ->
                                     log.error(
                                             "Error to generate event TRANSACTION_ACTIVATED_EVENT for rptIds {} and transactionId {} - error {}",
-                                            String.join(",",transactionActivatedEvent.getNoticeCodes().stream().map(noticeCode1 -> noticeCode1.getRptId()).toList()),
+                                            String.join(",",transactionActivatedEvent.getNoticeCodes().stream().map(NoticeCode::getRptId).toList()),
                                             transactionActivatedEvent.getTransactionId(),
                                             exception.getMessage()))
                         .doOnNext(
                                 event ->
                                         log.info(
                                                 "Generated event TRANSACTION_ACTIVATED_EVENT for rptIds {} and transactionId {}",
-                                                String.join(",", event.getNoticeCodes().stream().map(noticeCode1 -> noticeCode1.getRptId()).toList()),
+                                                String.join(",", event.getNoticeCodes().stream().map(NoticeCode::getRptId).toList()),
                                                 event.getTransactionId()));
             });
   }

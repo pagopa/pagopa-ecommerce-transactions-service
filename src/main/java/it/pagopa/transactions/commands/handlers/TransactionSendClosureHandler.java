@@ -91,9 +91,7 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                                         command.getData().transaction().getTransactionId().value().toString(),
                                         command.getData().transaction().getNoticeCodes().stream().map(
                                                 noticeCode ->  new NoticeCode(
-                                                        command.getData().transaction().getTransactionActivatedData().getNoticeCodes().
-                                                                stream().filter(noticeCode1 -> noticeCode1.getRptId().equals(noticeCode.rptId().value())).findFirst().get()
-                                                                .getPaymentToken(),
+                                                        noticeCode.paymentToken().value(),
                                                         noticeCode.rptId().value(),
                                                         noticeCode.transactionDescription().value(),
                                                         noticeCode.transactionAmount().value()
