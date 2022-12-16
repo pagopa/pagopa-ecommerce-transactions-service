@@ -22,6 +22,7 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.stream.Stream;
 
 @Component
@@ -52,15 +53,19 @@ public class TransactionRequestAuthorizationHandler
 
         var monoPostePay = Mono.just(command.getData())
                 .flatMap(d -> paymentGatewayClient.requestPostepayAuthorization(d))
-                .switchIfEmpty(Mono.empty())
                 .map(p -> Tuples.of(p.getRequestId(),p.getUrlRedirect()));
 
         var monoXPay = Mono.just(command.getData())
                 .flatMap(d -> paymentGatewayClient.requestXPayAuthorization(d))
-                .switchIfEmpty(Mono.empty())
                 .map(p -> Tuples.of(p.getRequestId(),p.getUrlRedirect()));
 
-        return monoPostePay.switchIfEmpty(monoXPay).switchIfEmpty(Mono.error(new BadRequestException("No gateway matched")))
+        List<Mono<Tuple2<String, String>>> gatewayRequests = List.of(monoPostePay, monoXPay);
+
+        Mono<Tuple2<String, String>> gatewayAttempts = gatewayRequests
+                .stream()
+                .reduce((pipeline, candidateStep) -> pipeline.switchIfEmpty(candidateStep)).get();
+
+        return gatewayAttempts.switchIfEmpty(Mono.error(new BadRequestException("No gateway matched")))
                     .flatMap(tuple2 -> {
                         log.info("Logging authorization event for rpt id {}", transaction.getRptId().value());
                         TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(

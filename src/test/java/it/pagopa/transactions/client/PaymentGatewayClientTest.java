@@ -140,7 +140,7 @@ class PaymentGatewayClientTest {
 
         /* test */
         StepVerifier.create(client.requestXPayAuthorization(authorizationData))
-                .assertNext(response -> response.equals(xPayResponse))
+                .expectNext(xPayResponse)
                 .verifyComplete();
 
         StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
@@ -198,7 +198,7 @@ class PaymentGatewayClientTest {
                 .verifyComplete();
 
         StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
-                .expectNextMatches(t -> t.equals(postePayResponse))
+                .expectNext(postePayResponse)
                 .verifyComplete();
     }
 
@@ -510,7 +510,7 @@ class PaymentGatewayClientTest {
 
         /* test */
         StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
-                .expectNextMatches(response -> response.equals(postePayResponse))
+                .expectNext(postePayResponse)
                 .verifyComplete();
 
         StepVerifier.create(client.requestXPayAuthorization(authorizationData))
@@ -567,7 +567,7 @@ class PaymentGatewayClientTest {
 
         /* test */
         StepVerifier.create(client.requestXPayAuthorization(authorizationData))
-                .expectNextMatches(response -> response.equals(xPayResponse))
+                .expectNext(xPayResponse)
                 .verifyComplete();
 
         StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
