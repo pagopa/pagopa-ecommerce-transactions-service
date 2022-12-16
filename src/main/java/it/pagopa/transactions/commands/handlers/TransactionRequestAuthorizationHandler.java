@@ -52,10 +52,12 @@ public class TransactionRequestAuthorizationHandler
 
         var monoPostePay = Mono.just(command.getData())
                 .flatMap(d -> paymentGatewayClient.requestPostepayAuthorization(d))
+                .switchIfEmpty(Mono.empty())
                 .map(p -> Tuples.of(p.getRequestId(),p.getUrlRedirect()));
 
         var monoXPay = Mono.just(command.getData())
                 .flatMap(d -> paymentGatewayClient.requestXPayAuthorization(d))
+                .switchIfEmpty(Mono.empty())
                 .map(p -> Tuples.of(p.getRequestId(),p.getUrlRedirect()));
 
         List<Mono<Tuple2<String, String>>> gatewayRequests = List.of(monoPostePay, monoXPay);
