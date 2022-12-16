@@ -41,6 +41,8 @@ public class PaymentGatewayClient {
     @Autowired
     private ObjectMapper objectMapper;
 
+    //TODO Handle multiple rptId
+
     public Mono<Tuple2<Optional<PostePayAuthResponseEntityDto>,Optional<XPayAuthResponseEntityDto>>> requestGeneralAuthorization(AuthorizationRequestData authorizationData) {
         Mono<Optional<PostePayAuthResponseEntityDto>> postePayAuthResponseEntityDtoMono = requestPostepayAuthorization(authorizationData).map(Optional::of).switchIfEmpty(Mono.just(Optional.empty()));
         Mono<Optional<XPayAuthResponseEntityDto>> xPayAuthResponseEntityDtoMono = requestXPayAuthorization(authorizationData).map(Optional::of).switchIfEmpty(Mono.just(Optional.empty()));
@@ -96,7 +98,6 @@ public class PaymentGatewayClient {
                 .flatMap(xPayAuthRequestDto ->
                         paymentTransactionGatewayXPayWebClient.authRequestXpay(xPayAuthRequestDto, encodeMdcFields(authorizationData))
                                 .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
-                                    //FIXME Handle multiple rptId
                                     case UNAUTHORIZED ->
                                             new AlreadyProcessedException(authorizationData.transaction().getNoticeCodes().get(0).rptId()); //401
                                     case INTERNAL_SERVER_ERROR -> new BadGatewayException(""); //500
