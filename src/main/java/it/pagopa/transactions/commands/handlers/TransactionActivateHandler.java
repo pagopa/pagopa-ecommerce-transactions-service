@@ -192,7 +192,6 @@ public class TransactionActivateHandler
 
     TransactionActivationRequestedData data = new TransactionActivationRequestedData();
     data.setEmail(email);
-    //TODO PaymentContextCode and PaymentToken are the same thing?
     NoticeCode noticeCode = new NoticeCode(null,rptId,description,amount);
     data.setNoticeCodes(Arrays.asList(noticeCode));
     data.setPaymentContextCode(paymentContextCode);
