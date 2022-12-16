@@ -63,7 +63,7 @@ public class TransactionRequestAuthorizationHandler
 
         Mono<Tuple2<String, String>> gatewayAttempts = gatewayRequests
                 .stream()
-                .reduce((pipeline, candidateStep) -> pipeline.switchIfEmpty(candidateStep)).get();
+                .reduce((pipeline, candidateStep) -> pipeline.switchIfEmpty(candidateStep)).orElse(Mono.empty());
 
         return gatewayAttempts.switchIfEmpty(Mono.error(new BadRequestException("No gateway matched")))
                     .flatMap(tuple2 -> {
