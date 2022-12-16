@@ -81,7 +81,7 @@ public class TransactionAddUserReceiptHandler implements CommandHandler<Transact
                                     noticeCode.rptId().value(),
                                     noticeCode.transactionDescription().value(),
                                     noticeCode.transactionAmount().value()
-                            )).collect(Collectors.toList()),
+                            )).toList(),
                             transactionAddReceiptData
                     );
 
@@ -173,7 +173,7 @@ public class TransactionAddUserReceiptHandler implements CommandHandler<Transact
                                                         ),
                                                         addUserReceiptRequestDto.getPayments().get(0).getDescription(),
                                                         amountToHumanReadableString(noticeCode.transactionAmount().value())
-                                                )).collect(Collectors.toList()),
+                                                )).toList(),
                                         amountToHumanReadableString(tx.getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum())
                                 )
                         )

@@ -34,7 +34,7 @@ public class AuthorizationUpdateProjectionHandler implements ProjectionHandler<T
                                         new RptId(noticeCode.getRptId()),
                                         new TransactionAmount(noticeCode.getAmount()),
                                         new TransactionDescription(noticeCode.getDescription())
-                                        )).collect(Collectors.toList()),
+                                        )).toList(),
                         new Email(transactionDocument.getEmail()),
                         null,
                         null,

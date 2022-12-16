@@ -39,7 +39,6 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.time.OffsetDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -314,7 +313,7 @@ public class TransactionServiceTests {
 						.paymentToken(noticeCode.getPaymentToken())
 						.rptId(noticeCode.getRptId())
 						.authToken(null)
-				).collect(Collectors.toList()))
+				).toList())
 				.status(TransactionStatusDto.CLOSED);
 
 		Transaction closedTransactionDocument = new Transaction(
@@ -424,7 +423,7 @@ public class TransactionServiceTests {
 						.paymentToken(noticeCode.getPaymentToken())
 						.rptId(noticeCode.getRptId())
 						.authToken(null)
-				).collect(Collectors.toList()))
+				).toList())
 				.status(TransactionStatusDto.NOTIFIED);
 
 		/* preconditions */

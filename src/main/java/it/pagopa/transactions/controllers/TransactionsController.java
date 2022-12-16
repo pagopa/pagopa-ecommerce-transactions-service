@@ -46,7 +46,7 @@ public class TransactionsController implements TransactionsApi {
     public Mono<ResponseEntity<NewTransactionResponseDto>> newTransaction(Mono<NewTransactionRequestDto> newTransactionRequest, ServerWebExchange exchange) {
         return newTransactionRequest
                 .flatMap(ntr -> {
-                    log.info("newTransaction rptIDs {} ", ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).collect(Collectors.toList()));
+                    log.info("newTransaction rptIDs {} ", ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).toList());
                     return transactionsService.newTransaction(ntr);
                 })
                 .map(ResponseEntity::ok);

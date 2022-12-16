@@ -272,7 +272,7 @@ class TransactionSendClosureHandlerTest {
                         transactionActivatedEvent.getData().getNoticeCodes().stream().filter(noticeCode1 -> noticeCode1.getRptId().equals(noticeCode.getRptId())).findFirst().get().getPaymentToken(),
                         noticeCode.getDescription(),
                         noticeCode.getAmount()
-                )).collect(Collectors.toList()),
+                )).toList(),
                 transactionClosureSendData
         );
 
