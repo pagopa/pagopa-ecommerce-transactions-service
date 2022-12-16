@@ -43,12 +43,6 @@ public class PaymentGatewayClient {
 
     //TODO Handle multiple rptId
 
-    /*public Mono<Tuple2<Optional<PostePayAuthResponseEntityDto>,Optional<XPayAuthResponseEntityDto>>> requestGeneralAuthorization(AuthorizationRequestData authorizationData) {
-        Mono<Optional<PostePayAuthResponseEntityDto>> postePayAuthResponseEntityDtoMono = requestPostepayAuthorization(authorizationData).map(Optional::of).switchIfEmpty(Mono.just(Optional.empty()));
-        Mono<Optional<XPayAuthResponseEntityDto>> xPayAuthResponseEntityDtoMono = requestXPayAuthorization(authorizationData).map(Optional::of).switchIfEmpty(Mono.just(Optional.empty()));
-        return Mono.zip(postePayAuthResponseEntityDtoMono,xPayAuthResponseEntityDtoMono);
-    }*/
-
     public Mono<PostePayAuthResponseEntityDto> requestPostepayAuthorization(AuthorizationRequestData authorizationData) {
 
         return Mono.just(authorizationData)

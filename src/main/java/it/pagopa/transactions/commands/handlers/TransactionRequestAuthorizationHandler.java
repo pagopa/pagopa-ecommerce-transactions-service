@@ -50,39 +50,39 @@ public class TransactionRequestAuthorizationHandler
             return Mono.error(new AlreadyProcessedException(transaction.getNoticeCodes().get(0).rptId()));
         }
 
-        var t1 = Mono.just(command.getData())
+        var monoPostePay = Mono.just(command.getData())
                 .flatMap(d -> paymentGatewayClient.requestPostepayAuthorization(d))
                 .switchIfEmpty(Mono.empty())
                 .map(p -> Tuples.of(p.getRequestId(),p.getUrlRedirect()));
 
-        var t2 = Mono.just(command.getData())
+        var monoXPay = Mono.just(command.getData())
                 .flatMap(d -> paymentGatewayClient.requestXPayAuthorization(d))
                 .switchIfEmpty(Mono.empty())
                 .map(p -> Tuples.of(p.getRequestId(),p.getUrlRedirect()));
 
-                    return t1.switchIfEmpty(t2).switchIfEmpty(Mono.error(new BadRequestException("No gateway matched")))
-                            .flatMap(tuple2 -> {
-                                log.info("Logging authorization event for rpt id {}", transaction.getRptId().value());
-                                TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
-                                        transaction.getTransactionId().value().toString(),
-                                        transaction.getNoticeCodes().stream().map(
-                                                noticeCode ->  new NoticeCode(
-                                                        noticeCode.paymentToken().value(),
-                                                        noticeCode.rptId().value(),
-                                                        noticeCode.transactionDescription().value(),
-                                                        noticeCode.transactionAmount().value()
+        return monoPostePay.switchIfEmpty(monoXPay).switchIfEmpty(Mono.error(new BadRequestException("No gateway matched")))
+                    .flatMap(tuple2 -> {
+                        log.info("Logging authorization event for rpt id {}", transaction.getRptId().value());
+                        TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
+                                transaction.getTransactionId().value().toString(),
+                                transaction.getNoticeCodes().stream().map(
+                                        noticeCode ->  new NoticeCode(
+                                                noticeCode.paymentToken().value(),
+                                                noticeCode.rptId().value(),
+                                                noticeCode.transactionDescription().value(),
+                                                noticeCode.transactionAmount().value()
                                         )).toList(),
-                                        new TransactionAuthorizationRequestData(
-                                                command.getData().transaction().getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum(),
-                                                command.getData().fee(),
-                                                command.getData().paymentInstrumentId(),
-                                                command.getData().pspId(),
-                                                command.getData().paymentTypeCode(),
-                                                command.getData().brokerName(),
-                                                command.getData().pspChannelCode(),
-                                                command.getData().paymentMethodName(),
-                                                command.getData().pspBusinessName(),
-                                                tuple2.getT1()));
+                                new TransactionAuthorizationRequestData(
+                                        command.getData().transaction().getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum(),
+                                        command.getData().fee(),
+                                        command.getData().paymentInstrumentId(),
+                                        command.getData().pspId(),
+                                        command.getData().paymentTypeCode(),
+                                        command.getData().brokerName(),
+                                        command.getData().pspChannelCode(),
+                                        command.getData().paymentMethodName(),
+                                        command.getData().pspBusinessName(),
+                                        tuple2.getT1()));
 
                         return transactionEventStoreRepository.save(authorizationEvent)
                                 .thenReturn(tuple2)
