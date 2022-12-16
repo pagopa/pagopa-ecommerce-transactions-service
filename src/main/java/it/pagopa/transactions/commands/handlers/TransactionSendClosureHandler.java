@@ -117,7 +117,7 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                      */
                     log.info("Invoking closePaymentV2 for RptId: {}", tx.getRptId());
                     return nodeForPspClient.closePaymentV2(closePaymentRequest)
-                            .flatMap(response -> buildEventFromOutcome(response.getOutcome(), command, updateAuthorizationRequestDto))
+                            .flatMap(response -> buildEventFromOutcome(response.getOutcome(), command))
                             .flatMap(transactionEventStoreRepository::save)
                             .map(Either::<TransactionClosureErrorEvent, TransactionClosureSentEvent>right)
                             .onErrorResume(exception -> {
@@ -202,7 +202,7 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
         return events.reduce(new EmptyTransaction(), Transaction::applyEvent);
     }
 
-    private Mono<TransactionClosureSentEvent> buildEventFromOutcome(ClosePaymentResponseDto.OutcomeEnum outcome, TransactionClosureSendCommand command, UpdateAuthorizationRequestDto updateAuthorizationRequestDto) {
+    private Mono<TransactionClosureSentEvent> buildEventFromOutcome(ClosePaymentResponseDto.OutcomeEnum outcome, TransactionClosureSendCommand command) {
         TransactionStatusDto updatedStatus;
 
         switch (outcome) {

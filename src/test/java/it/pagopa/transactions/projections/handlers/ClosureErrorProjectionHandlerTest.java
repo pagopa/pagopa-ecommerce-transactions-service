@@ -20,7 +20,7 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
-public class ClosureErrorProjectionHandlerTest {
+class ClosureErrorProjectionHandlerTest {
     @Mock
     private TransactionsViewRepository transactionsViewRepository;
 
