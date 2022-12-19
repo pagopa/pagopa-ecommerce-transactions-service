@@ -1,5 +1,6 @@
 package it.pagopa.transactions.services;
 
+import it.pagopa.ecommerce.commons.documents.NoticeCode;
 import it.pagopa.ecommerce.commons.documents.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.TransactionActivationRequestedData;
@@ -24,6 +25,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -57,29 +59,18 @@ class TransactionServiceTest {
                 .addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(TEST_RPTID));
 
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
-        transactionActivatedData.setDescription("dest");
-        transactionActivatedData.setAmount(0);
         transactionActivatedData.setEmail(TEST_EMAIL);
-        transactionActivatedData.setPaymentToken(TEST_TOKEN);
+        transactionActivatedData.setNoticeCodes(Arrays.asList(new NoticeCode(TEST_TOKEN,null,"dest",0)));
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                TRANSACTION_ID.toString(),
-                TEST_RPTID,
-                TEST_TOKEN,
-                transactionActivatedData
-        );
+                TRANSACTION_ID.toString(), Arrays.asList(new NoticeCode(TEST_TOKEN,TEST_RPTID, null,null)), transactionActivatedData);
 
         TransactionActivationRequestedData transactionActivationRequestedData = new TransactionActivationRequestedData();
-        transactionActivationRequestedData.setAmount(0);
-        transactionActivationRequestedData.setDescription("desc");
+        transactionActivatedData.setNoticeCodes(Arrays.asList(new NoticeCode(TEST_TOKEN,null,"dest",0)));
         transactionActivationRequestedData.setEmail(TEST_EMAIL);
         transactionActivationRequestedData.setPaymentContextCode(TEST_CPP.toString());
 
-        TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
-                TRANSACTION_ID.toString(),
-                TEST_RPTID,
-                transactionActivationRequestedData
-        );
+        TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(TRANSACTION_ID.toString(), Arrays.asList(new NoticeCode(null,TEST_RPTID, null,null)), transactionActivationRequestedData);
 
         SessionDataDto sessionDataDto = new SessionDataDto();
         sessionDataDto.setEmail(TEST_EMAIL);
@@ -88,30 +79,24 @@ class TransactionServiceTest {
         sessionDataDto.setPaymentToken(TEST_TOKEN);
         sessionDataDto.setRptId(TEST_RPTID);
 
-        Tuple3<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>, SessionDataDto> response = Tuples
-                .of(
-                        Mono.just(transactionActivatedEvent),
-                        Mono.just(transactionActivationRequestedEvent),
-                        sessionDataDto
-                );
+        Tuple3<
+                Mono<TransactionActivatedEvent>,
+                Mono<TransactionActivationRequestedEvent>,
+                SessionDataDto> response = Tuples.of(Mono.just(transactionActivatedEvent), Mono.just(transactionActivationRequestedEvent), sessionDataDto);
 
         TransactionActivated transactionActivated = new TransactionActivated(
                 new TransactionId(TRANSACTION_ID),
-                new PaymentToken(TEST_TOKEN),
-                new RptId(TEST_RPTID),
-                new TransactionDescription("desc"),
-                new TransactionAmount(0),
+                Arrays.asList(new it.pagopa.ecommerce.commons.domain.NoticeCode(new PaymentToken(TEST_TOKEN),new RptId(TEST_RPTID), new TransactionAmount(0), new TransactionDescription("desc"))),
                 new Email("foo@example.com"),
                 "faultCode",
                 "faultCodeString",
                 TransactionStatusDto.ACTIVATED
         );
 
+
         TransactionActivationRequested transactionActivationRequested = new TransactionActivationRequested(
                 new TransactionId(TRANSACTION_ID),
-                new RptId(TEST_RPTID),
-                new TransactionDescription("desc"),
-                new TransactionAmount(0),
+                Arrays.asList(new it.pagopa.ecommerce.commons.domain.NoticeCode(null,new RptId(TEST_RPTID), new TransactionAmount(0), new TransactionDescription("desc"))),
                 new Email("foo@example.com"),
                 TransactionStatusDto.ACTIVATION_REQUESTED
         );
@@ -119,11 +104,9 @@ class TransactionServiceTest {
         /**
          * Preconditions
          */
-        Mockito.when(transactionActivateHandler.handle(Mockito.any(TransactionActivateCommand.class)))
-                .thenReturn(Mono.just(response));
+        Mockito.when(transactionActivateHandler.handle(Mockito.any(TransactionActivateCommand.class))).thenReturn(Mono.just(response));
 //        Mockito.when(transactionsProjectionHandler.handle(transactionActivationRequestedEvent)).thenReturn(Mono.just(transactionActivationRequested));
-        Mockito.when(transactionsActivationProjectionHandler.handle(transactionActivatedEvent))
-                .thenReturn(Mono.just(transactionActivated));
+        Mockito.when(transactionsActivationProjectionHandler.handle(transactionActivatedEvent)).thenReturn(Mono.just(transactionActivated));
 
         /**
          * Test
@@ -133,9 +116,6 @@ class TransactionServiceTest {
         /**
          * Assertions
          */
-        assertEquals(
-                transactionRequestDto.getPaymentNotices().get(0).getRptId(),
-                responseDto.getPayments().get(0).getRptId()
-        );
+        assertEquals(transactionRequestDto.getPaymentNotices().get(0).getRptId(), responseDto.getPayments().get(0).getRptId());
     }
 }

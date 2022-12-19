@@ -1,5 +1,7 @@
 package it.pagopa.transactions.documents;
 
+
+import it.pagopa.ecommerce.commons.documents.NoticeCode;
 import it.pagopa.ecommerce.commons.documents.Transaction;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
@@ -8,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,53 +33,27 @@ class TransactionDocumentTest {
         /**
          * Test
          */
-        Transaction transaction = new Transaction(
-                TEST_TRANSACTIONID,
-                TEST_TOKEN,
-                TEST_RPTID,
-                TEST_DESC,
-                TEST_AMOUNT,
-                TEST_EMAIL,
-                TEST_STATUS,
-                TEST_TIME
-        );
+        Transaction transaction = new Transaction(TEST_TRANSACTIONID, TEST_TOKEN, TEST_RPTID, TEST_DESC, TEST_AMOUNT,
+                TEST_EMAIL, TEST_STATUS, TEST_TIME);
 
-        Transaction sameTransaction = new Transaction(
-                TEST_TRANSACTIONID,
-                TEST_TOKEN,
-                TEST_RPTID,
-                TEST_DESC,
-                TEST_AMOUNT,
-                TEST_EMAIL,
-                TEST_STATUS,
-                TEST_TIME
-        );
+        Transaction sameTransaction = new Transaction(TEST_TRANSACTIONID, TEST_TOKEN, TEST_RPTID, TEST_DESC,
+                TEST_AMOUNT, TEST_EMAIL, TEST_STATUS, TEST_TIME);
         sameTransaction.setCreationDate(transaction.getCreationDate());
 
         // Different transaction (creation date)
-        Transaction differentTransaction = new Transaction(
-                "",
-                "",
-                "",
-                "",
-                1,
-                "",
-                null,
-                ZonedDateTime.now()
-        );
-        differentTransaction.setPaymentToken(TEST_TOKEN);
-        differentTransaction.setRptId(TEST_RPTID);
-        differentTransaction.setDescription(TEST_DESC);
-        differentTransaction.setAmount(TEST_AMOUNT);
+        Transaction differentTransaction = new Transaction("",
+                "", "", "", 1, "", null, ZonedDateTime.now());
+        it.pagopa.ecommerce.commons.documents.NoticeCode noticeCode = new NoticeCode(TEST_TOKEN,TEST_RPTID,TEST_DESC,TEST_AMOUNT);
+        differentTransaction.setNoticeCodes(Arrays.asList(noticeCode));
         differentTransaction.setStatus(TEST_STATUS);
 
         /**
          * Assertions
          */
-        assertEquals(TEST_TOKEN, transaction.getPaymentToken());
-        assertEquals(TEST_RPTID, transaction.getRptId());
-        assertEquals(TEST_DESC, transaction.getDescription());
-        assertEquals(TEST_AMOUNT, transaction.getAmount());
+        assertEquals(TEST_TOKEN, transaction.getNoticeCodes().get(0).getPaymentToken());
+        assertEquals(TEST_RPTID, transaction.getNoticeCodes().get(0).getRptId());
+        assertEquals(TEST_DESC, transaction.getNoticeCodes().get(0).getDescription());
+        assertEquals(TEST_AMOUNT, transaction.getNoticeCodes().get(0).getAmount());
         assertEquals(TEST_STATUS, transaction.getStatus());
 
         assertNotEquals(transaction, differentTransaction);
@@ -98,25 +75,21 @@ class TransactionDocumentTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                paymentToken,
+                Arrays.asList(new it.pagopa.ecommerce.commons.domain.NoticeCode(paymentToken,
                 rptId,
-                description,
                 amount,
+                description)),
                 email,
                 faultCode,
                 faultCodeString,
-                status
-        );
+                status);
 
         Transaction transactionDocument = Transaction.from(transaction);
 
-        assertEquals(
-                transactionDocument.getPaymentToken(),
-                transaction.getTransactionActivatedData().getPaymentToken()
-        );
-        assertEquals(transactionDocument.getRptId(), transaction.getRptId().value());
-        assertEquals(transactionDocument.getDescription(), transaction.getDescription().value());
-        assertEquals(transactionDocument.getAmount(), transaction.getAmount().value());
+        assertEquals(transactionDocument.getNoticeCodes().get(0).getPaymentToken(), transaction.getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken());
+        assertEquals(transactionDocument.getNoticeCodes().get(0).getRptId(), transaction.getNoticeCodes().get(0).rptId().value());
+        assertEquals(transactionDocument.getNoticeCodes().get(0).getDescription(), transaction.getNoticeCodes().get(0).transactionDescription().value());
+        assertEquals(transactionDocument.getNoticeCodes().get(0).getAmount(), transaction.getNoticeCodes().get(0).transactionAmount().value());
         assertEquals(ZonedDateTime.parse(transactionDocument.getCreationDate()), transaction.getCreationDate());
         assertEquals(transactionDocument.getStatus(), transaction.getStatus());
     }

@@ -12,21 +12,14 @@ import reactor.core.publisher.Mono;
 
 @Component
 @Slf4j
-public class AuthorizationRequestProjectionHandler
-        implements ProjectionHandler<AuthorizationRequestData, Mono<Transaction>> {
+public class AuthorizationRequestProjectionHandler implements ProjectionHandler<AuthorizationRequestData, Mono<Transaction>> {
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
 
     @Override
     public Mono<Transaction> handle(AuthorizationRequestData data) {
         return transactionsViewRepository.findById(data.transaction().getTransactionId().value().toString())
-                .switchIfEmpty(
-                        Mono.error(
-                                new TransactionNotFoundException(
-                                        data.transaction().getTransactionActivatedData().getPaymentToken()
-                                )
-                        )
-                )
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(data.transaction().getTransactionId().value().toString())))
                 .flatMap(transactionDocument -> {
                     transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_REQUESTED);
                     return transactionsViewRepository.save(transactionDocument);

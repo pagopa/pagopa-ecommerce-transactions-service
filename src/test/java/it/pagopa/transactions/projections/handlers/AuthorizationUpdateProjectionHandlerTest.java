@@ -18,6 +18,7 @@ import reactor.test.StepVerifier;
 
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.argThat;
@@ -40,10 +41,10 @@ class AuthorizationUpdateProjectionHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(UUID.randomUUID()),
-                new PaymentToken("paymentToken"),
+                Arrays.asList(new NoticeCode(new PaymentToken("paymentToken"),
                 new RptId("77777777777111111111111111111"),
-                new TransactionDescription("description"),
                 new TransactionAmount(100),
+                new TransactionDescription("description"))),
                 new Email("email@example.com"),
                 "faultCode",
                 "faultCodeString",
@@ -52,10 +53,10 @@ class AuthorizationUpdateProjectionHandlerTest {
 
         it.pagopa.ecommerce.commons.documents.Transaction expectedDocument = new it.pagopa.ecommerce.commons.documents.Transaction(
                 transaction.getTransactionId().value().toString(),
-                transaction.getTransactionActivatedData().getPaymentToken(),
-                transaction.getRptId().value(),
-                transaction.getDescription().value(),
-                transaction.getAmount().value(),
+                transaction.getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken(),
+                transaction.getTransactionActivatedData().getNoticeCodes().get(0).getRptId(),
+                transaction.getTransactionActivatedData().getNoticeCodes().get(0).getDescription(),
+                transaction.getTransactionActivatedData().getNoticeCodes().get(0).getAmount(),
                 transaction.getEmail().value(),
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZED,
                 transaction.getCreationDate()
@@ -70,17 +71,23 @@ class AuthorizationUpdateProjectionHandlerTest {
 
         TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
                 transaction.getTransactionId().value().toString(),
-                transaction.getRptId().value(),
-                transaction.getTransactionActivatedData().getPaymentToken(),
+                transaction.getNoticeCodes().stream().map(noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                        noticeCode.paymentToken().value(),
+                        noticeCode.rptId().value(),
+                        null,
+                        null
+                )).toList(),
                 statusUpdateData
         );
 
         TransactionActivated expected = new TransactionActivated(
                 transaction.getTransactionId(),
-                new PaymentToken(transaction.getTransactionActivatedData().getPaymentToken()),
-                transaction.getRptId(),
-                transaction.getDescription(),
-                transaction.getAmount(),
+                transaction.getNoticeCodes().stream().map(noticeCode -> new it.pagopa.ecommerce.commons.domain.NoticeCode(
+                        noticeCode.paymentToken(),
+                        noticeCode.rptId(),
+                        noticeCode.transactionAmount(),
+                        noticeCode.transactionDescription()
+                )).toList(),
                 transaction.getEmail(),
                 null,
                 null,
