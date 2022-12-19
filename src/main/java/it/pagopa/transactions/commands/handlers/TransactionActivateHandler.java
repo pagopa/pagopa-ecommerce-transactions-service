@@ -28,6 +28,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Component
@@ -74,16 +75,25 @@ public class TransactionActivateHandler
         final RptId rptId = command.getRptId();
         final NewTransactionRequestDto newTransactionRequestDto = command.getData();
         final String paymentContextCode = newTransactionRequestDto.getPaymentNotices().get(0).getPaymentContextCode();
+        final int totalPaymentNotices = newTransactionRequestDto.getPaymentNotices().size();
+        final AtomicInteger processedPaymentNoticeCount = new AtomicInteger(0);
         return Mono.defer(
                 () -> Flux.fromIterable(newTransactionRequestDto.getPaymentNotices())
                         .parallel(5)
                         .flatMap(
-                                paymentNotice -> Mono.just(
-                                        Tuples.of(
-                                                paymentNotice,
-                                                getPaymentRequestInfoFromCache(new RptId(paymentNotice.getRptId()))
-                                        )
-                                )
+                                paymentNotice -> {
+                                    log.info(
+                                            "Start processing of payment request: [{}/{}]",
+                                            processedPaymentNoticeCount.addAndGet(1),
+                                            totalPaymentNotices
+                                    );
+                                    return Mono.just(
+                                            Tuples.of(
+                                                    paymentNotice,
+                                                    getPaymentRequestInfoFromCache(new RptId(paymentNotice.getRptId()))
+                                            )
+                                    );
+                                }
                         ).flatMap(
                                 cacheResult -> {
                                     final PaymentNoticeInfoDto paymentNotice = cacheResult.getT1();
