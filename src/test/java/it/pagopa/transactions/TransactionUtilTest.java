@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class TransactionUtilTest {
 
     @Test
-    void transactionUtilitiesTest(){
+    void transactionUtilitiesTest() {
         assertEquals("TRANSACTION_ACTIVATED_EVENT", TransactionEventCode.TRANSACTION_ACTIVATED_EVENT.toString());
         assertEquals("ACTIVATED", TransactionStatusDto.ACTIVATED.getValue());
     }

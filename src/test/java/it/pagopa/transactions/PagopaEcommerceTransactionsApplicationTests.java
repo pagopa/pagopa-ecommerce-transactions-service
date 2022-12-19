@@ -20,20 +20,24 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest
 @TestPropertySource(locations = "classpath:application-tests.properties")
-@Import({NodoApi.class})
+@Import(
+    {
+            NodoApi.class
+    }
+)
 class PagopaEcommerceTransactionsApplicationTests {
 
-  @MockBean
-  private NodoUtilities nodoUtilities;
+    @MockBean
+    private NodoUtilities nodoUtilities;
 
-  @MockBean
-  private ApiClient apiClient;
+    @MockBean
+    private ApiClient apiClient;
 
-  @InjectMocks
-  private NodoApi nodoApiClient;
+    @InjectMocks
+    private NodoApi nodoApiClient;
 
-  @Test
-  void contextLoads() {
-    Assert.assertTrue(true);
-  }
+    @Test
+    void contextLoads() {
+        Assert.assertTrue(true);
+    }
 }

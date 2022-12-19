@@ -15,29 +15,30 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @ExtendWith(MockitoExtension.class)
 class NodoConfigTest {
 
-  @InjectMocks private NodoConfig nodoConfig;
+    @InjectMocks
+    private NodoConfig nodoConfig;
 
-  private final String nodoConnectionString =
-      "{\"idPSP\":\"idPsp\",\"idChannel\":\"idChannel\",\"idBrokerPSP\":\"idBrokerPsp\",\"password\":\"password\"}";
+    private final String nodoConnectionString = "{\"idPSP\":\"idPsp\",\"idChannel\":\"idChannel\",\"idBrokerPSP\":\"idBrokerPsp\",\"password\":\"password\"}";
 
-  @Test
-  void shouldReturnValidVerificaRPTBaseRequest()
-      throws NoSuchMethodException, InvocationTargetException, IllegalAccessException,
-          JsonProcessingException {
+    @Test
+    void shouldReturnValidVerificaRPTBaseRequest()
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException,
+            JsonProcessingException {
 
-    NodoVerificaRPT nodoVerificaRPT =
-        nodoConfig.baseNodoVerificaRPTRequest(
-            nodoConnectionString, new it.pagopa.generated.nodoperpsp.model.ObjectFactory());
-    assertEquals(Boolean.TRUE, nodoVerificaRPT != null);
-  }
+        NodoVerificaRPT nodoVerificaRPT = nodoConfig.baseNodoVerificaRPTRequest(
+                nodoConnectionString,
+                new it.pagopa.generated.nodoperpsp.model.ObjectFactory()
+        );
+        assertEquals(Boolean.TRUE, nodoVerificaRPT != null);
+    }
 
-  @Test
-  void shouldReturnValidVerifyPaymentNoticeBaseRequest()
-      throws NoSuchMethodException, InvocationTargetException, IllegalAccessException,
-          JsonProcessingException {
+    @Test
+    void shouldReturnValidVerifyPaymentNoticeBaseRequest()
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException,
+            JsonProcessingException {
 
-    VerifyPaymentNoticeReq verifyPaymentNoticeReq =
-        nodoConfig.baseVerifyPaymentNoticeReq(nodoConnectionString, new ObjectFactory());
-    assertEquals(Boolean.TRUE, verifyPaymentNoticeReq != null);
-  }
+        VerifyPaymentNoticeReq verifyPaymentNoticeReq = nodoConfig
+                .baseVerifyPaymentNoticeReq(nodoConnectionString, new ObjectFactory());
+        assertEquals(Boolean.TRUE, verifyPaymentNoticeReq != null);
+    }
 }

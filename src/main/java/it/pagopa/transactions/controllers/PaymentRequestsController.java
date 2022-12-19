@@ -26,25 +26,32 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PaymentRequestsController implements PaymentRequestsApi {
 
-  @Autowired private PaymentRequestsService paymentRequestsService;
+    @Autowired
+    private PaymentRequestsService paymentRequestsService;
 
-  @Override
-  public Mono<ResponseEntity<PaymentRequestsGetResponseDto>> getPaymentRequestInfo(
-      String rptId, ServerWebExchange exchange) {
-    return Mono.just(rptId)
-        .flatMap(paymentRequestsService::getPaymentRequestInfo)
-        .map(ResponseEntity::ok);
-  }
+    @Override
+    public Mono<ResponseEntity<PaymentRequestsGetResponseDto>> getPaymentRequestInfo(
+                                                                                     String rptId,
+                                                                                     ServerWebExchange exchange
+    ) {
+        return Mono.just(rptId)
+                .flatMap(paymentRequestsService::getPaymentRequestInfo)
+                .map(ResponseEntity::ok);
+    }
 
-  @ExceptionHandler({
-    RedisSystemException.class,
-    RedisConnectionException.class,
-    WebClientRequestException.class
-  })
-  private ResponseEntity<ProblemJsonDto> genericBadGatewayHandler(RuntimeException exception) {
-    return new ResponseEntity<>(
-        new ProblemJsonDto().status(502).title("Bad gateway"), HttpStatus.BAD_GATEWAY);
-  }
+    @ExceptionHandler(
+        {
+                RedisSystemException.class,
+                RedisConnectionException.class,
+                WebClientRequestException.class
+        }
+    )
+    private ResponseEntity<ProblemJsonDto> genericBadGatewayHandler(RuntimeException exception) {
+        return new ResponseEntity<>(
+                new ProblemJsonDto().status(502).title("Bad gateway"),
+                HttpStatus.BAD_GATEWAY
+        );
+    }
 
   @ExceptionHandler({
     NodoErrorException.class,

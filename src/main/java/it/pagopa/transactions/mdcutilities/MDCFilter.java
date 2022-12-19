@@ -32,7 +32,9 @@ public class MDCFilter implements WebFilter {
 
     private ServerWebExchange decorate(ServerWebExchange exchange) {
 
-        final ServerHttpRequest decoratedRequest = new MDCCachingValuesServerHttpRequestDecorator(exchange.getRequest());
+        final ServerHttpRequest decoratedRequest = new MDCCachingValuesServerHttpRequestDecorator(
+                exchange.getRequest()
+        );
 
         return new ServerWebExchangeDecorator(exchange) {
 
@@ -44,17 +46,31 @@ public class MDCFilter implements WebFilter {
         };
     }
 
-
     @Override
-    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+    public Mono<Void> filter(
+                             ServerWebExchange exchange,
+                             WebFilterChain chain
+    ) {
         ServerHttpRequest request = exchange.getRequest();
-        Map<String,String> transactionMap = getTransactionId(exchange.getRequest());
+        Map<String, String> transactionMap = getTransactionId(exchange.getRequest());
 
         ServerWebExchange serverWebExchange = decorate(exchange);
         return chain.filter(serverWebExchange)
                 .doOnEach(logOnEach(r -> {
-                        log.info("{} {} {}", request.getMethod(), request.getURI(), ((MDCCachingValuesServerHttpRequestDecorator)serverWebExchange.getRequest()).getInfoFromValuesMap());
-                        ((MDCCachingValuesServerHttpRequestDecorator)serverWebExchange.getRequest()).getObjectAsMap().forEach((k,v) -> transactionMap.put(k,v.toString()));
+                    log.info(
+                            "{} {} {}",
+                            request.getMethod(),
+                            request.getURI(),
+                            ((MDCCachingValuesServerHttpRequestDecorator) serverWebExchange.getRequest())
+                                    .getInfoFromValuesMap()
+                    );
+                    ((MDCCachingValuesServerHttpRequestDecorator) serverWebExchange.getRequest()).getObjectAsMap()
+                            .forEach(
+                                    (
+                                     k,
+                                     v
+                                    ) -> transactionMap.put(k, v.toString())
+                            );
                 }))
                 .contextWrite(Context.of(CONTEXT_KEY, UUID.randomUUID().toString()))
                 .contextWrite(Context.of(TRANSACTION_ID, transactionMap.getOrDefault(TRANSACTION_ID, "")))
@@ -63,23 +79,25 @@ public class MDCFilter implements WebFilter {
     }
 
     private Map<String, String> getTransactionId(ServerHttpRequest request) {
-        UriTemplate uriTemplatePCC = new UriTemplate("/transactions/payment-context-codes/{paymentContextCode}/activation-results");
+        UriTemplate uriTemplatePCC = new UriTemplate(
+                "/transactions/payment-context-codes/{paymentContextCode}/activation-results"
+        );
         UriTemplate uriTemplateStandard = new UriTemplate("/transactions/{transactionId}");
-        return uriTemplatePCC.matches(request.getPath().value()) ? uriTemplatePCC.match(request.getPath().value()) : uriTemplateStandard.match(request.getPath().value());
+        return uriTemplatePCC.matches(request.getPath().value()) ? uriTemplatePCC.match(request.getPath().value())
+                : uriTemplateStandard.match(request.getPath().value());
     }
 
     public static <T> Consumer<Signal<T>> logOnEach(Consumer<T> logStatement) {
         return signal -> {
-            String contextValue = signal.getContextView().getOrDefault(CONTEXT_KEY,"");
-            String rptId = signal.getContextView().getOrDefault(RPT_ID,"");
+            String contextValue = signal.getContextView().getOrDefault(CONTEXT_KEY, "");
+            String rptId = signal.getContextView().getOrDefault(RPT_ID, "");
             String paymentContextCode = signal.getContextView().getOrDefault(PAYMENT_CONTEXT_CODE, "");
             String transactionId = signal.getContextView().getOrDefault(TRANSACTION_ID, "");
             try (
                     MDC.MDCCloseable mdcCloseable1 = MDC.putCloseable(CONTEXT_KEY, contextValue);
                     MDC.MDCCloseable mdcCloseable2 = MDC.putCloseable(RPT_ID, rptId);
                     MDC.MDCCloseable mdcCloseable3 = MDC.putCloseable(PAYMENT_CONTEXT_CODE, paymentContextCode);
-                    MDC.MDCCloseable mdcCloseable4 = MDC.putCloseable(TRANSACTION_ID, transactionId);
-                    ) {
+                    MDC.MDCCloseable mdcCloseable4 = MDC.putCloseable(TRANSACTION_ID, transactionId);) {
                 logStatement.accept(signal.get());
             }
         };

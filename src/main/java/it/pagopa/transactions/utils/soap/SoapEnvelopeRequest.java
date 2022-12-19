@@ -8,7 +8,10 @@ public class SoapEnvelopeRequest {
     private String headerContent;
     private Object body;
 
-    public SoapEnvelopeRequest(String headerContent, Object body) {
+    public SoapEnvelopeRequest(
+            String headerContent,
+            Object body
+    ) {
         this.headerContent = headerContent;
         this.body = body;
     }

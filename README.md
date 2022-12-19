@@ -42,7 +42,7 @@ An example configuration of these environment variables is in the `.env.example`
 Create your environment typing :
 ```sh
 cp .env.example .env
-``` 
+```
 
 Then from current project directory run :
 ```sh
@@ -86,10 +86,23 @@ When running with the Docker container you can check data persisted to either Mo
 Create your environment:
 ```sh
 export $(grep -v '^#' .env.local | xargs)
-``` 
+```
 
 Then from current project directory run :
+
 ```sh
- mvn validate  # --> used to perform ecommerce-commons library checkout from git repo and install throught maven plugin
- mvn spring-boot:run
+mvn validate # --> used to perform ecommerce-commons library checkout from git repo and install throught maven plugin
+mvn spring-boot:run
+```
+
+## Code formatting
+
+Code formatting checks are automatically performed during build phase.
+If the code is not well formatted an error is raised blocking the maven build.
+
+Helpful commands:
+
+```sh
+mvn spotless:check # --> used to perform format checks
+mvn spotless:apply # --> used to format all misformatted files
 ```
