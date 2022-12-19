@@ -5,8 +5,6 @@ import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.generated.nodoperpsp.model.*;
 import it.pagopa.generated.transactions.model.*;
-import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
-import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NodoPerPspClient;
 import it.pagopa.transactions.exceptions.NodoErrorException;
@@ -57,10 +55,7 @@ class NodoOperationsTest {
     Boolean isNM3 = Boolean.TRUE;
 
     PaymentRequestInfo paymentRequestInfo = new PaymentRequestInfo(rptId, paTaxCode, paName, description, amount, null, isNM3, paymentToken, idempotencyKey);
-    NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
-    newTransactionRequestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto()
-            .paymentContextCode(paymentContextCode)
-            .amount(amount));
+
 
     it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil =
             new it.pagopa.generated.transactions.model.ObjectFactory();
@@ -92,8 +87,9 @@ class NodoOperationsTest {
     PaymentRequestInfo response =
         nodoOperations
             .activatePaymentRequest(
-                paymentRequestInfo,
-                newTransactionRequestDto)
+                    paymentRequestInfo,
+                    paymentContextCode,
+                    amount)
             .block();
 
     /** asserts */
@@ -147,16 +143,14 @@ class NodoOperationsTest {
             .thenReturn(objectFactoryUtil.createActivatePaymentNoticeReq(activatePaymentReq));
 
     PaymentRequestInfo paymentRequestInfo = new PaymentRequestInfo(rptId, paTaxCode, paName, description, amount, null, isNM3, paymentToken, idempotencyKey);
-    NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
-    newTransactionRequestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto()
-            .paymentContextCode(paymentContextCode)
-            .amount(amount));
+
 
     /** Test / asserts */
     Mono<PaymentRequestInfo> paymentRequestInfoMono = nodoOperations
             .activatePaymentRequest(
                     paymentRequestInfo,
-                    newTransactionRequestDto);
+                    paymentContextCode,
+                    amount);
 
     Assert.assertThrows(
             NodoErrorException.class,
@@ -245,17 +239,15 @@ class NodoOperationsTest {
     Mockito.when(nodoUtilities.getCodiceIdRpt(Mockito.any(RptId.class))).thenReturn(nodoTipoCodiceIdRPT);
 
     PaymentRequestInfo paymentRequestInfo = new PaymentRequestInfo(rptId, paTaxCode, paName, description, amount, null, isNM3, paymentToken, idempotencyKey);
-    NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
-    newTransactionRequestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto()
-            .paymentContextCode(paymentContextCode)
-            .amount(amount));
+
 
     /** test */
     PaymentRequestInfo response =
             nodoOperations
                     .activatePaymentRequest(
                             paymentRequestInfo,
-                            newTransactionRequestDto)
+                            paymentContextCode,
+                            amount)
                     .block();
 
     /** asserts */
@@ -328,17 +320,15 @@ class NodoOperationsTest {
             .thenReturn(objectFactoryUtilNodoPerPsp.createNodoAttivaRPT(nodoAttivaRPT));
 
     PaymentRequestInfo paymentRequestInfo = new PaymentRequestInfo(rptId, paTaxCode, paName, description, amount, null, isNM3, paymentToken, idempotencyKey);
-    NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
-    newTransactionRequestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto()
-            .paymentContextCode(paymentContextCode)
-            .amount(amount));
+
 
     /** Test / asserts */
 
     Mono<PaymentRequestInfo> paymentRequestInfoMono = nodoOperations
             .activatePaymentRequest(
                     paymentRequestInfo,
-                    newTransactionRequestDto);
+                    paymentContextCode,
+                    amount);
 
     Assert.assertThrows(
             NodoErrorException.class,
@@ -413,17 +403,14 @@ class NodoOperationsTest {
     Mockito.when(nodoUtilities.getCodiceIdRpt(Mockito.any(RptId.class))).thenReturn(nodoTipoCodiceIdRPT);
 
     PaymentRequestInfo paymentRequestInfo = new PaymentRequestInfo(rptId, paTaxCode, paName, description, amount, null, isNM3, paymentToken, idempotencyKey);
-    NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
-    newTransactionRequestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto()
-            .paymentContextCode(paymentContextCode)
-            .amount(amount));
 
     /** test */
     PaymentRequestInfo response =
             nodoOperations
                     .activatePaymentRequest(
                             paymentRequestInfo,
-                            newTransactionRequestDto)
+                            paymentContextCode,
+                            amount)
                     .block();
 
     /** asserts */

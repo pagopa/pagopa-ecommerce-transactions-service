@@ -10,7 +10,6 @@ import it.pagopa.generated.nodoperpsp.model.NodoTipoDatiPagamentoPSP;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
 import it.pagopa.generated.transactions.model.CtQrCode;
 import it.pagopa.generated.transactions.model.StOutcome;
-import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NodoPerPspClient;
 import it.pagopa.transactions.exceptions.NodoErrorException;
@@ -49,13 +48,9 @@ public class NodoOperations {
   @Autowired NodoUtilities nodoUtilities;
 
   public Mono<PaymentRequestInfo> activatePaymentRequest(
-          PaymentRequestInfo paymentRequestInfo,
-          NewTransactionRequestDto newTransactionRequestDto) {
-
+          PaymentRequestInfo paymentRequestInfo, String paymentContextCode, Integer amount) {
     RptId rptId = paymentRequestInfo.id();
-    String paymentContextCode = newTransactionRequestDto.getPaymentNotices().get(0).getPaymentContextCode();
     Boolean isNM3 = paymentRequestInfo.isNM3();
-    Integer amount = newTransactionRequestDto.getPaymentNotices().get(0).getAmount();
     String paTaxCode = paymentRequestInfo.paFiscalCode();
     String paName = paymentRequestInfo.paName();
     IdempotencyKey idempotencyKey = Optional.ofNullable(paymentRequestInfo.idempotencyKey())
