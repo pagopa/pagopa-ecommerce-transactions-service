@@ -57,7 +57,7 @@ public class PaymentGatewayClient {
             .flatMap(payAuthRequestDto ->
                     paymentTransactionGatewayPostepayWebClient.authRequest(payAuthRequestDto, false, encodeMdcFields(authorizationData))
                     .onErrorMap(WebClientResponseException.class, exception -> switch (exception.getStatusCode()) {
-                        //FIXME Handle multiple rptId
+                        //TODO Handle multiple rptId
                             case UNAUTHORIZED -> new AlreadyProcessedException(authorizationData.transaction().getNoticeCodes().get(0).rptId());
                             case GATEWAY_TIMEOUT -> new GatewayTimeoutException();
                             case INTERNAL_SERVER_ERROR -> new BadGatewayException("");
