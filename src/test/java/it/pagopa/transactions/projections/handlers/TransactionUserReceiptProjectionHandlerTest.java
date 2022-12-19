@@ -18,6 +18,7 @@ import reactor.test.StepVerifier;
 
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.argThat;
@@ -43,10 +44,9 @@ class TransactionUserReceiptProjectionHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(UUID.randomUUID()),
-                new PaymentToken("paymentToken"),
+                Arrays.asList(new NoticeCode(new PaymentToken("paymentToken"),
                 new RptId("77777777777111111111111111111"),
-                new TransactionDescription("description"),
-                new TransactionAmount(100),
+                new TransactionAmount(100), new TransactionDescription("description"))),
                 new Email("foo@example.com"),
                 faultCode,
                 faultCodeString,
@@ -55,10 +55,10 @@ class TransactionUserReceiptProjectionHandlerTest {
 
         it.pagopa.ecommerce.commons.documents.Transaction expectedDocument = new it.pagopa.ecommerce.commons.documents.Transaction(
                 transaction.getTransactionId().value().toString(),
-                transaction.getTransactionActivatedData().getPaymentToken(),
-                transaction.getRptId().value(),
-                transaction.getDescription().value(),
-                transaction.getAmount().value(),
+                transaction.getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken(),
+                transaction.getNoticeCodes().get(0).rptId().value(),
+                transaction.getNoticeCodes().get(0).transactionDescription().value(),
+                transaction.getNoticeCodes().get(0).transactionAmount().value(),
                 transaction.getEmail().value(),
                 TransactionStatusDto.NOTIFIED,
                 transaction.getCreationDate()
@@ -68,17 +68,25 @@ class TransactionUserReceiptProjectionHandlerTest {
 
         TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                 transaction.getTransactionId().value().toString(),
-                transaction.getRptId().value(),
-                transaction.getTransactionActivatedData().getPaymentToken(),
+                Arrays.asList(new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                        transaction.getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken(),
+                        transaction.getNoticeCodes().get(0).rptId().value(),
+                        null,
+                        null
+                        ))
+
+                ,
                 transactionAddReceiptData
         );
 
         TransactionActivated expected = new TransactionActivated(
                 transaction.getTransactionId(),
-                new PaymentToken(transaction.getTransactionActivatedData().getPaymentToken()),
-                transaction.getRptId(),
-                transaction.getDescription(),
-                transaction.getAmount(),
+                Arrays.asList(new NoticeCode(
+                        new PaymentToken(transaction.getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken()),
+                        transaction.getNoticeCodes().get(0).rptId(),
+                        transaction.getNoticeCodes().get(0).transactionAmount(),
+                        transaction.getNoticeCodes().get(0).transactionDescription()
+                )),
                 transaction.getEmail(),
                 transaction.getTransactionActivatedData().getFaultCode(),
                 transaction.getTransactionActivatedData().getFaultCodeString(),

@@ -1,5 +1,6 @@
 package it.pagopa.transactions.commands.handlers;
 
+import it.pagopa.ecommerce.commons.documents.NoticeCode;
 import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationStatusUpdateData;
 import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationStatusUpdatedEvent;
 import it.pagopa.ecommerce.commons.domain.TransactionActivated;
@@ -14,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+
+import java.util.Arrays;
 
 @Component
 @Slf4j
@@ -31,7 +34,7 @@ public class TransactionUpdateAuthorizationHandler implements CommandHandler<Tra
 
         if (transaction.getStatus() != it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_REQUESTED) {
             log.error("Error: requesting authorization update for transaction in state {}", transaction.getStatus());
-            return Mono.error(new AlreadyProcessedException(transaction.getRptId()));
+            return Mono.error(new AlreadyProcessedException(command.getRptId()));
         } else {
             UpdateAuthorizationRequestDto updateAuthorizationRequest = command.getData().updateAuthorizationRequest();
 
@@ -54,8 +57,7 @@ public class TransactionUpdateAuthorizationHandler implements CommandHandler<Tra
 
             TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
                     transaction.getTransactionId().value().toString(),
-                    transaction.getRptId().value(),
-                    transaction.getTransactionActivatedData().getPaymentToken(),
+                    transaction.getTransactionActivatedData().getNoticeCodes(),
                     statusUpdateData
             );
 

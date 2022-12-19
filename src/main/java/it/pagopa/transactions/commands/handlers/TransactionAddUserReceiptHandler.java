@@ -1,12 +1,9 @@
 package it.pagopa.transactions.commands.handlers;
 
-import it.pagopa.ecommerce.commons.documents.TransactionAddReceiptData;
-import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationRequestData;
-import it.pagopa.ecommerce.commons.documents.TransactionEvent;
-import it.pagopa.ecommerce.commons.documents.TransactionUserReceiptAddedEvent;
-import it.pagopa.ecommerce.commons.domain.EmptyTransaction;
+import it.pagopa.ecommerce.commons.documents.*;
+import it.pagopa.ecommerce.commons.documents.NoticeCode;
+import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.Transaction;
-import it.pagopa.ecommerce.commons.domain.TransactionClosed;
 import it.pagopa.ecommerce.commons.domain.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.notifications.templates.ko.KoTemplate;
@@ -26,7 +23,6 @@ import reactor.core.publisher.Mono;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -52,7 +48,7 @@ public class TransactionAddUserReceiptHandler implements CommandHandler<Transact
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
                 .cast(BaseTransaction.class)
                 .doOnNext(t -> log.error("Error: requesting closure status update for transaction in state {}", t.getStatus()))
-                .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getRptId())));
+                .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getNoticeCodes().get(0).rptId())));
 
         return transaction
                 .cast(BaseTransaction.class)
@@ -75,8 +71,14 @@ public class TransactionAddUserReceiptHandler implements CommandHandler<Transact
 
                     TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                             command.getData().transaction().getTransactionId().value().toString(),
-                            command.getData().transaction().getRptId().value(),
-                            command.getData().transaction().getTransactionActivatedData().getPaymentToken(),
+                            command.getData().transaction().getNoticeCodes().stream().map(noticeCode ->
+                                new NoticeCode(
+                                    noticeCode.paymentToken().value(),
+                                    noticeCode.rptId().value(),
+                                    noticeCode.transactionDescription().value(),
+                                    noticeCode.transactionAmount().value()
+                                )
+                            ).toList(),
                             transactionAddReceiptData
                     );
 
@@ -114,7 +116,7 @@ public class TransactionAddUserReceiptHandler implements CommandHandler<Transact
                                 new it.pagopa.generated.notifications.templates.ko.TransactionTemplate(
                                         tx.getTransactionId().value().toString().toUpperCase(),
                                         dateTimeToHumanReadableString(addUserReceiptRequestDto.getPaymentDate(), Locale.forLanguageTag(language)),
-                                        amountToHumanReadableString(tx.getAmount().value())
+                                        amountToHumanReadableString(tx.getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum())
                                 )
                         )
                 )
@@ -137,7 +139,7 @@ public class TransactionAddUserReceiptHandler implements CommandHandler<Transact
                                 new TransactionTemplate(
                                         tx.getTransactionId().value().toString().toUpperCase(),
                                         dateTimeToHumanReadableString(addUserReceiptRequestDto.getPaymentDate(), Locale.forLanguageTag(language)),
-                                        amountToHumanReadableString(tx.getAmount().value() + transactionAuthorizationRequestData.getFee()),
+                                        amountToHumanReadableString(tx.getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum() + transactionAuthorizationRequestData.getFee()),
                                         new PspTemplate(
                                                 transactionAuthorizationRequestData.getPspBusinessName(),
                                                 new FeeTemplate(amountToHumanReadableString(transactionAuthorizationRequestData.getFee()))
@@ -156,22 +158,20 @@ public class TransactionAddUserReceiptHandler implements CommandHandler<Transact
                                         tx.getEmail().value()
                                 ),
                                 new CartTemplate(
-                                        List.of(
-                                                new ItemTemplate(
+                                        tx.getNoticeCodes().stream().map(noticeCode -> new ItemTemplate(
                                                         new RefNumberTemplate(
                                                                 RefNumberTemplate.Type.CODICE_AVVISO,
-                                                                tx.getRptId().getNoticeId()
+                                                                noticeCode.rptId().getNoticeId()
                                                         ),
                                                         null,
                                                         new PayeeTemplate(
                                                                 addUserReceiptRequestDto.getPayments().get(0).getOfficeName(),
-                                                                tx.getRptId().getFiscalCode()
+                                                                noticeCode.rptId().getFiscalCode()
                                                         ),
                                                         addUserReceiptRequestDto.getPayments().get(0).getDescription(),
-                                                        amountToHumanReadableString(tx.getAmount().value())
-                                                )
-                                        ),
-                                        amountToHumanReadableString(tx.getAmount().value())
+                                                        amountToHumanReadableString(noticeCode.transactionAmount().value())
+                                                )).toList(),
+                                        amountToHumanReadableString(tx.getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum())
                                 )
                         )
                 )

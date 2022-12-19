@@ -2,10 +2,7 @@ package it.pagopa.transactions.commands.handlers;
 
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
-import it.pagopa.ecommerce.commons.documents.TransactionActivatedData;
-import it.pagopa.ecommerce.commons.documents.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.documents.TransactionActivationRequestedData;
-import it.pagopa.ecommerce.commons.documents.TransactionActivationRequestedEvent;
+import it.pagopa.ecommerce.commons.documents.*;
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
@@ -26,6 +23,7 @@ import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.UUID;
 
 @Slf4j
@@ -193,12 +191,12 @@ public class TransactionActivateHandler
       String paymentContextCode) {
 
     TransactionActivationRequestedData data = new TransactionActivationRequestedData();
-    data.setAmount(amount);
-    data.setDescription(description);
     data.setEmail(email);
+    NoticeCode noticeCode = new NoticeCode(null,rptId,description,amount);
+    data.setNoticeCodes(Arrays.asList(noticeCode));
     data.setPaymentContextCode(paymentContextCode);
     TransactionActivationRequestedEvent transactionActivationRequestedEvent =
-        new TransactionActivationRequestedEvent(transactionId, rptId, data);
+        new TransactionActivationRequestedEvent(transactionId, Arrays.asList(noticeCode), data);
 
     log.info(
         "Generated event TRANSACTION_ACTIVATION_REQUESTED_EVENT for rptId {} and transactionId {}",
@@ -218,13 +216,12 @@ public class TransactionActivateHandler
       String paymentToken) {
 
     TransactionActivatedData data = new TransactionActivatedData();
-    data.setAmount(amount);
-    data.setDescription(description);
     data.setEmail(email);
-    data.setPaymentToken(paymentToken);
+    NoticeCode noticeCode = new NoticeCode(paymentToken,rptId,description,amount);
+    data.setNoticeCodes(Arrays.asList(noticeCode));
 
     TransactionActivatedEvent transactionActivatedEvent =
-        new TransactionActivatedEvent(transactionId, rptId, paymentToken, data);
+        new TransactionActivatedEvent(transactionId, Arrays.asList(noticeCode), data);
 
     return transactionEventActivatedStoreRepository
         .save(transactionActivatedEvent)
@@ -238,7 +235,7 @@ public class TransactionActivateHandler
             exception ->
               log.error(
                   "Error to generate event TRANSACTION_ACTIVATED_EVENT for rptId {} and transactionId {} - error {}",
-                  transactionActivatedEvent.getRptId(),
+                  String.join(",",transactionActivatedEvent.getNoticeCodes().stream().map(NoticeCode::getRptId).toList()),
                   transactionActivatedEvent.getTransactionId(),
                   exception.getMessage())
             )
@@ -246,7 +243,7 @@ public class TransactionActivateHandler
             event ->
                 log.info(
                     "Generated event TRANSACTION_ACTIVATED_EVENT for rptId {} and transactionId {}",
-                    event.getRptId(),
+                    String.join(",",event.getNoticeCodes().stream().map(NoticeCode::getRptId).toList()),
                     event.getTransactionId()));
   }
 }

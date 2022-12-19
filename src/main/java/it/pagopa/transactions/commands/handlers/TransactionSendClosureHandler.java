@@ -23,6 +23,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -44,7 +45,7 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
                 .cast(BaseTransaction.class)
                 .doOnNext(t -> log.error("Error: requesting closure for transaction in state {}", t.getStatus()))
-                .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getRptId())));
+                .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getNoticeCodes().get(0).rptId())));
 
         return transaction
                 .cast(BaseTransaction.class)
@@ -57,13 +58,13 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                     TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = tx.getTransactionAuthorizationStatusUpdateData();
 
                     ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
-                            .paymentTokens(List.of(tx.getTransactionActivatedData().getPaymentToken()))
+                            .paymentTokens(tx.getTransactionActivatedData().getNoticeCodes().stream().map(NoticeCode::getPaymentToken).toList())
                             .outcome(authorizationResultToOutcomeV2(transactionAuthorizationStatusUpdateData.getAuthorizationResult()))
                             .idPSP(transactionAuthorizationRequestData.getPspId())
                             .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())
                             .idChannel(transactionAuthorizationRequestData.getPspChannelCode())
                             .transactionId(tx.getTransactionId().value().toString())
-                            .totalAmount(EuroUtils.euroCentsToEuro(tx.getAmount().value() + transactionAuthorizationRequestData.getFee()))
+                            .totalAmount(EuroUtils.euroCentsToEuro(tx.getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum() + transactionAuthorizationRequestData.getFee()))
                             .fee(EuroUtils.euroCentsToEuro(transactionAuthorizationRequestData.getFee()))
                             .timestampOperation(updateAuthorizationRequestDto.getTimestampOperation())
                             .paymentMethod(transactionAuthorizationRequestData.getPaymentTypeCode())
@@ -88,8 +89,13 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
 
                                 TransactionClosureSentEvent event = new TransactionClosureSentEvent(
                                         command.getData().transaction().getTransactionId().value().toString(),
-                                        command.getData().transaction().getRptId().value(),
-                                        command.getData().transaction().getTransactionActivatedData().getPaymentToken(),
+                                        command.getData().transaction().getNoticeCodes().stream().map(
+                                                noticeCode ->  new NoticeCode(
+                                                        noticeCode.paymentToken().value(),
+                                                        noticeCode.rptId().value(),
+                                                        noticeCode.transactionDescription().value(),
+                                                        noticeCode.transactionAmount().value()
+                                                )).toList(),
                                         new TransactionClosureSendData(
                                                 response.getOutcome(),
                                                 updatedStatus
