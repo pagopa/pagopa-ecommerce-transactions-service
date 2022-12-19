@@ -140,9 +140,11 @@ public class TransactionServiceTests {
                                 .amount(transaction.getNoticeCodes().get(0).getAmount())
                                 .reason("reason")
                                 .paymentToken(PAYMENT_TOKEN)
-                                .authToken(null)
                                 .rptId("77777777777111111111111111111")
                 )
+				.origin(TransactionInfoDto.OriginEnum.UNKNOWN)
+				.amountTotal(100)
+				.feeTotal(0)
                 .status(TransactionStatusDto.ACTIVATED);
 
         when(repository.findById(TRANSACION_ID)).thenReturn(Mono.just(transaction));
@@ -352,7 +354,6 @@ public class TransactionServiceTests {
                                         .reason(noticeCode.getDescription())
                                         .paymentToken(noticeCode.getPaymentToken())
                                         .rptId(noticeCode.getRptId())
-                                        .authToken(null)
                         ).toList()
                 )
                 .status(TransactionStatusDto.CLOSED);
@@ -479,7 +480,6 @@ public class TransactionServiceTests {
                                         .reason(noticeCode.getDescription())
                                         .paymentToken(noticeCode.getPaymentToken())
                                         .rptId(noticeCode.getRptId())
-                                        .authToken(null)
                         ).toList()
                 )
                 .status(TransactionStatusDto.NOTIFIED);

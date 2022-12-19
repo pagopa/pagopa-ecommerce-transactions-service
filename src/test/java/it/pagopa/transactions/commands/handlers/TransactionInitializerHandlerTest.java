@@ -158,31 +158,27 @@ class TransactionInitializerHandlerTest {
         String TEST_RPTID = "77777777777302016723749670035";
         String TEST_TOKEN = "token";
 
-        TransactionsProjection<NewTransactionResponseDto> transactionsProjection = new TransactionsProjection<>();
-        transactionsProjection.setData(
-                new NewTransactionResponseDto()
-                        .addPaymentsItem(
-                                new PaymentInfoDto()
-                                        .amount(1)
-                                        .rptId(TEST_RPTID)
-                                        .paymentToken(TEST_TOKEN)
-                                        .authToken(TEST_TOKEN)
-                                        .reason("")
-                        )
-        );
+    TransactionsProjection<NewTransactionResponseDto> transactionsProjection =new TransactionsProjection<>();
+    transactionsProjection.setData(
+            new NewTransactionResponseDto()
+                    .addPaymentsItem(new PaymentInfoDto()
+                            .amount(1)
+                            .rptId(TEST_RPTID)
+                            .paymentToken(TEST_TOKEN)
+                            .reason(""))
+                    .authToken(TEST_TOKEN)
+    );
 
-        TransactionsProjection<NewTransactionResponseDto> differentTransactionsProjection = new TransactionsProjection<>();
-        differentTransactionsProjection.setData(
-                new NewTransactionResponseDto()
-                        .addPaymentsItem(
-                                new PaymentInfoDto()
-                                        .amount(1)
-                                        .rptId(TEST_RPTID)
-                                        .paymentToken(TEST_TOKEN)
-                                        .authToken(TEST_TOKEN)
-                                        .reason("")
-                        )
-        );
+    TransactionsProjection<NewTransactionResponseDto> differentTransactionsProjection = new TransactionsProjection<>();
+    differentTransactionsProjection.setData(
+            new NewTransactionResponseDto()
+                    .addPaymentsItem(new PaymentInfoDto()
+                            .amount(1)
+                            .rptId(TEST_RPTID)
+                            .paymentToken(TEST_TOKEN)
+                            .reason(""))
+                    .authToken(TEST_TOKEN)
+    );
 
         differentTransactionsProjection.setRptId(new RptId(TEST_RPTID));
 
