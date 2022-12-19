@@ -17,36 +17,45 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class TransactionsActivationProjectionHandler
-		implements ProjectionHandler<TransactionActivatedEvent, Mono<TransactionActivated>> {
+        implements ProjectionHandler<TransactionActivatedEvent, Mono<TransactionActivated>> {
 
-	@Autowired
-	private TransactionsViewRepository viewEventStoreRepository;
+    @Autowired
+    private TransactionsViewRepository viewEventStoreRepository;
 
-	@Override
-	public Mono<TransactionActivated> handle(TransactionActivatedEvent event) {
-		TransactionActivatedData data = event.getData();
-		TransactionId transactionId = new TransactionId(UUID.fromString(event.getTransactionId()));
-		List<NoticeCode> noticeCodeList = event.getNoticeCodes().stream().map(noticeCode -> {
-			it.pagopa.ecommerce.commons.documents.NoticeCode noticeCodeData = data.getNoticeCodes().stream().filter(noticeCodeDataValue -> noticeCodeDataValue.getRptId().equals(noticeCode.getRptId())).findFirst().get();
-			return new NoticeCode(
-					new PaymentToken(noticeCode.getPaymentToken()),
-					new RptId(noticeCode.getRptId()),
-					new TransactionAmount(noticeCodeData.getAmount()),
-					new TransactionDescription(noticeCodeData.getDescription()));
-		}).toList();
-		Email email = new Email(event.getData().getEmail());
-		String faultCode = event.getData().getFaultCode();
-		String faultCodeString = event.getData().getFaultCodeString();
+    @Override
+    public Mono<TransactionActivated> handle(TransactionActivatedEvent event) {
+        TransactionActivatedData data = event.getData();
+        TransactionId transactionId = new TransactionId(UUID.fromString(event.getTransactionId()));
+        List<NoticeCode> noticeCodeList = event.getNoticeCodes().stream().map(noticeCode -> {
+            it.pagopa.ecommerce.commons.documents.NoticeCode noticeCodeData = data.getNoticeCodes().stream()
+                    .filter(noticeCodeDataValue -> noticeCodeDataValue.getRptId().equals(noticeCode.getRptId()))
+                    .findFirst().get();
+            return new NoticeCode(
+                    new PaymentToken(noticeCode.getPaymentToken()),
+                    new RptId(noticeCode.getRptId()),
+                    new TransactionAmount(noticeCodeData.getAmount()),
+                    new TransactionDescription(noticeCodeData.getDescription())
+            );
+        }).toList();
+        Email email = new Email(event.getData().getEmail());
+        String faultCode = event.getData().getFaultCode();
+        String faultCodeString = event.getData().getFaultCodeString();
 
-		TransactionActivated transaction =
-				new TransactionActivated(transactionId, noticeCodeList, email, faultCode, faultCodeString, TransactionStatusDto.ACTIVATED);
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                noticeCodeList,
+                email,
+                faultCode,
+                faultCodeString,
+                TransactionStatusDto.ACTIVATED
+        );
 
-		it.pagopa.ecommerce.commons.documents.Transaction transactionDocument =
-				it.pagopa.ecommerce.commons.documents.Transaction.from(transaction);
+        it.pagopa.ecommerce.commons.documents.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.Transaction
+                .from(transaction);
 
-		return viewEventStoreRepository
-				.save(transactionDocument)
-				.doOnNext(t -> log.info("Transactions update view for transactionId: {}", t.getTransactionId()))
-				.thenReturn(transaction);
-	}
+        return viewEventStoreRepository
+                .save(transactionDocument)
+                .doOnNext(t -> log.info("Transactions update view for transactionId: {}", t.getTransactionId()))
+                .thenReturn(transaction);
+    }
 }

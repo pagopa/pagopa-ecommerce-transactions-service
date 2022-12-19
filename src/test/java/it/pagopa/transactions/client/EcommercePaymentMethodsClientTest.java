@@ -34,17 +34,21 @@ class EcommercePaymentMethodsClientTest {
         String TEST_ID = UUID.randomUUID().toString();
 
         PSPsResponseDto testResponseDto = new PSPsResponseDto();
-        testResponseDto.setPsp(List.of(new PspDto()
-                .code("AA")
-                .language(PspDto.LanguageEnum.IT)
-                .paymentTypeCode("PO")
-                .fixedCost(100l)
-                .brokerName("brokerName")
-                .description("")
-                .maxAmount(0l)
-                .maxAmount(1000l)
-                .channelCode("CH1")
-                .status(PspDto.StatusEnum.ENABLED)));
+        testResponseDto.setPsp(
+                List.of(
+                        new PspDto()
+                                .code("AA")
+                                .language(PspDto.LanguageEnum.IT)
+                                .paymentTypeCode("PO")
+                                .fixedCost(100l)
+                                .brokerName("brokerName")
+                                .description("")
+                                .maxAmount(0l)
+                                .maxAmount(1000l)
+                                .channelCode("CH1")
+                                .status(PspDto.StatusEnum.ENABLED)
+                )
+        );
 
         /**
          * preconditions
@@ -55,7 +59,8 @@ class EcommercePaymentMethodsClientTest {
         /**
          * test
          */
-        PSPsResponseDto pspResponseDto = ecommercePaymentInstrumentsClient.getPSPs(TEST_AMOUNT, TEST_LANG, TEST_ID).block();
+        PSPsResponseDto pspResponseDto = ecommercePaymentInstrumentsClient.getPSPs(TEST_AMOUNT, TEST_LANG, TEST_ID)
+                .block();
 
         /**
          * asserts
@@ -70,7 +75,7 @@ class EcommercePaymentMethodsClientTest {
         PaymentMethodResponseDto testPaymentMethodResponseDto = new PaymentMethodResponseDto();
         testPaymentMethodResponseDto
                 .description("")
-                .addRangesItem( new RangeDto().max(100L).min(0L))
+                .addRangesItem(new RangeDto().max(100L).min(0L))
                 .paymentTypeCode("PO")
                 .status(PaymentMethodResponseDto.StatusEnum.ENABLED)
                 .id(TEST_ID)
@@ -85,7 +90,8 @@ class EcommercePaymentMethodsClientTest {
         /**
          * test
          */
-        PaymentMethodResponseDto paymentMethodResponseDto = ecommercePaymentInstrumentsClient.getPaymentMethod(TEST_ID).block();
+        PaymentMethodResponseDto paymentMethodResponseDto = ecommercePaymentInstrumentsClient.getPaymentMethod(TEST_ID)
+                .block();
 
         /**
          * asserts
@@ -93,6 +99,4 @@ class EcommercePaymentMethodsClientTest {
         assertThat(testPaymentMethodResponseDto.getId()).isEqualTo(paymentMethodResponseDto.getId());
     }
 
-
-
-    }
+}

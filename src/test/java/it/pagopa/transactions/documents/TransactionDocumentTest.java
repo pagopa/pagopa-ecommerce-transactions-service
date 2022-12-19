@@ -1,6 +1,5 @@
 package it.pagopa.transactions.documents;
 
-
 import it.pagopa.ecommerce.commons.documents.NoticeCode;
 import it.pagopa.ecommerce.commons.documents.Transaction;
 import it.pagopa.ecommerce.commons.domain.*;
@@ -33,17 +32,46 @@ class TransactionDocumentTest {
         /**
          * Test
          */
-        Transaction transaction = new Transaction(TEST_TRANSACTIONID, TEST_TOKEN, TEST_RPTID, TEST_DESC, TEST_AMOUNT,
-                TEST_EMAIL, TEST_STATUS, TEST_TIME);
+        Transaction transaction = new Transaction(
+                TEST_TRANSACTIONID,
+                TEST_TOKEN,
+                TEST_RPTID,
+                TEST_DESC,
+                TEST_AMOUNT,
+                TEST_EMAIL,
+                TEST_STATUS,
+                TEST_TIME
+        );
 
-        Transaction sameTransaction = new Transaction(TEST_TRANSACTIONID, TEST_TOKEN, TEST_RPTID, TEST_DESC,
-                TEST_AMOUNT, TEST_EMAIL, TEST_STATUS, TEST_TIME);
+        Transaction sameTransaction = new Transaction(
+                TEST_TRANSACTIONID,
+                TEST_TOKEN,
+                TEST_RPTID,
+                TEST_DESC,
+                TEST_AMOUNT,
+                TEST_EMAIL,
+                TEST_STATUS,
+                TEST_TIME
+        );
         sameTransaction.setCreationDate(transaction.getCreationDate());
 
         // Different transaction (creation date)
-        Transaction differentTransaction = new Transaction("",
-                "", "", "", 1, "", null, ZonedDateTime.now());
-        it.pagopa.ecommerce.commons.documents.NoticeCode noticeCode = new NoticeCode(TEST_TOKEN,TEST_RPTID,TEST_DESC,TEST_AMOUNT);
+        Transaction differentTransaction = new Transaction(
+                "",
+                "",
+                "",
+                "",
+                1,
+                "",
+                null,
+                ZonedDateTime.now()
+        );
+        it.pagopa.ecommerce.commons.documents.NoticeCode noticeCode = new NoticeCode(
+                TEST_TOKEN,
+                TEST_RPTID,
+                TEST_DESC,
+                TEST_AMOUNT
+        );
         differentTransaction.setNoticeCodes(Arrays.asList(noticeCode));
         differentTransaction.setStatus(TEST_STATUS);
 
@@ -75,21 +103,38 @@ class TransactionDocumentTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                Arrays.asList(new it.pagopa.ecommerce.commons.domain.NoticeCode(paymentToken,
-                rptId,
-                amount,
-                description)),
+                Arrays.asList(
+                        new it.pagopa.ecommerce.commons.domain.NoticeCode(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description
+                        )
+                ),
                 email,
                 faultCode,
                 faultCodeString,
-                status);
+                status
+        );
 
         Transaction transactionDocument = Transaction.from(transaction);
 
-        assertEquals(transactionDocument.getNoticeCodes().get(0).getPaymentToken(), transaction.getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken());
-        assertEquals(transactionDocument.getNoticeCodes().get(0).getRptId(), transaction.getNoticeCodes().get(0).rptId().value());
-        assertEquals(transactionDocument.getNoticeCodes().get(0).getDescription(), transaction.getNoticeCodes().get(0).transactionDescription().value());
-        assertEquals(transactionDocument.getNoticeCodes().get(0).getAmount(), transaction.getNoticeCodes().get(0).transactionAmount().value());
+        assertEquals(
+                transactionDocument.getNoticeCodes().get(0).getPaymentToken(),
+                transaction.getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken()
+        );
+        assertEquals(
+                transactionDocument.getNoticeCodes().get(0).getRptId(),
+                transaction.getNoticeCodes().get(0).rptId().value()
+        );
+        assertEquals(
+                transactionDocument.getNoticeCodes().get(0).getDescription(),
+                transaction.getNoticeCodes().get(0).transactionDescription().value()
+        );
+        assertEquals(
+                transactionDocument.getNoticeCodes().get(0).getAmount(),
+                transaction.getNoticeCodes().get(0).transactionAmount().value()
+        );
         assertEquals(ZonedDateTime.parse(transactionDocument.getCreationDate()), transaction.getCreationDate());
         assertEquals(transactionDocument.getStatus(), transaction.getStatus());
     }
