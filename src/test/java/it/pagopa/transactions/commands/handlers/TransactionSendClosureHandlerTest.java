@@ -8,6 +8,7 @@ import com.azure.storage.queue.QueueAsyncClient;
 import com.azure.storage.queue.models.SendMessageResult;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.*;
+import it.pagopa.ecommerce.commons.domain.NoticeCode;
 import it.pagopa.ecommerce.commons.domain.Transaction;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.pojos.BaseTransactionWithPaymentToken;
@@ -33,6 +34,7 @@ import reactor.test.StepVerifier;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -76,19 +78,28 @@ class TransactionSendClosureHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
         Email email = new Email("foo@example.com");
+        List<it.pagopa.ecommerce.commons.documents.NoticeCode> noticeCodes = List.of(new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                paymentToken.value(),
+                rptId.value(),
+                description.value(),
+                amount.value()
+        ));
 
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                paymentToken,
-                rptId,
-                description,
-                amount,
+                noticeCodes.stream().map(n ->
+                        new NoticeCode(
+                                new PaymentToken(n.getPaymentToken()),
+                                new RptId(n.getRptId()),
+                                new TransactionAmount(n.getAmount()),
+                                new TransactionDescription(n.getDescription())))
+                        .toList(),
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.AUTHORIZATION_REQUESTED
+                TransactionStatusDto.ACTIVATED
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -101,25 +112,21 @@ class TransactionSendClosureHandlerTest {
                 updateAuthorizationRequest
         );
 
-        TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(transaction.getRptId(), closureSendData);
+        TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(transaction.getNoticeCodes().get(0).rptId(), closureSendData);
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
-                rptId.value(),
-                paymentToken.value(),
+                transaction.getTransactionActivatedData().getNoticeCodes(),
                 new TransactionActivatedData(
-                        description.value(),
-                        amount.value(),
                         email.value(),
+                        transaction.getTransactionActivatedData().getNoticeCodes(),
                         faultCode,
-                        faultCodeString,
-                        "paymentToken"
+                        faultCodeString
                 ));
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
                 transactionId.value().toString(),
-                rptId.value(),
-                paymentToken.value(),
+                transaction.getTransactionActivatedData().getNoticeCodes(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -136,8 +143,7 @@ class TransactionSendClosureHandlerTest {
 
         TransactionAuthorizationStatusUpdatedEvent authorizationStatusUpdatedEvent = new TransactionAuthorizationStatusUpdatedEvent(
                 transactionId.value().toString(),
-                rptId.value(),
-                paymentToken.value(),
+                transaction.getTransactionActivatedData().getNoticeCodes(),
                 new TransactionAuthorizationStatusUpdateData(
                         AuthorizationResultDto.OK,
                         TransactionStatusDto.AUTHORIZED,
@@ -147,8 +153,7 @@ class TransactionSendClosureHandlerTest {
 
         TransactionClosureSentEvent closureSentEvent = new TransactionClosureSentEvent(
                 transactionId.value().toString(),
-                rptId.value(),
-                paymentToken.value(),
+                transaction.getTransactionActivatedData().getNoticeCodes(),
                 new TransactionClosureSendData(
                         ClosePaymentResponseDto.OutcomeEnum.OK,
                         TransactionStatusDto.CLOSED
@@ -182,24 +187,26 @@ class TransactionSendClosureHandlerTest {
         Email email = new Email("foo@example.com");
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        List<it.pagopa.ecommerce.commons.documents.NoticeCode> noticeCodes = List.of(new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                paymentToken.value(),
+                rptId.value(),
+                description.value(),
+                amount.value()
+        ));
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
-                rptId.value(),
-                paymentToken.value(),
+                noticeCodes,
                 new TransactionActivatedData(
-                        description.value(),
-                        amount.value(),
                         email.value(),
+                        noticeCodes,
                         faultCode,
-                        faultCodeString,
-                        "paymentToken"
+                        faultCodeString
                 ));
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
                 transactionId.value().toString(),
-                rptId.value(),
-                paymentToken.value(),
+                transactionActivatedEvent.getNoticeCodes(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -216,8 +223,7 @@ class TransactionSendClosureHandlerTest {
 
         TransactionAuthorizationStatusUpdatedEvent authorizationStatusUpdatedEvent = new TransactionAuthorizationStatusUpdatedEvent(
                 transactionId.value().toString(),
-                rptId.value(),
-                paymentToken.value(),
+                transactionActivatedEvent.getNoticeCodes(),
                 new TransactionAuthorizationStatusUpdateData(
                         AuthorizationResultDto.OK,
                         TransactionStatusDto.AUTHORIZED,
@@ -240,25 +246,24 @@ class TransactionSendClosureHandlerTest {
                 updateAuthorizationRequest
         );
 
-        TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(new RptId(transactionActivatedEvent.getRptId()), closureSendData);
+        TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(new RptId(transactionActivatedEvent.getNoticeCodes().get(0).getRptId()), closureSendData);
 
         TransactionClosureSentEvent event = new TransactionClosureSentEvent(
                 transactionId.toString(),
-                transactionActivatedEvent.getRptId(),
-                transactionActivatedEvent.getData().getPaymentToken(),
+                transactionActivatedEvent.getNoticeCodes(),
                 transactionClosureSendData
         );
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
-                .paymentTokens(List.of(((BaseTransactionWithPaymentToken) transaction).getTransactionActivatedData().getPaymentToken()))
+                .paymentTokens(List.of(((BaseTransactionWithPaymentToken) transaction).getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken()))
                 .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
                 .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
-                .totalAmount(EuroUtils.euroCentsToEuro(((BaseTransactionWithPaymentToken) transaction).getAmount().value() + authorizationRequestData.getFee()))
+                .totalAmount(EuroUtils.euroCentsToEuro(((BaseTransactionWithPaymentToken) transaction).getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum() + authorizationRequestData.getFee()))
                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
@@ -294,24 +299,26 @@ class TransactionSendClosureHandlerTest {
         Email email = new Email("foo@example.com");
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        List<it.pagopa.ecommerce.commons.documents.NoticeCode> noticeCodes = List.of(new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                paymentToken.value(),
+                rptId.value(),
+                description.value(),
+                amount.value()
+        ));
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
-                rptId.value(),
-                paymentToken.value(),
+                noticeCodes,
                 new TransactionActivatedData(
-                        description.value(),
-                        amount.value(),
                         email.value(),
+                        noticeCodes,
                         faultCode,
-                        faultCodeString,
-                        "paymentToken"
+                        faultCodeString
                 ));
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
                 transactionId.value().toString(),
-                rptId.value(),
-                paymentToken.value(),
+                transactionActivatedEvent.getNoticeCodes(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -328,8 +335,7 @@ class TransactionSendClosureHandlerTest {
 
         TransactionAuthorizationStatusUpdatedEvent authorizationStatusUpdatedEvent = new TransactionAuthorizationStatusUpdatedEvent(
                 transactionId.value().toString(),
-                rptId.value(),
-                paymentToken.value(),
+                transactionActivatedEvent.getNoticeCodes(),
                 new TransactionAuthorizationStatusUpdateData(
                         AuthorizationResultDto.OK,
                         TransactionStatusDto.AUTHORIZED,
@@ -352,25 +358,24 @@ class TransactionSendClosureHandlerTest {
                 updateAuthorizationRequest
         );
 
-        TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(new RptId(transactionActivatedEvent.getRptId()), closureSendData);
+        TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(new RptId(transactionActivatedEvent.getNoticeCodes().get(0).getRptId()), closureSendData);
 
         TransactionClosureSentEvent event = new TransactionClosureSentEvent(
                 transactionId.toString(),
-                transactionActivatedEvent.getRptId(),
-                transactionActivatedEvent.getData().getPaymentToken(),
+                transactionActivatedEvent.getNoticeCodes(),
                 transactionClosureSendData
         );
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
-                .paymentTokens(List.of(((BaseTransactionWithPaymentToken) transaction).getTransactionActivatedData().getPaymentToken()))
+                .paymentTokens(transactionActivatedEvent.getNoticeCodes().stream().map(it.pagopa.ecommerce.commons.documents.NoticeCode::getPaymentToken).toList())
                 .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
                 .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
-                .totalAmount(EuroUtils.euroCentsToEuro(((BaseTransactionWithPaymentToken) transaction).getAmount().value() + authorizationRequestData.getFee()))
+                .totalAmount(EuroUtils.euroCentsToEuro((transactionActivatedEvent.getNoticeCodes().stream().mapToInt(it.pagopa.ecommerce.commons.documents.NoticeCode::getAmount).sum() + authorizationRequestData.getFee())))
                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
@@ -383,8 +388,7 @@ class TransactionSendClosureHandlerTest {
 
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
                 transactionId.value().toString(),
-                transactionActivatedEvent.getRptId(),
-                transactionActivatedEvent.getData().getPaymentToken()
+                transactionActivatedEvent.getNoticeCodes()
         );
 
         RuntimeException closePaymentError = new RuntimeException("Network error");
@@ -421,24 +425,26 @@ class TransactionSendClosureHandlerTest {
         Email email = new Email("foo@example.com");
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        List<it.pagopa.ecommerce.commons.documents.NoticeCode> noticeCodes = List.of(new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                paymentToken.value(),
+                rptId.value(),
+                description.value(),
+                amount.value()
+        ));
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
-                rptId.value(),
-                paymentToken.value(),
+                noticeCodes,
                 new TransactionActivatedData(
-                        description.value(),
-                        amount.value(),
                         email.value(),
+                        noticeCodes,
                         faultCode,
-                        faultCodeString,
-                        "paymentToken"
+                        faultCodeString
                 ));
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
                 transactionId.value().toString(),
-                rptId.value(),
-                paymentToken.value(),
+                transactionActivatedEvent.getNoticeCodes(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -455,8 +461,7 @@ class TransactionSendClosureHandlerTest {
 
         TransactionAuthorizationStatusUpdatedEvent authorizationStatusUpdatedEvent = new TransactionAuthorizationStatusUpdatedEvent(
                 transactionId.value().toString(),
-                rptId.value(),
-                paymentToken.value(),
+                transactionActivatedEvent.getNoticeCodes(),
                 new TransactionAuthorizationStatusUpdateData(
                         AuthorizationResultDto.OK,
                         TransactionStatusDto.AUTHORIZED,
@@ -479,18 +484,18 @@ class TransactionSendClosureHandlerTest {
                 updateAuthorizationRequest
         );
 
-        TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(new RptId(transactionActivatedEvent.getRptId()), closureSendData);
+        TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(new RptId(transactionActivatedEvent.getNoticeCodes().get(0).getRptId()), closureSendData);
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
-                .paymentTokens(List.of(((BaseTransactionWithPaymentToken) transaction).getTransactionActivatedData().getPaymentToken()))
+                .paymentTokens(List.of(((BaseTransactionWithPaymentToken) transaction).getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken()))
                 .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
                 .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
-                .totalAmount(EuroUtils.euroCentsToEuro(((BaseTransactionWithPaymentToken) transaction).getAmount().value() + authorizationRequestData.getFee()))
+                .totalAmount(EuroUtils.euroCentsToEuro(((BaseTransactionWithPaymentToken) transaction).getTransactionActivatedData().getNoticeCodes().get(0).getAmount() + authorizationRequestData.getFee()))
                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
@@ -506,8 +511,7 @@ class TransactionSendClosureHandlerTest {
 
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
                 transactionId.value().toString(),
-                transactionActivatedEvent.getRptId(),
-                transactionActivatedEvent.getData().getPaymentToken()
+                transactionActivatedEvent.getNoticeCodes()
         );
 
         RuntimeException redisError = new RuntimeException("Network error");

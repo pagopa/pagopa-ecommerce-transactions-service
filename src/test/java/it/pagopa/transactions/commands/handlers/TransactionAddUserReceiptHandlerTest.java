@@ -1,6 +1,7 @@
 package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.ecommerce.commons.documents.*;
+import it.pagopa.ecommerce.commons.documents.NoticeCode;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
@@ -24,6 +25,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -58,10 +60,7 @@ class TransactionAddUserReceiptHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                paymentToken,
-                rptId,
-                description,
-                amount,
+                Arrays.asList(new it.pagopa.ecommerce.commons.domain.NoticeCode(paymentToken,rptId,amount,description)),
                 email,
                 faultCode,
                 faultCodeString,
@@ -69,21 +68,27 @@ class TransactionAddUserReceiptHandlerTest {
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
-                rptId.value(),
-                paymentToken.value(),
+                Arrays.asList(new NoticeCode(paymentToken.value(),
+                        rptId.value(),
+                       null,
+                        null
+                )),
                 new TransactionActivatedData(
-                        description.value(),
-                        amount.value(),
                         email.value(),
+                        Arrays.asList(new it.pagopa.ecommerce.commons.documents.NoticeCode(paymentToken.value(),
+                                rptId.value(),
+                                description.value(),
+                                amount.value())),
                         faultCode,
-                        faultCodeString,
-                        "paymentToken"
+                        faultCodeString
                 ));
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
                 transactionId.value().toString(),
-                rptId.value(),
-                paymentToken.value(),
+                Arrays.asList(new it.pagopa.ecommerce.commons.documents.NoticeCode(paymentToken.value(),
+                        rptId.value(),
+                        description.value(),
+                        amount.value())),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -100,8 +105,10 @@ class TransactionAddUserReceiptHandlerTest {
 
         TransactionAuthorizationStatusUpdatedEvent authorizationStatusUpdatedEvent = new TransactionAuthorizationStatusUpdatedEvent(
                 transactionId.value().toString(),
-                rptId.value(),
-                paymentToken.value(),
+                Arrays.asList(new it.pagopa.ecommerce.commons.documents.NoticeCode(paymentToken.value(),
+                        rptId.value(),
+                        description.value(),
+                        amount.value())),
                 new TransactionAuthorizationStatusUpdateData(
                         AuthorizationResultDto.OK,
                         TransactionStatusDto.AUTHORIZED,
@@ -111,8 +118,7 @@ class TransactionAddUserReceiptHandlerTest {
 
         TransactionClosureSentEvent closureSentEvent = new TransactionClosureSentEvent(
                 transactionId.toString(),
-                transactionActivatedEvent.getRptId(),
-                transactionActivatedEvent.getData().getPaymentToken(),
+                transactionActivatedEvent.getNoticeCodes(),
                 new TransactionClosureSendData(
                         ClosePaymentResponseDto.OutcomeEnum.OK,
                         TransactionStatusDto.CLOSED
@@ -138,14 +144,13 @@ class TransactionAddUserReceiptHandlerTest {
         );
 
         TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getRptId(), addUserReceiptData);
+                transaction.getNoticeCodes().get(0).rptId(), addUserReceiptData);
 
         TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(TransactionStatusDto.NOTIFIED);
 
         TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                 transactionId.toString(),
-                transaction.getRptId().toString(),
-                transaction.getTransactionActivatedData().getPaymentToken(),
+                transaction.getTransactionActivatedData().getNoticeCodes(),
                 transactionAddReceiptData);
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(transactionActivatedEvent, authorizationRequestedEvent, authorizationStatusUpdatedEvent, closureSentEvent, event));
@@ -176,10 +181,7 @@ class TransactionAddUserReceiptHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                paymentToken,
-                rptId,
-                description,
-                amount,
+                Arrays.asList(new it.pagopa.ecommerce.commons.domain.NoticeCode(paymentToken,rptId,amount,description)),
                 email,
                 faultCode,
                 faultCodeString,
@@ -187,21 +189,25 @@ class TransactionAddUserReceiptHandlerTest {
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
-                rptId.value(),
-                paymentToken.value(),
-                new TransactionActivatedData(
+                Arrays.asList(new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                        paymentToken.value(),
+                        rptId.value(),
                         description.value(),
-                        amount.value(),
+                        amount.value())),
+                new TransactionActivatedData(
                         email.value(),
+                        Arrays.asList(new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                                paymentToken.value(),
+                                rptId.value(),
+                                description.value(),
+                                amount.value())),
                         faultCode,
-                        faultCodeString,
-                        "paymentToken"
+                        faultCodeString
                 ));
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
                 transactionId.value().toString(),
-                rptId.value(),
-                paymentToken.value(),
+                transactionActivatedEvent.getNoticeCodes(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -218,8 +224,7 @@ class TransactionAddUserReceiptHandlerTest {
 
         TransactionAuthorizationStatusUpdatedEvent authorizationStatusUpdatedEvent = new TransactionAuthorizationStatusUpdatedEvent(
                 transactionId.value().toString(),
-                rptId.value(),
-                paymentToken.value(),
+                authorizationRequestedEvent.getNoticeCodes(),
                 new TransactionAuthorizationStatusUpdateData(
                         AuthorizationResultDto.OK,
                         TransactionStatusDto.AUTHORIZED,
@@ -229,8 +234,7 @@ class TransactionAddUserReceiptHandlerTest {
 
         TransactionClosureSentEvent closureSentEvent = new TransactionClosureSentEvent(
                 transactionId.toString(),
-                transactionActivatedEvent.getRptId(),
-                transactionActivatedEvent.getData().getPaymentToken(),
+                authorizationStatusUpdatedEvent.getNoticeCodes(),
                 new TransactionClosureSendData(
                         ClosePaymentResponseDto.OutcomeEnum.OK,
                         TransactionStatusDto.CLOSED
@@ -256,14 +260,13 @@ class TransactionAddUserReceiptHandlerTest {
         );
 
         TransactionAddUserReceiptCommand transactionAddUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getRptId(), addUserReceiptData);
+                transaction.getNoticeCodes().get(0).rptId(), addUserReceiptData);
 
         TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(TransactionStatusDto.NOTIFIED);
 
         TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                 transactionId.toString(),
-                transaction.getRptId().toString(),
-                transaction.getTransactionActivatedData().getPaymentToken(),
+                transaction.getTransactionActivatedData().getNoticeCodes(),
                 transactionAddReceiptData);
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(transactionActivatedEvent, authorizationRequestedEvent, authorizationStatusUpdatedEvent, closureSentEvent, event));
@@ -294,10 +297,7 @@ class TransactionAddUserReceiptHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                paymentToken,
-                rptId,
-                description,
-                amount,
+                Arrays.asList(new it.pagopa.ecommerce.commons.domain.NoticeCode(paymentToken,rptId,amount,description)),
                 email,
                 faultCode,
                 faultCodeString,
@@ -305,21 +305,29 @@ class TransactionAddUserReceiptHandlerTest {
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
-                rptId.value(),
-                paymentToken.value(),
+                Arrays.asList(new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                        paymentToken.value(),
+                        rptId.value(),
+                        null,
+                        null)),
                 new TransactionActivatedData(
-                        description.value(),
-                        amount.value(),
                         email.value(),
+                        Arrays.asList(new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                                paymentToken.value(),
+                                rptId.value(),
+                                description.value(),
+                                amount.value())),
                         faultCode,
-                        faultCodeString,
-                        "paymentToken"
+                        faultCodeString
                 ));
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
                 transactionId.value().toString(),
-                rptId.value(),
-                paymentToken.value(),
+                Arrays.asList(new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                        paymentToken.value(),
+                        rptId.value(),
+                        null,
+                        null)),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -336,8 +344,11 @@ class TransactionAddUserReceiptHandlerTest {
 
         TransactionAuthorizationStatusUpdatedEvent authorizationStatusUpdatedEvent = new TransactionAuthorizationStatusUpdatedEvent(
                 transactionId.value().toString(),
-                rptId.value(),
-                paymentToken.value(),
+                Arrays.asList(new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                        paymentToken.value(),
+                        rptId.value(),
+                        null,
+                        null)),
                 new TransactionAuthorizationStatusUpdateData(
                         AuthorizationResultDto.OK,
                         TransactionStatusDto.AUTHORIZED,
@@ -364,7 +375,7 @@ class TransactionAddUserReceiptHandlerTest {
         );
 
         TransactionAddUserReceiptCommand requestStatusCommand = new TransactionAddUserReceiptCommand(
-                transaction.getRptId(), addUserReceiptData);
+                transaction.getNoticeCodes().get(0).rptId(), addUserReceiptData);
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(transactionActivatedEvent, authorizationRequestedEvent, authorizationStatusUpdatedEvent));
 

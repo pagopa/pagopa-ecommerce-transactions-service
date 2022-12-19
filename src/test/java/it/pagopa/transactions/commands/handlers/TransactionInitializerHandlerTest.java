@@ -32,6 +32,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple3;
 
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -114,8 +115,11 @@ class TransactionInitializerHandlerTest {
     TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
     transactionActivatedEvent.setTransactionId(transactionId);
     transactionActivatedEvent.setEventCode(TransactionEventCode.TRANSACTION_ACTIVATED_EVENT);
-    transactionActivatedEvent.setPaymentToken(paymentToken);
-    transactionActivatedEvent.setRptId(rptId.value());
+    transactionActivatedEvent.setNoticeCodes( Arrays.asList(new it.pagopa.ecommerce.commons.documents.NoticeCode(
+            paymentToken,
+            rptId.value(),
+            null,
+            null)));
 
     /** preconditions */
     Mockito.when(paymentRequestInfoRepository.findById(rptId))

@@ -18,6 +18,7 @@ import it.pagopa.transactions.commands.data.ActivationResultData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import org.aspectj.weaver.ast.Not;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,6 +30,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -69,9 +71,11 @@ class TransactionActivateResultHandlerTest {
 
         TransactionActivationRequested transaction = new TransactionActivationRequested(
                 new TransactionId(UUID.fromString(transactionId)),
-                rptId,
-                new TransactionDescription("testTransactionDescription"),
-                new TransactionAmount(amount),
+                Arrays.asList(new NoticeCode(null,
+                        rptId,
+                        new TransactionAmount(amount),
+                        new TransactionDescription("testTransactionDescription")
+                )),
                 new Email(requestDto.getEmail()),
                 TransactionStatusDto.ACTIVATION_REQUESTED
         );
@@ -118,9 +122,11 @@ class TransactionActivateResultHandlerTest {
 
             TransactionActivationRequested transaction = new TransactionActivationRequested(
                     new TransactionId(UUID.fromString(transactionId)),
-                    rptId,
-                new TransactionDescription("testTransactionDescription"),
-                new TransactionAmount(amount),
+                    Arrays.asList(new NoticeCode(null,
+                            rptId,
+                            new TransactionAmount(amount),
+                            new TransactionDescription("testTransactionDescription")
+                           )),
                 new Email(requestDto.getEmail()),
                 TransactionStatusDto.ACTIVATION_REQUESTED
             );
@@ -131,9 +137,17 @@ class TransactionActivateResultHandlerTest {
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 command.getData().transactionActivationRequested().getTransactionId().toString(),
-                rptId.value(),
-                paymentToken,
-                new TransactionActivatedData(transaction.getDescription().value(), transaction.getAmount().value(), null, null, null, null)
+                Arrays.asList(new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                        paymentToken,rptId.value(),null,null)),
+                new TransactionActivatedData(
+                        null,
+                        transaction.getNoticeCodes().stream().map(noticeCode ->
+                                new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                                        paymentToken,
+                                        noticeCode.rptId().value(),
+                                        noticeCode.transactionDescription().value(),
+                                        noticeCode.transactionAmount().value())).toList(),
+                        null, null)
         );
 
         PaymentRequestInfo paymentRequestInfoCachedNoToken =
@@ -205,9 +219,11 @@ class TransactionActivateResultHandlerTest {
 
         TransactionActivationRequested transactionActivationRequested = new TransactionActivationRequested(
                 new TransactionId(UUID.fromString(transactionId)),
-                rptId,
-                new TransactionDescription("testTransactionDescription"),
-                new TransactionAmount(amount),
+                Arrays.asList(new NoticeCode(null,
+                        rptId,
+                        new TransactionAmount(amount),
+                        new TransactionDescription("testTransactionDescription")
+                        )),
                 new Email(requestDto.getEmail()),
                 TransactionStatusDto.AUTHORIZED
         );
@@ -253,9 +269,11 @@ class TransactionActivateResultHandlerTest {
 
         TransactionActivationRequested transactionActivationRequested = new TransactionActivationRequested(
                 new TransactionId(UUID.fromString(transactionId)),
-                rptId,
-                new TransactionDescription("testTransactionDescription"),
-                new TransactionAmount(amount),
+                Arrays.asList(new NoticeCode(null,
+                        rptId,
+                        new TransactionAmount(amount),
+                        new TransactionDescription("testTransactionDescription")
+                )),
                 new Email(requestDto.getEmail()),
                 TransactionStatusDto.ACTIVATION_REQUESTED
         );

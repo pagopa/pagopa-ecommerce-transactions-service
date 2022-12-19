@@ -29,7 +29,6 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -81,7 +80,7 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
                 .cast(BaseTransaction.class)
                 .doOnNext(t -> log.error("Error: requesting closure for transaction in state {}", t.getStatus()))
-                .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getRptId())));
+                .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getNoticeCodes().get(0).rptId())));
 
         return transaction
                 .cast(BaseTransaction.class)
@@ -94,13 +93,13 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                     TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = tx.getTransactionAuthorizationStatusUpdateData();
 
                     ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
-                            .paymentTokens(List.of(tx.getTransactionActivatedData().getPaymentToken()))
+                            .paymentTokens(tx.getTransactionActivatedData().getNoticeCodes().stream().map(NoticeCode::getPaymentToken).toList())
                             .outcome(authorizationResultToOutcomeV2(transactionAuthorizationStatusUpdateData.getAuthorizationResult()))
                             .idPSP(transactionAuthorizationRequestData.getPspId())
                             .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())
                             .idChannel(transactionAuthorizationRequestData.getPspChannelCode())
                             .transactionId(tx.getTransactionId().value().toString())
-                            .totalAmount(EuroUtils.euroCentsToEuro(tx.getAmount().value() + transactionAuthorizationRequestData.getFee()))
+                            .totalAmount(EuroUtils.euroCentsToEuro(tx.getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum() + transactionAuthorizationRequestData.getFee()))
                             .fee(EuroUtils.euroCentsToEuro(transactionAuthorizationRequestData.getFee()))
                             .timestampOperation(updateAuthorizationRequestDto.getTimestampOperation())
                             .paymentMethod(transactionAuthorizationRequestData.getPaymentTypeCode())
@@ -115,7 +114,9 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                      * ClosePayment (either OK or KO): save to event store and return event
                      * On error: save TransactionClosureErrorEvent to event store, enqueue and return error event
                      */
-                    log.info("Invoking closePaymentV2 for RptId: {}", tx.getRptId());
+                    // FIXME: Refactor to handle multiple notices
+                    it.pagopa.ecommerce.commons.domain.NoticeCode noticeCode = tx.getNoticeCodes().get(0);
+                    log.info("Invoking closePaymentV2 for RptId: {}", noticeCode.rptId().value());
                     return nodeForPspClient.closePaymentV2(closePaymentRequest)
                             .flatMap(response -> buildEventFromOutcome(response.getOutcome(), command))
                             .flatMap(transactionEventStoreRepository::save)
@@ -124,8 +125,12 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                                 log.error("Got exception while invoking closePaymentV2", exception);
                                 TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
                                         tx.getTransactionId().value().toString(),
-                                        tx.getRptId().value(),
-                                        tx.getTransactionActivatedData().getPaymentToken()
+                                        tx.getNoticeCodes().stream().map(n -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                                                n.paymentToken().value(),
+                                                n.rptId().value(),
+                                                n.transactionDescription().value(),
+                                                n.transactionAmount().value()
+                                        )).toList()
                                 );
 
                                 /*
@@ -215,8 +220,13 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
 
         TransactionClosureSentEvent event = new TransactionClosureSentEvent(
                 command.getData().transaction().getTransactionId().value().toString(),
-                command.getData().transaction().getRptId().value(),
-                command.getData().transaction().getTransactionActivatedData().getPaymentToken(),
+                command.getData().transaction().getNoticeCodes().stream().map(
+                        noticeCode ->  new NoticeCode(
+                                noticeCode.paymentToken().value(),
+                                noticeCode.rptId().value(),
+                                noticeCode.transactionDescription().value(),
+                                noticeCode.transactionAmount().value()
+                        )).toList(),
                 new TransactionClosureSendData(
                         outcome,
                         updatedStatus

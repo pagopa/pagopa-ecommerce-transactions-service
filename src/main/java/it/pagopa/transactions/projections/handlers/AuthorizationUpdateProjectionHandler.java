@@ -21,17 +21,19 @@ public class AuthorizationUpdateProjectionHandler implements ProjectionHandler<T
     @Override
     public Mono<TransactionActivated> handle(TransactionAuthorizationStatusUpdatedEvent data) {
         return transactionsViewRepository.findById(data.getTransactionId())
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(data.getPaymentToken())))
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(data.getNoticeCodes().get(0).getPaymentToken())))
                 .flatMap(transactionDocument -> {
                     transactionDocument.setStatus(data.getData().getNewTransactionStatus());
                     return transactionsViewRepository.save(transactionDocument);
                 })
                 .map(transactionDocument -> new TransactionActivated(
                         new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
-                        new PaymentToken(transactionDocument.getPaymentToken()),
-                        new RptId(transactionDocument.getRptId()),
-                        new TransactionDescription(transactionDocument.getDescription()),
-                        new TransactionAmount(transactionDocument.getAmount()),
+                        transactionDocument.getNoticeCodes().stream().map(noticeCode ->
+                                new NoticeCode(new PaymentToken(noticeCode.getPaymentToken()),
+                                        new RptId(noticeCode.getRptId()),
+                                        new TransactionAmount(noticeCode.getAmount()),
+                                        new TransactionDescription(noticeCode.getDescription())
+                                        )).toList(),
                         new Email(transactionDocument.getEmail()),
                         null,
                         null,

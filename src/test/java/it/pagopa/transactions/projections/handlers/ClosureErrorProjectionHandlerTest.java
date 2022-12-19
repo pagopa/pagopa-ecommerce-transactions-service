@@ -1,5 +1,6 @@
 package it.pagopa.transactions.projections.handlers;
 
+import it.pagopa.ecommerce.commons.documents.NoticeCode;
 import it.pagopa.ecommerce.commons.documents.Transaction;
 import it.pagopa.ecommerce.commons.documents.TransactionClosureErrorEvent;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
@@ -15,6 +16,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -33,18 +36,17 @@ class ClosureErrorProjectionHandlerTest {
 
         TransactionClosureErrorEvent closureErrorEvent = new TransactionClosureErrorEvent(
           transaction.getTransactionId(),
-          transaction.getRptId(),
-          transaction.getPaymentToken()
+          transaction.getNoticeCodes()
         );
 
         Transaction expected = new Transaction(
                 transaction.getTransactionId(),
-                transaction.getPaymentToken(),
-                transaction.getRptId(),
-                transaction.getDescription(),
-                transaction.getAmount(),
+                transaction.getNoticeCodes(),
+                transaction.getNoticeCodes().stream().mapToInt(NoticeCode::getAmount).sum(),
+                transaction.getFeeTotal(),
                 transaction.getEmail(),
                 TransactionStatusDto.CLOSURE_ERROR,
+                Transaction.OriginType.CHECKOUT,
                 transaction.getCreationDate()
         );
 
@@ -62,8 +64,7 @@ class ClosureErrorProjectionHandlerTest {
 
         TransactionClosureErrorEvent closureErrorEvent = new TransactionClosureErrorEvent(
                 transaction.getTransactionId(),
-                transaction.getRptId(),
-                transaction.getPaymentToken()
+                transaction.getNoticeCodes()
         );
 
         Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId())).thenReturn(Mono.empty());
@@ -77,12 +78,18 @@ class ClosureErrorProjectionHandlerTest {
     private Transaction transactionDocument() {
         return new Transaction(
                 UUID.randomUUID().toString(),
-                "paymentToken",
-                "77777777777302016723749670035",
-                "description",
+                List.of(new NoticeCode(
+                        "paymentToken",
+                        "77777777777302016723749670035",
+                        "description",
+                        100
+                )),
                 100,
+                0,
                 "foo@example.com",
-                TransactionStatusDto.AUTHORIZED
+                TransactionStatusDto.AUTHORIZED,
+                Transaction.OriginType.CHECKOUT,
+                ZonedDateTime.now().toString()
         );
     }
 }

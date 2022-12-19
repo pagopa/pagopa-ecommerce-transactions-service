@@ -4,6 +4,7 @@ import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.Transaction;
 import it.pagopa.ecommerce.commons.documents.*;
 import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.domain.NoticeCode;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PSPsResponseDto;
@@ -38,10 +39,7 @@ import reactor.test.StepVerifier;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -128,7 +126,7 @@ public class TransactionServiceTests {
 		final TransactionInfoDto expected = new TransactionInfoDto()
 				.transactionId(TRANSACION_ID)
 				.addPaymentsItem(new PaymentInfoDto()
-						.amount(transaction.getAmount())
+						.amount(transaction.getNoticeCodes().get(0).getAmount())
 						.reason("reason")
 						.paymentToken(PAYMENT_TOKEN)
 						.authToken(null)
@@ -262,10 +260,12 @@ public class TransactionServiceTests {
 
 		TransactionActivated transaction = new TransactionActivated(
 				new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
-				new PaymentToken(transactionDocument.getPaymentToken()),
-				new RptId(transactionDocument.getRptId()),
-				new TransactionDescription(transactionDocument.getDescription()),
-				new TransactionAmount(transactionDocument.getAmount()),
+				transactionDocument.getNoticeCodes().stream().map(noticeCode ->new NoticeCode(
+						new PaymentToken(noticeCode.getPaymentToken()),
+						new RptId(noticeCode.getRptId()),
+						new TransactionAmount(noticeCode.getAmount()),
+						new TransactionDescription(noticeCode.getDescription())
+						)).toList(),
 				new Email(transactionDocument.getEmail()),
                 "faultCode",
 				"faultCodeString",
@@ -286,8 +286,12 @@ public class TransactionServiceTests {
 
 		TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
 				transactionDocument.getTransactionId(),
-				transactionDocument.getRptId(),
-				transactionDocument.getPaymentToken(),
+				transactionDocument.getNoticeCodes().stream().map(noticeCode ->new it.pagopa.ecommerce.commons.documents.NoticeCode(
+						noticeCode.getPaymentToken(),
+						noticeCode.getRptId(),
+						null,
+						null
+				)).toList(),
 				statusUpdateData
 		);
 
@@ -295,27 +299,32 @@ public class TransactionServiceTests {
 
 		TransactionClosureSentEvent closureSentEvent = new TransactionClosureSentEvent(
 				transactionDocument.getTransactionId(),
-				transactionDocument.getRptId(),
-				transactionDocument.getPaymentToken(),
+				transactionDocument.getNoticeCodes().stream().map(noticeCode ->new it.pagopa.ecommerce.commons.documents.NoticeCode(
+						noticeCode.getPaymentToken(),
+						noticeCode.getRptId(),
+						null,
+						null
+				)).toList(),
 				closureSendData
 		);
 
 		TransactionInfoDto expectedResponse = new TransactionInfoDto()
 				.transactionId(transactionDocument.getTransactionId())
-				.addPaymentsItem(new PaymentInfoDto()
-						.amount(transactionDocument.getAmount())
+				.payments(transactionDocument.getNoticeCodes().stream().map(noticeCode -> new PaymentInfoDto()
+						.amount(noticeCode.getAmount())
+						.reason(noticeCode.getDescription())
+						.paymentToken(noticeCode.getPaymentToken())
+						.rptId(noticeCode.getRptId())
 						.authToken(null)
-						.reason(transactionDocument.getDescription())
-						.paymentToken(transactionDocument.getPaymentToken())
-						.rptId(transactionDocument.getRptId()))
+				).toList())
 				.status(TransactionStatusDto.CLOSED);
 
 		Transaction closedTransactionDocument = new Transaction(
 				transactionDocument.getTransactionId(),
-				transactionDocument.getPaymentToken(),
-				transactionDocument.getRptId(),
-				transactionDocument.getDescription(),
-				transactionDocument.getAmount(),
+				transactionDocument.getNoticeCodes().get(0).getPaymentToken(),
+				transactionDocument.getNoticeCodes().get(0).getRptId(),
+				transactionDocument.getNoticeCodes().get(0).getDescription(),
+				transactionDocument.getNoticeCodes().get(0).getAmount(),
 				transactionDocument.getEmail(),
 				it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSED);
 
@@ -373,10 +382,12 @@ public class TransactionServiceTests {
 
 		TransactionActivated transaction = new TransactionActivated(
 				new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
-				new PaymentToken(transactionDocument.getPaymentToken()),
-				new RptId(transactionDocument.getRptId()),
-				new TransactionDescription(transactionDocument.getDescription()),
-				new TransactionAmount(transactionDocument.getAmount()),
+				transactionDocument.getNoticeCodes().stream().map(noticeCode ->new NoticeCode(
+						new PaymentToken(noticeCode.getPaymentToken()),
+						new RptId(noticeCode.getRptId()),
+						new TransactionAmount(noticeCode.getAmount()),
+						new TransactionDescription(noticeCode.getDescription())
+				)).toList(),
 				new Email(transactionDocument.getEmail()),
 				null, null, it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED
 		);
@@ -385,8 +396,12 @@ public class TransactionServiceTests {
 
 		TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
 				transactionDocument.getTransactionId(),
-				transactionDocument.getRptId(),
-				transactionDocument.getPaymentToken(),
+				transactionDocument.getNoticeCodes().stream().map(noticeCode ->new it.pagopa.ecommerce.commons.documents.NoticeCode(
+						noticeCode.getPaymentToken(),
+						noticeCode.getRptId(),
+						null,
+						null
+				)).toList(),
 				transactionAddReceiptData
 		);
 
@@ -405,12 +420,13 @@ public class TransactionServiceTests {
 
 		TransactionInfoDto expectedResponse = new TransactionInfoDto()
 				.transactionId(transactionDocument.getTransactionId())
-				.addPaymentsItem(new PaymentInfoDto()
-						.amount(transactionDocument.getAmount())
+				.payments(transactionDocument.getNoticeCodes().stream().map(noticeCode -> new PaymentInfoDto()
+						.amount(noticeCode.getAmount())
+						.reason(noticeCode.getDescription())
+						.paymentToken(noticeCode.getPaymentToken())
+						.rptId(noticeCode.getRptId())
 						.authToken(null)
-						.reason(transactionDocument.getDescription())
-						.paymentToken(transactionDocument.getPaymentToken())
-						.rptId(transactionDocument.getRptId()))
+				).toList())
 				.status(TransactionStatusDto.NOTIFIED);
 
 		/* preconditions */
@@ -493,10 +509,12 @@ public class TransactionServiceTests {
 
 		it.pagopa.ecommerce.commons.domain.TransactionActivated transactionActivated = new it.pagopa.ecommerce.commons.domain.TransactionActivated(
 				new TransactionId(UUID.fromString(TRANSACION_ID)),
-				new PaymentToken(PAYMENT_TOKEN),
-				rtpId,
-				new TransactionDescription("Description"),
-				new TransactionAmount(100),
+				Arrays.asList(new NoticeCode(
+					new PaymentToken(PAYMENT_TOKEN),
+					rtpId,
+								new TransactionAmount(100),
+					new TransactionDescription("Description")
+				)),
 				new Email("foo@example.com"),
 				faultCode,
 				faultCodeString,
@@ -505,21 +523,41 @@ public class TransactionServiceTests {
 
 		TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
 				TRANSACION_ID,
-				"77777777777111111111111111111",
-				PAYMENT_TOKEN,
-				new TransactionActivationRequestedData(TRANSACION_ID, transactionActivated.getAmount().value(), transactionActivated.getEmail().value(), null, null, null)
+				Arrays.asList(new it.pagopa.ecommerce.commons.documents.NoticeCode(
+						PAYMENT_TOKEN,
+						"77777777777111111111111111111",
+						null,
+						null
+				)),
+				new TransactionActivationRequestedData(
+						transactionActivated.getNoticeCodes().stream().map(noticeCode ->new it.pagopa.ecommerce.commons.documents.NoticeCode(
+								PAYMENT_TOKEN,
+								"77777777777111111111111111111",
+								null,
+								noticeCode.transactionAmount().value()
+						)).toList(),
+						transactionActivated.getEmail().value(), null, null, null)
 		);
 
 		TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
 				TRANSACION_ID,
-				"77777777777111111111111111111",
-				PAYMENT_TOKEN,
-				new TransactionActivatedData(TRANSACION_ID,
-						transactionActivated.getAmount().value(),
+				Arrays.asList(new it.pagopa.ecommerce.commons.documents.NoticeCode(
+						PAYMENT_TOKEN,
+						"77777777777111111111111111111",
+						null,
+						null
+				)),
+				new TransactionActivatedData(
 						transactionActivated.getEmail().value(),
+						transactionActivated.getNoticeCodes().stream().map(noticeCode ->new it.pagopa.ecommerce.commons.documents.NoticeCode(
+								PAYMENT_TOKEN,
+								"77777777777111111111111111111",
+								null,
+								noticeCode.transactionAmount().value()
+						)).toList(),
+
 						transactionActivated.getTransactionActivatedData().getFaultCode(),
-						transactionActivated.getTransactionActivatedData().getFaultCodeString(),
-						PAYMENT_TOKEN
+						transactionActivated.getTransactionActivatedData().getFaultCodeString()
 				)
 		);
 

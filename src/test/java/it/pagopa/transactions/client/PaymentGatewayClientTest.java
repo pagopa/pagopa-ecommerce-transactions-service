@@ -34,6 +34,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Map;
 import java.util.UUID;
@@ -58,10 +59,11 @@ class PaymentGatewayClientTest {
     void shouldReturnAuthorizationEmptyOptionalResponseCP_VPOS() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
-                new PaymentToken("paymentToken"),
+                Arrays.asList(new NoticeCode(new PaymentToken("paymentToken"),
                 new RptId("77777777777111111111111111111"),
-                new TransactionDescription("description"),
                 new TransactionAmount(100),
+                new TransactionDescription("description")
+                )),
                 new Email("foo@example.com"),
                 null, null, TransactionStatusDto.ACTIVATED
         );
@@ -91,10 +93,11 @@ class PaymentGatewayClientTest {
     void shouldReturnAuthorizationResponseCP_XPAY() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
-                new PaymentToken("paymentToken"),
-                new RptId("77777777777111111111111111111"),
-                new TransactionDescription("description"),
-                new TransactionAmount(100),
+                Arrays.asList(new NoticeCode(new PaymentToken("paymentToken"),
+                        new RptId("77777777777111111111111111111"),
+                        new TransactionAmount(100),
+                        new TransactionDescription("description")
+                )),
                 new Email("foo@example.com"),
                 null, null, TransactionStatusDto.ACTIVATED
         );
@@ -118,7 +121,7 @@ class PaymentGatewayClientTest {
                 .pan(cardDetails.getPan())
                 .exipiryDate(cardDetails.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM")))
                 .idTransaction(transactionIdUUID.toString())
-                .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()));
+                .grandTotal(BigDecimal.valueOf(transaction.getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum() + authorizationData.fee()));
 
         String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
@@ -141,10 +144,11 @@ class PaymentGatewayClientTest {
     void shouldReturnAuthorizationResponsePPAY() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
-                new PaymentToken("paymentToken"),
-                new RptId("77777777777111111111111111111"),
-                new TransactionDescription("description"),
-                new TransactionAmount(100),
+                Arrays.asList(new NoticeCode(new PaymentToken("paymentToken"),
+                        new RptId("77777777777111111111111111111"),
+                        new TransactionAmount(100),
+                        new TransactionDescription("description")
+                )),
                 new Email("foo@example.com"),
                 null, null, TransactionStatusDto.ACTIVATED
         );
@@ -164,8 +168,8 @@ class PaymentGatewayClientTest {
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
-                .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
-                .description(transaction.getDescription().value())
+                .grandTotal(BigDecimal.valueOf(transaction.getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum() + authorizationData.fee()))
+                .description(transaction.getNoticeCodes().get(0).transactionDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(transactionIdUUID.toString());
 
@@ -190,10 +194,11 @@ class PaymentGatewayClientTest {
     void shouldThrowAlreadyProcessedOn401CP_XPAY() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
-                new PaymentToken("paymentToken"),
-                new RptId("77777777777111111111111111111"),
-                new TransactionDescription("description"),
-                new TransactionAmount(100),
+                Arrays.asList(new NoticeCode(new PaymentToken("paymentToken"),
+                        new RptId("77777777777111111111111111111"),
+                        new TransactionAmount(100),
+                        new TransactionDescription("description")
+                )),
                 new Email("foo@example.com"),
                 null, null, TransactionStatusDto.ACTIVATED
         );
@@ -217,7 +222,7 @@ class PaymentGatewayClientTest {
                 .pan(cardDetails.getPan())
                 .exipiryDate(cardDetails.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM")))
                 .idTransaction(transactionIdUUID.toString())
-                .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()));
+                .grandTotal(BigDecimal.valueOf(transaction.getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum() + authorizationData.fee()));
 
         String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
@@ -230,7 +235,7 @@ class PaymentGatewayClientTest {
         StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
                 .expectErrorMatches(error ->
                         error instanceof AlreadyProcessedException &&
-                                ((AlreadyProcessedException) error).getRptId().equals(transaction.getRptId()))
+                                ((AlreadyProcessedException) error).getRptId().equals(transaction.getNoticeCodes().get(0).rptId()))
                 .verify();
     }
 
@@ -238,10 +243,11 @@ class PaymentGatewayClientTest {
     void shouldThrowAlreadyProcessedOn401PPAY() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
-                new PaymentToken("paymentToken"),
-                new RptId("77777777777111111111111111111"),
-                new TransactionDescription("description"),
-                new TransactionAmount(100),
+                Arrays.asList(new NoticeCode(new PaymentToken("paymentToken"),
+                        new RptId("77777777777111111111111111111"),
+                        new TransactionAmount(100),
+                        new TransactionDescription("description")
+                )),
                 new Email("foo@example.com"),
                 null, null, TransactionStatusDto.ACTIVATED
         );
@@ -261,8 +267,8 @@ class PaymentGatewayClientTest {
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
-                .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
-                .description(transaction.getDescription().value())
+                .grandTotal(BigDecimal.valueOf(transaction.getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum() + authorizationData.fee()))
+                .description(transaction.getNoticeCodes().get(0).transactionDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(transactionIdUUID.toString());
 
@@ -277,7 +283,7 @@ class PaymentGatewayClientTest {
         StepVerifier.create(client.requestGeneralAuthorization(authorizationData))
                 .expectErrorMatches(error ->
                         error instanceof AlreadyProcessedException &&
-                                ((AlreadyProcessedException) error).getRptId().equals(transaction.getRptId()))
+                                ((AlreadyProcessedException) error).getRptId().equals(transaction.getNoticeCodes().get(0).rptId()))
                 .verify();
     }
 
@@ -285,10 +291,11 @@ class PaymentGatewayClientTest {
     void shouldThrowGatewayTimeoutOn504() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
-                new PaymentToken("paymentToken"),
-                new RptId("77777777777111111111111111111"),
-                new TransactionDescription("description"),
-                new TransactionAmount(100),
+                Arrays.asList(new NoticeCode(new PaymentToken("paymentToken"),
+                        new RptId("77777777777111111111111111111"),
+                        new TransactionAmount(100),
+                        new TransactionDescription("description")
+                )),
                 new Email("foo@example.com"),
                 "faultCode",
                 "faultCodeString",
@@ -310,8 +317,8 @@ class PaymentGatewayClientTest {
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
-                .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
-                .description(transaction.getDescription().value())
+                .grandTotal(BigDecimal.valueOf(transaction.getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum() + authorizationData.fee()))
+                .description(transaction.getNoticeCodes().get(0).transactionDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(transactionIdUUID.toString());
 
@@ -334,10 +341,11 @@ class PaymentGatewayClientTest {
     void shouldThrowBadGatewayOn500PPAY() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
-                new PaymentToken("paymentToken"),
-                new RptId("77777777777111111111111111111"),
-                new TransactionDescription("description"),
-                new TransactionAmount(100),
+                Arrays.asList(new NoticeCode(new PaymentToken("paymentToken"),
+                        new RptId("77777777777111111111111111111"),
+                        new TransactionAmount(100),
+                        new TransactionDescription("description")
+                )),
                 new Email("foo@example.com"),
                 null, null, TransactionStatusDto.ACTIVATED
         );
@@ -357,8 +365,8 @@ class PaymentGatewayClientTest {
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
-                .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
-                .description(transaction.getDescription().value())
+                .grandTotal(BigDecimal.valueOf(transaction.getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum() + authorizationData.fee()))
+                .description(transaction.getNoticeCodes().get(0).transactionDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(transactionIdUUID.toString());
 
@@ -379,10 +387,11 @@ class PaymentGatewayClientTest {
     void shouldThrowBadGatewayOn500CP_XPAY() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
-                new PaymentToken("paymentToken"),
-                new RptId("77777777777111111111111111111"),
-                new TransactionDescription("description"),
-                new TransactionAmount(100),
+                Arrays.asList(new NoticeCode(new PaymentToken("paymentToken"),
+                        new RptId("77777777777111111111111111111"),
+                        new TransactionAmount(100),
+                        new TransactionDescription("description")
+                )),
                 new Email("foo@example.com"),
                 null, null, TransactionStatusDto.ACTIVATED
         );
@@ -406,7 +415,7 @@ class PaymentGatewayClientTest {
                 .pan(cardDetails.getPan())
                 .exipiryDate(cardDetails.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM")))
                 .idTransaction(transactionIdUUID.toString())
-                .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()));
+                .grandTotal(BigDecimal.valueOf(transaction.getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum() + authorizationData.fee()));
 
         String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
@@ -425,10 +434,11 @@ class PaymentGatewayClientTest {
     void fallbackOnEmptyMdcInfoOnMapperErrorPPAY() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
-                new PaymentToken("paymentToken"),
-                new RptId("77777777777111111111111111111"),
-                new TransactionDescription("description"),
-                new TransactionAmount(100),
+                Arrays.asList(new NoticeCode(new PaymentToken("paymentToken"),
+                        new RptId("77777777777111111111111111111"),
+                        new TransactionAmount(100),
+                        new TransactionDescription("description")
+                )),
                 new Email("foo@example.com"),
                 null, null, TransactionStatusDto.ACTIVATED
         );
@@ -448,8 +458,8 @@ class PaymentGatewayClientTest {
         );
 
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
-                .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()))
-                .description(transaction.getDescription().value())
+                .grandTotal(BigDecimal.valueOf(transaction.getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum() + authorizationData.fee()))
+                .description(transaction.getNoticeCodes().get(0).transactionDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(transactionIdUUID.toString());
 
@@ -475,10 +485,11 @@ class PaymentGatewayClientTest {
     void fallbackOnEmptyMdcInfoOnMapperErrorCP_XPAY() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
-                new PaymentToken("paymentToken"),
-                new RptId("77777777777111111111111111111"),
-                new TransactionDescription("description"),
-                new TransactionAmount(100),
+                Arrays.asList(new NoticeCode(new PaymentToken("paymentToken"),
+                        new RptId("77777777777111111111111111111"),
+                        new TransactionAmount(100),
+                        new TransactionDescription("description")
+                )),
                 new Email("foo@example.com"),
                 null, null, TransactionStatusDto.ACTIVATED
         );
@@ -502,7 +513,7 @@ class PaymentGatewayClientTest {
                 .pan(cardDetails.getPan())
                 .exipiryDate(cardDetails.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM")))
                 .idTransaction(transactionIdUUID.toString())
-                .grandTotal(BigDecimal.valueOf(transaction.getAmount().value() + authorizationData.fee()));
+                .grandTotal(BigDecimal.valueOf(transaction.getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum() + authorizationData.fee()));
 
         String encodedMdcFields = "";
 
@@ -528,10 +539,11 @@ class PaymentGatewayClientTest {
     void shouldThrowInvalidRequestWhenCardDetailsAreMissing_XPAY() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
-                new PaymentToken("paymentToken"),
-                new RptId("77777777777111111111111111111"),
-                new TransactionDescription("description"),
-                new TransactionAmount(100),
+                Arrays.asList(new NoticeCode(new PaymentToken("paymentToken"),
+                        new RptId("77777777777111111111111111111"),
+                        new TransactionAmount(100),
+                        new TransactionDescription("description")
+                )),
                 new Email("foo@example.com"),
                 null, null, TransactionStatusDto.ACTIVATED
         );

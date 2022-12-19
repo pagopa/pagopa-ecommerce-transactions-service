@@ -25,6 +25,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -63,10 +64,7 @@ class TransactionRequestAuthorizizationHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                paymentToken,
-                rptId,
-                description,
-                amount,
+                Arrays.asList(new NoticeCode(paymentToken,rptId,amount,description)),
                 email,
                 null, null, TransactionStatusDto.ACTIVATED
         );
@@ -92,7 +90,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 null
         );
 
-        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);
+        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getNoticeCodes().get(0).rptId(), authorizationData);
 
         PostePayAuthResponseEntityDto postePayAuthResponseEntityDto = new PostePayAuthResponseEntityDto()
                 .channel("channel")
@@ -125,10 +123,7 @@ class TransactionRequestAuthorizizationHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                paymentToken,
-                rptId,
-                description,
-                amount,
+                Arrays.asList(new NoticeCode(paymentToken,rptId,amount,description)),
                 email,
                 faultCode,
                 faultCodeString,
@@ -156,7 +151,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 null
         );
 
-        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);
+        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getNoticeCodes().get(0).rptId(), authorizationData);
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -178,10 +173,7 @@ class TransactionRequestAuthorizizationHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                paymentToken,
-                rptId,
-                description,
-                amount,
+                Arrays.asList(new NoticeCode(paymentToken,rptId,amount,description)),
                 email,
                 faultCode,
                 faultCodeString,
@@ -209,7 +201,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 new PostePayAuthRequestDetailsDto().detailType("VPOS").accountEmail("test@test.it")
         );
 
-        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getRptId(), authorizationData);
+        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getNoticeCodes().get(0).rptId(), authorizationData);
 
         Mockito.when(paymentGatewayClient.requestGeneralAuthorization(authorizationData)).thenReturn(Mono.zip(Mono.just(Optional.empty()),
                 Mono.just(Optional.empty())));

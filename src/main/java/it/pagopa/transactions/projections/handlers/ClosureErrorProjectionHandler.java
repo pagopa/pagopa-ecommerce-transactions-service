@@ -19,7 +19,7 @@ public class ClosureErrorProjectionHandler implements ProjectionHandler<Transact
     @Override
     public Mono<Transaction> handle(TransactionClosureErrorEvent event) {
         return transactionsViewRepository.findById(event.getTransactionId())
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(event.getPaymentToken())))
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(event.getNoticeCodes().get(0).getPaymentToken())))
                 .flatMap(transactionDocument -> {
                     transactionDocument.setStatus(TransactionStatusDto.CLOSURE_ERROR);
                     return transactionsViewRepository.save(transactionDocument);
