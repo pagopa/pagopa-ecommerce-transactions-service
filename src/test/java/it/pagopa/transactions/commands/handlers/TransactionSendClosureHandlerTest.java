@@ -267,12 +267,7 @@ class TransactionSendClosureHandlerTest {
 
         TransactionClosureSentEvent event = new TransactionClosureSentEvent(
                 transactionId.toString(),
-                transactionActivatedEvent.getNoticeCodes().stream().map(noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
-                        noticeCode.getRptId(),
-                        transactionActivatedEvent.getData().getNoticeCodes().stream().filter(noticeCode1 -> noticeCode1.getRptId().equals(noticeCode.getRptId())).findFirst().get().getPaymentToken(),
-                        noticeCode.getDescription(),
-                        noticeCode.getAmount()
-                )).toList(),
+                transactionActivatedEvent.getNoticeCodes(),
                 transactionClosureSendData
         );
 

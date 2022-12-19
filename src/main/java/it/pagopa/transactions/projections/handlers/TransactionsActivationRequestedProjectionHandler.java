@@ -41,7 +41,7 @@ public class TransactionsActivationRequestedProjectionHandler
 
         return viewEventStoreRepository
                 .save(transactionDocument)
-                .doOnNext(event -> log.info("Transactions update view for rptId: {}", String.join(",",event.getNoticeCodes().stream().map(noticeCode -> noticeCode.getRptId()).toList())))
+                .doOnNext(event -> log.info("Transactions update view for rptId: {}", String.join(",",event.getNoticeCodes().stream().map(it.pagopa.ecommerce.commons.documents.NoticeCode::getRptId).toList())))
                 .thenReturn(transaction);
     }
 }

@@ -58,7 +58,7 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                     TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = tx.getTransactionAuthorizationStatusUpdateData();
 
                     ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
-                            .paymentTokens(tx.getTransactionActivatedData().getNoticeCodes().stream().map(noticeCode -> noticeCode.getPaymentToken()).toList())
+                            .paymentTokens(tx.getTransactionActivatedData().getNoticeCodes().stream().map(NoticeCode::getPaymentToken).toList())
                             .outcome(authorizationResultToOutcomeV2(transactionAuthorizationStatusUpdateData.getAuthorizationResult()))
                             .idPSP(transactionAuthorizationRequestData.getPspId())
                             .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())
