@@ -44,9 +44,14 @@ class TransactionUserReceiptProjectionHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(UUID.randomUUID()),
-                Arrays.asList(new NoticeCode(new PaymentToken("paymentToken"),
-                new RptId("77777777777111111111111111111"),
-                new TransactionAmount(100), new TransactionDescription("description"))),
+                Arrays.asList(
+                        new NoticeCode(
+                                new PaymentToken("paymentToken"),
+                                new RptId("77777777777111111111111111111"),
+                                new TransactionAmount(100),
+                                new TransactionDescription("description")
+                        )
+                ),
                 new Email("foo@example.com"),
                 faultCode,
                 faultCodeString,
@@ -70,12 +75,14 @@ class TransactionUserReceiptProjectionHandlerTest {
 
         TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                 transaction.getTransactionId().value().toString(),
-                Arrays.asList(new it.pagopa.ecommerce.commons.documents.NoticeCode(
-                        transaction.getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken(),
-                        transaction.getNoticeCodes().get(0).rptId().value(),
-                        null,
-                        null
-                        ))
+                Arrays.asList(
+                        new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                                transaction.getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken(),
+                                transaction.getNoticeCodes().get(0).rptId().value(),
+                                null,
+                                null
+                        )
+                )
 
                 ,
                 transactionAddReceiptData
@@ -83,12 +90,17 @@ class TransactionUserReceiptProjectionHandlerTest {
 
         TransactionActivated expected = new TransactionActivated(
                 transaction.getTransactionId(),
-                Arrays.asList(new NoticeCode(
-                        new PaymentToken(transaction.getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken()),
-                        transaction.getNoticeCodes().get(0).rptId(),
-                        transaction.getNoticeCodes().get(0).transactionAmount(),
-                        transaction.getNoticeCodes().get(0).transactionDescription()
-                )),
+                Arrays.asList(
+                        new NoticeCode(
+                                new PaymentToken(
+                                        transaction.getTransactionActivatedData().getNoticeCodes().get(0)
+                                                .getPaymentToken()
+                                ),
+                                transaction.getNoticeCodes().get(0).rptId(),
+                                transaction.getNoticeCodes().get(0).transactionAmount(),
+                                transaction.getNoticeCodes().get(0).transactionDescription()
+                        )
+                ),
                 transaction.getEmail(),
                 transaction.getTransactionActivatedData().getFaultCode(),
                 transaction.getTransactionActivatedData().getFaultCodeString(),

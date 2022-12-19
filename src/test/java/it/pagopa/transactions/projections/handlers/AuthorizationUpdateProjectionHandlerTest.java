@@ -41,10 +41,14 @@ class AuthorizationUpdateProjectionHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(UUID.randomUUID()),
-                Arrays.asList(new NoticeCode(new PaymentToken("paymentToken"),
-                new RptId("77777777777111111111111111111"),
-                new TransactionAmount(100),
-                new TransactionDescription("description"))),
+                Arrays.asList(
+                        new NoticeCode(
+                                new PaymentToken("paymentToken"),
+                                new RptId("77777777777111111111111111111"),
+                                new TransactionAmount(100),
+                                new TransactionDescription("description")
+                        )
+                ),
                 new Email("email@example.com"),
                 "faultCode",
                 "faultCodeString",
@@ -71,23 +75,29 @@ class AuthorizationUpdateProjectionHandlerTest {
 
         TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
                 transaction.getTransactionId().value().toString(),
-                transaction.getNoticeCodes().stream().map(noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
-                        noticeCode.paymentToken().value(),
-                        noticeCode.rptId().value(),
-                        null,
-                        null
-                )).toList(),
+                transaction.getNoticeCodes().stream()
+                        .map(
+                                noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                                        noticeCode.paymentToken().value(),
+                                        noticeCode.rptId().value(),
+                                        null,
+                                        null
+                                )
+                        ).toList(),
                 statusUpdateData
         );
 
         TransactionActivated expected = new TransactionActivated(
                 transaction.getTransactionId(),
-                transaction.getNoticeCodes().stream().map(noticeCode -> new it.pagopa.ecommerce.commons.domain.NoticeCode(
-                        noticeCode.paymentToken(),
-                        noticeCode.rptId(),
-                        noticeCode.transactionAmount(),
-                        noticeCode.transactionDescription()
-                )).toList(),
+                transaction.getNoticeCodes().stream()
+                        .map(
+                                noticeCode -> new it.pagopa.ecommerce.commons.domain.NoticeCode(
+                                        noticeCode.paymentToken(),
+                                        noticeCode.rptId(),
+                                        noticeCode.transactionAmount(),
+                                        noticeCode.transactionDescription()
+                                )
+                        ).toList(),
                 transaction.getEmail(),
                 null,
                 null,

@@ -48,10 +48,14 @@ class TransactionUpdateAuthorizationHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                Arrays.asList(new NoticeCode(paymentToken,
-                        rptId,
-                        amount,
-                        description)),
+                Arrays.asList(
+                        new NoticeCode(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description
+                        )
+                ),
                 email,
                 faultCode,
                 faultCodeString,
@@ -68,18 +72,32 @@ class TransactionUpdateAuthorizationHandlerTest {
                 updateAuthorizationRequest
         );
 
-        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(transaction.getNoticeCodes().get(0).rptId(), updateAuthorizationStatusData);
+        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
+                transaction.getNoticeCodes().get(0).rptId(),
+                updateAuthorizationStatusData
+        );
 
-        TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = new TransactionAuthorizationStatusUpdateData(AuthorizationResultDto.KO, TransactionStatusDto.AUTHORIZED, "authorizationCode");
+        TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = new TransactionAuthorizationStatusUpdateData(
+                AuthorizationResultDto.KO,
+                TransactionStatusDto.AUTHORIZED,
+                "authorizationCode"
+        );
 
         TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
                 transactionId.toString(),
-                transaction.getNoticeCodes().stream().map(noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
-                    transaction.getTransactionActivatedData().getNoticeCodes().stream().filter(noticeCodeData -> noticeCodeData.getRptId().equals(noticeCode.rptId().value())).findFirst().get().getPaymentToken(),
-                    noticeCode.rptId().value(),
-                    noticeCode.transactionDescription().value(),
-                    noticeCode.transactionAmount().value()
-                    )).toList(),
+                transaction.getNoticeCodes().stream()
+                        .map(
+                                noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                                        transaction.getTransactionActivatedData().getNoticeCodes().stream()
+                                                .filter(
+                                                        noticeCodeData -> noticeCodeData.getRptId()
+                                                                .equals(noticeCode.rptId().value())
+                                                ).findFirst().get().getPaymentToken(),
+                                        noticeCode.rptId().value(),
+                                        noticeCode.transactionDescription().value(),
+                                        noticeCode.transactionAmount().value()
+                                )
+                        ).toList(),
                 transactionAuthorizationStatusUpdateData
         );
 
@@ -91,7 +109,13 @@ class TransactionUpdateAuthorizationHandlerTest {
                 .expectNextMatches(authorizationStatusUpdatedEvent -> authorizationStatusUpdatedEvent.equals(event))
                 .verifyComplete();
 
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(argThat(eventArg -> eventArg.getData().getNewTransactionStatus().equals(TransactionStatusDto.AUTHORIZED)));
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1))
+                .save(
+                        argThat(
+                                eventArg -> eventArg.getData().getNewTransactionStatus()
+                                        .equals(TransactionStatusDto.AUTHORIZED)
+                        )
+                );
     }
 
     @Test
@@ -106,10 +130,14 @@ class TransactionUpdateAuthorizationHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                Arrays.asList(new it.pagopa.ecommerce.commons.domain.NoticeCode(paymentToken,
-                rptId,
-                amount,
-                description)),
+                Arrays.asList(
+                        new it.pagopa.ecommerce.commons.domain.NoticeCode(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description
+                        )
+                ),
                 email,
                 faultCode,
                 faultCodeString,
@@ -126,7 +154,10 @@ class TransactionUpdateAuthorizationHandlerTest {
                 updateAuthorizationRequest
         );
 
-        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(transaction.getNoticeCodes().get(0).rptId(), updateAuthorizationStatusData);
+        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
+                transaction.getNoticeCodes().get(0).rptId(),
+                updateAuthorizationStatusData
+        );
 
         /* test */
         StepVerifier.create(updateAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -148,10 +179,14 @@ class TransactionUpdateAuthorizationHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                Arrays.asList(new it.pagopa.ecommerce.commons.domain.NoticeCode(paymentToken,
-                        rptId,
-                        amount,
-                        description)),
+                Arrays.asList(
+                        new it.pagopa.ecommerce.commons.domain.NoticeCode(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description
+                        )
+                ),
                 email,
                 faultCode,
                 faultCodeString,
@@ -168,18 +203,30 @@ class TransactionUpdateAuthorizationHandlerTest {
                 updateAuthorizationRequest
         );
 
-        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(transaction.getNoticeCodes().get(0).rptId(), updateAuthorizationStatusData);
+        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
+                transaction.getNoticeCodes().get(0).rptId(),
+                updateAuthorizationStatusData
+        );
 
-        TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = new TransactionAuthorizationStatusUpdateData(AuthorizationResultDto.KO, TransactionStatusDto.AUTHORIZATION_FAILED, "authorizationCode");
+        TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = new TransactionAuthorizationStatusUpdateData(
+                AuthorizationResultDto.KO,
+                TransactionStatusDto.AUTHORIZATION_FAILED,
+                "authorizationCode"
+        );
 
         TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
                 transactionId.toString(),
-                transaction.getNoticeCodes().stream().map(noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
-                        transaction.getTransactionActivatedData().getNoticeCodes().stream().filter(noticeCode1 -> noticeCode1.getRptId().equals(noticeCode.rptId().value())).findFirst().get().getPaymentToken(),
-                        noticeCode.rptId().value(),
-                        noticeCode.transactionDescription().value(),
-                        noticeCode.transactionAmount().value()
-                )).toList(),
+                transaction.getNoticeCodes().stream().map(
+                        noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                                transaction.getTransactionActivatedData().getNoticeCodes().stream()
+                                        .filter(
+                                                noticeCode1 -> noticeCode1.getRptId().equals(noticeCode.rptId().value())
+                                        ).findFirst().get().getPaymentToken(),
+                                noticeCode.rptId().value(),
+                                noticeCode.transactionDescription().value(),
+                                noticeCode.transactionAmount().value()
+                        )
+                ).toList(),
                 transactionAuthorizationStatusUpdateData
         );
 
@@ -191,6 +238,11 @@ class TransactionUpdateAuthorizationHandlerTest {
                 .expectNextMatches(authorizationStatusUpdatedEvent -> authorizationStatusUpdatedEvent.equals(event))
                 .verifyComplete();
 
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(argThat(eventArg -> eventArg.getData().getNewTransactionStatus().equals(TransactionStatusDto.AUTHORIZATION_FAILED)));
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
+                argThat(
+                        eventArg -> eventArg.getData().getNewTransactionStatus()
+                                .equals(TransactionStatusDto.AUTHORIZATION_FAILED)
+                )
+        );
     }
 }
