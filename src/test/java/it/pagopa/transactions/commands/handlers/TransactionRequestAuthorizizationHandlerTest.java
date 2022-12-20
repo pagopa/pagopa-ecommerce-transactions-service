@@ -45,7 +45,7 @@ class TransactionRequestAuthorizizationHandlerTest {
 
     @Mock
     private TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository;
-   
+
     @Mock
     private QueueAsyncClient queueAsyncClient;
 
@@ -64,9 +64,11 @@ class TransactionRequestAuthorizizationHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                Arrays.asList(new NoticeCode(paymentToken,rptId,amount,description)),
+                Arrays.asList(new NoticeCode(paymentToken, rptId, amount, description)),
                 email,
-                null, null, TransactionStatusDto.ACTIVATED
+                null,
+                null,
+                TransactionStatusDto.ACTIVATED
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -90,7 +92,10 @@ class TransactionRequestAuthorizizationHandlerTest {
                 null
         );
 
-        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getNoticeCodes().get(0).rptId(), authorizationData);
+        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
+                transaction.getNoticeCodes().get(0).rptId(),
+                authorizationData
+        );
 
         PostePayAuthResponseEntityDto postePayAuthResponseEntityDto = new PostePayAuthResponseEntityDto()
                 .channel("channel")
@@ -100,9 +105,11 @@ class TransactionRequestAuthorizizationHandlerTest {
         ReflectionTestUtils.setField(requestAuthorizationHandler, "queueVisibilityTimeout", "300");
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData)).thenReturn(Mono.just(postePayAuthResponseEntityDto));
+        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
+                .thenReturn(Mono.just(postePayAuthResponseEntityDto));
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.empty());
-        Mockito.when(queueAsyncClient.sendMessageWithResponse(BinaryData.fromObject(any()),any(),any())).thenReturn(Mono.empty());
+        Mockito.when(queueAsyncClient.sendMessageWithResponse(BinaryData.fromObject(any()), any(), any()))
+                .thenReturn(Mono.empty());
 
         /* test */
         requestAuthorizationHandler.handle(requestAuthorizationCommand).block();
@@ -122,7 +129,7 @@ class TransactionRequestAuthorizizationHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                Arrays.asList(new NoticeCode(paymentToken,rptId,amount,description)),
+                Arrays.asList(new NoticeCode(paymentToken, rptId, amount, description)),
                 email,
                 faultCode,
                 faultCodeString,
@@ -150,7 +157,10 @@ class TransactionRequestAuthorizizationHandlerTest {
                 null
         );
 
-        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getNoticeCodes().get(0).rptId(), authorizationData);
+        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
+                transaction.getNoticeCodes().get(0).rptId(),
+                authorizationData
+        );
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -172,7 +182,7 @@ class TransactionRequestAuthorizizationHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                Arrays.asList(new NoticeCode(paymentToken,rptId,amount,description)),
+                Arrays.asList(new NoticeCode(paymentToken, rptId, amount, description)),
                 email,
                 faultCode,
                 faultCodeString,
@@ -200,7 +210,10 @@ class TransactionRequestAuthorizizationHandlerTest {
                 new PostePayAuthRequestDetailsDto().detailType("VPOS").accountEmail("test@test.it")
         );
 
-        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(transaction.getNoticeCodes().get(0).rptId(), authorizationData);
+        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
+                transaction.getNoticeCodes().get(0).rptId(),
+                authorizationData
+        );
 
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData)).thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData)).thenReturn(Mono.empty());

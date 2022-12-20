@@ -37,15 +37,23 @@ class TransactionProjectionHandlerTest {
         TransactionActivationRequestedData transactionActivationRequestedData = new TransactionActivationRequestedData();
         transactionActivationRequestedData.setPaymentContextCode("ccpcode");
         transactionActivationRequestedData.setEmail("email@test.it");
-        NoticeCode noticeCode = new NoticeCode(null,null,"reason",1);
+        NoticeCode noticeCode = new NoticeCode(null, null, "reason", 1);
         transactionActivationRequestedData.setNoticeCodes(Arrays.asList(noticeCode));
         transactionActivationRequestedData.setFaultCode("faultCode");
         transactionActivationRequestedData.setFaultCodeString("faultCodeString");
 
         TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
                 transactionUUID.toString(),
-                Arrays.asList(new it.pagopa.ecommerce.commons.documents.NoticeCode(null,"77777777777302016723749670035","reason",1)),
-                transactionActivationRequestedData);
+                Arrays.asList(
+                        new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                                null,
+                                "77777777777302016723749670035",
+                                "reason",
+                                1
+                        )
+                ),
+                transactionActivationRequestedData
+        );
 
         TransactionActivationRequestedEvent event = new TransactionActivationRequestedEvent(
                 transactionActivationRequestedEvent.getTransactionId(),
@@ -60,10 +68,16 @@ class TransactionProjectionHandlerTest {
         );
 
         TransactionId transactionId = new TransactionId(transactionUUID);
-        PaymentToken paymentToken = new PaymentToken(transactionActivationRequestedEvent.getNoticeCodes().get(0).getPaymentToken());
+        PaymentToken paymentToken = new PaymentToken(
+                transactionActivationRequestedEvent.getNoticeCodes().get(0).getPaymentToken()
+        );
         RptId rptId = new RptId(transactionActivationRequestedEvent.getNoticeCodes().get(0).getRptId());
-        TransactionDescription description = new TransactionDescription(transactionActivationRequestedData.getNoticeCodes().get(0).getDescription());
-        TransactionAmount amount = new TransactionAmount(transactionActivationRequestedData.getNoticeCodes().get(0).getAmount());
+        TransactionDescription description = new TransactionDescription(
+                transactionActivationRequestedData.getNoticeCodes().get(0).getDescription()
+        );
+        TransactionAmount amount = new TransactionAmount(
+                transactionActivationRequestedData.getNoticeCodes().get(0).getAmount()
+        );
         Email email = new Email(transactionActivationRequestedData.getEmail());
         ZonedDateTime creationDate = ZonedDateTime.now();
 
@@ -71,24 +85,28 @@ class TransactionProjectionHandlerTest {
                 MockedStatic<ZonedDateTime> zonedDateTime = Mockito.mockStatic(ZonedDateTime.class)) {
             TransactionActivationRequested expected = new TransactionActivationRequested(
                     transactionId,
-                    Arrays.asList(new it.pagopa.ecommerce.commons.domain.NoticeCode(null,rptId,amount, description)),
+                    Arrays.asList(new it.pagopa.ecommerce.commons.domain.NoticeCode(null, rptId, amount, description)),
                     email,
                     creationDate,
-                    TransactionStatusDto.ACTIVATION_REQUESTED);
+                    TransactionStatusDto.ACTIVATION_REQUESTED
+            );
 
             /*
              * Preconditions
              */
             it.pagopa.ecommerce.commons.documents.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.Transaction
                     .from(expected);
-            Mockito.when(viewEventStoreRepository.save(Mockito.any(it.pagopa.ecommerce.commons.documents.Transaction.class)))
+            Mockito.when(
+                    viewEventStoreRepository.save(Mockito.any(it.pagopa.ecommerce.commons.documents.Transaction.class))
+            )
                     .thenReturn(Mono.just(transactionDocument));
             zonedDateTime.when(ZonedDateTime::now).thenReturn(expected.getCreationDate());
 
             /*
              * Test
              */
-            TransactionActivationRequested result = transactionsProjectionHandler.handle(transactionActivationRequestedEvent).cast(TransactionActivationRequested.class).block();
+            TransactionActivationRequested result = transactionsProjectionHandler
+                    .handle(transactionActivationRequestedEvent).cast(TransactionActivationRequested.class).block();
 
             /*
              * Assertions

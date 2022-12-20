@@ -11,7 +11,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * Helper that copies the state of Reactor [Context] to MDC on the #onNext function.
+ * Helper that copies the state of Reactor [Context] to MDC on the #onNext
+ * function.
  */
 class MDCContextLifter<T> implements CoreSubscriber<T> {
 
@@ -48,17 +49,18 @@ class MDCContextLifter<T> implements CoreSubscriber<T> {
     }
 
     /**
-     * Extension function for the Reactor [Context]. Copies the current context to the MDC, if context is empty clears the MDC.
-     * State of the MDC after calling this method should be same as Reactor [Context] state.
-     * One thread-local access only.
+     * Extension function for the Reactor [Context]. Copies the current context to
+     * the MDC, if context is empty clears the MDC. State of the MDC after calling
+     * this method should be same as Reactor [Context] state. One thread-local
+     * access only.
      */
     private void copyToMdc(Context context) {
         if (!context.isEmpty()) {
-            Map<String,String> val = Optional.ofNullable(MDC.getCopyOfContextMap()).orElseGet(HashMap::new);
+            Map<String, String> val = Optional.ofNullable(MDC.getCopyOfContextMap()).orElseGet(HashMap::new);
             Map<String, String> map = context.stream()
                     .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString()));
 
-            if(map.getOrDefault("contextKey","").equals(val.getOrDefault("contextKey",""))) {
+            if (map.getOrDefault("contextKey", "").equals(val.getOrDefault("contextKey", ""))) {
                 map.putAll(val);
                 MDC.setContextMap(map);
             } else {

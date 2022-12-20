@@ -45,62 +45,91 @@ public class TransactionRequestAuthorizationHandler
         TransactionActivated transaction = command.getData().transaction();
 
         if (transaction.getStatus() != TransactionStatusDto.ACTIVATED) {
-            log.warn("Invalid state transition: requested authorization for transaction {} from status {}",
-                    transaction.getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken(), transaction.getStatus());
+            log.warn(
+                    "Invalid state transition: requested authorization for transaction {} from status {}",
+                    transaction.getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken(),
+                    transaction.getStatus()
+            );
             return Mono.error(new AlreadyProcessedException(transaction.getNoticeCodes().get(0).rptId()));
         }
 
         var monoPostePay = Mono.just(command.getData())
                 .flatMap(d -> paymentGatewayClient.requestPostepayAuthorization(d))
-                .map(p -> Tuples.of(p.getRequestId(),p.getUrlRedirect()));
+                .map(p -> Tuples.of(p.getRequestId(), p.getUrlRedirect()));
 
         var monoXPay = Mono.just(command.getData())
                 .flatMap(d -> paymentGatewayClient.requestXPayAuthorization(d))
-                .map(p -> Tuples.of(p.getRequestId(),p.getUrlRedirect()));
+                .map(p -> Tuples.of(p.getRequestId(), p.getUrlRedirect()));
 
         List<Mono<Tuple2<String, String>>> gatewayRequests = List.of(monoPostePay, monoXPay);
 
         Mono<Tuple2<String, String>> gatewayAttempts = gatewayRequests
                 .stream()
-                .reduce((pipeline, candidateStep) -> pipeline.switchIfEmpty(candidateStep)).orElse(Mono.empty());
+                .reduce(
+                        (
+                         pipeline,
+                         candidateStep
+                        ) -> pipeline.switchIfEmpty(candidateStep)
+                ).orElse(Mono.empty());
 
         return gatewayAttempts.switchIfEmpty(Mono.error(new BadRequestException("No gateway matched")))
-                    .flatMap(tuple2 -> {
-                        log.info("Logging authorization event for rpt ids {}", String.join(",",transaction.getNoticeCodes().stream().map(noticeCode -> noticeCode.rptId().value()).toList()));
-                        TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
-                                transaction.getTransactionId().value().toString(),
-                                transaction.getNoticeCodes().stream().map(
-                                        noticeCode ->  new NoticeCode(
-                                                noticeCode.paymentToken().value(),
-                                                noticeCode.rptId().value(),
-                                                noticeCode.transactionDescription().value(),
-                                                noticeCode.transactionAmount().value()
-                                        )).toList(),
-                                new TransactionAuthorizationRequestData(
-                                        command.getData().transaction().getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum(),
-                                        command.getData().fee(),
-                                        command.getData().paymentInstrumentId(),
-                                        command.getData().pspId(),
-                                        command.getData().paymentTypeCode(),
-                                        command.getData().brokerName(),
-                                        command.getData().pspChannelCode(),
-                                        command.getData().paymentMethodName(),
-                                        command.getData().pspBusinessName(),
-                                        tuple2.getT1()));
+                .flatMap(tuple2 -> {
+                    log.info(
+                            "Logging authorization event for rpt ids {}",
+                            String.join(
+                                    ",",
+                                    transaction.getNoticeCodes().stream().map(noticeCode -> noticeCode.rptId().value())
+                                            .toList()
+                            )
+                    );
+                    TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
+                            transaction.getTransactionId().value().toString(),
+                            transaction.getNoticeCodes().stream().map(
+                                    noticeCode -> new NoticeCode(
+                                            noticeCode.paymentToken().value(),
+                                            noticeCode.rptId().value(),
+                                            noticeCode.transactionDescription().value(),
+                                            noticeCode.transactionAmount().value()
+                                    )
+                            ).toList(),
+                            new TransactionAuthorizationRequestData(
+                                    command.getData().transaction().getNoticeCodes().stream()
+                                            .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum(),
+                                    command.getData().fee(),
+                                    command.getData().paymentInstrumentId(),
+                                    command.getData().pspId(),
+                                    command.getData().paymentTypeCode(),
+                                    command.getData().brokerName(),
+                                    command.getData().pspChannelCode(),
+                                    command.getData().paymentMethodName(),
+                                    command.getData().pspBusinessName(),
+                                    tuple2.getT1()
+                            )
+                    );
 
-                        return transactionEventStoreRepository.save(authorizationEvent)
-                                .thenReturn(tuple2)
-                                .map(auth -> new RequestAuthorizationResponseDto()
-                                        .authorizationUrl(tuple2.getT2())
-                                        .authorizationRequestId(tuple2.getT1()));
-                    })
+                    return transactionEventStoreRepository.save(authorizationEvent)
+                            .thenReturn(tuple2)
+                            .map(
+                                    auth -> new RequestAuthorizationResponseDto()
+                                            .authorizationUrl(tuple2.getT2())
+                                            .authorizationRequestId(tuple2.getT1())
+                            );
+                })
                 .doOnError(BadRequestException.class, error -> log.error(error.getMessage()))
-                .doOnNext(authorizationEvent -> queueAsyncClient.sendMessageWithResponse(
-                        BinaryData.fromObject(authorizationEvent),
-                        Duration.ofSeconds(Integer.valueOf(queueVisibilityTimeout)), null).subscribe(
-                                response -> log.debug("Message {} expires at {}", response.getValue().getMessageId(),
-                                        response.getValue().getExpirationTime()),
+                .doOnNext(
+                        authorizationEvent -> queueAsyncClient.sendMessageWithResponse(
+                                BinaryData.fromObject(authorizationEvent),
+                                Duration.ofSeconds(Integer.valueOf(queueVisibilityTimeout)),
+                                null
+                        ).subscribe(
+                                response -> log.debug(
+                                        "Message {} expires at {}",
+                                        response.getValue().getMessageId(),
+                                        response.getValue().getExpirationTime()
+                                ),
                                 error -> log.error(error.toString()),
-                                () -> log.debug("Complete enqueuing the message!")));
+                                () -> log.debug("Complete enqueuing the message!")
+                        )
+                );
     }
 }

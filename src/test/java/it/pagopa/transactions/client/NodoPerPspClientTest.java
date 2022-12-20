@@ -100,8 +100,10 @@ class NodoPerPspClientTest {
          * asserts
          */
         assertThat(testResponse.getNodoVerificaRPTRisposta().getEsito()).isEqualTo(esito);
-        assertThat(testResponse.getNodoVerificaRPTRisposta().getDatiPagamentoPA().getImportoSingoloVersamento()).isEqualTo(importoSingoloVersamento);
-        assertThat(testResponse.getNodoVerificaRPTRisposta().getDatiPagamentoPA().getCausaleVersamento()).isEqualTo(causaleVersamento);
+        assertThat(testResponse.getNodoVerificaRPTRisposta().getDatiPagamentoPA().getImportoSingoloVersamento())
+                .isEqualTo(importoSingoloVersamento);
+        assertThat(testResponse.getNodoVerificaRPTRisposta().getDatiPagamentoPA().getCausaleVersamento())
+                .isEqualTo(causaleVersamento);
     }
 
     @Test
@@ -209,7 +211,6 @@ class NodoPerPspClientTest {
 
         attivaRPTRisposta.setNodoAttivaRPTRisposta(esitoAttiva);
 
-
         /**
          * preconditions
          */
@@ -231,8 +232,10 @@ class NodoPerPspClientTest {
          * asserts
          */
         assertThat(testResponse.getNodoAttivaRPTRisposta().getEsito()).isEqualTo(esito);
-        assertThat(testResponse.getNodoAttivaRPTRisposta().getDatiPagamentoPA().getImportoSingoloVersamento()).isEqualTo(importoSingoloVersamento);
-        assertThat(testResponse.getNodoAttivaRPTRisposta().getDatiPagamentoPA().getCausaleVersamento()).isEqualTo(causaleVersamento);
+        assertThat(testResponse.getNodoAttivaRPTRisposta().getDatiPagamentoPA().getImportoSingoloVersamento())
+                .isEqualTo(importoSingoloVersamento);
+        assertThat(testResponse.getNodoAttivaRPTRisposta().getDatiPagamentoPA().getCausaleVersamento())
+                .isEqualTo(causaleVersamento);
     }
 
     @Test
@@ -289,7 +292,6 @@ class NodoPerPspClientTest {
         esitoAttiva.setEsito(esito);
 
         attivaRPTRisposta.setNodoAttivaRPTRisposta(esitoAttiva);
-
 
         /**
          * preconditions

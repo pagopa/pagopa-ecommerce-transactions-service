@@ -4,7 +4,7 @@ import it.pagopa.ecommerce.commons.domain.TransactionActivated;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDetailsDto;
 
 public record AuthorizationRequestData(
-		TransactionActivated transaction,
+        TransactionActivated transaction,
         int fee,
         String paymentInstrumentId,
         String pspId,
@@ -14,5 +14,6 @@ public record AuthorizationRequestData(
         String paymentMethodName,
         String pspBusinessName,
         String paymentGatewayId,
-		RequestAuthorizationRequestDetailsDto authDetails
-) {}
+        RequestAuthorizationRequestDetailsDto authDetails
+) {
+}

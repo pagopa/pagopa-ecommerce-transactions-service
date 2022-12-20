@@ -36,18 +36,45 @@ public class NodoPerPspClient {
                 .header("SOAPAction", "nodoVerificaRPT")
                 .body(Mono.just(new SoapEnvelope("", request)), SoapEnvelope.class)
                 .retrieve()
-                .onStatus(HttpStatus::isError,
+                .onStatus(
+                        HttpStatus::isError,
                         clientResponse -> clientResponse.bodyToMono(String.class)
-                                .flatMap(errorResponseBody -> Mono.error(
-                                        new ResponseStatusException(clientResponse.statusCode(), errorResponseBody))))
+                                .flatMap(
+                                        errorResponseBody -> Mono.error(
+                                                new ResponseStatusException(
+                                                        clientResponse.statusCode(),
+                                                        errorResponseBody
+                                                )
+                                        )
+                                )
+                )
                 .bodyToMono(NodoVerificaRPTRisposta.class)
-                .doOnSuccess((NodoVerificaRPTRisposta verificaRPTResponse) -> log.info(
-                        "Payment info for idRpt {}",
-                        new Object[]{request.getValue().getCodiceIdRPT()}))
-                .doOnError(ResponseStatusException.class,
-                        error -> log.error("ResponseStatus Error : {}", new Object[]{error}))
-                .doOnError(Exception.class,
-                        (Exception error) -> log.error("Generic Error : {}", new Object[]{error}));
+                .doOnSuccess(
+                        (NodoVerificaRPTRisposta verificaRPTResponse) -> log.info(
+                                "Payment info for idRpt {}",
+                                new Object[] {
+                                        request.getValue().getCodiceIdRPT()
+                                }
+                        )
+                )
+                .doOnError(
+                        ResponseStatusException.class,
+                        error -> log.error(
+                                "ResponseStatus Error : {}",
+                                new Object[] {
+                                        error
+                                }
+                        )
+                )
+                .doOnError(
+                        Exception.class,
+                        (Exception error) -> log.error(
+                                "Generic Error : {}",
+                                new Object[] {
+                                        error
+                                }
+                        )
+                );
     }
 
     public Mono<NodoAttivaRPTRisposta> attivaRPT(JAXBElement<NodoAttivaRPT> request) {
@@ -58,17 +85,44 @@ public class NodoPerPspClient {
                 .header("SOAPAction", "nodoAttivaRPT")
                 .body(Mono.just(new SoapEnvelope("", request)), SoapEnvelope.class)
                 .retrieve()
-                .onStatus(HttpStatus::isError,
+                .onStatus(
+                        HttpStatus::isError,
                         clientResponse -> clientResponse.bodyToMono(String.class)
-                                .flatMap(errorResponseBody -> Mono.error(
-                                        new ResponseStatusException(clientResponse.statusCode(), errorResponseBody))))
+                                .flatMap(
+                                        errorResponseBody -> Mono.error(
+                                                new ResponseStatusException(
+                                                        clientResponse.statusCode(),
+                                                        errorResponseBody
+                                                )
+                                        )
+                                )
+                )
                 .bodyToMono(NodoAttivaRPTRisposta.class)
-                .doOnSuccess((NodoAttivaRPTRisposta attivaRPTResponse) -> log.info(
-                        "Payment info for idRpt {}",
-                        new Object[]{request.getValue().getCodiceIdRPT()}))
-                .doOnError(ResponseStatusException.class,
-                        error -> log.error("ResponseStatus Error : {}", new Object[]{error}))
-                .doOnError(Exception.class,
-                        (Exception error) -> log.error("Generic Error : {}", new Object[]{error}));
+                .doOnSuccess(
+                        (NodoAttivaRPTRisposta attivaRPTResponse) -> log.info(
+                                "Payment info for idRpt {}",
+                                new Object[] {
+                                        request.getValue().getCodiceIdRPT()
+                                }
+                        )
+                )
+                .doOnError(
+                        ResponseStatusException.class,
+                        error -> log.error(
+                                "ResponseStatus Error : {}",
+                                new Object[] {
+                                        error
+                                }
+                        )
+                )
+                .doOnError(
+                        Exception.class,
+                        (Exception error) -> log.error(
+                                "Generic Error : {}",
+                                new Object[] {
+                                        error
+                                }
+                        )
+                );
     }
 }

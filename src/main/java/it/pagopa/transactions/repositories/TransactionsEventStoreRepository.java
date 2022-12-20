@@ -7,7 +7,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface TransactionsEventStoreRepository<T> extends ReactiveCrudRepository<TransactionEvent<T>, String> {
-    Mono<TransactionEvent<T>> findByTransactionIdAndEventCode(String idTransaction, TransactionEventCode transactionEventCode);
+    Mono<TransactionEvent<T>> findByTransactionIdAndEventCode(
+                                                              String idTransaction,
+                                                              TransactionEventCode transactionEventCode
+    );
 
     Flux<TransactionEvent<T>> findByTransactionId(String transactionId);
 }
