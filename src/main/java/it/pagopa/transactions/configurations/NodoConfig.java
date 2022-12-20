@@ -7,14 +7,12 @@ import it.pagopa.generated.nodoperpsp.model.NodoVerificaRPT;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
 import it.pagopa.generated.transactions.model.VerifyPaymentNoticeReq;
 import it.pagopa.transactions.utils.NodoConnectionString;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@Slf4j
 public class NodoConfig {
 
     @Value("${nodo.connection.string}")
@@ -35,7 +33,7 @@ public class NodoConfig {
         } catch (JsonProcessingException e) {
             // exception not logged here since it can expose sensitive information contained
             // into nodo connection string
-            log.error("Exception parsing nodo connection string");
+            throw new IllegalStateException("Exception parsing JSON nodo connection string");
         }
         return nodoConnectionString;
     }
