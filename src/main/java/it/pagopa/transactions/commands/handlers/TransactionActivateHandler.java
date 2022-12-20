@@ -78,6 +78,8 @@ public class TransactionActivateHandler
     ) {
         final RptId rptId = command.getRptId();
         final NewTransactionRequestDto newTransactionRequestDto = command.getData();
+        // TODO correggere qui, prendere il payment context code per ogni singolo
+        // pagamento
         final String paymentContextCode = newTransactionRequestDto.getPaymentNotices().get(0).getPaymentContextCode();
         final int totalPaymentNotices = newTransactionRequestDto.getPaymentNotices().size();
         final AtomicInteger processedPaymentNoticeCount = new AtomicInteger(0);
@@ -199,13 +201,6 @@ public class TransactionActivateHandler
     private Mono<PaymentRequestInfo> getPaymentRequestInfoFromCache(RptId rptId) {
         Optional<PaymentRequestInfo> paymentInfofromCache = paymentRequestsInfoRepository.findById(rptId);
         log.info("PaymentRequestInfo cache hit for {}: {}", rptId, paymentInfofromCache.isPresent());
-        try {
-            log.info("START SLEEPING REDIS PAYMENT REQUEST INFO");
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            Thread.currentThread().interrupt();
-        }
         return paymentInfofromCache.map(Mono::just).orElseGet(
                 () -> Mono.just(
                         new PaymentRequestInfo(
