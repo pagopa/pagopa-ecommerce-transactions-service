@@ -39,13 +39,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 @ExtendWith(SpringExtension.class)
 class PaymentGatewayClientTest {
     @InjectMocks
     private PaymentGatewayClient client;
 
     @Mock
-    PostePayInternalApi paymentTransactionsControllerApi;
+    PostePayInternalApi postePayInternalApi;
 
     @Mock
     XPayInternalApi xPayInternalApi;
@@ -95,6 +98,8 @@ class PaymentGatewayClientTest {
         StepVerifier.create(client.requestXPayAuthorization(authorizationData))
                 .expectNextCount(0)
                 .verifyComplete();
+
+        verifyNoInteractions(postePayInternalApi, xPayInternalApi);
     }
 
     @Test
@@ -166,6 +171,9 @@ class PaymentGatewayClientTest {
         StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
                 .expectNextCount(0)
                 .verifyComplete();
+
+        verify(xPayInternalApi, times(1)).authRequestXpay(any(), any());
+        verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
     }
 
     @Test
@@ -220,7 +228,7 @@ class PaymentGatewayClientTest {
                 .urlRedirect("https://example.com");
 
         /* preconditions */
-        Mockito.when(paymentTransactionsControllerApi.authRequest(postePayAuthRequest, false, encodedMdcFields))
+        Mockito.when(postePayInternalApi.authRequest(postePayAuthRequest, false, encodedMdcFields))
                 .thenReturn(Mono.just(postePayResponse));
 
         /* test */
@@ -231,6 +239,9 @@ class PaymentGatewayClientTest {
         StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
                 .expectNext(postePayResponse)
                 .verifyComplete();
+
+        verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
+        verify(postePayInternalApi, times(1)).authRequest(any(), any(), any());
     }
 
     @Test
@@ -313,6 +324,9 @@ class PaymentGatewayClientTest {
                                         .equals(transaction.getNoticeCodes().get(0).rptId())
                 )
                 .verify();
+
+        verify(xPayInternalApi, times(1)).authRequestXpay(any(), any());
+        verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
     }
 
     @Test
@@ -363,7 +377,7 @@ class PaymentGatewayClientTest {
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
 
         /* preconditions */
-        Mockito.when(paymentTransactionsControllerApi.authRequest(postePayAuthRequest, false, encodedMdcFields))
+        Mockito.when(postePayInternalApi.authRequest(postePayAuthRequest, false, encodedMdcFields))
                 .thenReturn(
                         Mono.error(
                                 new WebClientResponseException(
@@ -389,6 +403,9 @@ class PaymentGatewayClientTest {
         StepVerifier.create(client.requestXPayAuthorization(authorizationData))
                 .expectNextCount(0)
                 .verifyComplete();
+
+        verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
+        verify(postePayInternalApi, times(1)).authRequest(any(), any(), any());
     }
 
     @Test
@@ -439,7 +456,7 @@ class PaymentGatewayClientTest {
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
 
         /* preconditions */
-        Mockito.when(paymentTransactionsControllerApi.authRequest(postePayAuthRequest, false, encodedMdcFields))
+        Mockito.when(postePayInternalApi.authRequest(postePayAuthRequest, false, encodedMdcFields))
                 .thenReturn(
                         Mono.error(
                                 new WebClientResponseException(
@@ -463,6 +480,9 @@ class PaymentGatewayClientTest {
         StepVerifier.create(client.requestXPayAuthorization(authorizationData))
                 .expectNextCount(0)
                 .verifyComplete();
+
+        verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
+        verify(postePayInternalApi, times(1)).authRequest(any(), any(), any());
     }
 
     @Test
@@ -513,7 +533,7 @@ class PaymentGatewayClientTest {
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
 
         /* preconditions */
-        Mockito.when(paymentTransactionsControllerApi.authRequest(postePayAuthRequest, false, encodedMdcFields))
+        Mockito.when(postePayInternalApi.authRequest(postePayAuthRequest, false, encodedMdcFields))
                 .thenReturn(
                         Mono.error(
                                 new WebClientResponseException(
@@ -535,6 +555,9 @@ class PaymentGatewayClientTest {
         StepVerifier.create(client.requestXPayAuthorization(authorizationData))
                 .expectNextCount(0)
                 .verifyComplete();
+
+        verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
+        verify(postePayInternalApi, times(1)).authRequest(any(), any(), any());
     }
 
     @Test
@@ -609,6 +632,9 @@ class PaymentGatewayClientTest {
         StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
                 .expectNextCount(0)
                 .verifyComplete();
+
+        verify(xPayInternalApi, times(1)).authRequestXpay(any(), any());
+        verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
     }
 
     @Test
@@ -665,7 +691,7 @@ class PaymentGatewayClientTest {
         Mockito.when(objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID)))
                 .thenThrow(new JsonProcessingException("") {
                 });
-        Mockito.when(paymentTransactionsControllerApi.authRequest(postePayAuthRequest, false, encodedMdcFields))
+        Mockito.when(postePayInternalApi.authRequest(postePayAuthRequest, false, encodedMdcFields))
                 .thenReturn(Mono.just(postePayResponse));
 
         /* test */
@@ -677,6 +703,8 @@ class PaymentGatewayClientTest {
                 .expectNextCount(0)
                 .verifyComplete();
 
+        verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
+        verify(postePayInternalApi, times(1)).authRequest(any(), any(), any());
     }
 
     @Test
@@ -747,6 +775,8 @@ class PaymentGatewayClientTest {
                 .expectNextCount(0)
                 .verifyComplete();
 
+        verify(xPayInternalApi, times(1)).authRequestXpay(any(), any());
+        verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
     }
 
     @Test
@@ -790,5 +820,7 @@ class PaymentGatewayClientTest {
                 .expectNextCount(0)
                 .verifyComplete();
 
+        verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
+        verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
     }
 }
