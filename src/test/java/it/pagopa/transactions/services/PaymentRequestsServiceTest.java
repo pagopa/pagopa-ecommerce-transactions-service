@@ -10,6 +10,7 @@ import it.pagopa.generated.payment.requests.model.ValidationFaultDto;
 import it.pagopa.generated.transactions.model.*;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NodoPerPspClient;
+import it.pagopa.transactions.configurations.NodoConfig;
 import it.pagopa.transactions.exceptions.NodoErrorException;
 import it.pagopa.transactions.utils.NodoOperations;
 import it.pagopa.transactions.utils.NodoUtilities;
@@ -41,10 +42,10 @@ class PaymentRequestsServiceTest {
 
     @InjectMocks
     private PaymentRequestsService paymentRequestsService;
-
     @Mock
     private PaymentRequestsInfoRepository paymentRequestsInfoRepository;
-
+    @Mock
+    private NodoConfig nodoConfig;
     @Mock
     private NodoPerPspClient nodoPerPspClient;
 
@@ -56,12 +57,6 @@ class PaymentRequestsServiceTest {
 
     @Mock
     private it.pagopa.generated.transactions.model.ObjectFactory objectFactoryNodeForPsp;
-
-    @Mock
-    private NodoVerificaRPT baseNodoVerificaRPTRequest;
-
-    @Mock
-    private VerifyPaymentNoticeReq baseVerifyPaymentNoticeReq;
 
     @Mock
     private NodoOperations nodoOperations;
@@ -141,6 +136,7 @@ class PaymentRequestsServiceTest {
                 .thenReturn(Optional.empty());
         Mockito.when(nodoPerPspClient.verificaRPT(Mockito.any()))
                 .thenReturn(Mono.just(verificaRPTRIsposta));
+        Mockito.when(nodoConfig.baseNodoVerificaRPTRequest()).thenReturn(new NodoVerificaRPT());
         Mockito.when(nodoOperations.getEuroCentsFromNodoAmount(amountForNodo))
                 .thenReturn(amount);
 
@@ -184,6 +180,7 @@ class PaymentRequestsServiceTest {
                 .thenReturn(Optional.empty());
         Mockito.when(nodoPerPspClient.verificaRPT(Mockito.any()))
                 .thenReturn(Mono.just(verificaRPTRIsposta));
+        Mockito.when(nodoConfig.baseNodoVerificaRPTRequest()).thenReturn(new NodoVerificaRPT());
         Mockito.when(nodoOperations.getEuroCentsFromNodoAmount(amountForNodo))
                 .thenReturn(amount);
 
@@ -243,6 +240,8 @@ class PaymentRequestsServiceTest {
                 .thenReturn(Optional.empty());
         Mockito.when(nodoPerPspClient.verificaRPT(Mockito.any()))
                 .thenReturn(Mono.just(verificaRPTRIsposta));
+        Mockito.when(nodoConfig.baseNodoVerificaRPTRequest()).thenReturn(new NodoVerificaRPT());
+        Mockito.when(nodoConfig.baseVerifyPaymentNoticeReq()).thenReturn(new VerifyPaymentNoticeReq());
         Mockito.when(nodeForPspClient.verifyPaymentNotice(Mockito.any()))
                 .thenReturn(Mono.just(verifyPaymentNotice));
         Mockito.when(nodoOperations.getEuroCentsFromNodoAmount(amountForNodo))
@@ -278,6 +277,7 @@ class PaymentRequestsServiceTest {
                 .thenReturn(new NodoTipoCodiceIdRPT());
         Mockito.when(nodoPerPspClient.verificaRPT(Mockito.any()))
                 .thenReturn(Mono.just(verificaRPTRIsposta));
+        Mockito.when(nodoConfig.baseNodoVerificaRPTRequest()).thenReturn(new NodoVerificaRPT());
 
         /** Test */
         Mono<PaymentRequestsGetResponseDto> paymentRequestInfoMono = paymentRequestsService
@@ -308,6 +308,7 @@ class PaymentRequestsServiceTest {
                 .thenReturn(Optional.empty());
         Mockito.when(nodoPerPspClient.verificaRPT(Mockito.any()))
                 .thenReturn(Mono.just(verificaRPTRIsposta));
+        Mockito.when(nodoConfig.baseNodoVerificaRPTRequest()).thenReturn(new NodoVerificaRPT());
 
         /** Test */
         Mono<PaymentRequestsGetResponseDto> paymentRequestInfoMono = paymentRequestsService
@@ -360,6 +361,8 @@ class PaymentRequestsServiceTest {
                 .thenReturn(Mono.just(verificaRPTRIsposta));
         Mockito.when(nodeForPspClient.verifyPaymentNotice(Mockito.any()))
                 .thenReturn(Mono.just(verifyPaymentNotice));
+        Mockito.when(nodoConfig.baseNodoVerificaRPTRequest()).thenReturn(new NodoVerificaRPT());
+        Mockito.when(nodoConfig.baseVerifyPaymentNoticeReq()).thenReturn(new VerifyPaymentNoticeReq());
         Mockito.when(nodoOperations.getEuroCentsFromNodoAmount(amountForNodo))
                 .thenReturn(amount);
 
@@ -392,7 +395,7 @@ class PaymentRequestsServiceTest {
                 .thenReturn(Optional.empty());
         Mockito.when(nodoPerPspClient.verificaRPT(Mockito.any()))
                 .thenReturn(Mono.just(verificaRPTRIsposta));
-
+        Mockito.when(nodoConfig.baseNodoVerificaRPTRequest()).thenReturn(new NodoVerificaRPT());
         /** Assertions */
         StepVerifier
                 .create(paymentRequestsService.getPaymentRequestInfo(rptIdAsString))
@@ -423,7 +426,7 @@ class PaymentRequestsServiceTest {
                 .thenReturn(Optional.empty());
         Mockito.when(nodoPerPspClient.verificaRPT(Mockito.any()))
                 .thenReturn(Mono.just(verificaRPTRIsposta));
-
+        Mockito.when(nodoConfig.baseNodoVerificaRPTRequest()).thenReturn(new NodoVerificaRPT());
         /** Assertions */
         StepVerifier
                 .create(paymentRequestsService.getPaymentRequestInfo(rptIdAsString))
@@ -458,6 +461,7 @@ class PaymentRequestsServiceTest {
                 .thenReturn(Optional.empty());
         Mockito.when(nodoPerPspClient.verificaRPT(Mockito.any()))
                 .thenReturn(Mono.just(verificaRPTRIsposta));
+        Mockito.when(nodoConfig.baseNodoVerificaRPTRequest()).thenReturn(new NodoVerificaRPT());
 
         /** Assertions */
         StepVerifier

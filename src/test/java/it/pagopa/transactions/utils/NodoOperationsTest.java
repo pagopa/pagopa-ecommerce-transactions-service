@@ -7,6 +7,7 @@ import it.pagopa.generated.nodoperpsp.model.*;
 import it.pagopa.generated.transactions.model.*;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NodoPerPspClient;
+import it.pagopa.transactions.configurations.NodoConfig;
 import it.pagopa.transactions.exceptions.NodoErrorException;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,9 @@ class NodoOperationsTest {
 
     @Mock
     NodeForPspClient nodeForPspClient;
+
+    @Mock
+    NodoConfig nodoConfig;
 
     @Mock
     ActivatePaymentNoticeReq baseActivatePaymentNoticeReq;
@@ -97,6 +101,8 @@ class NodoOperationsTest {
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(objectFactoryNodeForPsp.createActivatePaymentNoticeReq(Mockito.any()))
                 .thenReturn(objectFactoryUtil.createActivatePaymentNoticeReq(activatePaymentReq));
+        Mockito.when(nodoConfig.baseActivatePaymentNoticeReq()).thenReturn(new ActivatePaymentNoticeReq());
+
         /** test */
         PaymentRequestInfo response = nodoOperations
                 .activatePaymentRequest(
@@ -152,6 +158,7 @@ class NodoOperationsTest {
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(objectFactoryNodeForPsp.createActivatePaymentNoticeReq(Mockito.any()))
                 .thenReturn(objectFactoryUtil.createActivatePaymentNoticeReq(activatePaymentReq));
+        Mockito.when(nodoConfig.baseActivatePaymentNoticeReq()).thenReturn(new ActivatePaymentNoticeReq());
 
         PaymentRequestInfo paymentRequestInfo = new PaymentRequestInfo(
                 rptId,
@@ -250,6 +257,8 @@ class NodoOperationsTest {
         Mockito.when(objectFactoryNodoPerPsp.createNodoAttivaRPT(Mockito.any()))
                 .thenReturn(objectFactoryUtilNodoPerPsp.createNodoAttivaRPT(nodoAttivaRPT));
         Mockito.when(nodoUtilities.getCodiceIdRpt(Mockito.any(RptId.class))).thenReturn(nodoTipoCodiceIdRPT);
+        Mockito.when(nodoConfig.baseNodoAttivaRPTRequest()).thenReturn(new NodoAttivaRPT());
+        Mockito.when(nodoConfig.baseActivatePaymentNoticeReq()).thenReturn(new ActivatePaymentNoticeReq());
 
         PaymentRequestInfo paymentRequestInfo = new PaymentRequestInfo(
                 rptId,
@@ -334,7 +343,7 @@ class NodoOperationsTest {
                 .thenReturn(Mono.just(attivaRPTRisposta));
         Mockito.when(objectFactoryNodoPerPsp.createNodoAttivaRPT(Mockito.any()))
                 .thenReturn(objectFactoryUtilNodoPerPsp.createNodoAttivaRPT(nodoAttivaRPT));
-
+        Mockito.when(nodoConfig.baseNodoAttivaRPTRequest()).thenReturn(new NodoAttivaRPT());
         PaymentRequestInfo paymentRequestInfo = new PaymentRequestInfo(
                 rptId,
                 paTaxCode,
@@ -420,6 +429,7 @@ class NodoOperationsTest {
         Mockito.when(objectFactoryNodoPerPsp.createNodoAttivaRPT(Mockito.any()))
                 .thenReturn(objectFactoryUtilNodoPerPsp.createNodoAttivaRPT(nodoAttivaRPT));
         Mockito.when(nodoUtilities.getCodiceIdRpt(Mockito.any(RptId.class))).thenReturn(nodoTipoCodiceIdRPT);
+        Mockito.when(nodoConfig.baseNodoAttivaRPTRequest()).thenReturn(new NodoAttivaRPT());
 
         PaymentRequestInfo paymentRequestInfo = new PaymentRequestInfo(
                 rptId,

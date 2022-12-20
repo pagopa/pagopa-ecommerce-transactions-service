@@ -1,11 +1,11 @@
 package it.pagopa.transactions.client;
 
-import javax.xml.bind.JAXBElement;
-
 import it.pagopa.generated.nodoperpsp.model.NodoAttivaRPT;
 import it.pagopa.generated.nodoperpsp.model.NodoAttivaRPTRisposta;
 import it.pagopa.generated.nodoperpsp.model.NodoVerificaRPT;
 import it.pagopa.generated.nodoperpsp.model.NodoVerificaRPTRisposta;
+import it.pagopa.transactions.utils.soap.SoapEnvelope;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -13,10 +13,9 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
-
-import it.pagopa.transactions.utils.soap.SoapEnvelope;
-import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
+
+import javax.xml.bind.JAXBElement;
 
 @Component
 @Slf4j
