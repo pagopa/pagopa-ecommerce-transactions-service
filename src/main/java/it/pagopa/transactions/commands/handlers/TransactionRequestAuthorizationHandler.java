@@ -74,14 +74,8 @@ public class TransactionRequestAuthorizationHandler
 
         return gatewayAttempts.switchIfEmpty(Mono.error(new BadRequestException("No gateway matched")))
                 .flatMap(tuple2 -> {
-                    log.info(
-                            "Logging authorization event for rpt ids {}",
-                            String.join(
-                                    ",",
-                                    transaction.getNoticeCodes().stream().map(noticeCode -> noticeCode.rptId().value())
-                                            .toList()
-                            )
-                    );
+                    log.info("Logging authorization event for transaction id {}", transaction.getTransactionId().value());
+
                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                             transaction.getTransactionId().value().toString(),
                             transaction.getNoticeCodes().stream().map(
@@ -119,7 +113,7 @@ public class TransactionRequestAuthorizationHandler
                 .doOnNext(
                         authorizationEvent -> queueAsyncClient.sendMessageWithResponse(
                                 BinaryData.fromObject(authorizationEvent),
-                                Duration.ofSeconds(Integer.valueOf(queueVisibilityTimeout)),
+                                Duration.ofSeconds(Integer.parseInt(queueVisibilityTimeout)),
                                 null
                         ).subscribe(
                                 response -> log.debug(
