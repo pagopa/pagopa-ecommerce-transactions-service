@@ -19,8 +19,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import java.time.Duration;
+import java.util.List;
 
 @Component
 @Slf4j
@@ -51,74 +53,67 @@ public class TransactionRequestAuthorizationHandler
             return Mono.error(new AlreadyProcessedException(transaction.getNoticeCodes().get(0).rptId()));
         }
 
-        return paymentGatewayClient.requestGeneralAuthorization(command.getData())
-                .flatMap(authResponse -> {
+        var monoPostePay = Mono.just(command.getData())
+                .flatMap(d -> paymentGatewayClient.requestPostepayAuthorization(d))
+                .map(p -> Tuples.of(p.getRequestId(), p.getUrlRedirect()));
+
+        var monoXPay = Mono.just(command.getData())
+                .flatMap(d -> paymentGatewayClient.requestXPayAuthorization(d))
+                .map(p -> Tuples.of(p.getRequestId(), p.getUrlRedirect()));
+
+        List<Mono<Tuple2<String, String>>> gatewayRequests = List.of(monoPostePay, monoXPay);
+
+        Mono<Tuple2<String, String>> gatewayAttempts = gatewayRequests
+                .stream()
+                .reduce(
+                        (
+                         pipeline,
+                         candidateStep
+                        ) -> pipeline.switchIfEmpty(candidateStep)
+                ).orElse(Mono.empty());
+
+        return gatewayAttempts.switchIfEmpty(Mono.error(new BadRequestException("No gateway matched")))
+                .flatMap(tuple2 -> {
                     log.info(
-                            "Logging authorization event for rpt id {}",
-                            transaction.getNoticeCodes().get(0).rptId().value()
+                            "Logging authorization event for rpt ids {}",
+                            String.join(
+                                    ",",
+                                    transaction.getNoticeCodes().stream().map(noticeCode -> noticeCode.rptId().value())
+                                            .toList()
+                            )
+                    );
+                    TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
+                            transaction.getTransactionId().value().toString(),
+                            transaction.getNoticeCodes().stream().map(
+                                    noticeCode -> new NoticeCode(
+                                            noticeCode.paymentToken().value(),
+                                            noticeCode.rptId().value(),
+                                            noticeCode.transactionDescription().value(),
+                                            noticeCode.transactionAmount().value()
+                                    )
+                            ).toList(),
+                            new TransactionAuthorizationRequestData(
+                                    command.getData().transaction().getNoticeCodes().stream()
+                                            .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum(),
+                                    command.getData().fee(),
+                                    command.getData().paymentInstrumentId(),
+                                    command.getData().pspId(),
+                                    command.getData().paymentTypeCode(),
+                                    command.getData().brokerName(),
+                                    command.getData().pspChannelCode(),
+                                    command.getData().paymentMethodName(),
+                                    command.getData().pspBusinessName(),
+                                    tuple2.getT1()
+                            )
                     );
 
-                    if (!authResponse.getT1().isPresent() && !authResponse.getT2().isPresent()) {
-                        return Mono.error(new BadRequestException("No gateway matched"));
-                    }
-
-                    Mono<Tuple2<String, String>> monoPostePay = Mono.just(authResponse.getT1())
-                            .filter(pPayAuth -> pPayAuth.isPresent())
-                            .switchIfEmpty(Mono.empty())
-                            .flatMap(
-                                    pPay -> Mono.zip(
-                                            Mono.just(pPay.get().getRequestId()),
-                                            Mono.just(pPay.get().getUrlRedirect())
-                                    )
+                    return transactionEventStoreRepository.save(authorizationEvent)
+                            .thenReturn(tuple2)
+                            .map(
+                                    auth -> new RequestAuthorizationResponseDto()
+                                            .authorizationUrl(tuple2.getT2())
+                                            .authorizationRequestId(tuple2.getT1())
                             );
-
-                    Mono<Tuple2<String, String>> monoXPay = Mono.just(authResponse.getT2())
-                            .filter(xPayAuth -> xPayAuth.isPresent())
-                            .switchIfEmpty(Mono.empty())
-                            .flatMap(
-                                    xPay -> Mono.zip(
-                                            Mono.just(xPay.get().getRequestId()),
-                                            Mono.just(xPay.get().getUrlRedirect())
-                                    )
-                            );
-
-                    return monoPostePay.switchIfEmpty(monoXPay)
-                            .flatMap(tuple2 -> {
-
-                                TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
-                                        transaction.getTransactionId().value().toString(),
-                                        transaction.getNoticeCodes().stream().map(
-                                                noticeCode -> new NoticeCode(
-                                                        noticeCode.paymentToken().value(),
-                                                        noticeCode.rptId().value(),
-                                                        noticeCode.transactionDescription().value(),
-                                                        noticeCode.transactionAmount().value()
-                                                )
-                                        ).toList(),
-                                        new TransactionAuthorizationRequestData(
-                                                command.getData().transaction().getNoticeCodes().stream()
-                                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value())
-                                                        .sum(),
-                                                command.getData().fee(),
-                                                command.getData().paymentInstrumentId(),
-                                                command.getData().pspId(),
-                                                command.getData().paymentTypeCode(),
-                                                command.getData().brokerName(),
-                                                command.getData().pspChannelCode(),
-                                                command.getData().paymentMethodName(),
-                                                command.getData().pspBusinessName(),
-                                                tuple2.getT1()
-                                        )
-                                );
-
-                                return transactionEventStoreRepository.save(authorizationEvent)
-                                        .thenReturn(tuple2)
-                                        .map(
-                                                auth -> new RequestAuthorizationResponseDto()
-                                                        .authorizationUrl(tuple2.getT2())
-                                                        .authorizationRequestId(tuple2.getT1())
-                                        );
-                            });
                 })
                 .doOnError(BadRequestException.class, error -> log.error(error.getMessage()))
                 .doOnNext(

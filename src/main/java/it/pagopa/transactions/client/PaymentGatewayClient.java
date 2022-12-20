@@ -19,14 +19,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Map;
-import java.util.Optional;
 
 @Component
 public class PaymentGatewayClient {
@@ -43,20 +41,8 @@ public class PaymentGatewayClient {
 
     // TODO Handle multiple rptId
 
-    public Mono<Tuple2<Optional<PostePayAuthResponseEntityDto>, Optional<XPayAuthResponseEntityDto>>> requestGeneralAuthorization(
-                                                                                                                                  AuthorizationRequestData authorizationData
-    ) {
-        Mono<Optional<PostePayAuthResponseEntityDto>> postePayAuthResponseEntityDtoMono = requestPostepayAuthorization(
-                authorizationData
-        ).map(Optional::of).switchIfEmpty(Mono.just(Optional.empty()));
-        Mono<Optional<XPayAuthResponseEntityDto>> xPayAuthResponseEntityDtoMono = requestXPayAuthorization(
-                authorizationData
-        ).map(Optional::of).switchIfEmpty(Mono.just(Optional.empty()));
-        return Mono.zip(postePayAuthResponseEntityDtoMono, xPayAuthResponseEntityDtoMono);
-    }
-
-    private Mono<PostePayAuthResponseEntityDto> requestPostepayAuthorization(
-                                                                             AuthorizationRequestData authorizationData
+    public Mono<PostePayAuthResponseEntityDto> requestPostepayAuthorization(
+                                                                            AuthorizationRequestData authorizationData
     ) {
 
         return Mono.just(authorizationData)
@@ -83,7 +69,7 @@ public class PaymentGatewayClient {
                                 .onErrorMap(
                                         WebClientResponseException.class,
                                         exception -> switch (exception.getStatusCode()) {
-                                        // FIXME Handle multiple rptId
+                                        // TODO Handle multiple rptId
                                         case UNAUTHORIZED -> new AlreadyProcessedException(
                                                 authorizationData.transaction().getNoticeCodes().get(0).rptId()
                                         );
@@ -95,7 +81,7 @@ public class PaymentGatewayClient {
                 );
     }
 
-    private Mono<XPayAuthResponseEntityDto> requestXPayAuthorization(AuthorizationRequestData authorizationData) {
+    public Mono<XPayAuthResponseEntityDto> requestXPayAuthorization(AuthorizationRequestData authorizationData) {
 
         return Mono.just(authorizationData)
                 .filter(

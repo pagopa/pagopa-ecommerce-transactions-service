@@ -230,9 +230,9 @@ public class TransactionServiceTests {
         Mockito.when(repository.findById(TRANSACION_ID))
                 .thenReturn(Mono.just(transaction));
 
-        Mockito.when(paymentGatewayClient.requestGeneralAuthorization(any())).thenReturn(
-                Mono.zip(Mono.just(Optional.of(postePayAuthResponseEntityDto)), Mono.just(Optional.empty()))
-        );
+        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(any()))
+                .thenReturn(Mono.just(postePayAuthResponseEntityDto));
+        Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.empty());
 
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 
@@ -719,9 +719,8 @@ public class TransactionServiceTests {
         Mockito.when(repository.findById(TRANSACION_ID))
                 .thenReturn(Mono.just(transaction));
 
-        Mockito.when(paymentGatewayClient.requestGeneralAuthorization(any())).thenReturn(
-                Mono.zip(Mono.just(Optional.of(gatewayResponse)), Mono.just(Optional.empty()))
-        );
+        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(any())).thenReturn(Mono.just(gatewayResponse));
+        Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.empty());
 
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 
