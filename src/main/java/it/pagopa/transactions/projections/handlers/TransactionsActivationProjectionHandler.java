@@ -26,17 +26,15 @@ public class TransactionsActivationProjectionHandler
     public Mono<TransactionActivated> handle(TransactionActivatedEvent event) {
         TransactionActivatedData data = event.getData();
         TransactionId transactionId = new TransactionId(UUID.fromString(event.getTransactionId()));
-        List<NoticeCode> noticeCodeList = event.getNoticeCodes().stream().map(noticeCode -> {
-            it.pagopa.ecommerce.commons.documents.NoticeCode noticeCodeData = data.getNoticeCodes().stream()
-                    .filter(noticeCodeDataValue -> noticeCodeDataValue.getRptId().equals(noticeCode.getRptId()))
-                    .findFirst().get();
-            return new NoticeCode(
-                    new PaymentToken(noticeCode.getPaymentToken()),
-                    new RptId(noticeCode.getRptId()),
-                    new TransactionAmount(noticeCodeData.getAmount()),
-                    new TransactionDescription(noticeCodeData.getDescription())
-            );
-        }).toList();
+        List<NoticeCode> noticeCodeList = data.getNoticeCodes().stream().map(
+                noticeCodeData -> new NoticeCode(
+                        new PaymentToken(noticeCodeData.getPaymentToken()),
+                        new RptId(noticeCodeData.getRptId()),
+                        new TransactionAmount(noticeCodeData.getAmount()),
+                        new TransactionDescription(noticeCodeData.getDescription()),
+                        new PaymentContextCode(noticeCodeData.getPaymentContextCode())
+                )
+        ).toList();
         Email email = new Email(event.getData().getEmail());
         String faultCode = event.getData().getFaultCode();
         String faultCodeString = event.getData().getFaultCodeString();

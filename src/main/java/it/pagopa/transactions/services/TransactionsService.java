@@ -235,7 +235,8 @@ public class TransactionsService {
                                                             new PaymentToken(noticeCode.getPaymentToken()),
                                                             new RptId(noticeCode.getRptId()),
                                                             new TransactionAmount(noticeCode.getAmount()),
-                                                            new TransactionDescription(noticeCode.getDescription())
+                                                            new TransactionDescription(noticeCode.getDescription()),
+                                                            new PaymentContextCode(noticeCode.getPaymentContextCode())
                                                     )
                                             ).toList(),
                                     new Email(transactionDocument.getEmail()),
@@ -299,7 +300,8 @@ public class TransactionsService {
                                                             new PaymentToken(noticeCode.getPaymentToken()),
                                                             new RptId(noticeCode.getRptId()),
                                                             new TransactionAmount(noticeCode.getAmount()),
-                                                            new TransactionDescription(noticeCode.getDescription())
+                                                            new TransactionDescription(noticeCode.getDescription()),
+                                                            new PaymentContextCode(noticeCode.getPaymentContextCode())
                                                     )
                                             ).toList(),
                                     new Email(transactionDocument.getEmail()),
@@ -407,7 +409,8 @@ public class TransactionsService {
                                                             new PaymentToken(noticeCode.getPaymentToken()),
                                                             new RptId(noticeCode.getRptId()),
                                                             new TransactionAmount(noticeCode.getAmount()),
-                                                            new TransactionDescription(noticeCode.getDescription())
+                                                            new TransactionDescription(noticeCode.getDescription()),
+                                                            new PaymentContextCode(noticeCode.getPaymentContextCode())
                                                     )
                                             )
                                             .toList(),
@@ -505,7 +508,8 @@ public class TransactionsService {
                                                 null,
                                                 new RptId(noticeCode.getRptId()),
                                                 new TransactionAmount(noticeCodeDataValue.getAmount()),
-                                                new TransactionDescription(noticeCodeDataValue.getDescription())
+                                                new TransactionDescription(noticeCodeDataValue.getDescription()),
+                                                new PaymentContextCode(noticeCodeDataValue.getPaymentContextCode())
                                         );
                                     }).toList(),
                                     new Email(activationRequestedEvent.getData().getEmail()),

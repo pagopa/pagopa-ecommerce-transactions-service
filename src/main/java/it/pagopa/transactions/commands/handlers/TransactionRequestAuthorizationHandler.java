@@ -89,7 +89,8 @@ public class TransactionRequestAuthorizationHandler
                                             noticeCode.paymentToken().value(),
                                             noticeCode.rptId().value(),
                                             noticeCode.transactionDescription().value(),
-                                            noticeCode.transactionAmount().value()
+                                            noticeCode.transactionAmount().value(),
+                                            noticeCode.paymentContextCode().value()
                                     )
                             ).toList(),
                             new TransactionAuthorizationRequestData(

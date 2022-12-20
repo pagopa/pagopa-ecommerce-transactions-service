@@ -205,9 +205,8 @@ public class TransactionActivateHandler
 
         TransactionActivationRequestedData data = new TransactionActivationRequestedData();
         data.setEmail(email);
-        NoticeCode noticeCode = new NoticeCode(null, rptId, description, amount);
+        NoticeCode noticeCode = new NoticeCode(null, rptId, description, amount, paymentContextCode);
         data.setNoticeCodes(Arrays.asList(noticeCode));
-        data.setPaymentContextCode(paymentContextCode);
         TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
                 transactionId,
                 Arrays.asList(noticeCode),
@@ -236,7 +235,7 @@ public class TransactionActivateHandler
 
         TransactionActivatedData data = new TransactionActivatedData();
         data.setEmail(email);
-        NoticeCode noticeCode = new NoticeCode(paymentToken, rptId, description, amount);
+        NoticeCode noticeCode = new NoticeCode(paymentToken, rptId, description, amount, null);
         data.setNoticeCodes(Arrays.asList(noticeCode));
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
