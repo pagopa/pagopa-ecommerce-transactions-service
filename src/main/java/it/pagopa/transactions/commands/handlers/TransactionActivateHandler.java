@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
@@ -50,6 +51,9 @@ public class TransactionActivateHandler
 
     private final Integer paymentTokenTimeout;
 
+    @Value("${nodo.parallelRequests}")
+    private int nodoParallelRequests;
+
     @Autowired
     public TransactionActivateHandler(
             PaymentRequestsInfoRepository paymentRequestsInfoRepository,
@@ -77,9 +81,11 @@ public class TransactionActivateHandler
         final String paymentContextCode = newTransactionRequestDto.getPaymentNotices().get(0).getPaymentContextCode();
         final int totalPaymentNotices = newTransactionRequestDto.getPaymentNotices().size();
         final AtomicInteger processedPaymentNoticeCount = new AtomicInteger(0);
+        log.info("Nodo parallelism: [{}]", nodoParallelRequests);
         return Mono.defer(
                 () -> Flux.fromIterable(newTransactionRequestDto.getPaymentNotices())
-                        .parallel(5)
+                        .parallel(nodoParallelRequests)
+                        .runOn(Schedulers.parallel())
                         .flatMap(
                                 paymentNotice -> {
                                     log.info(
@@ -157,6 +163,7 @@ public class TransactionActivateHandler
                                     .map(sessionData -> Tuples.of(sessionData, paymentRequestInfos));
                         }).flatMap(
                                 args -> {
+                                    processedPaymentNoticeCount.set(0);
                                     final SessionDataDto sessionDataDto = args.getT1();
                                     final List<PaymentRequestInfo> paymentRequestsInfo = args.getT2();
                                     return areAllValidPaymentTokens(paymentRequestsInfo)
@@ -192,6 +199,13 @@ public class TransactionActivateHandler
     private Mono<PaymentRequestInfo> getPaymentRequestInfoFromCache(RptId rptId) {
         Optional<PaymentRequestInfo> paymentInfofromCache = paymentRequestsInfoRepository.findById(rptId);
         log.info("PaymentRequestInfo cache hit for {}: {}", rptId, paymentInfofromCache.isPresent());
+        try {
+            log.info("START SLEEPING REDIS PAYMENT REQUEST INFO");
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            Thread.currentThread().interrupt();
+        }
         return paymentInfofromCache.map(Mono::just).orElseGet(
                 () -> Mono.just(
                         new PaymentRequestInfo(
@@ -227,7 +241,8 @@ public class TransactionActivateHandler
                                                                                              String email,
                                                                                              String paymentContextCode
     ) {
-
+        // TODO qui il payment context code deve essere UNO per ogni pagamento, quindi
+        // va modificata qui l'oggetto data!
         TransactionActivationRequestedData data = new TransactionActivationRequestedData();
         data.setEmail(email);
         List<NoticeCode> noticeCodes = toNoticeCodeList(paymentRequestsInfo);
