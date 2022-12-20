@@ -34,7 +34,8 @@ import java.util.UUID;
 
 @Component
 @Slf4j
-public class TransactionSendClosureHandler implements
+public class TransactionSendClosureHandler
+        implements
         CommandHandler<TransactionClosureSendCommand, Mono<Either<TransactionClosureErrorEvent, TransactionClosureSentEvent>>> {
 
     private final TransactionsEventStoreRepository<TransactionClosureSendData> transactionEventStoreRepository;
