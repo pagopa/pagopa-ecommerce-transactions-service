@@ -107,9 +107,3 @@ stages:
             testResultsFormat: 'JUnit'
             testResultsFiles: '**/*-TEST.xml' 
             searchFolder: '$(System.DefaultWorkingDirectory)'
-      
-
-
-
-
-
