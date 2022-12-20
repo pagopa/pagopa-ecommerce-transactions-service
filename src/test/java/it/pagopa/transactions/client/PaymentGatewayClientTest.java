@@ -34,8 +34,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -56,10 +56,10 @@ class PaymentGatewayClientTest {
     ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
-    void shouldReturnAuthorizationEmptyOptionalResponseCP_VPOS() throws JsonProcessingException {
+    void shouldNotCallAuthorizationGatewayWithInvalidDetailType() {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
-                Arrays.asList(
+                List.of(
                         new NoticeCode(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
@@ -84,7 +84,7 @@ class PaymentGatewayClientTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 "VPOS",
-                new PostePayAuthRequestDetailsDto().detailType("VPOS").accountEmail("test@test.it")
+                new PostePayAuthRequestDetailsDto().detailType("invalid").accountEmail("test@test.it")
         );
 
         /* test */
@@ -98,10 +98,10 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldReturnAuthorizationResponseCP_XPAY() throws JsonProcessingException {
+    void shouldReturnAuthorizationResponseForCreditCardWithXPay() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
-                Arrays.asList(
+                List.of(
                         new NoticeCode(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
@@ -114,8 +114,12 @@ class PaymentGatewayClientTest {
                 null,
                 TransactionStatusDto.ACTIVATED
         );
-        CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto().cvv("345").pan("16589654852")
-                .expiryDate(LocalDate.of(2030, Month.DECEMBER, 31));
+        CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
+                .cvv("345")
+                .pan("16589654852")
+                .expiryDate(LocalDate.of(2030, Month.DECEMBER, 31))
+                .detailType("card")
+                .holderName("John Doe");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
@@ -165,10 +169,10 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldReturnAuthorizationResponsePPAY() throws JsonProcessingException {
+    void shouldReturnAuthorizationResponseWithPostePay() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
-                Arrays.asList(
+                List.of(
                         new NoticeCode(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
@@ -230,10 +234,10 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldThrowAlreadyProcessedOn401CP_XPAY() throws JsonProcessingException {
+    void shouldThrowAlreadyProcessedOn401ForCreditCardWithXpay() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
-                Arrays.asList(
+                List.of(
                         new NoticeCode(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
@@ -246,7 +250,10 @@ class PaymentGatewayClientTest {
                 null,
                 TransactionStatusDto.ACTIVATED
         );
-        CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto().cvv("345").pan("16589654852")
+        CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
+                .detailType("card")
+                .cvv("345")
+                .pan("16589654852")
                 .expiryDate(LocalDate.of(2030, Month.DECEMBER, 31));
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
@@ -309,10 +316,10 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldThrowAlreadyProcessedOn401PPAY() throws JsonProcessingException {
+    void shouldThrowAlreadyProcessedOn401ForPostePay() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
-                Arrays.asList(
+                List.of(
                         new NoticeCode(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
@@ -388,7 +395,7 @@ class PaymentGatewayClientTest {
     void shouldThrowGatewayTimeoutOn504() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
-                Arrays.asList(
+                List.of(
                         new NoticeCode(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
@@ -459,10 +466,10 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldThrowBadGatewayOn500PPAY() throws JsonProcessingException {
+    void shouldThrowBadGatewayOn500ForPostePay() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
-                Arrays.asList(
+                List.of(
                         new NoticeCode(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
@@ -531,10 +538,10 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldThrowBadGatewayOn500CP_XPAY() throws JsonProcessingException {
+    void shouldThrowBadGatewayOn500ForCreditCardWithXPay() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
-                Arrays.asList(
+                List.of(
                         new NoticeCode(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
@@ -605,10 +612,10 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void fallbackOnEmptyMdcInfoOnMapperErrorPPAY() throws JsonProcessingException {
+    void fallbackOnEmptyMdcInfoOnMapperErrorForPostePay() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
-                Arrays.asList(
+                List.of(
                         new NoticeCode(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
@@ -673,10 +680,10 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void fallbackOnEmptyMdcInfoOnMapperErrorCP_XPAY() throws JsonProcessingException {
+    void fallbackOnEmptyMdcInfoOnMapperErrorForCreditCardWithXPay() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
-                Arrays.asList(
+                List.of(
                         new NoticeCode(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
@@ -743,10 +750,10 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldThrowInvalidRequestWhenCardDetailsAreMissing_XPAY() throws JsonProcessingException {
+    void shouldThrowInvalidRequestWhenCardDetailsAreMissingForCreditCardWithXPay() {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
-                Arrays.asList(
+                List.of(
                         new NoticeCode(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
@@ -776,7 +783,8 @@ class PaymentGatewayClientTest {
 
         /* test */
         StepVerifier.create(client.requestXPayAuthorization(authorizationData))
-                .expectErrorMatches(exception -> exception instanceof InvalidRequestException);
+                .expectError(InvalidRequestException.class)
+                .verify();
 
         StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
                 .expectNextCount(0)

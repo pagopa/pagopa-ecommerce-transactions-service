@@ -26,6 +26,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -41,15 +42,12 @@ class TransactionRequestAuthorizizationHandlerTest {
     private PaymentGatewayClient paymentGatewayClient;
 
     @Mock
-    private EcommerceSessionsClient ecommerceSessionsClient;
-
-    @Mock
     private TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository;
 
     @Mock
     private QueueAsyncClient queueAsyncClient;
 
-    private UUID transactionIdUUID = UUID.randomUUID();
+    private final UUID transactionIdUUID = UUID.randomUUID();
 
     TransactionId transactionId = new TransactionId(transactionIdUUID);
 
@@ -64,7 +62,7 @@ class TransactionRequestAuthorizizationHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                Arrays.asList(new NoticeCode(paymentToken, rptId, amount, description)),
+                List.of(new NoticeCode(paymentToken, rptId, amount, description)),
                 email,
                 null,
                 null,
@@ -129,7 +127,7 @@ class TransactionRequestAuthorizizationHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                Arrays.asList(new NoticeCode(paymentToken, rptId, amount, description)),
+                List.of(new NoticeCode(paymentToken, rptId, amount, description)),
                 email,
                 faultCode,
                 faultCodeString,
@@ -182,7 +180,7 @@ class TransactionRequestAuthorizizationHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                Arrays.asList(new NoticeCode(paymentToken, rptId, amount, description)),
+                List.of(new NoticeCode(paymentToken, rptId, amount, description)),
                 email,
                 faultCode,
                 faultCodeString,
