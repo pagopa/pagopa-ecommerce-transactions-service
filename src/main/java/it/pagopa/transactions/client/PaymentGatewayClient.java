@@ -71,7 +71,7 @@ public class PaymentGatewayClient {
                                         exception -> switch (exception.getStatusCode()) {
                                         // TODO Handle multiple rptId
                                         case UNAUTHORIZED -> new AlreadyProcessedException(
-                                                authorizationData.transaction().getNoticeCodes().get(0).rptId()
+                                                authorizationData.transaction().getTransactionId()
                                         );
                                         case GATEWAY_TIMEOUT -> new GatewayTimeoutException();
                                         case INTERNAL_SERVER_ERROR -> new BadGatewayException("");
@@ -125,7 +125,7 @@ public class PaymentGatewayClient {
                                         WebClientResponseException.class,
                                         exception -> switch (exception.getStatusCode()) {
                                         case UNAUTHORIZED -> new AlreadyProcessedException(
-                                                authorizationData.transaction().getNoticeCodes().get(0).rptId()
+                                                authorizationData.transaction().getTransactionId()
                                         ); // 401
                                         case INTERNAL_SERVER_ERROR -> new BadGatewayException(""); // 500
                                         default -> exception;

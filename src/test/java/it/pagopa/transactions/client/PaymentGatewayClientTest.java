@@ -320,7 +320,7 @@ class PaymentGatewayClientTest {
         StepVerifier.create(client.requestXPayAuthorization(authorizationData))
                 .expectErrorMatches(
                         error -> error instanceof AlreadyProcessedException &&
-                                ((AlreadyProcessedException) error).getRptId()
+                                ((AlreadyProcessedException) error).getTransactionId()
                                         .equals(transaction.getNoticeCodes().get(0).rptId())
                 )
                 .verify();
@@ -395,7 +395,7 @@ class PaymentGatewayClientTest {
         StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
                 .expectErrorMatches(
                         error -> error instanceof AlreadyProcessedException &&
-                                ((AlreadyProcessedException) error).getRptId()
+                                ((AlreadyProcessedException) error).getTransactionId()
                                         .equals(transaction.getNoticeCodes().get(0).rptId())
                 )
                 .verify();

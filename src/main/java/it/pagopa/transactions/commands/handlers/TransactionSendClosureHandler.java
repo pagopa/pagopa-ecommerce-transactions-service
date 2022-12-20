@@ -88,7 +88,7 @@ public class TransactionSendClosureHandler
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
                 .cast(BaseTransaction.class)
                 .doOnNext(t -> log.error("Error: requesting closure for transaction in state {}", t.getStatus()))
-                .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getNoticeCodes().get(0).rptId())));
+                .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
 
         return transaction
                 .cast(BaseTransaction.class)
