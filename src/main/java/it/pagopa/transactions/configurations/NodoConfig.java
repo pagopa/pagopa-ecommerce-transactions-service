@@ -26,16 +26,14 @@ public class NodoConfig {
 
     @Bean
     public NodoConnectionString nodoConnectionString() {
-        NodoConnectionString nodoConnectionString = null;
         try {
-            nodoConnectionString = new ObjectMapper()
+            return new ObjectMapper()
                     .readValue(nodoConnectionParamsAsString, NodoConnectionString.class);
         } catch (JsonProcessingException e) {
             // exception not logged here since it can expose sensitive information contained
             // into nodo connection string
             throw new IllegalStateException("Exception parsing JSON nodo connection string");
         }
-        return nodoConnectionString;
     }
 
     public NodoVerificaRPT baseNodoVerificaRPTRequest() {
