@@ -13,6 +13,7 @@ import it.pagopa.generated.transactions.model.StOutcome;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NodoPerPspClient;
+import it.pagopa.transactions.configurations.NodoConfig;
 import it.pagopa.transactions.exceptions.NodoErrorException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,16 +41,12 @@ public class NodoOperations {
     NodeForPspClient nodeForPspClient;
 
     @Autowired
-    ActivatePaymentNoticeReq baseActivatePaymentNoticeReq;
-
-    @Autowired
-    NodoAttivaRPT baseNodoAttivaRPT;
-
-    @Autowired
     it.pagopa.generated.nodoperpsp.model.ObjectFactory objectFactoryNodoPerPsp;
 
     @Autowired
     it.pagopa.generated.transactions.model.ObjectFactory objectFactoryNodeForPsp;
+    @Autowired
+    NodoConfig nodoConfig;
 
     @Autowired
     NodoUtilities nodoUtilities;
@@ -117,7 +114,7 @@ public class NodoOperations {
         CtQrCode qrCode = new CtQrCode();
         qrCode.setFiscalCode(rptId.getFiscalCode());
         qrCode.setNoticeNumber(rptId.getNoticeId());
-        ActivatePaymentNoticeReq request = baseActivatePaymentNoticeReq;
+        ActivatePaymentNoticeReq request = nodoConfig.baseActivatePaymentNoticeReq();
         request.setAmount(amount);
         request.setQrCode(qrCode);
         request.setIdempotencyKey(idempotencyKey);
@@ -139,8 +136,7 @@ public class NodoOperations {
                                                                 String idempotencyKey,
                                                                 String paymentContextCode
     ) {
-        NodoAttivaRPT nodoAttivaRPTReq = baseNodoAttivaRPT;
-
+        NodoAttivaRPT nodoAttivaRPTReq = nodoConfig.baseNodoAttivaRPTRequest();
         NodoTipoCodiceIdRPT nodoTipoCodiceIdRPT = nodoUtilities.getCodiceIdRpt(rptId);
         NodoTipoDatiPagamentoPSP datiPagamentoPsp = objectFactoryNodoPerPsp.createNodoTipoDatiPagamentoPSP();
         datiPagamentoPsp.setImportoSingoloVersamento(amount);

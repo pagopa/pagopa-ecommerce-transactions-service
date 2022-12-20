@@ -1,14 +1,14 @@
 package it.pagopa.transactions.configurations;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import it.pagopa.generated.nodoperpsp.model.NodoAttivaRPT;
 import it.pagopa.generated.nodoperpsp.model.NodoVerificaRPT;
-import it.pagopa.generated.transactions.model.ObjectFactory;
+import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
 import it.pagopa.generated.transactions.model.VerifyPaymentNoticeReq;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
-import java.lang.reflect.InvocationTargetException;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -18,27 +18,53 @@ class NodoConfigTest {
     @InjectMocks
     private NodoConfig nodoConfig;
 
-    private final String nodoConnectionString = "{\"idPSP\":\"idPsp\",\"idChannel\":\"idChannel\",\"idBrokerPSP\":\"idBrokerPsp\",\"password\":\"password\"}";
-
     @Test
-    void shouldReturnValidVerificaRPTBaseRequest()
-            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException,
-            JsonProcessingException {
-
-        NodoVerificaRPT nodoVerificaRPT = nodoConfig.baseNodoVerificaRPTRequest(
-                nodoConnectionString,
+    void shouldReturnValidVerificaRPTBaseRequest() {
+        ReflectionTestUtils.setField(nodoConfig, "nodoConnectionParamsAsString", "{}");
+        ReflectionTestUtils.setField(
+                nodoConfig,
+                "objectFactoryNodoPerPsp",
                 new it.pagopa.generated.nodoperpsp.model.ObjectFactory()
         );
+        NodoVerificaRPT nodoVerificaRPT = nodoConfig.baseNodoVerificaRPTRequest();
         assertEquals(Boolean.TRUE, nodoVerificaRPT != null);
     }
 
     @Test
-    void shouldReturnValidVerifyPaymentNoticeBaseRequest()
-            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException,
-            JsonProcessingException {
-
+    void shouldReturnValidVerifyPaymentNoticeBaseRequest() {
+        ReflectionTestUtils.setField(nodoConfig, "nodoConnectionParamsAsString", "{}");
+        ReflectionTestUtils.setField(
+                nodoConfig,
+                "objectFactoryNodeForPsp",
+                new it.pagopa.generated.transactions.model.ObjectFactory()
+        );
         VerifyPaymentNoticeReq verifyPaymentNoticeReq = nodoConfig
-                .baseVerifyPaymentNoticeReq(nodoConnectionString, new ObjectFactory());
+                .baseVerifyPaymentNoticeReq();
         assertEquals(Boolean.TRUE, verifyPaymentNoticeReq != null);
+    }
+
+    @Test
+    void shouldReturnValidNodoAttivaRPTBaseRequest() {
+        ReflectionTestUtils.setField(nodoConfig, "nodoConnectionParamsAsString", "{}");
+        ReflectionTestUtils.setField(
+                nodoConfig,
+                "objectFactoryNodoPerPsp",
+                new it.pagopa.generated.nodoperpsp.model.ObjectFactory()
+        );
+        NodoAttivaRPT request = nodoConfig.baseNodoAttivaRPTRequest();
+        assertEquals(Boolean.TRUE, request != null);
+    }
+
+    @Test
+    void shouldReturnValidActivatePaymentNoticeReqRPTRequest() {
+        ReflectionTestUtils.setField(nodoConfig, "nodoConnectionParamsAsString", "{}");
+        ReflectionTestUtils.setField(
+                nodoConfig,
+                "objectFactoryNodeForPsp",
+                new it.pagopa.generated.transactions.model.ObjectFactory()
+        );
+        ActivatePaymentNoticeReq request = nodoConfig
+                .baseActivatePaymentNoticeReq();
+        assertEquals(Boolean.TRUE, request != null);
     }
 }
