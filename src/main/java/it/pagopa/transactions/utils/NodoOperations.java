@@ -52,8 +52,8 @@ public class NodoOperations {
     NodoUtilities nodoUtilities;
 
     public Mono<PaymentRequestInfo> activatePaymentRequest(
-            PaymentRequestInfo paymentRequestInfo,
-            NewTransactionRequestDto newTransactionRequestDto
+                                                           PaymentRequestInfo paymentRequestInfo,
+                                                           NewTransactionRequestDto newTransactionRequestDto
     ) {
 
         RptId rptId = paymentRequestInfo.id();
