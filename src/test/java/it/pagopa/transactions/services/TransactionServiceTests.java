@@ -142,9 +142,9 @@ public class TransactionServiceTests {
                                 .paymentToken(PAYMENT_TOKEN)
                                 .rptId("77777777777111111111111111111")
                 )
-				.origin(TransactionInfoDto.OriginEnum.UNKNOWN)
-				.amountTotal(100)
-				.feeTotal(0)
+                .origin(TransactionInfoDto.OriginEnum.UNKNOWN)
+                .amountTotal(100)
+                .feeTotal(0)
                 .status(TransactionStatusDto.ACTIVATED);
 
         when(repository.findById(TRANSACION_ID)).thenReturn(Mono.just(transaction));

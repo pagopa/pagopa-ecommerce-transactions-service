@@ -146,7 +146,13 @@ public class TransactionsService {
                                 )
                                 .amountTotal(transaction.getAmountTotal())
                                 .feeTotal(transaction.getFeeTotal())
-                                .origin(TransactionInfoDto.OriginEnum.valueOf(Optional.ofNullable(transaction.getOrigin()).orElse(it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN).toString()))
+                                .origin(
+                                        TransactionInfoDto.OriginEnum.valueOf(
+                                                Optional.ofNullable(transaction.getOrigin()).orElse(
+                                                        it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
+                                                ).toString()
+                                        )
+                                )
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
                 );
     }

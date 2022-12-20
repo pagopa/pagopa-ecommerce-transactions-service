@@ -179,9 +179,11 @@ class TransactionsControllerTest {
         String paymentToken = "paymentToken";
 
         TransactionInfoDto transactionInfo = new TransactionInfoDto()
-                .addPaymentsItem(new PaymentInfoDto()
-                        .amount(100)
-                        .paymentToken(paymentToken))
+                .addPaymentsItem(
+                        new PaymentInfoDto()
+                                .amount(100)
+                                .paymentToken(paymentToken)
+                )
                 .authToken("authToken")
                 .status(TransactionStatusDto.AUTHORIZED);
 
