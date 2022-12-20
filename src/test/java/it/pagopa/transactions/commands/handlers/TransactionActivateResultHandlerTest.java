@@ -80,7 +80,8 @@ class TransactionActivateResultHandlerTest {
                                 null,
                                 rptId,
                                 new TransactionAmount(amount),
-                                new TransactionDescription("testTransactionDescription")
+                                new TransactionDescription("testTransactionDescription"),
+                                new PaymentContextCode(null)
                         )
                 ),
                 new Email(requestDto.getEmail()),
@@ -137,7 +138,8 @@ class TransactionActivateResultHandlerTest {
                                 null,
                                 rptId,
                                 new TransactionAmount(amount),
-                                new TransactionDescription("testTransactionDescription")
+                                new TransactionDescription("testTransactionDescription"),
+                                new PaymentContextCode(null)
                         )
                 ),
                 new Email(requestDto.getEmail()),
@@ -155,6 +157,7 @@ class TransactionActivateResultHandlerTest {
                                 paymentToken,
                                 rptId.value(),
                                 null,
+                                null,
                                 null
                         )
                 ),
@@ -166,7 +169,8 @@ class TransactionActivateResultHandlerTest {
                                                 paymentToken,
                                                 noticeCode.rptId().value(),
                                                 noticeCode.transactionDescription().value(),
-                                                noticeCode.transactionAmount().value()
+                                                noticeCode.transactionAmount().value(),
+                                                noticeCode.paymentContextCode().value()
                                         )
                                 ).toList(),
                         null,
@@ -252,7 +256,8 @@ class TransactionActivateResultHandlerTest {
                                 null,
                                 rptId,
                                 new TransactionAmount(amount),
-                                new TransactionDescription("testTransactionDescription")
+                                new TransactionDescription("testTransactionDescription"),
+                                new PaymentContextCode(null)
                         )
                 ),
                 new Email(requestDto.getEmail()),
@@ -309,7 +314,8 @@ class TransactionActivateResultHandlerTest {
                                 null,
                                 rptId,
                                 new TransactionAmount(amount),
-                                new TransactionDescription("testTransactionDescription")
+                                new TransactionDescription("testTransactionDescription"),
+                                new PaymentContextCode(null)
                         )
                 ),
                 new Email(requestDto.getEmail()),

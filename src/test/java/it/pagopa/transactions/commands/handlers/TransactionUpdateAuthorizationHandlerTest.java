@@ -45,6 +45,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         Email email = new Email("foo@example.com");
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -53,7 +54,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                                 paymentToken,
                                 rptId,
                                 amount,
-                                description
+                                description,
+                                nullPaymentContextCode
                         )
                 ),
                 email,
@@ -88,14 +90,11 @@ class TransactionUpdateAuthorizationHandlerTest {
                 transaction.getNoticeCodes().stream()
                         .map(
                                 noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
-                                        transaction.getTransactionActivatedData().getNoticeCodes().stream()
-                                                .filter(
-                                                        noticeCodeData -> noticeCodeData.getRptId()
-                                                                .equals(noticeCode.rptId().value())
-                                                ).findFirst().get().getPaymentToken(),
+                                        noticeCode.paymentToken().value(),
                                         noticeCode.rptId().value(),
                                         noticeCode.transactionDescription().value(),
-                                        noticeCode.transactionAmount().value()
+                                        noticeCode.transactionAmount().value(),
+                                        noticeCode.paymentContextCode().value()
                                 )
                         ).toList(),
                 transactionAuthorizationStatusUpdateData
@@ -127,6 +126,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         Email email = new Email("foo@example.com");
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -135,7 +135,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                                 paymentToken,
                                 rptId,
                                 amount,
-                                description
+                                description,
+                                nullPaymentContextCode
                         )
                 ),
                 email,
@@ -176,6 +177,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         Email email = new Email("foo@example.com");
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -184,7 +186,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                                 paymentToken,
                                 rptId,
                                 amount,
-                                description
+                                description,
+                                nullPaymentContextCode
                         )
                 ),
                 email,
@@ -224,7 +227,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                                         ).findFirst().get().getPaymentToken(),
                                 noticeCode.rptId().value(),
                                 noticeCode.transactionDescription().value(),
-                                noticeCode.transactionAmount().value()
+                                noticeCode.transactionAmount().value(),
+                                noticeCode.paymentContextCode().value()
                         )
                 ).toList(),
                 transactionAuthorizationStatusUpdateData

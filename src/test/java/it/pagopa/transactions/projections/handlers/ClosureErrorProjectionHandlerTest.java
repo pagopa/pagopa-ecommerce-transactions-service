@@ -85,7 +85,8 @@ class ClosureErrorProjectionHandlerTest {
                                 "paymentToken",
                                 "77777777777302016723749670035",
                                 "description",
-                                100
+                                100,
+                                null
                         )
                 ),
                 100,

@@ -116,6 +116,7 @@ class TransactionInitializerHandlerTest {
                                 paymentToken,
                                 rptId.value(),
                                 null,
+                                null,
                                 null
                         )
                 )
