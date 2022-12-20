@@ -1,5 +1,6 @@
 package it.pagopa.transactions.services;
 
+import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.Transaction;
 import it.pagopa.ecommerce.commons.documents.*;
 import it.pagopa.ecommerce.commons.domain.*;
@@ -113,6 +114,9 @@ public class TransactionServiceTests {
 
     @Captor
     private ArgumentCaptor<TransactionRequestAuthorizationCommand> commandArgumentCaptor;
+
+    @MockBean
+    private ClosureErrorProjectionHandler closureErrorProjectionHandler;
 
     final String PAYMENT_TOKEN = "aaa";
     final String TRANSACION_ID = "833d303a-f857-11ec-b939-0242ac120002";
@@ -373,7 +377,7 @@ public class TransactionServiceTests {
         Mockito.when(authorizationUpdateProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
 
         Mockito.when(transactionSendClosureHandler.handle(any()))
-                .thenReturn(Mono.just(closureSentEvent));
+                .thenReturn(Mono.just(Either.right(closureSentEvent)));
 
         Mockito.when(closureSendProjectionHandler.handle(any()))
                 .thenReturn(Mono.just(closedTransactionDocument));

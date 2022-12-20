@@ -8,6 +8,15 @@ public class BadGatewayException extends RuntimeException {
     private final String detail;
 
     public BadGatewayException(String detail) {
+        super(detail);
+        this.detail = detail;
+    }
+
+    public BadGatewayException(
+            String detail,
+            Throwable cause
+    ) {
+        super(detail, cause);
         this.detail = detail;
     }
 

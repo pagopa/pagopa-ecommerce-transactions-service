@@ -47,7 +47,10 @@ microservice-chart:
       TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_NAME: transaction-events
       TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_VISIBILITY_TIMEOUT: "600"
       TRANSACTION_ACTIVATED_EVENT_QUEUE_NAME: pagopa-u-weu-ecommerce-activated-events-queue
-      PAYMENT_TOKEN_TIMEOUT: "120"
+      TRANSACTION_CLOSURE_SENT_EVENT_QUEUE_NAME: transactionclosuresentevents
+      PAYMENT_TOKEN_VALIDITY_TIME: 1800
+      TRANSACTIONS_RETRY_OFFSET: 60
+      CLOSURE_RETRY_INTERVAL: 30
     envSecret:
       MONGO_PASSWORD: mongo-ecommerce-password
       REDIS_PASSWORD: redis-ecommerce-password
@@ -146,7 +149,7 @@ microservice-chart:
     TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_NAME: transaction-events
     TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_VISIBILITY_TIMEOUT: "600"
     TRANSACTION_ACTIVATED_EVENT_QUEUE_NAME: pagopa-u-weu-ecommerce-activated-events-queue
-    PAYMENT_TOKEN_TIMEOUT: "120"
+    PAYMENT_TOKEN_VALIDITY_TIME: "120"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password

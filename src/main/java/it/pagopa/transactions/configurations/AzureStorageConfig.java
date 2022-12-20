@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class AzureStorageConfig {
-
     @Bean
     public QueueAsyncClient queueAsyncClient(
                                              @Value("${azurestorage.connectionstring}") String storageConnectionString,
@@ -35,6 +34,23 @@ public class AzureStorageConfig {
                                                                  @Value(
                                                                      "${azurestorage.queues.transactionactivatedevents.name}"
                                                                  ) String queueName
+    ) {
+        QueueAsyncClient queueAsyncClient = new QueueClientBuilder()
+                .connectionString(storageConnectionString)
+                .queueName(queueName)
+                .buildAsyncClient();
+        queueAsyncClient.createIfNotExists().block();
+        return queueAsyncClient;
+    }
+
+    @Bean("transactionClosureSentEventQueueAsyncClient")
+    public QueueAsyncClient transactionClosureSentEventQueueAsyncClient(
+                                                                        @Value(
+                                                                            "${azurestorage.connectionstring}"
+                                                                        ) String storageConnectionString,
+                                                                        @Value(
+                                                                            "${azurestorage.queues.transactionclosuresentevents.name}"
+                                                                        ) String queueName
     ) {
         QueueAsyncClient queueAsyncClient = new QueueClientBuilder()
                 .connectionString(storageConnectionString)

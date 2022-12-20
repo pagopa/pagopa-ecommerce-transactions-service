@@ -141,7 +141,6 @@ class TransactionAddUserReceiptHandlerTest {
                 new TransactionClosureSendData(
                         ClosePaymentResponseDto.OutcomeEnum.OK,
                         TransactionStatusDto.CLOSED
-
                 )
         );
 
