@@ -76,7 +76,7 @@ public class TransactionActivateHandler
     public Mono<Tuple3<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>, SessionDataDto>> handle(
                                                                                                                            TransactionActivateCommand command
     ) {
-        final RptId rptId = command.getRptId();
+
         final NewTransactionRequestDto newTransactionRequestDto = command.getData();
         // TODO correggere qui, prendere il payment context code per ogni singolo
         // pagamento
@@ -90,7 +90,7 @@ public class TransactionActivateHandler
                         .runOn(Schedulers.parallel())
                         .flatMap(
                                 paymentNotice -> {
-                                    log.info(
+                                    log.debug(
                                             "Start processing of payment request: [{}/{}]",
                                             processedPaymentNoticeCount.addAndGet(1),
                                             totalPaymentNotices
@@ -104,44 +104,40 @@ public class TransactionActivateHandler
                                 }
                         ).flatMap(
                                 cacheResult -> {
-                                    final PaymentNoticeInfoDto paymentNotice = cacheResult.getT1();
-                                    final Mono<PaymentRequestInfo> partialPaymentRequestInfoMono = cacheResult.getT2();
-                                    return partialPaymentRequestInfoMono.flatMap(
-                                            partialPaymentRequestInfo -> {
-                                                final Boolean isValidPaymentToken = isValidPaymentToken(
-                                                        partialPaymentRequestInfo.paymentToken()
-                                                );
-                                                return Boolean.TRUE.equals(isValidPaymentToken)
-                                                        ? Mono.just(partialPaymentRequestInfo)
-                                                                .doOnSuccess(
-                                                                        p -> log.info(
-                                                                                "PaymentRequestInfo cache hit for {} with valid paymentToken {}",
-                                                                                rptId,
-                                                                                p.paymentToken()
-                                                                        )
-                                                                )
-                                                        : nodoOperations
-                                                                .activatePaymentRequest(
-                                                                        partialPaymentRequestInfo,
-                                                                        paymentNotice.getPaymentContextCode(),
-                                                                        paymentNotice.getAmount()
-                                                                )
-                                                                .doOnSuccess(
-                                                                        p -> log.info(
-                                                                                "Nodo activation for {} with paymentToken {}",
-                                                                                rptId,
-                                                                                p.paymentToken()
-                                                                        )
-                                                                );
-                                            }
+                                    PaymentNoticeInfoDto paymentNotice = cacheResult.getT1();
+                                    PaymentRequestInfo partialPaymentRequestInfo = cacheResult.getT2();
+                                    Boolean isValidPaymentToken = isValidPaymentToken(
+                                            partialPaymentRequestInfo.paymentToken()
                                     );
+                                    return Boolean.TRUE.equals(isValidPaymentToken)
+                                            ? Mono.just(partialPaymentRequestInfo)
+                                                    .doOnSuccess(
+                                                            p -> log.info(
+                                                                    "PaymentRequestInfo cache hit for {} with valid paymentToken {}",
+                                                                    p.id(),
+                                                                    p.paymentToken()
+                                                            )
+                                                    )
+                                            : nodoOperations
+                                                    .activatePaymentRequest(
+                                                            partialPaymentRequestInfo,
+                                                            paymentNotice.getPaymentContextCode(),
+                                                            paymentNotice.getAmount()
+                                                    )
+                                                    .doOnSuccess(
+                                                            p -> log.info(
+                                                                    "Nodo activation for {} with paymentToken {}",
+                                                                    p.id(),
+                                                                    p.paymentToken()
+                                                            )
+                                                    );
                                 }
                         )
                         .doOnNext(
                                 paymentRequestInfo -> {
                                     log.info(
                                             "Cache Nodo activation info for {} with paymentToken {}",
-                                            rptId,
+                                            paymentRequestInfo.id(),
                                             paymentRequestInfo.paymentToken()
                                     );
                                     paymentRequestsInfoRepository.save(paymentRequestInfo);
@@ -150,11 +146,12 @@ public class TransactionActivateHandler
                         .sequential()
                         .collectList()
                         .flatMap(paymentRequestInfos -> {
+                            processedPaymentNoticeCount.set(0);
                             // TODO post adeguamento modulo sessions passare l'array di payment info, se
                             // necessario
-                            final String transactionId = UUID.randomUUID().toString();
-                            final PaymentRequestInfo paymentRequestInfo = paymentRequestInfos.get(0);
-                            final SessionRequestDto sessionRequest = new SessionRequestDto()
+                            String transactionId = UUID.randomUUID().toString();
+                            PaymentRequestInfo paymentRequestInfo = paymentRequestInfos.get(0);
+                            SessionRequestDto sessionRequest = new SessionRequestDto()
                                     .email(newTransactionRequestDto.getEmail())
                                     .rptId(paymentRequestInfo.id().value())
                                     .transactionId(transactionId)
@@ -165,9 +162,8 @@ public class TransactionActivateHandler
                                     .map(sessionData -> Tuples.of(sessionData, paymentRequestInfos));
                         }).flatMap(
                                 args -> {
-                                    processedPaymentNoticeCount.set(0);
-                                    final SessionDataDto sessionDataDto = args.getT1();
-                                    final List<PaymentRequestInfo> paymentRequestsInfo = args.getT2();
+                                    SessionDataDto sessionDataDto = args.getT1();
+                                    List<PaymentRequestInfo> paymentRequestsInfo = args.getT2();
                                     return areAllValidPaymentTokens(paymentRequestsInfo)
                                             ? Mono.just(
                                                     Tuples.of(
@@ -198,22 +194,21 @@ public class TransactionActivateHandler
         );
     }
 
-    private Mono<PaymentRequestInfo> getPaymentRequestInfoFromCache(RptId rptId) {
+    private PaymentRequestInfo getPaymentRequestInfoFromCache(RptId rptId) {
         Optional<PaymentRequestInfo> paymentInfofromCache = paymentRequestsInfoRepository.findById(rptId);
         log.info("PaymentRequestInfo cache hit for {}: {}", rptId, paymentInfofromCache.isPresent());
-        return paymentInfofromCache.map(Mono::just).orElseGet(
-                () -> Mono.just(
-                        new PaymentRequestInfo(
-                                rptId,
-                                null,
-                                null,
-                                null,
-                                null,
-                                null,
-                                false,
-                                null,
-                                null
-                        )
+        return paymentInfofromCache.orElseGet(
+                () -> new PaymentRequestInfo(
+                        rptId,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        false,
+                        null,
+                        null
+
                 )
         );
     }
