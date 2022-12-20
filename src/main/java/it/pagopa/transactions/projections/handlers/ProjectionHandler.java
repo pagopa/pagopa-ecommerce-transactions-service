@@ -2,7 +2,6 @@ package it.pagopa.transactions.projections.handlers;
 
 public interface ProjectionHandler<T, S> {
 
-  S handle(T data);
-
+    S handle(T data);
 
 }

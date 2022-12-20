@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Generated
 public class TransactionsProjection<T> {
-    
+
     private RptId rptId;
     private T data;
 }

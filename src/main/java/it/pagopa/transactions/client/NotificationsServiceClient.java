@@ -21,29 +21,40 @@ public class NotificationsServiceClient {
     @Autowired
     private DefaultApi notificationsServiceApi;
 
-    public Mono<NotificationEmailResponseDto> sendNotificationEmail(NotificationEmailRequestDto notificationEmailRequestDto) {
+    public Mono<NotificationEmailResponseDto> sendNotificationEmail(
+                                                                    NotificationEmailRequestDto notificationEmailRequestDto
+    ) {
         return notificationsServiceApi.sendNotificationEmail(notificationsServiceApiKey, notificationEmailRequestDto)
-                .doOnError(WebClientResponseException.class, e -> log.info("Got bad response from notifications-service [HTTP {}]: {}", e.getStatusCode(), e.getResponseBodyAsString()))
+                .doOnError(
+                        WebClientResponseException.class,
+                        e -> log.info(
+                                "Got bad response from notifications-service [HTTP {}]: {}",
+                                e.getStatusCode(),
+                                e.getResponseBodyAsString()
+                        )
+                )
                 .doOnError(e -> log.info(e.toString()));
     }
 
     public Mono<NotificationEmailResponseDto> sendSuccessEmail(SuccessTemplateRequest successTemplateRequest) {
-        return sendNotificationEmail(new NotificationEmailRequestDto()
-                .language(successTemplateRequest.language)
-                .subject(successTemplateRequest.subject)
-                .to(successTemplateRequest.to)
-                .templateId(SuccessTemplateRequest.TEMPLATE_ID)
-                .parameters(successTemplateRequest.templateParameters)
+        return sendNotificationEmail(
+                new NotificationEmailRequestDto()
+                        .language(successTemplateRequest.language)
+                        .subject(successTemplateRequest.subject)
+                        .to(successTemplateRequest.to)
+                        .templateId(SuccessTemplateRequest.TEMPLATE_ID)
+                        .parameters(successTemplateRequest.templateParameters)
         );
     }
 
     public Mono<NotificationEmailResponseDto> sendKoEmail(KoTemplateRequest koTemplateRequest) {
-        return sendNotificationEmail(new NotificationEmailRequestDto()
-                .language(koTemplateRequest.language)
-                .subject(koTemplateRequest.subject)
-                .to(koTemplateRequest.to)
-                .templateId(KoTemplateRequest.TEMPLATE_ID)
-                .parameters(koTemplateRequest.templateParameters)
+        return sendNotificationEmail(
+                new NotificationEmailRequestDto()
+                        .language(koTemplateRequest.language)
+                        .subject(koTemplateRequest.subject)
+                        .to(koTemplateRequest.to)
+                        .templateId(KoTemplateRequest.TEMPLATE_ID)
+                        .parameters(koTemplateRequest.templateParameters)
         );
     }
 

@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class TransactionNotFoundException extends RuntimeException {
     private final String paymentToken;
 
-
     public TransactionNotFoundException(String paymentToken) {
         this.paymentToken = paymentToken;
     }

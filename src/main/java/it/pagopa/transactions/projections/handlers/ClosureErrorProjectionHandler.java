@@ -12,14 +12,17 @@ import reactor.core.publisher.Mono;
 
 @Component
 @Slf4j
-public class ClosureErrorProjectionHandler implements ProjectionHandler<TransactionClosureErrorEvent, Mono<Transaction>> {
+public class ClosureErrorProjectionHandler
+        implements ProjectionHandler<TransactionClosureErrorEvent, Mono<Transaction>> {
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
 
     @Override
     public Mono<Transaction> handle(TransactionClosureErrorEvent event) {
         return transactionsViewRepository.findById(event.getTransactionId())
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(event.getNoticeCodes().get(0).getPaymentToken())))
+                .switchIfEmpty(
+                        Mono.error(new TransactionNotFoundException(event.getNoticeCodes().get(0).getPaymentToken()))
+                )
                 .flatMap(transactionDocument -> {
                     transactionDocument.setStatus(TransactionStatusDto.CLOSURE_ERROR);
                     return transactionsViewRepository.save(transactionDocument);

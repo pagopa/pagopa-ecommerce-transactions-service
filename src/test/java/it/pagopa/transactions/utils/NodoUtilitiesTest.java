@@ -25,30 +25,32 @@ class NodoUtilitiesTest {
         ObjectFactory objectFactory = new ObjectFactory();
         RptId rptId = new RptId("77777777777011222222222222222");
 
-        Mockito.when(objectFactoryNodoPerPsp.createNodoTipoCodiceIdRPT()).thenReturn(objectFactory.createNodoTipoCodiceIdRPT());
+        Mockito.when(objectFactoryNodoPerPsp.createNodoTipoCodiceIdRPT())
+                .thenReturn(objectFactory.createNodoTipoCodiceIdRPT());
 
         NodoTipoCodiceIdRPT nodoTipoCodiceIdRPT = nodoUtilities.getCodiceIdRpt(rptId);
 
         Assert.assertNotNull(nodoTipoCodiceIdRPT.getQrCode());
         Assert.assertEquals("11", nodoTipoCodiceIdRPT.getQrCode().getCodStazPA());
-        Assert.assertEquals("0",nodoTipoCodiceIdRPT.getQrCode().getAuxDigit());
-        Assert.assertEquals("77777777777",nodoTipoCodiceIdRPT.getQrCode().getCF());
-        Assert.assertEquals("222222222222222",nodoTipoCodiceIdRPT.getQrCode().getCodIUV());
+        Assert.assertEquals("0", nodoTipoCodiceIdRPT.getQrCode().getAuxDigit());
+        Assert.assertEquals("77777777777", nodoTipoCodiceIdRPT.getQrCode().getCF());
+        Assert.assertEquals("222222222222222", nodoTipoCodiceIdRPT.getQrCode().getCodIUV());
     }
 
     private void shouldGetNodoTipoCodiceIdRPTAux(String auxDigit) {
         ObjectFactory objectFactory = new ObjectFactory();
-        RptId rptId = new RptId("77777777777"+auxDigit+"44444444444444444");
+        RptId rptId = new RptId("77777777777" + auxDigit + "44444444444444444");
 
-        Mockito.when(objectFactoryNodoPerPsp.createNodoTipoCodiceIdRPT()).thenReturn(objectFactory.createNodoTipoCodiceIdRPT());
+        Mockito.when(objectFactoryNodoPerPsp.createNodoTipoCodiceIdRPT())
+                .thenReturn(objectFactory.createNodoTipoCodiceIdRPT());
 
         NodoTipoCodiceIdRPT nodoTipoCodiceIdRPT = nodoUtilities.getCodiceIdRpt(rptId);
 
         Assert.assertNotNull(nodoTipoCodiceIdRPT.getQrCode());
         Assert.assertNull(nodoTipoCodiceIdRPT.getQrCode().getCodStazPA());
-        Assert.assertEquals(auxDigit,nodoTipoCodiceIdRPT.getQrCode().getAuxDigit());
-        Assert.assertEquals("77777777777",nodoTipoCodiceIdRPT.getQrCode().getCF());
-        Assert.assertEquals("44444444444444444",nodoTipoCodiceIdRPT.getQrCode().getCodIUV());
+        Assert.assertEquals(auxDigit, nodoTipoCodiceIdRPT.getQrCode().getAuxDigit());
+        Assert.assertEquals("77777777777", nodoTipoCodiceIdRPT.getQrCode().getCF());
+        Assert.assertEquals("44444444444444444", nodoTipoCodiceIdRPT.getQrCode().getCodIUV());
     }
 
     @Test

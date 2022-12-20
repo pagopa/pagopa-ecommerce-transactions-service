@@ -35,8 +35,8 @@ class ClosureErrorProjectionHandlerTest {
         Transaction transaction = transactionDocument();
 
         TransactionClosureErrorEvent closureErrorEvent = new TransactionClosureErrorEvent(
-          transaction.getTransactionId(),
-          transaction.getNoticeCodes()
+                transaction.getTransactionId(),
+                transaction.getNoticeCodes()
         );
 
         Transaction expected = new Transaction(
@@ -50,8 +50,10 @@ class ClosureErrorProjectionHandlerTest {
                 transaction.getCreationDate()
         );
 
-        Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId())).thenReturn(Mono.just(transaction));
-        Mockito.when(transactionsViewRepository.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
+        Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId()))
+                .thenReturn(Mono.just(transaction));
+        Mockito.when(transactionsViewRepository.save(any()))
+                .thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
 
         StepVerifier.create(closureErrorProjectionHandler.handle(closureErrorEvent))
                 .expectNext(expected)
@@ -78,12 +80,14 @@ class ClosureErrorProjectionHandlerTest {
     private Transaction transactionDocument() {
         return new Transaction(
                 UUID.randomUUID().toString(),
-                List.of(new NoticeCode(
-                        "paymentToken",
-                        "77777777777302016723749670035",
-                        "description",
-                        100
-                )),
+                List.of(
+                        new NoticeCode(
+                                "paymentToken",
+                                "77777777777302016723749670035",
+                                "description",
+                                100
+                        )
+                ),
                 100,
                 0,
                 "foo@example.com",

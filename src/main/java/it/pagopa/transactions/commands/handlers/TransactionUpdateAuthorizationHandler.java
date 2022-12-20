@@ -20,7 +20,8 @@ import java.util.Arrays;
 
 @Component
 @Slf4j
-public class TransactionUpdateAuthorizationHandler implements CommandHandler<TransactionUpdateAuthorizationCommand, Mono<TransactionAuthorizationStatusUpdatedEvent>> {
+public class TransactionUpdateAuthorizationHandler implements
+        CommandHandler<TransactionUpdateAuthorizationCommand, Mono<TransactionAuthorizationStatusUpdatedEvent>> {
 
     @Autowired
     NodeForPspClient nodeForPspClient;
@@ -32,7 +33,8 @@ public class TransactionUpdateAuthorizationHandler implements CommandHandler<Tra
     public Mono<TransactionAuthorizationStatusUpdatedEvent> handle(TransactionUpdateAuthorizationCommand command) {
         TransactionActivated transaction = command.getData().transaction();
 
-        if (transaction.getStatus() != it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_REQUESTED) {
+        if (transaction
+                .getStatus() != it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_REQUESTED) {
             log.error("Error: requesting authorization update for transaction in state {}", transaction.getStatus());
             return Mono.error(new AlreadyProcessedException(command.getRptId()));
         } else {
@@ -48,12 +50,11 @@ public class TransactionUpdateAuthorizationHandler implements CommandHandler<Tra
                 }
             }
 
-            TransactionAuthorizationStatusUpdateData statusUpdateData =
-                    new TransactionAuthorizationStatusUpdateData(
-                            AuthorizationResultDto.fromValue(updateAuthorizationRequest.getAuthorizationResult().toString()),
-                            newStatus,
-                            updateAuthorizationRequest.getAuthorizationCode()
-                    );
+            TransactionAuthorizationStatusUpdateData statusUpdateData = new TransactionAuthorizationStatusUpdateData(
+                    AuthorizationResultDto.fromValue(updateAuthorizationRequest.getAuthorizationResult().toString()),
+                    newStatus,
+                    updateAuthorizationRequest.getAuthorizationCode()
+            );
 
             TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
                     transaction.getTransactionId().value().toString(),

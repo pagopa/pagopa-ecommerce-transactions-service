@@ -22,11 +22,11 @@ import java.util.UUID;
 @ExtendWith(MockitoExtension.class)
 class TransactionsActivationProjectionHandlerTest {
 
-
     @InjectMocks
     private TransactionsActivationProjectionHandler handler;
 
-    @Mock TransactionsViewRepository transactionsViewRepository;
+    @Mock
+    TransactionsViewRepository transactionsViewRepository;
 
     @Test
     void shouldSaveTransaction() {
@@ -39,13 +39,22 @@ class TransactionsActivationProjectionHandlerTest {
         int amountInt = 100;
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
         transactionActivatedData.setEmail("jon.doe@email.it");
-        transactionActivatedData.setNoticeCodes( Arrays.asList(new NoticeCode(
-                paymentTokenString,rptIdString,transactionDescription,amountInt)));
+        transactionActivatedData.setNoticeCodes(
+                Arrays.asList(
+                        new NoticeCode(
+                                paymentTokenString,
+                                rptIdString,
+                                transactionDescription,
+                                amountInt
+                        )
+                )
+        );
 
         TransactionActivatedEvent event = new TransactionActivatedEvent(
                 transactionIdString,
-                Arrays.asList(new NoticeCode(paymentTokenString, rptIdString,null,null)),
-                transactionActivatedData);
+                Arrays.asList(new NoticeCode(paymentTokenString, rptIdString, null, null)),
+                transactionActivatedData
+        );
 
         TransactionActivatedData data = event.getData();
         TransactionId transactionId = new TransactionId(UUID.fromString(event.getTransactionId()));
@@ -57,15 +66,23 @@ class TransactionsActivationProjectionHandlerTest {
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
 
-        TransactionActivated transaction =
-                new TransactionActivated(transactionId,
-                        Arrays.asList(new it.pagopa.ecommerce.commons.domain.NoticeCode(paymentToken, rptId, amount, description)),
-                        email, faultCode, faultCodeString, TransactionStatusDto.ACTIVATED);
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                Arrays.asList(
+                        new it.pagopa.ecommerce.commons.domain.NoticeCode(paymentToken, rptId, amount, description)
+                ),
+                email,
+                faultCode,
+                faultCodeString,
+                TransactionStatusDto.ACTIVATED
+        );
 
-        it.pagopa.ecommerce.commons.documents.Transaction transactionDocument =
-                it.pagopa.ecommerce.commons.documents.Transaction.from(transaction);
+        it.pagopa.ecommerce.commons.documents.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.Transaction
+                .from(transaction);
 
-        Mockito.when(transactionsViewRepository.save(Mockito.any(it.pagopa.ecommerce.commons.documents.Transaction.class))).thenReturn(Mono.just(transactionDocument));
+        Mockito.when(
+                transactionsViewRepository.save(Mockito.any(it.pagopa.ecommerce.commons.documents.Transaction.class))
+        ).thenReturn(Mono.just(transactionDocument));
 
         /** test */
 
@@ -74,11 +91,22 @@ class TransactionsActivationProjectionHandlerTest {
         Assert.assertNotEquals(transactionResult, transaction);
         Assert.assertEquals(transactionResult.getTransactionId(), transaction.getTransactionId());
         Assert.assertEquals(transactionResult.getStatus(), transaction.getStatus());
-        Assert.assertEquals(transactionResult.getNoticeCodes().get(0).transactionAmount(),transaction.getNoticeCodes().get(0).transactionAmount());
-        Assert.assertEquals(transactionResult.getNoticeCodes().get(0).transactionDescription(),transaction.getNoticeCodes().get(0).transactionDescription());
-        Assert.assertEquals(transactionResult.getNoticeCodes().get(0).rptId(),transaction.getNoticeCodes().get(0).rptId());
-        Assert.assertEquals(transactionResult.getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken(),transaction.getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken());
-
+        Assert.assertEquals(
+                transactionResult.getNoticeCodes().get(0).transactionAmount(),
+                transaction.getNoticeCodes().get(0).transactionAmount()
+        );
+        Assert.assertEquals(
+                transactionResult.getNoticeCodes().get(0).transactionDescription(),
+                transaction.getNoticeCodes().get(0).transactionDescription()
+        );
+        Assert.assertEquals(
+                transactionResult.getNoticeCodes().get(0).rptId(),
+                transaction.getNoticeCodes().get(0).rptId()
+        );
+        Assert.assertEquals(
+                transactionResult.getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken(),
+                transaction.getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken()
+        );
 
     }
 

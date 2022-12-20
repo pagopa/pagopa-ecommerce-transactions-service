@@ -34,7 +34,8 @@ import java.util.UUID;
 
 @Component
 @Slf4j
-public class TransactionSendClosureHandler implements CommandHandler<TransactionClosureSendCommand, Mono<Either<TransactionClosureErrorEvent, TransactionClosureSentEvent>>> {
+public class TransactionSendClosureHandler implements
+        CommandHandler<TransactionClosureSendCommand, Mono<Either<TransactionClosureErrorEvent, TransactionClosureSentEvent>>> {
 
     private final TransactionsEventStoreRepository<TransactionClosureSendData> transactionEventStoreRepository;
 
@@ -58,7 +59,9 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
             TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository,
             TransactionsEventStoreRepository<Object> eventStoreRepository,
             NodeForPspClient nodeForPspClient,
-            @Qualifier("transactionClosureSentEventQueueAsyncClient") QueueAsyncClient transactionClosureSentEventQueueClient,
+            @Qualifier(
+                "transactionClosureSentEventQueueAsyncClient"
+            ) QueueAsyncClient transactionClosureSentEventQueueClient,
             @Value("${payment.token.validity}") Integer paymentTokenValidity,
             @Value("${transactions.ecommerce.retry.offset}") Integer softTimeoutOffset,
             @Value("${transactions.closure_handler.retry_interval}") Integer retryTimeoutInterval
@@ -74,8 +77,12 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
     }
 
     @Override
-    public Mono<Either<TransactionClosureErrorEvent, TransactionClosureSentEvent>> handle(TransactionClosureSendCommand command) {
-        Mono<Transaction> transaction = replayTransactionEvents(command.getData().transaction().getTransactionId().value());
+    public Mono<Either<TransactionClosureErrorEvent, TransactionClosureSentEvent>> handle(
+                                                                                          TransactionClosureSendCommand command
+    ) {
+        Mono<Transaction> transaction = replayTransactionEvents(
+                command.getData().transaction().getTransactionId().value()
+        );
 
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
                 .cast(BaseTransaction.class)
@@ -84,35 +91,57 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
 
         return transaction
                 .cast(BaseTransaction.class)
-                .filter(t -> t.getStatus() == it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZED)
+                .filter(
+                        t -> t.getStatus() == it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZED
+                )
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(TransactionWithCompletedAuthorization.class)
                 .flatMap(tx -> {
-                    UpdateAuthorizationRequestDto updateAuthorizationRequestDto = command.getData().updateAuthorizationRequest();
-                    TransactionAuthorizationRequestData transactionAuthorizationRequestData = tx.getTransactionAuthorizationRequestData();
-                    TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = tx.getTransactionAuthorizationStatusUpdateData();
+                    UpdateAuthorizationRequestDto updateAuthorizationRequestDto = command.getData()
+                            .updateAuthorizationRequest();
+                    TransactionAuthorizationRequestData transactionAuthorizationRequestData = tx
+                            .getTransactionAuthorizationRequestData();
+                    TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = tx
+                            .getTransactionAuthorizationStatusUpdateData();
 
                     ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
-                            .paymentTokens(tx.getTransactionActivatedData().getNoticeCodes().stream().map(NoticeCode::getPaymentToken).toList())
-                            .outcome(authorizationResultToOutcomeV2(transactionAuthorizationStatusUpdateData.getAuthorizationResult()))
+                            .paymentTokens(
+                                    tx.getTransactionActivatedData().getNoticeCodes().stream()
+                                            .map(NoticeCode::getPaymentToken).toList()
+                            )
+                            .outcome(
+                                    authorizationResultToOutcomeV2(
+                                            transactionAuthorizationStatusUpdateData.getAuthorizationResult()
+                                    )
+                            )
                             .idPSP(transactionAuthorizationRequestData.getPspId())
                             .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())
                             .idChannel(transactionAuthorizationRequestData.getPspChannelCode())
                             .transactionId(tx.getTransactionId().value().toString())
-                            .totalAmount(EuroUtils.euroCentsToEuro(tx.getNoticeCodes().stream().mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum() + transactionAuthorizationRequestData.getFee()))
+                            .totalAmount(
+                                    EuroUtils.euroCentsToEuro(
+                                            tx.getNoticeCodes().stream()
+                                                    .mapToInt(noticeCode -> noticeCode.transactionAmount().value())
+                                                    .sum() + transactionAuthorizationRequestData.getFee()
+                                    )
+                            )
                             .fee(EuroUtils.euroCentsToEuro(transactionAuthorizationRequestData.getFee()))
                             .timestampOperation(updateAuthorizationRequestDto.getTimestampOperation())
                             .paymentMethod(transactionAuthorizationRequestData.getPaymentTypeCode())
                             .additionalPaymentInformations(
                                     Map.of(
-                                            "outcome_payment_gateway", transactionAuthorizationStatusUpdateData.getAuthorizationResult().toString(),
-                                            "authorization_code", updateAuthorizationRequestDto.getAuthorizationCode()
+                                            "outcome_payment_gateway",
+                                            transactionAuthorizationStatusUpdateData.getAuthorizationResult()
+                                                    .toString(),
+                                            "authorization_code",
+                                            updateAuthorizationRequestDto.getAuthorizationCode()
                                     )
                             );
 
                     /*
-                     * ClosePayment (either OK or KO): save to event store and return event
-                     * On error: save TransactionClosureErrorEvent to event store, enqueue and return error event
+                     * ClosePayment (either OK or KO): save to event store and return event On
+                     * error: save TransactionClosureErrorEvent to event store, enqueue and return
+                     * error event
                      */
                     // FIXME: Refactor to handle multiple notices
                     it.pagopa.ecommerce.commons.domain.NoticeCode noticeCode = tx.getNoticeCodes().get(0);
@@ -125,62 +154,68 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                                 log.error("Got exception while invoking closePaymentV2", exception);
                                 TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
                                         tx.getTransactionId().value().toString(),
-                                        tx.getNoticeCodes().stream().map(n -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
-                                                n.paymentToken().value(),
-                                                n.rptId().value(),
-                                                n.transactionDescription().value(),
-                                                n.transactionAmount().value()
-                                        )).toList()
+                                        tx.getNoticeCodes().stream()
+                                                .map(
+                                                        n -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                                                                n.paymentToken().value(),
+                                                                n.rptId().value(),
+                                                                n.transactionDescription().value(),
+                                                                n.transactionAmount().value()
+                                                        )
+                                                ).toList()
                                 );
 
                                 /*
-                                Conceptual view of visibility timeout computation:
+                                 * Conceptual view of visibility timeout computation:
+                                 *
+                                 * end = start + paymentTokenTimeout If (end - now) >= offset Visibility timeout
+                                 * = min(retryTimeoutInterval, (end - offset) - now) Else do nothing
+                                 *
+                                 * Meaning that: We set a visibility timeout to either the retry timeout (if now
+                                 * + retryTimeout is inside the validity window of the token) or at (start +
+                                 * paymentTokenTimeout - offset) where `start` is the creation time of the
+                                 * transaction If we're at less than `offset` from the token validity end it's
+                                 * not worth rescheduling a retry, so we don't :)
+                                 *
+                                 * ┌─────────────┐ ▼ │ t2 │ │ │ start │ end │ │ now │ │ │ (now +
+                                 * retryTimeoutInterval) ──┴────┬──────────┼────────┴────┼────── │ │ <offset> │
+                                 * │ │ ▲ └────────────────────────┘
+                                 */
 
-                                end = start + paymentTokenTimeout
-                                If (end - now) >= offset
-                                    Visibility timeout = min(retryTimeoutInterval, (end - offset) - now)
-                                Else do nothing
-
-                                Meaning that:
-                                  * We set a visibility timeout to either the retry timeout (if now + retryTimeout is inside the validity window of the token)
-                                    or at (start + paymentTokenTimeout - offset) where `start` is the creation time of the transaction
-                                  * If we're at less than `offset` from the token validity end it's not worth rescheduling a retry, so we don't :)
-
-                                                  ┌─────────────┐
-                                                  ▼             │
-                                                 t2             │
-                                                  │             │
-                                start             │       end   │
-                                  │   now         │        │    │ (now + retryTimeoutInterval)
-                                ──┴────┬──────────┼────────┴────┼──────
-                                       │          │ <offset>    │
-                                       │
-                                       │                        ▲
-                                       └────────────────────────┘
-                                */
-
-                                Instant validityEnd = tx.getCreationDate().plusSeconds(paymentTokenValidity).toInstant();
+                                Instant validityEnd = tx.getCreationDate().plusSeconds(paymentTokenValidity)
+                                        .toInstant();
                                 Instant softValidityEnd = validityEnd.minusSeconds(softTimeoutOffset);
 
-                                Mono<TransactionClosureErrorEvent> eventSaved = transactionClosureErrorEventStoreRepository.save(errorEvent);
+                                Mono<TransactionClosureErrorEvent> eventSaved = transactionClosureErrorEventStoreRepository
+                                        .save(errorEvent);
                                 if (softValidityEnd.isAfter(Instant.now())) {
-                                    Duration latestAllowedVisibilityTimeout = Duration.between(Instant.now(), softValidityEnd);
+                                    Duration latestAllowedVisibilityTimeout = Duration
+                                            .between(Instant.now(), softValidityEnd);
                                     Duration candidateVisibilityTimeout = Duration.ofSeconds(retryTimeoutInterval);
 
-                                    Duration visibilityTimeout = ObjectUtils.min(candidateVisibilityTimeout, latestAllowedVisibilityTimeout);
-                                    log.info("Enqueued closure error retry event with visibility timeout {}", visibilityTimeout);
+                                    Duration visibilityTimeout = ObjectUtils
+                                            .min(candidateVisibilityTimeout, latestAllowedVisibilityTimeout);
+                                    log.info(
+                                            "Enqueued closure error retry event with visibility timeout {}",
+                                            visibilityTimeout
+                                    );
 
                                     eventSaved = eventSaved
-                                            .flatMap(e -> transactionClosureSentEventQueueClient
-                                                    .sendMessageWithResponse(
-                                                            BinaryData.fromObject(e),
-                                                            visibilityTimeout,
-                                                            null
-                                                    )
-                                                    .thenReturn(e)
+                                            .flatMap(
+                                                    e -> transactionClosureSentEventQueueClient
+                                                            .sendMessageWithResponse(
+                                                                    BinaryData.fromObject(e),
+                                                                    visibilityTimeout,
+                                                                    null
+                                                            )
+                                                            .thenReturn(e)
                                             );
                                 } else {
-                                    log.info("Skipped enqueueing of closure error retry event: too near payment token expiry (offset={}, expiration at {})", softTimeoutOffset, validityEnd);
+                                    log.info(
+                                            "Skipped enqueueing of closure error retry event: too near payment token expiry (offset={}, expiration at {})",
+                                            softTimeoutOffset,
+                                            validityEnd
+                                    );
                                 }
 
                                 return eventSaved.map(Either::left);
@@ -188,7 +223,9 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
                 });
     }
 
-    private ClosePaymentRequestV2Dto.OutcomeEnum authorizationResultToOutcomeV2(AuthorizationResultDto authorizationResult) {
+    private ClosePaymentRequestV2Dto.OutcomeEnum authorizationResultToOutcomeV2(
+                                                                                AuthorizationResultDto authorizationResult
+    ) {
         switch (authorizationResult) {
             case OK -> {
                 return ClosePaymentRequestV2Dto.OutcomeEnum.OK;
@@ -196,8 +233,9 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
             case KO -> {
                 return ClosePaymentRequestV2Dto.OutcomeEnum.KO;
             }
-            default ->
-                    throw new IllegalArgumentException("Missing authorization result enum value mapping to Nodo closePaymentV2 outcome");
+            default -> throw new IllegalArgumentException(
+                    "Missing authorization result enum value mapping to Nodo closePaymentV2 outcome"
+            );
         }
     }
 
@@ -207,7 +245,10 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
         return events.reduce(new EmptyTransaction(), Transaction::applyEvent);
     }
 
-    private Mono<TransactionClosureSentEvent> buildEventFromOutcome(ClosePaymentResponseDto.OutcomeEnum outcome, TransactionClosureSendCommand command) {
+    private Mono<TransactionClosureSentEvent> buildEventFromOutcome(
+                                                                    ClosePaymentResponseDto.OutcomeEnum outcome,
+                                                                    TransactionClosureSendCommand command
+    ) {
         TransactionStatusDto updatedStatus;
 
         switch (outcome) {
@@ -221,12 +262,13 @@ public class TransactionSendClosureHandler implements CommandHandler<Transaction
         TransactionClosureSentEvent event = new TransactionClosureSentEvent(
                 command.getData().transaction().getTransactionId().value().toString(),
                 command.getData().transaction().getNoticeCodes().stream().map(
-                        noticeCode ->  new NoticeCode(
+                        noticeCode -> new NoticeCode(
                                 noticeCode.paymentToken().value(),
                                 noticeCode.rptId().value(),
                                 noticeCode.transactionDescription().value(),
                                 noticeCode.transactionAmount().value()
-                        )).toList(),
+                        )
+                ).toList(),
                 new TransactionClosureSendData(
                         outcome,
                         updatedStatus

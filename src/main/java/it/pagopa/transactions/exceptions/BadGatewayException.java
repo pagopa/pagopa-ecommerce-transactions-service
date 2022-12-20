@@ -12,7 +12,10 @@ public class BadGatewayException extends RuntimeException {
         this.detail = detail;
     }
 
-    public BadGatewayException(String detail, Throwable cause) {
+    public BadGatewayException(
+            String detail,
+            Throwable cause
+    ) {
         super(detail, cause);
         this.detail = detail;
     }
