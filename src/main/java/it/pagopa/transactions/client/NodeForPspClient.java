@@ -198,7 +198,7 @@ public class NodeForPspClient {
                         ResponseStatusException.class,
                         error -> {
                             log.error("ResponseStatus Error:", error);
-                            return new BadGatewayException("");
+                            return new BadGatewayException(error.getReason(), error);
                         }
                 )
                 .doOnError(Exception.class, error -> log.error("Generic Error:", error));

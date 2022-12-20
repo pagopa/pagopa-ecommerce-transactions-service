@@ -24,9 +24,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -61,6 +59,9 @@ public class TransactionsService {
 
     @Autowired
     private ClosureSendProjectionHandler closureSendProjectionHandler;
+
+    @Autowired
+    private ClosureErrorProjectionHandler closureErrorProjectionHandler;
 
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
@@ -355,11 +356,15 @@ public class TransactionsService {
                             // FIXME Handle multiple rtpId
                             log.info(
                                     "Requested transaction closure for rptId: {}",
-                                    closureSentEvent.getNoticeCodes().get(0).getRptId()
+                                    transaction.getNoticeCodes().get(0).rptId().value()
                             )
                                     )
                                     .flatMap(
-                                            closureSentEvent -> closureSendProjectionHandler.handle(closureSentEvent)
+                                            result -> result.fold(
+                                                    errorEvent -> closureErrorProjectionHandler.handle(errorEvent),
+                                                    closureSentEvent -> closureSendProjectionHandler
+                                                            .handle(closureSentEvent)
+                                            )
                                     )
                                     .map(
                                             transactionDocument -> new TransactionInfoDto()

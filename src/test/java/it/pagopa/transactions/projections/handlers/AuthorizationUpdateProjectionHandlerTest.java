@@ -70,7 +70,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto
                         .fromValue(updateAuthorizationRequest.getAuthorizationResult().toString()),
                 expectedDocument.getStatus(),
-                "authorizationCode"
+                updateAuthorizationRequest.getAuthorizationCode()
         );
 
         TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
