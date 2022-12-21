@@ -118,12 +118,19 @@ public class NodoOperations {
         return nodeForPspClient
                 .activatePaymentNotice(objectFactoryNodeForPsp.createActivatePaymentNoticeReq(request))
                 .flatMap(
-                        activatePaymentNoticeRes -> StOutcome.OK.value()
-                                .equals(activatePaymentNoticeRes.getOutcome().value())
-                                        ? Mono.just(activatePaymentNoticeRes.getPaymentToken())
-                                        : Mono.error(
-                                                new NodoErrorException(activatePaymentNoticeRes.getFault())
-                                        )
+                        activatePaymentNoticeRes -> {
+                            log.info(
+                                    "Nodo activation for NM3 payment. RPT id: [{}] response outcome: [{}]",
+                                    rptId,
+                                    activatePaymentNoticeRes.getOutcome()
+                            );
+                            return StOutcome.OK.value()
+                                    .equals(activatePaymentNoticeRes.getOutcome().value())
+                                            ? Mono.just(activatePaymentNoticeRes.getPaymentToken())
+                                            : Mono.error(
+                                                    new NodoErrorException(activatePaymentNoticeRes.getFault())
+                                            );
+                        }
                 );
     }
 
@@ -151,6 +158,12 @@ public class NodoOperations {
                                     && "PPT_MULTI_BENEFICIARIO"
                                             .equals(nodoAttivaRPTRResponse.getFault().getFaultCode());
 
+                            log.info(
+                                    "Esito nodo attiva RPT. RPT id: [{}] outcome: [{}], is multibeneficiary response code: [{}]",
+                                    rptId,
+                                    outcome,
+                                    isNM3GivenAttivaRPTRisposta
+                            );
                             if (Boolean.TRUE.equals(isNM3GivenAttivaRPTRisposta)) {
                                 return nodoActivationForNM3PaymentRequest(
                                         rptId,
