@@ -132,7 +132,8 @@ public class TransactionServiceTests {
                 PAYMENT_TOKEN,
                 "77777777777111111111111111111",
                 "reason",
-                100
+                100,
+                "paymentContextCode"
         );
 
         final Transaction transaction = new Transaction(
