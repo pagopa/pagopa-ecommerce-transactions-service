@@ -304,7 +304,8 @@ public class TransactionServiceTests {
                                 new PaymentToken(noticeCode.getPaymentToken()),
                                 new RptId(noticeCode.getRptId()),
                                 new TransactionAmount(noticeCode.getAmount()),
-                                new TransactionDescription(noticeCode.getDescription())
+                                new TransactionDescription(noticeCode.getDescription()),
+                                new PaymentContextCode(noticeCode.getPaymentContextCode())
                         )
                 ).toList(),
                 new Email(transactionDocument.getEmail()),
@@ -333,6 +334,7 @@ public class TransactionServiceTests {
                                         noticeCode.getPaymentToken(),
                                         noticeCode.getRptId(),
                                         null,
+                                        null,
                                         null
                                 )
                         ).toList(),
@@ -351,6 +353,7 @@ public class TransactionServiceTests {
                                 noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
                                         noticeCode.getPaymentToken(),
                                         noticeCode.getRptId(),
+                                        null,
                                         null,
                                         null
                                 )
@@ -443,7 +446,8 @@ public class TransactionServiceTests {
                                 new PaymentToken(noticeCode.getPaymentToken()),
                                 new RptId(noticeCode.getRptId()),
                                 new TransactionAmount(noticeCode.getAmount()),
-                                new TransactionDescription(noticeCode.getDescription())
+                                new TransactionDescription(noticeCode.getDescription()),
+                                new PaymentContextCode(noticeCode.getPaymentContextCode())
                         )
                 ).toList(),
                 new Email(transactionDocument.getEmail()),
@@ -463,6 +467,7 @@ public class TransactionServiceTests {
                                 noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
                                         noticeCode.getPaymentToken(),
                                         noticeCode.getRptId(),
+                                        null,
                                         null,
                                         null
                                 )
@@ -589,7 +594,8 @@ public class TransactionServiceTests {
                                 new PaymentToken(PAYMENT_TOKEN),
                                 rtpId,
                                 new TransactionAmount(100),
-                                new TransactionDescription("Description")
+                                new TransactionDescription("Description"),
+                                new PaymentContextCode(null)
                         )
                 ),
                 new Email("foo@example.com"),
@@ -605,6 +611,7 @@ public class TransactionServiceTests {
                                 PAYMENT_TOKEN,
                                 "77777777777111111111111111111",
                                 null,
+                                null,
                                 null
                         )
                 ),
@@ -615,11 +622,11 @@ public class TransactionServiceTests {
                                                 PAYMENT_TOKEN,
                                                 "77777777777111111111111111111",
                                                 null,
-                                                noticeCode.transactionAmount().value()
+                                                noticeCode.transactionAmount().value(),
+                                                null
                                         )
                                 ).toList(),
                         transactionActivated.getEmail().value(),
-                        null,
                         null,
                         null
                 )
@@ -632,6 +639,7 @@ public class TransactionServiceTests {
                                 PAYMENT_TOKEN,
                                 "77777777777111111111111111111",
                                 null,
+                                null,
                                 null
                         )
                 ),
@@ -643,7 +651,8 @@ public class TransactionServiceTests {
                                                 PAYMENT_TOKEN,
                                                 "77777777777111111111111111111",
                                                 null,
-                                                noticeCode.transactionAmount().value()
+                                                noticeCode.transactionAmount().value(),
+                                                null
                                         )
                                 ).toList(),
 

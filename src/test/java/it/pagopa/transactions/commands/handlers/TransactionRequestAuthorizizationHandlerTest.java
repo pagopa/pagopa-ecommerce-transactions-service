@@ -59,10 +59,11 @@ class TransactionRequestAuthorizizationHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
         Email email = new Email("foo@example.com");
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                List.of(new NoticeCode(paymentToken, rptId, amount, description)),
+                List.of(new NoticeCode(paymentToken, rptId, amount, description, nullPaymentContextCode)),
                 email,
                 null,
                 null,
@@ -124,10 +125,11 @@ class TransactionRequestAuthorizizationHandlerTest {
         Email email = new Email("foo@example.com");
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                List.of(new NoticeCode(paymentToken, rptId, amount, description)),
+                List.of(new NoticeCode(paymentToken, rptId, amount, description, nullPaymentContextCode)),
                 email,
                 faultCode,
                 faultCodeString,
@@ -177,10 +179,11 @@ class TransactionRequestAuthorizizationHandlerTest {
         Email email = new Email("foo@example.com");
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                List.of(new NoticeCode(paymentToken, rptId, amount, description)),
+                List.of(new NoticeCode(paymentToken, rptId, amount, description, nullPaymentContextCode)),
                 email,
                 faultCode,
                 faultCodeString,

@@ -60,22 +60,23 @@ class TransactionServiceTest {
 
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
         transactionActivatedData.setEmail(TEST_EMAIL);
-        transactionActivatedData.setNoticeCodes(Arrays.asList(new NoticeCode(TEST_TOKEN, null, "dest", 0)));
+        transactionActivatedData
+                .setNoticeCodes(Arrays.asList(new NoticeCode(TEST_TOKEN, null, "dest", 0, TEST_CPP.toString())));
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 TRANSACTION_ID.toString(),
-                Arrays.asList(new NoticeCode(TEST_TOKEN, TEST_RPTID, null, null)),
+                Arrays.asList(new NoticeCode(TEST_TOKEN, TEST_RPTID, null, null, TEST_CPP.toString())),
                 transactionActivatedData
         );
 
         TransactionActivationRequestedData transactionActivationRequestedData = new TransactionActivationRequestedData();
-        transactionActivatedData.setNoticeCodes(Arrays.asList(new NoticeCode(TEST_TOKEN, null, "dest", 0)));
+        transactionActivatedData
+                .setNoticeCodes(Arrays.asList(new NoticeCode(TEST_TOKEN, null, "dest", 0, TEST_CPP.toString())));
         transactionActivationRequestedData.setEmail(TEST_EMAIL);
-        transactionActivationRequestedData.setPaymentContextCode(TEST_CPP.toString());
 
         TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
                 TRANSACTION_ID.toString(),
-                Arrays.asList(new NoticeCode(null, TEST_RPTID, null, null)),
+                Arrays.asList(new NoticeCode(null, TEST_RPTID, null, null, null)),
                 transactionActivationRequestedData
         );
 
@@ -100,7 +101,8 @@ class TransactionServiceTest {
                                 new PaymentToken(TEST_TOKEN),
                                 new RptId(TEST_RPTID),
                                 new TransactionAmount(0),
-                                new TransactionDescription("desc")
+                                new TransactionDescription("desc"),
+                                new PaymentContextCode(TEST_CPP.toString())
                         )
                 ),
                 new Email("foo@example.com"),
@@ -116,7 +118,8 @@ class TransactionServiceTest {
                                 null,
                                 new RptId(TEST_RPTID),
                                 new TransactionAmount(0),
-                                new TransactionDescription("desc")
+                                new TransactionDescription("desc"),
+                                new PaymentContextCode(TEST_CPP.toString())
                         )
                 ),
                 new Email("foo@example.com"),

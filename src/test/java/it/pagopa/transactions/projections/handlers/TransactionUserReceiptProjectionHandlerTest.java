@@ -49,7 +49,8 @@ class TransactionUserReceiptProjectionHandlerTest {
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
-                                new TransactionDescription("description")
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null)
                         )
                 ),
                 new Email("foo@example.com"),
@@ -75,32 +76,30 @@ class TransactionUserReceiptProjectionHandlerTest {
 
         TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                 transaction.getTransactionId().value().toString(),
-                Arrays.asList(
-                        new it.pagopa.ecommerce.commons.documents.NoticeCode(
-                                transaction.getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken(),
-                                transaction.getNoticeCodes().get(0).rptId().value(),
-                                null,
-                                null
-                        )
-                )
-
-                ,
+                transaction.getNoticeCodes().stream()
+                        .map(
+                                noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                                        noticeCode.paymentToken().value(),
+                                        noticeCode.rptId().value(),
+                                        noticeCode.transactionDescription().value(),
+                                        noticeCode.transactionAmount().value(),
+                                        noticeCode.paymentContextCode().value()
+                                )
+                        ).toList(),
                 transactionAddReceiptData
         );
 
         TransactionActivated expected = new TransactionActivated(
                 transaction.getTransactionId(),
-                Arrays.asList(
-                        new NoticeCode(
-                                new PaymentToken(
-                                        transaction.getTransactionActivatedData().getNoticeCodes().get(0)
-                                                .getPaymentToken()
-                                ),
-                                transaction.getNoticeCodes().get(0).rptId(),
-                                transaction.getNoticeCodes().get(0).transactionAmount(),
-                                transaction.getNoticeCodes().get(0).transactionDescription()
+                transaction.getTransactionActivatedData().getNoticeCodes().stream().map(
+                        noticeCode -> new NoticeCode(
+                                new PaymentToken(noticeCode.getPaymentToken()),
+                                new RptId(noticeCode.getRptId()),
+                                new TransactionAmount(noticeCode.getAmount()),
+                                new TransactionDescription(noticeCode.getDescription()),
+                                new PaymentContextCode(noticeCode.getPaymentContextCode())
                         )
-                ),
+                ).toList(),
                 transaction.getEmail(),
                 transaction.getTransactionActivatedData().getFaultCode(),
                 transaction.getTransactionActivatedData().getFaultCodeString(),

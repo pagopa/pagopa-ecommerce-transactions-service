@@ -86,7 +86,8 @@ class TransactionSendClosureHandlerTest {
                         paymentToken.value(),
                         rptId.value(),
                         description.value(),
-                        amount.value()
+                        amount.value(),
+                        null
                 )
         );
 
@@ -95,11 +96,12 @@ class TransactionSendClosureHandlerTest {
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 noticeCodes.stream().map(
-                        n -> new NoticeCode(
-                                new PaymentToken(n.getPaymentToken()),
-                                new RptId(n.getRptId()),
-                                new TransactionAmount(n.getAmount()),
-                                new TransactionDescription(n.getDescription())
+                        noticeCode -> new NoticeCode(
+                                new PaymentToken(noticeCode.getPaymentToken()),
+                                new RptId(noticeCode.getRptId()),
+                                new TransactionAmount(noticeCode.getAmount()),
+                                new TransactionDescription(noticeCode.getDescription()),
+                                new PaymentContextCode(noticeCode.getPaymentContextCode())
                         )
                 )
                         .toList(),
@@ -203,7 +205,8 @@ class TransactionSendClosureHandlerTest {
                         paymentToken.value(),
                         rptId.value(),
                         description.value(),
-                        amount.value()
+                        amount.value(),
+                        null
                 )
         );
 
@@ -344,7 +347,8 @@ class TransactionSendClosureHandlerTest {
                         paymentToken.value(),
                         rptId.value(),
                         description.value(),
-                        amount.value()
+                        amount.value(),
+                        null
                 )
         );
 
@@ -497,7 +501,8 @@ class TransactionSendClosureHandlerTest {
                         paymentToken.value(),
                         rptId.value(),
                         description.value(),
-                        amount.value()
+                        amount.value(),
+                        null
                 )
         );
 

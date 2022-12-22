@@ -57,11 +57,18 @@ class TransactionAddUserReceiptHandlerTest {
         Email email = new Email("foo@example.com");
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 Arrays.asList(
-                        new it.pagopa.ecommerce.commons.domain.NoticeCode(paymentToken, rptId, amount, description)
+                        new it.pagopa.ecommerce.commons.domain.NoticeCode(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description,
+                                nullPaymentContextCode
+                        )
                 ),
                 email,
                 faultCode,
@@ -76,6 +83,7 @@ class TransactionAddUserReceiptHandlerTest {
                                 paymentToken.value(),
                                 rptId.value(),
                                 null,
+                                null,
                                 null
                         )
                 ),
@@ -86,7 +94,8 @@ class TransactionAddUserReceiptHandlerTest {
                                         paymentToken.value(),
                                         rptId.value(),
                                         description.value(),
-                                        amount.value()
+                                        amount.value(),
+                                        nullPaymentContextCode.value()
                                 )
                         ),
                         faultCode,
@@ -101,7 +110,8 @@ class TransactionAddUserReceiptHandlerTest {
                                 paymentToken.value(),
                                 rptId.value(),
                                 description.value(),
-                                amount.value()
+                                amount.value(),
+                                nullPaymentContextCode.value()
                         )
                 ),
                 new TransactionAuthorizationRequestData(
@@ -125,7 +135,8 @@ class TransactionAddUserReceiptHandlerTest {
                                 paymentToken.value(),
                                 rptId.value(),
                                 description.value(),
-                                amount.value()
+                                amount.value(),
+                                nullPaymentContextCode.value()
                         )
                 ),
                 new TransactionAuthorizationStatusUpdateData(
@@ -214,11 +225,18 @@ class TransactionAddUserReceiptHandlerTest {
         Email email = new Email("foo@example.com");
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 Arrays.asList(
-                        new it.pagopa.ecommerce.commons.domain.NoticeCode(paymentToken, rptId, amount, description)
+                        new it.pagopa.ecommerce.commons.domain.NoticeCode(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description,
+                                nullPaymentContextCode
+                        )
                 ),
                 email,
                 faultCode,
@@ -233,7 +251,8 @@ class TransactionAddUserReceiptHandlerTest {
                                 paymentToken.value(),
                                 rptId.value(),
                                 description.value(),
-                                amount.value()
+                                amount.value(),
+                                nullPaymentContextCode.value()
                         )
                 ),
                 new TransactionActivatedData(
@@ -243,7 +262,8 @@ class TransactionAddUserReceiptHandlerTest {
                                         paymentToken.value(),
                                         rptId.value(),
                                         description.value(),
-                                        amount.value()
+                                        amount.value(),
+                                        nullPaymentContextCode.value()
                                 )
                         ),
                         faultCode,
@@ -357,11 +377,18 @@ class TransactionAddUserReceiptHandlerTest {
         Email email = new Email("foo@example.com");
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 Arrays.asList(
-                        new it.pagopa.ecommerce.commons.domain.NoticeCode(paymentToken, rptId, amount, description)
+                        new it.pagopa.ecommerce.commons.domain.NoticeCode(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description,
+                                nullPaymentContextCode
+                        )
                 ),
                 email,
                 faultCode,
@@ -376,6 +403,7 @@ class TransactionAddUserReceiptHandlerTest {
                                 paymentToken.value(),
                                 rptId.value(),
                                 null,
+                                null,
                                 null
                         )
                 ),
@@ -386,7 +414,8 @@ class TransactionAddUserReceiptHandlerTest {
                                         paymentToken.value(),
                                         rptId.value(),
                                         description.value(),
-                                        amount.value()
+                                        amount.value(),
+                                        nullPaymentContextCode.value()
                                 )
                         ),
                         faultCode,
@@ -400,6 +429,7 @@ class TransactionAddUserReceiptHandlerTest {
                         new it.pagopa.ecommerce.commons.documents.NoticeCode(
                                 paymentToken.value(),
                                 rptId.value(),
+                                null,
                                 null,
                                 null
                         )
@@ -424,6 +454,7 @@ class TransactionAddUserReceiptHandlerTest {
                         new it.pagopa.ecommerce.commons.documents.NoticeCode(
                                 paymentToken.value(),
                                 rptId.value(),
+                                null,
                                 null,
                                 null
                         )
