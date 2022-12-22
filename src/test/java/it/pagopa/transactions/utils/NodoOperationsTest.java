@@ -108,7 +108,8 @@ class NodoOperationsTest {
                 .activatePaymentRequest(
                         paymentRequestInfo,
                         paymentContextCode,
-                        amount
+                        amount,
+                        false
                 )
                 .block();
 
@@ -177,7 +178,8 @@ class NodoOperationsTest {
                 .activatePaymentRequest(
                         paymentRequestInfo,
                         paymentContextCode,
-                        amount
+                        amount,
+                        false
                 );
 
         Assert.assertThrows(
@@ -277,7 +279,8 @@ class NodoOperationsTest {
                 .activatePaymentRequest(
                         paymentRequestInfo,
                         paymentContextCode,
-                        amount
+                        amount,
+                        false
                 )
                 .block();
 
@@ -362,7 +365,8 @@ class NodoOperationsTest {
                 .activatePaymentRequest(
                         paymentRequestInfo,
                         paymentContextCode,
-                        amount
+                        amount,
+                        false
                 );
 
         Assert.assertThrows(
@@ -448,7 +452,8 @@ class NodoOperationsTest {
                 .activatePaymentRequest(
                         paymentRequestInfo,
                         paymentContextCode,
-                        amount
+                        amount,
+                        false
                 )
                 .block();
 

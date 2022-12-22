@@ -53,7 +53,8 @@ public class NodoOperations {
     public Mono<PaymentRequestInfo> activatePaymentRequest(
                                                            PaymentRequestInfo paymentRequestInfo,
                                                            String paymentContextCode,
-                                                           Integer amount
+                                                           Integer amount,
+                                                           boolean multiplePaymentNotices
     ) {
         RptId rptId = paymentRequestInfo.id();
         Boolean isNM3 = paymentRequestInfo.isNM3();
@@ -73,7 +74,7 @@ public class NodoOperations {
 
         return Mono.just(isNM3)
                 .flatMap(
-                        validIsNM3 -> Boolean.TRUE.equals(validIsNM3)
+                        validIsNM3 -> Boolean.TRUE.equals(validIsNM3) || multiplePaymentNotices
                                 ? nodoActivationForNM3PaymentRequest(
                                         rptId,
                                         amountAsBigDecimal,

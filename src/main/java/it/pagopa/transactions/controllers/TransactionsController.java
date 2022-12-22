@@ -200,6 +200,17 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
+    @ExceptionHandler(NotImplementedException.class)
+    private ResponseEntity<ProblemJsonDto> notImplemented(NotImplementedException exception) {
+        return new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(501)
+                        .title("Not implemented")
+                        .detail(exception.getMessage()),
+                HttpStatus.NOT_IMPLEMENTED
+        );
+    }
+
     @ExceptionHandler(GatewayTimeoutException.class)
     private ResponseEntity<ProblemJsonDto> gatewayTimeoutHandler(GatewayTimeoutException exception) {
         return new ResponseEntity<>(

@@ -29,7 +29,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Component
@@ -78,30 +77,25 @@ public class TransactionActivateHandler
     ) {
 
         final NewTransactionRequestDto newTransactionRequestDto = command.getData();
-        // TODO correggere qui, prendere il payment context code per ogni singolo
-        // pagamento
-        final String paymentContextCode = newTransactionRequestDto.getPaymentNotices().get(0).getPaymentContextCode();
-        final int totalPaymentNotices = newTransactionRequestDto.getPaymentNotices().size();
-        final AtomicInteger processedPaymentNoticeCount = new AtomicInteger(0);
-        log.info("Nodo parallelism: [{}]", nodoParallelRequests);
+        final List<PaymentNoticeInfoDto> paymentNotices = newTransactionRequestDto.getPaymentNotices();
+        final boolean multiplePaymentNotices = paymentNotices.size() > 1;
+        final String paymentContextCode = paymentNotices.get(0).getPaymentContextCode();
+        log.info(
+                "Nodo parallel processed requests : [{}]. Multiple payment notices: [{}]",
+                nodoParallelRequests,
+                multiplePaymentNotices
+        );
         return Mono.defer(
-                () -> Flux.fromIterable(newTransactionRequestDto.getPaymentNotices())
+                () -> Flux.fromIterable(paymentNotices)
                         .parallel(nodoParallelRequests)
                         .runOn(Schedulers.parallel())
                         .flatMap(
-                                paymentNotice -> {
-                                    log.debug(
-                                            "Start processing of payment request: [{}/{}]",
-                                            processedPaymentNoticeCount.addAndGet(1),
-                                            totalPaymentNotices
-                                    );
-                                    return Mono.just(
-                                            Tuples.of(
-                                                    paymentNotice,
-                                                    getPaymentRequestInfoFromCache(new RptId(paymentNotice.getRptId()))
-                                            )
-                                    );
-                                }
+                                paymentNotice -> Mono.just(
+                                        Tuples.of(
+                                                paymentNotice,
+                                                getPaymentRequestInfoFromCache(new RptId(paymentNotice.getRptId()))
+                                        )
+                                )
                         ).flatMap(
                                 cacheResult -> {
                                     PaymentNoticeInfoDto paymentNotice = cacheResult.getT1();
@@ -122,7 +116,8 @@ public class TransactionActivateHandler
                                                     .activatePaymentRequest(
                                                             partialPaymentRequestInfo,
                                                             paymentNotice.getPaymentContextCode(),
-                                                            paymentNotice.getAmount()
+                                                            paymentNotice.getAmount(),
+                                                            multiplePaymentNotices
                                                     )
                                                     .doOnSuccess(
                                                             p -> log.info(
@@ -146,9 +141,7 @@ public class TransactionActivateHandler
                         .sequential()
                         .collectList()
                         .flatMap(paymentRequestInfos -> {
-                            processedPaymentNoticeCount.set(0);
-                            // TODO post adeguamento modulo sessions passare l'array di payment info, se
-                            // necessario
+                            // TODO change Session module call to handle multiple payment notices
                             String transactionId = UUID.randomUUID().toString();
                             PaymentRequestInfo paymentRequestInfo = paymentRequestInfos.get(0);
                             SessionRequestDto sessionRequest = new SessionRequestDto()
@@ -164,7 +157,7 @@ public class TransactionActivateHandler
                                 args -> {
                                     SessionDataDto sessionDataDto = args.getT1();
                                     List<PaymentRequestInfo> paymentRequestsInfo = args.getT2();
-                                    return areAllValidPaymentTokens(paymentRequestsInfo)
+                                    return generateTransactionActivatedEvent(paymentRequestsInfo)
                                             ? Mono.just(
                                                     Tuples.of(
                                                             newTransactionActivatedEvent(
@@ -217,29 +210,45 @@ public class TransactionActivateHandler
         return paymentToken != null && !paymentToken.isBlank();
     }
 
-    private boolean areAllValidPaymentTokens(List<PaymentRequestInfo> paymentRequestInfos) {
-        int payments = paymentRequestInfos.size();
-        int validPayments = paymentRequestInfos.stream()
-                .filter(paymentRequestInfo -> isValidPaymentToken(paymentRequestInfo.paymentToken())).toList().size();
-        log.info("Input payments: [{}], valid payments: [{}]", payments, validPayments);
-        return payments == validPayments;
+    private boolean generateTransactionActivatedEvent(List<PaymentRequestInfo> paymentRequestsInfo) {
+        int paymentRequestInfoSize = paymentRequestsInfo.size();
+        boolean generateTransactionActivatedEvent = true;
+        /**
+         * in caso di un carrello di avvisi di pagamento gli avvisi di pagamento saranno
+         * unicamente comunicati al nodo "a nuovo" (activatePaymentNotice) mentre nel
+         * caso di un solo pagamento si avrà la dualità sulla base dell'avviso di
+         * pagamento di cui effettuare il pagamento
+         */
+        if (paymentRequestInfoSize == 1) {
+            generateTransactionActivatedEvent = isValidPaymentToken(paymentRequestsInfo.get(0).paymentToken());
+        }
+        log.info(
+                "Input payment notices: [{}] generate new transaction activated event: [{}]",
+                paymentRequestInfoSize,
+                generateTransactionActivatedEvent
+        );
+        return generateTransactionActivatedEvent;
     }
 
     private Mono<TransactionActivationRequestedEvent> newTransactionActivationRequestedEvent(
                                                                                              List<PaymentRequestInfo> paymentRequestsInfo,
                                                                                              String transactionId,
                                                                                              String email,
-                                                                                             String transactionId,
-                                                                                             String rptId,
                                                                                              String paymentContextCode
     ) {
-        // TODO qui il payment context code deve essere UNO per ogni pagamento, quindi
-        // va modificata qui l'oggetto data!
         TransactionActivationRequestedData data = new TransactionActivationRequestedData();
         data.setEmail(email);
-        List<NoticeCode> noticeCodes = toNoticeCodeList(paymentRequestsInfo);
+        PaymentRequestInfo paymentRequestInfo = paymentRequestsInfo.get(0);
+        List<NoticeCode> noticeCodes = List.of(
+                new NoticeCode(
+                        null,
+                        paymentRequestInfo.id().value(),
+                        paymentRequestInfo.description(),
+                        paymentRequestInfo.amount(),
+                        paymentContextCode
+                )
+        );
         data.setNoticeCodes(noticeCodes);
-        data.setPaymentContextCode(paymentContextCode);
         TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
                 transactionId,
                 noticeCodes,
@@ -247,11 +256,7 @@ public class TransactionActivateHandler
         );
 
         log.info(
-                "Generated event TRANSACTION_ACTIVATION_REQUESTED_EVENT for rptId {} and transactionId {}",
-                String.join(
-                        ",",
-                        transactionActivationRequestedEvent.getNoticeCodes().stream().map(NoticeCode::getRptId).toList()
-                ),
+                "Generated event TRANSACTION_ACTIVATION_REQUESTED_EVENT for transactionId {}",
                 transactionId
         );
 
@@ -265,7 +270,6 @@ public class TransactionActivateHandler
                                                                          String transactionId,
                                                                          String email
     ) {
-
         TransactionActivatedData data = new TransactionActivatedData();
         data.setEmail(email);
         List<NoticeCode> noticeCodes = toNoticeCodeList(paymentRequestsInfo);
@@ -289,20 +293,14 @@ public class TransactionActivateHandler
                 .then(Mono.just(transactionActivatedEvent))
                 .doOnError(
                         exception -> log.error(
-                                "Error to generate event TRANSACTION_ACTIVATED_EVENT for rptIds {} and transactionId {} - error {}",
-                                String.join(
-                                        ",",
-                                        transactionActivatedEvent.getNoticeCodes().stream().map(NoticeCode::getRptId)
-                                                .toList()
-                                ),
+                                "Error to generate event TRANSACTION_ACTIVATED_EVENT for transactionId {} - error {}",
                                 transactionActivatedEvent.getTransactionId(),
                                 exception.getMessage()
                         )
                 )
                 .doOnNext(
                         event -> log.info(
-                                "Generated event TRANSACTION_ACTIVATED_EVENT for rptIds {} and transactionId {}",
-                                String.join(",", event.getNoticeCodes().stream().map(NoticeCode::getRptId).toList()),
+                                "Generated event TRANSACTION_ACTIVATED_EVENT for transactionId {}",
                                 event.getTransactionId()
                         )
                 );
@@ -314,7 +312,8 @@ public class TransactionActivateHandler
                         paymentRequestInfo.paymentToken(),
                         paymentRequestInfo.id().value(),
                         paymentRequestInfo.description(),
-                        paymentRequestInfo.amount()
+                        paymentRequestInfo.amount(),
+                        null
                 )
         ).toList();
     }
