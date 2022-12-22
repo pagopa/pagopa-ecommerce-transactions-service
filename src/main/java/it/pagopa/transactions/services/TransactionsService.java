@@ -146,11 +146,9 @@ public class TransactionsService {
                                 )
                                 .amountTotal(transaction.getAmountTotal())
                                 .feeTotal(transaction.getFeeTotal())
-                                // FIXME in the next release of commons library we will delete the null checking
                                 .origin(
                                         TransactionInfoDto.OriginEnum.valueOf(
-                                                transaction.getOrigin() == null ? "UNKNOWN"
-                                                        : transaction.getOrigin().name()
+                                                transaction.getOrigin().name()
                                         )
                                 )
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
