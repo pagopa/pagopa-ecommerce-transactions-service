@@ -541,7 +541,7 @@ public class TransactionServiceTests {
     }
 
     @Test
-    void shouldThrowTransacrionNotFoundExceptionWhenNotInTransactionRepository() {
+    void shouldThrowTransacrionNotImplementedExceptionWhenNotInTransactionRepository() {
 
         /** preconditions */
 
