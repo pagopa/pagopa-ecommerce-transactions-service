@@ -511,10 +511,17 @@ public class TransactionsService {
                                                         .amount(noticeCode.transactionAmount().value())
                                                         .reason(noticeCode.transactionDescription().value())
                                                         .rptId(noticeCode.rptId().value())
+                                                        .paymentToken(noticeCode.paymentToken().value())
                                         ).toList()
                                 )
                                 .authToken(sessionDataDto.getSessionToken())
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
+                                .amountTotal(
+                                        transaction.getNoticeCodes().stream()
+                                                .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
+                                )
+                                // .feeTotal()//TODO da dove prendere le fees?
+                                .origin(NewTransactionResponseDto.OriginEnum.CHECKOUT)// TODO che mettere qui?
                 );
     }
 
@@ -533,10 +540,17 @@ public class TransactionsService {
                                                         .amount(noticeCode.transactionAmount().value())
                                                         .reason(noticeCode.transactionDescription().value())
                                                         .rptId(noticeCode.rptId().value())
+                                                        .paymentToken(noticeCode.paymentToken().value())
                                         ).toList()
                                 )
                                 .authToken(sessionDataDto.getSessionToken())
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
+                                .amountTotal(
+                                        transaction.getNoticeCodes().stream()
+                                                .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
+                                )
+                                // .feeTotal()//TODO da dove prendere le fees?
+                                .origin(NewTransactionResponseDto.OriginEnum.CHECKOUT)// TODO che mettere qui?
                 );
     }
 }

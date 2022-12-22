@@ -157,18 +157,18 @@ public class TransactionActivateHandler
                                 args -> {
                                     SessionDataDto sessionDataDto = args.getT1();
                                     List<PaymentRequestInfo> paymentRequestsInfo = args.getT2();
-                                    return generateTransactionActivatedEvent(paymentRequestsInfo)
+                                    return shouldGenerateTransactionActivatedEvent(paymentRequestsInfo)
                                             ? Mono.just(
-                                                    Tuples.of(
-                                                            newTransactionActivatedEvent(
-                                                                    paymentRequestsInfo,
-                                                                    sessionDataDto.getTransactionId(),
-                                                                    sessionDataDto.getEmail()
-                                                            ),
-                                                            Mono.empty(),
-                                                            sessionDataDto
-                                                    )
+                                            Tuples.of(
+                                                    newTransactionActivatedEvent(
+                                                            paymentRequestsInfo,
+                                                            sessionDataDto.getTransactionId(),
+                                                            sessionDataDto.getEmail()
+                                                    ),
+                                                    Mono.empty(),
+                                                    sessionDataDto
                                             )
+                                    )
                                             : Mono.just(
                                                     Tuples.of(
                                                             Mono.empty(),
@@ -210,14 +210,15 @@ public class TransactionActivateHandler
         return paymentToken != null && !paymentToken.isBlank();
     }
 
-    private boolean generateTransactionActivatedEvent(List<PaymentRequestInfo> paymentRequestsInfo) {
+    private boolean shouldGenerateTransactionActivatedEvent(List<PaymentRequestInfo> paymentRequestsInfo) {
         int paymentRequestInfoSize = paymentRequestsInfo.size();
         boolean generateTransactionActivatedEvent = true;
-        /**
-         * in caso di un carrello di avvisi di pagamento gli avvisi di pagamento saranno
-         * unicamente comunicati al nodo "a nuovo" (activatePaymentNotice) mentre nel
-         * caso di un solo pagamento si avrà la dualità sulla base dell'avviso di
-         * pagamento di cui effettuare il pagamento
+        /*
+         * When input transaction contains multiple payment notices (cart request) then
+         * communication with Nodo component will be actuated only with the "new primitive" (activatePaymentNotice)
+         * so a transactionActivatedEvent is generated.
+         * If only one payment notice is contained into request then the generated event will be one of
+         * transactionActivated/transactionActivationRequested based on the paymentToken presence
          */
         if (paymentRequestInfoSize == 1) {
             generateTransactionActivatedEvent = isValidPaymentToken(paymentRequestsInfo.get(0).paymentToken());
@@ -270,10 +271,12 @@ public class TransactionActivateHandler
                                                                          String transactionId,
                                                                          String email
     ) {
-        TransactionActivatedData data = new TransactionActivatedData();
-        data.setEmail(email);
         List<NoticeCode> noticeCodes = toNoticeCodeList(paymentRequestsInfo);
-        data.setNoticeCodes(noticeCodes);
+        TransactionActivatedData data = new TransactionActivatedData(
+                email,
+                noticeCodes,
+                null,
+                null);
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId,
