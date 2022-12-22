@@ -54,7 +54,8 @@ public class NodoOperations {
                                                            PaymentRequestInfo paymentRequestInfo,
                                                            String paymentContextCode,
                                                            Integer amount,
-                                                           boolean multiplePaymentNotices
+                                                           boolean multiplePaymentNotices,
+                                                           String transactionId
     ) {
         RptId rptId = paymentRequestInfo.id();
         Boolean isNM3 = paymentRequestInfo.isNM3();
@@ -78,13 +79,15 @@ public class NodoOperations {
                                 ? nodoActivationForNM3PaymentRequest(
                                         rptId,
                                         amountAsBigDecimal,
-                                        idempotencyKey.rawValue()
+                                        idempotencyKey.rawValue(),
+                                        transactionId
                                 )
                                 : nodoActivationForUnknownPaymentRequest(
                                         rptId,
                                         amountAsBigDecimal,
                                         idempotencyKey.rawValue(),
-                                        paymentContextCode
+                                        paymentContextCode,
+                                        transactionId
                                 )
                 )
                 .flatMap(
@@ -107,7 +110,8 @@ public class NodoOperations {
     private Mono<String> nodoActivationForNM3PaymentRequest(
                                                             RptId rptId,
                                                             BigDecimal amount,
-                                                            String idempotencyKey
+                                                            String idempotencyKey,
+                                                            String transactionId
     ) {
         CtQrCode qrCode = new CtQrCode();
         qrCode.setFiscalCode(rptId.getFiscalCode());
@@ -121,7 +125,8 @@ public class NodoOperations {
                 .flatMap(
                         activatePaymentNoticeRes -> {
                             log.info(
-                                    "Nodo activation for NM3 payment. RPT id: [{}] response outcome: [{}]",
+                                    "Nodo activation for NM3 payment. Transaction id: [{}] RPT id: [{}] response outcome: [{}]",
+                                    transactionId,
                                     rptId,
                                     activatePaymentNoticeRes.getOutcome()
                             );
@@ -139,7 +144,8 @@ public class NodoOperations {
                                                                 RptId rptId,
                                                                 BigDecimal amount,
                                                                 String idempotencyKey,
-                                                                String paymentContextCode
+                                                                String paymentContextCode,
+                                                                String transactionId
     ) {
         NodoAttivaRPT nodoAttivaRPTReq = nodoConfig.baseNodoAttivaRPTRequest();
         NodoTipoCodiceIdRPT nodoTipoCodiceIdRPT = nodoUtilities.getCodiceIdRpt(rptId);
@@ -160,7 +166,8 @@ public class NodoOperations {
                                             .equals(nodoAttivaRPTRResponse.getFault().getFaultCode());
 
                             log.info(
-                                    "Esito nodo attiva RPT. RPT id: [{}] outcome: [{}], is multibeneficiary response code: [{}]",
+                                    "Esito nodo attiva RPT. Transaction id: [{}] RPT id: [{}] outcome: [{}], is multibeneficiary response code: [{}]",
+                                    transactionId,
                                     rptId,
                                     outcome,
                                     isNM3GivenAttivaRPTRisposta
@@ -169,7 +176,8 @@ public class NodoOperations {
                                 return nodoActivationForNM3PaymentRequest(
                                         rptId,
                                         amount,
-                                        idempotencyKey
+                                        idempotencyKey,
+                                        transactionId
                                 );
                             }
 

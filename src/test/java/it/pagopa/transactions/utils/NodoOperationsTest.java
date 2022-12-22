@@ -59,7 +59,7 @@ class NodoOperationsTest {
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
         String paymentContextCode = UUID.randomUUID().toString();
-
+        String transactionId = UUID.randomUUID().toString();
         String paName = "paName";
         String paTaxCode = "77777777777";
         String description = "Description";
@@ -109,7 +109,8 @@ class NodoOperationsTest {
                         paymentRequestInfo,
                         paymentContextCode,
                         amount,
-                        false
+                        false,
+                        transactionId
                 )
                 .block();
 
@@ -129,7 +130,7 @@ class NodoOperationsTest {
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
         String paymentContextCode = UUID.randomUUID().toString();
-
+        String transactionId = UUID.randomUUID().toString();
         String paName = "paName";
         String paTaxCode = "77777777777";
         String description = "Description";
@@ -179,7 +180,8 @@ class NodoOperationsTest {
                         paymentRequestInfo,
                         paymentContextCode,
                         amount,
-                        false
+                        false,
+                        transactionId
                 );
 
         Assert.assertThrows(
@@ -198,7 +200,7 @@ class NodoOperationsTest {
         String paymentToken = UUID.randomUUID().toString();
         String paymentContextCode = UUID.randomUUID().toString();
         String paymentNotice = "302000100000009424";
-
+        String transactionId = UUID.randomUUID().toString();
         String paName = "paName";
         String paTaxCode = "77777777777";
         String description = "Description";
@@ -280,7 +282,8 @@ class NodoOperationsTest {
                         paymentRequestInfo,
                         paymentContextCode,
                         amount,
-                        false
+                        false,
+                        transactionId
                 )
                 .block();
 
@@ -301,7 +304,7 @@ class NodoOperationsTest {
         String paymentToken = UUID.randomUUID().toString();
         String paymentContextCode = UUID.randomUUID().toString();
         String paymentNotice = "302000100000009424";
-
+        String transactionId = UUID.randomUUID().toString();
         String paName = "paName";
         String paTaxCode = "77777777777";
         String description = "Description";
@@ -366,7 +369,8 @@ class NodoOperationsTest {
                         paymentRequestInfo,
                         paymentContextCode,
                         amount,
-                        false
+                        false,
+                        transactionId
                 );
 
         Assert.assertThrows(
@@ -385,7 +389,7 @@ class NodoOperationsTest {
         String paymentToken = UUID.randomUUID().toString();
         String paymentContextCode = UUID.randomUUID().toString();
         String paymentNotice = "302000100000009424";
-
+        String transactionId = UUID.randomUUID().toString();
         String paName = "paName";
         String paTaxCode = "77777777777";
         String description = "Description";
@@ -453,7 +457,8 @@ class NodoOperationsTest {
                         paymentRequestInfo,
                         paymentContextCode,
                         amount,
-                        false
+                        false,
+                        transactionId
                 )
                 .block();
 

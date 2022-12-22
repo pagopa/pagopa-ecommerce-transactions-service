@@ -75,7 +75,7 @@ public class TransactionActivateHandler
     public Mono<Tuple3<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>, SessionDataDto>> handle(
                                                                                                                            TransactionActivateCommand command
     ) {
-
+        final String transactionId = UUID.randomUUID().toString();
         final NewTransactionRequestDto newTransactionRequestDto = command.getData();
         final List<PaymentNoticeInfoDto> paymentNotices = newTransactionRequestDto.getPaymentNotices();
         final boolean multiplePaymentNotices = paymentNotices.size() > 1;
@@ -117,7 +117,8 @@ public class TransactionActivateHandler
                                                             partialPaymentRequestInfo,
                                                             paymentNotice.getPaymentContextCode(),
                                                             paymentNotice.getAmount(),
-                                                            multiplePaymentNotices
+                                                            multiplePaymentNotices,
+                                                            transactionId
                                                     )
                                                     .doOnSuccess(
                                                             p -> log.info(
@@ -142,7 +143,6 @@ public class TransactionActivateHandler
                         .collectList()
                         .flatMap(paymentRequestInfos -> {
                             // TODO change Session module call to handle multiple payment notices
-                            String transactionId = UUID.randomUUID().toString();
                             PaymentRequestInfo paymentRequestInfo = paymentRequestInfos.get(0);
                             SessionRequestDto sessionRequest = new SessionRequestDto()
                                     .email(newTransactionRequestDto.getEmail())
@@ -159,16 +159,16 @@ public class TransactionActivateHandler
                                     List<PaymentRequestInfo> paymentRequestsInfo = args.getT2();
                                     return shouldGenerateTransactionActivatedEvent(paymentRequestsInfo)
                                             ? Mono.just(
-                                            Tuples.of(
-                                                    newTransactionActivatedEvent(
-                                                            paymentRequestsInfo,
-                                                            sessionDataDto.getTransactionId(),
-                                                            sessionDataDto.getEmail()
-                                                    ),
-                                                    Mono.empty(),
-                                                    sessionDataDto
+                                                    Tuples.of(
+                                                            newTransactionActivatedEvent(
+                                                                    paymentRequestsInfo,
+                                                                    sessionDataDto.getTransactionId(),
+                                                                    sessionDataDto.getEmail()
+                                                            ),
+                                                            Mono.empty(),
+                                                            sessionDataDto
+                                                    )
                                             )
-                                    )
                                             : Mono.just(
                                                     Tuples.of(
                                                             Mono.empty(),
@@ -215,10 +215,12 @@ public class TransactionActivateHandler
         boolean generateTransactionActivatedEvent = true;
         /*
          * When input transaction contains multiple payment notices (cart request) then
-         * communication with Nodo component will be actuated only with the "new primitive" (activatePaymentNotice)
-         * so a transactionActivatedEvent is generated.
-         * If only one payment notice is contained into request then the generated event will be one of
-         * transactionActivated/transactionActivationRequested based on the paymentToken presence
+         * communication with Nodo component will be actuated only with the
+         * "new primitive" (activatePaymentNotice) so a transactionActivatedEvent is
+         * generated. If only one payment notice is contained into request then the
+         * generated event will be one of
+         * transactionActivated/transactionActivationRequested based on the paymentToken
+         * presence
          */
         if (paymentRequestInfoSize == 1) {
             generateTransactionActivatedEvent = isValidPaymentToken(paymentRequestsInfo.get(0).paymentToken());
@@ -276,7 +278,8 @@ public class TransactionActivateHandler
                 email,
                 noticeCodes,
                 null,
-                null);
+                null
+        );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId,
