@@ -74,14 +74,15 @@ class TransactionsControllerTest {
         newTransactionRequestDto.setEmail(EMAIL);
 
         NewTransactionResponseDto response = new NewTransactionResponseDto();
-        PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
 
+        PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
         paymentInfoDto.setAmount(10);
-        paymentInfoDto.setAuthToken("token");
         paymentInfoDto.setReason("Reason");
         paymentInfoDto.setPaymentToken("payment_token");
         paymentInfoDto.setRptId(RPTID);
+
         response.addPaymentsItem(paymentInfoDto);
+        response.setAuthToken("token");
 
         Mockito.lenient().when(transactionsService.newTransaction(newTransactionRequestDto))
                 .thenReturn(Mono.just(response));
@@ -103,10 +104,10 @@ class TransactionsControllerTest {
         TransactionInfoDto response = new TransactionInfoDto();
         PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
         paymentInfoDto.setAmount(10);
-        paymentInfoDto.setAuthToken("token");
         paymentInfoDto.setReason("Reason");
         paymentInfoDto.setPaymentToken("payment_token");
         response.addPaymentsItem(paymentInfoDto);
+        response.setAuthToken("token");
 
         String paymentToken = UUID.randomUUID().toString();
 
@@ -181,9 +182,9 @@ class TransactionsControllerTest {
                 .addPaymentsItem(
                         new PaymentInfoDto()
                                 .amount(100)
-                                .authToken("authToken")
                                 .paymentToken(paymentToken)
                 )
+                .authToken("authToken")
                 .status(TransactionStatusDto.AUTHORIZED);
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()

@@ -35,9 +35,8 @@ class TransactionProjectionHandlerTest {
         UUID transactionUUID = UUID.randomUUID();
 
         TransactionActivationRequestedData transactionActivationRequestedData = new TransactionActivationRequestedData();
-        transactionActivationRequestedData.setPaymentContextCode("ccpcode");
         transactionActivationRequestedData.setEmail("email@test.it");
-        NoticeCode noticeCode = new NoticeCode(null, null, "reason", 1);
+        NoticeCode noticeCode = new NoticeCode(null, null, "reason", 1, null);
         transactionActivationRequestedData.setNoticeCodes(Arrays.asList(noticeCode));
         transactionActivationRequestedData.setFaultCode("faultCode");
         transactionActivationRequestedData.setFaultCodeString("faultCodeString");
@@ -49,7 +48,8 @@ class TransactionProjectionHandlerTest {
                                 null,
                                 "77777777777302016723749670035",
                                 "reason",
-                                1
+                                1,
+                                "ccpcode"
                         )
                 ),
                 transactionActivationRequestedData
@@ -62,8 +62,7 @@ class TransactionProjectionHandlerTest {
                         transactionActivationRequestedData.getNoticeCodes(),
                         "foo@example.com",
                         "faultCode",
-                        "faultCodeString",
-                        "paymentContextCode"
+                        "faultCodeString"
                 )
         );
 
@@ -80,12 +79,22 @@ class TransactionProjectionHandlerTest {
         );
         Email email = new Email(transactionActivationRequestedData.getEmail());
         ZonedDateTime creationDate = ZonedDateTime.now();
-
+        PaymentContextCode paymentContextCode = new PaymentContextCode(
+                transactionActivationRequestedData.getNoticeCodes().get(0).getPaymentContextCode()
+        );
         try (
                 MockedStatic<ZonedDateTime> zonedDateTime = Mockito.mockStatic(ZonedDateTime.class)) {
             TransactionActivationRequested expected = new TransactionActivationRequested(
                     transactionId,
-                    Arrays.asList(new it.pagopa.ecommerce.commons.domain.NoticeCode(null, rptId, amount, description)),
+                    Arrays.asList(
+                            new it.pagopa.ecommerce.commons.domain.NoticeCode(
+                                    paymentToken,
+                                    rptId,
+                                    amount,
+                                    description,
+                                    paymentContextCode
+                            )
+                    ),
                     email,
                     creationDate,
                     TransactionStatusDto.ACTIVATION_REQUESTED

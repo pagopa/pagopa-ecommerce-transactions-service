@@ -31,10 +31,11 @@ public class TransactionsActivationRequestedProjectionHandler
         List<NoticeCode> noticeCodeList = transactionActivationRequestedEvent.getNoticeCodes().stream()
                 .map(
                         noticeCode -> new NoticeCode(
-                                null,
+                                new PaymentToken(null),
                                 new RptId(noticeCode.getRptId()),
                                 new TransactionAmount(noticeCode.getAmount()),
-                                new TransactionDescription(noticeCode.getDescription())
+                                new TransactionDescription(noticeCode.getDescription()),
+                                new PaymentContextCode(null)
                         )
                 ).toList();
         Email email = new Email(transactionActivationRequestedEvent.getData().getEmail());

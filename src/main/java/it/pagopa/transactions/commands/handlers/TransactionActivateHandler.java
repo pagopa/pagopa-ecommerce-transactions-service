@@ -229,6 +229,8 @@ public class TransactionActivateHandler
                                                                                              List<PaymentRequestInfo> paymentRequestsInfo,
                                                                                              String transactionId,
                                                                                              String email,
+                                                                                             String transactionId,
+                                                                                             String rptId,
                                                                                              String paymentContextCode
     ) {
         // TODO qui il payment context code deve essere UNO per ogni pagamento, quindi
