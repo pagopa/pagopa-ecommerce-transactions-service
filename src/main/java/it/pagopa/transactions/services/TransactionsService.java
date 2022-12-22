@@ -144,7 +144,7 @@ public class TransactionsService {
                                 .feeTotal(transaction.getFeeTotal())
                                 .origin(
                                         TransactionInfoDto.OriginEnum.valueOf(
-                                                transaction.getOrigin().name()
+                                                transaction.getOrigin().toString()
                                         )
                                 )
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
