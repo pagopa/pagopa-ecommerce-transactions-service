@@ -3,8 +3,8 @@ package it.pagopa.transactions.services;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.Transaction;
 import it.pagopa.ecommerce.commons.documents.*;
-import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.NoticeCode;
+import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PSPsResponseDto;
@@ -39,7 +39,11 @@ import reactor.test.StepVerifier;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -122,17 +126,26 @@ public class TransactionServiceTests {
     final String TRANSACION_ID = "833d303a-f857-11ec-b939-0242ac120002";
 
     @Test
-    void getTransactionReturnsTransactionData() {
+    void getTransactionReturnsTransactionDataOriginProvided() {
 
-        final Transaction transaction = new Transaction(
-                TRANSACION_ID,
+        it.pagopa.ecommerce.commons.documents.NoticeCode noticeCode = new it.pagopa.ecommerce.commons.documents.NoticeCode(
                 PAYMENT_TOKEN,
                 "77777777777111111111111111111",
                 "reason",
-                100,
-                "foo@example.com",
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED
+                100
         );
+
+        final Transaction transaction = new Transaction(
+                TRANSACION_ID,
+                List.of(noticeCode),
+                100,
+                0,
+                "foo@example.com",
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
+                Transaction.OriginType.CHECKOUT,
+                ZonedDateTime.now().toString()
+        );
+
         final TransactionInfoDto expected = new TransactionInfoDto()
                 .transactionId(TRANSACION_ID)
                 .addPaymentsItem(
@@ -140,9 +153,11 @@ public class TransactionServiceTests {
                                 .amount(transaction.getNoticeCodes().get(0).getAmount())
                                 .reason("reason")
                                 .paymentToken(PAYMENT_TOKEN)
-                                .authToken(null)
                                 .rptId("77777777777111111111111111111")
                 )
+                .origin(TransactionInfoDto.OriginEnum.CHECKOUT)
+                .amountTotal(100)
+                .feeTotal(0)
                 .status(TransactionStatusDto.ACTIVATED);
 
         when(repository.findById(TRANSACION_ID)).thenReturn(Mono.just(transaction));
@@ -355,7 +370,6 @@ public class TransactionServiceTests {
                                         .reason(noticeCode.getDescription())
                                         .paymentToken(noticeCode.getPaymentToken())
                                         .rptId(noticeCode.getRptId())
-                                        .authToken(null)
                         ).toList()
                 )
                 .status(TransactionStatusDto.CLOSED);
@@ -484,7 +498,6 @@ public class TransactionServiceTests {
                                         .reason(noticeCode.getDescription())
                                         .paymentToken(noticeCode.getPaymentToken())
                                         .rptId(noticeCode.getRptId())
-                                        .authToken(null)
                         ).toList()
                 )
                 .status(TransactionStatusDto.NOTIFIED);

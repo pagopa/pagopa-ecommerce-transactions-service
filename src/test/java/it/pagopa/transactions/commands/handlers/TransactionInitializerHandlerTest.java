@@ -167,9 +167,9 @@ class TransactionInitializerHandlerTest {
                                         .amount(1)
                                         .rptId(TEST_RPTID)
                                         .paymentToken(TEST_TOKEN)
-                                        .authToken(TEST_TOKEN)
                                         .reason("")
                         )
+                        .authToken(TEST_TOKEN)
         );
 
         TransactionsProjection<NewTransactionResponseDto> differentTransactionsProjection = new TransactionsProjection<>();
@@ -180,9 +180,9 @@ class TransactionInitializerHandlerTest {
                                         .amount(1)
                                         .rptId(TEST_RPTID)
                                         .paymentToken(TEST_TOKEN)
-                                        .authToken(TEST_TOKEN)
                                         .reason("")
                         )
+                        .authToken(TEST_TOKEN)
         );
 
         differentTransactionsProjection.setRptId(new RptId(TEST_RPTID));

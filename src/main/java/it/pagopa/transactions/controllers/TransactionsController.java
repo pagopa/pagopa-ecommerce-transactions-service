@@ -56,7 +56,10 @@ public class TransactionsController implements TransactionsApi {
                 .flatMap(ntr -> {
                     log.info(
                             "newTransaction rptIDs {} ",
-                            ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).toList()
+                            String.join(
+                                    ",",
+                                    ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).toList()
+                            )
                     );
                     return transactionsService.newTransaction(ntr);
                 })
