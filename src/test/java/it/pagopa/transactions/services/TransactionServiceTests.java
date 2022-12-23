@@ -14,13 +14,12 @@ import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.RangeDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
-import it.pagopa.transactions.commands.TransactionActivateResultCommand;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.*;
+import it.pagopa.transactions.exceptions.NotImplementedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.*;
-import it.pagopa.transactions.repositories.TransactionsActivationRequestedEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
@@ -41,7 +40,6 @@ import java.time.Month;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -113,9 +111,6 @@ public class TransactionServiceTests {
     @MockBean
     private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
 
-    @MockBean
-    private TransactionsActivationRequestedEventStoreRepository transactionsActivationRequestedEventStoreRepository;
-
     @Captor
     private ArgumentCaptor<TransactionRequestAuthorizationCommand> commandArgumentCaptor;
 
@@ -132,7 +127,8 @@ public class TransactionServiceTests {
                 PAYMENT_TOKEN,
                 "77777777777111111111111111111",
                 "reason",
-                100
+                100,
+                ""
         );
 
         final Transaction transaction = new Transaction(
@@ -545,141 +541,17 @@ public class TransactionServiceTests {
     }
 
     @Test
-    void shouldThrowTransacrionNotFoundExceptionWhenNotInTransactionRepository() {
+    void shouldThrowTransacrionNotImplementedExceptionWhenNotInTransactionRepository() {
 
         /** preconditions */
 
         ActivationResultRequestDto activationResultRequestDto = new ActivationResultRequestDto()
                 .paymentToken(UUID.randomUUID().toString());
 
-        Mockito.when(
-                transactionsActivationRequestedEventStoreRepository
-                        .findByEventCodeAndData_PaymentContextCode(any(), any())
-        )
-                .thenReturn(Mono.empty());
-
         /** test */
         StepVerifier.create(transactionsService.activateTransaction(TRANSACION_ID, activationResultRequestDto))
-                .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
+                .expectErrorMatches(error -> error instanceof NotImplementedException)
                 .verify();
-
-    }
-
-    @Test
-    void shouldReturnTransactionActivationOk() {
-        /** preconditions */
-
-        ActivationResultRequestDto activationResultRequestDto = new ActivationResultRequestDto()
-                .paymentToken(PAYMENT_TOKEN);
-
-        Transaction transaction = new Transaction(
-                TRANSACION_ID,
-                PAYMENT_TOKEN,
-                "77777777777111111111111111111",
-                "Description",
-                100,
-                "foo@example.com",
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATION_REQUESTED
-        );
-
-        RptId rtpId = new RptId("77777777777111111111111111111");
-
-        String faultCode = "faultCode";
-        String faultCodeString = "faultCodeString";
-
-        it.pagopa.ecommerce.commons.domain.TransactionActivated transactionActivated = new it.pagopa.ecommerce.commons.domain.TransactionActivated(
-                new TransactionId(UUID.fromString(TRANSACION_ID)),
-                Arrays.asList(
-                        new NoticeCode(
-                                new PaymentToken(PAYMENT_TOKEN),
-                                rtpId,
-                                new TransactionAmount(100),
-                                new TransactionDescription("Description"),
-                                new PaymentContextCode(null)
-                        )
-                ),
-                new Email("foo@example.com"),
-                faultCode,
-                faultCodeString,
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_REQUESTED
-        );
-
-        TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
-                TRANSACION_ID,
-                Arrays.asList(
-                        new it.pagopa.ecommerce.commons.documents.NoticeCode(
-                                PAYMENT_TOKEN,
-                                "77777777777111111111111111111",
-                                null,
-                                null,
-                                null
-                        )
-                ),
-                new TransactionActivationRequestedData(
-                        transactionActivated.getNoticeCodes().stream()
-                                .map(
-                                        noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
-                                                PAYMENT_TOKEN,
-                                                "77777777777111111111111111111",
-                                                null,
-                                                noticeCode.transactionAmount().value(),
-                                                null
-                                        )
-                                ).toList(),
-                        transactionActivated.getEmail().value(),
-                        null,
-                        null
-                )
-        );
-
-        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                TRANSACION_ID,
-                Arrays.asList(
-                        new it.pagopa.ecommerce.commons.documents.NoticeCode(
-                                PAYMENT_TOKEN,
-                                "77777777777111111111111111111",
-                                null,
-                                null,
-                                null
-                        )
-                ),
-                new TransactionActivatedData(
-                        transactionActivated.getEmail().value(),
-                        transactionActivated.getNoticeCodes().stream()
-                                .map(
-                                        noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
-                                                PAYMENT_TOKEN,
-                                                "77777777777111111111111111111",
-                                                null,
-                                                noticeCode.transactionAmount().value(),
-                                                null
-                                        )
-                                ).toList(),
-
-                        transactionActivated.getTransactionActivatedData().getFaultCode(),
-                        transactionActivated.getTransactionActivatedData().getFaultCodeString()
-                )
-        );
-
-        Mockito.when(
-                transactionsActivationRequestedEventStoreRepository
-                        .findByEventCodeAndData_PaymentContextCode(any(), any())
-        ).thenReturn(Mono.just(transactionActivationRequestedEvent));
-        Mockito.when(transactionActivateResultHandler.handle(Mockito.any(TransactionActivateResultCommand.class)))
-                .thenReturn(Mono.just(transactionActivatedEvent));
-        Mockito.when(transactionsActivationProjectionHandler.handle(Mockito.any(TransactionActivatedEvent.class)))
-                .thenReturn(Mono.just(transactionActivated));
-
-        /** test */
-
-        ActivationResultResponseDto activationResultResponseDto = transactionsService
-                .activateTransaction(TRANSACION_ID, activationResultRequestDto).block();
-
-        assertEquals(ActivationResultResponseDto.OutcomeEnum.OK, activationResultResponseDto.getOutcome());
-        Mockito.verify(transactionActivateResultHandler, Mockito.times(1))
-                .handle(Mockito.any(TransactionActivateResultCommand.class));
-        Mockito.verify(transactionsActivationProjectionHandler, Mockito.times(1))
-                .handle(Mockito.any(TransactionActivatedEvent.class));
 
     }
 

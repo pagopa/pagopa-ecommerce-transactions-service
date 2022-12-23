@@ -9,6 +9,7 @@ import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
+import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -18,12 +19,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
 import java.time.Duration;
-import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -45,6 +49,9 @@ public class TransactionActivateHandler
     private final QueueAsyncClient transactionActivatedQueueAsyncClient;
 
     private final Integer paymentTokenTimeout;
+
+    @Value("${nodo.parallelRequests}")
+    private int nodoParallelRequests;
 
     @Autowired
     public TransactionActivateHandler(
@@ -68,75 +75,76 @@ public class TransactionActivateHandler
     public Mono<Tuple3<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>, SessionDataDto>> handle(
                                                                                                                            TransactionActivateCommand command
     ) {
-        final RptId rptId = command.getRptId();
+        final String transactionId = UUID.randomUUID().toString();
         final NewTransactionRequestDto newTransactionRequestDto = command.getData();
-        final String paymentContextCode = newTransactionRequestDto.getPaymentNotices().get(0).getPaymentContextCode();
-
-        return getPaymentRequestInfoFromCache(rptId)
-                .doOnNext(
-                        paymentRequestInfoFromCache -> log.info(
-                                "PaymentRequestInfo cache hit for {}: {}",
-                                rptId,
-                                paymentRequestInfoFromCache != null
-                        )
-                )
-                .switchIfEmpty(
-                        Mono.defer(
-                                () -> Mono.just(
-                                        new PaymentRequestInfo(
-                                                rptId,
-                                                null,
-                                                null,
-                                                null,
-                                                null,
-                                                null,
-                                                false,
-                                                null,
-                                                null
+        final List<PaymentNoticeInfoDto> paymentNotices = newTransactionRequestDto.getPaymentNotices();
+        final boolean multiplePaymentNotices = paymentNotices.size() > 1;
+        final String paymentContextCode = paymentNotices.get(0).getPaymentContextCode();
+        log.info(
+                "Nodo parallel processed requests : [{}]. Multiple payment notices: [{}]",
+                nodoParallelRequests,
+                multiplePaymentNotices
+        );
+        return Mono.defer(
+                () -> Flux.fromIterable(paymentNotices)
+                        .parallel(nodoParallelRequests)
+                        .runOn(Schedulers.parallel())
+                        .flatMap(
+                                paymentNotice -> Mono.just(
+                                        Tuples.of(
+                                                paymentNotice,
+                                                getPaymentRequestInfoFromCache(new RptId(paymentNotice.getRptId()))
                                         )
                                 )
-                                        .doOnSuccess(x -> log.info("PaymentRequestInfo cache miss for {}", rptId))
+                        ).flatMap(
+                                cacheResult -> {
+                                    PaymentNoticeInfoDto paymentNotice = cacheResult.getT1();
+                                    PaymentRequestInfo partialPaymentRequestInfo = cacheResult.getT2();
+                                    Boolean isValidPaymentToken = isValidPaymentToken(
+                                            partialPaymentRequestInfo.paymentToken()
+                                    );
+                                    return Boolean.TRUE.equals(isValidPaymentToken)
+                                            ? Mono.just(partialPaymentRequestInfo)
+                                                    .doOnSuccess(
+                                                            p -> log.info(
+                                                                    "PaymentRequestInfo cache hit for {} with valid paymentToken {}",
+                                                                    p.id(),
+                                                                    p.paymentToken()
+                                                            )
+                                                    )
+                                            : nodoOperations
+                                                    .activatePaymentRequest(
+                                                            partialPaymentRequestInfo,
+                                                            paymentNotice.getPaymentContextCode(),
+                                                            paymentNotice.getAmount(),
+                                                            multiplePaymentNotices,
+                                                            transactionId
+                                                    )
+                                                    .doOnSuccess(
+                                                            p -> log.info(
+                                                                    "Nodo activation for {} with paymentToken {}",
+                                                                    p.id(),
+                                                                    p.paymentToken()
+                                                            )
+                                                    );
+                                }
                         )
-                )
-                .flatMap(
-                        partialPaymentRequestInfo -> {
-                            final Boolean isValidPaymentToken = isValidPaymentToken(
-                                    partialPaymentRequestInfo.paymentToken()
-                            );
-                            return Boolean.TRUE.equals(isValidPaymentToken)
-                                    ? Mono.just(partialPaymentRequestInfo)
-                                            .doOnSuccess(
-                                                    p -> log.info(
-                                                            "PaymentRequestInfo cache hit for {} with valid paymentToken {}",
-                                                            rptId,
-                                                            p.paymentToken()
-                                                    )
-                                            )
-                                    : nodoOperations
-                                            .activatePaymentRequest(partialPaymentRequestInfo, newTransactionRequestDto)
-                                            .doOnSuccess(
-                                                    p -> log.info(
-                                                            "Nodo activation for {} with paymentToken {}",
-                                                            rptId,
-                                                            p.paymentToken()
-                                                    )
-                                            );
-                        }
-                )
-                .doOnNext(
-                        paymentRequestInfo -> {
-                            log.info(
-                                    "Cache Nodo activation info for {} with paymentToken {}",
-                                    rptId,
-                                    paymentRequestInfo.paymentToken()
-                            );
-                            paymentRequestsInfoRepository.save(paymentRequestInfo);
-                        }
-                )
-                .flatMap(
-                        paymentRequestInfo -> {
-                            final String transactionId = UUID.randomUUID().toString();
-                            final SessionRequestDto sessionRequest = new SessionRequestDto()
+                        .doOnNext(
+                                paymentRequestInfo -> {
+                                    log.info(
+                                            "Cache Nodo activation info for {} with paymentToken {}",
+                                            paymentRequestInfo.id(),
+                                            paymentRequestInfo.paymentToken()
+                                    );
+                                    paymentRequestsInfoRepository.save(paymentRequestInfo);
+                                }
+                        )
+                        .sequential()
+                        .collectList()
+                        .flatMap(paymentRequestInfos -> {
+                            // TODO change Session module call to handle multiple payment notices
+                            PaymentRequestInfo paymentRequestInfo = paymentRequestInfos.get(0);
+                            SessionRequestDto sessionRequest = new SessionRequestDto()
                                     .email(newTransactionRequestDto.getEmail())
                                     .rptId(paymentRequestInfo.id().value())
                                     .transactionId(transactionId)
@@ -144,78 +152,114 @@ public class TransactionActivateHandler
 
                             return ecommerceSessionsClient
                                     .createSessionToken(sessionRequest)
-                                    .map(sessionData -> Tuples.of(sessionData, paymentRequestInfo));
-                        }
-                )
-                .flatMap(
-                        args -> {
-                            final SessionDataDto sessionDataDto = args.getT1();
-                            final PaymentRequestInfo paymentRequestInfo = args.getT2();
-                            final String paymentToken = paymentRequestInfo.paymentToken();
-                            return isValidPaymentToken(paymentToken)
-                                    ? Mono.just(
-                                            Tuples.of(
-                                                    newTransactionActivatedEvent(
-                                                            paymentRequestInfo.amount(),
-                                                            paymentRequestInfo.description(),
-                                                            sessionDataDto.getEmail(),
-                                                            sessionDataDto.getTransactionId(),
-                                                            sessionDataDto.getRptId(),
-                                                            paymentToken
-                                                    ),
-                                                    Mono.empty(),
-                                                    sessionDataDto
+                                    .map(sessionData -> Tuples.of(sessionData, paymentRequestInfos));
+                        }).flatMap(
+                                args -> {
+                                    SessionDataDto sessionDataDto = args.getT1();
+                                    List<PaymentRequestInfo> paymentRequestsInfo = args.getT2();
+                                    return shouldGenerateTransactionActivatedEvent(paymentRequestsInfo)
+                                            ? Mono.just(
+                                                    Tuples.of(
+                                                            newTransactionActivatedEvent(
+                                                                    paymentRequestsInfo,
+                                                                    sessionDataDto.getTransactionId(),
+                                                                    sessionDataDto.getEmail()
+                                                            ),
+                                                            Mono.empty(),
+                                                            sessionDataDto
+                                                    )
                                             )
-                                    )
-                                    : Mono.just(
-                                            Tuples.of(
-                                                    Mono.empty(),
-                                                    newTransactionActivationRequestedEvent(
-                                                            paymentRequestInfo.amount(),
-                                                            paymentRequestInfo.description(),
-                                                            sessionDataDto.getEmail(),
-                                                            sessionDataDto.getTransactionId(),
-                                                            sessionDataDto.getRptId(),
-                                                            paymentContextCode
-                                                    ),
-                                                    sessionDataDto
-                                            )
-                                    );
-                        }
-                );
+                                            : Mono.just(
+                                                    Tuples.of(
+                                                            Mono.empty(),
+                                                            newTransactionActivationRequestedEvent(
+                                                                    paymentRequestsInfo,
+                                                                    sessionDataDto.getTransactionId(),
+                                                                    sessionDataDto.getEmail(),
+                                                                    paymentContextCode
+                                                            ),
+                                                            sessionDataDto
+                                                    )
+                                            );
+                                }
+                        )
+
+        );
     }
 
-    private Mono<PaymentRequestInfo> getPaymentRequestInfoFromCache(RptId rptId) {
+    private PaymentRequestInfo getPaymentRequestInfoFromCache(RptId rptId) {
+        Optional<PaymentRequestInfo> paymentInfofromCache = paymentRequestsInfoRepository.findById(rptId);
+        log.info("PaymentRequestInfo cache hit for {}: {}", rptId, paymentInfofromCache.isPresent());
+        return paymentInfofromCache.orElseGet(
+                () -> new PaymentRequestInfo(
+                        rptId,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        false,
+                        null,
+                        null
 
-        return paymentRequestsInfoRepository.findById(rptId).map(Mono::just).orElseGet(Mono::empty);
+                )
+        );
     }
 
     private boolean isValidPaymentToken(String paymentToken) {
         return paymentToken != null && !paymentToken.isBlank();
     }
 
+    private boolean shouldGenerateTransactionActivatedEvent(List<PaymentRequestInfo> paymentRequestsInfo) {
+        int paymentRequestInfoSize = paymentRequestsInfo.size();
+        boolean generateTransactionActivatedEvent = true;
+        /*
+         * When input transaction contains multiple payment notices (cart request) then
+         * communication with Nodo component will be actuated only with the
+         * "new primitive" (activatePaymentNotice) so a transactionActivatedEvent is
+         * generated. If only one payment notice is contained into request then the
+         * generated event will be one of
+         * transactionActivated/transactionActivationRequested based on the paymentToken
+         * presence
+         */
+        if (paymentRequestInfoSize == 1) {
+            generateTransactionActivatedEvent = isValidPaymentToken(paymentRequestsInfo.get(0).paymentToken());
+        }
+        log.info(
+                "Input payment notices: [{}] generate new transaction activated event: [{}]",
+                paymentRequestInfoSize,
+                generateTransactionActivatedEvent
+        );
+        return generateTransactionActivatedEvent;
+    }
+
     private Mono<TransactionActivationRequestedEvent> newTransactionActivationRequestedEvent(
-                                                                                             Integer amount,
-                                                                                             String description,
-                                                                                             String email,
+                                                                                             List<PaymentRequestInfo> paymentRequestsInfo,
                                                                                              String transactionId,
-                                                                                             String rptId,
+                                                                                             String email,
                                                                                              String paymentContextCode
     ) {
-
         TransactionActivationRequestedData data = new TransactionActivationRequestedData();
         data.setEmail(email);
-        NoticeCode noticeCode = new NoticeCode(null, rptId, description, amount, paymentContextCode);
-        data.setNoticeCodes(Arrays.asList(noticeCode));
+        PaymentRequestInfo paymentRequestInfo = paymentRequestsInfo.get(0);
+        List<NoticeCode> noticeCodes = List.of(
+                new NoticeCode(
+                        null,
+                        paymentRequestInfo.id().value(),
+                        paymentRequestInfo.description(),
+                        paymentRequestInfo.amount(),
+                        paymentContextCode
+                )
+        );
+        data.setNoticeCodes(noticeCodes);
         TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
                 transactionId,
-                Arrays.asList(noticeCode),
+                noticeCodes,
                 data
         );
 
         log.info(
-                "Generated event TRANSACTION_ACTIVATION_REQUESTED_EVENT for rptId {} and transactionId {}",
-                rptId,
+                "Generated event TRANSACTION_ACTIVATION_REQUESTED_EVENT for transactionId {}",
                 transactionId
         );
 
@@ -225,22 +269,21 @@ public class TransactionActivateHandler
     }
 
     private Mono<TransactionActivatedEvent> newTransactionActivatedEvent(
-                                                                         Integer amount,
-                                                                         String description,
-                                                                         String email,
+                                                                         List<PaymentRequestInfo> paymentRequestsInfo,
                                                                          String transactionId,
-                                                                         String rptId,
-                                                                         String paymentToken
+                                                                         String email
     ) {
-
-        TransactionActivatedData data = new TransactionActivatedData();
-        data.setEmail(email);
-        NoticeCode noticeCode = new NoticeCode(paymentToken, rptId, description, amount, null);
-        data.setNoticeCodes(Arrays.asList(noticeCode));
+        List<NoticeCode> noticeCodes = toNoticeCodeList(paymentRequestsInfo);
+        TransactionActivatedData data = new TransactionActivatedData(
+                email,
+                noticeCodes,
+                null,
+                null
+        );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId,
-                Arrays.asList(noticeCode),
+                noticeCodes,
                 data
         );
 
@@ -256,22 +299,28 @@ public class TransactionActivateHandler
                 .then(Mono.just(transactionActivatedEvent))
                 .doOnError(
                         exception -> log.error(
-                                "Error to generate event TRANSACTION_ACTIVATED_EVENT for rptId {} and transactionId {} - error {}",
-                                String.join(
-                                        ",",
-                                        transactionActivatedEvent.getNoticeCodes().stream().map(NoticeCode::getRptId)
-                                                .toList()
-                                ),
+                                "Error to generate event TRANSACTION_ACTIVATED_EVENT for transactionId {} - error {}",
                                 transactionActivatedEvent.getTransactionId(),
                                 exception.getMessage()
                         )
                 )
                 .doOnNext(
                         event -> log.info(
-                                "Generated event TRANSACTION_ACTIVATED_EVENT for rptId {} and transactionId {}",
-                                String.join(",", event.getNoticeCodes().stream().map(NoticeCode::getRptId).toList()),
+                                "Generated event TRANSACTION_ACTIVATED_EVENT for transactionId {}",
                                 event.getTransactionId()
                         )
                 );
+    }
+
+    private List<NoticeCode> toNoticeCodeList(List<PaymentRequestInfo> paymentRequestsInfo) {
+        return paymentRequestsInfo.stream().map(
+                paymentRequestInfo -> new NoticeCode(
+                        paymentRequestInfo.paymentToken(),
+                        paymentRequestInfo.id().value(),
+                        paymentRequestInfo.description(),
+                        paymentRequestInfo.amount(),
+                        null
+                )
+        ).toList();
     }
 }

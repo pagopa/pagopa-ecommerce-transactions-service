@@ -616,6 +616,23 @@ class TransactionsControllerTest {
         assertEquals("Invalid request: Some message", responseEntity.getBody().getDetail());
     }
 
+    @Test
+    void shouldReturnResponseEntityWithNotImplemented()
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+
+        Method method = TransactionsController.class.getDeclaredMethod(
+                "notImplemented",
+                NotImplementedException.class
+        );
+        method.setAccessible(true);
+
+        ResponseEntity<ProblemJsonDto> responseEntity = (ResponseEntity<ProblemJsonDto>) method
+                .invoke(transactionsController, new NotImplementedException("Method not implemented"));
+
+        assertEquals(HttpStatus.NOT_IMPLEMENTED, responseEntity.getStatusCode());
+        assertEquals("Method not implemented", responseEntity.getBody().getDetail());
+    }
+
     private static FaultBean faultBeanWithCode(String faultCode) {
         FaultBean fault = new FaultBean();
         fault.setFaultCode(faultCode);

@@ -11,12 +11,15 @@ import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.commands.*;
-import it.pagopa.transactions.commands.data.*;
+import it.pagopa.transactions.commands.data.AddUserReceiptData;
+import it.pagopa.transactions.commands.data.AuthorizationRequestData;
+import it.pagopa.transactions.commands.data.ClosureSendData;
+import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
 import it.pagopa.transactions.commands.handlers.*;
+import it.pagopa.transactions.exceptions.NotImplementedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
 import it.pagopa.transactions.projections.handlers.*;
-import it.pagopa.transactions.repositories.TransactionsActivationRequestedEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,11 +27,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -78,9 +77,6 @@ public class TransactionsService {
 
     @Autowired
     private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
-
-    @Autowired
-    private TransactionsActivationRequestedEventStoreRepository transactionEventStoreRepository;
 
     @CircuitBreaker(name = "node-backend")
     @Retry(name = "newTransaction")
@@ -148,7 +144,7 @@ public class TransactionsService {
                                 .feeTotal(transaction.getFeeTotal())
                                 .origin(
                                         TransactionInfoDto.OriginEnum.valueOf(
-                                                transaction.getOrigin().name()
+                                                transaction.getOrigin().toString()
                                         )
                                 )
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
@@ -497,67 +493,7 @@ public class TransactionsService {
                                                                  String paymentContextCode,
                                                                  ActivationResultRequestDto activationResultRequestDto
     ) {
-        return transactionEventStoreRepository
-                .findByEventCodeAndData_PaymentContextCode(
-                        TransactionEventCode.TRANSACTION_ACTIVATION_REQUESTED_EVENT,
-                        paymentContextCode
-                )
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(paymentContextCode)))
-                .map(
-                        activationRequestedEvent -> {
-                            TransactionActivationRequested transaction = new TransactionActivationRequested(
-                                    new TransactionId(UUID.fromString(activationRequestedEvent.getTransactionId())),
-                                    activationRequestedEvent.getNoticeCodes().stream().map(noticeCode -> {
-                                        var noticeCodeDataValue = activationRequestedEvent.getData().getNoticeCodes()
-                                                .stream().filter(
-                                                        noticeCodeData -> noticeCodeData.getRptId()
-                                                                .equals(noticeCode.getRptId())
-                                                ).findFirst().get();
-                                        return new NoticeCode(
-                                                null,
-                                                new RptId(noticeCode.getRptId()),
-                                                new TransactionAmount(noticeCodeDataValue.getAmount()),
-                                                new TransactionDescription(noticeCodeDataValue.getDescription()),
-                                                new PaymentContextCode(noticeCodeDataValue.getPaymentContextCode())
-                                        );
-                                    }).toList(),
-                                    new Email(activationRequestedEvent.getData().getEmail()),
-                                    it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATION_REQUESTED
-                            );
-                            ActivationResultData activationResultData = new ActivationResultData(
-                                    transaction,
-                                    activationResultRequestDto
-                            );
-                            return new TransactionActivateResultCommand(
-                                    transaction.getNoticeCodes().get(0).rptId(),
-                                    activationResultData
-                            );
-                        }
-                )
-                .flatMap(
-                        transactionActivateResultCommand -> transactionActivateResultHandler
-                                .handle(transactionActivateResultCommand)
-                )
-                .doOnNext(
-                        transactionActivatedEvent -> log.info(
-                                "TRANSACTION_ACTIVATED_EVENT for transactionId: {}",
-                                transactionActivatedEvent.getTransactionId()
-                        )
-                )
-                .flatMap(
-                        transactionActivatedEvent -> transactionsActivationProjectionHandler
-                                .handle(transactionActivatedEvent)
-                )
-                .doOnNext(
-                        transactionActivated -> log.info(
-                                "Transaction status updated ACTIVATED after nodoAttivaRPT for transactionId: {}",
-                                transactionActivated.getTransactionId()
-                        )
-                )
-                .map(
-                        transactionActivated -> new ActivationResultResponseDto()
-                                .outcome(ActivationResultResponseDto.OutcomeEnum.OK)
-                );
+        return Mono.error(new NotImplementedException("Activate transaction operation not implemented"));
     }
 
     private Mono<NewTransactionResponseDto> projectActivationEvent(
@@ -575,10 +511,17 @@ public class TransactionsService {
                                                         .amount(noticeCode.transactionAmount().value())
                                                         .reason(noticeCode.transactionDescription().value())
                                                         .rptId(noticeCode.rptId().value())
+                                                        .paymentToken(noticeCode.paymentToken().value())
                                         ).toList()
                                 )
                                 .authToken(sessionDataDto.getSessionToken())
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
+                                .amountTotal(
+                                        transaction.getNoticeCodes().stream()
+                                                .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
+                                )
+                                // .feeTotal()//TODO da dove prendere le fees?
+                                .origin(NewTransactionResponseDto.OriginEnum.CHECKOUT)// TODO che mettere qui?
                 );
     }
 
@@ -597,10 +540,17 @@ public class TransactionsService {
                                                         .amount(noticeCode.transactionAmount().value())
                                                         .reason(noticeCode.transactionDescription().value())
                                                         .rptId(noticeCode.rptId().value())
+                                                        .paymentToken(noticeCode.paymentToken().value())
                                         ).toList()
                                 )
                                 .authToken(sessionDataDto.getSessionToken())
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
+                                .amountTotal(
+                                        transaction.getNoticeCodes().stream()
+                                                .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
+                                )
+                                // .feeTotal()//TODO da dove prendere le fees?
+                                .origin(NewTransactionResponseDto.OriginEnum.CHECKOUT)// TODO che mettere qui?
                 );
     }
 }

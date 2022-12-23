@@ -32,6 +32,7 @@ microservice-chart:
       NODOPERPM_CONNECTION_TIMEOUT: "10000"
       NODO_READ_TIMEOUT: "10000"
       NODO_CONNECTION_TIMEOUT: "10000"
+      NODO_PARALLEL_REQUESTS: "5"
       ECOMMERCE_SESSIONS_URI: https://api.uat.platform.pagopa.it/ecommerce/sessions-service/v1
       ECOMMERCE_SESSIONS_READ_TIMEOUT: "10000"
       ECOMMERCE_SESSIONS_CONNECTION_TIMEOUT: "10000"
@@ -134,6 +135,7 @@ microservice-chart:
     NODOPERPM_URI: /nodo/nodo-per-pm/v1/informazioniPagamento
     NODOPERPM_READ_TIMEOUT: "10000"
     NODOPERPM_CONNECTION_TIMEOUT: "10000"
+    NODO_PARALLEL_REQUESTS: "5"
     ECOMMERCE_SESSIONS_URI: https://api.uat.platform.pagopa.it/ecommerce/sessions-service/v1
     ECOMMERCE_SESSIONS_READ_TIMEOUT: "10000"
     ECOMMERCE_SESSIONS_CONNECTION_TIMEOUT: "10000"
