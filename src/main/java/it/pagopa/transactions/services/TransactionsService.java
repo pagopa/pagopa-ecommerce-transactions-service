@@ -168,7 +168,7 @@ public class TransactionsService {
                                     "Authorization request amount validation for transactionId: {}",
                                     transactionId
                             );
-                            return amountTotal.equals(requestAuthorizationRequestDto.getAmount())
+                            return !amountTotal.equals(requestAuthorizationRequestDto.getAmount())
                                     ? Mono.empty()
                                     : Mono.just(transaction);
                         }
