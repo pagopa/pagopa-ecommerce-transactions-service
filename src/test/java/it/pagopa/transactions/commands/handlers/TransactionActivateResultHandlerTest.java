@@ -76,7 +76,7 @@ class TransactionActivateResultHandlerTest {
         TransactionActivationRequested transaction = new TransactionActivationRequested(
                 new TransactionId(UUID.fromString(transactionId)),
                 Arrays.asList(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 null,
                                 rptId,
                                 new TransactionAmount(amount),
@@ -134,7 +134,7 @@ class TransactionActivateResultHandlerTest {
         TransactionActivationRequested transaction = new TransactionActivationRequested(
                 new TransactionId(UUID.fromString(transactionId)),
                 Arrays.asList(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 null,
                                 rptId,
                                 new TransactionAmount(amount),
@@ -152,25 +152,16 @@ class TransactionActivateResultHandlerTest {
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 command.getData().transactionActivationRequested().getTransactionId().toString(),
-                Arrays.asList(
-                        new it.pagopa.ecommerce.commons.documents.NoticeCode(
-                                paymentToken,
-                                rptId.value(),
-                                null,
-                                null,
-                                null
-                        )
-                ),
                 new TransactionActivatedData(
                         null,
-                        transaction.getNoticeCodes().stream()
+                        transaction.getPaymentNotices().stream()
                                 .map(
-                                        noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                                        PaymentNotice -> new it.pagopa.ecommerce.commons.documents.PaymentNotice(
                                                 paymentToken,
-                                                noticeCode.rptId().value(),
-                                                noticeCode.transactionDescription().value(),
-                                                noticeCode.transactionAmount().value(),
-                                                noticeCode.paymentContextCode().value()
+                                                PaymentNotice.rptId().value(),
+                                                PaymentNotice.transactionDescription().value(),
+                                                PaymentNotice.transactionAmount().value(),
+                                                PaymentNotice.paymentContextCode().value()
                                         )
                                 ).toList(),
                         null,
@@ -252,7 +243,7 @@ class TransactionActivateResultHandlerTest {
         TransactionActivationRequested transactionActivationRequested = new TransactionActivationRequested(
                 new TransactionId(UUID.fromString(transactionId)),
                 Arrays.asList(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 null,
                                 rptId,
                                 new TransactionAmount(amount),
@@ -310,7 +301,7 @@ class TransactionActivateResultHandlerTest {
         TransactionActivationRequested transactionActivationRequested = new TransactionActivationRequested(
                 new TransactionId(UUID.fromString(transactionId)),
                 Arrays.asList(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 null,
                                 rptId,
                                 new TransactionAmount(amount),

@@ -63,7 +63,7 @@ class TransactionRequestAuthorizizationHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                List.of(new NoticeCode(paymentToken, rptId, amount, description, nullPaymentContextCode)),
+                List.of(new PaymentNotice(paymentToken, rptId, amount, description, nullPaymentContextCode)),
                 email,
                 null,
                 null,
@@ -92,7 +92,7 @@ class TransactionRequestAuthorizizationHandlerTest {
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                transaction.getNoticeCodes().get(0).rptId(),
+                transaction.getPaymentNotices().get(0).rptId(),
                 authorizationData
         );
 
@@ -129,7 +129,7 @@ class TransactionRequestAuthorizizationHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                List.of(new NoticeCode(paymentToken, rptId, amount, description, nullPaymentContextCode)),
+                List.of(new PaymentNotice(paymentToken, rptId, amount, description, nullPaymentContextCode)),
                 email,
                 faultCode,
                 faultCodeString,
@@ -158,7 +158,7 @@ class TransactionRequestAuthorizizationHandlerTest {
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                transaction.getNoticeCodes().get(0).rptId(),
+                transaction.getPaymentNotices().get(0).rptId(),
                 authorizationData
         );
 
@@ -183,7 +183,7 @@ class TransactionRequestAuthorizizationHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                List.of(new NoticeCode(paymentToken, rptId, amount, description, nullPaymentContextCode)),
+                List.of(new PaymentNotice(paymentToken, rptId, amount, description, nullPaymentContextCode)),
                 email,
                 faultCode,
                 faultCodeString,
@@ -212,7 +212,7 @@ class TransactionRequestAuthorizizationHandlerTest {
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                transaction.getNoticeCodes().get(0).rptId(),
+                transaction.getPaymentNotices().get(0).rptId(),
                 authorizationData
         );
 

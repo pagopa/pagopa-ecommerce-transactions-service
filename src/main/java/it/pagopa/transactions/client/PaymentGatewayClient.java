@@ -50,14 +50,15 @@ public class PaymentGatewayClient {
                 .switchIfEmpty(Mono.empty())
                 .map(authorizationRequestData -> {
                     BigDecimal grandTotal = BigDecimal.valueOf(
-                            ((long) authorizationData.transaction().getNoticeCodes().stream()
-                                    .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum())
+                            ((long) authorizationData.transaction().getPaymentNotices().stream()
+                                    .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum())
                                     + authorizationData.fee()
                     );
+                    // FIXME Handle all description together?
                     return new PostePayAuthRequestDto()
                             .grandTotal(grandTotal)
                             .description(
-                                    authorizationData.transaction().getNoticeCodes().get(0).transactionDescription()
+                                    authorizationData.transaction().getPaymentNotices().get(0).transactionDescription()
                                             .value()
                             )
                             .paymentChannel(authorizationData.pspChannelCode())
@@ -71,7 +72,7 @@ public class PaymentGatewayClient {
                                         exception -> switch (exception.getStatusCode()) {
                                         // TODO Handle multiple rptId
                                         case UNAUTHORIZED -> new AlreadyProcessedException(
-                                                authorizationData.transaction().getNoticeCodes().get(0).rptId()
+                                                authorizationData.transaction().getPaymentNotices().get(0).rptId()
                                         );
                                         case GATEWAY_TIMEOUT -> new GatewayTimeoutException();
                                         case INTERNAL_SERVER_ERROR -> new BadGatewayException("");
@@ -93,8 +94,8 @@ public class PaymentGatewayClient {
                     final Mono<XPayAuthRequestDto> xPayAuthRequest;
                     if (authorizationData.authDetails()instanceof CardAuthRequestDetailsDto cardData) {
                         BigDecimal grandTotal = BigDecimal.valueOf(
-                                ((long) authorizationData.transaction().getNoticeCodes().stream()
-                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum())
+                                ((long) authorizationData.transaction().getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum())
                                         + authorizationData.fee()
                         );
                         xPayAuthRequest = Mono.just(
@@ -125,7 +126,7 @@ public class PaymentGatewayClient {
                                         WebClientResponseException.class,
                                         exception -> switch (exception.getStatusCode()) {
                                         case UNAUTHORIZED -> new AlreadyProcessedException(
-                                                authorizationData.transaction().getNoticeCodes().get(0).rptId()
+                                                authorizationData.transaction().getPaymentNotices().get(0).rptId()
                                         ); // 401
                                         case INTERNAL_SERVER_ERROR -> new BadGatewayException(""); // 500
                                         default -> exception;

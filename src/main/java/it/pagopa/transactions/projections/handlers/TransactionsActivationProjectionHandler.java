@@ -26,13 +26,13 @@ public class TransactionsActivationProjectionHandler
     public Mono<TransactionActivated> handle(TransactionActivatedEvent event) {
         TransactionActivatedData data = event.getData();
         TransactionId transactionId = new TransactionId(UUID.fromString(event.getTransactionId()));
-        List<NoticeCode> noticeCodeList = data.getNoticeCodes().stream().map(
-                noticeCodeData -> new NoticeCode(
-                        new PaymentToken(noticeCodeData.getPaymentToken()),
-                        new RptId(noticeCodeData.getRptId()),
-                        new TransactionAmount(noticeCodeData.getAmount()),
-                        new TransactionDescription(noticeCodeData.getDescription()),
-                        new PaymentContextCode(noticeCodeData.getPaymentContextCode())
+        List<PaymentNotice> PaymentNoticeList = data.getPaymentNotices().stream().map(
+                PaymentNoticeData -> new PaymentNotice(
+                        new PaymentToken(PaymentNoticeData.getPaymentToken()),
+                        new RptId(PaymentNoticeData.getRptId()),
+                        new TransactionAmount(PaymentNoticeData.getAmount()),
+                        new TransactionDescription(PaymentNoticeData.getDescription()),
+                        new PaymentContextCode(PaymentNoticeData.getPaymentContextCode())
                 )
         ).toList();
         Email email = new Email(event.getData().getEmail());
@@ -41,7 +41,7 @@ public class TransactionsActivationProjectionHandler
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                noticeCodeList,
+                PaymentNoticeList,
                 email,
                 faultCode,
                 faultCodeString,

@@ -3,7 +3,6 @@ package it.pagopa.transactions.commands.handlers;
 import com.azure.core.util.BinaryData;
 import com.azure.cosmos.implementation.BadRequestException;
 import com.azure.storage.queue.QueueAsyncClient;
-import it.pagopa.ecommerce.commons.documents.NoticeCode;
 import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationRequestedEvent;
 import it.pagopa.ecommerce.commons.domain.TransactionActivated;
@@ -47,10 +46,10 @@ public class TransactionRequestAuthorizationHandler
         if (transaction.getStatus() != TransactionStatusDto.ACTIVATED) {
             log.warn(
                     "Invalid state transition: requested authorization for transaction {} from status {}",
-                    transaction.getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken(),
+                    transaction.getTransactionActivatedData().getPaymentNotices().get(0).getPaymentToken(),
                     transaction.getStatus()
             );
-            return Mono.error(new AlreadyProcessedException(transaction.getNoticeCodes().get(0).rptId()));
+            return Mono.error(new AlreadyProcessedException(transaction.getPaymentNotices().get(0).rptId()));
         }
 
         var monoPostePay = Mono.just(command.getData())
@@ -78,24 +77,16 @@ public class TransactionRequestAuthorizationHandler
                             "Logging authorization event for rpt ids {}",
                             String.join(
                                     ",",
-                                    transaction.getNoticeCodes().stream().map(noticeCode -> noticeCode.rptId().value())
+                                    transaction.getPaymentNotices().stream()
+                                            .map(PaymentNotice -> PaymentNotice.rptId().value())
                                             .toList()
                             )
                     );
                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                             transaction.getTransactionId().value().toString(),
-                            transaction.getNoticeCodes().stream().map(
-                                    noticeCode -> new NoticeCode(
-                                            noticeCode.paymentToken().value(),
-                                            noticeCode.rptId().value(),
-                                            noticeCode.transactionDescription().value(),
-                                            noticeCode.transactionAmount().value(),
-                                            noticeCode.paymentContextCode().value()
-                                    )
-                            ).toList(),
                             new TransactionAuthorizationRequestData(
-                                    command.getData().transaction().getNoticeCodes().stream()
-                                            .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum(),
+                                    command.getData().transaction().getPaymentNotices().stream()
+                                            .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum(),
                                     command.getData().fee(),
                                     command.getData().paymentInstrumentId(),
                                     command.getData().pspId(),

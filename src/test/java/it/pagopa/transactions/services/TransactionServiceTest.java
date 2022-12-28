@@ -1,6 +1,6 @@
 package it.pagopa.transactions.services;
 
-import it.pagopa.ecommerce.commons.documents.NoticeCode;
+import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.*;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
@@ -59,22 +59,20 @@ class TransactionServiceTest {
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
         transactionActivatedData.setEmail(TEST_EMAIL);
         transactionActivatedData
-                .setNoticeCodes(Arrays.asList(new NoticeCode(TEST_TOKEN, null, "dest", 0, TEST_CPP.toString())));
+                .setPaymentNotices(Arrays.asList(new PaymentNotice(TEST_TOKEN, null, "dest", 0, TEST_CPP.toString())));
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 TRANSACTION_ID.toString(),
-                Arrays.asList(new NoticeCode(TEST_TOKEN, TEST_RPTID, null, null, TEST_CPP.toString())),
                 transactionActivatedData
         );
 
         TransactionActivationRequestedData transactionActivationRequestedData = new TransactionActivationRequestedData();
         transactionActivatedData
-                .setNoticeCodes(Arrays.asList(new NoticeCode(TEST_TOKEN, null, "dest", 0, TEST_CPP.toString())));
+                .setPaymentNotices(Arrays.asList(new PaymentNotice(TEST_TOKEN, null, "dest", 0, TEST_CPP.toString())));
         transactionActivationRequestedData.setEmail(TEST_EMAIL);
 
         TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
                 TRANSACTION_ID.toString(),
-                Arrays.asList(new NoticeCode(null, TEST_RPTID, null, null, null)),
                 transactionActivationRequestedData
         );
 
@@ -95,7 +93,7 @@ class TransactionServiceTest {
         TransactionActivated transactionActivated = new TransactionActivated(
                 new TransactionId(TRANSACTION_ID),
                 Arrays.asList(
-                        new it.pagopa.ecommerce.commons.domain.NoticeCode(
+                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
                                 new PaymentToken(TEST_TOKEN),
                                 new RptId(TEST_RPTID),
                                 new TransactionAmount(0),
@@ -112,7 +110,7 @@ class TransactionServiceTest {
         TransactionActivationRequested transactionActivationRequested = new TransactionActivationRequested(
                 new TransactionId(TRANSACTION_ID),
                 Arrays.asList(
-                        new it.pagopa.ecommerce.commons.domain.NoticeCode(
+                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
                                 null,
                                 new RptId(TEST_RPTID),
                                 new TransactionAmount(0),
@@ -164,22 +162,20 @@ class TransactionServiceTest {
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
         transactionActivatedData.setEmail(TEST_EMAIL);
         transactionActivatedData
-                .setNoticeCodes(Arrays.asList(new NoticeCode(TEST_TOKEN, null, "dest", 0, TEST_CPP.toString())));
+                .setPaymentNotices(Arrays.asList(new PaymentNotice(TEST_TOKEN, null, "dest", 0, TEST_CPP.toString())));
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 TRANSACTION_ID.toString(),
-                Arrays.asList(new NoticeCode(TEST_TOKEN, TEST_RPTID, null, null, TEST_CPP.toString())),
                 transactionActivatedData
         );
 
         TransactionActivationRequestedData transactionActivationRequestedData = new TransactionActivationRequestedData();
         transactionActivatedData
-                .setNoticeCodes(Arrays.asList(new NoticeCode(TEST_TOKEN, null, "dest", 0, TEST_CPP.toString())));
+                .setPaymentNotices(Arrays.asList(new PaymentNotice(TEST_TOKEN, null, "dest", 0, TEST_CPP.toString())));
         transactionActivationRequestedData.setEmail(TEST_EMAIL);
 
         TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
                 TRANSACTION_ID.toString(),
-                Arrays.asList(new NoticeCode(null, TEST_RPTID, null, null, null)),
                 transactionActivationRequestedData
         );
 
@@ -196,8 +192,8 @@ class TransactionServiceTest {
                         Mono.just(transactionActivationRequestedEvent),
                         sessionDataDto
                 );
-        List<it.pagopa.ecommerce.commons.domain.NoticeCode> noticeCodeList = List.of(
-                new it.pagopa.ecommerce.commons.domain.NoticeCode(
+        List<it.pagopa.ecommerce.commons.domain.PaymentNotice> PaymentNoticeList = List.of(
+                new it.pagopa.ecommerce.commons.domain.PaymentNotice(
                         new PaymentToken(TEST_TOKEN),
                         new RptId(TEST_RPTID),
                         new TransactionAmount(0),
@@ -207,7 +203,7 @@ class TransactionServiceTest {
         );
         TransactionActivated transactionActivated = new TransactionActivated(
                 new TransactionId(TRANSACTION_ID),
-                noticeCodeList,
+                PaymentNoticeList,
                 new Email("foo@example.com"),
                 "faultCode",
                 "faultCodeString",
@@ -216,7 +212,7 @@ class TransactionServiceTest {
 
         TransactionActivationRequested transactionActivationRequested = new TransactionActivationRequested(
                 new TransactionId(TRANSACTION_ID),
-                noticeCodeList,
+                PaymentNoticeList,
                 new Email("foo@example.com"),
                 TransactionStatusDto.ACTIVATION_REQUESTED
         );

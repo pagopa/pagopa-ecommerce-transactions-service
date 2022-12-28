@@ -1,6 +1,6 @@
 package it.pagopa.transactions.commands.handlers;
 
-import it.pagopa.ecommerce.commons.documents.NoticeCode;
+import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.*;
@@ -39,9 +39,9 @@ class TransactionsActivationProjectionHandlerTest {
         int amountInt = 100;
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
         transactionActivatedData.setEmail("jon.doe@email.it");
-        transactionActivatedData.setNoticeCodes(
+        transactionActivatedData.setPaymentNotices(
                 Arrays.asList(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 paymentTokenString,
                                 rptIdString,
                                 transactionDescription,
@@ -53,16 +53,17 @@ class TransactionsActivationProjectionHandlerTest {
 
         TransactionActivatedEvent event = new TransactionActivatedEvent(
                 transactionIdString,
-                Arrays.asList(new NoticeCode(paymentTokenString, rptIdString, transactionDescription, amountInt, null)),
                 transactionActivatedData
         );
 
         TransactionActivatedData data = event.getData();
         TransactionId transactionId = new TransactionId(UUID.fromString(event.getTransactionId()));
-        PaymentToken paymentToken = new PaymentToken(event.getNoticeCodes().get(0).getPaymentToken());
-        RptId rptId = new RptId(event.getNoticeCodes().get(0).getRptId());
-        TransactionDescription description = new TransactionDescription(data.getNoticeCodes().get(0).getDescription());
-        TransactionAmount amount = new TransactionAmount(data.getNoticeCodes().get(0).getAmount());
+        PaymentToken paymentToken = new PaymentToken(event.getData().getPaymentNotices().get(0).getPaymentToken());
+        RptId rptId = new RptId(event.getData().getPaymentNotices().get(0).getRptId());
+        TransactionDescription description = new TransactionDescription(
+                data.getPaymentNotices().get(0).getDescription()
+        );
+        TransactionAmount amount = new TransactionAmount(data.getPaymentNotices().get(0).getAmount());
         Email email = new Email("foo@example.com");
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
@@ -71,7 +72,7 @@ class TransactionsActivationProjectionHandlerTest {
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 Arrays.asList(
-                        new it.pagopa.ecommerce.commons.domain.NoticeCode(
+                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
                                 paymentToken,
                                 rptId,
                                 amount,
@@ -100,20 +101,20 @@ class TransactionsActivationProjectionHandlerTest {
         Assert.assertEquals(transactionResult.getTransactionId(), transaction.getTransactionId());
         Assert.assertEquals(transactionResult.getStatus(), transaction.getStatus());
         Assert.assertEquals(
-                transactionResult.getNoticeCodes().get(0).transactionAmount(),
-                transaction.getNoticeCodes().get(0).transactionAmount()
+                transactionResult.getPaymentNotices().get(0).transactionAmount(),
+                transaction.getPaymentNotices().get(0).transactionAmount()
         );
         Assert.assertEquals(
-                transactionResult.getNoticeCodes().get(0).transactionDescription(),
-                transaction.getNoticeCodes().get(0).transactionDescription()
+                transactionResult.getPaymentNotices().get(0).transactionDescription(),
+                transaction.getPaymentNotices().get(0).transactionDescription()
         );
         Assert.assertEquals(
-                transactionResult.getNoticeCodes().get(0).rptId(),
-                transaction.getNoticeCodes().get(0).rptId()
+                transactionResult.getPaymentNotices().get(0).rptId(),
+                transaction.getPaymentNotices().get(0).rptId()
         );
         Assert.assertEquals(
-                transactionResult.getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken(),
-                transaction.getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken()
+                transactionResult.getTransactionActivatedData().getPaymentNotices().get(0).getPaymentToken(),
+                transaction.getTransactionActivatedData().getPaymentNotices().get(0).getPaymentToken()
         );
 
     }

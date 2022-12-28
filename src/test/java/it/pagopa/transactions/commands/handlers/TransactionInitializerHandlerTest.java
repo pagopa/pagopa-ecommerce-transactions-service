@@ -111,9 +111,10 @@ class TransactionInitializerHandlerTest {
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
         transactionActivatedEvent.setTransactionId(transactionId);
         transactionActivatedEvent.setEventCode(TransactionEventCode.TRANSACTION_ACTIVATED_EVENT);
-        transactionActivatedEvent.setNoticeCodes(
+        TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
+        transactionActivatedData.setPaymentNotices(
                 Arrays.asList(
-                        new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                        new it.pagopa.ecommerce.commons.documents.PaymentNotice(
                                 paymentToken,
                                 rptId.value(),
                                 null,
@@ -122,6 +123,7 @@ class TransactionInitializerHandlerTest {
                         )
                 )
         );
+        transactionActivatedEvent.setData(transactionActivatedData);
 
         /** preconditions */
         Mockito.when(paymentRequestInfoRepository.findById(rptId))

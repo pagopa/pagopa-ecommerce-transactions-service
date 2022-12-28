@@ -63,7 +63,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -108,7 +108,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -148,8 +148,8 @@ class PaymentGatewayClientTest {
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(
                         BigDecimal.valueOf(
-                                transaction.getNoticeCodes().stream()
-                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
+                                transaction.getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
                                         + authorizationData.fee()
                         )
                 );
@@ -183,7 +183,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -214,12 +214,12 @@ class PaymentGatewayClientTest {
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(
                         BigDecimal.valueOf(
-                                transaction.getNoticeCodes().stream()
-                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
+                                transaction.getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
                                         + authorizationData.fee()
                         )
                 )
-                .description(transaction.getNoticeCodes().get(0).transactionDescription().value())
+                .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(transactionIdUUID.toString());
 
@@ -252,7 +252,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -291,8 +291,8 @@ class PaymentGatewayClientTest {
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(
                         BigDecimal.valueOf(
-                                transaction.getNoticeCodes().stream()
-                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
+                                transaction.getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
                                         + authorizationData.fee()
                         )
                 );
@@ -325,7 +325,7 @@ class PaymentGatewayClientTest {
                 .expectErrorMatches(
                         error -> error instanceof AlreadyProcessedException &&
                                 ((AlreadyProcessedException) error).getRptId()
-                                        .equals(transaction.getNoticeCodes().get(0).rptId())
+                                        .equals(transaction.getPaymentNotices().get(0).rptId())
                 )
                 .verify();
 
@@ -338,7 +338,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -369,12 +369,12 @@ class PaymentGatewayClientTest {
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(
                         BigDecimal.valueOf(
-                                transaction.getNoticeCodes().stream()
-                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
+                                transaction.getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
                                         + authorizationData.fee()
                         )
                 )
-                .description(transaction.getNoticeCodes().get(0).transactionDescription().value())
+                .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(transactionIdUUID.toString());
 
@@ -401,7 +401,7 @@ class PaymentGatewayClientTest {
                 .expectErrorMatches(
                         error -> error instanceof AlreadyProcessedException &&
                                 ((AlreadyProcessedException) error).getRptId()
-                                        .equals(transaction.getNoticeCodes().get(0).rptId())
+                                        .equals(transaction.getPaymentNotices().get(0).rptId())
                 )
                 .verify();
 
@@ -418,7 +418,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -449,12 +449,12 @@ class PaymentGatewayClientTest {
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(
                         BigDecimal.valueOf(
-                                transaction.getNoticeCodes().stream()
-                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
+                                transaction.getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
                                         + authorizationData.fee()
                         )
                 )
-                .description(transaction.getNoticeCodes().get(0).transactionDescription().value())
+                .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(transactionIdUUID.toString());
 
@@ -496,7 +496,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -527,12 +527,12 @@ class PaymentGatewayClientTest {
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(
                         BigDecimal.valueOf(
-                                transaction.getNoticeCodes().stream()
-                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
+                                transaction.getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
                                         + authorizationData.fee()
                         )
                 )
-                .description(transaction.getNoticeCodes().get(0).transactionDescription().value())
+                .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(transactionIdUUID.toString());
 
@@ -572,7 +572,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -608,8 +608,8 @@ class PaymentGatewayClientTest {
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(
                         BigDecimal.valueOf(
-                                transaction.getNoticeCodes().stream()
-                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
+                                transaction.getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
                                         + authorizationData.fee()
                         )
                 );
@@ -650,7 +650,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -681,12 +681,12 @@ class PaymentGatewayClientTest {
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(
                         BigDecimal.valueOf(
-                                transaction.getNoticeCodes().stream()
-                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
+                                transaction.getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
                                         + authorizationData.fee()
                         )
                 )
-                .description(transaction.getNoticeCodes().get(0).transactionDescription().value())
+                .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(transactionIdUUID.toString());
 
@@ -721,7 +721,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -757,8 +757,8 @@ class PaymentGatewayClientTest {
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(
                         BigDecimal.valueOf(
-                                transaction.getNoticeCodes().stream()
-                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
+                                transaction.getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
                                         + authorizationData.fee()
                         )
                 );
@@ -794,7 +794,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),

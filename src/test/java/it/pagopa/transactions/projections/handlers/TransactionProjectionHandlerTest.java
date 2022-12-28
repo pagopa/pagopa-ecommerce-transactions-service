@@ -1,6 +1,6 @@
 package it.pagopa.transactions.projections.handlers;
 
-import it.pagopa.ecommerce.commons.documents.NoticeCode;
+import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.TransactionActivationRequestedData;
 import it.pagopa.ecommerce.commons.documents.TransactionActivationRequestedEvent;
 import it.pagopa.ecommerce.commons.domain.*;
@@ -36,30 +36,20 @@ class TransactionProjectionHandlerTest {
 
         TransactionActivationRequestedData transactionActivationRequestedData = new TransactionActivationRequestedData();
         transactionActivationRequestedData.setEmail("email@test.it");
-        NoticeCode noticeCode = new NoticeCode(null, null, "reason", 1, null);
-        transactionActivationRequestedData.setNoticeCodes(Arrays.asList(noticeCode));
+        PaymentNotice paymentNotice = new PaymentNotice(null, "77777777777302016723749670035", "reason", 1, null);
+        transactionActivationRequestedData.setPaymentNotices(Arrays.asList(paymentNotice));
         transactionActivationRequestedData.setFaultCode("faultCode");
         transactionActivationRequestedData.setFaultCodeString("faultCodeString");
 
         TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
                 transactionUUID.toString(),
-                Arrays.asList(
-                        new it.pagopa.ecommerce.commons.documents.NoticeCode(
-                                null,
-                                "77777777777302016723749670035",
-                                "reason",
-                                1,
-                                "ccpcode"
-                        )
-                ),
                 transactionActivationRequestedData
         );
 
         TransactionActivationRequestedEvent event = new TransactionActivationRequestedEvent(
                 transactionActivationRequestedEvent.getTransactionId(),
-                transactionActivationRequestedEvent.getNoticeCodes(),
                 new TransactionActivationRequestedData(
-                        transactionActivationRequestedData.getNoticeCodes(),
+                        transactionActivationRequestedData.getPaymentNotices(),
                         "foo@example.com",
                         "faultCode",
                         "faultCodeString"
@@ -68,26 +58,26 @@ class TransactionProjectionHandlerTest {
 
         TransactionId transactionId = new TransactionId(transactionUUID);
         PaymentToken paymentToken = new PaymentToken(
-                transactionActivationRequestedEvent.getNoticeCodes().get(0).getPaymentToken()
+                transactionActivationRequestedEvent.getData().getPaymentNotices().get(0).getPaymentToken()
         );
-        RptId rptId = new RptId(transactionActivationRequestedEvent.getNoticeCodes().get(0).getRptId());
+        RptId rptId = new RptId(transactionActivationRequestedEvent.getData().getPaymentNotices().get(0).getRptId());
         TransactionDescription description = new TransactionDescription(
-                transactionActivationRequestedData.getNoticeCodes().get(0).getDescription()
+                transactionActivationRequestedData.getPaymentNotices().get(0).getDescription()
         );
         TransactionAmount amount = new TransactionAmount(
-                transactionActivationRequestedData.getNoticeCodes().get(0).getAmount()
+                transactionActivationRequestedData.getPaymentNotices().get(0).getAmount()
         );
         Email email = new Email(transactionActivationRequestedData.getEmail());
         ZonedDateTime creationDate = ZonedDateTime.now();
         PaymentContextCode paymentContextCode = new PaymentContextCode(
-                transactionActivationRequestedData.getNoticeCodes().get(0).getPaymentContextCode()
+                transactionActivationRequestedData.getPaymentNotices().get(0).getPaymentContextCode()
         );
         try (
                 MockedStatic<ZonedDateTime> zonedDateTime = Mockito.mockStatic(ZonedDateTime.class)) {
             TransactionActivationRequested expected = new TransactionActivationRequested(
                     transactionId,
                     Arrays.asList(
-                            new it.pagopa.ecommerce.commons.domain.NoticeCode(
+                            new it.pagopa.ecommerce.commons.domain.PaymentNotice(
                                     paymentToken,
                                     rptId,
                                     amount,

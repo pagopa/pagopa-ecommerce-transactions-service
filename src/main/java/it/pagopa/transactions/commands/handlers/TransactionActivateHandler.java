@@ -242,8 +242,8 @@ public class TransactionActivateHandler
         TransactionActivationRequestedData data = new TransactionActivationRequestedData();
         data.setEmail(email);
         PaymentRequestInfo paymentRequestInfo = paymentRequestsInfo.get(0);
-        List<NoticeCode> noticeCodes = List.of(
-                new NoticeCode(
+        List<PaymentNotice> PaymentNotices = List.of(
+                new PaymentNotice(
                         null,
                         paymentRequestInfo.id().value(),
                         paymentRequestInfo.description(),
@@ -251,10 +251,9 @@ public class TransactionActivateHandler
                         paymentContextCode
                 )
         );
-        data.setNoticeCodes(noticeCodes);
+        data.setPaymentNotices(PaymentNotices);
         TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
                 transactionId,
-                noticeCodes,
                 data
         );
 
@@ -273,17 +272,16 @@ public class TransactionActivateHandler
                                                                          String transactionId,
                                                                          String email
     ) {
-        List<NoticeCode> noticeCodes = toNoticeCodeList(paymentRequestsInfo);
+        List<PaymentNotice> PaymentNotices = toPaymentNoticeList(paymentRequestsInfo);
         TransactionActivatedData data = new TransactionActivatedData(
                 email,
-                noticeCodes,
+                PaymentNotices,
                 null,
                 null
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId,
-                noticeCodes,
                 data
         );
 
@@ -312,9 +310,9 @@ public class TransactionActivateHandler
                 );
     }
 
-    private List<NoticeCode> toNoticeCodeList(List<PaymentRequestInfo> paymentRequestsInfo) {
+    private List<PaymentNotice> toPaymentNoticeList(List<PaymentRequestInfo> paymentRequestsInfo) {
         return paymentRequestsInfo.stream().map(
-                paymentRequestInfo -> new NoticeCode(
+                paymentRequestInfo -> new PaymentNotice(
                         paymentRequestInfo.paymentToken(),
                         paymentRequestInfo.id().value(),
                         paymentRequestInfo.description(),
