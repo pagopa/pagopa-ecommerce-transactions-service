@@ -7,6 +7,7 @@ import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationRequestData
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
+import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import it.pagopa.generated.transactions.server.model.PostePayAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
 import it.pagopa.transactions.client.EcommerceSessionsClient;
@@ -161,16 +162,16 @@ class TransactionRequestAuthorizizationHandlerTest {
                 authorizationData
         );
 
-        PostePayAuthResponseEntityDto postePayAuthResponseEntityDto = new PostePayAuthResponseEntityDto()
-                .channel("channel")
+        XPayAuthResponseEntityDto xPayAuthResponseEntityDto = new XPayAuthResponseEntityDto()
                 .requestId("requestId")
+                .status("status")
                 .urlRedirect("http://example.com");
 
         ReflectionTestUtils.setField(requestAuthorizationHandler, "queueVisibilityTimeout", "300");
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.just(postePayAuthResponseEntityDto));
+        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
+                .thenReturn(Mono.just(xPayAuthResponseEntityDto));
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.empty());
         Mockito.when(queueAsyncClient.sendMessageWithResponse(BinaryData.fromObject(any()), any(), any()))
                 .thenReturn(Mono.empty());
