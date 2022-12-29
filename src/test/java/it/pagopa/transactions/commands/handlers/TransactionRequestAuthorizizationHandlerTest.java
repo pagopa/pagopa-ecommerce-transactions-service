@@ -117,6 +117,71 @@ class TransactionRequestAuthorizizationHandlerTest {
     }
 
     @Test
+    void shouldSaveAuthorizationEventXPAY() {
+        TransactionId transactionId = new TransactionId(transactionIdUUID);
+        PaymentToken paymentToken = new PaymentToken("paymentToken");
+        RptId rptId = new RptId("77777777777111111111111111111");
+        TransactionDescription description = new TransactionDescription("description");
+        TransactionAmount amount = new TransactionAmount(100);
+        Email email = new Email("foo@example.com");
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
+
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                List.of(new NoticeCode(paymentToken, rptId, amount, description, nullPaymentContextCode)),
+                email,
+                null,
+                null,
+                TransactionStatusDto.ACTIVATED
+        );
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .fee(200)
+                .paymentInstrumentId("paymentInstrumentId")
+                .pspId("PSP_CODE")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
+
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction,
+                authorizationRequest.getFee(),
+                authorizationRequest.getPaymentInstrumentId(),
+                authorizationRequest.getPspId(),
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName",
+                "XPAY",
+                null
+        );
+
+        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
+                transaction.getNoticeCodes().get(0).rptId(),
+                authorizationData
+        );
+
+        PostePayAuthResponseEntityDto postePayAuthResponseEntityDto = new PostePayAuthResponseEntityDto()
+                .channel("channel")
+                .requestId("requestId")
+                .urlRedirect("http://example.com");
+
+        ReflectionTestUtils.setField(requestAuthorizationHandler, "queueVisibilityTimeout", "300");
+
+        /* preconditions */
+        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
+                .thenReturn(Mono.just(postePayAuthResponseEntityDto));
+        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.empty());
+        Mockito.when(queueAsyncClient.sendMessageWithResponse(BinaryData.fromObject(any()), any(), any()))
+                .thenReturn(Mono.empty());
+
+        /* test */
+        requestAuthorizationHandler.handle(requestAuthorizationCommand).block();
+
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
+    }
+
+    @Test
     void shouldRejectAlreadyProcessedTransaction() {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
