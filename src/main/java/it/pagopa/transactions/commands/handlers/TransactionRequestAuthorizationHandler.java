@@ -50,7 +50,7 @@ public class TransactionRequestAuthorizationHandler
                     transaction.getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken(),
                     transaction.getStatus()
             );
-            return Mono.error(new AlreadyProcessedException(transaction.getNoticeCodes().get(0).rptId()));
+            return Mono.error(new AlreadyProcessedException(transaction.getTransactionId()));
         }
 
         var monoPostePay = Mono.just(command.getData())
