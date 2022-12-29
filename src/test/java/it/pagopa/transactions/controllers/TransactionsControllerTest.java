@@ -143,7 +143,7 @@ class TransactionsControllerTest {
 
         /* test */
         ResponseEntity<RequestAuthorizationResponseDto> response = transactionsController
-                .requestTransactionAuthorization(paymentToken, pgsId, Mono.just(authorizationRequest), mockExchange)
+                .requestTransactionAuthorization(paymentToken, Mono.just(authorizationRequest), pgsId, mockExchange)
                 .block();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -167,7 +167,7 @@ class TransactionsControllerTest {
 
         /* test */
         Mono<ResponseEntity<RequestAuthorizationResponseDto>> mono = transactionsController
-                .requestTransactionAuthorization(paymentToken, pgsId, Mono.just(authorizationRequest), mockExchange);
+                .requestTransactionAuthorization(paymentToken, Mono.just(authorizationRequest), pgsId, mockExchange);
         assertThrows(
                 TransactionNotFoundException.class,
                 () -> mono.block()

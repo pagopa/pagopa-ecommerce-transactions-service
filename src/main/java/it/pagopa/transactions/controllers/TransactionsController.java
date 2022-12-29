@@ -79,8 +79,8 @@ public class TransactionsController implements TransactionsApi {
     @Override
     public Mono<ResponseEntity<RequestAuthorizationResponseDto>> requestTransactionAuthorization(
                                                                                                  String transactionId,
-                                                                                                 String xPgsId,
                                                                                                  Mono<RequestAuthorizationRequestDto> requestAuthorizationRequestDto,
+                                                                                                 String xPgsId,
                                                                                                  ServerWebExchange exchange
     ) {
         return requestAuthorizationRequestDto
