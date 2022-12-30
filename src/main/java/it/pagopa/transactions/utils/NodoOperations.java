@@ -23,6 +23,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -153,7 +154,9 @@ public class NodoOperations {
         datiPagamentoPsp.setImportoSingoloVersamento(amount);
         nodoAttivaRPTReq.setDatiPagamentoPSP(datiPagamentoPsp);
         nodoAttivaRPTReq.setCodiceIdRPT(nodoTipoCodiceIdRPT);
-        nodoAttivaRPTReq.setCodiceContestoPagamento(paymentContextCode);
+        nodoAttivaRPTReq.setCodiceContestoPagamento(
+                paymentContextCode != null ? paymentContextCode : UUID.randomUUID().toString().replace("-", "")
+        );
         return nodoPerPspClient
                 .attivaRPT(objectFactoryNodoPerPsp.createNodoAttivaRPT(nodoAttivaRPTReq))
                 .flatMap(
