@@ -194,7 +194,6 @@ class NodoOperationsTest {
         assertEquals(response.paFiscalCode(), paTaxCode);
     }
 
-
     @Test
     void shouldNotActiveNM3PaymentRequestdueFaultError() {
         RptId rptId = new RptId("77777777777302016723749670035");
