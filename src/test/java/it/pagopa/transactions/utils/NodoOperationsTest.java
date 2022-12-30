@@ -125,6 +125,77 @@ class NodoOperationsTest {
     }
 
     @Test
+    void shouldActiveNM3PaymentRequestWithoutPaymentContextCode() {
+        RptId rptId = new RptId("77777777777302016723749670035");
+        IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
+        String paymentToken = UUID.randomUUID().toString();
+        String transactionId = UUID.randomUUID().toString();
+        String paName = "paName";
+        String paTaxCode = "77777777777";
+        String description = "Description";
+        Integer amount = Integer.valueOf(1000);
+        Boolean isNM3 = Boolean.TRUE;
+
+        PaymentRequestInfo paymentRequestInfo = new PaymentRequestInfo(
+                rptId,
+                paTaxCode,
+                paName,
+                description,
+                amount,
+                null,
+                isNM3,
+                paymentToken,
+                idempotencyKey
+        );
+
+        it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
+        BigDecimal amountBigDec = BigDecimal.valueOf(amount);
+        String fiscalCode = "77777777777";
+        String paymentNotice = "302000100000009424";
+
+        ActivatePaymentNoticeReq activatePaymentReq = objectFactoryUtil.createActivatePaymentNoticeReq();
+        CtQrCode qrCode = new CtQrCode();
+        qrCode.setFiscalCode(fiscalCode);
+        qrCode.setNoticeNumber(paymentNotice);
+        activatePaymentReq.setAmount(amountBigDec);
+        activatePaymentReq.setQrCode(qrCode);
+
+        ActivatePaymentNoticeRes activatePaymentRes = objectFactoryUtil.createActivatePaymentNoticeRes();
+        activatePaymentRes.setPaymentToken(paymentToken);
+        activatePaymentRes.setFiscalCodePA(fiscalCode);
+        activatePaymentRes.setTotalAmount(amountBigDec);
+        activatePaymentRes.setOutcome(StOutcome.OK);
+
+        /** preconditions */
+        Mockito.when(nodeForPspClient.activatePaymentNotice(Mockito.any()))
+                .thenReturn(Mono.just(activatePaymentRes));
+        Mockito.when(objectFactoryNodeForPsp.createActivatePaymentNoticeReq(Mockito.any()))
+                .thenReturn(objectFactoryUtil.createActivatePaymentNoticeReq(activatePaymentReq));
+        Mockito.when(nodoConfig.baseActivatePaymentNoticeReq()).thenReturn(new ActivatePaymentNoticeReq());
+
+        /** test */
+        PaymentRequestInfo response = nodoOperations
+                .activatePaymentRequest(
+                        paymentRequestInfo,
+                        null,
+                        amount,
+                        false,
+                        transactionId
+                )
+                .block();
+
+        /** asserts */
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNotice(Mockito.any());
+
+        assertEquals(response.id(), rptId);
+        assertEquals(response.paymentToken(), paymentToken);
+        assertEquals(response.description(), description);
+        assertEquals(response.idempotencyKey(), idempotencyKey);
+        assertEquals(response.paFiscalCode(), paTaxCode);
+    }
+
+
+    @Test
     void shouldNotActiveNM3PaymentRequestdueFaultError() {
         RptId rptId = new RptId("77777777777302016723749670035");
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
