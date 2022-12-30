@@ -170,6 +170,8 @@ class TransactionRequestAuthorizizationHandlerTest {
         ReflectionTestUtils.setField(requestAuthorizationHandler, "queueVisibilityTimeout", "300");
 
         /* preconditions */
+        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
+                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.just(xPayAuthResponseEntityDto));
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.empty());
