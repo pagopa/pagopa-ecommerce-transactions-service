@@ -22,7 +22,6 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Map;
 
@@ -101,9 +100,7 @@ public class PaymentGatewayClient {
                                 new XPayAuthRequestDto()
                                         .cvv(cardData.getCvv())
                                         .pan(cardData.getPan())
-                                        .exipiryDate(
-                                                cardData.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM"))
-                                        )
+                                        .exipiryDate(cardData.getExpiryDate())
                                         .idTransaction(
                                                 authorizationData.transaction().getTransactionId().value().toString()
                                         )
