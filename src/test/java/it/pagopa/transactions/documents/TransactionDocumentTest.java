@@ -70,7 +70,8 @@ class TransactionDocumentTest {
                 TEST_TOKEN,
                 TEST_RPTID,
                 TEST_DESC,
-                TEST_AMOUNT
+                TEST_AMOUNT,
+                null
         );
         differentTransaction.setNoticeCodes(Arrays.asList(noticeCode));
         differentTransaction.setStatus(TEST_STATUS);
@@ -100,6 +101,7 @@ class TransactionDocumentTest {
         Email email = new Email("foo@example.com");
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -108,7 +110,8 @@ class TransactionDocumentTest {
                                 paymentToken,
                                 rptId,
                                 amount,
-                                description
+                                description,
+                                nullPaymentContextCode
                         )
                 ),
                 email,

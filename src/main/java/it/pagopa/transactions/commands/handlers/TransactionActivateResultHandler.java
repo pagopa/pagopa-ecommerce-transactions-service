@@ -135,7 +135,8 @@ public class TransactionActivateResultHandler
                                                             saved.paymentToken(),
                                                             noticeCode.rptId().value(),
                                                             noticeCode.transactionDescription().value(),
-                                                            noticeCode.transactionAmount().value()
+                                                            noticeCode.transactionAmount().value(),
+                                                            noticeCode.paymentContextCode().value()
                                                     )
                                             )
                                             .toList(),
@@ -151,7 +152,8 @@ public class TransactionActivateResultHandler
                                                             saved.paymentToken(),
                                                             noticeCode.rptId().value(),
                                                             noticeCode.transactionDescription().value(),
-                                                            noticeCode.transactionAmount().value()
+                                                            noticeCode.transactionAmount().value(),
+                                                            noticeCode.paymentContextCode().value()
                                                     )
                                             )
                                             .toList(),

@@ -75,14 +75,15 @@ class TransactionsControllerTest {
         newTransactionRequestDto.setEmail(EMAIL);
 
         NewTransactionResponseDto response = new NewTransactionResponseDto();
-        PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
 
+        PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
         paymentInfoDto.setAmount(10);
-        paymentInfoDto.setAuthToken("token");
         paymentInfoDto.setReason("Reason");
         paymentInfoDto.setPaymentToken("payment_token");
         paymentInfoDto.setRptId(RPTID);
+
         response.addPaymentsItem(paymentInfoDto);
+        response.setAuthToken("token");
 
         Mockito.lenient().when(transactionsService.newTransaction(newTransactionRequestDto))
                 .thenReturn(Mono.just(response));
@@ -104,10 +105,10 @@ class TransactionsControllerTest {
         TransactionInfoDto response = new TransactionInfoDto();
         PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
         paymentInfoDto.setAmount(10);
-        paymentInfoDto.setAuthToken("token");
         paymentInfoDto.setReason("Reason");
         paymentInfoDto.setPaymentToken("payment_token");
         response.addPaymentsItem(paymentInfoDto);
+        response.setAuthToken("token");
 
         String paymentToken = UUID.randomUUID().toString();
 
@@ -182,9 +183,9 @@ class TransactionsControllerTest {
                 .addPaymentsItem(
                         new PaymentInfoDto()
                                 .amount(100)
-                                .authToken("authToken")
                                 .paymentToken(paymentToken)
                 )
+                .authToken("authToken")
                 .status(TransactionStatusDto.AUTHORIZED);
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -614,6 +615,23 @@ class TransactionsControllerTest {
 
         assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
         assertEquals("Invalid request: Some message", responseEntity.getBody().getDetail());
+    }
+
+    @Test
+    void shouldReturnResponseEntityWithNotImplemented()
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+
+        Method method = TransactionsController.class.getDeclaredMethod(
+                "notImplemented",
+                NotImplementedException.class
+        );
+        method.setAccessible(true);
+
+        ResponseEntity<ProblemJsonDto> responseEntity = (ResponseEntity<ProblemJsonDto>) method
+                .invoke(transactionsController, new NotImplementedException("Method not implemented"));
+
+        assertEquals(HttpStatus.NOT_IMPLEMENTED, responseEntity.getStatusCode());
+        assertEquals("Method not implemented", responseEntity.getBody().getDetail());
     }
 
     private static FaultBean faultBeanWithCode(String faultCode) {

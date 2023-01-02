@@ -56,7 +56,10 @@ public class TransactionsController implements TransactionsApi {
                 .flatMap(ntr -> {
                     log.info(
                             "newTransaction rptIDs {} ",
-                            ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).toList()
+                            String.join(
+                                    ",",
+                                    ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).toList()
+                            )
                     );
                     return transactionsService.newTransaction(ntr);
                 })
@@ -194,6 +197,17 @@ public class TransactionsController implements TransactionsApi {
                         .title("Bad gateway")
                         .detail(exception.getDetail()),
                 HttpStatus.BAD_GATEWAY
+        );
+    }
+
+    @ExceptionHandler(NotImplementedException.class)
+    private ResponseEntity<ProblemJsonDto> notImplemented(NotImplementedException exception) {
+        return new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(501)
+                        .title("Not implemented")
+                        .detail(exception.getMessage()),
+                HttpStatus.NOT_IMPLEMENTED
         );
     }
 

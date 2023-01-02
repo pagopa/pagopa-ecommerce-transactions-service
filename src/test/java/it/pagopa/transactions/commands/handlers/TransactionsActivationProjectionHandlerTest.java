@@ -45,14 +45,15 @@ class TransactionsActivationProjectionHandlerTest {
                                 paymentTokenString,
                                 rptIdString,
                                 transactionDescription,
-                                amountInt
+                                amountInt,
+                                null
                         )
                 )
         );
 
         TransactionActivatedEvent event = new TransactionActivatedEvent(
                 transactionIdString,
-                Arrays.asList(new NoticeCode(paymentTokenString, rptIdString, null, null)),
+                Arrays.asList(new NoticeCode(paymentTokenString, rptIdString, transactionDescription, amountInt, null)),
                 transactionActivatedData
         );
 
@@ -65,11 +66,18 @@ class TransactionsActivationProjectionHandlerTest {
         Email email = new Email("foo@example.com");
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 Arrays.asList(
-                        new it.pagopa.ecommerce.commons.domain.NoticeCode(paymentToken, rptId, amount, description)
+                        new it.pagopa.ecommerce.commons.domain.NoticeCode(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description,
+                                nullPaymentContextCode
+                        )
                 ),
                 email,
                 faultCode,

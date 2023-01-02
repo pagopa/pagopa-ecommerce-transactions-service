@@ -10,9 +10,9 @@ import it.pagopa.generated.nodoperpsp.model.NodoTipoDatiPagamentoPSP;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
 import it.pagopa.generated.transactions.model.CtQrCode;
 import it.pagopa.generated.transactions.model.StOutcome;
-import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NodoPerPspClient;
+import it.pagopa.transactions.configurations.NodoConfig;
 import it.pagopa.transactions.exceptions.NodoErrorException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,29 +40,25 @@ public class NodoOperations {
     NodeForPspClient nodeForPspClient;
 
     @Autowired
-    ActivatePaymentNoticeReq baseActivatePaymentNoticeReq;
-
-    @Autowired
-    NodoAttivaRPT baseNodoAttivaRPT;
-
-    @Autowired
     it.pagopa.generated.nodoperpsp.model.ObjectFactory objectFactoryNodoPerPsp;
 
     @Autowired
     it.pagopa.generated.transactions.model.ObjectFactory objectFactoryNodeForPsp;
+    @Autowired
+    NodoConfig nodoConfig;
 
     @Autowired
     NodoUtilities nodoUtilities;
 
     public Mono<PaymentRequestInfo> activatePaymentRequest(
                                                            PaymentRequestInfo paymentRequestInfo,
-                                                           NewTransactionRequestDto newTransactionRequestDto
+                                                           String paymentContextCode,
+                                                           Integer amount,
+                                                           boolean multiplePaymentNotices,
+                                                           String transactionId
     ) {
-
         RptId rptId = paymentRequestInfo.id();
-        String paymentContextCode = newTransactionRequestDto.getPaymentNotices().get(0).getPaymentContextCode();
         Boolean isNM3 = paymentRequestInfo.isNM3();
-        Integer amount = newTransactionRequestDto.getPaymentNotices().get(0).getAmount();
         String paTaxCode = paymentRequestInfo.paFiscalCode();
         String paName = paymentRequestInfo.paName();
         IdempotencyKey idempotencyKey = Optional.ofNullable(paymentRequestInfo.idempotencyKey())
@@ -79,17 +75,19 @@ public class NodoOperations {
 
         return Mono.just(isNM3)
                 .flatMap(
-                        validIsNM3 -> Boolean.TRUE.equals(validIsNM3)
+                        validIsNM3 -> Boolean.TRUE.equals(validIsNM3) || multiplePaymentNotices
                                 ? nodoActivationForNM3PaymentRequest(
                                         rptId,
                                         amountAsBigDecimal,
-                                        idempotencyKey.rawValue()
+                                        idempotencyKey.rawValue(),
+                                        transactionId
                                 )
                                 : nodoActivationForUnknownPaymentRequest(
                                         rptId,
                                         amountAsBigDecimal,
                                         idempotencyKey.rawValue(),
-                                        paymentContextCode
+                                        paymentContextCode,
+                                        transactionId
                                 )
                 )
                 .flatMap(
@@ -112,24 +110,33 @@ public class NodoOperations {
     private Mono<String> nodoActivationForNM3PaymentRequest(
                                                             RptId rptId,
                                                             BigDecimal amount,
-                                                            String idempotencyKey
+                                                            String idempotencyKey,
+                                                            String transactionId
     ) {
         CtQrCode qrCode = new CtQrCode();
         qrCode.setFiscalCode(rptId.getFiscalCode());
         qrCode.setNoticeNumber(rptId.getNoticeId());
-        ActivatePaymentNoticeReq request = baseActivatePaymentNoticeReq;
+        ActivatePaymentNoticeReq request = nodoConfig.baseActivatePaymentNoticeReq();
         request.setAmount(amount);
         request.setQrCode(qrCode);
         request.setIdempotencyKey(idempotencyKey);
         return nodeForPspClient
                 .activatePaymentNotice(objectFactoryNodeForPsp.createActivatePaymentNoticeReq(request))
                 .flatMap(
-                        activatePaymentNoticeRes -> StOutcome.OK.value()
-                                .equals(activatePaymentNoticeRes.getOutcome().value())
-                                        ? Mono.just(activatePaymentNoticeRes.getPaymentToken())
-                                        : Mono.error(
-                                                new NodoErrorException(activatePaymentNoticeRes.getFault())
-                                        )
+                        activatePaymentNoticeRes -> {
+                            log.info(
+                                    "Nodo activation for NM3 payment. Transaction id: [{}] RPT id: [{}] response outcome: [{}]",
+                                    transactionId,
+                                    rptId,
+                                    activatePaymentNoticeRes.getOutcome()
+                            );
+                            return StOutcome.OK.value()
+                                    .equals(activatePaymentNoticeRes.getOutcome().value())
+                                            ? Mono.just(activatePaymentNoticeRes.getPaymentToken())
+                                            : Mono.error(
+                                                    new NodoErrorException(activatePaymentNoticeRes.getFault())
+                                            );
+                        }
                 );
     }
 
@@ -137,10 +144,10 @@ public class NodoOperations {
                                                                 RptId rptId,
                                                                 BigDecimal amount,
                                                                 String idempotencyKey,
-                                                                String paymentContextCode
+                                                                String paymentContextCode,
+                                                                String transactionId
     ) {
-        NodoAttivaRPT nodoAttivaRPTReq = baseNodoAttivaRPT;
-
+        NodoAttivaRPT nodoAttivaRPTReq = nodoConfig.baseNodoAttivaRPTRequest();
         NodoTipoCodiceIdRPT nodoTipoCodiceIdRPT = nodoUtilities.getCodiceIdRpt(rptId);
         NodoTipoDatiPagamentoPSP datiPagamentoPsp = objectFactoryNodoPerPsp.createNodoTipoDatiPagamentoPSP();
         datiPagamentoPsp.setImportoSingoloVersamento(amount);
@@ -158,11 +165,19 @@ public class NodoOperations {
                                     && "PPT_MULTI_BENEFICIARIO"
                                             .equals(nodoAttivaRPTRResponse.getFault().getFaultCode());
 
+                            log.info(
+                                    "Esito nodo attiva RPT. Transaction id: [{}] RPT id: [{}] outcome: [{}], is multibeneficiary response code: [{}]",
+                                    transactionId,
+                                    rptId,
+                                    outcome,
+                                    isNM3GivenAttivaRPTRisposta
+                            );
                             if (Boolean.TRUE.equals(isNM3GivenAttivaRPTRisposta)) {
                                 return nodoActivationForNM3PaymentRequest(
                                         rptId,
                                         amount,
-                                        idempotencyKey
+                                        idempotencyKey,
+                                        transactionId
                                 );
                             }
 

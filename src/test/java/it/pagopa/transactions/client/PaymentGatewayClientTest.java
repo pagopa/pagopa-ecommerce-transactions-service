@@ -67,7 +67,8 @@ class PaymentGatewayClientTest {
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
-                                new TransactionDescription("description")
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null)
                         )
                 ),
                 new Email("foo@example.com"),
@@ -111,7 +112,8 @@ class PaymentGatewayClientTest {
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
-                                new TransactionDescription("description")
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null)
                         )
                 ),
                 new Email("foo@example.com"),
@@ -185,7 +187,8 @@ class PaymentGatewayClientTest {
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
-                                new TransactionDescription("description")
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null)
                         )
                 ),
                 new Email("foo@example.com"),
@@ -253,7 +256,8 @@ class PaymentGatewayClientTest {
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
-                                new TransactionDescription("description")
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null)
                         )
                 ),
                 new Email("foo@example.com"),
@@ -338,7 +342,8 @@ class PaymentGatewayClientTest {
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
-                                new TransactionDescription("description")
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null)
                         )
                 ),
                 new Email("foo@example.com"),
@@ -417,7 +422,8 @@ class PaymentGatewayClientTest {
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
-                                new TransactionDescription("description")
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null)
                         )
                 ),
                 new Email("foo@example.com"),
@@ -494,7 +500,8 @@ class PaymentGatewayClientTest {
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
-                                new TransactionDescription("description")
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null)
                         )
                 ),
                 new Email("foo@example.com"),
@@ -569,7 +576,8 @@ class PaymentGatewayClientTest {
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
-                                new TransactionDescription("description")
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null)
                         )
                 ),
                 new Email("foo@example.com"),
@@ -646,7 +654,8 @@ class PaymentGatewayClientTest {
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
-                                new TransactionDescription("description")
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null)
                         )
                 ),
                 new Email("foo@example.com"),
@@ -716,7 +725,8 @@ class PaymentGatewayClientTest {
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
-                                new TransactionDescription("description")
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null)
                         )
                 ),
                 new Email("foo@example.com"),
@@ -788,7 +798,8 @@ class PaymentGatewayClientTest {
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
-                                new TransactionDescription("description")
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null)
                         )
                 ),
                 new Email("foo@example.com"),

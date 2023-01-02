@@ -10,6 +10,7 @@ import it.pagopa.generated.transactions.model.StOutcome;
 import it.pagopa.generated.transactions.model.VerifyPaymentNoticeReq;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NodoPerPspClient;
+import it.pagopa.transactions.configurations.NodoConfig;
 import it.pagopa.transactions.exceptions.NodoErrorException;
 import it.pagopa.transactions.utils.NodoOperations;
 import it.pagopa.transactions.utils.NodoUtilities;
@@ -43,16 +44,13 @@ public class PaymentRequestsService {
     private it.pagopa.generated.transactions.model.ObjectFactory objectFactoryNodeForPsp;
 
     @Autowired
-    private NodoVerificaRPT baseNodoVerificaRPTRequest;
-
-    @Autowired
-    private VerifyPaymentNoticeReq baseVerifyPaymentNoticeReq;
-
-    @Autowired
     private NodoOperations nodoOperations;
 
     @Autowired
     private NodoUtilities nodoUtilities;
+
+    @Autowired
+    private NodoConfig nodoConfig;
 
     public Mono<PaymentRequestsGetResponseDto> getPaymentRequestInfo(String rptId) {
 
@@ -112,7 +110,7 @@ public class PaymentRequestsService {
         return Mono.just(rptId)
                 .flatMap(
                         request -> {
-                            NodoVerificaRPT nodoVerificaRPTRequest = baseNodoVerificaRPTRequest;
+                            NodoVerificaRPT nodoVerificaRPTRequest = nodoConfig.baseNodoVerificaRPTRequest();
                             NodoTipoCodiceIdRPT nodoTipoCodiceIdRPT = nodoUtilities.getCodiceIdRpt(rptId);
                             nodoVerificaRPTRequest.setCodiceIdRPT(nodoTipoCodiceIdRPT);
                             nodoVerificaRPTRequest.setCodiceContestoPagamento(paymentContextCode);
@@ -143,7 +141,7 @@ public class PaymentRequestsService {
 
                             if (Boolean.TRUE.equals(isNM3)) {
 
-                                VerifyPaymentNoticeReq verifyPaymentNoticeReq = baseVerifyPaymentNoticeReq;
+                                VerifyPaymentNoticeReq verifyPaymentNoticeReq = nodoConfig.baseVerifyPaymentNoticeReq();
                                 CtQrCode qrCode = new CtQrCode();
                                 qrCode.setFiscalCode(rptId.getFiscalCode());
                                 qrCode.setNoticeNumber(rptId.getNoticeId());

@@ -5,10 +5,9 @@ import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.generated.nodoperpsp.model.*;
 import it.pagopa.generated.transactions.model.*;
-import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
-import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NodoPerPspClient;
+import it.pagopa.transactions.configurations.NodoConfig;
 import it.pagopa.transactions.exceptions.NodoErrorException;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
@@ -37,6 +36,9 @@ class NodoOperationsTest {
     NodeForPspClient nodeForPspClient;
 
     @Mock
+    NodoConfig nodoConfig;
+
+    @Mock
     ActivatePaymentNoticeReq baseActivatePaymentNoticeReq;
 
     @Mock
@@ -57,7 +59,7 @@ class NodoOperationsTest {
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
         String paymentContextCode = UUID.randomUUID().toString();
-
+        String transactionId = UUID.randomUUID().toString();
         String paName = "paName";
         String paTaxCode = "77777777777";
         String description = "Description";
@@ -74,12 +76,6 @@ class NodoOperationsTest {
                 isNM3,
                 paymentToken,
                 idempotencyKey
-        );
-        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
-        newTransactionRequestDto.addPaymentNoticesItem(
-                new PaymentNoticeInfoDto()
-                        .paymentContextCode(paymentContextCode)
-                        .amount(amount)
         );
 
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
@@ -105,11 +101,16 @@ class NodoOperationsTest {
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(objectFactoryNodeForPsp.createActivatePaymentNoticeReq(Mockito.any()))
                 .thenReturn(objectFactoryUtil.createActivatePaymentNoticeReq(activatePaymentReq));
+        Mockito.when(nodoConfig.baseActivatePaymentNoticeReq()).thenReturn(new ActivatePaymentNoticeReq());
+
         /** test */
         PaymentRequestInfo response = nodoOperations
                 .activatePaymentRequest(
                         paymentRequestInfo,
-                        newTransactionRequestDto
+                        paymentContextCode,
+                        amount,
+                        false,
+                        transactionId
                 )
                 .block();
 
@@ -129,7 +130,7 @@ class NodoOperationsTest {
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
         String paymentContextCode = UUID.randomUUID().toString();
-
+        String transactionId = UUID.randomUUID().toString();
         String paName = "paName";
         String paTaxCode = "77777777777";
         String description = "Description";
@@ -159,6 +160,7 @@ class NodoOperationsTest {
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(objectFactoryNodeForPsp.createActivatePaymentNoticeReq(Mockito.any()))
                 .thenReturn(objectFactoryUtil.createActivatePaymentNoticeReq(activatePaymentReq));
+        Mockito.when(nodoConfig.baseActivatePaymentNoticeReq()).thenReturn(new ActivatePaymentNoticeReq());
 
         PaymentRequestInfo paymentRequestInfo = new PaymentRequestInfo(
                 rptId,
@@ -171,18 +173,15 @@ class NodoOperationsTest {
                 paymentToken,
                 idempotencyKey
         );
-        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
-        newTransactionRequestDto.addPaymentNoticesItem(
-                new PaymentNoticeInfoDto()
-                        .paymentContextCode(paymentContextCode)
-                        .amount(amount)
-        );
 
         /** Test / asserts */
         Mono<PaymentRequestInfo> paymentRequestInfoMono = nodoOperations
                 .activatePaymentRequest(
                         paymentRequestInfo,
-                        newTransactionRequestDto
+                        paymentContextCode,
+                        amount,
+                        false,
+                        transactionId
                 );
 
         Assert.assertThrows(
@@ -201,7 +200,7 @@ class NodoOperationsTest {
         String paymentToken = UUID.randomUUID().toString();
         String paymentContextCode = UUID.randomUUID().toString();
         String paymentNotice = "302000100000009424";
-
+        String transactionId = UUID.randomUUID().toString();
         String paName = "paName";
         String paTaxCode = "77777777777";
         String description = "Description";
@@ -262,6 +261,8 @@ class NodoOperationsTest {
         Mockito.when(objectFactoryNodoPerPsp.createNodoAttivaRPT(Mockito.any()))
                 .thenReturn(objectFactoryUtilNodoPerPsp.createNodoAttivaRPT(nodoAttivaRPT));
         Mockito.when(nodoUtilities.getCodiceIdRpt(Mockito.any(RptId.class))).thenReturn(nodoTipoCodiceIdRPT);
+        Mockito.when(nodoConfig.baseNodoAttivaRPTRequest()).thenReturn(new NodoAttivaRPT());
+        Mockito.when(nodoConfig.baseActivatePaymentNoticeReq()).thenReturn(new ActivatePaymentNoticeReq());
 
         PaymentRequestInfo paymentRequestInfo = new PaymentRequestInfo(
                 rptId,
@@ -274,18 +275,15 @@ class NodoOperationsTest {
                 paymentToken,
                 idempotencyKey
         );
-        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
-        newTransactionRequestDto.addPaymentNoticesItem(
-                new PaymentNoticeInfoDto()
-                        .paymentContextCode(paymentContextCode)
-                        .amount(amount)
-        );
 
         /** test */
         PaymentRequestInfo response = nodoOperations
                 .activatePaymentRequest(
                         paymentRequestInfo,
-                        newTransactionRequestDto
+                        paymentContextCode,
+                        amount,
+                        false,
+                        transactionId
                 )
                 .block();
 
@@ -306,7 +304,7 @@ class NodoOperationsTest {
         String paymentToken = UUID.randomUUID().toString();
         String paymentContextCode = UUID.randomUUID().toString();
         String paymentNotice = "302000100000009424";
-
+        String transactionId = UUID.randomUUID().toString();
         String paName = "paName";
         String paTaxCode = "77777777777";
         String description = "Description";
@@ -351,7 +349,7 @@ class NodoOperationsTest {
                 .thenReturn(Mono.just(attivaRPTRisposta));
         Mockito.when(objectFactoryNodoPerPsp.createNodoAttivaRPT(Mockito.any()))
                 .thenReturn(objectFactoryUtilNodoPerPsp.createNodoAttivaRPT(nodoAttivaRPT));
-
+        Mockito.when(nodoConfig.baseNodoAttivaRPTRequest()).thenReturn(new NodoAttivaRPT());
         PaymentRequestInfo paymentRequestInfo = new PaymentRequestInfo(
                 rptId,
                 paTaxCode,
@@ -363,19 +361,16 @@ class NodoOperationsTest {
                 paymentToken,
                 idempotencyKey
         );
-        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
-        newTransactionRequestDto.addPaymentNoticesItem(
-                new PaymentNoticeInfoDto()
-                        .paymentContextCode(paymentContextCode)
-                        .amount(amount)
-        );
 
         /** Test / asserts */
 
         Mono<PaymentRequestInfo> paymentRequestInfoMono = nodoOperations
                 .activatePaymentRequest(
                         paymentRequestInfo,
-                        newTransactionRequestDto
+                        paymentContextCode,
+                        amount,
+                        false,
+                        transactionId
                 );
 
         Assert.assertThrows(
@@ -394,7 +389,7 @@ class NodoOperationsTest {
         String paymentToken = UUID.randomUUID().toString();
         String paymentContextCode = UUID.randomUUID().toString();
         String paymentNotice = "302000100000009424";
-
+        String transactionId = UUID.randomUUID().toString();
         String paName = "paName";
         String paTaxCode = "77777777777";
         String description = "Description";
@@ -442,6 +437,7 @@ class NodoOperationsTest {
         Mockito.when(objectFactoryNodoPerPsp.createNodoAttivaRPT(Mockito.any()))
                 .thenReturn(objectFactoryUtilNodoPerPsp.createNodoAttivaRPT(nodoAttivaRPT));
         Mockito.when(nodoUtilities.getCodiceIdRpt(Mockito.any(RptId.class))).thenReturn(nodoTipoCodiceIdRPT);
+        Mockito.when(nodoConfig.baseNodoAttivaRPTRequest()).thenReturn(new NodoAttivaRPT());
 
         PaymentRequestInfo paymentRequestInfo = new PaymentRequestInfo(
                 rptId,
@@ -454,18 +450,15 @@ class NodoOperationsTest {
                 paymentToken,
                 idempotencyKey
         );
-        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
-        newTransactionRequestDto.addPaymentNoticesItem(
-                new PaymentNoticeInfoDto()
-                        .paymentContextCode(paymentContextCode)
-                        .amount(amount)
-        );
 
         /** test */
         PaymentRequestInfo response = nodoOperations
                 .activatePaymentRequest(
                         paymentRequestInfo,
-                        newTransactionRequestDto
+                        paymentContextCode,
+                        amount,
+                        false,
+                        transactionId
                 )
                 .block();
 

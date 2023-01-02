@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple3;
 
@@ -116,6 +117,7 @@ class TransactionInitializerHandlerTest {
                                 paymentToken,
                                 rptId.value(),
                                 null,
+                                null,
                                 null
                         )
                 )
@@ -138,7 +140,7 @@ class TransactionInitializerHandlerTest {
                 )
         )
                 .thenReturn(queueSuccessfulResponse());
-
+        ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
         /** run test */
         Tuple3<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>, SessionDataDto> response = handler
                 .handle(command).block();
@@ -166,9 +168,9 @@ class TransactionInitializerHandlerTest {
                                         .amount(1)
                                         .rptId(TEST_RPTID)
                                         .paymentToken(TEST_TOKEN)
-                                        .authToken(TEST_TOKEN)
                                         .reason("")
                         )
+                        .authToken(TEST_TOKEN)
         );
 
         TransactionsProjection<NewTransactionResponseDto> differentTransactionsProjection = new TransactionsProjection<>();
@@ -179,9 +181,9 @@ class TransactionInitializerHandlerTest {
                                         .amount(1)
                                         .rptId(TEST_RPTID)
                                         .paymentToken(TEST_TOKEN)
-                                        .authToken(TEST_TOKEN)
                                         .reason("")
                         )
+                        .authToken(TEST_TOKEN)
         );
 
         differentTransactionsProjection.setRptId(new RptId(TEST_RPTID));
