@@ -276,7 +276,7 @@ class TransactionsControllerTest {
     @Test
     void testAlreadyProcessedTransactionExceptionHandler() throws NoSuchMethodException, SecurityException,
             IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-        final TransactionId RPT_ID = new TransactionId(UUID.randomUUID());
+        final TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
         ResponseEntity responseCheck = new ResponseEntity<>(
                 new ProblemJsonDto()
@@ -285,7 +285,7 @@ class TransactionsControllerTest {
                         .detail("Transaction for RPT id '' has been already processed"),
                 HttpStatus.CONFLICT
         );
-        AlreadyProcessedException exception = new AlreadyProcessedException(RPT_ID);
+        AlreadyProcessedException exception = new AlreadyProcessedException(transactionId);
         Method method = TransactionsController.class
                 .getDeclaredMethod("alreadyProcessedHandler", AlreadyProcessedException.class);
         method.setAccessible(true);

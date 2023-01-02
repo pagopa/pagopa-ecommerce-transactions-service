@@ -325,7 +325,7 @@ class PaymentGatewayClientTest {
                 .expectErrorMatches(
                         error -> error instanceof AlreadyProcessedException &&
                                 ((AlreadyProcessedException) error).getTransactionId()
-                                        .equals(transaction.getNoticeCodes().get(0).rptId())
+                                        .equals(transaction.getTransactionId())
                 )
                 .verify();
 
@@ -401,7 +401,7 @@ class PaymentGatewayClientTest {
                 .expectErrorMatches(
                         error -> error instanceof AlreadyProcessedException &&
                                 ((AlreadyProcessedException) error).getTransactionId()
-                                        .equals(transaction.getNoticeCodes().get(0).rptId())
+                                        .equals(transaction.getTransactionId())
                 )
                 .verify();
 

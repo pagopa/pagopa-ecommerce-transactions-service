@@ -56,7 +56,7 @@ public class TransactionAddUserReceiptHandler
                                 t.getStatus()
                         )
                 )
-                .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getNoticeCodes().get(0).rptId())));
+                .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
 
         return transaction
                 .cast(BaseTransaction.class)

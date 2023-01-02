@@ -72,7 +72,9 @@ public class PaymentGatewayClient {
                                                 authorizationData.transaction().getTransactionId()
                                         );
                                         case GATEWAY_TIMEOUT -> new GatewayTimeoutException();
-                                        case INTERNAL_SERVER_ERROR -> new BadGatewayException("PostePay API returned 500");
+                                        case INTERNAL_SERVER_ERROR -> new BadGatewayException(
+                                                "PostePay API returned 500"
+                                        );
                                         default -> exception;
                                         }
                                 )
@@ -88,7 +90,7 @@ public class PaymentGatewayClient {
                 )
                 .flatMap(authorizationRequestData -> {
                     final Mono<XPayAuthRequestDto> xPayAuthRequest;
-                    if (authorizationData.authDetails() instanceof CardAuthRequestDetailsDto cardData) {
+                    if (authorizationData.authDetails()instanceof CardAuthRequestDetailsDto cardData) {
                         BigDecimal grandTotal = BigDecimal.valueOf(
                                 ((long) authorizationData.transaction().getNoticeCodes().stream()
                                         .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum())

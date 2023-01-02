@@ -74,7 +74,10 @@ public class TransactionRequestAuthorizationHandler
 
         return gatewayAttempts.switchIfEmpty(Mono.error(new BadRequestException("No gateway matched")))
                 .flatMap(tuple2 -> {
-                    log.info("Logging authorization event for transaction id {}", transaction.getTransactionId().value());
+                    log.info(
+                            "Logging authorization event for transaction id {}",
+                            transaction.getTransactionId().value()
+                    );
 
                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                             transaction.getTransactionId().value().toString(),
