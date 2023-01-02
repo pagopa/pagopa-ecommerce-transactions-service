@@ -424,8 +424,8 @@ components:
           pattern: "^[0-9]{14,16}$"
         expiryDate:
           type: string
-          description: Credit card expiry date. Note that only the month and year components are taken into account.
-          format: date
+          description: Credit card expiry date. The date format is `YYYYMM`
+          pattern: '^\d{6}$'
         holderName:
           type: string
           description: The card holder name
@@ -439,7 +439,7 @@ components:
         detailType: "card"
         cvv: 000
         pan: 0123456789012345
-        expiryDate: "2099-01-01"
+        expiryDate: "209901"
         holderName: "Name Surname"
     RequestAuthorizationResponse:
       type: object

@@ -526,7 +526,7 @@ public class TransactionServiceTests {
     @Test
     void shouldRedirectToAuthorizationURIForValidRequestWithCardData() {
         CardAuthRequestDetailsDto cardAuthRequestDetailsDto = new CardAuthRequestDetailsDto()
-                .expiryDate(LocalDate.of(2000, Month.JANUARY, 1))
+                .expiryDate("203012")
                 .cvv("000")
                 .pan("0123456789012345")
                 .holderName("Name Surname");

@@ -271,17 +271,17 @@ public class TransactionsService {
                             );
 
                             // FIXME Handle multiple rtpId
-                            TransactionRequestAuthorizationCommand command = new TransactionRequestAuthorizationCommand(
+                            TransactionRequestAuthorizationCommand transactionRequestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                                     transaction.getPaymentNotices().get(0).rptId(),
                                     authorizationData
                             );
 
                             return transactionRequestAuthorizationHandler
-                                    .handle(command)
+                                    .handle(transactionRequestAuthorizationCommand)
                                     .doOnNext(
                                             res -> log.info(
-                                                    "Requested authorization for rptId: {}",
-                                                    transactionDocument.getPaymentNotices().get(0).getRptId()
+                                                    "Requested authorization for transaction: {}",
+                                                    transactionDocument.getTransactionId()
                                             )
                                     )
                                     .flatMap(

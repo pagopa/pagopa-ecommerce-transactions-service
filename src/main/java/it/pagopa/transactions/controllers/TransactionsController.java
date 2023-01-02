@@ -182,8 +182,8 @@ public class TransactionsController implements TransactionsApi {
                         .status(409)
                         .title("Transaction already processed")
                         .detail(
-                                "Transaction for RPT id '%s' has been already processed"
-                                        .formatted(exception.getRptId().value())
+                                "Transaction with id '%s' has been already processed"
+                                        .formatted(exception.getTransactionId().value())
                         ),
                 HttpStatus.CONFLICT
         );
