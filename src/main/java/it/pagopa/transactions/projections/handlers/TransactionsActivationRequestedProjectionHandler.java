@@ -28,14 +28,14 @@ public class TransactionsActivationRequestedProjectionHandler
         TransactionId transactionId = new TransactionId(
                 UUID.fromString(transactionActivationRequestedEvent.getTransactionId())
         );
-        List<PaymentNotice> PaymentNoticeList = transactionActivationRequestedEvent.getData().getPaymentNotices()
+        List<PaymentNotice> paymentNoticeList = transactionActivationRequestedEvent.getData().getPaymentNotices()
                 .stream()
                 .map(
-                        PaymentNotice -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                        paymentNotice -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
                                 new PaymentToken(null),
-                                new RptId(PaymentNotice.getRptId()),
-                                new TransactionAmount(PaymentNotice.getAmount()),
-                                new TransactionDescription(PaymentNotice.getDescription()),
+                                new RptId(paymentNotice.getRptId()),
+                                new TransactionAmount(paymentNotice.getAmount()),
+                                new TransactionDescription(paymentNotice.getDescription()),
                                 new PaymentContextCode(null)
                         )
                 ).toList();
@@ -43,7 +43,7 @@ public class TransactionsActivationRequestedProjectionHandler
 
         TransactionActivationRequested transaction = new TransactionActivationRequested(
                 transactionId,
-                PaymentNoticeList,
+                paymentNoticeList,
                 email,
                 TransactionStatusDto.ACTIVATION_REQUESTED
         );

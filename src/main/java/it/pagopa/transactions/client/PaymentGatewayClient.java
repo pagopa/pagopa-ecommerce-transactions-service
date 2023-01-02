@@ -51,7 +51,7 @@ public class PaymentGatewayClient {
                 .map(authorizationRequestData -> {
                     BigDecimal grandTotal = BigDecimal.valueOf(
                             ((long) authorizationData.transaction().getPaymentNotices().stream()
-                                    .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum())
+                                    .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value()).sum())
                                     + authorizationData.fee()
                     );
                     // FIXME Handle all description together?
@@ -95,7 +95,7 @@ public class PaymentGatewayClient {
                     if (authorizationData.authDetails()instanceof CardAuthRequestDetailsDto cardData) {
                         BigDecimal grandTotal = BigDecimal.valueOf(
                                 ((long) authorizationData.transaction().getPaymentNotices().stream()
-                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum())
+                                        .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value()).sum())
                                         + authorizationData.fee()
                         );
                         xPayAuthRequest = Mono.just(

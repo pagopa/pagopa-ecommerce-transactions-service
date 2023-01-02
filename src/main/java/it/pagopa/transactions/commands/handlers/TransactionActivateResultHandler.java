@@ -131,12 +131,12 @@ public class TransactionActivateResultHandler
                                     transactionActivationRequested.getEmail().value(),
                                     transactionActivationRequested.getPaymentNotices().stream()
                                             .map(
-                                                    PaymentNotice -> new it.pagopa.ecommerce.commons.documents.PaymentNotice(
+                                                    paymentNotice -> new it.pagopa.ecommerce.commons.documents.PaymentNotice(
                                                             saved.paymentToken(),
-                                                            PaymentNotice.rptId().value(),
-                                                            PaymentNotice.transactionDescription().value(),
-                                                            PaymentNotice.transactionAmount().value(),
-                                                            PaymentNotice.paymentContextCode().value()
+                                                            paymentNotice.rptId().value(),
+                                                            paymentNotice.transactionDescription().value(),
+                                                            paymentNotice.transactionAmount().value(),
+                                                            paymentNotice.paymentContextCode().value()
                                                     )
                                             )
                                             .toList(),

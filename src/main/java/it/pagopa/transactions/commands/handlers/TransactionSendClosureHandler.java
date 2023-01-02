@@ -123,7 +123,7 @@ public class TransactionSendClosureHandler
                                     EuroUtils.euroCentsToEuro(
                                             tx.getPaymentNotices().stream()
                                                     .mapToInt(
-                                                            PaymentNotice -> PaymentNotice.transactionAmount().value()
+                                                            paymentNotice -> paymentNotice.transactionAmount().value()
                                                     )
                                                     .sum() + transactionAuthorizationRequestData.getFee()
                                     )

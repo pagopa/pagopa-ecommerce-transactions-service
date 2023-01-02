@@ -1,8 +1,12 @@
 package it.pagopa.transactions.commands.handlers;
 
-import it.pagopa.ecommerce.commons.documents.*;
-import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.documents.TransactionAddReceiptData;
+import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationRequestData;
+import it.pagopa.ecommerce.commons.documents.TransactionEvent;
+import it.pagopa.ecommerce.commons.documents.TransactionUserReceiptAddedEvent;
+import it.pagopa.ecommerce.commons.domain.EmptyTransaction;
 import it.pagopa.ecommerce.commons.domain.Transaction;
+import it.pagopa.ecommerce.commons.domain.TransactionClosed;
 import it.pagopa.ecommerce.commons.domain.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.notifications.templates.ko.KoTemplate;
@@ -126,7 +130,7 @@ public class TransactionAddUserReceiptHandler
                                         amountToHumanReadableString(
                                                 tx.getPaymentNotices().stream()
                                                         .mapToInt(
-                                                                PaymentNotice -> PaymentNotice.transactionAmount()
+                                                                paymentNotice -> paymentNotice.transactionAmount()
                                                                         .value()
                                                         )
                                                         .sum()
@@ -160,7 +164,7 @@ public class TransactionAddUserReceiptHandler
                                         amountToHumanReadableString(
                                                 tx.getPaymentNotices().stream()
                                                         .mapToInt(
-                                                                PaymentNotice -> PaymentNotice.transactionAmount()
+                                                                paymentNotice -> paymentNotice.transactionAmount()
                                                                         .value()
                                                         )
                                                         .sum() + transactionAuthorizationRequestData.getFee()
@@ -188,27 +192,27 @@ public class TransactionAddUserReceiptHandler
                                 ),
                                 new CartTemplate(
                                         tx.getPaymentNotices().stream().map(
-                                                PaymentNotice -> new ItemTemplate(
+                                                paymentNotice -> new ItemTemplate(
                                                         new RefNumberTemplate(
                                                                 RefNumberTemplate.Type.CODICE_AVVISO,
-                                                                PaymentNotice.rptId().getNoticeId()
+                                                                paymentNotice.rptId().getNoticeId()
                                                         ),
                                                         null,
                                                         new PayeeTemplate(
                                                                 addUserReceiptRequestDto.getPayments().get(0)
                                                                         .getOfficeName(),
-                                                                PaymentNotice.rptId().getFiscalCode()
+                                                                paymentNotice.rptId().getFiscalCode()
                                                         ),
                                                         addUserReceiptRequestDto.getPayments().get(0).getDescription(),
                                                         amountToHumanReadableString(
-                                                                PaymentNotice.transactionAmount().value()
+                                                                paymentNotice.transactionAmount().value()
                                                         )
                                                 )
                                         ).toList(),
                                         amountToHumanReadableString(
                                                 tx.getPaymentNotices().stream()
                                                         .mapToInt(
-                                                                PaymentNotice -> PaymentNotice.transactionAmount()
+                                                                paymentNotice -> paymentNotice.transactionAmount()
                                                                         .value()
                                                         )
                                                         .sum()

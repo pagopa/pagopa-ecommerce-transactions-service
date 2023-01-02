@@ -242,7 +242,7 @@ public class TransactionActivateHandler
         TransactionActivationRequestedData data = new TransactionActivationRequestedData();
         data.setEmail(email);
         PaymentRequestInfo paymentRequestInfo = paymentRequestsInfo.get(0);
-        List<PaymentNotice> PaymentNotices = List.of(
+        List<PaymentNotice> paymentNotices = List.of(
                 new PaymentNotice(
                         null,
                         paymentRequestInfo.id().value(),
@@ -251,7 +251,7 @@ public class TransactionActivateHandler
                         paymentContextCode
                 )
         );
-        data.setPaymentNotices(PaymentNotices);
+        data.setPaymentNotices(paymentNotices);
         TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
                 transactionId,
                 data
@@ -272,10 +272,10 @@ public class TransactionActivateHandler
                                                                          String transactionId,
                                                                          String email
     ) {
-        List<PaymentNotice> PaymentNotices = toPaymentNoticeList(paymentRequestsInfo);
+        List<PaymentNotice> paymentNotices = toPaymentNoticeList(paymentRequestsInfo);
         TransactionActivatedData data = new TransactionActivatedData(
                 email,
-                PaymentNotices,
+                paymentNotices,
                 null,
                 null
         );

@@ -12,7 +12,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -26,13 +25,13 @@ public class TransactionsActivationProjectionHandler
     public Mono<TransactionActivated> handle(TransactionActivatedEvent event) {
         TransactionActivatedData data = event.getData();
         TransactionId transactionId = new TransactionId(UUID.fromString(event.getTransactionId()));
-        List<PaymentNotice> PaymentNoticeList = data.getPaymentNotices().stream().map(
-                PaymentNoticeData -> new PaymentNotice(
-                        new PaymentToken(PaymentNoticeData.getPaymentToken()),
-                        new RptId(PaymentNoticeData.getRptId()),
-                        new TransactionAmount(PaymentNoticeData.getAmount()),
-                        new TransactionDescription(PaymentNoticeData.getDescription()),
-                        new PaymentContextCode(PaymentNoticeData.getPaymentContextCode())
+        List<PaymentNotice> paymentNoticeList = data.getPaymentNotices().stream().map(
+                paymentNoticeData -> new PaymentNotice(
+                        new PaymentToken(paymentNoticeData.getPaymentToken()),
+                        new RptId(paymentNoticeData.getRptId()),
+                        new TransactionAmount(paymentNoticeData.getAmount()),
+                        new TransactionDescription(paymentNoticeData.getDescription()),
+                        new PaymentContextCode(paymentNoticeData.getPaymentContextCode())
                 )
         ).toList();
         Email email = new Email(event.getData().getEmail());
@@ -41,7 +40,7 @@ public class TransactionsActivationProjectionHandler
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                PaymentNoticeList,
+                paymentNoticeList,
                 email,
                 faultCode,
                 faultCodeString,

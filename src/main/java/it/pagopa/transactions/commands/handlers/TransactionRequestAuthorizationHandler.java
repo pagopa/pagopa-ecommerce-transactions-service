@@ -78,7 +78,7 @@ public class TransactionRequestAuthorizationHandler
                             String.join(
                                     ",",
                                     transaction.getPaymentNotices().stream()
-                                            .map(PaymentNotice -> PaymentNotice.rptId().value())
+                                            .map(paymentNotice -> paymentNotice.rptId().value())
                                             .toList()
                             )
                     );
@@ -86,7 +86,7 @@ public class TransactionRequestAuthorizationHandler
                             transaction.getTransactionId().value().toString(),
                             new TransactionAuthorizationRequestData(
                                     command.getData().transaction().getPaymentNotices().stream()
-                                            .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum(),
+                                            .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value()).sum(),
                                     command.getData().fee(),
                                     command.getData().paymentInstrumentId(),
                                     command.getData().pspId(),

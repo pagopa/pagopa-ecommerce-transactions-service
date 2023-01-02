@@ -34,12 +34,12 @@ public class AuthorizationUpdateProjectionHandler
                                 new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
                                 transactionDocument.getPaymentNotices().stream()
                                         .map(
-                                                PaymentNotice -> new PaymentNotice(
-                                                        new PaymentToken(PaymentNotice.getPaymentToken()),
-                                                        new RptId(PaymentNotice.getRptId()),
-                                                        new TransactionAmount(PaymentNotice.getAmount()),
-                                                        new TransactionDescription(PaymentNotice.getDescription()),
-                                                        new PaymentContextCode(PaymentNotice.getPaymentContextCode())
+                                                paymentNotice -> new PaymentNotice(
+                                                        new PaymentToken(paymentNotice.getPaymentToken()),
+                                                        new RptId(paymentNotice.getRptId()),
+                                                        new TransactionAmount(paymentNotice.getAmount()),
+                                                        new TransactionDescription(paymentNotice.getDescription()),
+                                                        new PaymentContextCode(paymentNotice.getPaymentContextCode())
                                                 )
                                         ).toList(),
                                 new Email(transactionDocument.getEmail()),

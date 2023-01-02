@@ -1,10 +1,10 @@
 package it.pagopa.transactions.services;
 
 import io.vavr.control.Either;
-import it.pagopa.ecommerce.commons.documents.*;
 import it.pagopa.ecommerce.commons.documents.Transaction;
-import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.documents.*;
 import it.pagopa.ecommerce.commons.domain.PaymentNotice;
+import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PSPsResponseDto;
@@ -294,12 +294,12 @@ public class TransactionServiceTests {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
                 transactionDocument.getPaymentNotices().stream().map(
-                        PaymentNotice -> new PaymentNotice(
-                                new PaymentToken(PaymentNotice.getPaymentToken()),
-                                new RptId(PaymentNotice.getRptId()),
-                                new TransactionAmount(PaymentNotice.getAmount()),
-                                new TransactionDescription(PaymentNotice.getDescription()),
-                                new PaymentContextCode(PaymentNotice.getPaymentContextCode())
+                        paymentNotice -> new PaymentNotice(
+                                new PaymentToken(paymentNotice.getPaymentToken()),
+                                new RptId(paymentNotice.getRptId()),
+                                new TransactionAmount(paymentNotice.getAmount()),
+                                new TransactionDescription(paymentNotice.getDescription()),
+                                new PaymentContextCode(paymentNotice.getPaymentContextCode())
                         )
                 ).toList(),
                 new Email(transactionDocument.getEmail()),
@@ -339,11 +339,11 @@ public class TransactionServiceTests {
                 .transactionId(transactionDocument.getTransactionId())
                 .payments(
                         transactionDocument.getPaymentNotices().stream().map(
-                                PaymentNotice -> new PaymentInfoDto()
-                                        .amount(PaymentNotice.getAmount())
-                                        .reason(PaymentNotice.getDescription())
-                                        .paymentToken(PaymentNotice.getPaymentToken())
-                                        .rptId(PaymentNotice.getRptId())
+                                paymentNotice -> new PaymentInfoDto()
+                                        .amount(paymentNotice.getAmount())
+                                        .reason(paymentNotice.getDescription())
+                                        .paymentToken(paymentNotice.getPaymentToken())
+                                        .rptId(paymentNotice.getRptId())
                         ).toList()
                 )
                 .status(TransactionStatusDto.CLOSED);
@@ -416,12 +416,12 @@ public class TransactionServiceTests {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
                 transactionDocument.getPaymentNotices().stream().map(
-                        PaymentNotice -> new PaymentNotice(
-                                new PaymentToken(PaymentNotice.getPaymentToken()),
-                                new RptId(PaymentNotice.getRptId()),
-                                new TransactionAmount(PaymentNotice.getAmount()),
-                                new TransactionDescription(PaymentNotice.getDescription()),
-                                new PaymentContextCode(PaymentNotice.getPaymentContextCode())
+                        paymentNotice -> new PaymentNotice(
+                                new PaymentToken(paymentNotice.getPaymentToken()),
+                                new RptId(paymentNotice.getRptId()),
+                                new TransactionAmount(paymentNotice.getAmount()),
+                                new TransactionDescription(paymentNotice.getDescription()),
+                                new PaymentContextCode(paymentNotice.getPaymentContextCode())
                         )
                 ).toList(),
                 new Email(transactionDocument.getEmail()),
@@ -457,11 +457,11 @@ public class TransactionServiceTests {
                 .transactionId(transactionDocument.getTransactionId())
                 .payments(
                         transactionDocument.getPaymentNotices().stream().map(
-                                PaymentNotice -> new PaymentInfoDto()
-                                        .amount(PaymentNotice.getAmount())
-                                        .reason(PaymentNotice.getDescription())
-                                        .paymentToken(PaymentNotice.getPaymentToken())
-                                        .rptId(PaymentNotice.getRptId())
+                                paymentNotice -> new PaymentInfoDto()
+                                        .amount(paymentNotice.getAmount())
+                                        .reason(paymentNotice.getDescription())
+                                        .paymentToken(paymentNotice.getPaymentToken())
+                                        .rptId(paymentNotice.getRptId())
                         ).toList()
                 )
                 .status(TransactionStatusDto.NOTIFIED);

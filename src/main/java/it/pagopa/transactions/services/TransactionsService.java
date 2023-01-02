@@ -133,11 +133,11 @@ public class TransactionsService {
                                 .transactionId(transaction.getTransactionId())
                                 .payments(
                                         transaction.getPaymentNotices().stream().map(
-                                                PaymentNotice -> new PaymentInfoDto()
-                                                        .amount(PaymentNotice.getAmount())
-                                                        .reason(PaymentNotice.getDescription())
-                                                        .paymentToken(PaymentNotice.getPaymentToken())
-                                                        .rptId(PaymentNotice.getRptId())
+                                                paymentNotice -> new PaymentInfoDto()
+                                                        .amount(paymentNotice.getAmount())
+                                                        .reason(paymentNotice.getDescription())
+                                                        .paymentToken(paymentNotice.getPaymentToken())
+                                                        .rptId(paymentNotice.getRptId())
                                         ).toList()
                                 )
                                 .feeTotal(transaction.getFeeTotal())
@@ -240,13 +240,13 @@ public class TransactionsService {
                                     new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
                                     transactionDocument.getPaymentNotices().stream()
                                             .map(
-                                                    PaymentNotice -> new PaymentNotice(
-                                                            new PaymentToken(PaymentNotice.getPaymentToken()),
-                                                            new RptId(PaymentNotice.getRptId()),
-                                                            new TransactionAmount(PaymentNotice.getAmount()),
-                                                            new TransactionDescription(PaymentNotice.getDescription()),
+                                                    paymentNotice -> new PaymentNotice(
+                                                            new PaymentToken(paymentNotice.getPaymentToken()),
+                                                            new RptId(paymentNotice.getRptId()),
+                                                            new TransactionAmount(paymentNotice.getAmount()),
+                                                            new TransactionDescription(paymentNotice.getDescription()),
                                                             new PaymentContextCode(
-                                                                    PaymentNotice.getPaymentContextCode()
+                                                                    paymentNotice.getPaymentContextCode()
                                                             )
                                                     )
                                             ).toList(),
@@ -307,13 +307,13 @@ public class TransactionsService {
                                     new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
                                     transactionDocument.getPaymentNotices().stream()
                                             .map(
-                                                    PaymentNotice -> new PaymentNotice(
-                                                            new PaymentToken(PaymentNotice.getPaymentToken()),
-                                                            new RptId(PaymentNotice.getRptId()),
-                                                            new TransactionAmount(PaymentNotice.getAmount()),
-                                                            new TransactionDescription(PaymentNotice.getDescription()),
+                                                    paymentNotice -> new PaymentNotice(
+                                                            new PaymentToken(paymentNotice.getPaymentToken()),
+                                                            new RptId(paymentNotice.getRptId()),
+                                                            new TransactionAmount(paymentNotice.getAmount()),
+                                                            new TransactionDescription(paymentNotice.getDescription()),
                                                             new PaymentContextCode(
-                                                                    PaymentNotice.getPaymentContextCode()
+                                                                    paymentNotice.getPaymentContextCode()
                                                             )
                                                     )
                                             ).toList(),
@@ -386,13 +386,13 @@ public class TransactionsService {
                                                     .transactionId(transactionDocument.getTransactionId())
                                                     .payments(
                                                             transactionDocument.getPaymentNotices().stream().map(
-                                                                    PaymentNotice -> new PaymentInfoDto()
-                                                                            .amount(PaymentNotice.getAmount())
-                                                                            .reason(PaymentNotice.getDescription())
+                                                                    paymentNotice -> new PaymentInfoDto()
+                                                                            .amount(paymentNotice.getAmount())
+                                                                            .reason(paymentNotice.getDescription())
                                                                             .paymentToken(
-                                                                                    PaymentNotice.getPaymentToken()
+                                                                                    paymentNotice.getPaymentToken()
                                                                             )
-                                                                            .rptId(PaymentNotice.getRptId())
+                                                                            .rptId(paymentNotice.getRptId())
                                                             ).toList()
                                                     )
                                                     .status(
@@ -420,13 +420,13 @@ public class TransactionsService {
                                     new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
                                     transactionDocument.getPaymentNotices().stream()
                                             .map(
-                                                    PaymentNotice -> new PaymentNotice(
-                                                            new PaymentToken(PaymentNotice.getPaymentToken()),
-                                                            new RptId(PaymentNotice.getRptId()),
-                                                            new TransactionAmount(PaymentNotice.getAmount()),
-                                                            new TransactionDescription(PaymentNotice.getDescription()),
+                                                    paymentNotice -> new PaymentNotice(
+                                                            new PaymentToken(paymentNotice.getPaymentToken()),
+                                                            new RptId(paymentNotice.getRptId()),
+                                                            new TransactionAmount(paymentNotice.getAmount()),
+                                                            new TransactionDescription(paymentNotice.getDescription()),
                                                             new PaymentContextCode(
-                                                                    PaymentNotice.getPaymentContextCode()
+                                                                    paymentNotice.getPaymentContextCode()
                                                             )
                                                     )
                                             )
@@ -468,23 +468,23 @@ public class TransactionsService {
                                 .transactionId(transaction.getTransactionId().value().toString())
                                 .payments(
                                         transaction.getPaymentNotices().stream().map(
-                                                PaymentNotice -> new PaymentInfoDto()
+                                                paymentNotice -> new PaymentInfoDto()
                                                         .amount(
                                                                 transaction.getTransactionActivatedData()
                                                                         .getPaymentNotices().stream()
                                                                         .filter(
-                                                                                PaymentNoticeData -> PaymentNoticeData
+                                                                                paymentNoticeData -> paymentNoticeData
                                                                                         .getRptId().equals(
-                                                                                                PaymentNotice.rptId()
+                                                                                                paymentNotice.rptId()
                                                                                                         .value()
                                                                                         )
                                                                         )
                                                                         .findFirst().get()
                                                                         .getAmount()
                                                         )
-                                                        .reason(PaymentNotice.transactionDescription().value())
-                                                        .paymentToken(PaymentNotice.paymentToken().value())
-                                                        .rptId(PaymentNotice.rptId().value())
+                                                        .reason(paymentNotice.transactionDescription().value())
+                                                        .paymentToken(paymentNotice.paymentToken().value())
+                                                        .rptId(paymentNotice.rptId().value())
                                         ).toList()
                                 )
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
@@ -518,11 +518,11 @@ public class TransactionsService {
                                 .transactionId(transaction.getTransactionId().value().toString())
                                 .payments(
                                         transaction.getPaymentNotices().stream().map(
-                                                PaymentNotice -> new PaymentInfoDto()
-                                                        .amount(PaymentNotice.transactionAmount().value())
-                                                        .reason(PaymentNotice.transactionDescription().value())
-                                                        .rptId(PaymentNotice.rptId().value())
-                                                        .paymentToken(PaymentNotice.paymentToken().value())
+                                                paymentNotice -> new PaymentInfoDto()
+                                                        .amount(paymentNotice.transactionAmount().value())
+                                                        .reason(paymentNotice.transactionDescription().value())
+                                                        .rptId(paymentNotice.rptId().value())
+                                                        .paymentToken(paymentNotice.paymentToken().value())
                                         ).toList()
                                 )
                                 .authToken(sessionDataDto.getSessionToken())
@@ -543,11 +543,11 @@ public class TransactionsService {
                                 .transactionId(transaction.getTransactionId().value().toString())
                                 .payments(
                                         transaction.getPaymentNotices().stream().map(
-                                                PaymentNotice -> new PaymentInfoDto()
-                                                        .amount(PaymentNotice.transactionAmount().value())
-                                                        .reason(PaymentNotice.transactionDescription().value())
-                                                        .rptId(PaymentNotice.rptId().value())
-                                                        .paymentToken(PaymentNotice.paymentToken().value())
+                                                paymentNotice -> new PaymentInfoDto()
+                                                        .amount(paymentNotice.transactionAmount().value())
+                                                        .reason(paymentNotice.transactionDescription().value())
+                                                        .rptId(paymentNotice.rptId().value())
+                                                        .paymentToken(paymentNotice.paymentToken().value())
                                         ).toList()
                                 )
                                 .authToken(sessionDataDto.getSessionToken())
