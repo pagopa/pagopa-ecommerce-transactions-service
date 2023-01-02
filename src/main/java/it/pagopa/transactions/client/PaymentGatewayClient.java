@@ -101,9 +101,7 @@ public class PaymentGatewayClient {
                                 new XPayAuthRequestDto()
                                         .cvv(cardData.getCvv())
                                         .pan(cardData.getPan())
-                                        .exipiryDate(
-                                                cardData.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM"))
-                                        )
+                                        .exipiryDate(cardData.getExpiryDate())
                                         .idTransaction(
                                                 authorizationData.transaction().getTransactionId().value().toString()
                                         )
