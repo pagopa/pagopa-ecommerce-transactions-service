@@ -2,6 +2,7 @@ package it.pagopa.transactions.controllers;
 
 import it.pagopa.ecommerce.commons.domain.PaymentToken;
 import it.pagopa.ecommerce.commons.domain.RptId;
+import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.generated.nodoperpsp.model.FaultBean;
 import it.pagopa.generated.payment.requests.model.*;
 import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
@@ -275,7 +276,7 @@ class TransactionsControllerTest {
     @Test
     void testAlreadyProcessedTransactionExceptionHandler() throws NoSuchMethodException, SecurityException,
             IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-        final RptId RPT_ID = new RptId("77777777777111111111111111111");
+        final TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
         ResponseEntity responseCheck = new ResponseEntity<>(
                 new ProblemJsonDto()
@@ -284,7 +285,7 @@ class TransactionsControllerTest {
                         .detail("Transaction for RPT id '' has been already processed"),
                 HttpStatus.CONFLICT
         );
-        AlreadyProcessedException exception = new AlreadyProcessedException(RPT_ID);
+        AlreadyProcessedException exception = new AlreadyProcessedException(transactionId);
         Method method = TransactionsController.class
                 .getDeclaredMethod("alreadyProcessedHandler", AlreadyProcessedException.class);
         method.setAccessible(true);
