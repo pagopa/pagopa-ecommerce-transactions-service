@@ -40,21 +40,12 @@ class TransactionProjectionHandlerTest {
         transactionActivationRequestedData.setPaymentNotices(Arrays.asList(paymentNotice));
         transactionActivationRequestedData.setFaultCode("faultCode");
         transactionActivationRequestedData.setFaultCodeString("faultCodeString");
+        transactionActivationRequestedData
+                .setOriginType(it.pagopa.ecommerce.commons.documents.Transaction.OriginType.CHECKOUT);
 
         TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
                 transactionUUID.toString(),
                 transactionActivationRequestedData
-        );
-
-        TransactionActivationRequestedEvent event = new TransactionActivationRequestedEvent(
-                transactionActivationRequestedEvent.getTransactionId(),
-                new TransactionActivationRequestedData(
-                        transactionActivationRequestedData.getPaymentNotices(),
-                        "foo@example.com",
-                        "faultCode",
-                        "faultCodeString",
-                        it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
-                )
         );
 
         TransactionId transactionId = new TransactionId(transactionUUID);
@@ -89,7 +80,7 @@ class TransactionProjectionHandlerTest {
                     email,
                     creationDate,
                     TransactionStatusDto.ACTIVATION_REQUESTED,
-                    it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
+                    it.pagopa.ecommerce.commons.documents.Transaction.OriginType.CHECKOUT
             );
 
             /*

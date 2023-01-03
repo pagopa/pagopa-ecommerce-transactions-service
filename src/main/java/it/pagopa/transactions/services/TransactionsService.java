@@ -89,7 +89,7 @@ public class TransactionsService {
         TransactionActivateCommand command = new TransactionActivateCommand(
                 new RptId(newTransactionRequestDto.getPaymentNotices().get(0).getRptId()),
                 newTransactionRequestDto,
-                //TODO cambiare con l'origin letta dall'header della richiesta
+                // TODO cambiare con l'origin letta dall'header della richiesta
                 it.pagopa.ecommerce.commons.documents.Transaction.OriginType.fromString("UNKNOWN")
         );
 
@@ -531,9 +531,14 @@ public class TransactionsService {
                                 .authToken(sessionDataDto.getSessionToken())
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
                                 // .feeTotal()//TODO da dove prendere le fees?
-                                .origin(Optional.ofNullable(transaction.getOriginType())
-                                        .map(origin -> NewTransactionResponseDto.OriginEnum.fromValue(origin.toString()))
-                                        .orElse(NewTransactionResponseDto.OriginEnum.UNKNOWN))
+                                .origin(
+                                        Optional.ofNullable(transaction.getOriginType())
+                                                .map(
+                                                        origin -> NewTransactionResponseDto.OriginEnum
+                                                                .fromValue(origin.toString())
+                                                )
+                                                .orElse(NewTransactionResponseDto.OriginEnum.UNKNOWN)
+                                )
                 );
     }
 
@@ -558,9 +563,14 @@ public class TransactionsService {
                                 .authToken(sessionDataDto.getSessionToken())
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
                                 // .feeTotal()//TODO da dove prendere le fees?
-                                .origin(Optional.ofNullable(transaction.getOriginType())
-                                        .map(origin -> NewTransactionResponseDto.OriginEnum.fromValue(origin.toString()))
-                                        .orElse(NewTransactionResponseDto.OriginEnum.UNKNOWN))
+                                .origin(
+                                        Optional.ofNullable(transaction.getOriginType())
+                                                .map(
+                                                        origin -> NewTransactionResponseDto.OriginEnum
+                                                                .fromValue(origin.toString())
+                                                )
+                                                .orElse(NewTransactionResponseDto.OriginEnum.UNKNOWN)
+                                )
                 );
     }
 }
