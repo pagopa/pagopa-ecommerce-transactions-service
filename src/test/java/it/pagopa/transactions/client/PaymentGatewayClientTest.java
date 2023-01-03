@@ -124,7 +124,7 @@ class PaymentGatewayClientTest {
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
                 .pan("16589654852")
-                .expiryDate(LocalDate.of(2030, Month.DECEMBER, 31))
+                .expiryDate("203012")
                 .detailType("card")
                 .holderName("John Doe");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -144,7 +144,7 @@ class PaymentGatewayClientTest {
         XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
                 .cvv(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
-                .exipiryDate(cardDetails.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM")))
+                .exipiryDate(cardDetails.getExpiryDate())
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(
                         BigDecimal.valueOf(
@@ -269,7 +269,7 @@ class PaymentGatewayClientTest {
                 .detailType("card")
                 .cvv("345")
                 .pan("16589654852")
-                .expiryDate(LocalDate.of(2030, Month.DECEMBER, 31));
+                .expiryDate("203012");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
@@ -287,7 +287,7 @@ class PaymentGatewayClientTest {
         XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
                 .cvv(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
-                .exipiryDate(cardDetails.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM")))
+                .exipiryDate(cardDetails.getExpiryDate())
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(
                         BigDecimal.valueOf(
@@ -325,7 +325,7 @@ class PaymentGatewayClientTest {
                 .expectErrorMatches(
                         error -> error instanceof AlreadyProcessedException &&
                                 ((AlreadyProcessedException) error).getTransactionId()
-                                        .equals(transaction.getTransactionId().value().toString())
+                                        .equals(transaction.getTransactionId())
                 )
                 .verify();
 
@@ -401,7 +401,7 @@ class PaymentGatewayClientTest {
                 .expectErrorMatches(
                         error -> error instanceof AlreadyProcessedException &&
                                 ((AlreadyProcessedException) error).getTransactionId()
-                                        .equals(transaction.getTransactionId().value().toString())
+                                        .equals(transaction.getTransactionId())
                 )
                 .verify();
 
@@ -586,7 +586,7 @@ class PaymentGatewayClientTest {
                 TransactionStatusDto.ACTIVATED
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto().cvv("345").pan("16589654852")
-                .expiryDate(LocalDate.of(2030, Month.DECEMBER, 31));
+                .expiryDate("203012");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
@@ -604,7 +604,7 @@ class PaymentGatewayClientTest {
         XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
                 .cvv(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
-                .exipiryDate(cardDetails.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM")))
+                .exipiryDate(cardDetails.getExpiryDate())
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(
                         BigDecimal.valueOf(
@@ -735,7 +735,7 @@ class PaymentGatewayClientTest {
                 TransactionStatusDto.ACTIVATED
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto().cvv("345").pan("16589654852")
-                .expiryDate(LocalDate.of(2030, Month.DECEMBER, 31));
+                .expiryDate("203012");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
@@ -753,7 +753,7 @@ class PaymentGatewayClientTest {
         XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
                 .cvv(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
-                .exipiryDate(cardDetails.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM")))
+                .exipiryDate(cardDetails.getExpiryDate())
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(
                         BigDecimal.valueOf(

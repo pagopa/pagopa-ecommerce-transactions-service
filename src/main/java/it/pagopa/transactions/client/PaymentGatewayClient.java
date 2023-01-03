@@ -22,7 +22,6 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Map;
 
@@ -30,7 +29,7 @@ import java.util.Map;
 public class PaymentGatewayClient {
     @Autowired
     @Qualifier("paymentTransactionGatewayPostepayWebClient")
-    PostePayInternalApi paymentTransactionGatewayPostepayWebClient;
+    PostePayInternalApi postePayInternalApi;
 
     @Autowired
     @Qualifier("paymentTransactionGatewayXPayWebClient")
@@ -47,7 +46,6 @@ public class PaymentGatewayClient {
 
         return Mono.just(authorizationData)
                 .filter(authorizationRequestData -> "PPAY".equals(authorizationRequestData.paymentTypeCode()))
-                .switchIfEmpty(Mono.empty())
                 .map(authorizationRequestData -> {
                     BigDecimal grandTotal = BigDecimal.valueOf(
                             ((long) authorizationData.transaction().getNoticeCodes().stream()
@@ -64,17 +62,18 @@ public class PaymentGatewayClient {
                             .idTransaction(authorizationData.transaction().getTransactionId().value().toString());
                 })
                 .flatMap(
-                        payAuthRequestDto -> paymentTransactionGatewayPostepayWebClient
+                        payAuthRequestDto -> postePayInternalApi
                                 .authRequest(payAuthRequestDto, false, encodeMdcFields(authorizationData))
                                 .onErrorMap(
                                         WebClientResponseException.class,
                                         exception -> switch (exception.getStatusCode()) {
-                                        // TODO Handle multiple rptId
                                         case UNAUTHORIZED -> new AlreadyProcessedException(
                                                 authorizationData.transaction().getTransactionId()
                                         );
                                         case GATEWAY_TIMEOUT -> new GatewayTimeoutException();
-                                        case INTERNAL_SERVER_ERROR -> new BadGatewayException("");
+                                        case INTERNAL_SERVER_ERROR -> new BadGatewayException(
+                                                "PostePay API returned 500"
+                                        );
                                         default -> exception;
                                         }
                                 )
@@ -88,7 +87,6 @@ public class PaymentGatewayClient {
                         authorizationRequestData -> "CP".equals(authorizationRequestData.paymentTypeCode())
                                 && "XPAY".equals(authorizationRequestData.paymentGatewayId())
                 )
-                .switchIfEmpty(Mono.empty())
                 .flatMap(authorizationRequestData -> {
                     final Mono<XPayAuthRequestDto> xPayAuthRequest;
                     if (authorizationData.authDetails()instanceof CardAuthRequestDetailsDto cardData) {
@@ -101,9 +99,7 @@ public class PaymentGatewayClient {
                                 new XPayAuthRequestDto()
                                         .cvv(cardData.getCvv())
                                         .pan(cardData.getPan())
-                                        .exipiryDate(
-                                                cardData.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM"))
-                                        )
+                                        .exipiryDate(cardData.getExpiryDate())
                                         .idTransaction(
                                                 authorizationData.transaction().getTransactionId().value().toString()
                                         )
