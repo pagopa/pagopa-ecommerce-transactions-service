@@ -36,7 +36,7 @@ public class TransactionUpdateAuthorizationHandler implements
         if (transaction
                 .getStatus() != it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_REQUESTED) {
             log.error("Error: requesting authorization update for transaction in state {}", transaction.getStatus());
-            return Mono.error(new AlreadyProcessedException(command.getRptId()));
+            return Mono.error(new AlreadyProcessedException(command.getData().transaction().getTransactionId()));
         } else {
             UpdateAuthorizationRequestDto updateAuthorizationRequest = command.getData().updateAuthorizationRequest();
 
