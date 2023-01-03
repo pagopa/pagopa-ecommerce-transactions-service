@@ -1,7 +1,7 @@
 package it.pagopa.transactions.controllers;
 
+import it.pagopa.ecommerce.commons.documents.Transaction;
 import it.pagopa.ecommerce.commons.domain.PaymentToken;
-import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.generated.nodoperpsp.model.FaultBean;
 import it.pagopa.generated.payment.requests.model.*;
@@ -69,7 +69,7 @@ class TransactionsControllerTest {
     void shouldGetOk() {
         String RPTID = "77777777777302016723749670035";
         String EMAIL = "mario.rossi@email.com";
-
+        String origin = Transaction.OriginType.CHECKOUT.toString();
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
         newTransactionRequestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(RPTID));
         newTransactionRequestDto.setEmail(EMAIL);
@@ -85,14 +85,14 @@ class TransactionsControllerTest {
         response.addPaymentsItem(paymentInfoDto);
         response.setAuthToken("token");
 
-        Mockito.lenient().when(transactionsService.newTransaction(newTransactionRequestDto))
+        Mockito.lenient().when(transactionsService.newTransaction(newTransactionRequestDto, origin))
                 .thenReturn(Mono.just(response));
 
         ResponseEntity<NewTransactionResponseDto> responseEntity = transactionsController
-                .newTransaction(Mono.just(newTransactionRequestDto), null).block();
+                .newTransaction(Mono.just(newTransactionRequestDto), origin, null).block();
 
         // Verify mock
-        Mockito.verify(transactionsService, Mockito.times(1)).newTransaction(newTransactionRequestDto);
+        Mockito.verify(transactionsService, Mockito.times(1)).newTransaction(newTransactionRequestDto, origin);
 
         // Verify status code and response
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());

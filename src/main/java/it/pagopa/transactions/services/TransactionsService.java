@@ -2,6 +2,7 @@ package it.pagopa.transactions.services;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
+import it.pagopa.ecommerce.commons.documents.Transaction.OriginType;
 import it.pagopa.ecommerce.commons.documents.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.TransactionActivationRequestedEvent;
 import it.pagopa.ecommerce.commons.domain.*;
@@ -81,12 +82,14 @@ public class TransactionsService {
     @CircuitBreaker(name = "node-backend")
     @Retry(name = "newTransaction")
     public Mono<NewTransactionResponseDto> newTransaction(
-                                                          NewTransactionRequestDto newTransactionRequestDto
+                                                          NewTransactionRequestDto newTransactionRequestDto,
+                                                          String origin
     ) {
-
+        OriginType originType = OriginType.fromString(origin);
         log.info(
-                "Initializing transaction for rptId: {}",
-                newTransactionRequestDto.getPaymentNotices().get(0).getRptId()
+                "Initializing transaction for rptId: {}. Transaction origin: {}",
+                newTransactionRequestDto.getPaymentNotices().get(0).getRptId(),
+                originType
         );
         TransactionActivateCommand command = new TransactionActivateCommand(
                 new RptId(newTransactionRequestDto.getPaymentNotices().get(0).getRptId()),

@@ -1,6 +1,7 @@
 package it.pagopa.transactions.services;
 
 import it.pagopa.ecommerce.commons.documents.NoticeCode;
+import it.pagopa.ecommerce.commons.documents.Transaction;
 import it.pagopa.ecommerce.commons.documents.*;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
@@ -48,6 +49,7 @@ class TransactionServiceTest {
         String TEST_EMAIL = "j.doe@mail.com";
         String TEST_RPTID = "77777777777302016723749670035";
         String TEST_TOKEN = "token";
+        String transactionOrigin = Transaction.OriginType.CHECKOUT.toString();
         UUID TEST_SESSION_TOKEN = UUID.randomUUID();
         UUID TEST_CPP = UUID.randomUUID();
         UUID TRANSACTION_ID = UUID.randomUUID();
@@ -136,7 +138,8 @@ class TransactionServiceTest {
         /**
          * Test
          */
-        NewTransactionResponseDto responseDto = transactionsService.newTransaction(transactionRequestDto).block();
+        NewTransactionResponseDto responseDto = transactionsService
+                .newTransaction(transactionRequestDto, transactionOrigin).block();
 
         /**
          * Assertions
@@ -153,6 +156,7 @@ class TransactionServiceTest {
         String TEST_RPTID = "77777777777302016723749670035";
         String TEST_TOKEN = "token";
         String paymentToken = "paymentToken";
+        String transactionOrigin = Transaction.OriginType.CHECKOUT.toString();
         UUID TEST_SESSION_TOKEN = UUID.randomUUID();
         UUID TEST_CPP = UUID.randomUUID();
         UUID TRANSACTION_ID = UUID.randomUUID();
@@ -232,7 +236,8 @@ class TransactionServiceTest {
         /**
          * Test
          */
-        NewTransactionResponseDto responseDto = transactionsService.newTransaction(transactionRequestDto).block();
+        NewTransactionResponseDto responseDto = transactionsService
+                .newTransaction(transactionRequestDto, transactionOrigin).block();
 
         /**
          * Assertions
