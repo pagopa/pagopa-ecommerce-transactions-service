@@ -127,11 +127,12 @@ class TransactionRequestAuthorizizationHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                List.of(new NoticeCode(paymentToken, rptId, amount, description, nullPaymentContextCode)),
+                List.of(new PaymentNotice(paymentToken, rptId, amount, description, nullPaymentContextCode)),
                 email,
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -156,7 +157,7 @@ class TransactionRequestAuthorizizationHandlerTest {
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                transaction.getNoticeCodes().get(0).rptId(),
+                transaction.getPaymentNotices().get(0).rptId(),
                 authorizationData
         );
 
