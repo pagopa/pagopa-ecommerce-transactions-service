@@ -9,7 +9,6 @@ import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.transactions.server.model.PostePayAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
-import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
@@ -25,9 +24,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -67,7 +64,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                 email,
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -133,7 +131,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.AUTHORIZATION_REQUESTED
+                TransactionStatusDto.AUTHORIZATION_REQUESTED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -187,7 +186,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()

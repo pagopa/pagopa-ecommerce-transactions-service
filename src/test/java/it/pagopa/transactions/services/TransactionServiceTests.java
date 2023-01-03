@@ -35,8 +35,6 @@ import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.time.LocalDate;
-import java.time.Month;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -305,7 +303,8 @@ public class TransactionServiceTests {
                 new Email(transactionDocument.getEmail()),
                 "faultCode",
                 "faultCodeString",
-                transactionDocument.getStatus()
+                transactionDocument.getStatus(),
+                Transaction.OriginType.UNKNOWN
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -427,7 +426,8 @@ public class TransactionServiceTests {
                 new Email(transactionDocument.getEmail()),
                 null,
                 null,
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED,
+                Transaction.OriginType.UNKNOWN
         );
 
         TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(

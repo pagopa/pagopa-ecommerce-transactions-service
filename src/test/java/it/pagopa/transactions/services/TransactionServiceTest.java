@@ -1,6 +1,7 @@
 package it.pagopa.transactions.services;
 
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.Transaction;
 import it.pagopa.ecommerce.commons.documents.*;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
@@ -104,7 +105,8 @@ class TransactionServiceTest {
                 new Email("foo@example.com"),
                 "faultCode",
                 "faultCodeString",
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                Transaction.OriginType.UNKNOWN
         );
 
         TransactionActivationRequested transactionActivationRequested = new TransactionActivationRequested(
@@ -119,7 +121,8 @@ class TransactionServiceTest {
                         )
                 ),
                 new Email("foo@example.com"),
-                TransactionStatusDto.ACTIVATION_REQUESTED
+                TransactionStatusDto.ACTIVATION_REQUESTED,
+                Transaction.OriginType.UNKNOWN
         );
 
         /**
@@ -207,14 +210,16 @@ class TransactionServiceTest {
                 new Email("foo@example.com"),
                 "faultCode",
                 "faultCodeString",
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                Transaction.OriginType.UNKNOWN
         );
 
         TransactionActivationRequested transactionActivationRequested = new TransactionActivationRequested(
                 new TransactionId(TRANSACTION_ID),
                 PaymentNoticeList,
                 new Email("foo@example.com"),
-                TransactionStatusDto.ACTIVATION_REQUESTED
+                TransactionStatusDto.ACTIVATION_REQUESTED,
+                Transaction.OriginType.UNKNOWN
         );
 
         /**

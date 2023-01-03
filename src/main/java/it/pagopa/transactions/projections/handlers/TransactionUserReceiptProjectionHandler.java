@@ -43,7 +43,8 @@ public class TransactionUserReceiptProjectionHandler
                                 null,
                                 null,
                                 ZonedDateTime.parse(transactionDocument.getCreationDate()),
-                                transactionDocument.getStatus()
+                                transactionDocument.getStatus(),
+                                transactionDocument.getOrigin()
                         )
                 );
     }

@@ -56,7 +56,8 @@ class TransactionUserReceiptProjectionHandlerTest {
                 new Email("foo@example.com"),
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.CLOSED
+                TransactionStatusDto.CLOSED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         it.pagopa.ecommerce.commons.documents.Transaction expectedDocument = new it.pagopa.ecommerce.commons.documents.Transaction(
@@ -94,7 +95,8 @@ class TransactionUserReceiptProjectionHandlerTest {
                 transaction.getTransactionActivatedData().getFaultCode(),
                 transaction.getTransactionActivatedData().getFaultCodeString(),
                 ZonedDateTime.parse(expectedDocument.getCreationDate()),
-                expectedDocument.getStatus()
+                expectedDocument.getStatus(),
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         /*

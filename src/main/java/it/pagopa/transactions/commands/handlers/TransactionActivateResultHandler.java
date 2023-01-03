@@ -3,6 +3,7 @@ package it.pagopa.transactions.commands.handlers;
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.Transaction;
 import it.pagopa.ecommerce.commons.documents.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.TransactionActivationRequested;
@@ -50,9 +51,9 @@ public class TransactionActivateResultHandler
         final TransactionActivationRequested transactionActivationRequested = command.getData()
                 .transactionActivationRequested();
 
-        final String transactionId = command.getData().transactionActivationRequested().getTransactionId().value()
+        final String transactionId = transactionActivationRequested.getTransactionId().value()
                 .toString();
-
+        final Transaction.OriginType originType = transactionActivationRequested.getOriginType();
         return Mono.just(command)
                 .filter(
                         commandData -> commandData.getData().transactionActivationRequested()
@@ -147,7 +148,8 @@ public class TransactionActivateResultHandler
                                             )
                                             .toList(),
                                     null,
-                                    null
+                                    null,
+                                    originType
                             );
 
                             TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(

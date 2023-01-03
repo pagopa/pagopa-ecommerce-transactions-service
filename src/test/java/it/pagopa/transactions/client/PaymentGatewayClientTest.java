@@ -31,9 +31,6 @@ import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.Month;
-import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -74,7 +71,8 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -119,7 +117,8 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
@@ -194,7 +193,8 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -263,7 +263,8 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .detailType("card")
@@ -287,7 +288,7 @@ class PaymentGatewayClientTest {
         XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
                 .cvv(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
-                .exipiryDate(cardDetails.getExpiryDate().format(DateTimeFormatter.ofPattern("yyyyMM")))
+                .exipiryDate(cardDetails.getExpiryDate())
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(
                         BigDecimal.valueOf(
@@ -349,7 +350,8 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -400,8 +402,8 @@ class PaymentGatewayClientTest {
         StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
                 .expectErrorMatches(
                         error -> error instanceof AlreadyProcessedException &&
-                                ((AlreadyProcessedException) error).getRptId()
-                                        .equals(transaction.getPaymentNotices().get(0).rptId())
+                                ((AlreadyProcessedException) error).getTransactionId()
+                                        .equals(transaction.getTransactionId())
                 )
                 .verify();
 
@@ -429,7 +431,8 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 "faultCode",
                 "faultCodeString",
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -507,7 +510,8 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -583,7 +587,8 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto().cvv("345").pan("16589654852")
                 .expiryDate("203012");
@@ -661,7 +666,8 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -732,7 +738,8 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto().cvv("345").pan("16589654852")
                 .expiryDate("203012");
@@ -805,7 +812,8 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(

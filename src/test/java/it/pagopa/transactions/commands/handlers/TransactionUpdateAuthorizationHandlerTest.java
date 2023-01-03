@@ -61,7 +61,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.AUTHORIZATION_REQUESTED
+                TransactionStatusDto.AUTHORIZATION_REQUESTED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -132,7 +133,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -183,7 +185,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.AUTHORIZATION_REQUESTED
+                TransactionStatusDto.AUTHORIZATION_REQUESTED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()

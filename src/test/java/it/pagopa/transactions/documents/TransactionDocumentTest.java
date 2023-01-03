@@ -117,7 +117,8 @@ class TransactionDocumentTest {
                 email,
                 faultCode,
                 faultCodeString,
-                status
+                status,
+                Transaction.OriginType.UNKNOWN
         );
 
         Transaction transactionDocument = Transaction.from(transaction);

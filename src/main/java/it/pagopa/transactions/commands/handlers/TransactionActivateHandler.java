@@ -163,7 +163,8 @@ public class TransactionActivateHandler
                                                             newTransactionActivatedEvent(
                                                                     paymentRequestsInfo,
                                                                     sessionDataDto.getTransactionId(),
-                                                                    sessionDataDto.getEmail()
+                                                                    sessionDataDto.getEmail(),
+                                                                    command.getOriginType()
                                                             ),
                                                             Mono.empty(),
                                                             sessionDataDto
@@ -176,7 +177,8 @@ public class TransactionActivateHandler
                                                                     paymentRequestsInfo,
                                                                     sessionDataDto.getTransactionId(),
                                                                     sessionDataDto.getEmail(),
-                                                                    paymentContextCode
+                                                                    paymentContextCode,
+                                                                    command.getOriginType()
                                                             ),
                                                             sessionDataDto
                                                     )
@@ -237,10 +239,9 @@ public class TransactionActivateHandler
                                                                                              List<PaymentRequestInfo> paymentRequestsInfo,
                                                                                              String transactionId,
                                                                                              String email,
-                                                                                             String paymentContextCode
+                                                                                             String paymentContextCode,
+                                                                                             Transaction.OriginType origin
     ) {
-        TransactionActivationRequestedData data = new TransactionActivationRequestedData();
-        data.setEmail(email);
         PaymentRequestInfo paymentRequestInfo = paymentRequestsInfo.get(0);
         List<PaymentNotice> paymentNotices = List.of(
                 new PaymentNotice(
@@ -251,7 +252,13 @@ public class TransactionActivateHandler
                         paymentContextCode
                 )
         );
-        data.setPaymentNotices(paymentNotices);
+        TransactionActivationRequestedData data = new TransactionActivationRequestedData(
+                paymentNotices,
+                email,
+                null,
+                null,
+                origin
+        );
         TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
                 transactionId,
                 data
@@ -270,14 +277,16 @@ public class TransactionActivateHandler
     private Mono<TransactionActivatedEvent> newTransactionActivatedEvent(
                                                                          List<PaymentRequestInfo> paymentRequestsInfo,
                                                                          String transactionId,
-                                                                         String email
+                                                                         String email,
+                                                                         Transaction.OriginType origin
     ) {
         List<PaymentNotice> paymentNotices = toPaymentNoticeList(paymentRequestsInfo);
         TransactionActivatedData data = new TransactionActivatedData(
                 email,
                 paymentNotices,
                 null,
-                null
+                null,
+                origin
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(

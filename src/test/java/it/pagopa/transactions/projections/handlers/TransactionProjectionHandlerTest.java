@@ -52,7 +52,8 @@ class TransactionProjectionHandlerTest {
                         transactionActivationRequestedData.getPaymentNotices(),
                         "foo@example.com",
                         "faultCode",
-                        "faultCodeString"
+                        "faultCodeString",
+                        it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
                 )
         );
 
@@ -87,7 +88,8 @@ class TransactionProjectionHandlerTest {
                     ),
                     email,
                     creationDate,
-                    TransactionStatusDto.ACTIVATION_REQUESTED
+                    TransactionStatusDto.ACTIVATION_REQUESTED,
+                    it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
             );
 
             /*

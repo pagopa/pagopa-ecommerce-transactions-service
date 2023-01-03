@@ -34,7 +34,6 @@ import reactor.test.StepVerifier;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -108,7 +107,8 @@ class TransactionSendClosureHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -132,7 +132,8 @@ class TransactionSendClosureHandlerTest {
                         email.value(),
                         transaction.getTransactionActivatedData().getPaymentNotices(),
                         faultCode,
-                        faultCodeString
+                        faultCodeString,
+                        it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
                 )
         );
 
@@ -212,7 +213,8 @@ class TransactionSendClosureHandlerTest {
                         email.value(),
                         PaymentNotices,
                         faultCode,
-                        faultCodeString
+                        faultCodeString,
+                        it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
                 )
         );
 
@@ -350,7 +352,8 @@ class TransactionSendClosureHandlerTest {
                         email.value(),
                         PaymentNotices,
                         faultCode,
-                        faultCodeString
+                        faultCodeString,
+                        it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
                 )
         );
 
@@ -499,7 +502,8 @@ class TransactionSendClosureHandlerTest {
                         email.value(),
                         PaymentNotices,
                         faultCode,
-                        faultCodeString
+                        faultCodeString,
+                        it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
                 )
         );
 

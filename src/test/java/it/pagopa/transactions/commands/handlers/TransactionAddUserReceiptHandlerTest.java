@@ -1,7 +1,7 @@
 package it.pagopa.transactions.commands.handlers;
 
+import it.pagopa.ecommerce.commons.documents.Transaction;
 import it.pagopa.ecommerce.commons.documents.*;
-import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
@@ -73,7 +73,8 @@ class TransactionAddUserReceiptHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.CLOSED
+                TransactionStatusDto.CLOSED,
+                Transaction.OriginType.UNKNOWN
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
@@ -90,7 +91,8 @@ class TransactionAddUserReceiptHandlerTest {
                                 )
                         ),
                         faultCode,
-                        faultCodeString
+                        faultCodeString,
+                        Transaction.OriginType.UNKNOWN
                 )
         );
 
@@ -212,7 +214,8 @@ class TransactionAddUserReceiptHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.CLOSED
+                TransactionStatusDto.CLOSED,
+                Transaction.OriginType.UNKNOWN
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
@@ -229,7 +232,8 @@ class TransactionAddUserReceiptHandlerTest {
                                 )
                         ),
                         faultCode,
-                        faultCodeString
+                        faultCodeString,
+                        Transaction.OriginType.UNKNOWN
                 )
         );
 
@@ -351,7 +355,8 @@ class TransactionAddUserReceiptHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                Transaction.OriginType.UNKNOWN
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
@@ -368,7 +373,8 @@ class TransactionAddUserReceiptHandlerTest {
                                 )
                         ),
                         faultCode,
-                        faultCodeString
+                        faultCodeString,
+                        Transaction.OriginType.UNKNOWN
                 )
         );
 

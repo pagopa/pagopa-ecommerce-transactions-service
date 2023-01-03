@@ -1,5 +1,6 @@
 package it.pagopa.transactions.projections.handlers;
 
+import it.pagopa.ecommerce.commons.documents.Transaction.OriginType;
 import it.pagopa.ecommerce.commons.documents.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.*;
@@ -37,6 +38,7 @@ public class TransactionsActivationProjectionHandler
         Email email = new Email(event.getData().getEmail());
         String faultCode = event.getData().getFaultCode();
         String faultCodeString = event.getData().getFaultCodeString();
+        OriginType originType = event.getData().getOriginType();
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -44,7 +46,8 @@ public class TransactionsActivationProjectionHandler
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                originType
         );
 
         it.pagopa.ecommerce.commons.documents.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.Transaction

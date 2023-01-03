@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -73,9 +74,6 @@ public class TransactionsService {
     private EcommercePaymentInstrumentsClient ecommercePaymentInstrumentsClient;
 
     @Autowired
-    private TransactionActivateResultHandler transactionActivateResultHandler;
-
-    @Autowired
     private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
 
     @CircuitBreaker(name = "node-backend")
@@ -90,7 +88,9 @@ public class TransactionsService {
         );
         TransactionActivateCommand command = new TransactionActivateCommand(
                 new RptId(newTransactionRequestDto.getPaymentNotices().get(0).getRptId()),
-                newTransactionRequestDto
+                newTransactionRequestDto,
+                //TODO cambiare con l'origin letta dall'header della richiesta
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.fromString("UNKNOWN")
         );
 
         return transactionActivateHandler
@@ -253,7 +253,8 @@ public class TransactionsService {
                                     new Email(transactionDocument.getEmail()),
                                     null,
                                     null,
-                                    transactionDocument.getStatus()
+                                    transactionDocument.getStatus(),
+                                    transactionDocument.getOrigin()
                             );
 
                             AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -320,7 +321,8 @@ public class TransactionsService {
                                     new Email(transactionDocument.getEmail()),
                                     null,
                                     null,
-                                    transactionDocument.getStatus()
+                                    transactionDocument.getStatus(),
+                                    transactionDocument.getOrigin()
                             );
 
                             UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
@@ -434,7 +436,8 @@ public class TransactionsService {
                                     new Email(transactionDocument.getEmail()),
                                     null,
                                     null,
-                                    transactionDocument.getStatus()
+                                    transactionDocument.getStatus(),
+                                    transactionDocument.getOrigin()
                             );
                             AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
                                     transaction,
@@ -528,7 +531,9 @@ public class TransactionsService {
                                 .authToken(sessionDataDto.getSessionToken())
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
                                 // .feeTotal()//TODO da dove prendere le fees?
-                                .origin(NewTransactionResponseDto.OriginEnum.CHECKOUT)// TODO che mettere qui?
+                                .origin(Optional.ofNullable(transaction.getOriginType())
+                                        .map(origin -> NewTransactionResponseDto.OriginEnum.fromValue(origin.toString()))
+                                        .orElse(NewTransactionResponseDto.OriginEnum.UNKNOWN))
                 );
     }
 
@@ -553,7 +558,9 @@ public class TransactionsService {
                                 .authToken(sessionDataDto.getSessionToken())
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
                                 // .feeTotal()//TODO da dove prendere le fees?
-                                .origin(NewTransactionResponseDto.OriginEnum.CHECKOUT)// TODO che mettere qui?
+                                .origin(Optional.ofNullable(transaction.getOriginType())
+                                        .map(origin -> NewTransactionResponseDto.OriginEnum.fromValue(origin.toString()))
+                                        .orElse(NewTransactionResponseDto.OriginEnum.UNKNOWN))
                 );
     }
 }
