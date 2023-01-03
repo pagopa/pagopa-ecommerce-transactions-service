@@ -48,14 +48,14 @@ public class PaymentGatewayClient {
                 .filter(authorizationRequestData -> "PPAY".equals(authorizationRequestData.paymentTypeCode()))
                 .map(authorizationRequestData -> {
                     BigDecimal grandTotal = BigDecimal.valueOf(
-                            ((long) authorizationData.transaction().getNoticeCodes().stream()
-                                    .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum())
+                            ((long) authorizationData.transaction().getPaymentNotices().stream()
+                                    .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value()).sum())
                                     + authorizationData.fee()
                     );
                     return new PostePayAuthRequestDto()
                             .grandTotal(grandTotal)
                             .description(
-                                    authorizationData.transaction().getNoticeCodes().get(0).transactionDescription()
+                                    authorizationData.transaction().getPaymentNotices().get(0).transactionDescription()
                                             .value()
                             )
                             .paymentChannel(authorizationData.pspChannelCode())
@@ -87,12 +87,13 @@ public class PaymentGatewayClient {
                         authorizationRequestData -> "CP".equals(authorizationRequestData.paymentTypeCode())
                                 && "XPAY".equals(authorizationRequestData.paymentGatewayId())
                 )
+                .switchIfEmpty(Mono.empty())
                 .flatMap(authorizationRequestData -> {
                     final Mono<XPayAuthRequestDto> xPayAuthRequest;
                     if (authorizationData.authDetails()instanceof CardAuthRequestDetailsDto cardData) {
                         BigDecimal grandTotal = BigDecimal.valueOf(
-                                ((long) authorizationData.transaction().getNoticeCodes().stream()
-                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum())
+                                ((long) authorizationData.transaction().getPaymentNotices().stream()
+                                        .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value()).sum())
                                         + authorizationData.fee()
                         );
                         xPayAuthRequest = Mono.just(

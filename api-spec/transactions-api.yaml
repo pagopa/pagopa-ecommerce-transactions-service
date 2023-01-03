@@ -341,8 +341,6 @@ components:
               amount: 100
         status:
           $ref: "#/components/schemas/TransactionStatus"
-        amountTotal:
-          $ref: "#/components/schemas/AmountEuroCents"
         feeTotal:
           $ref: "#/components/schemas/AmountEuroCents"
         origin:

@@ -3,7 +3,7 @@ package it.pagopa.transactions.services;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.Transaction;
 import it.pagopa.ecommerce.commons.documents.*;
-import it.pagopa.ecommerce.commons.domain.NoticeCode;
+import it.pagopa.ecommerce.commons.domain.PaymentNotice;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
@@ -35,8 +35,6 @@ import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.time.LocalDate;
-import java.time.Month;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -123,7 +121,7 @@ public class TransactionServiceTests {
     @Test
     void getTransactionReturnsTransactionDataOriginProvided() {
 
-        it.pagopa.ecommerce.commons.documents.NoticeCode noticeCode = new it.pagopa.ecommerce.commons.documents.NoticeCode(
+        it.pagopa.ecommerce.commons.documents.PaymentNotice paymentNotice = new it.pagopa.ecommerce.commons.documents.PaymentNotice(
                 PAYMENT_TOKEN,
                 "77777777777111111111111111111",
                 "reason",
@@ -133,9 +131,8 @@ public class TransactionServiceTests {
 
         final Transaction transaction = new Transaction(
                 TRANSACION_ID,
-                List.of(noticeCode),
-                100,
-                0,
+                List.of(paymentNotice),
+                null,
                 "foo@example.com",
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
                 Transaction.OriginType.CHECKOUT,
@@ -146,14 +143,13 @@ public class TransactionServiceTests {
                 .transactionId(TRANSACION_ID)
                 .addPaymentsItem(
                         new PaymentInfoDto()
-                                .amount(transaction.getNoticeCodes().get(0).getAmount())
+                                .amount(transaction.getPaymentNotices().get(0).getAmount())
                                 .reason("reason")
                                 .paymentToken(PAYMENT_TOKEN)
                                 .rptId("77777777777111111111111111111")
                 )
                 .origin(TransactionInfoDto.OriginEnum.CHECKOUT)
-                .amountTotal(100)
-                .feeTotal(0)
+                .feeTotal(null)
                 .status(TransactionStatusDto.ACTIVATED);
 
         when(repository.findById(TRANSACION_ID)).thenReturn(Mono.just(transaction));
@@ -295,19 +291,20 @@ public class TransactionServiceTests {
 
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
-                transactionDocument.getNoticeCodes().stream().map(
-                        noticeCode -> new NoticeCode(
-                                new PaymentToken(noticeCode.getPaymentToken()),
-                                new RptId(noticeCode.getRptId()),
-                                new TransactionAmount(noticeCode.getAmount()),
-                                new TransactionDescription(noticeCode.getDescription()),
-                                new PaymentContextCode(noticeCode.getPaymentContextCode())
+                transactionDocument.getPaymentNotices().stream().map(
+                        paymentNotice -> new PaymentNotice(
+                                new PaymentToken(paymentNotice.getPaymentToken()),
+                                new RptId(paymentNotice.getRptId()),
+                                new TransactionAmount(paymentNotice.getAmount()),
+                                new TransactionDescription(paymentNotice.getDescription()),
+                                new PaymentContextCode(paymentNotice.getPaymentContextCode())
                         )
                 ).toList(),
                 new Email(transactionDocument.getEmail()),
                 "faultCode",
                 "faultCodeString",
-                transactionDocument.getStatus()
+                transactionDocument.getStatus(),
+                Transaction.OriginType.UNKNOWN
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -324,16 +321,6 @@ public class TransactionServiceTests {
 
         TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
                 transactionDocument.getTransactionId(),
-                transactionDocument.getNoticeCodes().stream()
-                        .map(
-                                noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
-                                        noticeCode.getPaymentToken(),
-                                        noticeCode.getRptId(),
-                                        null,
-                                        null,
-                                        null
-                                )
-                        ).toList(),
                 statusUpdateData
         );
 
@@ -344,38 +331,28 @@ public class TransactionServiceTests {
 
         TransactionClosureSentEvent closureSentEvent = new TransactionClosureSentEvent(
                 transactionDocument.getTransactionId(),
-                transactionDocument.getNoticeCodes().stream()
-                        .map(
-                                noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
-                                        noticeCode.getPaymentToken(),
-                                        noticeCode.getRptId(),
-                                        null,
-                                        null,
-                                        null
-                                )
-                        ).toList(),
                 closureSendData
         );
 
         TransactionInfoDto expectedResponse = new TransactionInfoDto()
                 .transactionId(transactionDocument.getTransactionId())
                 .payments(
-                        transactionDocument.getNoticeCodes().stream().map(
-                                noticeCode -> new PaymentInfoDto()
-                                        .amount(noticeCode.getAmount())
-                                        .reason(noticeCode.getDescription())
-                                        .paymentToken(noticeCode.getPaymentToken())
-                                        .rptId(noticeCode.getRptId())
+                        transactionDocument.getPaymentNotices().stream().map(
+                                paymentNotice -> new PaymentInfoDto()
+                                        .amount(paymentNotice.getAmount())
+                                        .reason(paymentNotice.getDescription())
+                                        .paymentToken(paymentNotice.getPaymentToken())
+                                        .rptId(paymentNotice.getRptId())
                         ).toList()
                 )
                 .status(TransactionStatusDto.CLOSED);
 
         Transaction closedTransactionDocument = new Transaction(
                 transactionDocument.getTransactionId(),
-                transactionDocument.getNoticeCodes().get(0).getPaymentToken(),
-                transactionDocument.getNoticeCodes().get(0).getRptId(),
-                transactionDocument.getNoticeCodes().get(0).getDescription(),
-                transactionDocument.getNoticeCodes().get(0).getAmount(),
+                transactionDocument.getPaymentNotices().get(0).getPaymentToken(),
+                transactionDocument.getPaymentNotices().get(0).getRptId(),
+                transactionDocument.getPaymentNotices().get(0).getDescription(),
+                transactionDocument.getPaymentNotices().get(0).getAmount(),
                 transactionDocument.getEmail(),
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSED
         );
@@ -437,19 +414,20 @@ public class TransactionServiceTests {
 
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
-                transactionDocument.getNoticeCodes().stream().map(
-                        noticeCode -> new NoticeCode(
-                                new PaymentToken(noticeCode.getPaymentToken()),
-                                new RptId(noticeCode.getRptId()),
-                                new TransactionAmount(noticeCode.getAmount()),
-                                new TransactionDescription(noticeCode.getDescription()),
-                                new PaymentContextCode(noticeCode.getPaymentContextCode())
+                transactionDocument.getPaymentNotices().stream().map(
+                        paymentNotice -> new PaymentNotice(
+                                new PaymentToken(paymentNotice.getPaymentToken()),
+                                new RptId(paymentNotice.getRptId()),
+                                new TransactionAmount(paymentNotice.getAmount()),
+                                new TransactionDescription(paymentNotice.getDescription()),
+                                new PaymentContextCode(paymentNotice.getPaymentContextCode())
                         )
                 ).toList(),
                 new Email(transactionDocument.getEmail()),
                 null,
                 null,
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED,
+                Transaction.OriginType.UNKNOWN
         );
 
         TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(
@@ -458,16 +436,6 @@ public class TransactionServiceTests {
 
         TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                 transactionDocument.getTransactionId(),
-                transactionDocument.getNoticeCodes().stream()
-                        .map(
-                                noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
-                                        noticeCode.getPaymentToken(),
-                                        noticeCode.getRptId(),
-                                        null,
-                                        null,
-                                        null
-                                )
-                        ).toList(),
                 transactionAddReceiptData
         );
 
@@ -488,12 +456,12 @@ public class TransactionServiceTests {
         TransactionInfoDto expectedResponse = new TransactionInfoDto()
                 .transactionId(transactionDocument.getTransactionId())
                 .payments(
-                        transactionDocument.getNoticeCodes().stream().map(
-                                noticeCode -> new PaymentInfoDto()
-                                        .amount(noticeCode.getAmount())
-                                        .reason(noticeCode.getDescription())
-                                        .paymentToken(noticeCode.getPaymentToken())
-                                        .rptId(noticeCode.getRptId())
+                        transactionDocument.getPaymentNotices().stream().map(
+                                paymentNotice -> new PaymentInfoDto()
+                                        .amount(paymentNotice.getAmount())
+                                        .reason(paymentNotice.getDescription())
+                                        .paymentToken(paymentNotice.getPaymentToken())
+                                        .rptId(paymentNotice.getRptId())
                         ).toList()
                 )
                 .status(TransactionStatusDto.NOTIFIED);

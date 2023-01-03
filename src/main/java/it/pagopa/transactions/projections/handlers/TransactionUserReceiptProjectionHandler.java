@@ -30,20 +30,21 @@ public class TransactionUserReceiptProjectionHandler
                 .map(
                         transactionDocument -> new TransactionActivated(
                                 new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
-                                transactionDocument.getNoticeCodes().stream().map(
-                                        noticeCode -> new NoticeCode(
-                                                new PaymentToken(noticeCode.getPaymentToken()),
-                                                new RptId(noticeCode.getRptId()),
-                                                new TransactionAmount(noticeCode.getAmount()),
-                                                new TransactionDescription(noticeCode.getDescription()),
-                                                new PaymentContextCode(noticeCode.getPaymentContextCode())
+                                transactionDocument.getPaymentNotices().stream().map(
+                                        paymentNotice -> new PaymentNotice(
+                                                new PaymentToken(paymentNotice.getPaymentToken()),
+                                                new RptId(paymentNotice.getRptId()),
+                                                new TransactionAmount(paymentNotice.getAmount()),
+                                                new TransactionDescription(paymentNotice.getDescription()),
+                                                new PaymentContextCode(paymentNotice.getPaymentContextCode())
                                         )
                                 ).toList(),
                                 new Email(transactionDocument.getEmail()),
                                 null,
                                 null,
                                 ZonedDateTime.parse(transactionDocument.getCreationDate()),
-                                transactionDocument.getStatus()
+                                transactionDocument.getStatus(),
+                                transactionDocument.getOrigin()
                         )
                 );
     }

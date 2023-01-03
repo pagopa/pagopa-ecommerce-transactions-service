@@ -28,13 +28,14 @@ public class TransactionsActivationRequestedProjectionHandler
         TransactionId transactionId = new TransactionId(
                 UUID.fromString(transactionActivationRequestedEvent.getTransactionId())
         );
-        List<NoticeCode> noticeCodeList = transactionActivationRequestedEvent.getNoticeCodes().stream()
+        List<PaymentNotice> paymentNoticeList = transactionActivationRequestedEvent.getData().getPaymentNotices()
+                .stream()
                 .map(
-                        noticeCode -> new NoticeCode(
+                        paymentNotice -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
                                 new PaymentToken(null),
-                                new RptId(noticeCode.getRptId()),
-                                new TransactionAmount(noticeCode.getAmount()),
-                                new TransactionDescription(noticeCode.getDescription()),
+                                new RptId(paymentNotice.getRptId()),
+                                new TransactionAmount(paymentNotice.getAmount()),
+                                new TransactionDescription(paymentNotice.getDescription()),
                                 new PaymentContextCode(null)
                         )
                 ).toList();
@@ -42,9 +43,10 @@ public class TransactionsActivationRequestedProjectionHandler
 
         TransactionActivationRequested transaction = new TransactionActivationRequested(
                 transactionId,
-                noticeCodeList,
+                paymentNoticeList,
                 email,
-                TransactionStatusDto.ACTIVATION_REQUESTED
+                TransactionStatusDto.ACTIVATION_REQUESTED,
+                transactionActivationRequestedEvent.getData().getOriginType()
         );
 
         it.pagopa.ecommerce.commons.documents.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.Transaction
@@ -57,8 +59,8 @@ public class TransactionsActivationRequestedProjectionHandler
                                 "Transactions update view for rptId: {}",
                                 String.join(
                                         ",",
-                                        event.getNoticeCodes().stream()
-                                                .map(it.pagopa.ecommerce.commons.documents.NoticeCode::getRptId)
+                                        event.getPaymentNotices().stream()
+                                                .map(it.pagopa.ecommerce.commons.documents.PaymentNotice::getRptId)
                                                 .toList()
                                 )
                         )

@@ -1,9 +1,12 @@
 package it.pagopa.transactions.commands.handlers;
 
-import it.pagopa.ecommerce.commons.documents.*;
-import it.pagopa.ecommerce.commons.documents.NoticeCode;
-import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.documents.TransactionAddReceiptData;
+import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationRequestData;
+import it.pagopa.ecommerce.commons.documents.TransactionEvent;
+import it.pagopa.ecommerce.commons.documents.TransactionUserReceiptAddedEvent;
+import it.pagopa.ecommerce.commons.domain.EmptyTransaction;
 import it.pagopa.ecommerce.commons.domain.Transaction;
+import it.pagopa.ecommerce.commons.domain.TransactionClosed;
 import it.pagopa.ecommerce.commons.domain.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.notifications.templates.ko.KoTemplate;
@@ -79,15 +82,6 @@ public class TransactionAddUserReceiptHandler
 
                     TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                             command.getData().transaction().getTransactionId().value().toString(),
-                            command.getData().transaction().getNoticeCodes().stream().map(
-                                    noticeCode -> new NoticeCode(
-                                            noticeCode.paymentToken().value(),
-                                            noticeCode.rptId().value(),
-                                            noticeCode.transactionDescription().value(),
-                                            noticeCode.transactionAmount().value(),
-                                            noticeCode.paymentContextCode().value()
-                                    )
-                            ).toList(),
                             transactionAddReceiptData
                     );
 
@@ -134,8 +128,11 @@ public class TransactionAddUserReceiptHandler
                                                 Locale.forLanguageTag(language)
                                         ),
                                         amountToHumanReadableString(
-                                                tx.getNoticeCodes().stream()
-                                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value())
+                                                tx.getPaymentNotices().stream()
+                                                        .mapToInt(
+                                                                paymentNotice -> paymentNotice.transactionAmount()
+                                                                        .value()
+                                                        )
                                                         .sum()
                                         )
                                 )
@@ -165,8 +162,11 @@ public class TransactionAddUserReceiptHandler
                                                 Locale.forLanguageTag(language)
                                         ),
                                         amountToHumanReadableString(
-                                                tx.getNoticeCodes().stream()
-                                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value())
+                                                tx.getPaymentNotices().stream()
+                                                        .mapToInt(
+                                                                paymentNotice -> paymentNotice.transactionAmount()
+                                                                        .value()
+                                                        )
                                                         .sum() + transactionAuthorizationRequestData.getFee()
                                         ),
                                         new PspTemplate(
@@ -191,27 +191,30 @@ public class TransactionAddUserReceiptHandler
                                         tx.getEmail().value()
                                 ),
                                 new CartTemplate(
-                                        tx.getNoticeCodes().stream().map(
-                                                noticeCode -> new ItemTemplate(
+                                        tx.getPaymentNotices().stream().map(
+                                                paymentNotice -> new ItemTemplate(
                                                         new RefNumberTemplate(
                                                                 RefNumberTemplate.Type.CODICE_AVVISO,
-                                                                noticeCode.rptId().getNoticeId()
+                                                                paymentNotice.rptId().getNoticeId()
                                                         ),
                                                         null,
                                                         new PayeeTemplate(
                                                                 addUserReceiptRequestDto.getPayments().get(0)
                                                                         .getOfficeName(),
-                                                                noticeCode.rptId().getFiscalCode()
+                                                                paymentNotice.rptId().getFiscalCode()
                                                         ),
                                                         addUserReceiptRequestDto.getPayments().get(0).getDescription(),
                                                         amountToHumanReadableString(
-                                                                noticeCode.transactionAmount().value()
+                                                                paymentNotice.transactionAmount().value()
                                                         )
                                                 )
                                         ).toList(),
                                         amountToHumanReadableString(
-                                                tx.getNoticeCodes().stream()
-                                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value())
+                                                tx.getPaymentNotices().stream()
+                                                        .mapToInt(
+                                                                paymentNotice -> paymentNotice.transactionAmount()
+                                                                        .value()
+                                                        )
                                                         .sum()
                                         )
                                 )

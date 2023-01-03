@@ -1,6 +1,6 @@
 package it.pagopa.transactions.projections.handlers;
 
-import it.pagopa.ecommerce.commons.documents.NoticeCode;
+import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.Transaction;
 import it.pagopa.ecommerce.commons.documents.TransactionClosureErrorEvent;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
@@ -35,14 +35,12 @@ class ClosureErrorProjectionHandlerTest {
         Transaction transaction = transactionDocument();
 
         TransactionClosureErrorEvent closureErrorEvent = new TransactionClosureErrorEvent(
-                transaction.getTransactionId(),
-                transaction.getNoticeCodes()
+                transaction.getTransactionId()
         );
 
         Transaction expected = new Transaction(
                 transaction.getTransactionId(),
-                transaction.getNoticeCodes(),
-                transaction.getNoticeCodes().stream().mapToInt(NoticeCode::getAmount).sum(),
+                transaction.getPaymentNotices(),
                 transaction.getFeeTotal(),
                 transaction.getEmail(),
                 TransactionStatusDto.CLOSURE_ERROR,
@@ -65,8 +63,7 @@ class ClosureErrorProjectionHandlerTest {
         Transaction transaction = transactionDocument();
 
         TransactionClosureErrorEvent closureErrorEvent = new TransactionClosureErrorEvent(
-                transaction.getTransactionId(),
-                transaction.getNoticeCodes()
+                transaction.getTransactionId()
         );
 
         Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId())).thenReturn(Mono.empty());
@@ -81,7 +78,7 @@ class ClosureErrorProjectionHandlerTest {
         return new Transaction(
                 UUID.randomUUID().toString(),
                 List.of(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 "paymentToken",
                                 "77777777777302016723749670035",
                                 "description",
@@ -89,7 +86,6 @@ class ClosureErrorProjectionHandlerTest {
                                 null
                         )
                 ),
-                100,
                 0,
                 "foo@example.com",
                 TransactionStatusDto.AUTHORIZED,

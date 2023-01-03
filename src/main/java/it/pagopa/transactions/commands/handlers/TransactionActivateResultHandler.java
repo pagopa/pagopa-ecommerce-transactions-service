@@ -2,7 +2,8 @@ package it.pagopa.transactions.commands.handlers;
 
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
-import it.pagopa.ecommerce.commons.documents.NoticeCode;
+import it.pagopa.ecommerce.commons.documents.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.Transaction;
 import it.pagopa.ecommerce.commons.documents.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.TransactionActivationRequested;
@@ -50,9 +51,9 @@ public class TransactionActivateResultHandler
         final TransactionActivationRequested transactionActivationRequested = command.getData()
                 .transactionActivationRequested();
 
-        final String transactionId = command.getData().transactionActivationRequested().getTransactionId().value()
+        final String transactionId = transactionActivationRequested.getTransactionId().value()
                 .toString();
-
+        final Transaction.OriginType originType = transactionActivationRequested.getOriginType();
         return Mono.just(command)
                 .filter(
                         commandData -> commandData.getData().transactionActivationRequested()
@@ -135,34 +136,24 @@ public class TransactionActivateResultHandler
                         saved -> {
                             TransactionActivatedData data = new TransactionActivatedData(
                                     transactionActivationRequested.getEmail().value(),
-                                    transactionActivationRequested.getNoticeCodes().stream()
+                                    transactionActivationRequested.getPaymentNotices().stream()
                                             .map(
-                                                    noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                                                    paymentNotice -> new it.pagopa.ecommerce.commons.documents.PaymentNotice(
                                                             saved.paymentToken(),
-                                                            noticeCode.rptId().value(),
-                                                            noticeCode.transactionDescription().value(),
-                                                            noticeCode.transactionAmount().value(),
-                                                            noticeCode.paymentContextCode().value()
+                                                            paymentNotice.rptId().value(),
+                                                            paymentNotice.transactionDescription().value(),
+                                                            paymentNotice.transactionAmount().value(),
+                                                            paymentNotice.paymentContextCode().value()
                                                     )
                                             )
                                             .toList(),
                                     null,
-                                    null
+                                    null,
+                                    originType
                             );
 
                             TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                                     transactionId,
-                                    transactionActivationRequested.getNoticeCodes().stream()
-                                            .map(
-                                                    noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
-                                                            saved.paymentToken(),
-                                                            noticeCode.rptId().value(),
-                                                            noticeCode.transactionDescription().value(),
-                                                            noticeCode.transactionAmount().value(),
-                                                            noticeCode.paymentContextCode().value()
-                                                    )
-                                            )
-                                            .toList(),
                                     data
                             );
 
@@ -182,8 +173,9 @@ public class TransactionActivateResultHandler
                                                     "Error to generate event TRANSACTION_ACTIVATED_EVENT for rptIds {} and transactionId {} - error {}",
                                                     String.join(
                                                             ",",
-                                                            transactionActivatedEvent.getNoticeCodes().stream()
-                                                                    .map(NoticeCode::getRptId).toList()
+                                                            transactionActivatedEvent.getData().getPaymentNotices()
+                                                                    .stream()
+                                                                    .map(PaymentNotice::getRptId).toList()
                                                     ),
                                                     transactionActivatedEvent.getTransactionId(),
                                                     exception.getMessage()
@@ -194,7 +186,8 @@ public class TransactionActivateResultHandler
                                                     "Generated event TRANSACTION_ACTIVATED_EVENT for rptIds {} and transactionId {}",
                                                     String.join(
                                                             ",",
-                                                            event.getNoticeCodes().stream().map(NoticeCode::getRptId)
+                                                            event.getData().getPaymentNotices().stream()
+                                                                    .map(PaymentNotice::getRptId)
                                                                     .toList()
                                                     ),
                                                     event.getTransactionId()
