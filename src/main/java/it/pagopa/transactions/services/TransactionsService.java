@@ -92,8 +92,7 @@ public class TransactionsService {
         TransactionActivateCommand command = new TransactionActivateCommand(
                 new RptId(newTransactionRequestDto.getPaymentNotices().get(0).getRptId()),
                 newTransactionRequestDto,
-                // TODO cambiare con l'origin letta dall'header della richiesta
-                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.fromString("UNKNOWN")
+                originType
         );
 
         return transactionActivateHandler
