@@ -3,7 +3,6 @@ package it.pagopa.transactions.commands.handlers;
 import com.azure.core.util.BinaryData;
 import com.azure.cosmos.implementation.BadRequestException;
 import com.azure.storage.queue.QueueAsyncClient;
-import it.pagopa.ecommerce.commons.documents.NoticeCode;
 import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationRequestedEvent;
 import it.pagopa.ecommerce.commons.domain.TransactionActivated;
@@ -94,21 +93,11 @@ public class TransactionRequestAuthorizationHandler
                             "Logging authorization event for transaction id {}",
                             transaction.getTransactionId().value()
                     );
-
                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                             transaction.getTransactionId().value().toString(),
-                            transaction.getNoticeCodes().stream().map(
-                                    noticeCode -> new NoticeCode(
-                                            noticeCode.paymentToken().value(),
-                                            noticeCode.rptId().value(),
-                                            noticeCode.transactionDescription().value(),
-                                            noticeCode.transactionAmount().value(),
-                                            noticeCode.paymentContextCode().value()
-                                    )
-                            ).toList(),
                             new TransactionAuthorizationRequestData(
-                                    command.getData().transaction().getNoticeCodes().stream()
-                                            .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum(),
+                                    command.getData().transaction().getPaymentNotices().stream()
+                                            .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value()).sum(),
                                     command.getData().fee(),
                                     command.getData().paymentInstrumentId(),
                                     command.getData().pspId(),

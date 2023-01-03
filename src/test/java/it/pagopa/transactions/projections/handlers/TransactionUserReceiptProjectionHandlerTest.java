@@ -45,7 +45,7 @@ class TransactionUserReceiptProjectionHandlerTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(UUID.randomUUID()),
                 Arrays.asList(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -56,15 +56,16 @@ class TransactionUserReceiptProjectionHandlerTest {
                 new Email("foo@example.com"),
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.CLOSED
+                TransactionStatusDto.CLOSED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         it.pagopa.ecommerce.commons.documents.Transaction expectedDocument = new it.pagopa.ecommerce.commons.documents.Transaction(
                 transaction.getTransactionId().value().toString(),
-                transaction.getTransactionActivatedData().getNoticeCodes().get(0).getPaymentToken(),
-                transaction.getNoticeCodes().get(0).rptId().value(),
-                transaction.getNoticeCodes().get(0).transactionDescription().value(),
-                transaction.getNoticeCodes().get(0).transactionAmount().value(),
+                transaction.getTransactionActivatedData().getPaymentNotices().get(0).getPaymentToken(),
+                transaction.getPaymentNotices().get(0).rptId().value(),
+                transaction.getPaymentNotices().get(0).transactionDescription().value(),
+                transaction.getPaymentNotices().get(0).transactionAmount().value(),
                 transaction.getEmail().value(),
                 TransactionStatusDto.NOTIFIED,
                 transaction.getCreationDate()
@@ -76,35 +77,26 @@ class TransactionUserReceiptProjectionHandlerTest {
 
         TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                 transaction.getTransactionId().value().toString(),
-                transaction.getNoticeCodes().stream()
-                        .map(
-                                noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
-                                        noticeCode.paymentToken().value(),
-                                        noticeCode.rptId().value(),
-                                        noticeCode.transactionDescription().value(),
-                                        noticeCode.transactionAmount().value(),
-                                        noticeCode.paymentContextCode().value()
-                                )
-                        ).toList(),
                 transactionAddReceiptData
         );
 
         TransactionActivated expected = new TransactionActivated(
                 transaction.getTransactionId(),
-                transaction.getTransactionActivatedData().getNoticeCodes().stream().map(
-                        noticeCode -> new NoticeCode(
-                                new PaymentToken(noticeCode.getPaymentToken()),
-                                new RptId(noticeCode.getRptId()),
-                                new TransactionAmount(noticeCode.getAmount()),
-                                new TransactionDescription(noticeCode.getDescription()),
-                                new PaymentContextCode(noticeCode.getPaymentContextCode())
+                transaction.getTransactionActivatedData().getPaymentNotices().stream().map(
+                        PaymentNotice -> new PaymentNotice(
+                                new PaymentToken(PaymentNotice.getPaymentToken()),
+                                new RptId(PaymentNotice.getRptId()),
+                                new TransactionAmount(PaymentNotice.getAmount()),
+                                new TransactionDescription(PaymentNotice.getDescription()),
+                                new PaymentContextCode(PaymentNotice.getPaymentContextCode())
                         )
                 ).toList(),
                 transaction.getEmail(),
                 transaction.getTransactionActivatedData().getFaultCode(),
                 transaction.getTransactionActivatedData().getFaultCodeString(),
                 ZonedDateTime.parse(expectedDocument.getCreationDate()),
-                expectedDocument.getStatus()
+                expectedDocument.getStatus(),
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         /*

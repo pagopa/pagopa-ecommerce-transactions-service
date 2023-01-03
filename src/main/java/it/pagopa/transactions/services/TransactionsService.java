@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -74,9 +75,6 @@ public class TransactionsService {
     private EcommercePaymentInstrumentsClient ecommercePaymentInstrumentsClient;
 
     @Autowired
-    private TransactionActivateResultHandler transactionActivateResultHandler;
-
-    @Autowired
     private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
 
     @CircuitBreaker(name = "node-backend")
@@ -93,7 +91,9 @@ public class TransactionsService {
         );
         TransactionActivateCommand command = new TransactionActivateCommand(
                 new RptId(newTransactionRequestDto.getPaymentNotices().get(0).getRptId()),
-                newTransactionRequestDto
+                newTransactionRequestDto,
+                // TODO cambiare con l'origin letta dall'header della richiesta
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.fromString("UNKNOWN")
         );
 
         return transactionActivateHandler
@@ -135,15 +135,14 @@ public class TransactionsService {
                         transaction -> new TransactionInfoDto()
                                 .transactionId(transaction.getTransactionId())
                                 .payments(
-                                        transaction.getNoticeCodes().stream().map(
-                                                noticeCode -> new PaymentInfoDto()
-                                                        .amount(noticeCode.getAmount())
-                                                        .reason(noticeCode.getDescription())
-                                                        .paymentToken(noticeCode.getPaymentToken())
-                                                        .rptId(noticeCode.getRptId())
+                                        transaction.getPaymentNotices().stream().map(
+                                                paymentNotice -> new PaymentInfoDto()
+                                                        .amount(paymentNotice.getAmount())
+                                                        .reason(paymentNotice.getDescription())
+                                                        .paymentToken(paymentNotice.getPaymentToken())
+                                                        .rptId(paymentNotice.getRptId())
                                         ).toList()
                                 )
-                                .amountTotal(transaction.getAmountTotal())
                                 .feeTotal(transaction.getFeeTotal())
                                 .origin(
                                         TransactionInfoDto.OriginEnum.valueOf(
@@ -166,11 +165,13 @@ public class TransactionsService {
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .flatMap(
                         transaction -> {
+                            Integer amountTotal = transaction.getPaymentNotices().stream()
+                                    .mapToInt(it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount).sum();
                             log.info(
                                     "Authorization request amount validation for transactionId: {}",
                                     transactionId
                             );
-                            return transaction.getAmountTotal() != requestAuthorizationRequestDto.getAmount()
+                            return !amountTotal.equals(requestAuthorizationRequestDto.getAmount())
                                     ? Mono.empty()
                                     : Mono.just(transaction);
                         }
@@ -179,9 +180,11 @@ public class TransactionsService {
                 .flatMap(
                         transaction -> {
                             log.info("Authorization psp validation for transactionId: {}", transactionId);
+                            Integer amountTotal = transaction.getPaymentNotices().stream()
+                                    .mapToInt(it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount).sum();
                             return ecommercePaymentInstrumentsClient
                                     .getPSPs(
-                                            transaction.getAmountTotal(),
+                                            amountTotal,
                                             requestAuthorizationRequestDto.getLanguage().getValue(),
                                             requestAuthorizationRequestDto.getPaymentInstrumentId()
                                     )
@@ -238,20 +241,23 @@ public class TransactionsService {
 
                             TransactionActivated transaction = new TransactionActivated(
                                     new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
-                                    transactionDocument.getNoticeCodes().stream()
+                                    transactionDocument.getPaymentNotices().stream()
                                             .map(
-                                                    noticeCode -> new NoticeCode(
-                                                            new PaymentToken(noticeCode.getPaymentToken()),
-                                                            new RptId(noticeCode.getRptId()),
-                                                            new TransactionAmount(noticeCode.getAmount()),
-                                                            new TransactionDescription(noticeCode.getDescription()),
-                                                            new PaymentContextCode(noticeCode.getPaymentContextCode())
+                                                    paymentNotice -> new PaymentNotice(
+                                                            new PaymentToken(paymentNotice.getPaymentToken()),
+                                                            new RptId(paymentNotice.getRptId()),
+                                                            new TransactionAmount(paymentNotice.getAmount()),
+                                                            new TransactionDescription(paymentNotice.getDescription()),
+                                                            new PaymentContextCode(
+                                                                    paymentNotice.getPaymentContextCode()
+                                                            )
                                                     )
                                             ).toList(),
                                     new Email(transactionDocument.getEmail()),
                                     null,
                                     null,
-                                    transactionDocument.getStatus()
+                                    transactionDocument.getStatus(),
+                                    transactionDocument.getOrigin()
                             );
 
                             AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -270,7 +276,7 @@ public class TransactionsService {
 
                             // FIXME Handle multiple rtpId
                             TransactionRequestAuthorizationCommand transactionRequestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                                    transaction.getNoticeCodes().get(0).rptId(),
+                                    transaction.getPaymentNotices().get(0).rptId(),
                                     authorizationData
                             );
 
@@ -303,20 +309,23 @@ public class TransactionsService {
                         transactionDocument -> {
                             TransactionActivated transaction = new TransactionActivated(
                                     new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
-                                    transactionDocument.getNoticeCodes().stream()
+                                    transactionDocument.getPaymentNotices().stream()
                                             .map(
-                                                    noticeCode -> new NoticeCode(
-                                                            new PaymentToken(noticeCode.getPaymentToken()),
-                                                            new RptId(noticeCode.getRptId()),
-                                                            new TransactionAmount(noticeCode.getAmount()),
-                                                            new TransactionDescription(noticeCode.getDescription()),
-                                                            new PaymentContextCode(noticeCode.getPaymentContextCode())
+                                                    paymentNotice -> new PaymentNotice(
+                                                            new PaymentToken(paymentNotice.getPaymentToken()),
+                                                            new RptId(paymentNotice.getRptId()),
+                                                            new TransactionAmount(paymentNotice.getAmount()),
+                                                            new TransactionDescription(paymentNotice.getDescription()),
+                                                            new PaymentContextCode(
+                                                                    paymentNotice.getPaymentContextCode()
+                                                            )
                                                     )
                                             ).toList(),
                                     new Email(transactionDocument.getEmail()),
                                     null,
                                     null,
-                                    transactionDocument.getStatus()
+                                    transactionDocument.getStatus(),
+                                    transactionDocument.getOrigin()
                             );
 
                             UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
@@ -326,7 +335,7 @@ public class TransactionsService {
 
                             // FIXME Handle multiple rtpId
                             TransactionUpdateAuthorizationCommand transactionUpdateAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
-                                    transaction.getNoticeCodes().get(0).rptId(),
+                                    transaction.getPaymentNotices().get(0).rptId(),
                                     updateAuthorizationStatusData
                             );
 
@@ -336,7 +345,7 @@ public class TransactionsService {
                                             authorizationStatusUpdatedEvent -> log.info(
                                                     "Requested authorization update for rptId: {}",
                                                     // FIXME Handle multiple rtpId
-                                                    authorizationStatusUpdatedEvent.getNoticeCodes().get(0).getRptId()
+                                                    transaction.getPaymentNotices().get(0).rptId()
                                             )
                                     )
                                     .flatMap(
@@ -356,7 +365,7 @@ public class TransactionsService {
                             );
 
                             TransactionClosureSendCommand transactionClosureSendCommand = new TransactionClosureSendCommand(
-                                    transaction.getNoticeCodes().get(0).rptId(),
+                                    transaction.getPaymentNotices().get(0).rptId(),
                                     closureSendData
                             );
 
@@ -367,7 +376,7 @@ public class TransactionsService {
                             // FIXME Handle multiple rtpId
                             log.info(
                                     "Requested transaction closure for rptId: {}",
-                                    transaction.getNoticeCodes().get(0).rptId().value()
+                                    transaction.getPaymentNotices().get(0).rptId().value()
                             )
                                     )
                                     .flatMap(
@@ -381,12 +390,14 @@ public class TransactionsService {
                                             transactionDocument -> new TransactionInfoDto()
                                                     .transactionId(transactionDocument.getTransactionId())
                                                     .payments(
-                                                            transactionDocument.getNoticeCodes().stream().map(
-                                                                    noticeCode -> new PaymentInfoDto()
-                                                                            .amount(noticeCode.getAmount())
-                                                                            .reason(noticeCode.getDescription())
-                                                                            .paymentToken(noticeCode.getPaymentToken())
-                                                                            .rptId(noticeCode.getRptId())
+                                                            transactionDocument.getPaymentNotices().stream().map(
+                                                                    paymentNotice -> new PaymentInfoDto()
+                                                                            .amount(paymentNotice.getAmount())
+                                                                            .reason(paymentNotice.getDescription())
+                                                                            .paymentToken(
+                                                                                    paymentNotice.getPaymentToken()
+                                                                            )
+                                                                            .rptId(paymentNotice.getRptId())
                                                             ).toList()
                                                     )
                                                     .status(
@@ -412,21 +423,24 @@ public class TransactionsService {
                         transactionDocument -> {
                             TransactionActivated transaction = new TransactionActivated(
                                     new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
-                                    transactionDocument.getNoticeCodes().stream()
+                                    transactionDocument.getPaymentNotices().stream()
                                             .map(
-                                                    noticeCode -> new NoticeCode(
-                                                            new PaymentToken(noticeCode.getPaymentToken()),
-                                                            new RptId(noticeCode.getRptId()),
-                                                            new TransactionAmount(noticeCode.getAmount()),
-                                                            new TransactionDescription(noticeCode.getDescription()),
-                                                            new PaymentContextCode(noticeCode.getPaymentContextCode())
+                                                    paymentNotice -> new PaymentNotice(
+                                                            new PaymentToken(paymentNotice.getPaymentToken()),
+                                                            new RptId(paymentNotice.getRptId()),
+                                                            new TransactionAmount(paymentNotice.getAmount()),
+                                                            new TransactionDescription(paymentNotice.getDescription()),
+                                                            new PaymentContextCode(
+                                                                    paymentNotice.getPaymentContextCode()
+                                                            )
                                                     )
                                             )
                                             .toList(),
                                     new Email(transactionDocument.getEmail()),
                                     null,
                                     null,
-                                    transactionDocument.getStatus()
+                                    transactionDocument.getStatus(),
+                                    transactionDocument.getOrigin()
                             );
                             AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
                                     transaction,
@@ -434,7 +448,7 @@ public class TransactionsService {
                             );
                             // FIXME Handle multiple rtpId
                             return new TransactionAddUserReceiptCommand(
-                                    transaction.getNoticeCodes().get(0).rptId(),
+                                    transaction.getPaymentNotices().get(0).rptId(),
                                     addUserReceiptData
                             );
                         }
@@ -459,24 +473,24 @@ public class TransactionsService {
                         transaction -> new TransactionInfoDto()
                                 .transactionId(transaction.getTransactionId().value().toString())
                                 .payments(
-                                        transaction.getNoticeCodes().stream().map(
-                                                noticeCode -> new PaymentInfoDto()
+                                        transaction.getPaymentNotices().stream().map(
+                                                paymentNotice -> new PaymentInfoDto()
                                                         .amount(
                                                                 transaction.getTransactionActivatedData()
-                                                                        .getNoticeCodes().stream()
+                                                                        .getPaymentNotices().stream()
                                                                         .filter(
-                                                                                noticeCodeData -> noticeCodeData
+                                                                                paymentNoticeData -> paymentNoticeData
                                                                                         .getRptId().equals(
-                                                                                                noticeCode.rptId()
+                                                                                                paymentNotice.rptId()
                                                                                                         .value()
                                                                                         )
                                                                         )
                                                                         .findFirst().get()
                                                                         .getAmount()
                                                         )
-                                                        .reason(noticeCode.transactionDescription().value())
-                                                        .paymentToken(noticeCode.paymentToken().value())
-                                                        .rptId(noticeCode.rptId().value())
+                                                        .reason(paymentNotice.transactionDescription().value())
+                                                        .paymentToken(paymentNotice.paymentToken().value())
+                                                        .rptId(paymentNotice.rptId().value())
                                         ).toList()
                                 )
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
@@ -509,22 +523,25 @@ public class TransactionsService {
                         transaction -> new NewTransactionResponseDto()
                                 .transactionId(transaction.getTransactionId().value().toString())
                                 .payments(
-                                        transaction.getNoticeCodes().stream().map(
-                                                noticeCode -> new PaymentInfoDto()
-                                                        .amount(noticeCode.transactionAmount().value())
-                                                        .reason(noticeCode.transactionDescription().value())
-                                                        .rptId(noticeCode.rptId().value())
-                                                        .paymentToken(noticeCode.paymentToken().value())
+                                        transaction.getPaymentNotices().stream().map(
+                                                paymentNotice -> new PaymentInfoDto()
+                                                        .amount(paymentNotice.transactionAmount().value())
+                                                        .reason(paymentNotice.transactionDescription().value())
+                                                        .rptId(paymentNotice.rptId().value())
+                                                        .paymentToken(paymentNotice.paymentToken().value())
                                         ).toList()
                                 )
                                 .authToken(sessionDataDto.getSessionToken())
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
-                                .amountTotal(
-                                        transaction.getNoticeCodes().stream()
-                                                .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
-                                )
                                 // .feeTotal()//TODO da dove prendere le fees?
-                                .origin(NewTransactionResponseDto.OriginEnum.CHECKOUT)// TODO che mettere qui?
+                                .origin(
+                                        Optional.ofNullable(transaction.getOriginType())
+                                                .map(
+                                                        origin -> NewTransactionResponseDto.OriginEnum
+                                                                .fromValue(origin.toString())
+                                                )
+                                                .orElse(NewTransactionResponseDto.OriginEnum.UNKNOWN)
+                                )
                 );
     }
 
@@ -538,22 +555,25 @@ public class TransactionsService {
                         transaction -> new NewTransactionResponseDto()
                                 .transactionId(transaction.getTransactionId().value().toString())
                                 .payments(
-                                        transaction.getNoticeCodes().stream().map(
-                                                noticeCode -> new PaymentInfoDto()
-                                                        .amount(noticeCode.transactionAmount().value())
-                                                        .reason(noticeCode.transactionDescription().value())
-                                                        .rptId(noticeCode.rptId().value())
-                                                        .paymentToken(noticeCode.paymentToken().value())
+                                        transaction.getPaymentNotices().stream().map(
+                                                paymentNotice -> new PaymentInfoDto()
+                                                        .amount(paymentNotice.transactionAmount().value())
+                                                        .reason(paymentNotice.transactionDescription().value())
+                                                        .rptId(paymentNotice.rptId().value())
+                                                        .paymentToken(paymentNotice.paymentToken().value())
                                         ).toList()
                                 )
                                 .authToken(sessionDataDto.getSessionToken())
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
-                                .amountTotal(
-                                        transaction.getNoticeCodes().stream()
-                                                .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
-                                )
                                 // .feeTotal()//TODO da dove prendere le fees?
-                                .origin(NewTransactionResponseDto.OriginEnum.CHECKOUT)// TODO che mettere qui?
+                                .origin(
+                                        Optional.ofNullable(transaction.getOriginType())
+                                                .map(
+                                                        origin -> NewTransactionResponseDto.OriginEnum
+                                                                .fromValue(origin.toString())
+                                                )
+                                                .orElse(NewTransactionResponseDto.OriginEnum.UNKNOWN)
+                                )
                 );
     }
 }

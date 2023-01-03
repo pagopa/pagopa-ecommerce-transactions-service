@@ -31,9 +31,6 @@ import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.Month;
-import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +60,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -74,7 +71,8 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -108,7 +106,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -119,7 +117,8 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
@@ -148,8 +147,8 @@ class PaymentGatewayClientTest {
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(
                         BigDecimal.valueOf(
-                                transaction.getNoticeCodes().stream()
-                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
+                                transaction.getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
                                         + authorizationData.fee()
                         )
                 );
@@ -183,7 +182,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -194,7 +193,8 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -214,12 +214,12 @@ class PaymentGatewayClientTest {
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(
                         BigDecimal.valueOf(
-                                transaction.getNoticeCodes().stream()
-                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
+                                transaction.getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
                                         + authorizationData.fee()
                         )
                 )
-                .description(transaction.getNoticeCodes().get(0).transactionDescription().value())
+                .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(transactionIdUUID.toString());
 
@@ -252,7 +252,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -263,7 +263,8 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .detailType("card")
@@ -291,8 +292,8 @@ class PaymentGatewayClientTest {
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(
                         BigDecimal.valueOf(
-                                transaction.getNoticeCodes().stream()
-                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
+                                transaction.getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
                                         + authorizationData.fee()
                         )
                 );
@@ -338,7 +339,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -349,7 +350,8 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -369,12 +371,12 @@ class PaymentGatewayClientTest {
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(
                         BigDecimal.valueOf(
-                                transaction.getNoticeCodes().stream()
-                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
+                                transaction.getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
                                         + authorizationData.fee()
                         )
                 )
-                .description(transaction.getNoticeCodes().get(0).transactionDescription().value())
+                .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(transactionIdUUID.toString());
 
@@ -418,7 +420,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -429,7 +431,8 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 "faultCode",
                 "faultCodeString",
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -449,12 +452,12 @@ class PaymentGatewayClientTest {
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(
                         BigDecimal.valueOf(
-                                transaction.getNoticeCodes().stream()
-                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
+                                transaction.getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
                                         + authorizationData.fee()
                         )
                 )
-                .description(transaction.getNoticeCodes().get(0).transactionDescription().value())
+                .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(transactionIdUUID.toString());
 
@@ -496,7 +499,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -507,7 +510,8 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -527,12 +531,12 @@ class PaymentGatewayClientTest {
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(
                         BigDecimal.valueOf(
-                                transaction.getNoticeCodes().stream()
-                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
+                                transaction.getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
                                         + authorizationData.fee()
                         )
                 )
-                .description(transaction.getNoticeCodes().get(0).transactionDescription().value())
+                .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(transactionIdUUID.toString());
 
@@ -572,7 +576,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -583,7 +587,8 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto().cvv("345").pan("16589654852")
                 .expiryDate("203012");
@@ -608,8 +613,8 @@ class PaymentGatewayClientTest {
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(
                         BigDecimal.valueOf(
-                                transaction.getNoticeCodes().stream()
-                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
+                                transaction.getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
                                         + authorizationData.fee()
                         )
                 );
@@ -650,7 +655,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -661,7 +666,8 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -681,12 +687,12 @@ class PaymentGatewayClientTest {
         PostePayAuthRequestDto postePayAuthRequest = new PostePayAuthRequestDto()
                 .grandTotal(
                         BigDecimal.valueOf(
-                                transaction.getNoticeCodes().stream()
-                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
+                                transaction.getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
                                         + authorizationData.fee()
                         )
                 )
-                .description(transaction.getNoticeCodes().get(0).transactionDescription().value())
+                .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
                 .idTransaction(transactionIdUUID.toString());
 
@@ -721,7 +727,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -732,7 +738,8 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto().cvv("345").pan("16589654852")
                 .expiryDate("203012");
@@ -757,8 +764,8 @@ class PaymentGatewayClientTest {
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(
                         BigDecimal.valueOf(
-                                transaction.getNoticeCodes().stream()
-                                        .mapToInt(noticeCode -> noticeCode.transactionAmount().value()).sum()
+                                transaction.getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
                                         + authorizationData.fee()
                         )
                 );
@@ -794,7 +801,7 @@ class PaymentGatewayClientTest {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -805,7 +812,8 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(

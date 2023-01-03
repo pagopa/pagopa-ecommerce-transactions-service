@@ -21,7 +21,7 @@ public class ClosureErrorProjectionHandler
     public Mono<Transaction> handle(TransactionClosureErrorEvent event) {
         return transactionsViewRepository.findById(event.getTransactionId())
                 .switchIfEmpty(
-                        Mono.error(new TransactionNotFoundException(event.getNoticeCodes().get(0).getPaymentToken()))
+                        Mono.error(new TransactionNotFoundException(event.getTransactionId()))
                 )
                 .flatMap(transactionDocument -> {
                     transactionDocument.setStatus(TransactionStatusDto.CLOSURE_ERROR);

@@ -6,10 +6,7 @@ import com.azure.core.http.rest.Response;
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
 import com.azure.storage.queue.models.SendMessageResult;
-import it.pagopa.ecommerce.commons.documents.TransactionActivatedData;
-import it.pagopa.ecommerce.commons.documents.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.documents.TransactionActivationRequestedData;
-import it.pagopa.ecommerce.commons.documents.TransactionActivationRequestedEvent;
+import it.pagopa.ecommerce.commons.documents.*;
 import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.domain.TransactionEventCode;
@@ -87,7 +84,11 @@ class TransactionInitializerHandlerTest {
         requestDto.setEmail("jhon.doe@email.com");
         paymentNoticeInfoDto.setAmount(1200);
         paymentNoticeInfoDto.setPaymentContextCode(UUID.randomUUID().toString().replace("-", ""));
-        TransactionActivateCommand command = new TransactionActivateCommand(rptId, requestDto);
+        TransactionActivateCommand command = new TransactionActivateCommand(
+                rptId,
+                requestDto,
+                Transaction.OriginType.UNKNOWN
+        );
 
         PaymentRequestInfo paymentRequestInfoCached = new PaymentRequestInfo(
                 rptId,
@@ -111,9 +112,10 @@ class TransactionInitializerHandlerTest {
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
         transactionActivatedEvent.setTransactionId(transactionId);
         transactionActivatedEvent.setEventCode(TransactionEventCode.TRANSACTION_ACTIVATED_EVENT);
-        transactionActivatedEvent.setNoticeCodes(
+        TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
+        transactionActivatedData.setPaymentNotices(
                 Arrays.asList(
-                        new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                        new it.pagopa.ecommerce.commons.documents.PaymentNotice(
                                 paymentToken,
                                 rptId.value(),
                                 null,
@@ -122,6 +124,7 @@ class TransactionInitializerHandlerTest {
                         )
                 )
         );
+        transactionActivatedEvent.setData(transactionActivatedData);
 
         /** preconditions */
         Mockito.when(paymentRequestInfoRepository.findById(rptId))

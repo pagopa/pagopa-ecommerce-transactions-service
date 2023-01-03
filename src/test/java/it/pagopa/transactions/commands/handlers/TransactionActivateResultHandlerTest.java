@@ -18,7 +18,6 @@ import it.pagopa.transactions.commands.data.ActivationResultData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
-import org.aspectj.weaver.ast.Not;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -76,7 +75,7 @@ class TransactionActivateResultHandlerTest {
         TransactionActivationRequested transaction = new TransactionActivationRequested(
                 new TransactionId(UUID.fromString(transactionId)),
                 Arrays.asList(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 null,
                                 rptId,
                                 new TransactionAmount(amount),
@@ -85,7 +84,8 @@ class TransactionActivateResultHandlerTest {
                         )
                 ),
                 new Email(requestDto.getEmail()),
-                TransactionStatusDto.ACTIVATION_REQUESTED
+                TransactionStatusDto.ACTIVATION_REQUESTED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         ActivationResultData activationResultData = new ActivationResultData(transaction, activationResultRequestDto);
@@ -134,7 +134,7 @@ class TransactionActivateResultHandlerTest {
         TransactionActivationRequested transaction = new TransactionActivationRequested(
                 new TransactionId(UUID.fromString(transactionId)),
                 Arrays.asList(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 null,
                                 rptId,
                                 new TransactionAmount(amount),
@@ -143,7 +143,8 @@ class TransactionActivateResultHandlerTest {
                         )
                 ),
                 new Email(requestDto.getEmail()),
-                TransactionStatusDto.ACTIVATION_REQUESTED
+                TransactionStatusDto.ACTIVATION_REQUESTED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         ActivationResultData activationResultData = new ActivationResultData(transaction, activationResultRequestDto);
@@ -152,29 +153,21 @@ class TransactionActivateResultHandlerTest {
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 command.getData().transactionActivationRequested().getTransactionId().toString(),
-                Arrays.asList(
-                        new it.pagopa.ecommerce.commons.documents.NoticeCode(
-                                paymentToken,
-                                rptId.value(),
-                                null,
-                                null,
-                                null
-                        )
-                ),
                 new TransactionActivatedData(
                         null,
-                        transaction.getNoticeCodes().stream()
+                        transaction.getPaymentNotices().stream()
                                 .map(
-                                        noticeCode -> new it.pagopa.ecommerce.commons.documents.NoticeCode(
+                                        PaymentNotice -> new it.pagopa.ecommerce.commons.documents.PaymentNotice(
                                                 paymentToken,
-                                                noticeCode.rptId().value(),
-                                                noticeCode.transactionDescription().value(),
-                                                noticeCode.transactionAmount().value(),
-                                                noticeCode.paymentContextCode().value()
+                                                PaymentNotice.rptId().value(),
+                                                PaymentNotice.transactionDescription().value(),
+                                                PaymentNotice.transactionAmount().value(),
+                                                PaymentNotice.paymentContextCode().value()
                                         )
                                 ).toList(),
                         null,
-                        null
+                        null,
+                        it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
                 )
         );
 
@@ -252,7 +245,7 @@ class TransactionActivateResultHandlerTest {
         TransactionActivationRequested transactionActivationRequested = new TransactionActivationRequested(
                 new TransactionId(UUID.fromString(transactionId)),
                 Arrays.asList(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 null,
                                 rptId,
                                 new TransactionAmount(amount),
@@ -261,7 +254,8 @@ class TransactionActivateResultHandlerTest {
                         )
                 ),
                 new Email(requestDto.getEmail()),
-                TransactionStatusDto.AUTHORIZED
+                TransactionStatusDto.AUTHORIZED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         ActivationResultData activationResultData = new ActivationResultData(
@@ -310,7 +304,7 @@ class TransactionActivateResultHandlerTest {
         TransactionActivationRequested transactionActivationRequested = new TransactionActivationRequested(
                 new TransactionId(UUID.fromString(transactionId)),
                 Arrays.asList(
-                        new NoticeCode(
+                        new PaymentNotice(
                                 null,
                                 rptId,
                                 new TransactionAmount(amount),
@@ -319,7 +313,8 @@ class TransactionActivateResultHandlerTest {
                         )
                 ),
                 new Email(requestDto.getEmail()),
-                TransactionStatusDto.ACTIVATION_REQUESTED
+                TransactionStatusDto.ACTIVATION_REQUESTED,
+                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
         );
 
         ActivationResultData activationResultData = new ActivationResultData(
