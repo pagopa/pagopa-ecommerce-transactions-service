@@ -90,7 +90,7 @@ stages:
         - checkout: pagopaEcommerceLocal
         - task: Cache@2
           inputs:
-            key: 'maven | "$(Agent.OS)" | pom.xml'
+            key: 'maven | "$(Agent.OS)" | "ecommerce-local" '
             restoreKeys: |
               maven | "$(Agent.OS)"
               maven
