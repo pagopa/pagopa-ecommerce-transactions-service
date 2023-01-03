@@ -53,12 +53,28 @@ public class TransactionRequestAuthorizationHandler
         }
 
         var monoPostePay = Mono.just(command.getData())
-                .flatMap(d -> paymentGatewayClient.requestPostepayAuthorization(d))
-                .map(p -> Tuples.of(p.getRequestId(), p.getUrlRedirect()));
+                .flatMap(
+                        authorizationRequestData -> paymentGatewayClient
+                                .requestPostepayAuthorization(authorizationRequestData)
+                )
+                .map(
+                        postePayAuthResponseEntityDto -> Tuples.of(
+                                postePayAuthResponseEntityDto.getRequestId(),
+                                postePayAuthResponseEntityDto.getUrlRedirect()
+                        )
+                );
 
         var monoXPay = Mono.just(command.getData())
-                .flatMap(d -> paymentGatewayClient.requestXPayAuthorization(d))
-                .map(p -> Tuples.of(p.getRequestId(), p.getUrlRedirect()));
+                .flatMap(
+                        authorizationRequestData -> paymentGatewayClient
+                                .requestXPayAuthorization(authorizationRequestData)
+                )
+                .map(
+                        xPayAuthResponseEntityDto -> Tuples.of(
+                                xPayAuthResponseEntityDto.getRequestId(),
+                                xPayAuthResponseEntityDto.getUrlRedirect()
+                        )
+                );
 
         List<Mono<Tuple2<String, String>>> gatewayRequests = List.of(monoPostePay, monoXPay);
 
