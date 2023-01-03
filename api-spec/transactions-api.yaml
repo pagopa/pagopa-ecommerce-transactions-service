@@ -71,7 +71,7 @@ paths:
           schema:
             type: string
             pattern: 'XPAY|VPOS'
-          required: true
+          required: false
           description: Pgs identifier (populated by APIM policy)
       requestBody:
         $ref: "#/components/requestBodies/RequestAuthorizationRequest"
