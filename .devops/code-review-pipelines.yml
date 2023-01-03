@@ -88,6 +88,14 @@ stages:
       - job: make_integration_test  
         steps:
         - checkout: pagopaEcommerceLocal
+        - task: Cache@2
+          inputs:
+            key: 'maven | "$(Agent.OS)" | pom.xml'
+            restoreKeys: |
+              maven | "$(Agent.OS)"
+              maven
+            path: $(MAVEN_CACHE_FOLDER)
+          displayName: Cache Maven local repo
         - script: | 
             echo "##[debug] Change placeholder for ecommerce-transaction-service ..."
             sed -i "s/^ECOMMERCE_TRANSACTIONS_COMMIT_SHA=.*$/ECOMMERCE_TRANSACTIONS_COMMIT_SHA=$(BRANCH_NAME)/" .env
