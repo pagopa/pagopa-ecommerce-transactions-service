@@ -80,8 +80,8 @@ public class TransactionsService {
     @CircuitBreaker(name = "node-backend")
     @Retry(name = "newTransaction")
     public Mono<NewTransactionResponseDto> newTransaction(
-            NewTransactionRequestDto newTransactionRequestDto,
-            String xClientId
+                                                          NewTransactionRequestDto newTransactionRequestDto,
+                                                          String xClientId
     ) {
         OriginType clientId = OriginType.fromString(xClientId);
         log.info(

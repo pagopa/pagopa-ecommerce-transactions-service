@@ -12,6 +12,7 @@ paths:
           name: X-Client-Id
           schema:
             type: string
+            enum: [IO,CHECKOUT,CHECKOUT_CART]
             pattern: 'IO|CHECKOUT|CHECKOUT_CART'
           required: false
           description: Transaction origin (populated by APIM policy)

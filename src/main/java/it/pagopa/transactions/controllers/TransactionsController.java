@@ -49,9 +49,9 @@ public class TransactionsController implements TransactionsApi {
 
     @Override
     public Mono<ResponseEntity<NewTransactionResponseDto>> newTransaction(
-            Mono<NewTransactionRequestDto> newTransactionRequest,
-            String xClientId,
-            ServerWebExchange exchange
+                                                                          Mono<NewTransactionRequestDto> newTransactionRequest,
+                                                                          String xClientId,
+                                                                          ServerWebExchange exchange
     ) {
         return newTransactionRequest
                 .flatMap(ntr -> {
