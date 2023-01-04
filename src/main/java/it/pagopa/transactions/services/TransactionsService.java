@@ -80,19 +80,19 @@ public class TransactionsService {
     @CircuitBreaker(name = "node-backend")
     @Retry(name = "newTransaction")
     public Mono<NewTransactionResponseDto> newTransaction(
-                                                          NewTransactionRequestDto newTransactionRequestDto,
-                                                          String origin
+            NewTransactionRequestDto newTransactionRequestDto,
+            String xClientId
     ) {
-        OriginType originType = OriginType.fromString(origin);
+        OriginType clientId = OriginType.fromString(xClientId);
         log.info(
-                "Initializing transaction for rptId: {}. Transaction origin: {}",
+                "Initializing transaction for rptId: {}. ClientId: {}",
                 newTransactionRequestDto.getPaymentNotices().get(0).getRptId(),
-                originType
+                clientId
         );
         TransactionActivateCommand command = new TransactionActivateCommand(
                 new RptId(newTransactionRequestDto.getPaymentNotices().get(0).getRptId()),
                 newTransactionRequestDto,
-                originType
+                clientId
         );
 
         return transactionActivateHandler
