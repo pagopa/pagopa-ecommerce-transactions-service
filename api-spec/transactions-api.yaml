@@ -10,12 +10,10 @@ paths:
       parameters:
         - in: header
           name: X-Client-Id
-          schema:
-            type: string
-            enum: [IO,CHECKOUT,CHECKOUT_CART]
-            pattern: 'IO|CHECKOUT|CHECKOUT_CART'
           required: false
           description: Transaction origin (populated by APIM policy)
+          schema:
+            $ref: '#/components/schemas/ClientId'
       summary: Make a new transaction
       requestBody:
         $ref: "#/components/requestBodies/NewTransactionRequest"
@@ -681,6 +679,13 @@ components:
         - NOTIFIED_FAILED
         - EXPIRED
         - REFUNDED
+    ClientId:
+      type: string
+      description: Enumerations of client ids
+      enum:
+        - IO
+        - CHECKOUT
+        - CHECKOUT_CART
     ProblemJson:
       type: object
       properties:

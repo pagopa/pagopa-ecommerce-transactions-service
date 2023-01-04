@@ -81,9 +81,13 @@ public class TransactionsService {
     @Retry(name = "newTransaction")
     public Mono<NewTransactionResponseDto> newTransaction(
                                                           NewTransactionRequestDto newTransactionRequestDto,
-                                                          String xClientId
+                                                          ClientIdDto clientIdDto
     ) {
-        OriginType clientId = OriginType.fromString(xClientId);
+        OriginType clientId = OriginType.fromString(
+                Optional.ofNullable(clientIdDto)
+                        .map(ClientIdDto::toString)
+                        .orElse(null)
+        );
         log.info(
                 "Initializing transaction for rptId: {}. ClientId: {}",
                 newTransactionRequestDto.getPaymentNotices().get(0).getRptId(),
