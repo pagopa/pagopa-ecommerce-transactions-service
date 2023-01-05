@@ -44,7 +44,7 @@ class ClosureErrorProjectionHandlerTest {
                 transaction.getFeeTotal(),
                 transaction.getEmail(),
                 TransactionStatusDto.CLOSURE_ERROR,
-                Transaction.OriginType.CHECKOUT,
+                Transaction.ClientId.CHECKOUT,
                 transaction.getCreationDate()
         );
 
@@ -89,7 +89,7 @@ class ClosureErrorProjectionHandlerTest {
                 0,
                 "foo@example.com",
                 TransactionStatusDto.AUTHORIZED,
-                Transaction.OriginType.CHECKOUT,
+                Transaction.ClientId.CHECKOUT,
                 ZonedDateTime.now().toString()
         );
     }

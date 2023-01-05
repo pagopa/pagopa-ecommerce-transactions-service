@@ -108,7 +108,7 @@ class TransactionSendClosureHandlerTest {
                 faultCode,
                 faultCodeString,
                 TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -133,7 +133,7 @@ class TransactionSendClosureHandlerTest {
                         transaction.getTransactionActivatedData().getPaymentNotices(),
                         faultCode,
                         faultCodeString,
-                        it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
+                        it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
                 )
         );
 
@@ -214,7 +214,7 @@ class TransactionSendClosureHandlerTest {
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
+                        it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
                 )
         );
 
@@ -353,7 +353,7 @@ class TransactionSendClosureHandlerTest {
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
+                        it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
                 )
         );
 
@@ -503,7 +503,7 @@ class TransactionSendClosureHandlerTest {
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
+                        it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
                 )
         );
 

@@ -87,7 +87,7 @@ class TransactionInitializerHandlerTest {
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
                 requestDto,
-                Transaction.OriginType.UNKNOWN
+                Transaction.ClientId.UNKNOWN
         );
 
         PaymentRequestInfo paymentRequestInfoCached = new PaymentRequestInfo(

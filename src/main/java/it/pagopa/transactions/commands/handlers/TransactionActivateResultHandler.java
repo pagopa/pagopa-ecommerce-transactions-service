@@ -53,7 +53,7 @@ public class TransactionActivateResultHandler
 
         final String transactionId = transactionActivationRequested.getTransactionId().value()
                 .toString();
-        final Transaction.OriginType originType = transactionActivationRequested.getOriginType();
+        final Transaction.ClientId clientId = transactionActivationRequested.getClientId();
         return Mono.just(command)
                 .filter(
                         commandData -> commandData.getData().transactionActivationRequested()
@@ -149,7 +149,7 @@ public class TransactionActivateResultHandler
                                             .toList(),
                                     null,
                                     null,
-                                    originType
+                                    clientId
                             );
 
                             TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(

@@ -135,7 +135,7 @@ public class TransactionServiceTests {
                 null,
                 "foo@example.com",
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
-                Transaction.OriginType.CHECKOUT,
+                Transaction.ClientId.CHECKOUT,
                 ZonedDateTime.now().toString()
         );
 
@@ -148,7 +148,7 @@ public class TransactionServiceTests {
                                 .paymentToken(PAYMENT_TOKEN)
                                 .rptId("77777777777111111111111111111")
                 )
-                .origin(TransactionInfoDto.OriginEnum.CHECKOUT)
+                .clientId(TransactionInfoDto.ClientIdEnum.CHECKOUT)
                 .feeTotal(null)
                 .status(TransactionStatusDto.ACTIVATED);
 
@@ -304,7 +304,7 @@ public class TransactionServiceTests {
                 "faultCode",
                 "faultCodeString",
                 transactionDocument.getStatus(),
-                Transaction.OriginType.UNKNOWN
+                Transaction.ClientId.UNKNOWN
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -427,7 +427,7 @@ public class TransactionServiceTests {
                 null,
                 null,
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED,
-                Transaction.OriginType.UNKNOWN
+                Transaction.ClientId.UNKNOWN
         );
 
         TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(
