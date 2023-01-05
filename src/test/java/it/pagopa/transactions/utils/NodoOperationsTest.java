@@ -5,6 +5,7 @@ import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.generated.nodoperpsp.model.*;
 import it.pagopa.generated.transactions.model.*;
+import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NodoPerPspClient;
 import it.pagopa.transactions.configurations.NodoConfig;
@@ -19,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -94,6 +96,7 @@ class NodoOperationsTest {
         activatePaymentRes.setPaymentToken(paymentToken);
         activatePaymentRes.setFiscalCodePA(fiscalCode);
         activatePaymentRes.setTotalAmount(amountBigDec);
+        activatePaymentRes.setPaymentDescription(description);
         activatePaymentRes.setOutcome(StOutcome.OK);
 
         /** preconditions */
@@ -106,7 +109,8 @@ class NodoOperationsTest {
         /** test */
         PaymentRequestInfo response = nodoOperations
                 .activatePaymentRequest(
-                        paymentRequestInfo,
+                        rptId,
+                        Optional.of(paymentRequestInfo),
                         paymentContextCode,
                         amount,
                         false,
@@ -117,11 +121,11 @@ class NodoOperationsTest {
         /** asserts */
         Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNotice(Mockito.any());
 
-        assertEquals(response.id(), rptId);
-        assertEquals(response.paymentToken(), paymentToken);
-        assertEquals(response.description(), description);
-        assertEquals(response.idempotencyKey(), idempotencyKey);
-        assertEquals(response.paFiscalCode(), paTaxCode);
+        assertEquals(rptId, response.id());
+        assertEquals(paymentToken, response.paymentToken());
+        assertEquals(description, response.description());
+        assertEquals(idempotencyKey, response.idempotencyKey());
+        assertEquals(paTaxCode, response.paFiscalCode());
     }
 
     @Test
@@ -177,7 +181,8 @@ class NodoOperationsTest {
         /** Test / asserts */
         Mono<PaymentRequestInfo> paymentRequestInfoMono = nodoOperations
                 .activatePaymentRequest(
-                        paymentRequestInfo,
+                        rptId,
+                        Optional.of(paymentRequestInfo),
                         paymentContextCode,
                         amount,
                         false,
@@ -224,6 +229,7 @@ class NodoOperationsTest {
         activatePaymentRes.setPaymentToken(paymentToken);
         activatePaymentRes.setFiscalCodePA(paTaxCode);
         activatePaymentRes.setTotalAmount(amountBigDec);
+        activatePaymentRes.setPaymentDescription(description);
         activatePaymentRes.setOutcome(StOutcome.OK);
 
         NodoTipoCodiceIdRPT nodoTipoCodiceIdRPT = objectFactoryUtilNodoPerPsp.createNodoTipoCodiceIdRPT();
@@ -279,7 +285,8 @@ class NodoOperationsTest {
         /** test */
         PaymentRequestInfo response = nodoOperations
                 .activatePaymentRequest(
-                        paymentRequestInfo,
+                        rptId,
+                        Optional.of(paymentRequestInfo),
                         paymentContextCode,
                         amount,
                         false,
@@ -290,11 +297,11 @@ class NodoOperationsTest {
         /** asserts */
         Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNotice(Mockito.any());
 
-        assertEquals(response.id(), rptId);
-        assertEquals(response.paymentToken(), paymentToken);
-        assertEquals(response.description(), description);
-        assertEquals(response.idempotencyKey(), idempotencyKey);
-        assertEquals(response.paFiscalCode(), paTaxCode);
+        assertEquals(rptId, response.id());
+        assertEquals(paymentToken, response.paymentToken());
+        assertEquals(description, response.description());
+        assertEquals(idempotencyKey, response.idempotencyKey());
+        assertEquals(paTaxCode, response.paFiscalCode());
     }
 
     @Test
@@ -366,7 +373,8 @@ class NodoOperationsTest {
 
         Mono<PaymentRequestInfo> paymentRequestInfoMono = nodoOperations
                 .activatePaymentRequest(
-                        paymentRequestInfo,
+                        rptId,
+                        Optional.of(paymentRequestInfo),
                         paymentContextCode,
                         amount,
                         false,
@@ -424,6 +432,11 @@ class NodoOperationsTest {
         NodoTipoDatiPagamentoPA datiPagamentoPA = objectFactoryUtilNodoPerPsp.createNodoTipoDatiPagamentoPA();
         datiPagamentoPA.setImportoSingoloVersamento(amountBigDec);
 
+        CtEnteBeneficiario enteBeneficiario = objectFactoryUtilNodoPerPsp.createCtEnteBeneficiario();
+        enteBeneficiario.setDenominazioneBeneficiario(paName);
+
+        datiPagamentoPA.setEnteBeneficiario(enteBeneficiario);
+
         esitoAttiva.setDatiPagamentoPA(datiPagamentoPA);
         esitoAttiva.setEsito("OK");
 
@@ -454,7 +467,8 @@ class NodoOperationsTest {
         /** test */
         PaymentRequestInfo response = nodoOperations
                 .activatePaymentRequest(
-                        paymentRequestInfo,
+                        rptId,
+                        Optional.of(paymentRequestInfo),
                         paymentContextCode,
                         amount,
                         false,
@@ -463,7 +477,7 @@ class NodoOperationsTest {
                 .block();
 
         /** asserts */
-        assertEquals(response.id(), rptId);
+        assertEquals(rptId, response.id());
     }
 
     @Test

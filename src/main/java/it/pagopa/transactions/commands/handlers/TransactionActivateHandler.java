@@ -79,7 +79,9 @@ public class TransactionActivateHandler
         final NewTransactionRequestDto newTransactionRequestDto = command.getData();
         final List<PaymentNoticeInfoDto> paymentNotices = newTransactionRequestDto.getPaymentNotices();
         final boolean multiplePaymentNotices = paymentNotices.size() > 1;
-        final String paymentContextCode = paymentNotices.get(0).getPaymentContextCode();
+        final String paymentContextCode = Optional.ofNullable(paymentNotices.get(0).getPaymentContextCode())
+                .orElseGet(() -> UUID.randomUUID().toString().replace("-", ""));
+
         log.info(
                 "Nodo parallel processed requests : [{}]. Multiple payment notices: [{}]",
                 nodoParallelRequests,
@@ -98,35 +100,49 @@ public class TransactionActivateHandler
                                 )
                         ).flatMap(
                                 cacheResult -> {
+                                    /* @formatter:off
+                                     *
+                                     * There are three possible cases here:
+                                     *  - Cache hit with payment token => Return the cached value
+                                     *  - Cache hit without payment token => Activate payment
+                                     *  - Cache miss => Activate payment
+                                     *
+                                     * @formatter:on
+                                     */
+
                                     PaymentNoticeInfoDto paymentNotice = cacheResult.getT1();
-                                    PaymentRequestInfo partialPaymentRequestInfo = cacheResult.getT2();
-                                    Boolean isValidPaymentToken = isValidPaymentToken(
-                                            partialPaymentRequestInfo.paymentToken()
-                                    );
-                                    return Boolean.TRUE.equals(isValidPaymentToken)
-                                            ? Mono.just(partialPaymentRequestInfo)
-                                                    .doOnSuccess(
-                                                            p -> log.info(
-                                                                    "PaymentRequestInfo cache hit for {} with valid paymentToken {}",
-                                                                    p.id(),
-                                                                    p.paymentToken()
+                                    Optional<PaymentRequestInfo> partialPaymentRequestInfo = cacheResult.getT2();
+
+                                    return partialPaymentRequestInfo
+                                            .filter(requestInfo -> isValidPaymentToken(requestInfo.paymentToken()))
+                                            .map(
+                                                    requestInfo -> Mono.just(requestInfo)
+                                                            .doOnSuccess(
+                                                                    p -> log.info(
+                                                                            "PaymentRequestInfo cache hit for {} with valid paymentToken {}",
+                                                                            p.id(),
+                                                                            p.paymentToken()
+                                                                    )
                                                             )
-                                                    )
-                                            : nodoOperations
-                                                    .activatePaymentRequest(
-                                                            partialPaymentRequestInfo,
-                                                            paymentNotice.getPaymentContextCode(),
-                                                            paymentNotice.getAmount(),
-                                                            multiplePaymentNotices,
-                                                            transactionId
-                                                    )
-                                                    .doOnSuccess(
-                                                            p -> log.info(
-                                                                    "Nodo activation for {} with paymentToken {}",
-                                                                    p.id(),
-                                                                    p.paymentToken()
+                                            )
+                                            .orElseGet(
+                                                    () -> nodoOperations
+                                                            .activatePaymentRequest(
+                                                                    new RptId(paymentNotice.getRptId()),
+                                                                    partialPaymentRequestInfo,
+                                                                    paymentContextCode,
+                                                                    paymentNotice.getAmount(),
+                                                                    multiplePaymentNotices,
+                                                                    transactionId
                                                             )
-                                                    );
+                                                            .doOnSuccess(
+                                                                    p -> log.info(
+                                                                            "Nodo activation for {} with paymentToken {}",
+                                                                            p.id(),
+                                                                            p.paymentToken()
+                                                                    )
+                                                            )
+                                            );
                                 }
                         )
                         .doOnNext(
@@ -189,23 +205,10 @@ public class TransactionActivateHandler
         );
     }
 
-    private PaymentRequestInfo getPaymentRequestInfoFromCache(RptId rptId) {
+    private Optional<PaymentRequestInfo> getPaymentRequestInfoFromCache(RptId rptId) {
         Optional<PaymentRequestInfo> paymentInfofromCache = paymentRequestsInfoRepository.findById(rptId);
         log.info("PaymentRequestInfo cache hit for {}: {}", rptId, paymentInfofromCache.isPresent());
-        return paymentInfofromCache.orElseGet(
-                () -> new PaymentRequestInfo(
-                        rptId,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        false,
-                        null,
-                        null
-
-                )
-        );
+        return paymentInfofromCache;
     }
 
     private boolean isValidPaymentToken(String paymentToken) {
