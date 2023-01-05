@@ -6,6 +6,7 @@ import it.pagopa.ecommerce.commons.documents.*;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
+import it.pagopa.generated.transactions.server.model.ClientIdDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
@@ -49,6 +50,7 @@ class TransactionServiceTest {
         String TEST_EMAIL = "j.doe@mail.com";
         String TEST_RPTID = "77777777777302016723749670035";
         String TEST_TOKEN = "token";
+        ClientIdDto clientIdDto = ClientIdDto.CHECKOUT;
         UUID TEST_SESSION_TOKEN = UUID.randomUUID();
         UUID TEST_CPP = UUID.randomUUID();
         UUID TRANSACTION_ID = UUID.randomUUID();
@@ -137,7 +139,8 @@ class TransactionServiceTest {
         /**
          * Test
          */
-        NewTransactionResponseDto responseDto = transactionsService.newTransaction(transactionRequestDto).block();
+        NewTransactionResponseDto responseDto = transactionsService
+                .newTransaction(transactionRequestDto, clientIdDto).block();
 
         /**
          * Assertions
@@ -154,6 +157,7 @@ class TransactionServiceTest {
         String TEST_RPTID = "77777777777302016723749670035";
         String TEST_TOKEN = "token";
         String paymentToken = "paymentToken";
+        ClientIdDto clientIdDto = ClientIdDto.CHECKOUT;
         UUID TEST_SESSION_TOKEN = UUID.randomUUID();
         UUID TEST_CPP = UUID.randomUUID();
         UUID TRANSACTION_ID = UUID.randomUUID();
@@ -233,7 +237,8 @@ class TransactionServiceTest {
         /**
          * Test
          */
-        NewTransactionResponseDto responseDto = transactionsService.newTransaction(transactionRequestDto).block();
+        NewTransactionResponseDto responseDto = transactionsService
+                .newTransaction(transactionRequestDto, clientIdDto).block();
 
         /**
          * Assertions

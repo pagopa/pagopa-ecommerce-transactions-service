@@ -2,6 +2,7 @@ package it.pagopa.transactions.services;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
+import it.pagopa.ecommerce.commons.documents.Transaction.OriginType;
 import it.pagopa.ecommerce.commons.documents.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.TransactionActivationRequestedEvent;
 import it.pagopa.ecommerce.commons.domain.*;
@@ -79,18 +80,23 @@ public class TransactionsService {
     @CircuitBreaker(name = "node-backend")
     @Retry(name = "newTransaction")
     public Mono<NewTransactionResponseDto> newTransaction(
-                                                          NewTransactionRequestDto newTransactionRequestDto
+                                                          NewTransactionRequestDto newTransactionRequestDto,
+                                                          ClientIdDto clientIdDto
     ) {
-
+        OriginType clientId = OriginType.fromString(
+                Optional.ofNullable(clientIdDto)
+                        .map(ClientIdDto::toString)
+                        .orElse(null)
+        );
         log.info(
-                "Initializing transaction for rptId: {}",
-                newTransactionRequestDto.getPaymentNotices().get(0).getRptId()
+                "Initializing transaction for rptId: {}. ClientId: {}",
+                newTransactionRequestDto.getPaymentNotices().get(0).getRptId(),
+                clientId
         );
         TransactionActivateCommand command = new TransactionActivateCommand(
                 new RptId(newTransactionRequestDto.getPaymentNotices().get(0).getRptId()),
                 newTransactionRequestDto,
-                // TODO cambiare con l'origin letta dall'header della richiesta
-                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.fromString("UNKNOWN")
+                clientId
         );
 
         return transactionActivateHandler

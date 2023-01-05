@@ -50,6 +50,7 @@ public class TransactionsController implements TransactionsApi {
     @Override
     public Mono<ResponseEntity<NewTransactionResponseDto>> newTransaction(
                                                                           Mono<NewTransactionRequestDto> newTransactionRequest,
+                                                                          ClientIdDto clientIdDto,
                                                                           ServerWebExchange exchange
     ) {
         return newTransactionRequest
@@ -61,7 +62,7 @@ public class TransactionsController implements TransactionsApi {
                                     ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).toList()
                             )
                     );
-                    return transactionsService.newTransaction(ntr);
+                    return transactionsService.newTransaction(ntr, clientIdDto);
                 })
                 .map(ResponseEntity::ok);
     }

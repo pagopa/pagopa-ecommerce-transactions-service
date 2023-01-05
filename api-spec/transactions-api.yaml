@@ -7,6 +7,13 @@ paths:
   /transactions:
     post:
       operationId: newTransaction
+      parameters:
+        - in: header
+          name: X-Client-Id
+          required: false
+          description: Transaction origin (populated by APIM policy)
+          schema:
+            $ref: '#/components/schemas/ClientId'
       summary: Make a new transaction
       requestBody:
         $ref: "#/components/requestBodies/NewTransactionRequest"
@@ -672,6 +679,13 @@ components:
         - NOTIFIED_FAILED
         - EXPIRED
         - REFUNDED
+    ClientId:
+      type: string
+      description: Enumerations of client ids
+      enum:
+        - IO
+        - CHECKOUT
+        - CHECKOUT_CART
     ProblemJson:
       type: object
       properties:
