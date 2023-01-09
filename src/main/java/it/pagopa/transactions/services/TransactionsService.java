@@ -537,14 +537,7 @@ public class TransactionsService {
                                 .authToken(sessionDataDto.getSessionToken())
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
                                 // .feeTotal()//TODO da dove prendere le fees?
-                                .clientId(
-                                        Optional.ofNullable(transaction.getClientId())
-                                                .map(
-                                                        clientId -> NewTransactionResponseDto.ClientIdEnum
-                                                                .fromValue(clientId.toString())
-                                                )
-                                                .orElse(NewTransactionResponseDto.ClientIdEnum.UNKNOWN)
-                                )
+                                .clientId(convertClientId(transaction.getClientId()))
                 );
     }
 
@@ -569,14 +562,23 @@ public class TransactionsService {
                                 .authToken(sessionDataDto.getSessionToken())
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
                                 // .feeTotal()//TODO da dove prendere le fees?
-                                .clientId(
-                                        Optional.ofNullable(transaction.getClientId())
-                                                .map(
-                                                        clientId -> NewTransactionResponseDto.ClientIdEnum
-                                                                .fromValue(clientId.toString())
-                                                )
-                                                .orElse(NewTransactionResponseDto.ClientIdEnum.UNKNOWN)
-                                )
+                                .clientId(convertClientId(transaction.getClientId()))
                 );
+    }
+
+    private NewTransactionResponseDto.ClientIdEnum convertClientId(
+                                                                   it.pagopa.ecommerce.commons.documents.Transaction.ClientId clientId
+    ) {
+        return Optional.ofNullable(clientId)
+                .map(
+                        enumVal -> {
+                            try {
+                                return NewTransactionResponseDto.ClientIdEnum.fromValue(enumVal.toString());
+                            } catch (IllegalArgumentException e) {
+                                log.error("Unknown input origin ", e);
+                                return NewTransactionResponseDto.ClientIdEnum.UNKNOWN;
+                            }
+                        }
+                ).orElse(NewTransactionResponseDto.ClientIdEnum.UNKNOWN);
     }
 }
