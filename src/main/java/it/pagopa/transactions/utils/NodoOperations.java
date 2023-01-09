@@ -100,8 +100,6 @@ public class NodoOperations {
         request.setQrCode(qrCode);
         request.setIdempotencyKey(idempotencyKey);
 
-        LocalDate dueDate = LocalDate.now().plusYears(100);
-
         return nodeForPspClient
                 .activatePaymentNotice(objectFactoryNodeForPsp.createActivatePaymentNoticeReq(request))
                 .flatMap(
@@ -127,7 +125,7 @@ public class NodoOperations {
                                 response.getCompanyName(),
                                 response.getPaymentDescription(),
                                 amount.intValue(),
-                                dueDate.toString(),
+                                null,
                                 true,
                                 response.getPaymentToken(),
                                 new IdempotencyKey(idempotencyKey)
@@ -176,15 +174,14 @@ public class NodoOperations {
                                 );
                             }
 
-                            final LocalDate dueDate = LocalDate.now().plusYears(100);
                             final NodoTipoDatiPagamentoPA datiPagamentoPA = nodoAttivaRPTResponse
                                     .getNodoAttivaRPTRisposta()
                                     .getDatiPagamentoPA();
                             final String paName = Optional.ofNullable(datiPagamentoPA.getEnteBeneficiario())
                                     .map(CtEnteBeneficiario::getDenominazioneBeneficiario)
-                                    .orElse("");
-                            final String description = Optional.ofNullable(datiPagamentoPA.getCausaleVersamento())
-                                    .orElse("");
+                                    .orElse(null);
+
+                            final String description = datiPagamentoPA.getCausaleVersamento();
 
                             return StOutcome.OK.value().equals(nodoAttivaRPTRResponse.getEsito())
                                     ? Mono.just(
@@ -194,7 +191,7 @@ public class NodoOperations {
                                                     paName,
                                                     description,
                                                     amount.intValue(),
-                                                    dueDate.toString(),
+                                                    null,
                                                     false,
                                                     paymentContextCode,
                                                     new IdempotencyKey(idempotencyKey)
