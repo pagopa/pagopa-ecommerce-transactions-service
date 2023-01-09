@@ -47,7 +47,7 @@ public class AuthorizationUpdateProjectionHandler
                                 null,
                                 ZonedDateTime.parse(transactionDocument.getCreationDate()),
                                 transactionDocument.getStatus(),
-                                transactionDocument.getOrigin()
+                                transactionDocument.getClientId()
                         )
                 );
     }

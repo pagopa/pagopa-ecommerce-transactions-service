@@ -46,7 +46,7 @@ public class TransactionsActivationRequestedProjectionHandler
                 paymentNoticeList,
                 email,
                 TransactionStatusDto.ACTIVATION_REQUESTED,
-                transactionActivationRequestedEvent.getData().getOriginType()
+                transactionActivationRequestedEvent.getData().getClientId()
         );
 
         it.pagopa.ecommerce.commons.documents.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.Transaction

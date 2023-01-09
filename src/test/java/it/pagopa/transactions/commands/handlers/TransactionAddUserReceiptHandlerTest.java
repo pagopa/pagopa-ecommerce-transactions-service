@@ -74,7 +74,7 @@ class TransactionAddUserReceiptHandlerTest {
                 faultCode,
                 faultCodeString,
                 TransactionStatusDto.CLOSED,
-                Transaction.OriginType.UNKNOWN
+                Transaction.ClientId.UNKNOWN
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
@@ -92,7 +92,7 @@ class TransactionAddUserReceiptHandlerTest {
                         ),
                         faultCode,
                         faultCodeString,
-                        Transaction.OriginType.UNKNOWN
+                        Transaction.ClientId.UNKNOWN
                 )
         );
 
@@ -215,7 +215,7 @@ class TransactionAddUserReceiptHandlerTest {
                 faultCode,
                 faultCodeString,
                 TransactionStatusDto.CLOSED,
-                Transaction.OriginType.UNKNOWN
+                Transaction.ClientId.UNKNOWN
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
@@ -233,7 +233,7 @@ class TransactionAddUserReceiptHandlerTest {
                         ),
                         faultCode,
                         faultCodeString,
-                        Transaction.OriginType.UNKNOWN
+                        Transaction.ClientId.UNKNOWN
                 )
         );
 
@@ -356,7 +356,7 @@ class TransactionAddUserReceiptHandlerTest {
                 faultCode,
                 faultCodeString,
                 TransactionStatusDto.ACTIVATED,
-                Transaction.OriginType.UNKNOWN
+                Transaction.ClientId.UNKNOWN
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
@@ -374,7 +374,7 @@ class TransactionAddUserReceiptHandlerTest {
                         ),
                         faultCode,
                         faultCodeString,
-                        Transaction.OriginType.UNKNOWN
+                        Transaction.ClientId.UNKNOWN
                 )
         );
 

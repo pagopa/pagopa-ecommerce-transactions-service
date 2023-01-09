@@ -164,7 +164,7 @@ public class TransactionActivateHandler
                                                                     paymentRequestsInfo,
                                                                     sessionDataDto.getTransactionId(),
                                                                     sessionDataDto.getEmail(),
-                                                                    command.getOriginType()
+                                                                    command.getClientId()
                                                             ),
                                                             Mono.empty(),
                                                             sessionDataDto
@@ -178,7 +178,7 @@ public class TransactionActivateHandler
                                                                     sessionDataDto.getTransactionId(),
                                                                     sessionDataDto.getEmail(),
                                                                     paymentContextCode,
-                                                                    command.getOriginType()
+                                                                    command.getClientId()
                                                             ),
                                                             sessionDataDto
                                                     )
@@ -240,7 +240,7 @@ public class TransactionActivateHandler
                                                                                              String transactionId,
                                                                                              String email,
                                                                                              String paymentContextCode,
-                                                                                             Transaction.OriginType origin
+                                                                                             Transaction.ClientId clientId
     ) {
         PaymentRequestInfo paymentRequestInfo = paymentRequestsInfo.get(0);
         List<PaymentNotice> paymentNotices = List.of(
@@ -257,7 +257,7 @@ public class TransactionActivateHandler
                 email,
                 null,
                 null,
-                origin
+                clientId
         );
         TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
                 transactionId,
@@ -278,7 +278,7 @@ public class TransactionActivateHandler
                                                                          List<PaymentRequestInfo> paymentRequestsInfo,
                                                                          String transactionId,
                                                                          String email,
-                                                                         Transaction.OriginType origin
+                                                                         Transaction.ClientId clientId
     ) {
         List<PaymentNotice> paymentNotices = toPaymentNoticeList(paymentRequestsInfo);
         TransactionActivatedData data = new TransactionActivatedData(
@@ -286,7 +286,7 @@ public class TransactionActivateHandler
                 paymentNotices,
                 null,
                 null,
-                origin
+                clientId
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(

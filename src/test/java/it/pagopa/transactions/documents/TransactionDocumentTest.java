@@ -118,7 +118,7 @@ class TransactionDocumentTest {
                 faultCode,
                 faultCodeString,
                 status,
-                Transaction.OriginType.UNKNOWN
+                Transaction.ClientId.UNKNOWN
         );
 
         Transaction transactionDocument = Transaction.from(transaction);

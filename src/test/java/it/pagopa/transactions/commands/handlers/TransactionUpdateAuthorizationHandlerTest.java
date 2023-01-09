@@ -62,7 +62,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                 faultCode,
                 faultCodeString,
                 TransactionStatusDto.AUTHORIZATION_REQUESTED,
-                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -134,7 +134,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                 faultCode,
                 faultCodeString,
                 TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -186,7 +186,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                 faultCode,
                 faultCodeString,
                 TransactionStatusDto.AUTHORIZATION_REQUESTED,
-                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()

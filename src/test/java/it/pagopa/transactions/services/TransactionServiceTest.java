@@ -108,7 +108,7 @@ class TransactionServiceTest {
                 "faultCode",
                 "faultCodeString",
                 TransactionStatusDto.ACTIVATED,
-                Transaction.OriginType.UNKNOWN
+                Transaction.ClientId.UNKNOWN
         );
 
         TransactionActivationRequested transactionActivationRequested = new TransactionActivationRequested(
@@ -124,7 +124,7 @@ class TransactionServiceTest {
                 ),
                 new Email("foo@example.com"),
                 TransactionStatusDto.ACTIVATION_REQUESTED,
-                Transaction.OriginType.UNKNOWN
+                Transaction.ClientId.UNKNOWN
         );
 
         /**
@@ -215,7 +215,7 @@ class TransactionServiceTest {
                 "faultCode",
                 "faultCodeString",
                 TransactionStatusDto.ACTIVATED,
-                Transaction.OriginType.UNKNOWN
+                Transaction.ClientId.UNKNOWN
         );
 
         TransactionActivationRequested transactionActivationRequested = new TransactionActivationRequested(
@@ -223,7 +223,7 @@ class TransactionServiceTest {
                 PaymentNoticeList,
                 new Email("foo@example.com"),
                 TransactionStatusDto.ACTIVATION_REQUESTED,
-                Transaction.OriginType.UNKNOWN
+                Transaction.ClientId.UNKNOWN
         );
 
         /**

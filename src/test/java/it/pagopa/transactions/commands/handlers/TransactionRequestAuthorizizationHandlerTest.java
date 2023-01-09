@@ -66,7 +66,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 null,
                 null,
                 TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -132,7 +132,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 null,
                 null,
                 TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -201,7 +201,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 faultCode,
                 faultCodeString,
                 TransactionStatusDto.AUTHORIZATION_REQUESTED,
-                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -256,7 +256,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 faultCode,
                 faultCodeString,
                 TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.OriginType.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()

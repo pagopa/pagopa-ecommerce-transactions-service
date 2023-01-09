@@ -2,7 +2,7 @@ package it.pagopa.transactions.services;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
-import it.pagopa.ecommerce.commons.documents.Transaction.OriginType;
+import it.pagopa.ecommerce.commons.documents.Transaction.ClientId;
 import it.pagopa.ecommerce.commons.documents.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.TransactionActivationRequestedEvent;
 import it.pagopa.ecommerce.commons.domain.*;
@@ -83,7 +83,7 @@ public class TransactionsService {
                                                           NewTransactionRequestDto newTransactionRequestDto,
                                                           ClientIdDto clientIdDto
     ) {
-        OriginType clientId = OriginType.fromString(
+        ClientId clientId = ClientId.fromString(
                 Optional.ofNullable(clientIdDto)
                         .map(ClientIdDto::toString)
                         .orElse(null)
@@ -147,9 +147,9 @@ public class TransactionsService {
                                         ).toList()
                                 )
                                 .feeTotal(transaction.getFeeTotal())
-                                .origin(
-                                        TransactionInfoDto.OriginEnum.valueOf(
-                                                transaction.getOrigin().toString()
+                                .clientId(
+                                        TransactionInfoDto.ClientIdEnum.valueOf(
+                                                transaction.getClientId().toString()
                                         )
                                 )
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
@@ -260,7 +260,7 @@ public class TransactionsService {
                                     null,
                                     null,
                                     transactionDocument.getStatus(),
-                                    transactionDocument.getOrigin()
+                                    transactionDocument.getClientId()
                             );
 
                             AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -328,7 +328,7 @@ public class TransactionsService {
                                     null,
                                     null,
                                     transactionDocument.getStatus(),
-                                    transactionDocument.getOrigin()
+                                    transactionDocument.getClientId()
                             );
 
                             UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
@@ -443,7 +443,7 @@ public class TransactionsService {
                                     null,
                                     null,
                                     transactionDocument.getStatus(),
-                                    transactionDocument.getOrigin()
+                                    transactionDocument.getClientId()
                             );
                             AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
                                     transaction,
@@ -537,14 +537,7 @@ public class TransactionsService {
                                 .authToken(sessionDataDto.getSessionToken())
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
                                 // .feeTotal()//TODO da dove prendere le fees?
-                                .origin(
-                                        Optional.ofNullable(transaction.getOriginType())
-                                                .map(
-                                                        origin -> NewTransactionResponseDto.OriginEnum
-                                                                .fromValue(origin.toString())
-                                                )
-                                                .orElse(NewTransactionResponseDto.OriginEnum.UNKNOWN)
-                                )
+                                .clientId(convertClientId(transaction.getClientId()))
                 );
     }
 
@@ -569,14 +562,23 @@ public class TransactionsService {
                                 .authToken(sessionDataDto.getSessionToken())
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
                                 // .feeTotal()//TODO da dove prendere le fees?
-                                .origin(
-                                        Optional.ofNullable(transaction.getOriginType())
-                                                .map(
-                                                        origin -> NewTransactionResponseDto.OriginEnum
-                                                                .fromValue(origin.toString())
-                                                )
-                                                .orElse(NewTransactionResponseDto.OriginEnum.UNKNOWN)
-                                )
+                                .clientId(convertClientId(transaction.getClientId()))
                 );
+    }
+
+    private NewTransactionResponseDto.ClientIdEnum convertClientId(
+                                                                   it.pagopa.ecommerce.commons.documents.Transaction.ClientId clientId
+    ) {
+        return Optional.ofNullable(clientId)
+                .map(
+                        enumVal -> {
+                            try {
+                                return NewTransactionResponseDto.ClientIdEnum.fromValue(enumVal.toString());
+                            } catch (IllegalArgumentException e) {
+                                log.error("Unknown input origin ", e);
+                                return NewTransactionResponseDto.ClientIdEnum.UNKNOWN;
+                            }
+                        }
+                ).orElse(NewTransactionResponseDto.ClientIdEnum.UNKNOWN);
     }
 }
