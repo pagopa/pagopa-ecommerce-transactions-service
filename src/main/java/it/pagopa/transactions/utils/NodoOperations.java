@@ -3,10 +3,7 @@ package it.pagopa.transactions.utils;
 import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
-import it.pagopa.generated.nodoperpsp.model.EsitoNodoAttivaRPTRisposta;
-import it.pagopa.generated.nodoperpsp.model.NodoAttivaRPT;
-import it.pagopa.generated.nodoperpsp.model.NodoTipoCodiceIdRPT;
-import it.pagopa.generated.nodoperpsp.model.NodoTipoDatiPagamentoPSP;
+import it.pagopa.generated.nodoperpsp.model.*;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
 import it.pagopa.generated.transactions.model.CtQrCode;
 import it.pagopa.generated.transactions.model.StOutcome;
@@ -22,6 +19,7 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
+import java.time.LocalDate;
 import java.util.Optional;
 
 @Slf4j
@@ -51,31 +49,27 @@ public class NodoOperations {
     NodoUtilities nodoUtilities;
 
     public Mono<PaymentRequestInfo> activatePaymentRequest(
-                                                           PaymentRequestInfo paymentRequestInfo,
+                                                           RptId rptId,
+                                                           Optional<PaymentRequestInfo> paymentRequestInfo,
                                                            String paymentContextCode,
                                                            Integer amount,
                                                            boolean multiplePaymentNotices,
                                                            String transactionId
     ) {
-        RptId rptId = paymentRequestInfo.id();
-        Boolean isNM3 = paymentRequestInfo.isNM3();
-        String paTaxCode = paymentRequestInfo.paFiscalCode();
-        String paName = paymentRequestInfo.paName();
-        IdempotencyKey idempotencyKey = Optional.ofNullable(paymentRequestInfo.idempotencyKey())
+        boolean isNM3 = paymentRequestInfo.map(PaymentRequestInfo::isNM3).orElse(false);
+        IdempotencyKey idempotencyKey = paymentRequestInfo.map(PaymentRequestInfo::idempotencyKey)
                 .orElseGet(
                         () -> new IdempotencyKey(
                                 PSP_PAGOPA_ECOMMERCE_FISCAL_CODE,
                                 randomString(10)
                         )
                 );
-        String dueDate = paymentRequestInfo.dueDate();
-        String description = paymentRequestInfo.description();
 
         final BigDecimal amountAsBigDecimal = BigDecimal.valueOf(amount / 100).setScale(2, RoundingMode.CEILING);
 
         return Mono.just(isNM3)
                 .flatMap(
-                        validIsNM3 -> Boolean.TRUE.equals(validIsNM3) || multiplePaymentNotices
+                        validIsNM3 -> validIsNM3 || multiplePaymentNotices
                                 ? nodoActivationForNM3PaymentRequest(
                                         rptId,
                                         amountAsBigDecimal,
@@ -89,29 +83,14 @@ public class NodoOperations {
                                         paymentContextCode,
                                         transactionId
                                 )
-                )
-                .flatMap(
-                        paymentToken -> Mono.just(
-                                new PaymentRequestInfo(
-                                        rptId,
-                                        paTaxCode,
-                                        paName,
-                                        description,
-                                        amount,
-                                        dueDate,
-                                        isNM3,
-                                        paymentToken,
-                                        idempotencyKey
-                                )
-                        )
                 );
     }
 
-    private Mono<String> nodoActivationForNM3PaymentRequest(
-                                                            RptId rptId,
-                                                            BigDecimal amount,
-                                                            String idempotencyKey,
-                                                            String transactionId
+    private Mono<PaymentRequestInfo> nodoActivationForNM3PaymentRequest(
+                                                                        RptId rptId,
+                                                                        BigDecimal amount,
+                                                                        String idempotencyKey,
+                                                                        String transactionId
     ) {
         CtQrCode qrCode = new CtQrCode();
         qrCode.setFiscalCode(rptId.getFiscalCode());
@@ -120,6 +99,7 @@ public class NodoOperations {
         request.setAmount(amount);
         request.setQrCode(qrCode);
         request.setIdempotencyKey(idempotencyKey);
+
         return nodeForPspClient
                 .activatePaymentNotice(objectFactoryNodeForPsp.createActivatePaymentNoticeReq(request))
                 .flatMap(
@@ -132,20 +112,33 @@ public class NodoOperations {
                             );
                             return StOutcome.OK.value()
                                     .equals(activatePaymentNoticeRes.getOutcome().value())
-                                            ? Mono.just(activatePaymentNoticeRes.getPaymentToken())
+                                            ? Mono.just(activatePaymentNoticeRes)
                                             : Mono.error(
                                                     new NodoErrorException(activatePaymentNoticeRes.getFault())
                                             );
                         }
+                )
+                .map(
+                        response -> new PaymentRequestInfo(
+                                rptId,
+                                response.getFiscalCodePA(),
+                                response.getCompanyName(),
+                                response.getPaymentDescription(),
+                                amount.intValue(),
+                                null,
+                                true,
+                                response.getPaymentToken(),
+                                new IdempotencyKey(idempotencyKey)
+                        )
                 );
     }
 
-    private Mono<String> nodoActivationForUnknownPaymentRequest(
-                                                                RptId rptId,
-                                                                BigDecimal amount,
-                                                                String idempotencyKey,
-                                                                String paymentContextCode,
-                                                                String transactionId
+    private Mono<PaymentRequestInfo> nodoActivationForUnknownPaymentRequest(
+                                                                            RptId rptId,
+                                                                            BigDecimal amount,
+                                                                            String idempotencyKey,
+                                                                            String paymentContextCode,
+                                                                            String transactionId
     ) {
         NodoAttivaRPT nodoAttivaRPTReq = nodoConfig.baseNodoAttivaRPTRequest();
         NodoTipoCodiceIdRPT nodoTipoCodiceIdRPT = nodoUtilities.getCodiceIdRpt(rptId);
@@ -181,8 +174,30 @@ public class NodoOperations {
                                 );
                             }
 
+                            final NodoTipoDatiPagamentoPA datiPagamentoPA = nodoAttivaRPTResponse
+                                    .getNodoAttivaRPTRisposta()
+                                    .getDatiPagamentoPA();
+                            final String paName = Optional.ofNullable(datiPagamentoPA.getEnteBeneficiario())
+                                    .map(CtEnteBeneficiario::getDenominazioneBeneficiario)
+                                    .orElse(null);
+
+                            final String description = datiPagamentoPA.getCausaleVersamento();
+
                             return StOutcome.OK.value().equals(nodoAttivaRPTRResponse.getEsito())
-                                    ? Mono.just("")
+                                    ? Mono.just(
+                                            new PaymentRequestInfo(
+                                                    rptId,
+                                                    rptId.getFiscalCode(),
+                                                    paName,
+                                                    description,
+                                                    amount.intValue(),
+                                                    null,
+                                                    false,
+                                                    paymentContextCode,
+                                                    new IdempotencyKey(idempotencyKey)
+
+                                            )
+                                    )
                                     : Mono.error(
                                             new NodoErrorException(nodoAttivaRPTRResponse.getFault())
                                     );

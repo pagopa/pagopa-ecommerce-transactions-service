@@ -159,22 +159,33 @@ public class TransactionSendClosureHandler
                                         tx.getTransactionId().value().toString()
                                 );
 
-                                /*
-                                 * Conceptual view of visibility timeout computation:
-                                 *
-                                 * end = start + paymentTokenTimeout If (end - now) >= offset Visibility timeout
-                                 * = min(retryTimeoutInterval, (end - offset) - now) Else do nothing
-                                 *
-                                 * Meaning that: We set a visibility timeout to either the retry timeout (if now
-                                 * + retryTimeout is inside the validity window of the token) or at (start +
-                                 * paymentTokenTimeout - offset) where `start` is the creation time of the
-                                 * transaction If we're at less than `offset` from the token validity end it's
-                                 * not worth rescheduling a retry, so we don't :)
-                                 *
-                                 * ┌─────────────┐ ▼ │ t2 │ │ │ start │ end │ │ now │ │ │ (now +
-                                 * retryTimeoutInterval) ──┴────┬──────────┼────────┴────┼────── │ │ <offset> │
-                                 * │ │ ▲ └────────────────────────┘
-                                 */
+                                /* @formatter:off
+                                Conceptual view of visibility timeout computation:
+
+                                end = start + paymentTokenTimeout
+                                If (end - now) >= offset
+                                    Visibility timeout = min(retryTimeoutInterval, (end - offset) - now)
+                                Else do nothing
+
+                                Meaning that:
+                                  * We set a visibility timeout to either the retry timeout (if now + retryTimeout is inside the validity window of the token)
+                                    or at (start + paymentTokenTimeout - offset) where `start` is the creation time of the transaction
+                                  * If we're at less than `offset` from the token validity end it's not worth rescheduling a retry, so we don't :)
+
+                                                  ┌─────────────┐
+                                                  ▼             │
+                                                 t2             │
+                                                  │             │
+                                start             │       end   │
+                                  │   now         │        │    │ (now + retryTimeoutInterval)
+                                ──┴────┬──────────┼────────┴────┼──────
+                                       │          │ <offset>    │
+                                       │
+                                       │                        ▲
+                                       └────────────────────────┘
+
+                                @formatter:on
+                                */
 
                                 Instant validityEnd = tx.getCreationDate().plusSeconds(paymentTokenValidity)
                                         .toInstant();

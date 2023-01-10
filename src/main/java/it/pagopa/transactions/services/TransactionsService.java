@@ -93,14 +93,14 @@ public class TransactionsService {
                 newTransactionRequestDto.getPaymentNotices().get(0).getRptId(),
                 clientId
         );
-        TransactionActivateCommand command = new TransactionActivateCommand(
+        TransactionActivateCommand transactionActivateCommand = new TransactionActivateCommand(
                 new RptId(newTransactionRequestDto.getPaymentNotices().get(0).getRptId()),
                 newTransactionRequestDto,
                 clientId
         );
 
         return transactionActivateHandler
-                .handle(command)
+                .handle(transactionActivateCommand)
                 .doOnNext(
                         args -> log.info(
                                 "Transaction initialized for rptId: {}",
