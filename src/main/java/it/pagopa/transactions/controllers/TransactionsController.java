@@ -259,12 +259,13 @@ public class TransactionsController implements TransactionsApi {
     @ExceptionHandler(TransactionAmountMismatchException.class)
     ResponseEntity<ProblemJsonDto> amountMismatchErrorHandler(TransactionAmountMismatchException exception) {
         log.warn("Got invalid input: {}", exception.getMessage());
+        HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
         return new ResponseEntity<>(
                 new ProblemJsonDto()
-                        .status(HttpStatus.UNPROCESSABLE_ENTITY.value())
-                        .title(HttpStatus.UNPROCESSABLE_ENTITY.getReasonPhrase())
+                        .status(httpStatus.value())
+                        .title(httpStatus.getReasonPhrase())
                         .detail("Invalid request: %s".formatted(exception.getMessage())),
-                HttpStatus.UNPROCESSABLE_ENTITY
+                httpStatus
         );
     }
 

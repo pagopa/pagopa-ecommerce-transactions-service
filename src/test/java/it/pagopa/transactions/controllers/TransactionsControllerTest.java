@@ -553,7 +553,7 @@ class TransactionsControllerTest {
         ResponseEntity<ProblemJsonDto> responseEntity = transactionsController
                 .amountMismatchErrorHandler(new TransactionAmountMismatchException(1, 2));
 
-        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, responseEntity.getStatusCode());
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
         assertEquals(
                 "Invalid request: Transaction amount mismatch! Request amount: [1], Transaction amount: [2]",
                 responseEntity.getBody().getDetail()
