@@ -606,7 +606,9 @@ class NodoOperationsTest {
         assertEquals(description, response.description());
         assertEquals(idempotencyKey, response.idempotencyKey());
         assertEquals(paTaxCode, response.paFiscalCode());
+        //check amount saved into PaymentRequestInfo object
         assertEquals(1234, response.amount());
+        //Check amount sent into Nodo requests
         assertEquals(BigDecimal.valueOf(12.34).doubleValue(), nodoAttivaRPTArgumentCaptor.getValue().getDatiPagamentoPSP().getImportoSingoloVersamento().doubleValue());
         assertEquals(BigDecimal.valueOf(12.34).doubleValue(), activatePaymentNoticeReqArgumentCaptor.getValue().getAmount().doubleValue());
     }
