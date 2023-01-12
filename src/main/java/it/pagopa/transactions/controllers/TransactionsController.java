@@ -242,7 +242,8 @@ public class TransactionsController implements TransactionsApi {
     @ExceptionHandler(
         {
                 InvalidRequestException.class,
-                ConstraintViolationException.class
+                ConstraintViolationException.class,
+                TransactionAmountMismatchException.class
         }
     )
     private ResponseEntity<ProblemJsonDto> validationExceptionHandler(Exception exception) {
