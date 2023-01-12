@@ -571,8 +571,8 @@ public class TransactionsService {
                 );
     }
 
-    private NewTransactionResponseDto.ClientIdEnum convertClientId(
-                                                                   it.pagopa.ecommerce.commons.documents.Transaction.ClientId clientId
+    NewTransactionResponseDto.ClientIdEnum convertClientId(
+                                                           it.pagopa.ecommerce.commons.documents.Transaction.ClientId clientId
     ) {
         return Optional.ofNullable(clientId)
                 .map(

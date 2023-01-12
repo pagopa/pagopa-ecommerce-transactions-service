@@ -668,14 +668,22 @@ public class TransactionServiceTests {
 
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 
-        Mockito.when(transactionRequestAuthorizationHandler.handle(commandArgumentCaptor.capture()))
-                .thenReturn(Mono.just(requestAuthorizationResponse));
         /* test */
-        StepVerifier.create(
-                transactionsService
-                        .requestTransactionAuthorization(TRANSACION_ID, "XPAY", authorizationRequest)
-        ).expectErrorMatches(error -> error instanceof TransactionAmountMismatchException);
 
+        assertThrows(
+                TransactionAmountMismatchException.class,
+                () -> transactionsService
+                        .requestTransactionAuthorization(TRANSACION_ID, "XPAY", authorizationRequest).block()
+        );
+    }
+
+    @Test
+    void shouldConvertClientIdSuccessfully() {
+        for (it.pagopa.ecommerce.commons.documents.Transaction.ClientId clientId : it.pagopa.ecommerce.commons.documents.Transaction.ClientId
+                .values()) {
+            assertEquals(clientId.toString(), transactionsService.convertClientId(clientId).toString());
+        }
+        assertEquals("UNKNOWN", transactionsService.convertClientId(null).toString());
     }
 
 }
