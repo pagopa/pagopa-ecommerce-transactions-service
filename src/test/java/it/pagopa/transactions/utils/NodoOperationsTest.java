@@ -500,7 +500,6 @@ class NodoOperationsTest {
         assertEquals(1900, amount);
     }
 
-
     @Test
     void shouldConvertAmountCorrectly() {
         RptId rptId = new RptId("77777777777302016723749670035");
@@ -562,7 +561,9 @@ class NodoOperationsTest {
         /** preconditions */
         Mockito.when(nodeForPspClient.activatePaymentNotice(Mockito.any()))
                 .thenReturn(Mono.just(activatePaymentRes));
-        Mockito.when(objectFactoryNodeForPsp.createActivatePaymentNoticeReq(activatePaymentNoticeReqArgumentCaptor.capture()))
+        Mockito.when(
+                objectFactoryNodeForPsp.createActivatePaymentNoticeReq(activatePaymentNoticeReqArgumentCaptor.capture())
+        )
                 .thenReturn(objectFactoryUtil.createActivatePaymentNoticeReq(activatePaymentReq));
         Mockito.when(objectFactoryNodoPerPsp.createNodoTipoDatiPagamentoPSP())
                 .thenReturn(objectFactoryUtilNodoPerPsp.createNodoTipoDatiPagamentoPSP());
@@ -606,10 +607,16 @@ class NodoOperationsTest {
         assertEquals(description, response.description());
         assertEquals(idempotencyKey, response.idempotencyKey());
         assertEquals(paTaxCode, response.paFiscalCode());
-        //check amount saved into PaymentRequestInfo object
+        // check amount saved into PaymentRequestInfo object
         assertEquals(1234, response.amount());
-        //Check amount sent into Nodo requests
-        assertEquals(BigDecimal.valueOf(12.34).doubleValue(), nodoAttivaRPTArgumentCaptor.getValue().getDatiPagamentoPSP().getImportoSingoloVersamento().doubleValue());
-        assertEquals(BigDecimal.valueOf(12.34).doubleValue(), activatePaymentNoticeReqArgumentCaptor.getValue().getAmount().doubleValue());
+        // Check amount sent into Nodo requests
+        assertEquals(
+                BigDecimal.valueOf(12.34).doubleValue(),
+                nodoAttivaRPTArgumentCaptor.getValue().getDatiPagamentoPSP().getImportoSingoloVersamento().doubleValue()
+        );
+        assertEquals(
+                BigDecimal.valueOf(12.34).doubleValue(),
+                activatePaymentNoticeReqArgumentCaptor.getValue().getAmount().doubleValue()
+        );
     }
 }
