@@ -19,7 +19,6 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
-import java.time.LocalDate;
 import java.util.Optional;
 
 @Slf4j
@@ -65,7 +64,8 @@ public class NodoOperations {
                         )
                 );
 
-        final BigDecimal amountAsBigDecimal = BigDecimal.valueOf(amount / 100).setScale(2, RoundingMode.CEILING);
+        final BigDecimal amountAsBigDecimal = BigDecimal.valueOf(amount.doubleValue() / 100)
+                .setScale(2, RoundingMode.CEILING);
 
         return Mono.just(isNM3)
                 .flatMap(
@@ -124,7 +124,7 @@ public class NodoOperations {
                                 response.getFiscalCodePA(),
                                 response.getCompanyName(),
                                 response.getPaymentDescription(),
-                                amount.intValue(),
+                                amount.multiply(BigDecimal.valueOf(100)).intValue(),
                                 null,
                                 true,
                                 response.getPaymentToken(),
@@ -190,7 +190,7 @@ public class NodoOperations {
                                                     rptId.getFiscalCode(),
                                                     paName,
                                                     description,
-                                                    amount.intValue(),
+                                                    amount.multiply(BigDecimal.valueOf(100)).intValue(),
                                                     null,
                                                     false,
                                                     paymentContextCode,
