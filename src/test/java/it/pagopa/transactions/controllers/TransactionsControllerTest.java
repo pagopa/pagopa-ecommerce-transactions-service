@@ -633,6 +633,26 @@ class TransactionsControllerTest {
         assertEquals("Method not implemented", responseEntity.getBody().getDetail());
     }
 
+    @Test
+    void shouldReturnResponseEntityWithMismatchAmount()
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+
+        Method method = TransactionsController.class.getDeclaredMethod(
+                "validationExceptionHandler",
+                Exception.class
+        );
+        method.setAccessible(true);
+
+        ResponseEntity<ProblemJsonDto> responseEntity = (ResponseEntity<ProblemJsonDto>) method
+                .invoke(transactionsController, new TransactionAmountMismatchException(1, 2));
+
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertEquals(
+                "Invalid request: Transaction amount mismatch! Request amount: [1], Transaction amount: [2]",
+                responseEntity.getBody().getDetail()
+        );
+    }
+
     private static FaultBean faultBeanWithCode(String faultCode) {
         FaultBean fault = new FaultBean();
         fault.setFaultCode(faultCode);
