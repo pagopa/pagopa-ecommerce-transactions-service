@@ -53,7 +53,7 @@ microservice-chart:
       TRANSACTIONS_RETRY_OFFSET: "60"
       CLOSURE_RETRY_INTERVAL: "30"
       WEB_LOGGING_LEVEL: "off"
-      PAGOPA_LOGGING_LEVEL: "info"
+      SERVICE_LOGGING_LEVEL: "info"
     envSecret:
       MONGO_PASSWORD: mongo-ecommerce-password
       REDIS_PASSWORD: redis-ecommerce-password
@@ -158,7 +158,7 @@ microservice-chart:
     TRANSACTIONS_RETRY_OFFSET: "60"
     CLOSURE_RETRY_INTERVAL: "30"
     WEB_LOGGING_LEVEL: "off"
-    PAGOPA_LOGGING_LEVEL: "info"
+    SERVICE_LOGGING_LEVEL: "info"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password
