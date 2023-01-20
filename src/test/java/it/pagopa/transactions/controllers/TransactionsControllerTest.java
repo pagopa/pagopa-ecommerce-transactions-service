@@ -92,7 +92,7 @@ class TransactionsControllerTest {
 
             response.addPaymentsItem(paymentInfoDto);
             response.setAuthToken("token");
-            Mockito.when(jwtTokenUtils.generateTokenHeader(transactionId.toString())).thenReturn("");
+            Mockito.when(jwtTokenUtils.generateToken(transactionId.toString())).thenReturn("");
             Mockito.lenient()
                     .when(
                             transactionsService
@@ -441,7 +441,7 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnProblemJsonWith400OnBadInput() {
-        Mockito.when(jwtTokenUtils.generateTokenHeader(any())).thenReturn("");
+        Mockito.when(jwtTokenUtils.generateToken(any())).thenReturn("");
         webTestClient.post()
                 .uri("/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
