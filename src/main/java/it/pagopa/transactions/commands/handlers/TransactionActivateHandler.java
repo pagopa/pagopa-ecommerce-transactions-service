@@ -151,32 +151,30 @@ public class TransactionActivateHandler
                         .sequential()
                         .collectList()
                         .flatMap(
-                                paymentRequestsInfo -> {
-                                    return shouldGenerateTransactionActivatedEvent(paymentRequestsInfo)
-                                            ? Mono.just(
-                                                    Tuples.of(
-                                                            newTransactionActivatedEvent(
-                                                                    paymentRequestsInfo,
-                                                                    command.getTransactionId().value().toString(),
-                                                                    command.getData().getEmail(),
-                                                                    command.getClientId()
-                                                            ),
-                                                            Mono.empty()
-                                                    )
-                                            )
-                                            : Mono.just(
-                                                    Tuples.of(
-                                                            Mono.empty(),
-                                                            newTransactionActivationRequestedEvent(
-                                                                    paymentRequestsInfo,
-                                                                    command.getTransactionId().value().toString(),
-                                                                    command.getData().getEmail(),
-                                                                    paymentContextCode,
-                                                                    command.getClientId()
-                                                            )
-                                                    )
-                                            );
-                                }
+                                paymentRequestsInfo -> shouldGenerateTransactionActivatedEvent(paymentRequestsInfo)
+                                        ? Mono.just(
+                                                Tuples.of(
+                                                        newTransactionActivatedEvent(
+                                                                paymentRequestsInfo,
+                                                                command.getTransactionId().value().toString(),
+                                                                command.getData().getEmail(),
+                                                                command.getClientId()
+                                                        ),
+                                                        Mono.empty()
+                                                )
+                                        )
+                                        : Mono.just(
+                                                Tuples.of(
+                                                        Mono.empty(),
+                                                        newTransactionActivationRequestedEvent(
+                                                                paymentRequestsInfo,
+                                                                command.getTransactionId().value().toString(),
+                                                                command.getData().getEmail(),
+                                                                paymentContextCode,
+                                                                command.getClientId()
+                                                        )
+                                                )
+                                        )
                         )
 
         );
