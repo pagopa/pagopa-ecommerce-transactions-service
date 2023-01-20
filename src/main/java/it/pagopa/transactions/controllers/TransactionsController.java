@@ -1,6 +1,7 @@
 package it.pagopa.transactions.controllers;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.generated.payment.requests.model.*;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
 import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
@@ -56,7 +57,7 @@ public class TransactionsController implements TransactionsApi {
                                                                           ClientIdDto clientIdDto,
                                                                           ServerWebExchange exchange
     ) {
-        String transactionId = UUID.randomUUID().toString();
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
         String jwtToken = jwtTokenUtils.generateToken(transactionId);
         return Mono.just(jwtToken)
                 .switchIfEmpty(Mono.error(new JWTTokenGenerationException()))

@@ -68,7 +68,7 @@ public class TransactionActivateHandler
     public Mono<Tuple2<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>>> handle(
                                                                                                            TransactionActivateCommand command
     ) {
-        final String transactionId = command.getTransactionId();
+        final String transactionId = command.getTransactionId().value().toString();
         final NewTransactionRequestDto newTransactionRequestDto = command.getData();
         final List<PaymentNoticeInfoDto> paymentNotices = newTransactionRequestDto.getPaymentNotices();
         final boolean multiplePaymentNotices = paymentNotices.size() > 1;

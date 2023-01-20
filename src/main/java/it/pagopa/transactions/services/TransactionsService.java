@@ -81,7 +81,7 @@ public class TransactionsService {
     public Mono<NewTransactionResponseDto> newTransaction(
                                                           NewTransactionRequestDto newTransactionRequestDto,
                                                           ClientIdDto clientIdDto,
-                                                          String transactionId,
+                                                          TransactionId transactionId,
                                                           String authToken
     ) {
         ClientId clientId = ClientId.fromString(

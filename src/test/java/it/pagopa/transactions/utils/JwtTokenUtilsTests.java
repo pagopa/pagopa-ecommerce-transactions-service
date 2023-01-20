@@ -2,6 +2,7 @@ package it.pagopa.transactions.utils;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.transactions.configurations.JwtConfigurations;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,13 +23,13 @@ class JwtTokenUtilsTests {
 
     @Test
     void shouldGenerateValidJwtToken() {
-        String transactionId = UUID.randomUUID().toString();
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
         String generatedToken = jwtTokenUtils.generateToken(transactionId);
         assertNotNull(generatedToken);
         Claims claims = assertDoesNotThrow(
                 () -> Jwts.parserBuilder().setSigningKey(jwtSecretKey).build().parseClaimsJws(generatedToken).getBody()
         );
-        assertEquals(transactionId, claims.get(JwtTokenUtils.TRANSACTION_ID_CLAIM, String.class));
+        assertEquals(transactionId.value().toString(), claims.get(JwtTokenUtils.TRANSACTION_ID_CLAIM, String.class));
         assertNotNull(claims.getId());
         assertNotNull(claims.getIssuedAt());
         assertNotNull(claims.getExpiration());

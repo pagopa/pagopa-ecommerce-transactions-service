@@ -2,6 +2,7 @@ package it.pagopa.transactions.commands;
 
 import it.pagopa.ecommerce.commons.documents.Transaction;
 import it.pagopa.ecommerce.commons.domain.RptId;
+import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -12,13 +13,13 @@ public final class TransactionActivateCommand extends TransactionsCommand<NewTra
 
     private final Transaction.ClientId clientId;
 
-    private final String transactionId;
+    private final TransactionId transactionId;
 
     public TransactionActivateCommand(
             RptId rptId,
             NewTransactionRequestDto data,
             Transaction.ClientId clientId,
-            String transactionId
+            TransactionId transactionId
     ) {
         super(rptId, TransactionsCommandCode.ACTIVATE, data);
         this.clientId = clientId;

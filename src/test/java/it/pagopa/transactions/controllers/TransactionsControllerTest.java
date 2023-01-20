@@ -92,11 +92,15 @@ class TransactionsControllerTest {
 
             response.addPaymentsItem(paymentInfoDto);
             response.setAuthToken("token");
-            Mockito.when(jwtTokenUtils.generateToken(transactionId.toString())).thenReturn("");
+            Mockito.when(jwtTokenUtils.generateToken(new TransactionId(transactionId))).thenReturn("");
             Mockito.lenient()
                     .when(
                             transactionsService
-                                    .newTransaction(newTransactionRequestDto, clientIdDto, transactionId.toString(), "")
+                                    .newTransaction(
+                                            newTransactionRequestDto,
+                                            clientIdDto,
+                                            new TransactionId(transactionId)
+                                    )
                     )
                     .thenReturn(Mono.just(response));
 
@@ -105,7 +109,7 @@ class TransactionsControllerTest {
 
             // Verify mock
             Mockito.verify(transactionsService, Mockito.times(1))
-                    .newTransaction(newTransactionRequestDto, clientIdDto, transactionId.toString(), "");
+                    .newTransaction(newTransactionRequestDto, clientIdDto, transactionId.toString());
 
             // Verify status code and response
             assertEquals(HttpStatus.OK, responseEntity.getStatusCode());

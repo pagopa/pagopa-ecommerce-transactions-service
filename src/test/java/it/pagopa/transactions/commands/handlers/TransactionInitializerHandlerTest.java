@@ -10,6 +10,7 @@ import it.pagopa.ecommerce.commons.documents.*;
 import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.domain.TransactionEventCode;
+import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
@@ -82,7 +83,7 @@ class TransactionInitializerHandlerTest {
                 rptId,
                 requestDto,
                 Transaction.ClientId.UNKNOWN,
-                transactionId
+                new TransactionId(UUID.fromString(transactionId))
         );
 
         PaymentRequestInfo paymentRequestInfoCached = new PaymentRequestInfo(
