@@ -6,11 +6,8 @@ import it.pagopa.ecommerce.commons.documents.*;
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
-import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
-import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
-import it.pagopa.transactions.client.EcommerceSessionsClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.NodoOperations;
@@ -22,7 +19,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-import reactor.util.function.Tuple3;
+import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.time.Duration;
@@ -34,15 +31,13 @@ import java.util.UUID;
 @Component
 public class TransactionActivateHandler
         implements
-        CommandHandler<TransactionActivateCommand, Mono<Tuple3<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>, SessionDataDto>>> {
+        CommandHandler<TransactionActivateCommand, Mono<Tuple2<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>>>> {
 
     private final PaymentRequestsInfoRepository paymentRequestsInfoRepository;
 
     private final TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository;
 
     private final TransactionsEventStoreRepository<TransactionActivationRequestedData> transactionEventActivationRequestedStoreRepository;
-
-    private final EcommerceSessionsClient ecommerceSessionsClient;
 
     private final NodoOperations nodoOperations;
 
@@ -58,7 +53,6 @@ public class TransactionActivateHandler
             PaymentRequestsInfoRepository paymentRequestsInfoRepository,
             TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository,
             TransactionsEventStoreRepository<TransactionActivationRequestedData> transactionEventActivationRequestedStoreRepository,
-            EcommerceSessionsClient ecommerceSessionsClient,
             NodoOperations nodoOperations,
             @Qualifier("transactionActivatedQueueAsyncClient") QueueAsyncClient transactionActivatedQueueAsyncClient,
             @Value("${payment.token.validity}") Integer paymentTokenTimeout
@@ -66,14 +60,13 @@ public class TransactionActivateHandler
         this.paymentRequestsInfoRepository = paymentRequestsInfoRepository;
         this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
         this.transactionEventActivationRequestedStoreRepository = transactionEventActivationRequestedStoreRepository;
-        this.ecommerceSessionsClient = ecommerceSessionsClient;
         this.nodoOperations = nodoOperations;
         this.paymentTokenTimeout = paymentTokenTimeout;
         this.transactionActivatedQueueAsyncClient = transactionActivatedQueueAsyncClient;
     }
 
-    public Mono<Tuple3<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>, SessionDataDto>> handle(
-                                                                                                                           TransactionActivateCommand command
+    public Mono<Tuple2<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>>> handle(
+                                                                                                           TransactionActivateCommand command
     ) {
         final String transactionId = command.getTransactionId();
         final NewTransactionRequestDto newTransactionRequestDto = command.getData();
@@ -157,33 +150,18 @@ public class TransactionActivateHandler
                         )
                         .sequential()
                         .collectList()
-                        .flatMap(paymentRequestInfos -> {
-                            // TODO change Session module call to handle multiple payment notices
-                            PaymentRequestInfo paymentRequestInfo = paymentRequestInfos.get(0);
-                            SessionRequestDto sessionRequest = new SessionRequestDto()
-                                    .email(newTransactionRequestDto.getEmail())
-                                    .rptId(paymentRequestInfo.id().value())
-                                    .transactionId(transactionId)
-                                    .paymentToken(paymentRequestInfo.paymentToken());
-
-                            return ecommerceSessionsClient
-                                    .createSessionToken(sessionRequest)
-                                    .map(sessionData -> Tuples.of(sessionData, paymentRequestInfos));
-                        }).flatMap(
-                                args -> {
-                                    SessionDataDto sessionDataDto = args.getT1();
-                                    List<PaymentRequestInfo> paymentRequestsInfo = args.getT2();
+                        .flatMap(
+                                paymentRequestsInfo -> {
                                     return shouldGenerateTransactionActivatedEvent(paymentRequestsInfo)
                                             ? Mono.just(
                                                     Tuples.of(
                                                             newTransactionActivatedEvent(
                                                                     paymentRequestsInfo,
-                                                                    sessionDataDto.getTransactionId(),
-                                                                    sessionDataDto.getEmail(),
+                                                                    command.getTransactionId(),
+                                                                    command.getData().getEmail(),
                                                                     command.getClientId()
                                                             ),
-                                                            Mono.empty(),
-                                                            sessionDataDto
+                                                            Mono.empty()
                                                     )
                                             )
                                             : Mono.just(
@@ -191,12 +169,11 @@ public class TransactionActivateHandler
                                                             Mono.empty(),
                                                             newTransactionActivationRequestedEvent(
                                                                     paymentRequestsInfo,
-                                                                    sessionDataDto.getTransactionId(),
-                                                                    sessionDataDto.getEmail(),
+                                                                    command.getTransactionId(),
+                                                                    command.getData().getEmail(),
                                                                     paymentContextCode,
                                                                     command.getClientId()
-                                                            ),
-                                                            sessionDataDto
+                                                            )
                                                     )
                                             );
                                 }

@@ -96,7 +96,7 @@ class TransactionsControllerTest {
             Mockito.lenient()
                     .when(
                             transactionsService
-                                    .newTransaction(newTransactionRequestDto, clientIdDto, transactionId.toString())
+                                    .newTransaction(newTransactionRequestDto, clientIdDto, transactionId.toString(), "")
                     )
                     .thenReturn(Mono.just(response));
 
@@ -105,7 +105,7 @@ class TransactionsControllerTest {
 
             // Verify mock
             Mockito.verify(transactionsService, Mockito.times(1))
-                    .newTransaction(newTransactionRequestDto, clientIdDto, transactionId.toString());
+                    .newTransaction(newTransactionRequestDto, clientIdDto, transactionId.toString(), "");
 
             // Verify status code and response
             assertEquals(HttpStatus.OK, responseEntity.getStatusCode());

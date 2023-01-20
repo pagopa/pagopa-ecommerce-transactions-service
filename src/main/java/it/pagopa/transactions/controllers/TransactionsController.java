@@ -69,7 +69,7 @@ public class TransactionsController implements TransactionsApi {
                                     ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).toList()
                             )
                     );
-                    return transactionsService.newTransaction(ntr, clientIdDto, transactionId);
+                    return transactionsService.newTransaction(ntr, clientIdDto, transactionId, jwtToken);
                 })
                 .map(ResponseEntity::ok);
     }

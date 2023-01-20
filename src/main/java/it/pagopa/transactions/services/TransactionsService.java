@@ -8,7 +8,6 @@ import it.pagopa.ecommerce.commons.documents.TransactionActivationRequestedEvent
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PaymentMethodResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
-import it.pagopa.generated.ecommerce.sessions.v1.dto.SessionDataDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.commands.*;
@@ -82,7 +81,8 @@ public class TransactionsService {
     public Mono<NewTransactionResponseDto> newTransaction(
                                                           NewTransactionRequestDto newTransactionRequestDto,
                                                           ClientIdDto clientIdDto,
-                                                          String transactionId
+                                                          String transactionId,
+                                                          String authToken
     ) {
         ClientId clientId = ClientId.fromString(
                 Optional.ofNullable(clientIdDto)
@@ -114,14 +114,13 @@ public class TransactionsService {
                             final Mono<TransactionActivatedEvent> transactionActivatedEvent = es.getT1();
                             final Mono<TransactionActivationRequestedEvent> transactionActivationRequestedEvent = es
                                     .getT2();
-                            final SessionDataDto sessionDataDto = es.getT3();
 
                             return transactionActivatedEvent
-                                    .flatMap(t -> projectActivatedEvent(t, sessionDataDto))
+                                    .flatMap(t -> projectActivatedEvent(t, authToken))
                                     .switchIfEmpty(
                                             Mono.defer(
                                                     () -> transactionActivationRequestedEvent.flatMap(
-                                                            t -> projectActivationEvent(t, sessionDataDto)
+                                                            t -> projectActivationEvent(t, authToken)
                                                     )
                                             )
                                     );
@@ -520,7 +519,7 @@ public class TransactionsService {
 
     private Mono<NewTransactionResponseDto> projectActivationEvent(
                                                                    TransactionActivationRequestedEvent transactionActivateRequestedEvent,
-                                                                   SessionDataDto sessionDataDto
+                                                                   String authToken
     ) {
         return transactionsActivationRequestedProjectionHandler
                 .handle(transactionActivateRequestedEvent)
@@ -536,7 +535,7 @@ public class TransactionsService {
                                                         .paymentToken(paymentNotice.paymentToken().value())
                                         ).toList()
                                 )
-                                .authToken(sessionDataDto.getSessionToken())
+                                .authToken(authToken)
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
                                 // .feeTotal()//TODO da dove prendere le fees?
                                 .clientId(convertClientId(transaction.getClientId()))
@@ -545,7 +544,7 @@ public class TransactionsService {
 
     private Mono<NewTransactionResponseDto> projectActivatedEvent(
                                                                   TransactionActivatedEvent transactionActivatedEvent,
-                                                                  SessionDataDto sessionDataDto
+                                                                  String authToken
     ) {
         return transactionsActivationProjectionHandler
                 .handle(transactionActivatedEvent)
@@ -561,7 +560,7 @@ public class TransactionsService {
                                                         .paymentToken(paymentNotice.paymentToken().value())
                                         ).toList()
                                 )
-                                .authToken(sessionDataDto.getSessionToken())
+                                .authToken(authToken)
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
                                 // .feeTotal()//TODO da dove prendere le fees?
                                 .clientId(convertClientId(transaction.getClientId()))

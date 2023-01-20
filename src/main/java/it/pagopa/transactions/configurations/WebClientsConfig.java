@@ -9,8 +9,6 @@ import io.netty.handler.timeout.ReadTimeoutHandler;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
 import it.pagopa.generated.ecommerce.nodo.v1.api.NodoApi;
-import it.pagopa.generated.ecommerce.sessions.v1.ApiClient;
-import it.pagopa.generated.ecommerce.sessions.v1.api.DefaultApi;
 import it.pagopa.transactions.utils.soap.Jaxb2SoapDecoder;
 import it.pagopa.transactions.utils.soap.Jaxb2SoapEncoder;
 import org.springframework.beans.factory.annotation.Value;
@@ -93,34 +91,6 @@ public class WebClientsConfig {
         return WebClient.builder().baseUrl(nodoHostname)
                 .clientConnector(new ReactorClientHttpConnector(httpClient)).exchangeStrategies(exchangeStrategies)
                 .build();
-    }
-
-    @Bean(name = "ecommerceSessionsWebClient")
-    public DefaultApi ecommerceSessionsWebClient(
-                                                 @Value("${ecommerceSessions.uri}") String ecommerceSessionsUri,
-                                                 @Value(
-                                                     "${ecommerceSessions.readTimeout}"
-                                                 ) int ecommerceSessionsReadTimeout,
-                                                 @Value(
-                                                     "${ecommerceSessions.connectionTimeout}"
-                                                 ) int ecommerceSessionsConnectionTimeout
-    ) {
-        HttpClient httpClient = HttpClient.create()
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, ecommerceSessionsConnectionTimeout)
-                .doOnConnected(
-                        connection -> connection.addHandlerLast(
-                                new ReadTimeoutHandler(
-                                        ecommerceSessionsReadTimeout,
-                                        TimeUnit.MILLISECONDS
-                                )
-                        )
-                );
-
-        WebClient webClient = ApiClient.buildWebClientBuilder().clientConnector(
-                new ReactorClientHttpConnector(httpClient)
-        ).baseUrl(ecommerceSessionsUri).build();
-
-        return new DefaultApi(new ApiClient(webClient));
     }
 
     @Bean(name = "paymentTransactionGatewayPostepayWebClient")
@@ -257,7 +227,7 @@ public class WebClientsConfig {
                         )
                 );
 
-        WebClient webClient = ApiClient.buildWebClientBuilder().clientConnector(
+        WebClient webClient = it.pagopa.generated.notifications.v1.ApiClient.buildWebClientBuilder().clientConnector(
                 new ReactorClientHttpConnector(httpClient)
         ).baseUrl(notificationsServiceUri).build();
 
