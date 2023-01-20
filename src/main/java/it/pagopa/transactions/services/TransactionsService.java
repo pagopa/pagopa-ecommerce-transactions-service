@@ -82,7 +82,7 @@ public class TransactionsService {
     public Mono<NewTransactionResponseDto> newTransaction(
                                                           NewTransactionRequestDto newTransactionRequestDto,
                                                           ClientIdDto clientIdDto,
-                                                          String transactionId
+                                                          TransactionId transactionId
     ) {
         ClientId clientId = ClientId.fromString(
                 Optional.ofNullable(clientIdDto)
