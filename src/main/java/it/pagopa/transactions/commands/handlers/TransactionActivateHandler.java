@@ -157,7 +157,7 @@ public class TransactionActivateHandler
                                                     Tuples.of(
                                                             newTransactionActivatedEvent(
                                                                     paymentRequestsInfo,
-                                                                    command.getTransactionId(),
+                                                                    command.getTransactionId().value().toString(),
                                                                     command.getData().getEmail(),
                                                                     command.getClientId()
                                                             ),
@@ -169,7 +169,7 @@ public class TransactionActivateHandler
                                                             Mono.empty(),
                                                             newTransactionActivationRequestedEvent(
                                                                     paymentRequestsInfo,
-                                                                    command.getTransactionId(),
+                                                                    command.getTransactionId().value().toString(),
                                                                     command.getData().getEmail(),
                                                                     paymentContextCode,
                                                                     command.getClientId()
