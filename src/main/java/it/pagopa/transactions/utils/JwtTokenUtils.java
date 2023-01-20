@@ -31,7 +31,7 @@ public class JwtTokenUtils {
         this.tokenValidityTimeMillis = tokenValidityMillis;
     }
 
-    public String generateTokenHeader(String transactionId) {
+    public String generateToken(String transactionId) {
         try {
             Calendar calendar = Calendar.getInstance();
             Date issuedAtDate = calendar.getTime();

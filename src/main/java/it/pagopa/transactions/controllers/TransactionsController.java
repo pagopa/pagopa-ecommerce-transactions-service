@@ -57,7 +57,7 @@ public class TransactionsController implements TransactionsApi {
                                                                           ServerWebExchange exchange
     ) {
         String transactionId = UUID.randomUUID().toString();
-        String jwtToken = jwtTokenUtils.generateTokenHeader(transactionId);
+        String jwtToken = jwtTokenUtils.generateToken(transactionId);
         return Mono.just(jwtToken)
                 .switchIfEmpty(Mono.error(new JWTTokenGenerationException()))
                 .then(newTransactionRequest)
