@@ -555,7 +555,7 @@ class TransactionsControllerTest {
 
         assertEquals(HttpStatus.CONFLICT, responseEntity.getStatusCode());
         assertEquals(
-                "Invalid request: Transaction amount mismatch! Request amount: [1], Transaction amount: [2]",
+                "Invalid request: Transaction amount mismatch",
                 responseEntity.getBody().getDetail()
         );
     }
