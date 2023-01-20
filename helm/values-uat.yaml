@@ -52,6 +52,8 @@ microservice-chart:
       PAYMENT_TOKEN_VALIDITY_TIME: "1800"
       TRANSACTIONS_RETRY_OFFSET: "60"
       CLOSURE_RETRY_INTERVAL: "30"
+      WEB_LOGGING_LEVEL: "off"
+      SERVICE_LOGGING_LEVEL: "info"
     envSecret:
       MONGO_PASSWORD: mongo-ecommerce-password
       REDIS_PASSWORD: redis-ecommerce-password
@@ -155,6 +157,8 @@ microservice-chart:
     PAYMENT_TOKEN_VALIDITY_TIME: "1800"
     TRANSACTIONS_RETRY_OFFSET: "60"
     CLOSURE_RETRY_INTERVAL: "30"
+    WEB_LOGGING_LEVEL: "off"
+    SERVICE_LOGGING_LEVEL: "info"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password

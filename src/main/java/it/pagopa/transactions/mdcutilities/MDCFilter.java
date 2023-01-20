@@ -2,22 +2,18 @@ package it.pagopa.transactions.mdcutilities;
 
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.ServerWebExchangeDecorator;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
-import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.UriTemplate;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Signal;
 import reactor.util.context.Context;
 
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -57,7 +53,7 @@ public class MDCFilter implements WebFilter {
         ServerWebExchange serverWebExchange = decorate(exchange);
         return chain.filter(serverWebExchange)
                 .doOnEach(logOnEach(r -> {
-                    log.info(
+                    log.debug(
                             "{} {} {}",
                             request.getMethod(),
                             request.getURI(),
