@@ -81,7 +81,8 @@ public class TransactionsService {
     @Retry(name = "newTransaction")
     public Mono<NewTransactionResponseDto> newTransaction(
                                                           NewTransactionRequestDto newTransactionRequestDto,
-                                                          ClientIdDto clientIdDto
+                                                          ClientIdDto clientIdDto,
+                                                          String transactionId
     ) {
         ClientId clientId = ClientId.fromString(
                 Optional.ofNullable(clientIdDto)
@@ -96,7 +97,8 @@ public class TransactionsService {
         TransactionActivateCommand transactionActivateCommand = new TransactionActivateCommand(
                 new RptId(newTransactionRequestDto.getPaymentNotices().get(0).getRptId()),
                 newTransactionRequestDto,
-                clientId
+                clientId,
+                transactionId
         );
 
         return transactionActivateHandler

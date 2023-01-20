@@ -8,10 +8,12 @@ import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.TransactionsService;
+import it.pagopa.transactions.utils.JwtTokenUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +41,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
 @WebFluxTest(TransactionsController.class)
@@ -51,6 +54,9 @@ class TransactionsControllerTest {
 
     @MockBean
     private TransactionsService transactionsService;
+
+    @MockBean
+    private JwtTokenUtils jwtTokenUtils;
 
     @Autowired
     private WebTestClient webTestClient;
@@ -66,36 +72,45 @@ class TransactionsControllerTest {
 
     @Test
     void shouldGetOk() {
-        String RPTID = "77777777777302016723749670035";
-        String EMAIL = "mario.rossi@email.com";
-        ClientIdDto clientIdDto = ClientIdDto.CHECKOUT;
-        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
-        newTransactionRequestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(RPTID));
-        newTransactionRequestDto.setEmail(EMAIL);
+        UUID transactionId = UUID.fromString("95b278e6-a3ae-4c7b-9ac9-788fec1ceede");
+        try (MockedStatic<UUID> uuidMock = Mockito.mockStatic(UUID.class)) {
+            uuidMock.when(UUID::randomUUID).thenReturn(transactionId);
+            String RPTID = "77777777777302016723749670035";
+            String EMAIL = "mario.rossi@email.com";
+            ClientIdDto clientIdDto = ClientIdDto.CHECKOUT;
+            NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
+            newTransactionRequestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(RPTID));
+            newTransactionRequestDto.setEmail(EMAIL);
 
-        NewTransactionResponseDto response = new NewTransactionResponseDto();
+            NewTransactionResponseDto response = new NewTransactionResponseDto();
 
-        PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
-        paymentInfoDto.setAmount(10);
-        paymentInfoDto.setReason("Reason");
-        paymentInfoDto.setPaymentToken("payment_token");
-        paymentInfoDto.setRptId(RPTID);
+            PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
+            paymentInfoDto.setAmount(10);
+            paymentInfoDto.setReason("Reason");
+            paymentInfoDto.setPaymentToken("payment_token");
+            paymentInfoDto.setRptId(RPTID);
 
-        response.addPaymentsItem(paymentInfoDto);
-        response.setAuthToken("token");
+            response.addPaymentsItem(paymentInfoDto);
+            response.setAuthToken("token");
+            Mockito.when(jwtTokenUtils.generateTokenHeader(transactionId.toString())).thenReturn("");
+            Mockito.lenient()
+                    .when(
+                            transactionsService
+                                    .newTransaction(newTransactionRequestDto, clientIdDto, transactionId.toString())
+                    )
+                    .thenReturn(Mono.just(response));
 
-        Mockito.lenient().when(transactionsService.newTransaction(newTransactionRequestDto, clientIdDto))
-                .thenReturn(Mono.just(response));
+            ResponseEntity<NewTransactionResponseDto> responseEntity = transactionsController
+                    .newTransaction(Mono.just(newTransactionRequestDto), clientIdDto, null).block();
 
-        ResponseEntity<NewTransactionResponseDto> responseEntity = transactionsController
-                .newTransaction(Mono.just(newTransactionRequestDto), clientIdDto, null).block();
+            // Verify mock
+            Mockito.verify(transactionsService, Mockito.times(1))
+                    .newTransaction(newTransactionRequestDto, clientIdDto, transactionId.toString());
 
-        // Verify mock
-        Mockito.verify(transactionsService, Mockito.times(1)).newTransaction(newTransactionRequestDto, clientIdDto);
-
-        // Verify status code and response
-        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-        assertEquals(response, responseEntity.getBody());
+            // Verify status code and response
+            assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+            assertEquals(response, responseEntity.getBody());
+        }
     }
 
     @Test
@@ -135,7 +150,7 @@ class TransactionsControllerTest {
 
         RequestAuthorizationResponseDto authorizationResponse = new RequestAuthorizationResponseDto()
                 .authorizationUrl(new URI("https://example.com").toString());
-        String pgsId = "testPgsId";
+        String pgsId = "XPAY";
 
         /* preconditions */
         Mockito.when(transactionsService.requestTransactionAuthorization(paymentToken, pgsId, authorizationRequest))
@@ -159,7 +174,7 @@ class TransactionsControllerTest {
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("pspId");
 
-        String pgsId = "pgsIdTest";
+        String pgsId = "XPAY";
 
         /* preconditions */
         Mockito.when(transactionsService.requestTransactionAuthorization(paymentToken, pgsId, authorizationRequest))
@@ -426,6 +441,7 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnProblemJsonWith400OnBadInput() {
+        Mockito.when(jwtTokenUtils.generateTokenHeader(any())).thenReturn("");
         webTestClient.post()
                 .uri("/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -631,6 +647,15 @@ class TransactionsControllerTest {
 
         assertEquals(HttpStatus.NOT_IMPLEMENTED, responseEntity.getStatusCode());
         assertEquals("Method not implemented", responseEntity.getBody().getDetail());
+    }
+
+    @Test
+    void shouldReturnResponseEntityWithInternalServerError() {
+        ResponseEntity<ProblemJsonDto> responseEntity = transactionsController
+                .jwtTokenGenerationError(new JWTTokenGenerationException());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
+        assertEquals("Internal server error: cannot generate JWT token", responseEntity.getBody().getDetail());
+
     }
 
     private static FaultBean faultBeanWithCode(String faultCode) {

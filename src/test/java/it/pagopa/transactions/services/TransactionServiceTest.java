@@ -140,7 +140,7 @@ class TransactionServiceTest {
          * Test
          */
         NewTransactionResponseDto responseDto = transactionsService
-                .newTransaction(transactionRequestDto, clientIdDto).block();
+                .newTransaction(transactionRequestDto, clientIdDto, TRANSACTION_ID.toString()).block();
 
         /**
          * Assertions
@@ -238,7 +238,7 @@ class TransactionServiceTest {
          * Test
          */
         NewTransactionResponseDto responseDto = transactionsService
-                .newTransaction(transactionRequestDto, clientIdDto).block();
+                .newTransaction(transactionRequestDto, clientIdDto, TRANSACTION_ID.toString()).block();
 
         /**
          * Assertions

@@ -7,6 +7,7 @@ import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.TransactionsService;
+import it.pagopa.transactions.utils.JwtTokenUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,14 +21,16 @@ import reactor.core.publisher.Mono;
 
 import javax.validation.ConstraintViolationException;
 import java.util.Arrays;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
 @Slf4j
 public class TransactionsController implements TransactionsApi {
 
-    @Autowired
-    private TransactionsService transactionsService;
+    private @Autowired TransactionsService transactionsService;
+
+    private @Autowired JwtTokenUtils jwtTokenUtils;
 
     @ExceptionHandler(
         {
@@ -53,7 +56,11 @@ public class TransactionsController implements TransactionsApi {
                                                                           ClientIdDto clientIdDto,
                                                                           ServerWebExchange exchange
     ) {
-        return newTransactionRequest
+        String transactionId = UUID.randomUUID().toString();
+        String jwtToken = jwtTokenUtils.generateTokenHeader(transactionId);
+        return Mono.just(jwtToken)
+                .switchIfEmpty(Mono.error(new JWTTokenGenerationException()))
+                .then(newTransactionRequest)
                 .flatMap(ntr -> {
                     log.info(
                             "newTransaction rptIDs {} ",
@@ -62,7 +69,7 @@ public class TransactionsController implements TransactionsApi {
                                     ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).toList()
                             )
                     );
-                    return transactionsService.newTransaction(ntr, clientIdDto);
+                    return transactionsService.newTransaction(ntr, clientIdDto, transactionId);
                 })
                 .map(ResponseEntity::ok);
     }
@@ -253,6 +260,23 @@ public class TransactionsController implements TransactionsApi {
                         .title("Bad request")
                         .detail("Invalid request: %s".formatted(exception.getMessage())),
                 HttpStatus.BAD_REQUEST
+        );
+    }
+
+    @ExceptionHandler(
+        {
+                JWTTokenGenerationException.class
+        }
+    )
+    ResponseEntity<ProblemJsonDto> jwtTokenGenerationError(JWTTokenGenerationException exception) {
+        log.warn(exception.getMessage());
+        HttpStatus httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        return new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(httpStatus.value())
+                        .title(httpStatus.getReasonPhrase())
+                        .detail("Internal server error: cannot generate JWT token"),
+                HttpStatus.INTERNAL_SERVER_ERROR
         );
     }
 
