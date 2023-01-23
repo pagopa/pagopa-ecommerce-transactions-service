@@ -18,6 +18,7 @@ import it.pagopa.transactions.commands.data.ClosureSendData;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
 import it.pagopa.transactions.commands.handlers.*;
 import it.pagopa.transactions.exceptions.NotImplementedException;
+import it.pagopa.transactions.exceptions.TransactionAmountMismatchException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
 import it.pagopa.transactions.projections.handlers.*;
@@ -175,11 +176,15 @@ public class TransactionsService {
                                     transactionId
                             );
                             return !amountTotal.equals(requestAuthorizationRequestDto.getAmount())
-                                    ? Mono.empty()
+                                    ? Mono.error(
+                                            new TransactionAmountMismatchException(
+                                                    requestAuthorizationRequestDto.getAmount(),
+                                                    amountTotal
+                                            )
+                                    )
                                     : Mono.just(transaction);
                         }
                 )
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .flatMap(
                         transaction -> {
                             log.info("Authorization psp validation for transactionId: {}", transactionId);
@@ -566,8 +571,8 @@ public class TransactionsService {
                 );
     }
 
-    private NewTransactionResponseDto.ClientIdEnum convertClientId(
-                                                                   it.pagopa.ecommerce.commons.documents.Transaction.ClientId clientId
+    NewTransactionResponseDto.ClientIdEnum convertClientId(
+                                                           it.pagopa.ecommerce.commons.documents.Transaction.ClientId clientId
     ) {
         return Optional.ofNullable(clientId)
                 .map(
