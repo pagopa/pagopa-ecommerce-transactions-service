@@ -18,6 +18,7 @@ import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.*;
 import it.pagopa.transactions.exceptions.NotImplementedException;
+import it.pagopa.transactions.exceptions.TransactionAmountMismatchException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -606,6 +607,87 @@ public class TransactionServiceTests {
         } else {
             fail("AuthorizationRequestData.authDetails null or not instance of CardAuthRequestDetailsDto");
         }
+    }
+
+    @Test
+    void shouldReturnBadRequestForMismatchingRequestAmount() {
+        CardAuthRequestDetailsDto cardAuthRequestDetailsDto = new CardAuthRequestDetailsDto()
+                .expiryDate("203012")
+                .cvv("000")
+                .pan("0123456789012345")
+                .holderName("Name Surname");
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .paymentInstrumentId("paymentInstrumentId")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
+                .pspId("PSP_CODE")
+                .details(cardAuthRequestDetailsDto);
+        Transaction transaction = new Transaction(
+                TRANSACION_ID,
+                PAYMENT_TOKEN,
+                "77777777777111111111111111111",
+                "description",
+                200,
+                "foo@example.com",
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED
+        );
+
+        /* preconditions */
+        List<PspDto> pspDtoList = new ArrayList<>();
+        pspDtoList.add(
+                new PspDto()
+                        .code("PSP_CODE")
+                        .fixedCost(200l)
+        );
+        PSPsResponseDto pspResponseDto = new PSPsResponseDto();
+        pspResponseDto.psp(pspDtoList);
+
+        PaymentMethodResponseDto paymentMethod = new PaymentMethodResponseDto()
+                .name("paymentMethodName")
+                .description("desc")
+                .status(PaymentMethodResponseDto.StatusEnum.ENABLED)
+                .id("id")
+                .paymentTypeCode("PO")
+                .addRangesItem(new RangeDto().min(0L).max(100L));
+
+        PostePayAuthResponseEntityDto gatewayResponse = new PostePayAuthResponseEntityDto()
+                .channel("channel")
+                .requestId("requestId")
+                .urlRedirect("http://example.com");
+
+        RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
+                .authorizationUrl(gatewayResponse.getUrlRedirect());
+
+        Mockito.when(ecommercePaymentInstrumentsClient.getPSPs(any(), any(), any())).thenReturn(
+                Mono.just(pspResponseDto)
+        );
+
+        Mockito.when(ecommercePaymentInstrumentsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
+
+        Mockito.when(repository.findById(TRANSACION_ID))
+                .thenReturn(Mono.just(transaction));
+
+        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(any())).thenReturn(Mono.just(gatewayResponse));
+        Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.empty());
+
+        Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
+
+        /* test */
+
+        assertThrows(
+                TransactionAmountMismatchException.class,
+                () -> transactionsService
+                        .requestTransactionAuthorization(TRANSACION_ID, "XPAY", authorizationRequest).block()
+        );
+    }
+
+    @Test
+    void shouldConvertClientIdSuccessfully() {
+        for (it.pagopa.ecommerce.commons.documents.Transaction.ClientId clientId : it.pagopa.ecommerce.commons.documents.Transaction.ClientId
+                .values()) {
+            assertEquals(clientId.toString(), transactionsService.convertClientId(clientId).toString());
+        }
+        assertEquals("UNKNOWN", transactionsService.convertClientId(null).toString());
     }
 
 }
