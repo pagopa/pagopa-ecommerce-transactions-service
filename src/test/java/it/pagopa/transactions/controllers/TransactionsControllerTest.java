@@ -32,7 +32,6 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.OffsetDateTime;
@@ -428,6 +427,7 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnProblemJsonWith400OnBadInput() {
+        Mockito.when(jwtTokenUtils.generateToken(any())).thenReturn("");
         webTestClient.post()
                 .uri("/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -449,7 +449,7 @@ class TransactionsControllerTest {
     }
 
     @Test
-    void shouldReturnResponseEntityWithPartyConfigurationFault()  {
+    void shouldReturnResponseEntityWithPartyConfigurationFault() {
         FaultBean faultBean = faultBeanWithCode(PartyConfigurationFaultDto.PPT_DOMINIO_DISABILITATO.getValue());
         ResponseEntity<PartyConfigurationFaultPaymentProblemJsonDto> responseEntity = (ResponseEntity<PartyConfigurationFaultPaymentProblemJsonDto>) transactionsController
                 .nodoErrorHandler(
