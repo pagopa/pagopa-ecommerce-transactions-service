@@ -156,7 +156,7 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @ExceptionHandler(TransactionNotFoundException.class)
-    private ResponseEntity<ProblemJsonDto> transactionNotFoundHandler(TransactionNotFoundException exception) {
+    ResponseEntity<ProblemJsonDto> transactionNotFoundHandler(TransactionNotFoundException exception) {
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(404)
@@ -167,7 +167,7 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @ExceptionHandler(UnsatisfiablePspRequestException.class)
-    private ResponseEntity<ProblemJsonDto> unsatisfiablePspRequestHandler(UnsatisfiablePspRequestException exception) {
+    ResponseEntity<ProblemJsonDto> unsatisfiablePspRequestHandler(UnsatisfiablePspRequestException exception) {
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(409)
@@ -185,7 +185,7 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @ExceptionHandler(AlreadyProcessedException.class)
-    private ResponseEntity<ProblemJsonDto> alreadyProcessedHandler(AlreadyProcessedException exception) {
+    ResponseEntity<ProblemJsonDto> alreadyProcessedHandler(AlreadyProcessedException exception) {
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(409)
@@ -199,7 +199,7 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @ExceptionHandler(BadGatewayException.class)
-    private ResponseEntity<ProblemJsonDto> badGatewayHandler(BadGatewayException exception) {
+    ResponseEntity<ProblemJsonDto> badGatewayHandler(BadGatewayException exception) {
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(502)
@@ -210,7 +210,7 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @ExceptionHandler(NotImplementedException.class)
-    private ResponseEntity<ProblemJsonDto> notImplemented(NotImplementedException exception) {
+    ResponseEntity<ProblemJsonDto> notImplemented(NotImplementedException exception) {
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(501)
@@ -221,7 +221,7 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @ExceptionHandler(GatewayTimeoutException.class)
-    private ResponseEntity<ProblemJsonDto> gatewayTimeoutHandler(GatewayTimeoutException exception) {
+    ResponseEntity<ProblemJsonDto> gatewayTimeoutHandler(GatewayTimeoutException exception) {
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(504)
@@ -232,7 +232,7 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @ExceptionHandler(WebExchangeBindException.class)
-    private ResponseEntity<ProblemJsonDto> validationExceptionHandler(WebExchangeBindException exception) {
+    ResponseEntity<ProblemJsonDto> validationExceptionHandler(WebExchangeBindException exception) {
         String errorMessage = exception.getAllErrors().stream().map(ObjectError::toString)
                 .collect(Collectors.joining(", "));
 
@@ -253,7 +253,7 @@ public class TransactionsController implements TransactionsApi {
                 ConstraintViolationException.class
         }
     )
-    private ResponseEntity<ProblemJsonDto> validationExceptionHandler(Exception exception) {
+    ResponseEntity<ProblemJsonDto> validationExceptionHandler(Exception exception) {
         log.warn("Got invalid input: {}", exception.getMessage());
         return new ResponseEntity<>(
                 new ProblemJsonDto()
@@ -261,6 +261,24 @@ public class TransactionsController implements TransactionsApi {
                         .title("Bad request")
                         .detail("Invalid request: %s".formatted(exception.getMessage())),
                 HttpStatus.BAD_REQUEST
+        );
+    }
+
+    @ExceptionHandler(TransactionAmountMismatchException.class)
+    ResponseEntity<ProblemJsonDto> amountMismatchErrorHandler(TransactionAmountMismatchException exception) {
+        log.warn(
+                "Got invalid input: {}. Request amount: [{}], transaction amount: [{}]",
+                exception.getMessage(),
+                exception.getRequestAmount(),
+                exception.getTransactionAmount()
+        );
+        HttpStatus httpStatus = HttpStatus.CONFLICT;
+        return new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(httpStatus.value())
+                        .title(httpStatus.getReasonPhrase())
+                        .detail("Invalid request: %s".formatted(exception.getMessage())),
+                httpStatus
         );
     }
 
@@ -284,7 +302,7 @@ public class TransactionsController implements TransactionsApi {
     @ExceptionHandler({
             NodoErrorException.class,
     })
-    private ResponseEntity<?> nodoErrorHandler(NodoErrorException exception) {
+    ResponseEntity<?> nodoErrorHandler(NodoErrorException exception) {
 
         return switch (exception.getFaultCode()) {
             case String s && Arrays.stream(PartyConfigurationFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
