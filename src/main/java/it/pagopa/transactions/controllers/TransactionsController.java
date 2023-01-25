@@ -29,9 +29,9 @@ public class TransactionsController implements TransactionsApi {
     private TransactionsService transactionsService;
 
     @ExceptionHandler(
-            {
-                    CallNotPermittedException.class
-            }
+        {
+                CallNotPermittedException.class
+        }
     )
     public Mono<ResponseEntity<ProblemJsonDto>> openStateHandler() {
         log.error("Error - OPEN circuit breaker");
