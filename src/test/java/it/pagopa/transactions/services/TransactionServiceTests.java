@@ -673,12 +673,11 @@ public class TransactionServiceTests {
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 
         /* test */
-
-        assertThrows(
-                TransactionAmountMismatchException.class,
-                () -> transactionsService
-                        .requestTransactionAuthorization(TRANSACION_ID, "XPAY", authorizationRequest).block()
-        );
+        StepVerifier
+                .create(
+                        transactionsService.requestTransactionAuthorization(TRANSACION_ID, "XPAY", authorizationRequest)
+                )
+                .expectErrorMatches(exception -> exception instanceof TransactionAmountMismatchException);
     }
 
     @Test

@@ -28,6 +28,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 import reactor.util.function.Tuple3;
 
 import java.util.Arrays;
@@ -217,7 +218,9 @@ class TransactionInitializerHandlerTest {
                 .thenReturn(Mono.error(new JWTTokenGenerationException()));
         ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
         /** run test */
-        assertThrows(JWTTokenGenerationException.class, () -> handler.handle(command).block());
+        StepVerifier
+                .create(handler.handle(command))
+                .expectErrorMatches(exception -> exception instanceof JWTTokenGenerationException);
 
     }
 
