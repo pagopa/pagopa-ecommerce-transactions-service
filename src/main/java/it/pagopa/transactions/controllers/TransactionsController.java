@@ -1,14 +1,12 @@
 package it.pagopa.transactions.controllers;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.generated.payment.requests.model.*;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
 import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.TransactionsService;
-import it.pagopa.transactions.utils.JwtTokenUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,21 +20,18 @@ import reactor.core.publisher.Mono;
 
 import javax.validation.ConstraintViolationException;
 import java.util.Arrays;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
 @Slf4j
 public class TransactionsController implements TransactionsApi {
-
-    private @Autowired TransactionsService transactionsService;
-
-    private @Autowired JwtTokenUtils jwtTokenUtils;
+    @Autowired
+    private TransactionsService transactionsService;
 
     @ExceptionHandler(
-        {
-                CallNotPermittedException.class
-        }
+            {
+                    CallNotPermittedException.class
+            }
     )
     public Mono<ResponseEntity<ProblemJsonDto>> openStateHandler() {
         log.error("Error - OPEN circuit breaker");
@@ -57,11 +52,8 @@ public class TransactionsController implements TransactionsApi {
                                                                           ClientIdDto clientIdDto,
                                                                           ServerWebExchange exchange
     ) {
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
-        String jwtToken = jwtTokenUtils.generateToken(transactionId);
-        return Mono.just(jwtToken)
-                .switchIfEmpty(Mono.error(new JWTTokenGenerationException()))
-                .then(newTransactionRequest)
+
+        return newTransactionRequest
                 .flatMap(ntr -> {
                     log.info(
                             "newTransaction rptIDs {} ",
@@ -70,7 +62,7 @@ public class TransactionsController implements TransactionsApi {
                                     ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).toList()
                             )
                     );
-                    return transactionsService.newTransaction(ntr, clientIdDto, transactionId, jwtToken);
+                    return transactionsService.newTransaction(ntr, clientIdDto);
                 })
                 .map(ResponseEntity::ok);
     }

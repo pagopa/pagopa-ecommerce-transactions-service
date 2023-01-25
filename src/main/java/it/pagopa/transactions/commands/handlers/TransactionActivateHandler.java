@@ -4,12 +4,14 @@ import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.*;
 import it.pagopa.ecommerce.commons.domain.RptId;
+import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import it.pagopa.transactions.utils.JwtTokenUtils;
 import it.pagopa.transactions.utils.NodoOperations;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +21,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-import reactor.util.function.Tuple2;
+import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
 import java.time.Duration;
@@ -31,7 +33,7 @@ import java.util.UUID;
 @Component
 public class TransactionActivateHandler
         implements
-        CommandHandler<TransactionActivateCommand, Mono<Tuple2<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>>>> {
+        CommandHandler<TransactionActivateCommand, Mono<Tuple3<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>, String>>> {
 
     private final PaymentRequestsInfoRepository paymentRequestsInfoRepository;
 
@@ -45,6 +47,8 @@ public class TransactionActivateHandler
 
     private final Integer paymentTokenTimeout;
 
+    private final JwtTokenUtils jwtTokenUtils;
+
     @Value("${nodo.parallelRequests}")
     private int nodoParallelRequests;
 
@@ -54,6 +58,7 @@ public class TransactionActivateHandler
             TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository,
             TransactionsEventStoreRepository<TransactionActivationRequestedData> transactionEventActivationRequestedStoreRepository,
             NodoOperations nodoOperations,
+            JwtTokenUtils jwtTokenUtils,
             @Qualifier("transactionActivatedQueueAsyncClient") QueueAsyncClient transactionActivatedQueueAsyncClient,
             @Value("${payment.token.validity}") Integer paymentTokenTimeout
     ) {
@@ -63,12 +68,13 @@ public class TransactionActivateHandler
         this.nodoOperations = nodoOperations;
         this.paymentTokenTimeout = paymentTokenTimeout;
         this.transactionActivatedQueueAsyncClient = transactionActivatedQueueAsyncClient;
+        this.jwtTokenUtils = jwtTokenUtils;
     }
 
-    public Mono<Tuple2<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>>> handle(
-                                                                                                           TransactionActivateCommand command
+    public Mono<Tuple3<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>, String>> handle(
+                                                                                                                   TransactionActivateCommand command
     ) {
-        final String transactionId = command.getTransactionId().value().toString();
+        final String transactionId = UUID.randomUUID().toString();
         final NewTransactionRequestDto newTransactionRequestDto = command.getData();
         final List<PaymentNoticeInfoDto> paymentNotices = newTransactionRequestDto.getPaymentNotices();
         final boolean multiplePaymentNotices = paymentNotices.size() > 1;
@@ -151,32 +157,42 @@ public class TransactionActivateHandler
                         .sequential()
                         .collectList()
                         .flatMap(
-                                paymentRequestsInfo -> shouldGenerateTransactionActivatedEvent(paymentRequestsInfo)
-                                        ? Mono.just(
-                                                Tuples.of(
-                                                        newTransactionActivatedEvent(
-                                                                paymentRequestsInfo,
-                                                                command.getTransactionId().value().toString(),
-                                                                command.getData().getEmail(),
-                                                                command.getClientId()
-                                                        ),
-                                                        Mono.empty()
-                                                )
-                                        )
-                                        : Mono.just(
-                                                Tuples.of(
-                                                        Mono.empty(),
-                                                        newTransactionActivationRequestedEvent(
-                                                                paymentRequestsInfo,
-                                                                command.getTransactionId().value().toString(),
-                                                                command.getData().getEmail(),
-                                                                paymentContextCode,
-                                                                command.getClientId()
-                                                        )
-                                                )
-                                        )
-                        )
+                                paymentRequestInfos -> jwtTokenUtils
+                                        .generateToken(new TransactionId(UUID.fromString(transactionId)))
+                                        .map(generatedToken -> Tuples.of(generatedToken, paymentRequestInfos))
+                        ).flatMap(
+                                args -> {
+                                    String authToken = args.getT1();
+                                    List<PaymentRequestInfo> paymentRequestsInfo = args.getT2();
+                                    return shouldGenerateTransactionActivatedEvent(paymentRequestsInfo)
+                                            ? Mono.just(
+                                                    Tuples.of(
+                                                            newTransactionActivatedEvent(
+                                                                    paymentRequestsInfo,
+                                                                    transactionId,
+                                                                    newTransactionRequestDto.getEmail(),
+                                                                    command.getClientId()
+                                                            ),
+                                                            Mono.empty(),
+                                                            authToken
+                                                    )
+                                            )
+                                            : Mono.just(
+                                                    Tuples.of(
+                                                            Mono.empty(),
+                                                            newTransactionActivationRequestedEvent(
+                                                                    paymentRequestsInfo,
+                                                                    transactionId,
+                                                                    newTransactionRequestDto.getEmail(),
+                                                                    paymentContextCode,
+                                                                    command.getClientId()
+                                                            ),
+                                                            authToken
+                                                    )
+                                            );
+                                }
 
+                        )
         );
     }
 

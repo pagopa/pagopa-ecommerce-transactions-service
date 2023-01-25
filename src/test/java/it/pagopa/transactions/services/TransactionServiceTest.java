@@ -20,7 +20,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
+import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
 import java.util.Arrays;
@@ -78,10 +78,11 @@ class TransactionServiceTest {
                 transactionActivationRequestedData
         );
 
-        Tuple2<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>> response = Tuples
+        Tuple3<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>, String> response = Tuples
                 .of(
                         Mono.just(transactionActivatedEvent),
-                        Mono.just(transactionActivationRequestedEvent)
+                        Mono.just(transactionActivationRequestedEvent),
+                        TEST_SESSION_TOKEN.toString()
                 );
 
         TransactionActivated transactionActivated = new TransactionActivated(
@@ -131,7 +132,7 @@ class TransactionServiceTest {
          * Test
          */
         NewTransactionResponseDto responseDto = transactionsService
-                .newTransaction(transactionRequestDto, clientIdDto, new TransactionId(TRANSACTION_ID), "").block();
+                .newTransaction(transactionRequestDto, clientIdDto).block();
 
         /**
          * Assertions
@@ -177,10 +178,11 @@ class TransactionServiceTest {
                 transactionActivationRequestedData
         );
 
-        Tuple2<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>> response = Tuples
+        Tuple3<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>, String> response = Tuples
                 .of(
                         Mono.empty(),
-                        Mono.just(transactionActivationRequestedEvent)
+                        Mono.just(transactionActivationRequestedEvent),
+                        TEST_SESSION_TOKEN.toString()
                 );
         List<it.pagopa.ecommerce.commons.domain.PaymentNotice> PaymentNoticeList = List.of(
                 new it.pagopa.ecommerce.commons.domain.PaymentNotice(
@@ -221,7 +223,7 @@ class TransactionServiceTest {
          * Test
          */
         NewTransactionResponseDto responseDto = transactionsService
-                .newTransaction(transactionRequestDto, clientIdDto, new TransactionId(TRANSACTION_ID), "").block();
+                .newTransaction(transactionRequestDto, clientIdDto).block();
 
         /**
          * Assertions

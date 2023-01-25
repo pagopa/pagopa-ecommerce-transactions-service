@@ -81,9 +81,7 @@ public class TransactionsService {
     @Retry(name = "newTransaction")
     public Mono<NewTransactionResponseDto> newTransaction(
                                                           NewTransactionRequestDto newTransactionRequestDto,
-                                                          ClientIdDto clientIdDto,
-                                                          TransactionId transactionId,
-                                                          String authToken
+                                                          ClientIdDto clientIdDto
     ) {
         ClientId clientId = ClientId.fromString(
                 Optional.ofNullable(clientIdDto)
@@ -98,8 +96,7 @@ public class TransactionsService {
         TransactionActivateCommand transactionActivateCommand = new TransactionActivateCommand(
                 new RptId(newTransactionRequestDto.getPaymentNotices().get(0).getRptId()),
                 newTransactionRequestDto,
-                clientId,
-                transactionId
+                clientId
         );
 
         return transactionActivateHandler
@@ -115,7 +112,7 @@ public class TransactionsService {
                             final Mono<TransactionActivatedEvent> transactionActivatedEvent = es.getT1();
                             final Mono<TransactionActivationRequestedEvent> transactionActivationRequestedEvent = es
                                     .getT2();
-
+                            final String authToken = es.getT3();
                             return transactionActivatedEvent
                                     .flatMap(t -> projectActivatedEvent(t, authToken))
                                     .switchIfEmpty(

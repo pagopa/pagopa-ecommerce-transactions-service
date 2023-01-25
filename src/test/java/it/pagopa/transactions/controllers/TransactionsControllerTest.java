@@ -90,15 +90,13 @@ class TransactionsControllerTest {
 
             response.addPaymentsItem(paymentInfoDto);
             response.setAuthToken("token");
-            Mockito.when(jwtTokenUtils.generateToken(new TransactionId(transactionId))).thenReturn("");
+            Mockito.when(jwtTokenUtils.generateToken(any())).thenReturn(Mono.just(""));
             Mockito.lenient()
                     .when(
                             transactionsService
                                     .newTransaction(
                                             newTransactionRequestDto,
-                                            clientIdDto,
-                                            new TransactionId(transactionId),
-                                            ""
+                                            clientIdDto
                                     )
                     )
                     .thenReturn(Mono.just(response));
@@ -108,7 +106,7 @@ class TransactionsControllerTest {
 
             // Verify mock
             Mockito.verify(transactionsService, Mockito.times(1))
-                    .newTransaction(newTransactionRequestDto, clientIdDto, new TransactionId(transactionId), "");
+                    .newTransaction(newTransactionRequestDto, clientIdDto);
 
             // Verify status code and response
             assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -427,7 +425,7 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnProblemJsonWith400OnBadInput() {
-        Mockito.when(jwtTokenUtils.generateToken(any())).thenReturn("");
+        Mockito.when(jwtTokenUtils.generateToken(any())).thenReturn(Mono.just(""));
         webTestClient.post()
                 .uri("/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -580,7 +578,7 @@ class TransactionsControllerTest {
     }
 
     @Test
-    void shouldReturnResponseEntityWithInternalServerError() {
+    void shouldReturnResponseEntityWithInternalServerErrorForErrorGeneratingJwtToken() {
         ResponseEntity<ProblemJsonDto> responseEntity = transactionsController
                 .jwtTokenGenerationError(new JWTTokenGenerationException());
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
