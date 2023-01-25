@@ -10,7 +10,7 @@ import lombok.Getter;
 @EqualsAndHashCode(callSuper = true)
 public final class TransactionActivateCommand extends TransactionsCommand<NewTransactionRequestDto> {
 
-    private Transaction.ClientId clientId;
+    private final Transaction.ClientId clientId;
 
     public TransactionActivateCommand(
             RptId rptId,

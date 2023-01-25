@@ -23,6 +23,7 @@ import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
+import it.pagopa.transactions.utils.JwtTokenUtils;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -115,6 +116,9 @@ public class TransactionServiceTests {
 
     @MockBean
     private ClosureErrorProjectionHandler closureErrorProjectionHandler;
+
+    @MockBean
+    private JwtTokenUtils jwtTokenUtils;
 
     final String PAYMENT_TOKEN = "aaa";
     final String TRANSACION_ID = "833d303a-f857-11ec-b939-0242ac120002";
@@ -669,12 +673,11 @@ public class TransactionServiceTests {
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 
         /* test */
-
-        assertThrows(
-                TransactionAmountMismatchException.class,
-                () -> transactionsService
-                        .requestTransactionAuthorization(TRANSACION_ID, "XPAY", authorizationRequest).block()
-        );
+        StepVerifier
+                .create(
+                        transactionsService.requestTransactionAuthorization(TRANSACION_ID, "XPAY", authorizationRequest)
+                )
+                .expectErrorMatches(exception -> exception instanceof TransactionAmountMismatchException);
     }
 
     @Test

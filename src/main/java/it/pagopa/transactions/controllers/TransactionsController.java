@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 @RestController
 @Slf4j
 public class TransactionsController implements TransactionsApi {
-
     @Autowired
     private TransactionsService transactionsService;
 
@@ -53,6 +52,7 @@ public class TransactionsController implements TransactionsApi {
                                                                           ClientIdDto clientIdDto,
                                                                           ServerWebExchange exchange
     ) {
+
         return newTransactionRequest
                 .flatMap(ntr -> {
                     log.info(
@@ -271,6 +271,23 @@ public class TransactionsController implements TransactionsApi {
                         .title(httpStatus.getReasonPhrase())
                         .detail("Invalid request: %s".formatted(exception.getMessage())),
                 httpStatus
+        );
+    }
+
+    @ExceptionHandler(
+        {
+                JWTTokenGenerationException.class
+        }
+    )
+    ResponseEntity<ProblemJsonDto> jwtTokenGenerationError(JWTTokenGenerationException exception) {
+        log.warn(exception.getMessage());
+        HttpStatus httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        return new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(httpStatus.value())
+                        .title(httpStatus.getReasonPhrase())
+                        .detail("Internal server error: cannot generate JWT token"),
+                HttpStatus.INTERNAL_SERVER_ERROR
         );
     }
 
