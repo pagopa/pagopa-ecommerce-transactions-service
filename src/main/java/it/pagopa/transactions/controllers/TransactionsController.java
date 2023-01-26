@@ -52,7 +52,6 @@ public class TransactionsController implements TransactionsApi {
                                                                           Mono<NewTransactionRequestDto> newTransactionRequestDto,
                                                                           ServerWebExchange exchange
     ) {
-
         return newTransactionRequestDto
                 .flatMap(ntr -> {
                     log.info(
