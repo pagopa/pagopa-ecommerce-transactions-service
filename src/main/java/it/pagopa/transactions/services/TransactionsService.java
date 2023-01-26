@@ -1,5 +1,6 @@
 package it.pagopa.transactions.services;
 
+import com.azure.cosmos.implementation.BadRequestException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import it.pagopa.ecommerce.commons.documents.Transaction.ClientId;
@@ -28,8 +29,10 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -83,47 +86,57 @@ public class TransactionsService {
                                                           NewTransactionRequestDto newTransactionRequestDto,
                                                           ClientIdDto clientIdDto
     ) {
-        ClientId clientId = ClientId.fromString(
-                Optional.ofNullable(clientIdDto)
-                        .map(ClientIdDto::toString)
-                        .orElse(null)
-        );
+
+        Mono<ClientId> clientIdMono = Mono.just(clientIdDto).filter(Objects::nonNull)
+                .switchIfEmpty(Mono.error(BadRequestException::new))
+                .map(ClientIdDto::toString)
+                .map(ClientId::fromString);
+
         log.info(
                 "Initializing transaction for rptId: {}. ClientId: {}",
                 newTransactionRequestDto.getPaymentNotices().get(0).getRptId(),
-                clientId
-        );
-        TransactionActivateCommand transactionActivateCommand = new TransactionActivateCommand(
-                new RptId(newTransactionRequestDto.getPaymentNotices().get(0).getRptId()),
-                newTransactionRequestDto,
-                clientId
+                clientIdDto.name()
         );
 
-        return transactionActivateHandler
-                .handle(transactionActivateCommand)
-                .doOnNext(
-                        args -> log.info(
-                                "Transaction initialized for rptId: {}",
-                                newTransactionRequestDto.getPaymentNotices().get(0).getRptId()
+        return clientIdMono
+                .map(
+                        clientId -> new TransactionActivateCommand(
+                                new RptId(newTransactionRequestDto.getPaymentNotices().get(0).getRptId()),
+                                newTransactionRequestDto,
+                                clientId
                         )
                 )
                 .flatMap(
-                        es -> {
-                            final Mono<TransactionActivatedEvent> transactionActivatedEvent = es.getT1();
-                            final Mono<TransactionActivationRequestedEvent> transactionActivationRequestedEvent = es
-                                    .getT2();
-                            final SessionDataDto sessionDataDto = es.getT3();
+                        transactionActivateCommand -> transactionActivateHandler
+                                .handle(transactionActivateCommand)
+                                .doOnNext(
+                                        args -> log.info(
+                                                "Transaction initialized for rptId: {}",
+                                                newTransactionRequestDto.getPaymentNotices().get(0).getRptId()
+                                        )
+                                )
+                                .flatMap(
+                                        es -> {
+                                            final Mono<TransactionActivatedEvent> transactionActivatedEvent = es
+                                                    .getT1();
+                                            final Mono<TransactionActivationRequestedEvent> transactionActivationRequestedEvent = es
+                                                    .getT2();
+                                            final SessionDataDto sessionDataDto = es.getT3();
 
-                            return transactionActivatedEvent
-                                    .flatMap(t -> projectActivatedEvent(t, sessionDataDto))
-                                    .switchIfEmpty(
-                                            Mono.defer(
-                                                    () -> transactionActivationRequestedEvent.flatMap(
-                                                            t -> projectActivationEvent(t, sessionDataDto)
-                                                    )
-                                            )
-                                    );
-                        }
+                                            return transactionActivatedEvent
+                                                    .flatMap(t -> projectActivatedEvent(t, sessionDataDto))
+                                                    .switchIfEmpty(
+                                                            Mono.defer(
+                                                                    () -> transactionActivationRequestedEvent.flatMap(
+                                                                            t -> projectActivationEvent(
+                                                                                    t,
+                                                                                    sessionDataDto
+                                                                            )
+                                                                    )
+                                                            )
+                                                    );
+                                        }
+                                )
                 );
     }
 
@@ -569,16 +582,11 @@ public class TransactionsService {
     private NewTransactionResponseDto.ClientIdEnum convertClientId(
                                                                    it.pagopa.ecommerce.commons.documents.Transaction.ClientId clientId
     ) {
-        return Optional.ofNullable(clientId)
-                .map(
-                        enumVal -> {
-                            try {
-                                return NewTransactionResponseDto.ClientIdEnum.fromValue(enumVal.toString());
-                            } catch (IllegalArgumentException e) {
-                                log.error("Unknown input origin ", e);
-                                return NewTransactionResponseDto.ClientIdEnum.UNKNOWN;
-                            }
-                        }
-                ).orElse(NewTransactionResponseDto.ClientIdEnum.UNKNOWN);
+        try {
+            return NewTransactionResponseDto.ClientIdEnum.fromValue(clientId.toString());
+        } catch (IllegalArgumentException e) {
+            log.error("Unknown input origin ", e);
+            throw new BadRequestException("ClientID " + clientId + " not valid");
+        }
     }
 }
