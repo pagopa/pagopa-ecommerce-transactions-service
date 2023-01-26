@@ -101,8 +101,8 @@ class TransactionsControllerTest {
                     )
                     .thenReturn(Mono.just(response));
 
-        ResponseEntity<NewTransactionResponseDto> responseEntity = transactionsController
-                .newTransaction(clientIdDto, Mono.just(newTransactionRequestDto), null).block();
+            ResponseEntity<NewTransactionResponseDto> responseEntity = transactionsController
+                    .newTransaction(clientIdDto, Mono.just(newTransactionRequestDto), null).block();
 
             // Verify mock
             Mockito.verify(transactionsService, Mockito.times(1))

@@ -87,17 +87,17 @@ public class TransactionsService {
                                                           ClientIdDto clientIdDto
     ) {
 
-        Mono<ClientId> clientIdMono = Mono.just(clientIdDto).filter(Objects::nonNull)
+        return Mono.just(clientIdDto).filter(Objects::nonNull)
                 .switchIfEmpty(Mono.error(BadRequestException::new))
+                .doOnNext(
+                        clientId -> log.info(
+                                "Initializing transaction for rptId: {}. ClientId: {}",
+                                newTransactionRequestDto.getPaymentNotices().get(0).getRptId(),
+                                clientId.name()
+                        )
+                )
                 .map(ClientIdDto::toString)
-                .map(ClientId::fromString);
-
-        log.info(
-                "Initializing transaction for rptId: {}. ClientId: {}",
-                newTransactionRequestDto.getPaymentNotices().get(0).getRptId(),
-                clientIdDto.name()
-        );
-        return clientIdMono
+                .map(ClientId::fromString)
                 .map(
                         clientId -> new TransactionActivateCommand(
                                 new RptId(newTransactionRequestDto.getPaymentNotices().get(0).getRptId()),
@@ -106,31 +106,33 @@ public class TransactionsService {
                         )
                 )
                 .flatMap(
-                        transactionActivateCommand ->  transactionActivateHandler
-                .handle(transactionActivateCommand)
-                .doOnNext(
-                        args -> log.info(
-                                "Transaction initialized for rptId: {}",
-                                newTransactionRequestDto.getPaymentNotices().get(0).getRptId()
-                        )
-                )
-                .flatMap(
-                        es -> {
-                            final Mono<TransactionActivatedEvent> transactionActivatedEvent = es.getT1();
-                            final Mono<TransactionActivationRequestedEvent> transactionActivationRequestedEvent = es
-                                    .getT2();
-                            final String authToken = es.getT3();
-                            return transactionActivatedEvent
-                                    .flatMap(t -> projectActivatedEvent(t, authToken))
-                                    .switchIfEmpty(
-                                            Mono.defer(
-                                                    () -> transactionActivationRequestedEvent.flatMap(
-                                                            t -> projectActivationEvent(t, authToken)
-                                                    )
-                                            )
-                                    );
-                        }
-                ));
+                        transactionActivateCommand -> transactionActivateHandler
+                                .handle(transactionActivateCommand)
+                                .doOnNext(
+                                        args -> log.info(
+                                                "Transaction initialized for rptId: {}",
+                                                newTransactionRequestDto.getPaymentNotices().get(0).getRptId()
+                                        )
+                                )
+                                .flatMap(
+                                        es -> {
+                                            final Mono<TransactionActivatedEvent> transactionActivatedEvent = es
+                                                    .getT1();
+                                            final Mono<TransactionActivationRequestedEvent> transactionActivationRequestedEvent = es
+                                                    .getT2();
+                                            final String authToken = es.getT3();
+                                            return transactionActivatedEvent
+                                                    .flatMap(t -> projectActivatedEvent(t, authToken))
+                                                    .switchIfEmpty(
+                                                            Mono.defer(
+                                                                    () -> transactionActivationRequestedEvent.flatMap(
+                                                                            t -> projectActivationEvent(t, authToken)
+                                                                    )
+                                                            )
+                                                    );
+                                        }
+                                )
+                );
     }
 
     @CircuitBreaker(name = "node-backend")
@@ -579,11 +581,17 @@ public class TransactionsService {
     NewTransactionResponseDto.ClientIdEnum convertClientId(
                                                            it.pagopa.ecommerce.commons.documents.Transaction.ClientId clientId
     ) {
-        try {
-            return NewTransactionResponseDto.ClientIdEnum.fromValue(clientId.toString());
-        } catch (IllegalArgumentException e) {
-            log.error("Unknown input origin ", e);
-            throw new BadRequestException("ClientID " + clientId + " not valid");
-        }
+        return Optional.ofNullable(clientId).filter(Objects::nonNull)
+                .map(
+                        enumVal -> {
+                            try {
+                                return NewTransactionResponseDto.ClientIdEnum.fromValue(enumVal.toString());
+                            } catch (IllegalArgumentException e) {
+                                log.error("Unknown input origin ", e);
+                                throw new BadRequestException();
+                            }
+                        }
+                ).orElseThrow(BadRequestException::new);
     }
+
 }
