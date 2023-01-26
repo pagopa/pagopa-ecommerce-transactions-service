@@ -117,7 +117,6 @@ class TransactionDocumentTest {
                 email,
                 faultCode,
                 faultCodeString,
-                status,
                 Transaction.ClientId.CHECKOUT
         );
 

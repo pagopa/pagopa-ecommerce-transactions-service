@@ -46,7 +46,6 @@ public class TransactionsActivationProjectionHandler
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.ACTIVATED,
                 clientId
         );
 

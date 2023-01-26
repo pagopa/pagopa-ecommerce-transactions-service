@@ -83,7 +83,6 @@ class TransactionsActivationProjectionHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.ACTIVATED,
                 it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
 

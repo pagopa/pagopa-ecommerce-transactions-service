@@ -99,7 +99,6 @@ class TransactionServiceTest {
                 new Email("foo@example.com"),
                 "faultCode",
                 "faultCodeString",
-                TransactionStatusDto.ACTIVATED,
                 Transaction.ClientId.CHECKOUT
         );
 
@@ -115,7 +114,6 @@ class TransactionServiceTest {
                         )
                 ),
                 new Email("foo@example.com"),
-                TransactionStatusDto.ACTIVATION_REQUESTED,
                 Transaction.ClientId.CHECKOUT
         );
 
@@ -199,7 +197,6 @@ class TransactionServiceTest {
                 new Email("foo@example.com"),
                 "faultCode",
                 "faultCodeString",
-                TransactionStatusDto.ACTIVATED,
                 Transaction.ClientId.CHECKOUT
         );
 
@@ -207,7 +204,6 @@ class TransactionServiceTest {
                 new TransactionId(TRANSACTION_ID),
                 PaymentNoticeList,
                 new Email("foo@example.com"),
-                TransactionStatusDto.ACTIVATION_REQUESTED,
                 Transaction.ClientId.CHECKOUT
         );
 

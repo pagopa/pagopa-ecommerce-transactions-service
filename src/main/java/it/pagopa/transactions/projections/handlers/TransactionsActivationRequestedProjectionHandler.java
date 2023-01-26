@@ -45,7 +45,6 @@ public class TransactionsActivationRequestedProjectionHandler
                 transactionId,
                 paymentNoticeList,
                 email,
-                TransactionStatusDto.ACTIVATION_REQUESTED,
                 transactionActivationRequestedEvent.getData().getClientId()
         );
 

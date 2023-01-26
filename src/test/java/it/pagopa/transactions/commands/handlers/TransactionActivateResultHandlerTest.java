@@ -84,7 +84,6 @@ class TransactionActivateResultHandlerTest {
                         )
                 ),
                 new Email(requestDto.getEmail()),
-                TransactionStatusDto.ACTIVATION_REQUESTED,
                 it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
 
@@ -143,7 +142,6 @@ class TransactionActivateResultHandlerTest {
                         )
                 ),
                 new Email(requestDto.getEmail()),
-                TransactionStatusDto.ACTIVATION_REQUESTED,
                 it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
 
@@ -254,7 +252,6 @@ class TransactionActivateResultHandlerTest {
                         )
                 ),
                 new Email(requestDto.getEmail()),
-                TransactionStatusDto.AUTHORIZED,
                 it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
 
@@ -313,7 +310,6 @@ class TransactionActivateResultHandlerTest {
                         )
                 ),
                 new Email(requestDto.getEmail()),
-                TransactionStatusDto.ACTIVATION_REQUESTED,
                 it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
 

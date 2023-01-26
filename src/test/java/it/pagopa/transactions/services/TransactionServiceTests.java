@@ -310,7 +310,6 @@ public class TransactionServiceTests {
                 new Email(transactionDocument.getEmail()),
                 "faultCode",
                 "faultCodeString",
-                transactionDocument.getStatus(),
                 Transaction.ClientId.CHECKOUT
         );
 
@@ -433,7 +432,6 @@ public class TransactionServiceTests {
                 new Email(transactionDocument.getEmail()),
                 null,
                 null,
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED,
                 Transaction.ClientId.CHECKOUT
         );
 

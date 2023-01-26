@@ -71,7 +71,6 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
                 it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
 
@@ -117,7 +116,6 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
                 it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
@@ -193,7 +191,6 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
                 it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
 
@@ -263,7 +260,6 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
                 it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
@@ -350,7 +346,6 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
                 it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
 
@@ -431,7 +426,6 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 "faultCode",
                 "faultCodeString",
-                TransactionStatusDto.ACTIVATED,
                 it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
 
@@ -510,7 +504,6 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
                 it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
 
@@ -587,7 +580,6 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
                 it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto().cvv("345").pan("16589654852")
@@ -666,7 +658,6 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
                 it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
 
@@ -738,7 +729,6 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
                 it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto().cvv("345").pan("16589654852")
@@ -812,7 +802,6 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
                 it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
 
