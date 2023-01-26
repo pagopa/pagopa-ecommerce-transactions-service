@@ -72,7 +72,7 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -118,7 +118,7 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
@@ -194,7 +194,7 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -264,7 +264,7 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .detailType("card")
@@ -351,7 +351,7 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -432,7 +432,7 @@ class PaymentGatewayClientTest {
                 "faultCode",
                 "faultCodeString",
                 TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -511,7 +511,7 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -588,7 +588,7 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto().cvv("345").pan("16589654852")
                 .expiryDate("203012");
@@ -667,7 +667,7 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -739,7 +739,7 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto().cvv("345").pan("16589654852")
                 .expiryDate("203012");
@@ -813,7 +813,7 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(

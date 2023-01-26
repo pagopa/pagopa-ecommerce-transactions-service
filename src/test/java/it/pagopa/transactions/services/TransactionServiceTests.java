@@ -309,7 +309,7 @@ public class TransactionServiceTests {
                 "faultCode",
                 "faultCodeString",
                 transactionDocument.getStatus(),
-                Transaction.ClientId.UNKNOWN
+                Transaction.ClientId.CHECKOUT
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -432,7 +432,7 @@ public class TransactionServiceTests {
                 null,
                 null,
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED,
-                Transaction.ClientId.UNKNOWN
+                Transaction.ClientId.CHECKOUT
         );
 
         TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(

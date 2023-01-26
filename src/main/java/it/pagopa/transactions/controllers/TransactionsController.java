@@ -48,12 +48,12 @@ public class TransactionsController implements TransactionsApi {
 
     @Override
     public Mono<ResponseEntity<NewTransactionResponseDto>> newTransaction(
-                                                                          Mono<NewTransactionRequestDto> newTransactionRequest,
-                                                                          ClientIdDto clientIdDto,
+                                                                          ClientIdDto xClientId,
+                                                                          Mono<NewTransactionRequestDto> newTransactionRequestDto,
                                                                           ServerWebExchange exchange
     ) {
 
-        return newTransactionRequest
+        return newTransactionRequestDto
                 .flatMap(ntr -> {
                     log.info(
                             "newTransaction rptIDs {} ",
@@ -62,7 +62,7 @@ public class TransactionsController implements TransactionsApi {
                                     ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).toList()
                             )
                     );
-                    return transactionsService.newTransaction(ntr, clientIdDto);
+                    return transactionsService.newTransaction(ntr, xClientId);
                 })
                 .map(ResponseEntity::ok);
     }
