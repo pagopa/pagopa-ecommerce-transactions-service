@@ -276,8 +276,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
-                "VPOS",
-                new PostePayAuthRequestDetailsDto().detailType("VPOS").accountEmail("test@test.it")
+                "GPAY",
+                new PostePayAuthRequestDetailsDto().detailType("GPAY").accountEmail("test@test.it")
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -287,6 +287,7 @@ class TransactionRequestAuthorizizationHandlerTest {
 
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData)).thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData)).thenReturn(Mono.empty());
+        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData)).thenReturn(Mono.empty());
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectErrorMatches(error -> error instanceof BadRequestException)
