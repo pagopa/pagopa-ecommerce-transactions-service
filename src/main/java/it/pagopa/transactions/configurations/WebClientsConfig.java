@@ -172,18 +172,18 @@ public class WebClientsConfig {
 
     @Bean(name = "creditCardInternalApiClient")
     public CreditCardInternalApi creditCardInternalApiClient(
-            @Value(
-                    "${paymentTransactionsGateway.uri}"
-            ) String paymentTransactionGatewayUri,
-            @Value(
-                    "${paymentTransactionsGateway.readTimeout}"
-            ) int paymentTransactionGatewayReadTimeout,
-            @Value(
-                    "${paymentTransactionsGateway.connectionTimeout}"
-            ) int paymentTransactionGatewayConnectionTimeout,
-            @Value(
-                    "${paymentTransactionsGateway.apiKey}"
-            ) String apiKey
+                                                             @Value(
+                                                                 "${paymentTransactionsGateway.uri}"
+                                                             ) String paymentTransactionGatewayUri,
+                                                             @Value(
+                                                                 "${paymentTransactionsGateway.readTimeout}"
+                                                             ) int paymentTransactionGatewayReadTimeout,
+                                                             @Value(
+                                                                 "${paymentTransactionsGateway.connectionTimeout}"
+                                                             ) int paymentTransactionGatewayConnectionTimeout,
+                                                             @Value(
+                                                                 "${paymentTransactionsGateway.apiKey}"
+                                                             ) String apiKey
     ) {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, paymentTransactionGatewayConnectionTimeout)
@@ -207,7 +207,6 @@ public class WebClientsConfig {
         apiClient.setApiKey(apiKey);
         return new CreditCardInternalApi(apiClient);
     }
-
 
     @Bean(name = "ecommercePaymentInstrumentsWebClient")
     public it.pagopa.generated.ecommerce.paymentinstruments.v1.api.DefaultApi ecommercePaymentInstrumentsWebClient(
