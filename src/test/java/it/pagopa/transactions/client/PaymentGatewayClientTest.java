@@ -4,12 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.generated.ecommerce.gateway.v1.api.CreditCardInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthRequestDto;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthRequestDto;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
+import it.pagopa.generated.ecommerce.gateway.v1.dto.*;
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.PostePayAuthRequestDetailsDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
@@ -46,6 +44,9 @@ class PaymentGatewayClientTest {
 
     @Mock
     PostePayInternalApi postePayInternalApi;
+
+    @Mock
+    CreditCardInternalApi creditCardInternalApi;
 
     @Mock
     XPayInternalApi xPayInternalApi;
@@ -175,6 +176,7 @@ class PaymentGatewayClientTest {
 
         verify(xPayInternalApi, times(1)).authRequestXpay(any(), any());
         verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
+        verify(creditCardInternalApi, times(0)).step0CreditCard(any(), any(), any());
     }
 
     @Test
@@ -245,6 +247,92 @@ class PaymentGatewayClientTest {
 
         verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
         verify(postePayInternalApi, times(1)).authRequest(any(), any(), any());
+        verify(creditCardInternalApi, times(0)).step0CreditCard(any(), any(), any());
+    }
+
+    @Test
+    void shouldReturnAuthorizationResponseForCreditCardWithVPOS() throws JsonProcessingException {
+        TransactionActivated transaction = new TransactionActivated(
+                new TransactionId(transactionIdUUID),
+                List.of(
+                        new PaymentNotice(
+                                new PaymentToken("paymentToken"),
+                                new RptId("77777777777111111111111111111"),
+                                new TransactionAmount(100),
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null)
+                        )
+                ),
+                new Email("foo@example.com"),
+                null,
+                null,
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+        );
+        CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
+                .cvv("345")
+                .pan("16589654852")
+                .expiryDate("203012")
+                .detailType("card")
+                .holderName("John Doe");
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction,
+                10,
+                "paymentInstrumentId",
+                "pspId",
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName",
+                "VPOS",
+                cardDetails
+        );
+
+        CreditCardAuthRequestDto creditCardAuthRequestDto = new CreditCardAuthRequestDto()
+                .securitycode(cardDetails.getCvv())
+                .pan(cardDetails.getPan())
+                .expireDate(cardDetails.getExpiryDate())
+                .idTransaction(transactionIdUUID.toString())
+                .amount(
+                        BigDecimal.valueOf(
+                                transaction.getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                        + authorizationData.fee()
+                        )
+                )
+                .emailCh("mail@mail.com")
+                .circuit("VISA")
+                .holder("Mario Rossi")
+                .isFirstPayment(true)
+                .reqRefNumber("reqRefNumber")
+                .threeDsData("threeDsData")
+                .idPsp("idPsp")
+                ;
+
+        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
+        String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
+
+        CreditCardAuthResponseDto creditCardAuthResponseDto = new CreditCardAuthResponseDto()
+                .requestId("requestId")
+                .urlRedirect("https://example.com");
+
+        /* preconditions */
+        Mockito.when(client.requestCreditCardAuthorization(authorizationData))
+                .thenReturn(Mono.just(creditCardAuthResponseDto));
+
+        /* test */
+        StepVerifier.create(client.requestXPayAuthorization(authorizationData))
+                .expectNextCount(0)
+                .verifyComplete();
+
+        StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
+                .expectNextCount(0)
+                .verifyComplete();
+
+        verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
+        verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
+        verify(creditCardInternalApi, times(1)).step0CreditCard(any(), any(), any());
     }
 
     @Test
@@ -332,6 +420,7 @@ class PaymentGatewayClientTest {
 
         verify(xPayInternalApi, times(1)).authRequestXpay(any(), any());
         verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
+        verify(creditCardInternalApi, times(0)).step0CreditCard(any(), any(), any());
     }
 
     @Test
@@ -413,6 +502,95 @@ class PaymentGatewayClientTest {
 
         verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
         verify(postePayInternalApi, times(1)).authRequest(any(), any(), any());
+        verify(creditCardInternalApi, times(0)).step0CreditCard(any(), any(), any());
+    }
+
+    @Test
+    void shouldThrowAlreadyProcessedOn401ForVPOS() throws JsonProcessingException {
+        TransactionActivated transaction = new TransactionActivated(
+                new TransactionId(transactionIdUUID),
+                List.of(
+                        new PaymentNotice(
+                                new PaymentToken("paymentToken"),
+                                new RptId("77777777777111111111111111111"),
+                                new TransactionAmount(100),
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null)
+                        )
+                ),
+                new Email("foo@example.com"),
+                null,
+                null,
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+        );
+        CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
+                .detailType("card")
+                .cvv("345")
+                .pan("16589654852")
+                .expiryDate("203012");
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction,
+                10,
+                "paymentInstrumentId",
+                "pspId",
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName",
+                "VPOS",
+                cardDetails
+        );
+
+        XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
+                .cvv(cardDetails.getCvv())
+                .pan(cardDetails.getPan())
+                .exipiryDate(cardDetails.getExpiryDate())
+                .idTransaction(transactionIdUUID.toString())
+                .grandTotal(
+                        BigDecimal.valueOf(
+                                transaction.getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                        + authorizationData.fee()
+                        )
+                );
+
+        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
+        String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
+
+        /* preconditions */
+        Mockito.when(xPayInternalApi.authRequestXpay(xPayAuthRequestDto, encodedMdcFields))
+                .thenReturn(
+                        Mono.error(
+                                new WebClientResponseException(
+                                        "api error",
+                                        HttpStatus.UNAUTHORIZED.value(),
+                                        "Unauthorized",
+                                        null,
+                                        null,
+                                        null
+                                )
+                        )
+                );
+
+        /* test */
+
+        StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
+                .expectNextCount(0)
+                .verifyComplete();
+
+        StepVerifier.create(client.requestXPayAuthorization(authorizationData))
+                .expectErrorMatches(
+                        error -> error instanceof AlreadyProcessedException &&
+                                ((AlreadyProcessedException) error).getTransactionId()
+                                        .equals(transaction.getTransactionId())
+                )
+                .verify();
+
+        verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
+        verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
+        verify(creditCardInternalApi, times(1)).step0CreditCard(any(), any(), any());
     }
 
     @Test
@@ -492,6 +670,7 @@ class PaymentGatewayClientTest {
 
         verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
         verify(postePayInternalApi, times(1)).authRequest(any(), any(), any());
+        verify(creditCardInternalApi, times(0)).step0CreditCard(any(), any(), any());
     }
 
     @Test
@@ -648,6 +827,87 @@ class PaymentGatewayClientTest {
 
         verify(xPayInternalApi, times(1)).authRequestXpay(any(), any());
         verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
+        verify(creditCardInternalApi, times(0)).step0CreditCard(any(), any(), any());
+    }
+
+    @Test
+    void shouldThrowBadGatewayOn500ForCreditCardWithVPOS() throws JsonProcessingException {
+        TransactionActivated transaction = new TransactionActivated(
+                new TransactionId(transactionIdUUID),
+                List.of(
+                        new PaymentNotice(
+                                new PaymentToken("paymentToken"),
+                                new RptId("77777777777111111111111111111"),
+                                new TransactionAmount(100),
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null)
+                        )
+                ),
+                new Email("foo@example.com"),
+                null,
+                null,
+                TransactionStatusDto.ACTIVATED,
+                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+        );
+        CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto().cvv("345").pan("16589654852")
+                .expiryDate("203012");
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction,
+                10,
+                "paymentInstrumentId",
+                "pspId",
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName",
+                "XPAY",
+                cardDetails
+        );
+
+        XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
+                .cvv(cardDetails.getCvv())
+                .pan(cardDetails.getPan())
+                .exipiryDate(cardDetails.getExpiryDate())
+                .idTransaction(transactionIdUUID.toString())
+                .grandTotal(
+                        BigDecimal.valueOf(
+                                transaction.getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                        + authorizationData.fee()
+                        )
+                );
+
+        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
+        String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
+
+        /* preconditions */
+        Mockito.when(creditCardInternalApi.step0CreditCard(c, encodedMdcFields))
+                .thenReturn(
+                        Mono.error(
+                                new WebClientResponseException(
+                                        "api error",
+                                        HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                                        "Internal server error",
+                                        null,
+                                        null,
+                                        null
+                                )
+                        )
+                );
+
+        /* test */
+        StepVerifier.create(client.requestXPayAuthorization(authorizationData))
+                .expectErrorMatches(error -> error instanceof BadGatewayException)
+                .verify();
+
+        StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
+                .expectNextCount(0)
+                .verifyComplete();
+
+        verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
+        verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
+        verify(creditCardInternalApi, times(1)).step0CreditCard(any(), any(), any());
     }
 
     @Test

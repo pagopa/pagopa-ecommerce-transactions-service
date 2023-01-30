@@ -176,7 +176,7 @@ public class PaymentGatewayClient {
                 .flatMap(
                         creditCardAuthRequestDto -> creditCardInternalApiClient
                                 .step0CreditCard(
-                                        "clienId",
+                                        "Web",
                                         creditCardAuthRequestDto,
                                         encodeMdcFields(authorizationData)
                                 )
