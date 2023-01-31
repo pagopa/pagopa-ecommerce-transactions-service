@@ -166,8 +166,8 @@ public class TransactionsService {
         return Mono.just(requestAuthorizationRequestDto)
                 .filter(
                         requestTransactionAuht -> ((requestTransactionAuht.getThreeDsData() != null
-                                && paymentGatewayId.equals("VPOS")) ||
-                                !paymentGatewayId.equals("VPOS"))
+                                && "VPOS".equals(paymentGatewayId)) ||
+                                !"VPOS".equals(paymentGatewayId))
                 )
                 .switchIfEmpty(Mono.error(BadRequestException::new)).then(
                         transactionsViewRepository
