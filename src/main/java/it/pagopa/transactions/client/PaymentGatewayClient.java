@@ -163,6 +163,7 @@ public class PaymentGatewayClient {
                                         .threeDsData("threeDsData") // TI BE CHECKED
                                         .circuit("VISA") // TO BE PASSED FROM CLIENT
                                         .reqRefNumber("reqRefNumber") // Is this the authRequestId ?
+                                        .idPsp(authorizationData.pspId()) // TO BE PASSED FROM CLIENT
                         );
                     } else {
                         creditCardAuthRequest = Mono.error(
