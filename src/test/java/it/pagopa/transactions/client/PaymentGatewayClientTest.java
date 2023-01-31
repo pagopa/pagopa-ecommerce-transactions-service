@@ -129,8 +129,7 @@ class PaymentGatewayClientTest {
                 .cvv("345")
                 .pan("16589654852")
                 .expiryDate("203012")
-                .detailType("card")
-                .holderName("John Doe");
+                .detailType("card");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,

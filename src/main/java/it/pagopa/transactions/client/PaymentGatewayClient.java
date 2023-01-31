@@ -159,11 +159,11 @@ public class PaymentGatewayClient {
                                         .emailCh(authorizationData.transaction().getEmail().value())
                                         .holder(cardData.getHolderName())
                                         .securitycode(cardData.getCvv())
-                                        .isFirstPayment(true) // TO BE CHECKED
-                                        .threeDsData("threeDsData") // TI BE CHECKED
-                                        .circuit("VISA") // TO BE PASSED FROM CLIENT
-                                        .reqRefNumber("reqRefNumber") // Is this the authRequestId ?
-                                        .idPsp(authorizationData.pspId()) // TO BE PASSED FROM CLIENT
+                                        .isFirstPayment(true) // TODO TO BE CHECKED
+                                        .threeDsData("threeDsData") // TODO From client
+                                        .circuit("VISA") // TODO Add field to card details
+                                        .reqRefNumber("reqRefNumber") // TODO From client
+                                        .idPsp(authorizationData.pspId())
                         );
                     } else {
                         creditCardAuthRequest = Mono.error(
