@@ -4,7 +4,7 @@ microservice-chart:
   fullnameOverride: ""
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.7.0" #improve
+    tag: "0.8.0" #improve
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -26,7 +26,7 @@ microservice-chart:
     create: true
     type: ClusterIP
     ports:
-    - 8080
+      - 8080
   ingress:
     create: true
     host: "weudev.ecommerce.internal.dev.platform.pagopa.it"
