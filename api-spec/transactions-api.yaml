@@ -392,9 +392,6 @@ components:
             mapping:
               postepay: "#/components/schemas/PostePayAuthRequestDetails"
               card: "#/components/schemas/CardAuthRequestDetails"
-        threeDsData:
-          type: string
-          description: three ds data evaluated from client
       required:
         - amount
         - fee
@@ -442,6 +439,9 @@ components:
         brand:
           type: string
           description: The card brand name
+        threeDsData:
+          type: string
+          description: three ds data evaluated from client
       required:
         - detailType
         - cvv
@@ -449,6 +449,7 @@ components:
         - expiryDate
         - holderName
         - brand
+        - threeDsData
       example:
         detailType: "card"
         cvv: 000
@@ -456,6 +457,7 @@ components:
         expiryDate: "209901"
         holderName: "Name Surname"
         brand: "VISA"
+        threeDsData: "threeDsData"
     RequestAuthorizationResponse:
       type: object
       description: Response body for requesting an authorization for a transaction

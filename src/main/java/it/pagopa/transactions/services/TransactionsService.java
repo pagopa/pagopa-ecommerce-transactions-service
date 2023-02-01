@@ -163,176 +163,168 @@ public class TransactionsService {
                                                                                  String paymentGatewayId,
                                                                                  RequestAuthorizationRequestDto requestAuthorizationRequestDto
     ) {
-        return Mono.just(requestAuthorizationRequestDto)
-                .filter(
-                        requestTransactionAuht -> ((requestTransactionAuht.getThreeDsData() != null
-                                && "VPOS".equals(paymentGatewayId)) ||
-                                !"VPOS".equals(paymentGatewayId))
+        return transactionsViewRepository
+                .findById(transactionId)
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+                .flatMap(
+                        transaction -> {
+                            Integer amountTotal = transaction.getPaymentNotices().stream()
+                                    .mapToInt(
+                                            it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount
+                                    ).sum();
+                            log.info(
+                                    "Authorization request amount validation for transactionId: {}",
+                                    transactionId
+                            );
+                            return !amountTotal.equals(requestAuthorizationRequestDto.getAmount())
+                                    ? Mono.error(
+                                            new TransactionAmountMismatchException(
+                                                    requestAuthorizationRequestDto.getAmount(),
+                                                    amountTotal
+                                            )
+                                    )
+                                    : Mono.just(transaction);
+                        }
                 )
-                .switchIfEmpty(Mono.error(BadRequestException::new)).then(
-                        transactionsViewRepository
-                                .findById(transactionId)
-                                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
-                                .flatMap(
-                                        transaction -> {
-                                            Integer amountTotal = transaction.getPaymentNotices().stream()
-                                                    .mapToInt(
-                                                            it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount
-                                                    ).sum();
-                                            log.info(
-                                                    "Authorization request amount validation for transactionId: {}",
-                                                    transactionId
-                                            );
-                                            return !amountTotal.equals(requestAuthorizationRequestDto.getAmount())
-                                                    ? Mono.error(
-                                                            new TransactionAmountMismatchException(
-                                                                    requestAuthorizationRequestDto.getAmount(),
-                                                                    amountTotal
-                                                            )
-                                                    )
-                                                    : Mono.just(transaction);
-                                        }
-                                )
-                                .flatMap(
-                                        transaction -> {
-                                            log.info(
-                                                    "Authorization psp validation for transactionId: {}",
-                                                    transactionId
-                                            );
-                                            Integer amountTotal = transaction.getPaymentNotices().stream()
-                                                    .mapToInt(
-                                                            it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount
-                                                    ).sum();
-                                            return ecommercePaymentInstrumentsClient
-                                                    .getPSPs(
-                                                            amountTotal,
-                                                            requestAuthorizationRequestDto.getLanguage().getValue(),
-                                                            requestAuthorizationRequestDto.getPaymentInstrumentId()
-                                                    )
-                                                    .mapNotNull(
-                                                            pspResponse -> pspResponse.getPsp().stream()
-                                                                    .filter(
-                                                                            psp -> psp.getCode()
-                                                                                    .equals(
-                                                                                            requestAuthorizationRequestDto
-                                                                                                    .getPspId()
-                                                                                    )
-                                                                                    && psp.getFixedCost()
-                                                                                            .equals(
-                                                                                                    Long.valueOf(
-                                                                                                            requestAuthorizationRequestDto
-                                                                                                                    .getFee()
-                                                                                                    )
-                                                                                            )
-                                                                    )
-                                                                    .findFirst()
-                                                                    .orElse(null)
-                                                    )
-                                                    .map(psp -> Tuples.of(transaction, psp));
-                                        }
-                                )
-                                .flatMap(transactionAndPsp -> {
-                                    log.info(
-                                            "Requesting payment instrument data for id {}",
+                .flatMap(
+                        transaction -> {
+                            log.info(
+                                    "Authorization psp validation for transactionId: {}",
+                                    transactionId
+                            );
+                            Integer amountTotal = transaction.getPaymentNotices().stream()
+                                    .mapToInt(
+                                            it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount
+                                    ).sum();
+                            return ecommercePaymentInstrumentsClient
+                                    .getPSPs(
+                                            amountTotal,
+                                            requestAuthorizationRequestDto.getLanguage().getValue(),
                                             requestAuthorizationRequestDto.getPaymentInstrumentId()
-                                    );
-                                    return ecommercePaymentInstrumentsClient
-                                            .getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId())
-                                            .map(
-                                                    paymentMethod -> Tuples
-                                                            .of(
-                                                                    transactionAndPsp.getT1(),
-                                                                    transactionAndPsp.getT2(),
-                                                                    paymentMethod
-                                                            )
-                                            );
-                                })
-                                .switchIfEmpty(
-                                        Mono.error(
-                                                new UnsatisfiablePspRequestException(
-                                                        new PaymentToken(transactionId),
-                                                        requestAuthorizationRequestDto.getLanguage(),
-                                                        requestAuthorizationRequestDto.getFee()
-                                                )
-                                        )
-                                )
-                                .flatMap(
-                                        args -> {
-                                            it.pagopa.ecommerce.commons.documents.Transaction transactionDocument = args
-                                                    .getT1();
-                                            PspDto psp = args.getT2();
-                                            PaymentMethodResponseDto paymentMethod = args.getT3();
-
-                                            log.info(
-                                                    "Requesting authorization for transactionId: {}",
-                                                    transactionDocument.getTransactionId()
-                                            );
-
-                                            TransactionActivated transaction = new TransactionActivated(
-                                                    new TransactionId(
-                                                            UUID.fromString(transactionDocument.getTransactionId())
-                                                    ),
-                                                    transactionDocument.getPaymentNotices().stream()
-                                                            .map(
-                                                                    paymentNotice -> new PaymentNotice(
-                                                                            new PaymentToken(
-                                                                                    paymentNotice.getPaymentToken()
-                                                                            ),
-                                                                            new RptId(paymentNotice.getRptId()),
-                                                                            new TransactionAmount(
-                                                                                    paymentNotice.getAmount()
-                                                                            ),
-                                                                            new TransactionDescription(
-                                                                                    paymentNotice.getDescription()
-                                                                            ),
-                                                                            new PaymentContextCode(
-                                                                                    paymentNotice
-                                                                                            .getPaymentContextCode()
-                                                                            )
+                                    )
+                                    .mapNotNull(
+                                            pspResponse -> pspResponse.getPsp().stream()
+                                                    .filter(
+                                                            psp -> psp.getCode()
+                                                                    .equals(
+                                                                            requestAuthorizationRequestDto
+                                                                                    .getPspId()
                                                                     )
-                                                            ).toList(),
-                                                    new Email(transactionDocument.getEmail()),
-                                                    null,
-                                                    null,
-                                                    transactionDocument.getStatus(),
-                                                    transactionDocument.getClientId()
-                                            );
+                                                                    && psp.getFixedCost()
+                                                                            .equals(
+                                                                                    Long.valueOf(
+                                                                                            requestAuthorizationRequestDto
+                                                                                                    .getFee()
+                                                                                    )
+                                                                            )
+                                                    )
+                                                    .findFirst()
+                                                    .orElse(null)
+                                    )
+                                    .map(psp -> Tuples.of(transaction, psp));
+                        }
+                )
+                .flatMap(transactionAndPsp -> {
+                    log.info(
+                            "Requesting payment instrument data for id {}",
+                            requestAuthorizationRequestDto.getPaymentInstrumentId()
+                    );
+                    return ecommercePaymentInstrumentsClient
+                            .getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId())
+                            .map(
+                                    paymentMethod -> Tuples
+                                            .of(
+                                                    transactionAndPsp.getT1(),
+                                                    transactionAndPsp.getT2(),
+                                                    paymentMethod
+                                            )
+                            );
+                })
+                .switchIfEmpty(
+                        Mono.error(
+                                new UnsatisfiablePspRequestException(
+                                        new PaymentToken(transactionId),
+                                        requestAuthorizationRequestDto.getLanguage(),
+                                        requestAuthorizationRequestDto.getFee()
+                                )
+                        )
+                )
+                .flatMap(
+                        args -> {
+                            it.pagopa.ecommerce.commons.documents.Transaction transactionDocument = args
+                                    .getT1();
+                            PspDto psp = args.getT2();
+                            PaymentMethodResponseDto paymentMethod = args.getT3();
 
-                                            AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                                                    transaction,
-                                                    requestAuthorizationRequestDto.getFee(),
-                                                    requestAuthorizationRequestDto.getPaymentInstrumentId(),
-                                                    requestAuthorizationRequestDto.getPspId(),
-                                                    psp.getPaymentTypeCode(),
-                                                    psp.getBrokerName(),
-                                                    psp.getChannelCode(),
-                                                    paymentMethod.getName(),
-                                                    psp.getBusinessName(),
-                                                    paymentGatewayId,
-                                                    requestAuthorizationRequestDto.getDetails()
-                                            );
+                            log.info(
+                                    "Requesting authorization for transactionId: {}",
+                                    transactionDocument.getTransactionId()
+                            );
 
-                                            // FIXME Handle multiple rtpId
-                                            TransactionRequestAuthorizationCommand transactionRequestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                                                    transaction.getPaymentNotices().get(0).rptId(),
-                                                    authorizationData
-                                            );
-
-                                            return transactionRequestAuthorizationHandler
-                                                    .handle(transactionRequestAuthorizationCommand)
-                                                    .doOnNext(
-                                                            res -> log.info(
-                                                                    "Requested authorization for transaction: {}",
-                                                                    transactionDocument.getTransactionId()
+                            TransactionActivated transaction = new TransactionActivated(
+                                    new TransactionId(
+                                            UUID.fromString(transactionDocument.getTransactionId())
+                                    ),
+                                    transactionDocument.getPaymentNotices().stream()
+                                            .map(
+                                                    paymentNotice -> new PaymentNotice(
+                                                            new PaymentToken(
+                                                                    paymentNotice.getPaymentToken()
+                                                            ),
+                                                            new RptId(paymentNotice.getRptId()),
+                                                            new TransactionAmount(
+                                                                    paymentNotice.getAmount()
+                                                            ),
+                                                            new TransactionDescription(
+                                                                    paymentNotice.getDescription()
+                                                            ),
+                                                            new PaymentContextCode(
+                                                                    paymentNotice
+                                                                            .getPaymentContextCode()
                                                             )
                                                     )
-                                                    .flatMap(
-                                                            res -> authorizationProjectionHandler
-                                                                    .handle(authorizationData)
-                                                                    .thenReturn(res)
-                                                    );
-                                        }
-                                )
+                                            ).toList(),
+                                    new Email(transactionDocument.getEmail()),
+                                    null,
+                                    null,
+                                    transactionDocument.getStatus(),
+                                    transactionDocument.getClientId()
+                            );
+
+                            AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                                    transaction,
+                                    requestAuthorizationRequestDto.getFee(),
+                                    requestAuthorizationRequestDto.getPaymentInstrumentId(),
+                                    requestAuthorizationRequestDto.getPspId(),
+                                    psp.getPaymentTypeCode(),
+                                    psp.getBrokerName(),
+                                    psp.getChannelCode(),
+                                    paymentMethod.getName(),
+                                    psp.getBusinessName(),
+                                    paymentGatewayId,
+                                    requestAuthorizationRequestDto.getDetails()
+                            );
+
+                            // FIXME Handle multiple rtpId
+                            TransactionRequestAuthorizationCommand transactionRequestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
+                                    transaction.getPaymentNotices().get(0).rptId(),
+                                    authorizationData
+                            );
+
+                            return transactionRequestAuthorizationHandler
+                                    .handle(transactionRequestAuthorizationCommand)
+                                    .doOnNext(
+                                            res -> log.info(
+                                                    "Requested authorization for transaction: {}",
+                                                    transactionDocument.getTransactionId()
+                                            )
+                                    )
+                                    .flatMap(
+                                            res -> authorizationProjectionHandler
+                                                    .handle(authorizationData)
+                                                    .thenReturn(res)
+                                    );
+                        }
                 );
     }
 
