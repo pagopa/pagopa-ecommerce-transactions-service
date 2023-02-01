@@ -129,7 +129,11 @@ class PaymentGatewayClientTest {
                 .cvv("345")
                 .pan("16589654852")
                 .expiryDate("203012")
-                .detailType("card");
+                .detailType("card")
+                .holderName("John Doe")
+                .brand("VISA")
+                .threeDsData("threeDsData");
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
@@ -372,7 +376,9 @@ class PaymentGatewayClientTest {
                 .detailType("card")
                 .cvv("345")
                 .pan("16589654852")
-                .expiryDate("203012");
+                .expiryDate("203012")
+                .brand("VISA")
+                .threeDsData("threeDsData");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
@@ -697,8 +703,12 @@ class PaymentGatewayClientTest {
                 TransactionStatusDto.ACTIVATED,
                 it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
         );
-        CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto().cvv("345").pan("16589654852")
-                .expiryDate("203012");
+        CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
+                .cvv("345")
+                .pan("16589654852")
+                .expiryDate("203012")
+                .brand("VISA")
+                .threeDsData("threeDsData");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
@@ -949,8 +959,12 @@ class PaymentGatewayClientTest {
                 TransactionStatusDto.ACTIVATED,
                 it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
         );
-        CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto().cvv("345").pan("16589654852")
-                .expiryDate("203012");
+        CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
+                .cvv("345")
+                .pan("16589654852")
+                .expiryDate("203012")
+                .brand("VISA")
+                .threeDsData("threeDsData");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
