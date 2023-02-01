@@ -441,7 +441,7 @@ components:
           description: The card brand name
         threeDsData:
           type: string
-          description: three ds data evaluated from client
+          description: The 3ds data evaluated by the client
       required:
         - detailType
         - cvv
