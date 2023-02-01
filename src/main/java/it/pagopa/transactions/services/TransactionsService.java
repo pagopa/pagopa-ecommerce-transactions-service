@@ -1,6 +1,5 @@
 package it.pagopa.transactions.services;
 
-import com.azure.cosmos.implementation.BadRequestException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import it.pagopa.ecommerce.commons.documents.Transaction.ClientId;
