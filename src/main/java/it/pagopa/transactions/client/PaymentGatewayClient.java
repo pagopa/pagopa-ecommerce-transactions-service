@@ -160,9 +160,8 @@ public class PaymentGatewayClient {
                                         .holder(cardData.getHolderName())
                                         .securitycode(cardData.getCvv())
                                         .isFirstPayment(true) // TODO TO BE CHECKED
-                                        .threeDsData("threeDsData") // TODO From client
-                                        .circuit("VISA") // TODO Add field to card details
-                                        .reqRefNumber("reqRefNumber") // TODO From client
+                                        .threeDsData(cardData.getThreeDsData())
+                                        .circuit(cardData.getBrand())
                                         .idPsp(authorizationData.pspId())
                         );
                     } else {
@@ -177,7 +176,6 @@ public class PaymentGatewayClient {
                 .flatMap(
                         creditCardAuthRequestDto -> creditCardInternalApiClient
                                 .step0CreditCard(
-                                        "Web",
                                         creditCardAuthRequestDto,
                                         encodeMdcFields(authorizationData)
                                 )
