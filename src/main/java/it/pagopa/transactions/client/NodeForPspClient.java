@@ -1,13 +1,15 @@
 package it.pagopa.transactions.client;
 
-import javax.xml.bind.JAXBElement;
-
 import it.pagopa.generated.ecommerce.nodo.v1.dto.ClosePaymentRequestDto;
-import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
+import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
+import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
+import it.pagopa.generated.transactions.model.ActivatePaymentNoticeRes;
 import it.pagopa.generated.transactions.model.VerifyPaymentNoticeReq;
 import it.pagopa.generated.transactions.model.VerifyPaymentNoticeRes;
 import it.pagopa.transactions.exceptions.BadGatewayException;
+import it.pagopa.transactions.utils.soap.SoapEnvelope;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -16,12 +18,9 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
-
-import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
-import it.pagopa.generated.transactions.model.ActivatePaymentNoticeRes;
-import it.pagopa.transactions.utils.soap.SoapEnvelope;
-import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
+
+import javax.xml.bind.JAXBElement;
 
 @Component
 @Slf4j

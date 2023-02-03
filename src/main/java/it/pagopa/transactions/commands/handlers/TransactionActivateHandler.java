@@ -129,9 +129,7 @@ public class TransactionActivateHandler
                                                             .activatePaymentRequest(
                                                                     new RptId(paymentNotice.getRptId()),
                                                                     partialPaymentRequestInfo,
-                                                                    paymentContextCode,
                                                                     paymentNotice.getAmount(),
-                                                                    multiplePaymentNotices,
                                                                     transactionId
                                                             )
                                                             .doOnSuccess(

@@ -3,9 +3,6 @@ package it.pagopa.transactions.client;
 import it.pagopa.generated.ecommerce.nodo.v1.ApiClient;
 import it.pagopa.generated.ecommerce.nodo.v1.api.NodoApi;
 import it.pagopa.generated.ecommerce.nodo.v1.dto.InformazioniPagamentoDto;
-import it.pagopa.generated.nodoperpsp.model.NodoVerificaRPTRisposta;
-import it.pagopa.generated.transactions.model.*;
-import it.pagopa.transactions.utils.soap.SoapEnvelope;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,14 +15,12 @@ import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.net.URI;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)

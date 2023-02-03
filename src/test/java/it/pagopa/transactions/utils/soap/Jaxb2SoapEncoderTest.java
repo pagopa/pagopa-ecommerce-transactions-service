@@ -1,6 +1,5 @@
 package it.pagopa.transactions.utils.soap;
 
-import it.pagopa.transactions.utils.soap.Jaxb2SoapEncoder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

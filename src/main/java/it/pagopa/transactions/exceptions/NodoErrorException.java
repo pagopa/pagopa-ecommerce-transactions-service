@@ -1,6 +1,5 @@
 package it.pagopa.transactions.exceptions;
 
-import it.pagopa.generated.nodoperpsp.model.FaultBean;
 import it.pagopa.generated.transactions.model.CtFaultBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -15,10 +14,7 @@ public class NodoErrorException extends RuntimeException {
     private final String faultCode;
 
     public NodoErrorException(CtFaultBean faultBean) {
-        this.faultCode = faultBean.getFaultCode();
-    }
 
-    public NodoErrorException(FaultBean faultBean) {
         this.faultCode = getFaultCodeFromBean(faultBean);
     }
 
@@ -26,7 +22,7 @@ public class NodoErrorException extends RuntimeException {
         return faultCode;
     }
 
-    private static String getFaultCodeFromBean(FaultBean faultBean) {
+    private static String getFaultCodeFromBean(CtFaultBean faultBean) {
         String description = faultBean.getDescription();
 
         if (description != null) {
