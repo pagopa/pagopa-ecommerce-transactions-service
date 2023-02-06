@@ -586,6 +586,18 @@ class TransactionsControllerTest {
 
     }
 
+    @Test
+    void shouldReturnResponseEntityWithInvalidNodoResponseReceivedError() {
+        ResponseEntity<ProblemJsonDto> responseEntity = transactionsController
+                .invalidNodoResponse(new InvalidNodoResponseException("Invalid payment token received"));
+
+        assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
+        assertEquals(
+                "Invalid payment token received",
+                responseEntity.getBody().getDetail()
+        );
+    }
+
     private static CtFaultBean faultBeanWithCode(String faultCode) {
         CtFaultBean fault = new CtFaultBean();
         fault.setFaultCode(faultCode);

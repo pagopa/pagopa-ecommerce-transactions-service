@@ -8,6 +8,7 @@ import it.pagopa.generated.transactions.model.CtQrCode;
 import it.pagopa.generated.transactions.model.StOutcome;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.configurations.NodoConfig;
+import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
 import it.pagopa.transactions.exceptions.NodoErrorException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,12 +86,13 @@ public class NodoOperations {
                                     rptId,
                                     activatePaymentNoticeRes.getOutcome()
                             );
-                            return StOutcome.OK.value()
-                                    .equals(activatePaymentNoticeRes.getOutcome().value())
-                                            ? Mono.just(activatePaymentNoticeRes)
-                                            : Mono.error(
-                                                    new NodoErrorException(activatePaymentNoticeRes.getFault())
-                                            );
+                            if (StOutcome.OK.value().equals(activatePaymentNoticeRes.getOutcome().value())) {
+                                return isOkPaymentToken(activatePaymentNoticeRes.getPaymentToken())
+                                        ? Mono.just(activatePaymentNoticeRes)
+                                        : Mono.error(new InvalidNodoResponseException("No payment token received"));
+                            } else {
+                                return Mono.error(new NodoErrorException(activatePaymentNoticeRes.getFault()));
+                            }
                         }
                 )
                 .map(
@@ -106,6 +108,10 @@ public class NodoOperations {
                                 new IdempotencyKey(idempotencyKey)
                         )
                 );
+    }
+
+    private boolean isOkPaymentToken(String paymentToken) {
+        return paymentToken != null && !paymentToken.isBlank();
     }
 
     public Integer getEuroCentsFromNodoAmount(BigDecimal amountFromNodo) {

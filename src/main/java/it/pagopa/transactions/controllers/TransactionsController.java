@@ -332,4 +332,20 @@ public class TransactionsController implements TransactionsApi {
         };
     }
 
+    @ExceptionHandler(
+        {
+                InvalidNodoResponseException.class,
+        }
+    )
+    ResponseEntity<ProblemJsonDto> invalidNodoResponse(InvalidNodoResponseException exception) {
+        log.warn(exception.getMessage());
+        HttpStatus httpStatus = HttpStatus.BAD_GATEWAY;
+        return new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(httpStatus.value())
+                        .title(httpStatus.getReasonPhrase())
+                        .detail(exception.getErrorDescription()),
+                httpStatus
+        );
+    }
 }
