@@ -61,7 +61,6 @@ class TransactionUpdateAuthorizationHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.AUTHORIZATION_REQUESTED,
                 it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
         );
 
@@ -133,7 +132,6 @@ class TransactionUpdateAuthorizationHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.ACTIVATED,
                 it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
         );
 
@@ -185,7 +183,6 @@ class TransactionUpdateAuthorizationHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.AUTHORIZATION_REQUESTED,
                 it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
         );
 

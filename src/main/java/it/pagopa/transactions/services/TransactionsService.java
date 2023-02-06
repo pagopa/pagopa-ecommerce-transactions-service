@@ -286,7 +286,6 @@ public class TransactionsService {
                                     new Email(transactionDocument.getEmail()),
                                     null,
                                     null,
-                                    transactionDocument.getStatus(),
                                     transactionDocument.getClientId()
                             );
 
@@ -355,7 +354,6 @@ public class TransactionsService {
                                     new Email(transactionDocument.getEmail()),
                                     null,
                                     null,
-                                    transactionDocument.getStatus(),
                                     transactionDocument.getClientId()
                             );
 
@@ -470,7 +468,6 @@ public class TransactionsService {
                                     new Email(transactionDocument.getEmail()),
                                     null,
                                     null,
-                                    transactionDocument.getStatus(),
                                     transactionDocument.getClientId()
                             );
                             AddUserReceiptData addUserReceiptData = new AddUserReceiptData(

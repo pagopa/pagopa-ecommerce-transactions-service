@@ -79,7 +79,6 @@ class TransactionProjectionHandlerTest {
                     ),
                     email,
                     creationDate,
-                    TransactionStatusDto.ACTIVATION_REQUESTED,
                     it.pagopa.ecommerce.commons.documents.Transaction.ClientId.CHECKOUT
             );
 

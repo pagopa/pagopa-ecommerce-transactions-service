@@ -73,7 +73,6 @@ class TransactionAddUserReceiptHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.CLOSED,
                 Transaction.ClientId.UNKNOWN
         );
 
@@ -214,7 +213,6 @@ class TransactionAddUserReceiptHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.CLOSED,
                 Transaction.ClientId.UNKNOWN
         );
 
@@ -355,7 +353,6 @@ class TransactionAddUserReceiptHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.ACTIVATED,
                 Transaction.ClientId.UNKNOWN
         );
 
