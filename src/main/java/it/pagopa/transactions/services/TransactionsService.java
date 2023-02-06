@@ -177,7 +177,9 @@ public class TransactionsService {
                 .flatMap(
                         transaction -> {
                             Integer amountTotal = transaction.getPaymentNotices().stream()
-                                    .mapToInt(it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount).sum();
+                                    .mapToInt(
+                                            it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount
+                                    ).sum();
                             log.info(
                                     "Authorization request amount validation for transactionId: {}",
                                     transactionId
@@ -194,9 +196,14 @@ public class TransactionsService {
                 )
                 .flatMap(
                         transaction -> {
-                            log.info("Authorization psp validation for transactionId: {}", transactionId);
+                            log.info(
+                                    "Authorization psp validation for transactionId: {}",
+                                    transactionId
+                            );
                             Integer amountTotal = transaction.getPaymentNotices().stream()
-                                    .mapToInt(it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount).sum();
+                                    .mapToInt(
+                                            it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount
+                                    ).sum();
                             return ecommercePaymentInstrumentsClient
                                     .getPSPs(
                                             amountTotal,
@@ -207,7 +214,10 @@ public class TransactionsService {
                                             pspResponse -> pspResponse.getPsp().stream()
                                                     .filter(
                                                             psp -> psp.getCode()
-                                                                    .equals(requestAuthorizationRequestDto.getPspId())
+                                                                    .equals(
+                                                                            requestAuthorizationRequestDto
+                                                                                    .getPspId()
+                                                                    )
                                                                     && psp.getFixedCost()
                                                                             .equals(
                                                                                     Long.valueOf(
@@ -231,7 +241,11 @@ public class TransactionsService {
                             .getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId())
                             .map(
                                     paymentMethod -> Tuples
-                                            .of(transactionAndPsp.getT1(), transactionAndPsp.getT2(), paymentMethod)
+                                            .of(
+                                                    transactionAndPsp.getT1(),
+                                                    transactionAndPsp.getT2(),
+                                                    paymentMethod
+                                            )
                             );
                 })
                 .switchIfEmpty(
@@ -245,7 +259,8 @@ public class TransactionsService {
                 )
                 .flatMap(
                         args -> {
-                            it.pagopa.ecommerce.commons.documents.Transaction transactionDocument = args.getT1();
+                            it.pagopa.ecommerce.commons.documents.Transaction transactionDocument = args
+                                    .getT1();
                             PspDto psp = args.getT2();
                             PaymentMethodResponseDto paymentMethod = args.getT3();
 
@@ -255,16 +270,25 @@ public class TransactionsService {
                             );
 
                             TransactionActivated transaction = new TransactionActivated(
-                                    new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
+                                    new TransactionId(
+                                            UUID.fromString(transactionDocument.getTransactionId())
+                                    ),
                                     transactionDocument.getPaymentNotices().stream()
                                             .map(
                                                     paymentNotice -> new PaymentNotice(
-                                                            new PaymentToken(paymentNotice.getPaymentToken()),
+                                                            new PaymentToken(
+                                                                    paymentNotice.getPaymentToken()
+                                                            ),
                                                             new RptId(paymentNotice.getRptId()),
-                                                            new TransactionAmount(paymentNotice.getAmount()),
-                                                            new TransactionDescription(paymentNotice.getDescription()),
+                                                            new TransactionAmount(
+                                                                    paymentNotice.getAmount()
+                                                            ),
+                                                            new TransactionDescription(
+                                                                    paymentNotice.getDescription()
+                                                            ),
                                                             new PaymentContextCode(
-                                                                    paymentNotice.getPaymentContextCode()
+                                                                    paymentNotice
+                                                                            .getPaymentContextCode()
                                                             )
                                                     )
                                             ).toList(),
@@ -303,7 +327,8 @@ public class TransactionsService {
                                             )
                                     )
                                     .flatMap(
-                                            res -> authorizationProjectionHandler.handle(authorizationData)
+                                            res -> authorizationProjectionHandler
+                                                    .handle(authorizationData)
                                                     .thenReturn(res)
                                     );
                         }
