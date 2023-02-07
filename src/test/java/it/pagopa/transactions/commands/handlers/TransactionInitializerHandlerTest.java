@@ -63,7 +63,6 @@ class TransactionInitializerHandlerTest {
     private final TransactionActivateHandler handler = new TransactionActivateHandler(
             paymentRequestInfoRepository,
             transactionEventActivatedStoreRepository,
-            transactionEventActivationRequestedStoreRepository,
             nodoOperations,
             jwtTokenUtils,
             transactionClosureSentEventQueueClient,

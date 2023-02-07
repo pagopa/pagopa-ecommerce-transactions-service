@@ -2,7 +2,10 @@ package it.pagopa.transactions.commands.handlers;
 
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
-import it.pagopa.ecommerce.commons.documents.*;
+import it.pagopa.ecommerce.commons.documents.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.Transaction;
+import it.pagopa.ecommerce.commons.documents.TransactionActivatedData;
+import it.pagopa.ecommerce.commons.documents.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
@@ -39,8 +42,6 @@ public class TransactionActivateHandler
 
     private final TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository;
 
-    private final TransactionsEventStoreRepository<TransactionActivationRequestedData> transactionEventActivationRequestedStoreRepository;
-
     private final NodoOperations nodoOperations;
 
     private final QueueAsyncClient transactionActivatedQueueAsyncClient;
@@ -56,7 +57,6 @@ public class TransactionActivateHandler
     public TransactionActivateHandler(
             PaymentRequestsInfoRepository paymentRequestsInfoRepository,
             TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository,
-            TransactionsEventStoreRepository<TransactionActivationRequestedData> transactionEventActivationRequestedStoreRepository,
             NodoOperations nodoOperations,
             JwtTokenUtils jwtTokenUtils,
             @Qualifier("transactionActivatedQueueAsyncClient") QueueAsyncClient transactionActivatedQueueAsyncClient,
@@ -64,7 +64,6 @@ public class TransactionActivateHandler
     ) {
         this.paymentRequestsInfoRepository = paymentRequestsInfoRepository;
         this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
-        this.transactionEventActivationRequestedStoreRepository = transactionEventActivationRequestedStoreRepository;
         this.nodoOperations = nodoOperations;
         this.paymentTokenTimeout = paymentTokenTimeout;
         this.transactionActivatedQueueAsyncClient = transactionActivatedQueueAsyncClient;
