@@ -280,8 +280,4 @@ public class WebClientsConfig {
         return new it.pagopa.generated.transactions.model.ObjectFactory();
     }
 
-    @Bean
-    public it.pagopa.generated.nodoperpsp.model.ObjectFactory objectFactoryNodoPerPSP() {
-        return new it.pagopa.generated.nodoperpsp.model.ObjectFactory();
-    }
 }

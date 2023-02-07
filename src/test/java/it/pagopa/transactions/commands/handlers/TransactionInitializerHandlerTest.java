@@ -6,7 +6,10 @@ import com.azure.core.http.rest.Response;
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
 import com.azure.storage.queue.models.SendMessageResult;
-import it.pagopa.ecommerce.commons.documents.*;
+import it.pagopa.ecommerce.commons.documents.Transaction;
+import it.pagopa.ecommerce.commons.documents.TransactionActivatedData;
+import it.pagopa.ecommerce.commons.documents.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.TransactionActivationRequestedData;
 import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.domain.TransactionEventCode;
@@ -17,6 +20,7 @@ import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.generated.transactions.server.model.PaymentInfoDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
+import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
 import it.pagopa.transactions.exceptions.JWTTokenGenerationException;
 import it.pagopa.transactions.projections.TransactionsProjection;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -29,7 +33,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-import reactor.util.function.Tuple3;
+import reactor.util.function.Tuple2;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -59,7 +63,6 @@ class TransactionInitializerHandlerTest {
     private final TransactionActivateHandler handler = new TransactionActivateHandler(
             paymentRequestInfoRepository,
             transactionEventActivatedStoreRepository,
-            transactionEventActivationRequestedStoreRepository,
             nodoOperations,
             jwtTokenUtils,
             transactionClosureSentEventQueueClient,
@@ -138,7 +141,7 @@ class TransactionInitializerHandlerTest {
                 .thenReturn(Mono.just("authToken"));
         ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
         /** run test */
-        Tuple3<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>, String> response = handler
+        Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
                 .handle(command).block();
 
         /** asserts */
@@ -262,6 +265,55 @@ class TransactionInitializerHandlerTest {
                 Boolean.TRUE,
                 transactionsProjection.getData().equals(differentTransactionsProjection.getData())
         );
+    }
+
+    @Test
+    void shouldFailForMissingNodoResponsePaymentToken() {
+        RptId rptId = new RptId("77777777777302016723749670035");
+        IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
+        String paName = "paName";
+        String paTaxcode = "77777777777";
+        String description = "Description";
+        Integer amount = Integer.valueOf(1000);
+
+        NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
+        PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto();
+        requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
+        paymentNoticeInfoDto.setRptId(rptId.value());
+        requestDto.setEmail("jhon.doe@email.com");
+        paymentNoticeInfoDto.setAmount(1200);
+        paymentNoticeInfoDto.setPaymentContextCode(UUID.randomUUID().toString().replace("-", ""));
+        TransactionActivateCommand command = new TransactionActivateCommand(
+                rptId,
+                requestDto,
+                Transaction.ClientId.UNKNOWN
+        );
+
+        PaymentRequestInfo paymentRequestInfoCached = new PaymentRequestInfo(
+                rptId,
+                paTaxcode,
+                paName,
+                description,
+                amount,
+                null,
+                true,
+                null,
+                idempotencyKey
+        );
+
+        /* preconditions */
+        Mockito.when(paymentRequestInfoRepository.findById(rptId))
+                .thenReturn(Optional.of(paymentRequestInfoCached));
+        Mockito.when(nodoOperations.activatePaymentRequest(any(), any(), any(), any()))
+                .thenReturn(Mono.error(new InvalidNodoResponseException("Invalid payment token received")));
+        ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
+        /* run test */
+        Mono<Tuple2<Mono<TransactionActivatedEvent>, String>> response = handler
+                .handle(command);
+        /* Assertions */
+        InvalidNodoResponseException exception = assertThrows(InvalidNodoResponseException.class, response::block);
+        assertEquals("Invalid payment token received", exception.getErrorDescription());
+
     }
 
     private Mono<Response<SendMessageResult>> queueSuccessfulResponse() {

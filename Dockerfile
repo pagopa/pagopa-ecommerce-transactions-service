@@ -13,7 +13,6 @@ RUN ./mvnw dependency:go-offline
 
 COPY src src
 COPY api-spec api-spec
-COPY nodo-wsdl nodo-wsdl
 COPY eclipse-style.xml eclipse-style.xml
 RUN ./mvnw install -DskipTests --offline
 RUN mkdir target/extracted && java -Djarmode=layertools -jar target/*.jar extract --destination target/extracted

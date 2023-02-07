@@ -1,7 +1,7 @@
 package it.pagopa.transactions.client;
 
-import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
+import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.transactions.model.*;
 import it.pagopa.transactions.utils.soap.SoapEnvelope;
 import org.junit.jupiter.api.Test;
