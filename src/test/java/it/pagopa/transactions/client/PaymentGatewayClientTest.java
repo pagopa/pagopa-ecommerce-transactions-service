@@ -151,7 +151,7 @@ class PaymentGatewayClientTest {
         XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
                 .cvv(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
-                .exipiryDate(cardDetails.getExpiryDate())
+                .expiryDate(cardDetails.getExpiryDate())
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(
                         BigDecimal.valueOf(
@@ -397,7 +397,7 @@ class PaymentGatewayClientTest {
         XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
                 .cvv(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
-                .exipiryDate(cardDetails.getExpiryDate())
+                .expiryDate(cardDetails.getExpiryDate())
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(
                         BigDecimal.valueOf(
@@ -727,7 +727,7 @@ class PaymentGatewayClientTest {
         XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
                 .cvv(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
-                .exipiryDate(cardDetails.getExpiryDate())
+                .expiryDate(cardDetails.getExpiryDate())
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(
                         BigDecimal.valueOf(
@@ -986,7 +986,7 @@ class PaymentGatewayClientTest {
         XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
                 .cvv(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
-                .exipiryDate(cardDetails.getExpiryDate())
+                .expiryDate(cardDetails.getExpiryDate())
                 .idTransaction(transactionIdUUID.toString())
                 .grandTotal(
                         BigDecimal.valueOf(
