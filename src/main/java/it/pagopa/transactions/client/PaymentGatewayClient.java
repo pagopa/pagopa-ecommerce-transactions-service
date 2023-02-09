@@ -2,8 +2,8 @@ package it.pagopa.transactions.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.pagopa.generated.ecommerce.gateway.v1.api.CreditCardInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
+import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.*;
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
@@ -35,7 +35,7 @@ public class PaymentGatewayClient {
 
     @Autowired
     @Qualifier("creditCardInternalApiClient")
-    CreditCardInternalApi creditCardInternalApiClient;
+    VposInternalApi creditCardInternalApiClient;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -133,7 +133,7 @@ public class PaymentGatewayClient {
                 );
     }
 
-    public Mono<CreditCardAuthResponseDto> requestCreditCardAuthorization(AuthorizationRequestData authorizationData) {
+    public Mono<VposAuthResponseDto> requestCreditCardAuthorization(AuthorizationRequestData authorizationData) {
         return Mono.just(authorizationData)
                 .filter(
                         authorizationRequestData -> "CP".equals(authorizationRequestData.paymentTypeCode())
@@ -141,7 +141,7 @@ public class PaymentGatewayClient {
                 )
                 .switchIfEmpty(Mono.empty())
                 .flatMap(authorizationRequestData -> {
-                    final Mono<CreditCardAuthRequestDto> creditCardAuthRequest;
+                    final Mono<VposAuthRequestDto> creditCardAuthRequest;
                     if (authorizationData.authDetails()instanceof CardAuthRequestDetailsDto cardData) {
                         BigDecimal grandTotal = BigDecimal.valueOf(
                                 ((long) authorizationData.transaction().getPaymentNotices().stream()
@@ -149,7 +149,7 @@ public class PaymentGatewayClient {
                                         + authorizationData.fee()
                         );
                         creditCardAuthRequest = Mono.just(
-                                new CreditCardAuthRequestDto()
+                                new VposAuthRequestDto()
                                         .pan(cardData.getPan())
                                         .expireDate(cardData.getExpiryDate())
                                         .idTransaction(
@@ -175,7 +175,7 @@ public class PaymentGatewayClient {
                 })
                 .flatMap(
                         creditCardAuthRequestDto -> creditCardInternalApiClient
-                                .step0CreditCard(
+                                .step0Vpos(
                                         creditCardAuthRequestDto,
                                         encodeMdcFields(authorizationData)
                                 )

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
-import it.pagopa.generated.ecommerce.gateway.v1.api.CreditCardInternalApi;
+import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.*;
@@ -46,7 +46,7 @@ class PaymentGatewayClientTest {
     PostePayInternalApi postePayInternalApi;
 
     @Mock
-    CreditCardInternalApi creditCardInternalApi;
+    VposInternalApi creditCardInternalApi;
 
     @Mock
     XPayInternalApi xPayInternalApi;
@@ -187,7 +187,7 @@ class PaymentGatewayClientTest {
 
         verify(xPayInternalApi, times(1)).authRequestXpay(any(), any());
         verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(0)).step0CreditCard(any(), any());
+        verify(creditCardInternalApi, times(0)).step0Vpos(any(), any());
     }
 
     @Test
@@ -262,7 +262,7 @@ class PaymentGatewayClientTest {
 
         verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
         verify(postePayInternalApi, times(1)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(0)).step0CreditCard(any(), any());
+        verify(creditCardInternalApi, times(0)).step0Vpos(any(), any());
     }
 
     @Test
@@ -306,7 +306,7 @@ class PaymentGatewayClientTest {
                 cardDetails
         );
 
-        CreditCardAuthRequestDto creditCardAuthRequestDto = new CreditCardAuthRequestDto()
+        VposAuthRequestDto vposAuthRequestDto = new VposAuthRequestDto()
                 .securitycode(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
                 .expireDate(cardDetails.getExpiryDate())
@@ -328,13 +328,13 @@ class PaymentGatewayClientTest {
         String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
 
-        CreditCardAuthResponseDto creditCardAuthResponseDto = new CreditCardAuthResponseDto()
+        VposAuthResponseDto vposAuthResponseDto = new VposAuthResponseDto()
                 .requestId("requestId")
                 .urlRedirect("https://example.com");
 
         /* preconditions */
-        Mockito.when(creditCardInternalApi.step0CreditCard(eq(creditCardAuthRequestDto), eq(encodedMdcFields)))
-                .thenReturn(Mono.just(creditCardAuthResponseDto));
+        Mockito.when(creditCardInternalApi.step0Vpos(eq(vposAuthRequestDto), eq(encodedMdcFields)))
+                .thenReturn(Mono.just(vposAuthResponseDto));
 
         /* test */
         StepVerifier.create(client.requestXPayAuthorization(authorizationData))
@@ -346,12 +346,12 @@ class PaymentGatewayClientTest {
                 .verifyComplete();
 
         StepVerifier.create(client.requestCreditCardAuthorization(authorizationData))
-                .expectNext(creditCardAuthResponseDto)
+                .expectNext(vposAuthResponseDto)
                 .verifyComplete();
 
         verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
         verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(1)).step0CreditCard(any(), any());
+        verify(creditCardInternalApi, times(1)).step0Vpos(any(), any());
     }
 
     @Test
@@ -445,7 +445,7 @@ class PaymentGatewayClientTest {
 
         verify(xPayInternalApi, times(1)).authRequestXpay(any(), any());
         verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(0)).step0CreditCard(any(), any());
+        verify(creditCardInternalApi, times(0)).step0Vpos(any(), any());
     }
 
     @Test
@@ -531,7 +531,7 @@ class PaymentGatewayClientTest {
 
         verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
         verify(postePayInternalApi, times(1)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(0)).step0CreditCard(any(), any());
+        verify(creditCardInternalApi, times(0)).step0Vpos(any(), any());
     }
 
     @Test
@@ -600,7 +600,7 @@ class PaymentGatewayClientTest {
 
         verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
         verify(postePayInternalApi, times(1)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(0)).step0CreditCard(any(), any());
+        verify(creditCardInternalApi, times(0)).step0Vpos(any(), any());
     }
 
     @Test
@@ -682,7 +682,7 @@ class PaymentGatewayClientTest {
 
         verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
         verify(postePayInternalApi, times(1)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(0)).step0CreditCard(any(), any());
+        verify(creditCardInternalApi, times(0)).step0Vpos(any(), any());
     }
 
     @Test
@@ -770,7 +770,7 @@ class PaymentGatewayClientTest {
 
         verify(xPayInternalApi, times(1)).authRequestXpay(any(), any());
         verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(0)).step0CreditCard(any(), any());
+        verify(creditCardInternalApi, times(0)).step0Vpos(any(), any());
     }
 
     @Test
@@ -812,7 +812,7 @@ class PaymentGatewayClientTest {
                 cardDetails
         );
 
-        CreditCardAuthRequestDto creditCardAuthRequestDto = new CreditCardAuthRequestDto()
+        VposAuthRequestDto vposAuthRequestDto = new VposAuthRequestDto()
                 .securitycode(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
                 .expireDate(cardDetails.getExpiryDate())
@@ -835,7 +835,7 @@ class PaymentGatewayClientTest {
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
 
         /* preconditions */
-        Mockito.when(creditCardInternalApi.step0CreditCard(eq(creditCardAuthRequestDto), eq(encodedMdcFields)))
+        Mockito.when(creditCardInternalApi.step0Vpos(eq(vposAuthRequestDto), eq(encodedMdcFields)))
                 .thenReturn(
                         Mono.error(
                                 new WebClientResponseException(
@@ -864,7 +864,7 @@ class PaymentGatewayClientTest {
 
         verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
         verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(1)).step0CreditCard(any(), any());
+        verify(creditCardInternalApi, times(1)).step0Vpos(any(), any());
     }
 
     @Test
@@ -941,7 +941,7 @@ class PaymentGatewayClientTest {
 
         verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
         verify(postePayInternalApi, times(1)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(0)).step0CreditCard(any(), any());
+        verify(creditCardInternalApi, times(0)).step0Vpos(any(), any());
     }
 
     @Test
@@ -1024,7 +1024,7 @@ class PaymentGatewayClientTest {
 
         verify(xPayInternalApi, times(1)).authRequestXpay(any(), any());
         verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(0)).step0CreditCard(any(), any());
+        verify(creditCardInternalApi, times(0)).step0Vpos(any(), any());
     }
 
     @Test
@@ -1066,7 +1066,7 @@ class PaymentGatewayClientTest {
                 cardDetails
         );
 
-        CreditCardAuthRequestDto creditCardAuthRequestDto = new CreditCardAuthRequestDto()
+        VposAuthRequestDto vposAuthRequestDto = new VposAuthRequestDto()
                 .securitycode(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
                 .expireDate(cardDetails.getExpiryDate())
@@ -1087,7 +1087,7 @@ class PaymentGatewayClientTest {
 
         String encodedMdcFields = "";
 
-        CreditCardAuthResponseDto creditCardAuthResponseDto = new CreditCardAuthResponseDto()
+        VposAuthResponseDto creditCardAuthResponseDto = new VposAuthResponseDto()
                 .requestId("requestId")
                 .urlRedirect("https://example.com");
 
@@ -1095,7 +1095,7 @@ class PaymentGatewayClientTest {
         Mockito.when(objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID)))
                 .thenThrow(new JsonProcessingException("") {
                 });
-        Mockito.when(creditCardInternalApi.step0CreditCard(eq(creditCardAuthRequestDto), eq(encodedMdcFields)))
+        Mockito.when(creditCardInternalApi.step0Vpos(eq(vposAuthRequestDto), eq(encodedMdcFields)))
                 .thenReturn(Mono.just(creditCardAuthResponseDto));
 
         /* test */
@@ -1113,7 +1113,7 @@ class PaymentGatewayClientTest {
 
         verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
         verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(1)).step0CreditCard(any(), any());
+        verify(creditCardInternalApi, times(1)).step0Vpos(any(), any());
     }
 
     @Test
@@ -1165,7 +1165,7 @@ class PaymentGatewayClientTest {
 
         verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
         verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(0)).step0CreditCard(any(), any());
+        verify(creditCardInternalApi, times(0)).step0Vpos(any(), any());
     }
 
     @Test
@@ -1217,6 +1217,6 @@ class PaymentGatewayClientTest {
 
         verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
         verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(0)).step0CreditCard(any(), any());
+        verify(creditCardInternalApi, times(0)).step0Vpos(any(), any());
     }
 }

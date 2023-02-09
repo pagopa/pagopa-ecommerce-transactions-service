@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
-import it.pagopa.generated.ecommerce.gateway.v1.api.CreditCardInternalApi;
+import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
 import it.pagopa.generated.ecommerce.nodo.v1.api.NodoApi;
@@ -171,19 +171,19 @@ public class WebClientsConfig {
     }
 
     @Bean(name = "creditCardInternalApiClient")
-    public CreditCardInternalApi creditCardInternalApiClient(
-                                                             @Value(
-                                                                 "${paymentTransactionsGateway.uri}"
-                                                             ) String paymentTransactionGatewayUri,
-                                                             @Value(
-                                                                 "${paymentTransactionsGateway.readTimeout}"
-                                                             ) int paymentTransactionGatewayReadTimeout,
-                                                             @Value(
-                                                                 "${paymentTransactionsGateway.connectionTimeout}"
-                                                             ) int paymentTransactionGatewayConnectionTimeout,
-                                                             @Value(
-                                                                 "${paymentTransactionsGateway.apiKey}"
-                                                             ) String apiKey
+    public VposInternalApi creditCardInternalApiClient(
+                                                       @Value(
+                                                           "${paymentTransactionsGateway.uri}"
+                                                       ) String paymentTransactionGatewayUri,
+                                                       @Value(
+                                                           "${paymentTransactionsGateway.readTimeout}"
+                                                       ) int paymentTransactionGatewayReadTimeout,
+                                                       @Value(
+                                                           "${paymentTransactionsGateway.connectionTimeout}"
+                                                       ) int paymentTransactionGatewayConnectionTimeout,
+                                                       @Value(
+                                                           "${paymentTransactionsGateway.apiKey}"
+                                                       ) String apiKey
     ) {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, paymentTransactionGatewayConnectionTimeout)
@@ -205,7 +205,7 @@ public class WebClientsConfig {
         );
         apiClient.setBasePath(paymentTransactionGatewayUri);
         apiClient.setApiKey(apiKey);
-        return new CreditCardInternalApi(apiClient);
+        return new VposInternalApi(apiClient);
     }
 
     @Bean(name = "ecommercePaymentInstrumentsWebClient")
