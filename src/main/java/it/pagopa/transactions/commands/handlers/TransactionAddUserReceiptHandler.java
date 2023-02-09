@@ -63,7 +63,10 @@ public class TransactionAddUserReceiptHandler
 
         return transaction
                 .cast(BaseTransaction.class)
-                .filter(t -> t.getStatus() == TransactionStatusDto.CLOSED)
+                .filter(
+                        t -> t.getStatus() == TransactionStatusDto.CLOSED
+                                || t.getStatus() == TransactionStatusDto.CLOSURE_FAILED
+                )
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(TransactionClosed.class)
                 .flatMap(tx -> {
