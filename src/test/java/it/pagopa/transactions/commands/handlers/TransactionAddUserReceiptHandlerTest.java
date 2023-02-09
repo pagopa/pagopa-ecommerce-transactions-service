@@ -49,7 +49,7 @@ class TransactionAddUserReceiptHandlerTest {
     private TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
     @Test
-    void shouldSaveSuccessfulUpdate() {
+    void shouldSaveSuccessfulUpdateWithStatusClosed() {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -74,6 +74,147 @@ class TransactionAddUserReceiptHandlerTest {
                 faultCode,
                 faultCodeString,
                 TransactionStatusDto.CLOSED,
+                Transaction.ClientId.UNKNOWN
+        );
+
+        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
+                transactionId.value().toString(),
+                new TransactionActivatedData(
+                        email.value(),
+                        Arrays.asList(
+                                new it.pagopa.ecommerce.commons.documents.PaymentNotice(
+                                        paymentToken.value(),
+                                        rptId.value(),
+                                        description.value(),
+                                        amount.value(),
+                                        nullPaymentContextCode.value()
+                                )
+                        ),
+                        faultCode,
+                        faultCodeString,
+                        Transaction.ClientId.UNKNOWN
+                )
+        );
+
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
+                transactionId.value().toString(),
+                new TransactionAuthorizationRequestData(
+                        amount.value(),
+                        10,
+                        "paymentInstrumentId",
+                        "pspId",
+                        "paymentTypeCode",
+                        "brokerName",
+                        "pspChannelCode",
+                        "paymentMethodName",
+                        "pspBusinessName",
+                        "authorizationRequestId"
+                )
+        );
+
+        TransactionAuthorizationStatusUpdatedEvent authorizationStatusUpdatedEvent = new TransactionAuthorizationStatusUpdatedEvent(
+                transactionId.value().toString(),
+                new TransactionAuthorizationStatusUpdateData(
+                        AuthorizationResultDto.OK,
+                        TransactionStatusDto.AUTHORIZED,
+                        "authorizationCode"
+                )
+        );
+
+        TransactionClosureSentEvent closureSentEvent = new TransactionClosureSentEvent(
+                transactionId.toString(),
+                new TransactionClosureSendData(
+                        ClosePaymentResponseDto.OutcomeEnum.OK,
+                        TransactionStatusDto.CLOSED
+                )
+        );
+
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(
+                        new AddUserReceiptRequestPaymentsInnerDto()
+                                .paymentToken("paymentToken")
+                                .companyName("companyName")
+                                .creditorReferenceId("creditorReferenceId")
+                                .description("description")
+                                .debtor("debtor")
+                                .fiscalCode("fiscalCode")
+                                .officeName("officeName")
+                );
+
+        AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
+                transaction,
+                addUserReceiptRequest
+        );
+
+        TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
+                transaction.getPaymentNotices().get(0).rptId(),
+                addUserReceiptData
+        );
+
+        TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(
+                TransactionStatusDto.NOTIFIED
+        );
+
+        TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
+                transactionId.toString(),
+                transactionAddReceiptData
+        );
+
+        Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(
+                transactionActivatedEvent,
+                authorizationRequestedEvent,
+                authorizationStatusUpdatedEvent,
+                closureSentEvent,
+                event
+        ));
+
+        /* preconditions */
+        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(notificationsServiceClient.sendSuccessEmail(any()))
+                .thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
+
+        /* test */
+        StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
+                .expectNext(event)
+                .verifyComplete();
+
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
+                argThat(
+                        eventArg -> eventArg
+                                .getData().getNewTransactionStatus().equals(TransactionStatusDto.NOTIFIED)
+                )
+        );
+    }
+
+    @Test
+    void shouldSaveSuccessfulUpdateWithStatusClousureFailed() {
+        PaymentToken paymentToken = new PaymentToken("paymentToken");
+        RptId rptId = new RptId("77777777777111111111111111111");
+        TransactionDescription description = new TransactionDescription("description");
+        TransactionAmount amount = new TransactionAmount(100);
+        Email email = new Email("foo@example.com");
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
+
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                Arrays.asList(
+                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description,
+                                nullPaymentContextCode
+                        )
+                ),
+                email,
+                faultCode,
+                faultCodeString,
+                TransactionStatusDto.CLOSURE_FAILED,
                 Transaction.ClientId.UNKNOWN
         );
 
