@@ -677,7 +677,6 @@ components:
       type: string
       description: Possible statuses a transaction can be in
       enum:
-        - ACTIVATION_REQUESTED
         - ACTIVATED
         - AUTHORIZATION_REQUESTED
         - AUTHORIZED
