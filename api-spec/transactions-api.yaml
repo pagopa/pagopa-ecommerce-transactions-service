@@ -552,8 +552,8 @@ components:
         - $ref: "#/components/schemas/NewTransactionResponse"
         - type: object
           properties:
-            status:
-              $ref: "#/components/schemas/TransactionStatus"
+            feeTotal:
+              $ref: "#/components/schemas/AmountEuroCents"
           required:
             - status
     AmountEuroCents:
