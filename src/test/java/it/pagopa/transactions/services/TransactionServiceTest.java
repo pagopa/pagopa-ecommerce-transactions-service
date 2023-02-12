@@ -12,7 +12,6 @@ import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
 import it.pagopa.transactions.projections.handlers.TransactionsActivationProjectionHandler;
-import it.pagopa.transactions.projections.handlers.TransactionsActivationRequestedProjectionHandler;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -36,9 +35,6 @@ class TransactionServiceTest {
 
     @Mock
     private TransactionActivateHandler transactionActivateHandler;
-
-    @Mock
-    private TransactionsActivationRequestedProjectionHandler transactionsProjectionHandler;
 
     @Mock
     private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;

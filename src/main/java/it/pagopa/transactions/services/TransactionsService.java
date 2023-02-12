@@ -50,9 +50,6 @@ public class TransactionsService {
     private TransactionSendClosureHandler transactionSendClosureHandler;
 
     @Autowired
-    private TransactionsActivationRequestedProjectionHandler transactionsActivationRequestedProjectionHandler;
-
-    @Autowired
     private AuthorizationRequestProjectionHandler authorizationProjectionHandler;
 
     @Autowired

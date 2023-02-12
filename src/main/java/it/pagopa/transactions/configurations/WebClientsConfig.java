@@ -1,6 +1,5 @@
 package it.pagopa.transactions.configurations;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -9,7 +8,6 @@ import io.netty.handler.timeout.ReadTimeoutHandler;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
-import it.pagopa.generated.ecommerce.nodo.v1.api.NodoApi;
 import it.pagopa.transactions.utils.soap.Jaxb2SoapDecoder;
 import it.pagopa.transactions.utils.soap.Jaxb2SoapEncoder;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,40 +26,6 @@ import java.util.concurrent.TimeUnit;
 
 @Configuration
 public class WebClientsConfig {
-
-    @Bean(name = "nodoApiClient")
-    public NodoApi nodoApiClient(
-                                 @Value("${nodo.hostname}") String nodoUri,
-                                 @Value("${nodoPerPM.readTimeout}") int nodoReadTimeout,
-                                 @Value("${nodoPerPM.connectionTimeout}") int nodoConnectionTimeout
-    ) {
-
-        HttpClient httpClient = HttpClient.create().option(ChannelOption.CONNECT_TIMEOUT_MILLIS, nodoConnectionTimeout)
-                .doOnConnected(
-                        connection -> connection
-                                .addHandlerLast(new ReadTimeoutHandler(nodoReadTimeout, TimeUnit.MILLISECONDS))
-                );
-
-        ExchangeStrategies exchangeStrategies = ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.registerModule(new JavaTimeModule());
-            mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-            mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-
-            clientCodecConfigurer.registerDefaults(false);
-            clientCodecConfigurer.customCodecs().register(new Jackson2JsonDecoder(mapper, MediaType.APPLICATION_JSON));
-            clientCodecConfigurer.customCodecs().register(new Jackson2JsonEncoder(mapper, MediaType.APPLICATION_JSON));
-        }).build();
-
-        WebClient webClient = WebClient.builder().baseUrl(nodoUri)
-                .clientConnector(new ReactorClientHttpConnector(httpClient)).exchangeStrategies(exchangeStrategies)
-                .build();
-        it.pagopa.generated.ecommerce.nodo.v1.ApiClient apiClient = new it.pagopa.generated.ecommerce.nodo.v1.ApiClient(
-                webClient
-        );
-
-        return new NodoApi(apiClient);
-    }
 
     @Bean(name = "nodoWebClient")
     public WebClient nodoWebClient(
