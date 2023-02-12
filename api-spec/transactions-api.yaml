@@ -298,6 +298,8 @@ components:
       properties:
         transactionId:
           type: string
+        status:
+          $ref: "#/components/schemas/TransactionStatus"
         payments:
           type: array
           items:
@@ -313,17 +315,12 @@ components:
               paymentToken: "paymentToken2"
               reason: "reason2"
               amount: 100
-        status:
-          $ref: "#/components/schemas/TransactionStatus"
-        feeTotal:
-          $ref: "#/components/schemas/AmountEuroCents"
         clientId:
           description: transaction client id
           enum:
             - IO
             - CHECKOUT
             - CHECKOUT_CART
-            - UNKNOWN
         authToken:
           type: string
       required:
