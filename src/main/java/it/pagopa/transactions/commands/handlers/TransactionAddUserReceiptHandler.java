@@ -125,7 +125,7 @@ public class TransactionAddUserReceiptHandler
                         language,
                         new KoTemplate(
                                 new it.pagopa.generated.notifications.templates.ko.TransactionTemplate(
-                                        tx.getTransactionId().value().toString().toUpperCase(),
+                                        tx.getTransactionId().value().toString().toLowerCase(),
                                         dateTimeToHumanReadableString(
                                                 addUserReceiptRequestDto.getPaymentDate(),
                                                 Locale.forLanguageTag(language)
@@ -159,7 +159,7 @@ public class TransactionAddUserReceiptHandler
                         language,
                         new SuccessTemplate(
                                 new TransactionTemplate(
-                                        tx.getTransactionId().value().toString().toUpperCase(),
+                                        tx.getTransactionId().value().toString().toLowerCase(),
                                         dateTimeToHumanReadableString(
                                                 addUserReceiptRequestDto.getPaymentDate(),
                                                 Locale.forLanguageTag(language)
