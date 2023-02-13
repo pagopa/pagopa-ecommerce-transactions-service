@@ -2,7 +2,6 @@ package it.pagopa.transactions.controllers;
 
 import it.pagopa.ecommerce.commons.domain.PaymentToken;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
-import it.pagopa.generated.payment.requests.model.*;
 import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
 import it.pagopa.generated.transactions.server.model.*;
@@ -102,7 +101,7 @@ class TransactionsControllerTest {
                     .thenReturn(Mono.just(response));
 
             ResponseEntity<NewTransactionResponseDto> responseEntity = transactionsController
-                    .newTransaction(Mono.just(newTransactionRequestDto), clientIdDto, null).block();
+                    .newTransaction(clientIdDto, Mono.just(newTransactionRequestDto), null).block();
 
             // Verify mock
             Mockito.verify(transactionsService, Mockito.times(1))
@@ -354,30 +353,6 @@ class TransactionsControllerTest {
         ResponseEntity<ProblemJsonDto> response = transactionsController.gatewayTimeoutHandler(exception);
 
         assertEquals(responseCheck.getStatusCode(), response.getStatusCode());
-    }
-
-    @Test
-    void shouldReturnActivationResultResponseDto() {
-        String paymentToken = UUID.randomUUID().toString();
-        String transactionId = UUID.randomUUID().toString();
-
-        ActivationResultRequestDto activationResultRequestDto = new ActivationResultRequestDto()
-                .paymentToken(paymentToken);
-
-        /* preconditions */
-
-        ActivationResultResponseDto resultResponseDto = new ActivationResultResponseDto()
-                .outcome(ActivationResultResponseDto.OutcomeEnum.OK);
-
-        Mockito.when(transactionsService.activateTransaction(transactionId, activationResultRequestDto))
-                .thenReturn(Mono.just(resultResponseDto));
-
-        /* test */
-        ResponseEntity<ActivationResultResponseDto> response = transactionsController
-                .transactionActivationResult(transactionId, Mono.just(activationResultRequestDto), null).block();
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(resultResponseDto, response.getBody());
     }
 
     @Test

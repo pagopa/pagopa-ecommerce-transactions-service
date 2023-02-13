@@ -86,7 +86,6 @@ class TransactionInitializerHandlerTest {
         paymentNoticeInfoDto.setRptId(rptId.value());
         requestDto.setEmail("jhon.doe@email.com");
         paymentNoticeInfoDto.setAmount(1200);
-        paymentNoticeInfoDto.setPaymentContextCode(UUID.randomUUID().toString().replace("-", ""));
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
                 requestDto,
@@ -166,7 +165,6 @@ class TransactionInitializerHandlerTest {
         paymentNoticeInfoDto.setRptId(rptId.value());
         requestDto.setEmail("jhon.doe@email.com");
         paymentNoticeInfoDto.setAmount(1200);
-        paymentNoticeInfoDto.setPaymentContextCode(UUID.randomUUID().toString().replace("-", ""));
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
                 requestDto,
@@ -282,7 +280,6 @@ class TransactionInitializerHandlerTest {
         paymentNoticeInfoDto.setRptId(rptId.value());
         requestDto.setEmail("jhon.doe@email.com");
         paymentNoticeInfoDto.setAmount(1200);
-        paymentNoticeInfoDto.setPaymentContextCode(UUID.randomUUID().toString().replace("-", ""));
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
                 requestDto,

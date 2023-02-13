@@ -1,7 +1,7 @@
 package it.pagopa.transactions;
 
-import it.pagopa.generated.ecommerce.nodo.v1.ApiClient;
-import it.pagopa.generated.ecommerce.nodo.v1.api.NodoApi;
+import it.pagopa.generated.ecommerce.nodo.v2.ApiClient;
+import it.pagopa.generated.ecommerce.nodo.v2.api.NodoApi;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;

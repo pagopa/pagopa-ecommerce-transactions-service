@@ -245,31 +245,6 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>payment-requests-api</id>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <inputSpec>${project.basedir}/api-spec/payment-requests-api.yaml</inputSpec>
-                            <generatorName>spring</generatorName>
-                            <library>spring-boot</library>
-                            <modelNameSuffix>Dto</modelNameSuffix>
-                            <generateApiTests>false</generateApiTests>
-                            <generateModelTests>false</generateModelTests>
-                            <configOptions>
-                                <basePackage>it.pagopa.generated.payment.requests</basePackage>
-                                <modelPackage>it.pagopa.generated.payment.requests.model</modelPackage>
-                                <apiPackage>it.pagopa.generated.payment.requests.api</apiPackage>
-                                <configPackage>it.pagopa.generated.payment.requests.config</configPackage>
-                                <interfaceOnly>true</interfaceOnly>
-                                <hideGenerationTimestamp>true</hideGenerationTimestamp>
-                                <skipDefaultInterface>true</skipDefaultInterface>
-                                <useSwaggerUI>false</useSwaggerUI>
-                                <reactive>true</reactive>
-                            </configOptions>
-                        </configuration>
-                    </execution>
-                     <execution>
                         <id>payment-instruments-api</id>
                         <goals>
                             <goal>generate</goal>
@@ -310,28 +285,6 @@
                             </configOptions>
                             <modelPackage>it.pagopa.generated.ecommerce.gateway.v1.dto</modelPackage>
                             <apiPackage>it.pagopa.generated.ecommerce.gateway.v1.api</apiPackage>
-                            <modelNameSuffix>dto</modelNameSuffix>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>nodo-rest-api</id>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-infra/8400e0ef51f9fd6ef9386ccc4e520d24465ba2b5/src/api/nodopagamenti_api/nodoPerPM/v1/_swagger.json.tpl</inputSpec>
-                            <generatorName>java</generatorName>
-                            <library>webclient</library>
-                            <generateApiDocumentation>false</generateApiDocumentation>
-                            <generateApiTests>false</generateApiTests>
-                            <generateModelTests>false</generateModelTests>
-                            <generateSupportingFiles>true</generateSupportingFiles>
-                            <configOptions>
-                                <swaggerAnnotations>false</swaggerAnnotations>
-                                <openApiNullable>false</openApiNullable>
-                            </configOptions>
-                            <modelPackage>it.pagopa.generated.ecommerce.nodo.v1.dto</modelPackage>
-                            <apiPackage>it.pagopa.generated.ecommerce.nodo.v1.api</apiPackage>
                             <modelNameSuffix>dto</modelNameSuffix>
                         </configuration>
                     </execution>
