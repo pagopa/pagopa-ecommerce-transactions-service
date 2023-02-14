@@ -369,6 +369,6 @@ class NodoOperationsTest {
                 .generateRandomStringToIdempotencyKey();
 
         /** asserts */
-        assertEquals(randomStringToIdempotencyKey.length(), 10);
+        assertEquals(10, randomStringToIdempotencyKey.length());
     }
 }

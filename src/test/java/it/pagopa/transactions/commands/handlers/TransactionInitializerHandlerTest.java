@@ -346,4 +346,102 @@ class TransactionInitializerHandlerTest {
                 }
         );
     }
+
+    @Test
+    void shouldHandleCommandForOnlyIdempotencyKeyCachedPaymentRequest() {
+        RptId rptId = new RptId("77777777777302016723749670035");
+        IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
+        String transactionId = UUID.randomUUID().toString();
+        String paymentToken = UUID.randomUUID().toString();
+        String paName = "paName";
+        String paTaxcode = "77777777777";
+        String description = "Description";
+        Integer amount = Integer.valueOf(1000);
+
+        NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
+        PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto();
+        requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
+        paymentNoticeInfoDto.setRptId(rptId.value());
+        requestDto.setEmail("jhon.doe@email.com");
+        paymentNoticeInfoDto.setAmount(1200);
+        TransactionActivateCommand command = new TransactionActivateCommand(
+                rptId,
+                requestDto,
+                Transaction.ClientId.UNKNOWN
+        );
+
+        PaymentRequestInfo paymentRequestInfoBeforeActivation = new PaymentRequestInfo(
+                rptId,
+                null,
+                null,
+                null,
+                null,
+                null,
+                true,
+                null,
+                idempotencyKey
+        );
+        PaymentRequestInfo paymentRequestInfoAfterActivation = new PaymentRequestInfo(
+                rptId,
+                paTaxcode,
+                paName,
+                description,
+                amount,
+                null,
+                true,
+                paymentToken,
+                idempotencyKey
+        );
+        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
+        transactionActivatedEvent.setTransactionId(transactionId);
+        transactionActivatedEvent.setEventCode(TransactionEventCode.TRANSACTION_ACTIVATED_EVENT);
+        TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
+        transactionActivatedData.setPaymentNotices(
+                Arrays.asList(
+                        new it.pagopa.ecommerce.commons.documents.PaymentNotice(
+                                paymentToken,
+                                rptId.value(),
+                                null,
+                                null,
+                                null
+                        )
+                )
+        );
+        transactionActivatedEvent.setData(transactionActivatedData);
+
+        /** preconditions */
+        Mockito.when(paymentRequestInfoRepository.findById(rptId))
+                .thenReturn(Optional.of(paymentRequestInfoAfterActivation));
+        Mockito.when(transactionEventActivatedStoreRepository.save(any()))
+                .thenReturn(Mono.just(transactionActivatedEvent));
+        Mockito.when(paymentRequestInfoRepository.save(any(PaymentRequestInfo.class)))
+                .thenReturn(paymentRequestInfoBeforeActivation);
+        Mockito.when(
+                nodoOperations.activatePaymentRequest(any(), any(), any(), any())
+        )
+                .thenReturn(Mono.just(paymentRequestInfoAfterActivation));
+        Mockito.when(jwtTokenUtils.generateToken(any()))
+                .thenReturn(Mono.just("authToken"));
+        Mockito.when(
+                transactionClosureSentEventQueueClient.sendMessageWithResponse(
+                        any(BinaryData.class),
+                        any(),
+                        any()
+                )
+        )
+                .thenReturn(queueSuccessfulResponse());
+
+        ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
+        /** run test */
+        Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
+                .handle(command).block();
+
+        /** asserts */
+        TransactionActivatedEvent event = response.getT1().block();
+        Mockito.verify(paymentRequestInfoRepository, Mockito.times(1)).findById(rptId);
+        assertNotNull(event.getTransactionId());
+        assertNotNull(event.getEventCode());
+        assertNotNull(event.getCreationDate());
+        assertNotNull(event.getId());
+    }
 }
