@@ -16,7 +16,6 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -97,7 +96,7 @@ class NodoOperationsTest {
         PaymentRequestInfo response = nodoOperations
                 .activatePaymentRequest(
                         rptId,
-                        Optional.of(paymentRequestInfo),
+                        idempotencyKey,
                         amount,
                         transactionId
                 )
@@ -167,7 +166,7 @@ class NodoOperationsTest {
         Mono<PaymentRequestInfo> paymentRequestInfoMono = nodoOperations
                 .activatePaymentRequest(
                         rptId,
-                        Optional.of(paymentRequestInfo),
+                        idempotencyKey,
                         amount,
                         transactionId
                 );
@@ -235,7 +234,7 @@ class NodoOperationsTest {
         Mono<PaymentRequestInfo> paymentRequestInfoMono = nodoOperations
                 .activatePaymentRequest(
                         rptId,
-                        Optional.of(paymentRequestInfo),
+                        idempotencyKey,
                         amount,
                         transactionId
                 );
@@ -322,7 +321,7 @@ class NodoOperationsTest {
         PaymentRequestInfo response = nodoOperations
                 .activatePaymentRequest(
                         rptId,
-                        Optional.of(paymentRequestInfo),
+                        idempotencyKey,
                         amount,
                         transactionId
                 )
