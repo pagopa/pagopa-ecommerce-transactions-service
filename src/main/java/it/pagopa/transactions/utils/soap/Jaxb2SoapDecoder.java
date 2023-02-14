@@ -21,7 +21,6 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.UnmarshalException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.stream.XMLStreamException;
-
 import java.util.Map;
 
 public class Jaxb2SoapDecoder extends Jaxb2XmlDecoder {

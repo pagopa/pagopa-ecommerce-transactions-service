@@ -76,7 +76,19 @@ public class TransactionRequestAuthorizationHandler
                         )
                 );
 
-        List<Mono<Tuple2<String, String>>> gatewayRequests = List.of(monoPostePay, monoXPay);
+        var monoVPOS = Mono.just(command.getData())
+                .flatMap(
+                        authorizationRequestData -> paymentGatewayClient
+                                .requestCreditCardAuthorization(authorizationRequestData)
+                )
+                .map(
+                        creditCardAuthResponseDto -> Tuples.of(
+                                creditCardAuthResponseDto.getRequestId(),
+                                creditCardAuthResponseDto.getUrlRedirect()
+                        )
+                );
+
+        List<Mono<Tuple2<String, String>>> gatewayRequests = List.of(monoPostePay, monoXPay, monoVPOS);
 
         Mono<Tuple2<String, String>> gatewayAttempts = gatewayRequests
                 .stream()

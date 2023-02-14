@@ -4,7 +4,6 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import it.pagopa.ecommerce.commons.documents.Transaction.ClientId;
 import it.pagopa.ecommerce.commons.documents.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.documents.TransactionActivationRequestedEvent;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PaymentMethodResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
@@ -49,9 +48,6 @@ public class TransactionsService {
 
     @Autowired
     private TransactionSendClosureHandler transactionSendClosureHandler;
-
-    @Autowired
-    private TransactionsActivationRequestedProjectionHandler transactionsActivationRequestedProjectionHandler;
 
     @Autowired
     private AuthorizationRequestProjectionHandler authorizationProjectionHandler;
@@ -110,18 +106,9 @@ public class TransactionsService {
                 .flatMap(
                         es -> {
                             final Mono<TransactionActivatedEvent> transactionActivatedEvent = es.getT1();
-                            final Mono<TransactionActivationRequestedEvent> transactionActivationRequestedEvent = es
-                                    .getT2();
-                            final String authToken = es.getT3();
+                            final String authToken = es.getT2();
                             return transactionActivatedEvent
-                                    .flatMap(t -> projectActivatedEvent(t, authToken))
-                                    .switchIfEmpty(
-                                            Mono.defer(
-                                                    () -> transactionActivationRequestedEvent.flatMap(
-                                                            t -> projectActivationEvent(t, authToken)
-                                                    )
-                                            )
-                                    );
+                                    .flatMap(t -> projectActivatedEvent(t, authToken));
                         }
                 );
     }
@@ -539,31 +526,6 @@ public class TransactionsService {
                                                                  ActivationResultRequestDto activationResultRequestDto
     ) {
         return Mono.error(new NotImplementedException("Activate transaction operation not implemented"));
-    }
-
-    private Mono<NewTransactionResponseDto> projectActivationEvent(
-                                                                   TransactionActivationRequestedEvent transactionActivateRequestedEvent,
-                                                                   String authToken
-    ) {
-        return transactionsActivationRequestedProjectionHandler
-                .handle(transactionActivateRequestedEvent)
-                .map(
-                        transaction -> new NewTransactionResponseDto()
-                                .transactionId(transaction.getTransactionId().value().toString())
-                                .payments(
-                                        transaction.getPaymentNotices().stream().map(
-                                                paymentNotice -> new PaymentInfoDto()
-                                                        .amount(paymentNotice.transactionAmount().value())
-                                                        .reason(paymentNotice.transactionDescription().value())
-                                                        .rptId(paymentNotice.rptId().value())
-                                                        .paymentToken(paymentNotice.paymentToken().value())
-                                        ).toList()
-                                )
-                                .authToken(authToken)
-                                .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
-                                // .feeTotal()//TODO da dove prendere le fees?
-                                .clientId(convertClientId(transaction.getClientId()))
-                );
     }
 
     private Mono<NewTransactionResponseDto> projectActivatedEvent(

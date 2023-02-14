@@ -52,11 +52,8 @@ import static org.mockito.Mockito.when;
 @Import(
     {
             TransactionsService.class,
-            PaymentRequestsService.class,
             TransactionRequestAuthorizationHandler.class,
-            TransactionsActivationRequestedProjectionHandler.class,
             AuthorizationRequestProjectionHandler.class,
-            TransactionActivateResultHandler.class,
             TransactionsEventStoreRepository.class,
             TransactionsActivationProjectionHandler.class
     }
@@ -98,12 +95,6 @@ public class TransactionServiceTests {
 
     @MockBean
     private TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandler;
-
-    @MockBean
-    private PaymentRequestsService paymentRequestsService;
-
-    @MockBean
-    private TransactionActivateResultHandler transactionActivateResultHandler;
 
     @MockBean
     private TransactionsEventStoreRepository transactionsEventStoreRepository;

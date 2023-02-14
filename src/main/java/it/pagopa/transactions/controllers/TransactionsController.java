@@ -1,7 +1,6 @@
 package it.pagopa.transactions.controllers;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
-import it.pagopa.generated.payment.requests.model.*;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
 import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
 import it.pagopa.generated.transactions.server.model.*;
@@ -48,8 +47,8 @@ public class TransactionsController implements TransactionsApi {
 
     @Override
     public Mono<ResponseEntity<NewTransactionResponseDto>> newTransaction(
+                                                                          ClientIdDto xClientId,
                                                                           Mono<NewTransactionRequestDto> newTransactionRequest,
-                                                                          ClientIdDto clientIdDto,
                                                                           ServerWebExchange exchange
     ) {
 
@@ -62,7 +61,7 @@ public class TransactionsController implements TransactionsApi {
                                     ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).toList()
                             )
                     );
-                    return transactionsService.newTransaction(ntr, clientIdDto);
+                    return transactionsService.newTransaction(ntr, xClientId);
                 })
                 .map(ResponseEntity::ok);
     }
@@ -104,21 +103,6 @@ public class TransactionsController implements TransactionsApi {
                 .flatMap(
                         updateAuthorizationRequest -> transactionsService
                                 .updateTransactionAuthorization(transactionId, updateAuthorizationRequest)
-                )
-                .map(ResponseEntity::ok);
-    }
-
-    @Override
-    public Mono<ResponseEntity<ActivationResultResponseDto>> transactionActivationResult(
-                                                                                         String paymentContextCode,
-                                                                                         Mono<ActivationResultRequestDto> activationResultRequestDto,
-                                                                                         ServerWebExchange exchange
-    ) {
-        return activationResultRequestDto
-                .doOnEach(t -> log.info("transactionActivationResult for paymentContextCode: {} ", paymentContextCode))
-                .flatMap(
-                        activationResultRequest -> transactionsService
-                                .activateTransaction(paymentContextCode, activationResultRequest)
                 )
                 .map(ResponseEntity::ok);
     }
@@ -332,4 +316,20 @@ public class TransactionsController implements TransactionsApi {
         };
     }
 
+    @ExceptionHandler(
+        {
+                InvalidNodoResponseException.class,
+        }
+    )
+    ResponseEntity<ProblemJsonDto> invalidNodoResponse(InvalidNodoResponseException exception) {
+        log.warn(exception.getMessage());
+        HttpStatus httpStatus = HttpStatus.BAD_GATEWAY;
+        return new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(httpStatus.value())
+                        .title(httpStatus.getReasonPhrase())
+                        .detail(exception.getErrorDescription()),
+                httpStatus
+        );
+    }
 }

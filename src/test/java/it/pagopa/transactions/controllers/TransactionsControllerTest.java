@@ -2,8 +2,7 @@ package it.pagopa.transactions.controllers;
 
 import it.pagopa.ecommerce.commons.domain.PaymentToken;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
-import it.pagopa.generated.nodoperpsp.model.FaultBean;
-import it.pagopa.generated.payment.requests.model.*;
+import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
@@ -102,7 +101,7 @@ class TransactionsControllerTest {
                     .thenReturn(Mono.just(response));
 
             ResponseEntity<NewTransactionResponseDto> responseEntity = transactionsController
-                    .newTransaction(Mono.just(newTransactionRequestDto), clientIdDto, null).block();
+                    .newTransaction(clientIdDto, Mono.just(newTransactionRequestDto), null).block();
 
             // Verify mock
             Mockito.verify(transactionsService, Mockito.times(1))
@@ -357,30 +356,6 @@ class TransactionsControllerTest {
     }
 
     @Test
-    void shouldReturnActivationResultResponseDto() {
-        String paymentToken = UUID.randomUUID().toString();
-        String transactionId = UUID.randomUUID().toString();
-
-        ActivationResultRequestDto activationResultRequestDto = new ActivationResultRequestDto()
-                .paymentToken(paymentToken);
-
-        /* preconditions */
-
-        ActivationResultResponseDto resultResponseDto = new ActivationResultResponseDto()
-                .outcome(ActivationResultResponseDto.OutcomeEnum.OK);
-
-        Mockito.when(transactionsService.activateTransaction(transactionId, activationResultRequestDto))
-                .thenReturn(Mono.just(resultResponseDto));
-
-        /* test */
-        ResponseEntity<ActivationResultResponseDto> response = transactionsController
-                .transactionActivationResult(transactionId, Mono.just(activationResultRequestDto), null).block();
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(resultResponseDto, response.getBody());
-    }
-
-    @Test
     void shouldReturnTransactionInfoOnCorrectNotify() {
         String paymentToken = UUID.randomUUID().toString();
         String transactionId = UUID.randomUUID().toString();
@@ -448,7 +423,7 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnResponseEntityWithPartyConfigurationFault() {
-        FaultBean faultBean = faultBeanWithCode(PartyConfigurationFaultDto.PPT_DOMINIO_DISABILITATO.getValue());
+        CtFaultBean faultBean = faultBeanWithCode(PartyConfigurationFaultDto.PPT_DOMINIO_DISABILITATO.getValue());
         ResponseEntity<PartyConfigurationFaultPaymentProblemJsonDto> responseEntity = (ResponseEntity<PartyConfigurationFaultPaymentProblemJsonDto>) transactionsController
                 .nodoErrorHandler(
                         new NodoErrorException(faultBean)
@@ -468,7 +443,7 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnResponseEntityWithValidationFault() {
-        FaultBean faultBean = faultBeanWithCode(ValidationFaultDto.PPT_DOMINIO_SCONOSCIUTO.getValue());
+        CtFaultBean faultBean = faultBeanWithCode(ValidationFaultDto.PPT_DOMINIO_SCONOSCIUTO.getValue());
 
         ResponseEntity<ValidationFaultPaymentProblemJsonDto> responseEntity = (ResponseEntity<ValidationFaultPaymentProblemJsonDto>) transactionsController
                 .nodoErrorHandler(
@@ -486,7 +461,7 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnResponseEntityWithGatewayFault() {
-        FaultBean faultBean = faultBeanWithCode(GatewayFaultDto.PAA_SYSTEM_ERROR.getValue());
+        CtFaultBean faultBean = faultBeanWithCode(GatewayFaultDto.PAA_SYSTEM_ERROR.getValue());
 
         ResponseEntity<GatewayFaultPaymentProblemJsonDto> responseEntity = (ResponseEntity<GatewayFaultPaymentProblemJsonDto>) transactionsController
                 .nodoErrorHandler(
@@ -504,7 +479,7 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnResponseEntityWithPartyTimeoutFault() {
-        FaultBean faultBean = faultBeanWithCode(PartyTimeoutFaultDto.PPT_STAZIONE_INT_PA_IRRAGGIUNGIBILE.getValue());
+        CtFaultBean faultBean = faultBeanWithCode(PartyTimeoutFaultDto.PPT_STAZIONE_INT_PA_IRRAGGIUNGIBILE.getValue());
         ResponseEntity<PartyTimeoutFaultPaymentProblemJsonDto> responseEntity = (ResponseEntity<PartyTimeoutFaultPaymentProblemJsonDto>) transactionsController
                 .nodoErrorHandler(
                         new NodoErrorException(faultBean)
@@ -521,7 +496,7 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnResponseEntityWithPaymentStatusFault() {
-        FaultBean faultBean = faultBeanWithCode(PaymentStatusFaultDto.PAA_PAGAMENTO_IN_CORSO.getValue());
+        CtFaultBean faultBean = faultBeanWithCode(PaymentStatusFaultDto.PAA_PAGAMENTO_IN_CORSO.getValue());
         ResponseEntity<PaymentStatusFaultPaymentProblemJsonDto> responseEntity = (ResponseEntity<PaymentStatusFaultPaymentProblemJsonDto>) transactionsController
                 .nodoErrorHandler(
                         new NodoErrorException(faultBean)
@@ -541,7 +516,7 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnResponseEntityWithGenericGatewayFault() {
-        FaultBean faultBean = faultBeanWithCode("UNKNOWN_ERROR");
+        CtFaultBean faultBean = faultBeanWithCode("UNKNOWN_ERROR");
         ResponseEntity<ProblemJsonDto> responseEntity = (ResponseEntity<ProblemJsonDto>) transactionsController
                 .nodoErrorHandler(new NodoErrorException(faultBean));
 
@@ -586,10 +561,21 @@ class TransactionsControllerTest {
 
     }
 
-    private static FaultBean faultBeanWithCode(String faultCode) {
-        FaultBean fault = new FaultBean();
-        fault.setFaultCode(faultCode);
+    @Test
+    void shouldReturnResponseEntityWithInvalidNodoResponseReceivedError() {
+        ResponseEntity<ProblemJsonDto> responseEntity = transactionsController
+                .invalidNodoResponse(new InvalidNodoResponseException("Invalid payment token received"));
 
+        assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
+        assertEquals(
+                "Invalid payment token received",
+                responseEntity.getBody().getDetail()
+        );
+    }
+
+    private static CtFaultBean faultBeanWithCode(String faultCode) {
+        CtFaultBean fault = new CtFaultBean();
+        fault.setFaultCode(faultCode);
         return fault;
     }
 }

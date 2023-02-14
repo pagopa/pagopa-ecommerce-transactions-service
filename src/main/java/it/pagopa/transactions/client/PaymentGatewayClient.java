@@ -3,11 +3,9 @@ package it.pagopa.transactions.client;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
+import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthRequestDto;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthRequestDto;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
+import it.pagopa.generated.ecommerce.gateway.v1.dto.*;
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
@@ -34,6 +32,10 @@ public class PaymentGatewayClient {
     @Autowired
     @Qualifier("paymentTransactionGatewayXPayWebClient")
     XPayInternalApi paymentTransactionGatewayXPayWebClient;
+
+    @Autowired
+    @Qualifier("creditCardInternalApiClient")
+    VposInternalApi creditCardInternalApiClient;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -100,7 +102,7 @@ public class PaymentGatewayClient {
                                 new XPayAuthRequestDto()
                                         .cvv(cardData.getCvv())
                                         .pan(cardData.getPan())
-                                        .exipiryDate(cardData.getExpiryDate())
+                                        .expiryDate(cardData.getExpiryDate())
                                         .idTransaction(
                                                 authorizationData.transaction().getTransactionId().value().toString()
                                         )
@@ -118,6 +120,65 @@ public class PaymentGatewayClient {
                 .flatMap(
                         xPayAuthRequestDto -> paymentTransactionGatewayXPayWebClient
                                 .authRequestXpay(xPayAuthRequestDto, encodeMdcFields(authorizationData))
+                                .onErrorMap(
+                                        WebClientResponseException.class,
+                                        exception -> switch (exception.getStatusCode()) {
+                                        case UNAUTHORIZED -> new AlreadyProcessedException(
+                                                authorizationData.transaction().getTransactionId()
+                                        ); // 401
+                                        case INTERNAL_SERVER_ERROR -> new BadGatewayException(""); // 500
+                                        default -> exception;
+                                        }
+                                )
+                );
+    }
+
+    public Mono<VposAuthResponseDto> requestCreditCardAuthorization(AuthorizationRequestData authorizationData) {
+        return Mono.just(authorizationData)
+                .filter(
+                        authorizationRequestData -> "CP".equals(authorizationRequestData.paymentTypeCode())
+                                && "VPOS".equals(authorizationRequestData.paymentGatewayId())
+                )
+                .switchIfEmpty(Mono.empty())
+                .flatMap(authorizationRequestData -> {
+                    final Mono<VposAuthRequestDto> creditCardAuthRequest;
+                    if (authorizationData.authDetails()instanceof CardAuthRequestDetailsDto cardData) {
+                        BigDecimal grandTotal = BigDecimal.valueOf(
+                                ((long) authorizationData.transaction().getPaymentNotices().stream()
+                                        .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value()).sum())
+                                        + authorizationData.fee()
+                        );
+                        creditCardAuthRequest = Mono.just(
+                                new VposAuthRequestDto()
+                                        .pan(cardData.getPan())
+                                        .expireDate(cardData.getExpiryDate())
+                                        .idTransaction(
+                                                authorizationData.transaction().getTransactionId().value().toString()
+                                        )
+                                        .amount(grandTotal)
+                                        .emailCh(authorizationData.transaction().getEmail().value())
+                                        .holder(cardData.getHolderName())
+                                        .securitycode(cardData.getCvv())
+                                        .isFirstPayment(true) // TODO TO BE CHECKED
+                                        .threeDsData(cardData.getThreeDsData())
+                                        .circuit(cardData.getBrand())
+                                        .idPsp(authorizationData.pspId())
+                        );
+                    } else {
+                        creditCardAuthRequest = Mono.error(
+                                new InvalidRequestException(
+                                        "Cannot perform VPOS authorization for null input CreditCardAuthRequestDto"
+                                )
+                        );
+                    }
+                    return creditCardAuthRequest;
+                })
+                .flatMap(
+                        creditCardAuthRequestDto -> creditCardInternalApiClient
+                                .step0Vpos(
+                                        creditCardAuthRequestDto,
+                                        encodeMdcFields(authorizationData)
+                                )
                                 .onErrorMap(
                                         WebClientResponseException.class,
                                         exception -> switch (exception.getStatusCode()) {

@@ -2,7 +2,10 @@ package it.pagopa.transactions.commands.handlers;
 
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
-import it.pagopa.ecommerce.commons.documents.*;
+import it.pagopa.ecommerce.commons.documents.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.Transaction;
+import it.pagopa.ecommerce.commons.documents.TransactionActivatedData;
+import it.pagopa.ecommerce.commons.documents.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
@@ -21,7 +24,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-import reactor.util.function.Tuple3;
+import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.time.Duration;
@@ -33,13 +36,11 @@ import java.util.UUID;
 @Component
 public class TransactionActivateHandler
         implements
-        CommandHandler<TransactionActivateCommand, Mono<Tuple3<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>, String>>> {
+        CommandHandler<TransactionActivateCommand, Mono<Tuple2<Mono<TransactionActivatedEvent>, String>>> {
 
     private final PaymentRequestsInfoRepository paymentRequestsInfoRepository;
 
     private final TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository;
-
-    private final TransactionsEventStoreRepository<TransactionActivationRequestedData> transactionEventActivationRequestedStoreRepository;
 
     private final NodoOperations nodoOperations;
 
@@ -56,7 +57,6 @@ public class TransactionActivateHandler
     public TransactionActivateHandler(
             PaymentRequestsInfoRepository paymentRequestsInfoRepository,
             TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository,
-            TransactionsEventStoreRepository<TransactionActivationRequestedData> transactionEventActivationRequestedStoreRepository,
             NodoOperations nodoOperations,
             JwtTokenUtils jwtTokenUtils,
             @Qualifier("transactionActivatedQueueAsyncClient") QueueAsyncClient transactionActivatedQueueAsyncClient,
@@ -64,22 +64,19 @@ public class TransactionActivateHandler
     ) {
         this.paymentRequestsInfoRepository = paymentRequestsInfoRepository;
         this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
-        this.transactionEventActivationRequestedStoreRepository = transactionEventActivationRequestedStoreRepository;
         this.nodoOperations = nodoOperations;
         this.paymentTokenTimeout = paymentTokenTimeout;
         this.transactionActivatedQueueAsyncClient = transactionActivatedQueueAsyncClient;
         this.jwtTokenUtils = jwtTokenUtils;
     }
 
-    public Mono<Tuple3<Mono<TransactionActivatedEvent>, Mono<TransactionActivationRequestedEvent>, String>> handle(
-                                                                                                                   TransactionActivateCommand command
+    public Mono<Tuple2<Mono<TransactionActivatedEvent>, String>> handle(
+                                                                        TransactionActivateCommand command
     ) {
         final String transactionId = UUID.randomUUID().toString();
         final NewTransactionRequestDto newTransactionRequestDto = command.getData();
         final List<PaymentNoticeInfoDto> paymentNotices = newTransactionRequestDto.getPaymentNotices();
         final boolean multiplePaymentNotices = paymentNotices.size() > 1;
-        final String paymentContextCode = Optional.ofNullable(paymentNotices.get(0).getPaymentContextCode())
-                .orElseGet(() -> UUID.randomUUID().toString().replace("-", ""));
 
         log.info(
                 "Nodo parallel processed requests : [{}]. Multiple payment notices: [{}]",
@@ -129,9 +126,7 @@ public class TransactionActivateHandler
                                                             .activatePaymentRequest(
                                                                     new RptId(paymentNotice.getRptId()),
                                                                     partialPaymentRequestInfo,
-                                                                    paymentContextCode,
                                                                     paymentNotice.getAmount(),
-                                                                    multiplePaymentNotices,
                                                                     transactionId
                                                             )
                                                             .doOnSuccess(
@@ -164,35 +159,20 @@ public class TransactionActivateHandler
                                 args -> {
                                     String authToken = args.getT1();
                                     List<PaymentRequestInfo> paymentRequestsInfo = args.getT2();
-                                    return shouldGenerateTransactionActivatedEvent(paymentRequestsInfo)
-                                            ? Mono.just(
-                                                    Tuples.of(
-                                                            newTransactionActivatedEvent(
-                                                                    paymentRequestsInfo,
-                                                                    transactionId,
-                                                                    newTransactionRequestDto.getEmail(),
-                                                                    command.getClientId()
-                                                            ),
-                                                            Mono.empty(),
-                                                            authToken
-                                                    )
+                                    return Mono.just(
+                                            Tuples.of(
+                                                    newTransactionActivatedEvent(
+                                                            paymentRequestsInfo,
+                                                            transactionId,
+                                                            newTransactionRequestDto.getEmail(),
+                                                            command.getClientId()
+                                                    ),
+                                                    authToken
                                             )
-                                            : Mono.just(
-                                                    Tuples.of(
-                                                            Mono.empty(),
-                                                            newTransactionActivationRequestedEvent(
-                                                                    paymentRequestsInfo,
-                                                                    transactionId,
-                                                                    newTransactionRequestDto.getEmail(),
-                                                                    paymentContextCode,
-                                                                    command.getClientId()
-                                                            ),
-                                                            authToken
-                                                    )
-                                            );
+                                    );
                                 }
-
                         )
+
         );
     }
 
@@ -204,68 +184,6 @@ public class TransactionActivateHandler
 
     private boolean isValidPaymentToken(String paymentToken) {
         return paymentToken != null && !paymentToken.isBlank();
-    }
-
-    private boolean shouldGenerateTransactionActivatedEvent(List<PaymentRequestInfo> paymentRequestsInfo) {
-        int paymentRequestInfoSize = paymentRequestsInfo.size();
-        boolean generateTransactionActivatedEvent = true;
-        /*
-         * When input transaction contains multiple payment notices (cart request) then
-         * communication with Nodo component will be actuated only with the
-         * "new primitive" (activatePaymentNotice) so a transactionActivatedEvent is
-         * generated. If only one payment notice is contained into request then the
-         * generated event will be one of
-         * transactionActivated/transactionActivationRequested based on the paymentToken
-         * presence
-         */
-        if (paymentRequestInfoSize == 1) {
-            generateTransactionActivatedEvent = isValidPaymentToken(paymentRequestsInfo.get(0).paymentToken());
-        }
-        log.info(
-                "Input payment notices: [{}] generate new transaction activated event: [{}]",
-                paymentRequestInfoSize,
-                generateTransactionActivatedEvent
-        );
-        return generateTransactionActivatedEvent;
-    }
-
-    private Mono<TransactionActivationRequestedEvent> newTransactionActivationRequestedEvent(
-                                                                                             List<PaymentRequestInfo> paymentRequestsInfo,
-                                                                                             String transactionId,
-                                                                                             String email,
-                                                                                             String paymentContextCode,
-                                                                                             Transaction.ClientId clientId
-    ) {
-        PaymentRequestInfo paymentRequestInfo = paymentRequestsInfo.get(0);
-        List<PaymentNotice> paymentNotices = List.of(
-                new PaymentNotice(
-                        null,
-                        paymentRequestInfo.id().value(),
-                        paymentRequestInfo.description(),
-                        paymentRequestInfo.amount(),
-                        paymentContextCode
-                )
-        );
-        TransactionActivationRequestedData data = new TransactionActivationRequestedData(
-                paymentNotices,
-                email,
-                null,
-                null,
-                clientId
-        );
-        TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
-                transactionId,
-                data
-        );
-
-        log.info(
-                "Generated event TRANSACTION_ACTIVATION_REQUESTED_EVENT for transactionId {}",
-                transactionId
-        );
-
-        return transactionEventActivationRequestedStoreRepository.save(
-                transactionActivationRequestedEvent
-        );
     }
 
     private Mono<TransactionActivatedEvent> newTransactionActivatedEvent(
