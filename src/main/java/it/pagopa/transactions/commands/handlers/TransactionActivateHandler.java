@@ -116,6 +116,9 @@ public class TransactionActivateHandler
                                                                                     requestInfo.idempotencyKey()
                                                                                             .rawValue()
                                                                             )
+                                                                                    && isValidPaymentToken(
+                                                                                            requestInfo.paymentToken()
+                                                                                    )
                                                                     )
                                                                     .orElseGet(
                                                                             () -> {
