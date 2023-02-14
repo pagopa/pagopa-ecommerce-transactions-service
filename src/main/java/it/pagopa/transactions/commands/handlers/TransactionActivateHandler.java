@@ -115,10 +115,7 @@ public class TransactionActivateHandler
                                                                             requestInfo -> isValidIdempotencyKey(
                                                                                     requestInfo.idempotencyKey()
                                                                                             .rawValue()
-                                                                            )
-                                                                                    && isValidPaymentToken(
-                                                                                            requestInfo.paymentToken()
-                                                                                    )
+                                                                            ) && isValidPaymentToken(requestInfo.paymentToken())
                                                                     )
                                                                     .orElseGet(
                                                                             () -> {
