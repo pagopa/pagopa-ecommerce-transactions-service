@@ -343,4 +343,32 @@ class NodoOperationsTest {
                 activatePaymentNoticeReqArgumentCaptor.getValue().getAmount().doubleValue()
         );
     }
+
+    @Test
+    void shouldReturnFiscalCodeEcommerce() {
+
+        /** preconditions */
+        String ecommerceFiscalCode = "00000000000";
+        NodoConnectionString nodoConnectionString = new NodoConnectionString();
+        nodoConnectionString.setIdBrokerPSP(ecommerceFiscalCode);
+        Mockito.when(nodoConfig.nodoConnectionString()).thenReturn(nodoConnectionString);
+
+        /** test */
+        String maybeEcommerceFiscalCode = nodoOperations
+                .getEcommerceFiscalCode();
+
+        /** asserts */
+        assertEquals(ecommerceFiscalCode, maybeEcommerceFiscalCode);
+    }
+
+    @Test
+    void shouldReturnRandomStringforIdempotencykey() {
+
+        /** test */
+        String randomStringToIdempotencyKey = nodoOperations
+                .generateRandomStringToIdempotencyKey();
+
+        /** asserts */
+        assertEquals(randomStringToIdempotencyKey.length(), 10);
+    }
 }
