@@ -56,8 +56,6 @@ public class TransactionActivateHandler
     @Value("${nodo.parallelRequests}")
     private int nodoParallelRequests;
 
-    private static final String PSP_PAGOPA_ECOMMERCE_FISCAL_CODE = "00000000000";
-
     @Autowired
     public TransactionActivateHandler(
             PaymentRequestsInfoRepository paymentRequestsInfoRepository,
