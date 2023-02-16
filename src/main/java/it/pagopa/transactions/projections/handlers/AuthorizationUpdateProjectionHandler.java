@@ -1,7 +1,8 @@
 package it.pagopa.transactions.projections.handlers;
 
-import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationStatusUpdatedEvent;
-import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedEvent;
+import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -15,18 +16,18 @@ import java.util.UUID;
 @Component
 @Slf4j
 public class AuthorizationUpdateProjectionHandler
-        implements ProjectionHandler<TransactionAuthorizationStatusUpdatedEvent, Mono<TransactionActivated>> {
+        implements ProjectionHandler<TransactionAuthorizationCompletedEvent, Mono<TransactionActivated>> {
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
 
     @Override
-    public Mono<TransactionActivated> handle(TransactionAuthorizationStatusUpdatedEvent data) {
+    public Mono<TransactionActivated> handle(TransactionAuthorizationCompletedEvent data) {
         return transactionsViewRepository.findById(data.getTransactionId())
                 .switchIfEmpty(
                         Mono.error(new TransactionNotFoundException(data.getTransactionId()))
                 )
                 .flatMap(transactionDocument -> {
-                    transactionDocument.setStatus(data.getData().getNewTransactionStatus());
+                    transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_COMPLETED);
                     return transactionsViewRepository.save(transactionDocument);
                 })
                 .map(
@@ -46,7 +47,6 @@ public class AuthorizationUpdateProjectionHandler
                                 null,
                                 null,
                                 ZonedDateTime.parse(transactionDocument.getCreationDate()),
-                                transactionDocument.getStatus(),
                                 transactionDocument.getClientId()
                         )
                 );

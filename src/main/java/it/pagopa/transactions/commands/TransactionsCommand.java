@@ -1,6 +1,6 @@
 package it.pagopa.transactions.commands;
 
-import it.pagopa.ecommerce.commons.domain.RptId;
+import it.pagopa.ecommerce.commons.domain.v1.*;
 import lombok.Data;
 
 @Data

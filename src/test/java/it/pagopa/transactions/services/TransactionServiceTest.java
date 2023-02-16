@@ -1,9 +1,7 @@
 package it.pagopa.transactions.services;
 
-import it.pagopa.ecommerce.commons.documents.PaymentNotice;
-import it.pagopa.ecommerce.commons.documents.Transaction;
-import it.pagopa.ecommerce.commons.documents.*;
-import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.documents.v1.*;
+import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.ClientIdDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;

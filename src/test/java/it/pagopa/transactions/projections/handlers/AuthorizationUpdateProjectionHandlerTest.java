@@ -1,8 +1,8 @@
 package it.pagopa.transactions.projections.handlers;
 
-import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationStatusUpdateData;
-import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationStatusUpdatedEvent;
-import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationStatusUpdateData;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationStatusUpdatedEvent;
+import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;

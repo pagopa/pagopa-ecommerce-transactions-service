@@ -1,6 +1,6 @@
 package it.pagopa.transactions.commands;
 
-import it.pagopa.ecommerce.commons.domain.RptId;
+import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
 
 public final class TransactionUpdateAuthorizationCommand extends TransactionsCommand<UpdateAuthorizationStatusData> {

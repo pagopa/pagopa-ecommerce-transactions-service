@@ -1,6 +1,6 @@
 package it.pagopa.transactions;
 
-import it.pagopa.ecommerce.commons.domain.TransactionEventCode;
+import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import org.junit.jupiter.api.Test;
 

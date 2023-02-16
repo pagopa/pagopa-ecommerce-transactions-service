@@ -1,10 +1,9 @@
 package it.pagopa.transactions.commands.handlers;
 
-import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationStatusUpdateData;
-import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationStatusUpdatedEvent;
-import it.pagopa.ecommerce.commons.domain.TransactionActivated;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedEvent;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
-import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
@@ -18,16 +17,16 @@ import reactor.core.publisher.Mono;
 @Component
 @Slf4j
 public class TransactionUpdateAuthorizationHandler implements
-        CommandHandler<TransactionUpdateAuthorizationCommand, Mono<TransactionAuthorizationStatusUpdatedEvent>> {
+        CommandHandler<TransactionUpdateAuthorizationCommand, Mono<TransactionAuthorizationCompletedEvent>> {
 
     @Autowired
     NodeForPspClient nodeForPspClient;
 
     @Autowired
-    private TransactionsEventStoreRepository<TransactionAuthorizationStatusUpdateData> transactionEventStoreRepository;
+    private TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> transactionEventStoreRepository;
 
     @Override
-    public Mono<TransactionAuthorizationStatusUpdatedEvent> handle(TransactionUpdateAuthorizationCommand command) {
+    public Mono<TransactionAuthorizationCompletedEvent> handle(TransactionUpdateAuthorizationCommand command) {
         TransactionActivated transaction = command.getData().transaction();
 
         if (transaction
@@ -36,29 +35,19 @@ public class TransactionUpdateAuthorizationHandler implements
             return Mono.error(new AlreadyProcessedException(command.getData().transaction().getTransactionId()));
         } else {
             UpdateAuthorizationRequestDto updateAuthorizationRequest = command.getData().updateAuthorizationRequest();
-
-            TransactionStatusDto newStatus;
-
-            switch (updateAuthorizationRequest.getAuthorizationResult()) {
-                case OK -> newStatus = TransactionStatusDto.AUTHORIZED;
-                case KO -> newStatus = TransactionStatusDto.AUTHORIZATION_FAILED;
-                default -> {
-                    return Mono.error(new RuntimeException("Invalid authorization result enum value"));
-                }
-            }
-
-            TransactionAuthorizationStatusUpdateData statusUpdateData = new TransactionAuthorizationStatusUpdateData(
-                    AuthorizationResultDto.fromValue(updateAuthorizationRequest.getAuthorizationResult().toString()),
-                    newStatus,
-                    updateAuthorizationRequest.getAuthorizationCode()
-            );
-
-            TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
-                    transaction.getTransactionId().value().toString(),
-                    statusUpdateData
-            );
-
-            return transactionEventStoreRepository.save(event);
+            return Mono.just(updateAuthorizationRequest.getAuthorizationResult().toString())
+                    .map(AuthorizationResultDto::fromValue)
+                    .flatMap(
+                            authorizationResultDto -> Mono.just(
+                                    new TransactionAuthorizationCompletedEvent(
+                                            transaction.getTransactionId().value().toString(),
+                                            new TransactionAuthorizationCompletedData(
+                                                    updateAuthorizationRequest.getAuthorizationCode(),
+                                                    authorizationResultDto
+                                            )
+                                    )
+                            )
+                    ).flatMap(transactionEventStoreRepository::save);
         }
     }
 }
