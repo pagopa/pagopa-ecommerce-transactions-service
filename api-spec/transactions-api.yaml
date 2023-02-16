@@ -155,7 +155,7 @@ paths:
           schema:
             type: string
           required: true
-          description: Transaction Id
+          description: Base64 of bytes related to TransactionId
       requestBody:
         $ref: "#/components/requestBodies/UpdateAuthorizationRequest"
       responses:
