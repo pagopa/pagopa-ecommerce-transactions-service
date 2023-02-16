@@ -289,7 +289,7 @@ components:
                amount: 200
         email:
           type: string
-          pattern: "(^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$)"
+          pattern: '(^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$)'
           example : mario.rossi@gmail.it
       required:
         - paymentNotices
