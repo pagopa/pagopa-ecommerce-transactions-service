@@ -3,6 +3,7 @@ package it.pagopa.transactions.projections.handlers;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
+import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,8 @@ class ClosureSendProjectionHandlerTests {
     void shouldHandleProjectionForClosedEvent() {
         Transaction transaction = transactionDocument();
 
-        TransactionClosedEvent event = TransactionTestUtils.transactionClosedEvent();
+        TransactionClosedEvent event = TransactionTestUtils
+                .transactionClosedEvent(ClosePaymentResponseDto.OutcomeEnum.OK);
 
         Transaction expected = new Transaction(
                 transaction.getTransactionId(),

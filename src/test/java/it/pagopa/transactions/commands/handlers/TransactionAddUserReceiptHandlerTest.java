@@ -5,6 +5,8 @@ import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
+import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
+import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.notifications.v1.dto.NotificationEmailResponseDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestPaymentsInnerDto;
@@ -126,9 +128,8 @@ class TransactionAddUserReceiptHandlerTest {
                 )
         );
 
-        TransactionClosedEvent closureSentEvent = new TransactionClosedEvent(
-                transactionId.toString()
-        );
+        TransactionClosedEvent closureSentEvent = TransactionTestUtils
+                .transactionClosedEvent(ClosePaymentResponseDto.OutcomeEnum.OK);
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
                 .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
@@ -255,9 +256,8 @@ class TransactionAddUserReceiptHandlerTest {
                 )
         );
 
-        TransactionClosedEvent closureSentEvent = new TransactionClosedEvent(
-                transactionId.toString()
-        );
+        TransactionClosedEvent closureSentEvent = TransactionTestUtils
+                .transactionClosedEvent(ClosePaymentResponseDto.OutcomeEnum.OK);
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
                 .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
@@ -384,9 +384,8 @@ class TransactionAddUserReceiptHandlerTest {
                 )
         );
 
-        TransactionClosedEvent closureSentEvent = new TransactionClosedEvent(
-                transactionId.toString()
-        );
+        TransactionClosedEvent closureSentEvent = TransactionTestUtils
+                .transactionClosedEvent(ClosePaymentResponseDto.OutcomeEnum.OK);
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
                 .outcome(AddUserReceiptRequestDto.OutcomeEnum.KO)

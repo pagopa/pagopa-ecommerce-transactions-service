@@ -14,12 +14,12 @@ import reactor.core.publisher.Mono;
 
 @Component
 @Slf4j
-public class ClosureSendProjectionHandler implements ProjectionHandler<TransactionEvent<Void>, Mono<Transaction>> {
+public class ClosureSendProjectionHandler implements ProjectionHandler<TransactionEvent<?>, Mono<Transaction>> {
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
 
     @Override
-    public Mono<Transaction> handle(TransactionEvent<Void> event) {
+    public Mono<Transaction> handle(TransactionEvent<?> event) {
         return transactionsViewRepository.findById(event.getTransactionId())
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(event.getTransactionId())))
                 .flatMap(transactionDocument -> {

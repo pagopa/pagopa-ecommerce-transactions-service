@@ -10,6 +10,7 @@ import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
+import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
@@ -31,9 +32,11 @@ import java.util.Map;
 @Component
 @Slf4j
 public class TransactionSendClosureHandler extends
-        BaseHandler<TransactionClosureSendCommand, Mono<Either<TransactionClosureErrorEvent, TransactionEvent<Void>>>> {
+        BaseHandler<TransactionClosureSendCommand, Mono<Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>>> {
 
-    private final TransactionsEventStoreRepository<Void> transactionEventStoreRepository;
+    private final TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository;
+
+    private final TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository;
 
     private final NodeForPspClient nodeForPspClient;
 
@@ -47,7 +50,8 @@ public class TransactionSendClosureHandler extends
 
     @Autowired
     public TransactionSendClosureHandler(
-            TransactionsEventStoreRepository<Void> transactionEventStoreRepository,
+            TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository,
+            TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository,
             TransactionsEventStoreRepository<Object> eventStoreRepository,
             NodeForPspClient nodeForPspClient,
             @Qualifier(
@@ -59,6 +63,7 @@ public class TransactionSendClosureHandler extends
     ) {
         super(eventStoreRepository);
         this.transactionEventStoreRepository = transactionEventStoreRepository;
+        this.transactionClosureErrorEventStoreRepository = transactionClosureErrorEventStoreRepository;
         this.nodeForPspClient = nodeForPspClient;
         this.transactionClosureSentEventQueueClient = transactionClosureSentEventQueueClient;
         this.paymentTokenValidity = paymentTokenValidity;
@@ -67,8 +72,8 @@ public class TransactionSendClosureHandler extends
     }
 
     @Override
-    public Mono<Either<TransactionClosureErrorEvent, TransactionEvent<Void>>> handle(
-                                                                                     TransactionClosureSendCommand command
+    public Mono<Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>> handle(
+                                                                                                       TransactionClosureSendCommand command
     ) {
         Mono<Transaction> transaction = replayTransactionEvents(
                 command.getData().transaction().getTransactionId().value()
@@ -142,11 +147,12 @@ public class TransactionSendClosureHandler extends
                             .flatMap(
                                     response -> buildClosureEvent(
                                             command,
-                                            transactionAuthorizationCompletedData.getAuthorizationResultDto()
+                                            transactionAuthorizationCompletedData.getAuthorizationResultDto(),
+                                            response.getOutcome()
                                     )
                             )
                             .flatMap(transactionEventStoreRepository::save)
-                            .map(Either::<TransactionClosureErrorEvent, TransactionEvent<Void>>right)
+                            .map(Either::<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>right)
                             .onErrorResume(exception -> {
                                 log.error("Got exception while invoking closePaymentV2", exception);
                                 TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
@@ -185,7 +191,7 @@ public class TransactionSendClosureHandler extends
                                         .toInstant();
                                 Instant softValidityEnd = validityEnd.minusSeconds(softTimeoutOffset);
 
-                                Mono<TransactionClosureErrorEvent> eventSaved = transactionEventStoreRepository
+                                Mono<TransactionClosureErrorEvent> eventSaved = transactionClosureErrorEventStoreRepository
                                         .save(errorEvent);
                                 if (softValidityEnd.isAfter(Instant.now())) {
                                     Duration latestAllowedVisibilityTimeout = Duration
@@ -238,14 +244,16 @@ public class TransactionSendClosureHandler extends
         }
     }
 
-    private Mono<TransactionEvent<Void>> buildClosureEvent(
+    private Mono<TransactionEvent<TransactionClosureData>> buildClosureEvent(
             TransactionClosureSendCommand command,
-            AuthorizationResultDto authorizationResult) {
+            AuthorizationResultDto authorizationResult,
+            ClosePaymentResponseDto.OutcomeEnum nodoOutcome) {
         String transactionId = command.getData().transaction().getTransactionId().value().toString();
         return switch (authorizationResult) {
-            case OK -> Mono.just(new TransactionClosedEvent(transactionId));
+            case OK -> Mono.just(new TransactionClosedEvent(transactionId, new TransactionClosureData(nodoOutcome)));
 
-            case KO -> Mono.just(new TransactionClosureFailedEvent(transactionId));
+            case KO ->
+                    Mono.just(new TransactionClosureFailedEvent(transactionId, new TransactionClosureData(nodoOutcome)));
 
             case null, default -> Mono.error(new IllegalArgumentException(
                     "Unhandled authorization result: %s".formatted(authorizationResult)

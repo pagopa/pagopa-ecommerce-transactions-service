@@ -42,7 +42,10 @@ import static org.mockito.ArgumentMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionSendClosureHandlerTest {
-    private final TransactionsEventStoreRepository<Void> transactionEventStoreRepository = Mockito
+    private final TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository = Mockito
+            .mock(TransactionsEventStoreRepository.class);
+
+    private final TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
 
     private final TransactionsEventStoreRepository<Object> eventStoreRepository = Mockito
@@ -58,6 +61,7 @@ class TransactionSendClosureHandlerTest {
 
     private final TransactionSendClosureHandler transactionSendClosureHandler = new TransactionSendClosureHandler(
             transactionEventStoreRepository,
+            transactionClosureErrorEventStoreRepository,
             eventStoreRepository,
             nodeForPspClient,
             transactionClosureSentEventQueueClient,
@@ -156,9 +160,8 @@ class TransactionSendClosureHandlerTest {
                 )
         );
 
-        TransactionClosedEvent closedEvent = new TransactionClosedEvent(
-                transactionId.value().toString()
-        );
+        TransactionClosedEvent closedEvent = TransactionTestUtils
+                .transactionClosedEvent(ClosePaymentResponseDto.OutcomeEnum.OK);
 
         Flux events = Flux.just(
                 transactionActivatedEvent,
@@ -252,9 +255,8 @@ class TransactionSendClosureHandlerTest {
                 closureSendData
         );
 
-        TransactionClosureFailedEvent event = new TransactionClosureFailedEvent(
-                transactionId.toString()
-        );
+        TransactionClosedEvent event = TransactionTestUtils
+                .transactionClosedEvent(ClosePaymentResponseDto.OutcomeEnum.OK);
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
@@ -385,9 +387,7 @@ class TransactionSendClosureHandlerTest {
                 closureSendData
         );
 
-        TransactionClosureFailedEvent event = new TransactionClosureFailedEvent(
-                transactionId.toString()
-        );
+        TransactionClosureFailedEvent event = TransactionTestUtils.transactionClosureFailedEvent();
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
@@ -518,9 +518,8 @@ class TransactionSendClosureHandlerTest {
                 closureSendData
         );
 
-        TransactionClosedEvent event = new TransactionClosedEvent(
-                transactionId.toString()
-        );
+        TransactionClosedEvent event = TransactionTestUtils
+                .transactionClosedEvent(ClosePaymentResponseDto.OutcomeEnum.OK);
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
@@ -651,9 +650,7 @@ class TransactionSendClosureHandlerTest {
                 closureSendData
         );
 
-        TransactionClosureFailedEvent event = new TransactionClosureFailedEvent(
-                transactionId.toString()
-        );
+        TransactionClosureFailedEvent event = TransactionTestUtils.transactionClosureFailedEvent();
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
@@ -697,7 +694,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.error(closePaymentError));
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
-        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
+        Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());
@@ -709,7 +706,7 @@ class TransactionSendClosureHandlerTest {
                 .expectNext(Either.left(errorEvent))
                 .verifyComplete();
 
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1))
+        Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
                 .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT)));
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
                 .sendMessageWithResponse(
@@ -843,7 +840,9 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
         // first call to redis is ko, second one is ok
         Mockito.when(transactionEventStoreRepository.save(any()))
-                .thenReturn(Mono.error(redisError), Mono.just(errorEvent));
+                .thenReturn(Mono.error(redisError));
+        Mockito.when(transactionClosureErrorEventStoreRepository.save(any()))
+                .thenReturn(Mono.just(errorEvent));
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());
@@ -855,7 +854,7 @@ class TransactionSendClosureHandlerTest {
                 .expectNext(Either.left(errorEvent))
                 .verifyComplete();
 
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1))
+        Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
                 .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT)));
 
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
