@@ -117,7 +117,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .thenReturn(Mono.just(postePayAuthResponseEntityDto));
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
-        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.empty());
+        Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(args -> Mono.just(args.getArguments()[0]));
         Mockito.when(queueAsyncClient.sendMessageWithResponse(BinaryData.fromObject(any()), any(), any()))
                 .thenReturn(Mono.empty());
 
@@ -184,7 +184,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .thenReturn(Mono.just(xPayAuthResponseEntityDto));
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
-        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.empty());
+        Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(args -> Mono.just(args.getArguments()[0]));
         Mockito.when(queueAsyncClient.sendMessageWithResponse(BinaryData.fromObject(any()), any(), any()))
                 .thenReturn(Mono.empty());
 

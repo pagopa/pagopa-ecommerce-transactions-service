@@ -152,6 +152,23 @@ public class TransactionRequestAuthorizationHandler
                                     );
 
                                     return transactionEventStoreRepository.save(authorizationEvent)
+                                            .doOnNext(
+                                                    event -> queueAsyncClient.sendMessageWithResponse(
+                                                            BinaryData.fromObject(event),
+                                                            Duration.ofSeconds(
+                                                                    Integer.parseInt(queueVisibilityTimeout)
+                                                            ),
+                                                            null
+                                                    ).subscribe(
+                                                            response -> log.debug(
+                                                                    "Message {} expires at {}",
+                                                                    response.getValue().getMessageId(),
+                                                                    response.getValue().getExpirationTime()
+                                                            ),
+                                                            error -> log.error(error.toString()),
+                                                            () -> log.debug("Complete enqueuing the message!")
+                                                    )
+                                            )
                                             .thenReturn(tuple2)
                                             .map(
                                                     auth -> new RequestAuthorizationResponseDto()
@@ -160,21 +177,6 @@ public class TransactionRequestAuthorizationHandler
                                             );
                                 })
                                 .doOnError(BadRequestException.class, error -> log.error(error.getMessage()))
-                                .doOnNext(
-                                        authorizationEvent -> queueAsyncClient.sendMessageWithResponse(
-                                                BinaryData.fromObject(authorizationEvent),
-                                                Duration.ofSeconds(Integer.parseInt(queueVisibilityTimeout)),
-                                                null
-                                        ).subscribe(
-                                                response -> log.debug(
-                                                        "Message {} expires at {}",
-                                                        response.getValue().getMessageId(),
-                                                        response.getValue().getExpirationTime()
-                                                ),
-                                                error -> log.error(error.toString()),
-                                                () -> log.debug("Complete enqueuing the message!")
-                                        )
-                                )
                 );
     }
 }
