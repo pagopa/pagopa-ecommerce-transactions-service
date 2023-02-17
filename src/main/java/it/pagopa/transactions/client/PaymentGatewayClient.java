@@ -12,6 +12,7 @@ import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.GatewayTimeoutException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.utils.UUIDUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -40,6 +41,9 @@ public class PaymentGatewayClient {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private UUIDUtils uuidUtils;
+
     // TODO Handle multiple rptId
 
     public Mono<PostePayAuthResponseEntityDto> requestPostepayAuthorization(
@@ -60,7 +64,9 @@ public class PaymentGatewayClient {
                                             .value()
                             )
                             .paymentChannel(authorizationData.pspChannelCode())
-                            .idTransaction(authorizationData.transaction().getTransactionId().value().toString());
+                            .idTransaction(
+                                    uuidUtils.uuidToBase64(authorizationData.transaction().getTransactionId().value())
+                            );
                 })
                 .flatMap(
                         payAuthRequestDto -> postePayInternalApi
@@ -103,7 +109,9 @@ public class PaymentGatewayClient {
                                         .pan(cardData.getPan())
                                         .expiryDate(cardData.getExpiryDate())
                                         .idTransaction(
-                                                authorizationData.transaction().getTransactionId().value().toString()
+                                                uuidUtils.uuidToBase64(
+                                                        authorizationData.transaction().getTransactionId().value()
+                                                )
                                         )
                                         .grandTotal(grandTotal)
                         );
@@ -152,7 +160,9 @@ public class PaymentGatewayClient {
                                         .pan(cardData.getPan())
                                         .expireDate(cardData.getExpiryDate())
                                         .idTransaction(
-                                                authorizationData.transaction().getTransactionId().value().toString()
+                                                uuidUtils.uuidToBase64(
+                                                        authorizationData.transaction().getTransactionId().value()
+                                                )
                                         )
                                         .amount(grandTotal)
                                         .emailCh(authorizationData.transaction().getEmail().value())
