@@ -1,6 +1,7 @@
 package it.pagopa.transactions.controllers;
 
-import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.domain.v1.PaymentToken;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
 import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
@@ -198,7 +199,7 @@ class TransactionsControllerTest {
                                 .paymentToken(paymentToken)
                 )
                 .authToken("authToken")
-                .status(TransactionStatusDto.AUTHORIZED);
+                .status(TransactionStatusDto.AUTHORIZATION_COMPLETED);
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .authorizationResult(AuthorizationResultDto.OK)

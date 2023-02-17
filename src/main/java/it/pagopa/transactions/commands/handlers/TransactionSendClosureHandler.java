@@ -10,7 +10,6 @@ import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
-import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
@@ -140,7 +139,7 @@ public class TransactionSendClosureHandler extends
                     it.pagopa.ecommerce.commons.domain.v1.PaymentNotice paymentNotice = tx.getPaymentNotices().get(0);
                     log.info("Invoking closePaymentV2 for RptId: {}", paymentNotice.rptId().value());
                     return nodeForPspClient.closePaymentV2(closePaymentRequest)
-                            .flatMap(response -> buildClosureEvent(command, response.getOutcome()))
+                            .flatMap(response -> buildClosureEvent(command, closePaymentRequest.getOutcome()))
                             .flatMap(transactionEventStoreRepository::save)
                             .map(Either::<TransactionClosureErrorEvent, TransactionEvent<Void>>right)
                             .onErrorResume(exception -> {
@@ -236,7 +235,7 @@ public class TransactionSendClosureHandler extends
 
     private Mono<TransactionEvent<Void>> buildClosureEvent(
             TransactionClosureSendCommand command,
-            ClosePaymentResponseDto.OutcomeEnum outcome) {
+            ClosePaymentRequestV2Dto.OutcomeEnum outcome) {
         String transactionId = command.getData().transaction().getTransactionId().value().toString();
         return switch (outcome) {
             case OK -> Mono.just(new TransactionClosedEvent(transactionId));
