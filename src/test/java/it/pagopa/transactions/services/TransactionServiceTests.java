@@ -1,10 +1,11 @@
 package it.pagopa.transactions.services;
 
 import io.vavr.control.Either;
+import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
-import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PSPsResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PaymentMethodResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
@@ -115,7 +116,7 @@ public class TransactionServiceTests {
     @Test
     void getTransactionReturnsTransactionDataOriginProvided() {
 
-        it.pagopa.ecommerce.commons.documents.PaymentNotice paymentNotice = new it.pagopa.ecommerce.commons.documents.PaymentNotice(
+        it.pagopa.ecommerce.commons.documents.v1.PaymentNotice paymentNotice = new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                 PAYMENT_TOKEN,
                 "77777777777111111111111111111",
                 "reason",
@@ -186,12 +187,21 @@ public class TransactionServiceTests {
 
         Transaction transaction = new Transaction(
                 TRANSACION_ID,
-                PAYMENT_TOKEN,
-                "77777777777111111111111111111",
-                "description",
-                100,
+                List.of(
+                        new PaymentNotice(
+                                PAYMENT_TOKEN,
+                                "77777777777111111111111111111",
+                                "description",
+                                100,
+                                null
+                        )
+                ),
+                0,
                 "foo@example.com",
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
+                Transaction.ClientId.CHECKOUT,
+                ZonedDateTime.now().toString()
+
         );
 
         /* preconditions */
@@ -274,19 +284,28 @@ public class TransactionServiceTests {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
         Transaction transactionDocument = new Transaction(
-                transactionId.value().toString(),
-                PAYMENT_TOKEN,
-                "77777777777111111111111111111",
-                "description",
-                100,
+                TRANSACION_ID,
+                List.of(
+                        new PaymentNotice(
+                                PAYMENT_TOKEN,
+                                "77777777777111111111111111111",
+                                "description",
+                                100,
+                                null
+                        )
+                ),
+                0,
                 "foo@example.com",
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_REQUESTED
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                Transaction.ClientId.CHECKOUT,
+                ZonedDateTime.now().toString()
+
         );
 
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
                 transactionDocument.getPaymentNotices().stream().map(
-                        paymentNotice -> new PaymentNotice(
+                        paymentNotice -> new it.pagopa.ecommerce.commons.domain.v1.PaymentNotice(
                                 new PaymentToken(paymentNotice.getPaymentToken()),
                                 new RptId(paymentNotice.getRptId()),
                                 new TransactionAmount(paymentNotice.getAmount()),
@@ -297,8 +316,7 @@ public class TransactionServiceTests {
                 new Email(transactionDocument.getEmail()),
                 "faultCode",
                 "faultCodeString",
-                transactionDocument.getStatus(),
-                Transaction.ClientId.UNKNOWN
+                Transaction.ClientId.CHECKOUT
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -306,26 +324,19 @@ public class TransactionServiceTests {
                 .authorizationCode("authorizationCode")
                 .timestampOperation(OffsetDateTime.now());
 
-        TransactionAuthorizationStatusUpdateData statusUpdateData = new TransactionAuthorizationStatusUpdateData(
+        TransactionAuthorizationCompletedData statusUpdateData = new TransactionAuthorizationCompletedData(
+                "authorizationCode",
                 it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto
-                        .fromValue(updateAuthorizationRequest.getAuthorizationResult().toString()),
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZED,
-                "authorizationCode"
+                        .fromValue(updateAuthorizationRequest.getAuthorizationResult().toString())
         );
 
-        TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
+        TransactionAuthorizationCompletedEvent event = new TransactionAuthorizationCompletedEvent(
                 transactionDocument.getTransactionId(),
                 statusUpdateData
         );
 
-        TransactionClosureSendData closureSendData = new TransactionClosureSendData(
-                ClosePaymentResponseDto.OutcomeEnum.OK,
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSED
-        );
-
-        TransactionClosureSentEvent closureSentEvent = new TransactionClosureSentEvent(
-                transactionDocument.getTransactionId(),
-                closureSendData
+        TransactionClosedEvent closureSentEvent = new TransactionClosedEvent(
+                transactionDocument.getTransactionId()
         );
 
         TransactionInfoDto expectedResponse = new TransactionInfoDto()
@@ -343,12 +354,12 @@ public class TransactionServiceTests {
 
         Transaction closedTransactionDocument = new Transaction(
                 transactionDocument.getTransactionId(),
-                transactionDocument.getPaymentNotices().get(0).getPaymentToken(),
-                transactionDocument.getPaymentNotices().get(0).getRptId(),
-                transactionDocument.getPaymentNotices().get(0).getDescription(),
-                transactionDocument.getPaymentNotices().get(0).getAmount(),
+                transactionDocument.getPaymentNotices(),
+                null,
                 transactionDocument.getEmail(),
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSED
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSED,
+                Transaction.ClientId.CHECKOUT,
+                ZonedDateTime.now().toString()
         );
 
         /* preconditions */
@@ -397,19 +408,28 @@ public class TransactionServiceTests {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
         Transaction transactionDocument = new Transaction(
-                transactionId.value().toString(),
-                PAYMENT_TOKEN,
-                "77777777777111111111111111111",
-                "description",
-                100,
+                TRANSACION_ID,
+                List.of(
+                        new PaymentNotice(
+                                PAYMENT_TOKEN,
+                                "77777777777111111111111111111",
+                                "description",
+                                100,
+                                null
+                        )
+                ),
+                0,
                 "foo@example.com",
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSED
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSED,
+                Transaction.ClientId.CHECKOUT,
+                ZonedDateTime.now().toString()
+
         );
 
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
                 transactionDocument.getPaymentNotices().stream().map(
-                        paymentNotice -> new PaymentNotice(
+                        paymentNotice -> new it.pagopa.ecommerce.commons.domain.v1.PaymentNotice(
                                 new PaymentToken(paymentNotice.getPaymentToken()),
                                 new RptId(paymentNotice.getRptId()),
                                 new TransactionAmount(paymentNotice.getAmount()),
@@ -420,17 +440,11 @@ public class TransactionServiceTests {
                 new Email(transactionDocument.getEmail()),
                 null,
                 null,
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED,
-                Transaction.ClientId.UNKNOWN
-        );
-
-        TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED
+                Transaction.ClientId.CHECKOUT
         );
 
         TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
-                transactionDocument.getTransactionId(),
-                transactionAddReceiptData
+                transactionDocument.getTransactionId()
         );
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
@@ -532,12 +546,21 @@ public class TransactionServiceTests {
                 .details(cardAuthRequestDetailsDto);
         Transaction transaction = new Transaction(
                 TRANSACION_ID,
-                PAYMENT_TOKEN,
-                "77777777777111111111111111111",
-                "description",
-                100,
+                List.of(
+                        new PaymentNotice(
+                                PAYMENT_TOKEN,
+                                "77777777777111111111111111111",
+                                "description",
+                                100,
+                                null
+                        )
+                ),
+                0,
                 "foo@example.com",
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
+                Transaction.ClientId.CHECKOUT,
+                ZonedDateTime.now().toString()
+
         );
 
         /* preconditions */
@@ -613,12 +636,21 @@ public class TransactionServiceTests {
                 .details(cardAuthRequestDetailsDto);
         Transaction transaction = new Transaction(
                 TRANSACION_ID,
-                PAYMENT_TOKEN,
-                "77777777777111111111111111111",
-                "description",
-                200,
+                List.of(
+                        new PaymentNotice(
+                                PAYMENT_TOKEN,
+                                "77777777777111111111111111111",
+                                "description",
+                                100,
+                                null
+                        )
+                ),
+                0,
                 "foo@example.com",
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
+                Transaction.ClientId.CHECKOUT,
+                ZonedDateTime.now().toString()
+
         );
 
         /* preconditions */
@@ -671,7 +703,7 @@ public class TransactionServiceTests {
 
     @Test
     void shouldConvertClientIdSuccessfully() {
-        for (it.pagopa.ecommerce.commons.documents.Transaction.ClientId clientId : it.pagopa.ecommerce.commons.documents.Transaction.ClientId
+        for (it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId clientId : it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId
                 .values()) {
             assertEquals(clientId.toString(), transactionsService.convertClientId(clientId).toString());
         }

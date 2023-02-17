@@ -1,5 +1,7 @@
 package it.pagopa.transactions.documents;
 
+import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import org.junit.jupiter.api.Test;
@@ -7,8 +9,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.ZonedDateTime;
-import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionDocumentTest {
@@ -24,54 +29,83 @@ class TransactionDocumentTest {
         int TEST_AMOUNT = 1;
         TransactionStatusDto TEST_STATUS = TransactionStatusDto.ACTIVATED;
 
-        /**
+        /*
          * Test
+         */
+        /*
+         * String transactionId,
+         * java.util.List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice>
+         * paymentNotices,
+         *
+         * @Nullable Integer feeTotal, String email,
+         * it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto
+         * status, Transaction.ClientId clientId, String creationDate
          */
         Transaction transaction = new Transaction(
                 TEST_TRANSACTIONID,
-                TEST_TOKEN,
-                TEST_RPTID,
-                TEST_DESC,
-                TEST_AMOUNT,
+                List.of(
+                        new PaymentNotice(
+                                TEST_TOKEN,
+                                TEST_RPTID,
+                                TEST_DESC,
+                                TEST_AMOUNT,
+                                ""
+                        )
+                ),
+                0,
                 TEST_EMAIL,
                 TEST_STATUS,
-                TEST_TIME
+                Transaction.ClientId.CHECKOUT,
+                TEST_TIME.toString()
         );
 
         Transaction sameTransaction = new Transaction(
                 TEST_TRANSACTIONID,
-                TEST_TOKEN,
-                TEST_RPTID,
-                TEST_DESC,
-                TEST_AMOUNT,
+                List.of(
+                        new PaymentNotice(
+                                TEST_TOKEN,
+                                TEST_RPTID,
+                                TEST_DESC,
+                                TEST_AMOUNT,
+                                ""
+                        )
+                ),
+                0,
                 TEST_EMAIL,
                 TEST_STATUS,
-                TEST_TIME
+                Transaction.ClientId.CHECKOUT,
+                TEST_TIME.toString()
         );
-        sameTransaction.setCreationDate(transaction.getCreationDate());
 
         // Different transaction (creation date)
         Transaction differentTransaction = new Transaction(
-                "",
-                "",
-                "",
-                "",
-                1,
-                "",
-                null,
-                ZonedDateTime.now()
+                TEST_TRANSACTIONID,
+                List.of(
+                        new PaymentNotice(
+                                TEST_TOKEN,
+                                TEST_RPTID,
+                                TEST_DESC,
+                                TEST_AMOUNT,
+                                ""
+                        )
+                ),
+                0,
+                TEST_EMAIL,
+                TEST_STATUS,
+                Transaction.ClientId.CHECKOUT,
+                ZonedDateTime.now().toString()
         );
-        it.pagopa.ecommerce.commons.documents.PaymentNotice paymentNotice = new PaymentNotice(
+        it.pagopa.ecommerce.commons.documents.v1.PaymentNotice paymentNotice = new PaymentNotice(
                 TEST_TOKEN,
                 TEST_RPTID,
                 TEST_DESC,
                 TEST_AMOUNT,
                 null
         );
-        differentTransaction.setPaymentNotices(Arrays.asList(paymentNotice));
+        differentTransaction.setPaymentNotices(List.of(paymentNotice));
         differentTransaction.setStatus(TEST_STATUS);
 
-        /**
+        /*
          * Assertions
          */
         assertEquals(TEST_TOKEN, transaction.getPaymentNotices().get(0).getPaymentToken());
@@ -100,8 +134,8 @@ class TransactionDocumentTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                Arrays.asList(
-                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                List.of(
+                        new it.pagopa.ecommerce.commons.domain.v1.PaymentNotice(
                                 paymentToken,
                                 rptId,
                                 amount,
@@ -112,7 +146,6 @@ class TransactionDocumentTest {
                 email,
                 faultCode,
                 faultCodeString,
-                status,
                 Transaction.ClientId.UNKNOWN
         );
 

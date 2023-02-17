@@ -508,7 +508,11 @@ public class TransactionsService {
                                                         .rptId(paymentNotice.rptId().value())
                                         ).toList()
                                 )
-                                .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
+                                .status(TransactionStatusDto.fromValue(transaction.getStatus().toString())) // TODO bug,
+                                                                                                            // lo stato
+                                                                                                            // è
+                                                                                                            // ACTIVATED
+                                                                                                            // qui
                 )
                 .doOnNext(
                         transaction -> log.info(

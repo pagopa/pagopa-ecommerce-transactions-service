@@ -1,8 +1,10 @@
 package it.pagopa.transactions.services;
 
-import it.pagopa.ecommerce.commons.documents.v1.*;
+import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.v1.Transaction;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.v1.*;
-import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.ClientIdDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
@@ -21,6 +23,7 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -54,21 +57,11 @@ class TransactionServiceTest {
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
         transactionActivatedData.setEmail(TEST_EMAIL);
         transactionActivatedData
-                .setPaymentNotices(Arrays.asList(new PaymentNotice(TEST_TOKEN, null, "dest", 0, TEST_CPP.toString())));
+                .setPaymentNotices(List.of(new PaymentNotice(TEST_TOKEN, null, "dest", 0, TEST_CPP.toString())));
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 TRANSACTION_ID.toString(),
                 transactionActivatedData
-        );
-
-        TransactionActivationRequestedData transactionActivationRequestedData = new TransactionActivationRequestedData();
-        transactionActivatedData
-                .setPaymentNotices(Arrays.asList(new PaymentNotice(TEST_TOKEN, null, "dest", 0, TEST_CPP.toString())));
-        transactionActivationRequestedData.setEmail(TEST_EMAIL);
-
-        TransactionActivationRequestedEvent transactionActivationRequestedEvent = new TransactionActivationRequestedEvent(
-                TRANSACTION_ID.toString(),
-                transactionActivationRequestedData
         );
 
         Tuple2<Mono<TransactionActivatedEvent>, String> response = Tuples
@@ -80,7 +73,7 @@ class TransactionServiceTest {
         TransactionActivated transactionActivated = new TransactionActivated(
                 new TransactionId(TRANSACTION_ID),
                 Arrays.asList(
-                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                        new it.pagopa.ecommerce.commons.domain.v1.PaymentNotice(
                                 new PaymentToken(TEST_TOKEN),
                                 new RptId(TEST_RPTID),
                                 new TransactionAmount(0),
@@ -91,23 +84,6 @@ class TransactionServiceTest {
                 new Email("foo@example.com"),
                 "faultCode",
                 "faultCodeString",
-                TransactionStatusDto.ACTIVATED,
-                Transaction.ClientId.UNKNOWN
-        );
-
-        TransactionActivationRequested transactionActivationRequested = new TransactionActivationRequested(
-                new TransactionId(TRANSACTION_ID),
-                Arrays.asList(
-                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
-                                null,
-                                new RptId(TEST_RPTID),
-                                new TransactionAmount(0),
-                                new TransactionDescription("desc"),
-                                new PaymentContextCode(TEST_CPP.toString())
-                        )
-                ),
-                new Email("foo@example.com"),
-                TransactionStatusDto.ACTIVATION_REQUESTED,
                 Transaction.ClientId.UNKNOWN
         );
 

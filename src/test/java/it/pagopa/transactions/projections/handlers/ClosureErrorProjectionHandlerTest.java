@@ -88,7 +88,7 @@ class ClosureErrorProjectionHandlerTest {
                 ),
                 0,
                 "foo@example.com",
-                TransactionStatusDto.AUTHORIZED,
+                TransactionStatusDto.AUTHORIZATION_COMPLETED,
                 Transaction.ClientId.CHECKOUT,
                 ZonedDateTime.now().toString()
         );

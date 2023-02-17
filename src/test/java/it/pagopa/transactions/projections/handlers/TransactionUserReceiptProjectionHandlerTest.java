@@ -1,6 +1,5 @@
 package it.pagopa.transactions.projections.handlers;
 
-import it.pagopa.ecommerce.commons.documents.v1.TransactionAddReceiptData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptAddedEvent;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
@@ -18,7 +17,7 @@ import reactor.test.StepVerifier;
 
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.argThat;
@@ -44,7 +43,7 @@ class TransactionUserReceiptProjectionHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(UUID.randomUUID()),
-                Arrays.asList(
+                List.of(
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
@@ -56,28 +55,21 @@ class TransactionUserReceiptProjectionHandlerTest {
                 new Email("foo@example.com"),
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.CLOSED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.UNKNOWN
         );
 
-        it.pagopa.ecommerce.commons.documents.Transaction expectedDocument = new it.pagopa.ecommerce.commons.documents.Transaction(
+        it.pagopa.ecommerce.commons.documents.v1.Transaction expectedDocument = new it.pagopa.ecommerce.commons.documents.v1.Transaction(
                 transaction.getTransactionId().value().toString(),
-                transaction.getTransactionActivatedData().getPaymentNotices().get(0).getPaymentToken(),
-                transaction.getPaymentNotices().get(0).rptId().value(),
-                transaction.getPaymentNotices().get(0).transactionDescription().value(),
-                transaction.getPaymentNotices().get(0).transactionAmount().value(),
+                transaction.getTransactionActivatedData().getPaymentNotices(),
+                null,
                 transaction.getEmail().value(),
                 TransactionStatusDto.NOTIFIED,
-                transaction.getCreationDate()
-        );
-
-        TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(
-                expectedDocument.getStatus()
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                transaction.getCreationDate().toString()
         );
 
         TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
-                transaction.getTransactionId().value().toString(),
-                transactionAddReceiptData
+                transaction.getTransactionId().value().toString()
         );
 
         TransactionActivated expected = new TransactionActivated(
@@ -95,15 +87,14 @@ class TransactionUserReceiptProjectionHandlerTest {
                 transaction.getTransactionActivatedData().getFaultCode(),
                 transaction.getTransactionActivatedData().getFaultCodeString(),
                 ZonedDateTime.parse(expectedDocument.getCreationDate()),
-                expectedDocument.getStatus(),
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
 
         /*
          * Preconditions
          */
         Mockito.when(viewRepository.findById(transaction.getTransactionId().value().toString()))
-                .thenReturn(Mono.just(it.pagopa.ecommerce.commons.documents.Transaction.from(transaction)));
+                .thenReturn(Mono.just(it.pagopa.ecommerce.commons.documents.v1.Transaction.from(transaction)));
 
         Mockito.when(viewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
 

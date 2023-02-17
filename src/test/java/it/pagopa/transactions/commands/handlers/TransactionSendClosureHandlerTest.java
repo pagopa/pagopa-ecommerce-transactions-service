@@ -7,10 +7,12 @@ import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
 import com.azure.storage.queue.models.SendMessageResult;
 import io.vavr.control.Either;
+import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.*;
+import it.pagopa.ecommerce.commons.domain.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
-import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
@@ -39,10 +41,7 @@ import static org.mockito.ArgumentMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionSendClosureHandlerTest {
-    private final TransactionsEventStoreRepository<TransactionClosureSendData> transactionEventStoreRepository = Mockito
-            .mock(TransactionsEventStoreRepository.class);
-
-    private final TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository = Mockito
+    private final TransactionsEventStoreRepository<Void> transactionEventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
 
     private final TransactionsEventStoreRepository<Object> eventStoreRepository = Mockito
@@ -58,7 +57,6 @@ class TransactionSendClosureHandlerTest {
 
     private final TransactionSendClosureHandler transactionSendClosureHandler = new TransactionSendClosureHandler(
             transactionEventStoreRepository,
-            transactionClosureErrorEventStoreRepository,
             eventStoreRepository,
             nodeForPspClient,
             transactionClosureSentEventQueueClient,
@@ -77,8 +75,8 @@ class TransactionSendClosureHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
         Email email = new Email("foo@example.com");
-        List<it.pagopa.ecommerce.commons.documents.PaymentNotice> PaymentNotices = List.of(
-                new it.pagopa.ecommerce.commons.documents.PaymentNotice(
+        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
+                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
                         rptId.value(),
                         description.value(),
@@ -104,8 +102,7 @@ class TransactionSendClosureHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                Transaction.ClientId.CHECKOUT
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -130,7 +127,7 @@ class TransactionSendClosureHandlerTest {
                         transaction.getTransactionActivatedData().getPaymentNotices(),
                         faultCode,
                         faultCodeString,
-                        it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                        it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
                 )
         );
 
@@ -150,29 +147,24 @@ class TransactionSendClosureHandlerTest {
                 )
         );
 
-        TransactionAuthorizationStatusUpdatedEvent authorizationStatusUpdatedEvent = new TransactionAuthorizationStatusUpdatedEvent(
+        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
                 transactionId.value().toString(),
-                new TransactionAuthorizationStatusUpdateData(
-                        AuthorizationResultDto.OK,
-                        TransactionStatusDto.AUTHORIZED,
-                        "authorizationCode"
+                new TransactionAuthorizationCompletedData(
+                        "authorizationCode",
+                        AuthorizationResultDto.OK
                 )
         );
 
-        TransactionClosureSentEvent closureSentEvent = new TransactionClosureSentEvent(
-                transactionId.value().toString(),
-                new TransactionClosureSendData(
-                        ClosePaymentResponseDto.OutcomeEnum.OK,
-                        TransactionStatusDto.CLOSED
-                )
+        TransactionClosedEvent closedEvent = new TransactionClosedEvent(
+                transactionId.value().toString()
         );
 
         Flux events = Flux.just(
                 transactionActivatedEvent,
                 authorizationRequestedEvent,
-                authorizationStatusUpdatedEvent,
-                closureSentEvent,
-                closureSentEvent
+                authorizationCompletedEvent,
+                closedEvent,
+                closedEvent
         );
 
         Mockito.when(eventStoreRepository.findByTransactionId(any())).thenReturn(events);
@@ -194,8 +186,8 @@ class TransactionSendClosureHandlerTest {
         Email email = new Email("foo@example.com");
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
-        List<it.pagopa.ecommerce.commons.documents.PaymentNotice> PaymentNotices = List.of(
-                new it.pagopa.ecommerce.commons.documents.PaymentNotice(
+        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
+                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
                         rptId.value(),
                         description.value(),
@@ -211,7 +203,7 @@ class TransactionSendClosureHandlerTest {
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                        Transaction.ClientId.CHECKOUT
                 )
         );
 
@@ -231,12 +223,11 @@ class TransactionSendClosureHandlerTest {
                 )
         );
 
-        TransactionAuthorizationStatusUpdatedEvent authorizationStatusUpdatedEvent = new TransactionAuthorizationStatusUpdatedEvent(
+        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
                 transactionId.value().toString(),
-                new TransactionAuthorizationStatusUpdateData(
-                        AuthorizationResultDto.OK,
-                        TransactionStatusDto.AUTHORIZED,
-                        "authorizationCode"
+                new TransactionAuthorizationCompletedData(
+                        "authorizationCode",
+                        AuthorizationResultDto.OK
                 )
         );
 
@@ -246,15 +237,11 @@ class TransactionSendClosureHandlerTest {
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
-                .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationStatusUpdatedEvent));
+                .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
-        it.pagopa.ecommerce.commons.domain.Transaction transaction = events
-                .reduce(new EmptyTransaction(), Transaction::applyEvent).block();
+        it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
+                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
 
-        TransactionClosureSendData transactionClosureSendData = new TransactionClosureSendData(
-                ClosePaymentResponseDto.OutcomeEnum.KO,
-                TransactionStatusDto.CLOSURE_FAILED
-        );
         ClosureSendData closureSendData = new ClosureSendData(
                 (BaseTransactionWithPaymentToken) transaction,
                 updateAuthorizationRequest
@@ -265,9 +252,8 @@ class TransactionSendClosureHandlerTest {
                 closureSendData
         );
 
-        TransactionClosureSentEvent event = new TransactionClosureSentEvent(
-                transactionId.toString(),
-                transactionClosureSendData
+        TransactionClosureFailedEvent event = new TransactionClosureFailedEvent(
+                transactionId.toString()
         );
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
@@ -318,8 +304,8 @@ class TransactionSendClosureHandlerTest {
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
                 argThat(
-                        closureSendDataEvent -> closureSendDataEvent.getData().getNewTransactionStatus()
-                                .equals(TransactionStatusDto.CLOSURE_FAILED)
+                        eventArg -> TransactionEventCode.TRANSACTION_CLOSURE_FAILED_EVENT
+                                .equals(eventArg.getEventCode())
                 )
         );
     }
@@ -333,8 +319,8 @@ class TransactionSendClosureHandlerTest {
         Email email = new Email("foo@example.com");
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
-        List<it.pagopa.ecommerce.commons.documents.PaymentNotice> PaymentNotices = List.of(
-                new it.pagopa.ecommerce.commons.documents.PaymentNotice(
+        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
+                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
                         rptId.value(),
                         description.value(),
@@ -350,7 +336,7 @@ class TransactionSendClosureHandlerTest {
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                        Transaction.ClientId.CHECKOUT
                 )
         );
 
@@ -370,12 +356,11 @@ class TransactionSendClosureHandlerTest {
                 )
         );
 
-        TransactionAuthorizationStatusUpdatedEvent authorizationStatusUpdatedEvent = new TransactionAuthorizationStatusUpdatedEvent(
+        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
                 transactionId.value().toString(),
-                new TransactionAuthorizationStatusUpdateData(
-                        AuthorizationResultDto.OK,
-                        TransactionStatusDto.AUTHORIZED,
-                        "authorizationCode"
+                new TransactionAuthorizationCompletedData(
+                        "authorizationCode",
+                        AuthorizationResultDto.OK
                 )
         );
 
@@ -385,14 +370,11 @@ class TransactionSendClosureHandlerTest {
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
-                .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationStatusUpdatedEvent));
+                .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
-        Transaction transaction = events.reduce(new EmptyTransaction(), Transaction::applyEvent).block();
+        it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
+                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
 
-        TransactionClosureSendData transactionClosureSendData = new TransactionClosureSendData(
-                ClosePaymentResponseDto.OutcomeEnum.KO,
-                TransactionStatusDto.CLOSURE_FAILED
-        );
         ClosureSendData closureSendData = new ClosureSendData(
                 (BaseTransactionWithPaymentToken) transaction,
                 updateAuthorizationRequest
@@ -403,9 +385,8 @@ class TransactionSendClosureHandlerTest {
                 closureSendData
         );
 
-        TransactionClosureSentEvent event = new TransactionClosureSentEvent(
-                transactionId.toString(),
-                transactionClosureSendData
+        TransactionClosureFailedEvent event = new TransactionClosureFailedEvent(
+                transactionId.toString()
         );
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
@@ -413,7 +394,7 @@ class TransactionSendClosureHandlerTest {
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         transactionActivatedEvent.getData().getPaymentNotices().stream()
-                                .map(it.pagopa.ecommerce.commons.documents.PaymentNotice::getPaymentToken).toList()
+                                .map(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getPaymentToken).toList()
                 )
                 .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
                 .idPSP(authorizationRequestData.getPspId())
@@ -423,7 +404,8 @@ class TransactionSendClosureHandlerTest {
                 .totalAmount(
                         EuroUtils.euroCentsToEuro(
                                 (transactionActivatedEvent.getData().getPaymentNotices().stream()
-                                        .mapToInt(it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount).sum()
+                                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                                        .sum()
                                         + authorizationRequestData.getFee())
                         )
                 )
@@ -449,7 +431,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.error(closePaymentError));
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
-        Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
+        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());
@@ -461,7 +443,7 @@ class TransactionSendClosureHandlerTest {
                 .expectNext(Either.left(errorEvent))
                 .verifyComplete();
 
-        Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1))
                 .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT)));
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
                 .sendMessageWithResponse(
@@ -483,8 +465,8 @@ class TransactionSendClosureHandlerTest {
         Email email = new Email("foo@example.com");
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
-        List<it.pagopa.ecommerce.commons.documents.PaymentNotice> PaymentNotices = List.of(
-                new it.pagopa.ecommerce.commons.documents.PaymentNotice(
+        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
+                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
                         rptId.value(),
                         description.value(),
@@ -500,7 +482,7 @@ class TransactionSendClosureHandlerTest {
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                        Transaction.ClientId.CHECKOUT
                 )
         );
 
@@ -520,12 +502,11 @@ class TransactionSendClosureHandlerTest {
                 )
         );
 
-        TransactionAuthorizationStatusUpdatedEvent authorizationStatusUpdatedEvent = new TransactionAuthorizationStatusUpdatedEvent(
+        TransactionAuthorizationCompletedEvent authorizationStatusUpdatedEvent = new TransactionAuthorizationCompletedEvent(
                 transactionId.value().toString(),
-                new TransactionAuthorizationStatusUpdateData(
-                        AuthorizationResultDto.OK,
-                        TransactionStatusDto.AUTHORIZED,
-                        "authorizationCode"
+                new TransactionAuthorizationCompletedData(
+                        "authorizationCode",
+                        AuthorizationResultDto.OK
                 )
         );
 
@@ -537,12 +518,9 @@ class TransactionSendClosureHandlerTest {
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationStatusUpdatedEvent));
 
-        Transaction transaction = events.reduce(new EmptyTransaction(), Transaction::applyEvent).block();
+        it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
+                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
 
-        TransactionClosureSendData transactionClosureSendData = new TransactionClosureSendData(
-                ClosePaymentResponseDto.OutcomeEnum.KO,
-                TransactionStatusDto.CLOSURE_FAILED
-        );
         ClosureSendData closureSendData = new ClosureSendData(
                 (BaseTransactionWithPaymentToken) transaction,
                 updateAuthorizationRequest
@@ -598,7 +576,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.error(redisError));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
-        Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
+        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());
@@ -610,7 +588,7 @@ class TransactionSendClosureHandlerTest {
                 .expectNext(Either.left(errorEvent))
                 .verifyComplete();
 
-        Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1))
                 .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT)));
 
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
