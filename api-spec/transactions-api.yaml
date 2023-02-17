@@ -646,15 +646,15 @@ components:
       enum:
         - ACTIVATED
         - AUTHORIZATION_REQUESTED
-        - AUTHORIZED
-        - AUTHORIZATION_FAILED
+        - AUTHORIZATION_COMPLETED
         - CLOSED
-        - CLOSURE_FAILED
         - CLOSURE_ERROR
         - NOTIFIED
-        - NOTIFIED_FAILED
         - EXPIRED
         - REFUNDED
+        - CANCELED
+        - EXPIRED_NOT_AUTHORIZED
+        - UNAUTHORIZED
     ClientId:
       type: string
       description: Enumerations of client ids
