@@ -191,6 +191,13 @@
             <version>0.11.4</version>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>it.pagopa</groupId>
+            <artifactId>pagopa-ecommerce-commons</artifactId>
+            <version>${pagopa-ecommerce-commons.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>

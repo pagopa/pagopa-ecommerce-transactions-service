@@ -51,6 +51,9 @@ class TransactionInitializerHandlerTest {
     private final TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
 
+    private final TransactionsEventStoreRepository<Object> eventStoreRepository = Mockito
+            .mock(TransactionsEventStoreRepository.class);
+
     private final NodoOperations nodoOperations = Mockito.mock(NodoOperations.class);
 
     private final QueueAsyncClient transactionClosureSentEventQueueClient = Mockito.mock(QueueAsyncClient.class);
@@ -59,6 +62,7 @@ class TransactionInitializerHandlerTest {
 
     private final TransactionActivateHandler handler = new TransactionActivateHandler(
             paymentRequestInfoRepository,
+            eventStoreRepository,
             transactionEventActivatedStoreRepository,
             nodoOperations,
             jwtTokenUtils,
@@ -136,11 +140,9 @@ class TransactionInitializerHandlerTest {
         Mockito.when(jwtTokenUtils.generateToken(any()))
                 .thenReturn(Mono.just("authToken"));
         ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
-        /* run test */
-        StepVerifier.create(
-                handler.handle(command)
-        ).expectNext()
-                .verifyComplete();
+        /** run test */
+        Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
+                .handle(command).block();
 
         /* asserts */
         Mockito.verify(paymentRequestInfoRepository, Mockito.times(1)).findById(rptId);

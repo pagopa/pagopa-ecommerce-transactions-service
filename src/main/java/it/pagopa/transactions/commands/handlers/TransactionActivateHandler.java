@@ -6,7 +6,8 @@ import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.domain.v1.RptId;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
@@ -34,8 +35,7 @@ import java.util.UUID;
 @Slf4j
 @Component
 public class TransactionActivateHandler
-        implements
-        CommandHandler<TransactionActivateCommand, Mono<Tuple2<Mono<TransactionActivatedEvent>, String>>> {
+        extends BaseHandler<TransactionActivateCommand, Mono<Tuple2<Mono<TransactionActivatedEvent>, String>>> {
 
     private final PaymentRequestsInfoRepository paymentRequestsInfoRepository;
 
@@ -55,12 +55,14 @@ public class TransactionActivateHandler
     @Autowired
     public TransactionActivateHandler(
             PaymentRequestsInfoRepository paymentRequestsInfoRepository,
+            TransactionsEventStoreRepository<Object> eventStoreRepository,
             TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository,
             NodoOperations nodoOperations,
             JwtTokenUtils jwtTokenUtils,
             @Qualifier("transactionActivatedQueueAsyncClient") QueueAsyncClient transactionActivatedQueueAsyncClient,
             @Value("${payment.token.validity}") Integer paymentTokenTimeout
     ) {
+        super(eventStoreRepository);
         this.paymentRequestsInfoRepository = paymentRequestsInfoRepository;
         this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
         this.nodoOperations = nodoOperations;
@@ -171,7 +173,6 @@ public class TransactionActivateHandler
                                     );
                                 }
                         )
-
         );
     }
 

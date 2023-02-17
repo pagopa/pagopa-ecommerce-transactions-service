@@ -5,6 +5,7 @@ import com.azure.cosmos.implementation.BadRequestException;
 import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import it.pagopa.generated.transactions.server.model.PostePayAuthRequestDetailsDto;
@@ -14,13 +15,13 @@ import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -32,7 +33,6 @@ import static org.mockito.ArgumentMatchers.any;
 @ExtendWith(MockitoExtension.class)
 class TransactionRequestAuthorizizationHandlerTest {
 
-    @InjectMocks
     private TransactionRequestAuthorizationHandler requestAuthorizationHandler;
 
     @Mock
@@ -42,11 +42,25 @@ class TransactionRequestAuthorizizationHandlerTest {
     private TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository;
 
     @Mock
+    private TransactionsEventStoreRepository<Object> eventStoreRepository;
+
+    @Mock
     private QueueAsyncClient queueAsyncClient;
 
     private final UUID transactionIdUUID = UUID.randomUUID();
 
-    TransactionId transactionId = new TransactionId(transactionIdUUID);
+    TransactionId transactionId = new TransactionId(UUID.fromString(TransactionTestUtils.TRANSACTION_ID));
+
+    @BeforeEach
+    private void init() {
+        requestAuthorizationHandler = new TransactionRequestAuthorizationHandler(
+                eventStoreRepository,
+                paymentGatewayClient,
+                transactionEventStoreRepository,
+                queueAsyncClient,
+                "300"
+        );
+    }
 
     @Test
     void shouldSaveAuthorizationEvent() {
@@ -98,11 +112,11 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .requestId("requestId")
                 .urlRedirect("http://example.com");
 
-        ReflectionTestUtils.setField(requestAuthorizationHandler, "queueVisibilityTimeout", "300");
-
         /* preconditions */
         Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
                 .thenReturn(Mono.just(postePayAuthResponseEntityDto));
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString()))
+                .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.empty());
         Mockito.when(queueAsyncClient.sendMessageWithResponse(BinaryData.fromObject(any()), any(), any()))
                 .thenReturn(Mono.empty());
@@ -163,13 +177,13 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .status("status")
                 .urlRedirect("http://example.com");
 
-        ReflectionTestUtils.setField(requestAuthorizationHandler, "queueVisibilityTimeout", "300");
-
         /* preconditions */
         Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.just(xPayAuthResponseEntityDto));
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString()))
+                .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.empty());
         Mockito.when(queueAsyncClient.sendMessageWithResponse(BinaryData.fromObject(any()), any(), any()))
                 .thenReturn(Mono.empty());
@@ -225,6 +239,12 @@ class TransactionRequestAuthorizizationHandlerTest {
                 transaction.getPaymentNotices().get(0).rptId(),
                 authorizationData
         );
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(
+                (Flux) Flux.just(
+                        TransactionTestUtils.transactionActivateEvent(),
+                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                )
+        );
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -279,7 +299,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                 transaction.getPaymentNotices().get(0).rptId(),
                 authorizationData
         );
-
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString()))
+                .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData)).thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData)).thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData)).thenReturn(Mono.empty());

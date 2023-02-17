@@ -13,9 +13,9 @@ import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.data.AddUserReceiptData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -33,7 +33,6 @@ import static org.mockito.ArgumentMatchers.argThat;
 @ExtendWith(MockitoExtension.class)
 class TransactionAddUserReceiptHandlerTest {
 
-    @InjectMocks
     private TransactionAddUserReceiptHandler updateStatusHandler;
 
     @Mock
@@ -46,6 +45,15 @@ class TransactionAddUserReceiptHandlerTest {
     NotificationsServiceClient notificationsServiceClient;
 
     private final TransactionId transactionId = new TransactionId(UUID.randomUUID());
+
+    @BeforeEach
+    private void initTest() {
+        updateStatusHandler = new TransactionAddUserReceiptHandler(
+                eventStoreRepository,
+                transactionEventStoreRepository,
+                notificationsServiceClient
+        );
+    }
 
     @Test
     void shouldSaveSuccessfulUpdateWithStatusClosed() {
@@ -154,8 +162,7 @@ class TransactionAddUserReceiptHandlerTest {
                 transactionActivatedEvent,
                 authorizationRequestedEvent,
                 authorizationCompletedEvent,
-                closureSentEvent,
-                event
+                closureSentEvent
         ));
 
         /* preconditions */
@@ -284,8 +291,7 @@ class TransactionAddUserReceiptHandlerTest {
                 transactionActivatedEvent,
                 authorizationRequestedEvent,
                 authorizationCompletedEvent,
-                closureSentEvent,
-                event
+                closureSentEvent
         ));
 
         /* preconditions */
@@ -414,8 +420,7 @@ class TransactionAddUserReceiptHandlerTest {
                 transactionActivatedEvent,
                 authorizationRequestedEvent,
                 authorizationCompletedEvent,
-                closureSentEvent,
-                event
+                closureSentEvent
         ));
 
         /* preconditions */

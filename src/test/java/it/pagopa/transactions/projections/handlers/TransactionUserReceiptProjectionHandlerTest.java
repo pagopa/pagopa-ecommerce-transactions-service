@@ -55,7 +55,7 @@ class TransactionUserReceiptProjectionHandlerTest {
                 new Email("foo@example.com"),
                 faultCode,
                 faultCodeString,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
 
         it.pagopa.ecommerce.commons.documents.v1.Transaction expectedDocument = new it.pagopa.ecommerce.commons.documents.v1.Transaction(

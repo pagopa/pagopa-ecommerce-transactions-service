@@ -573,10 +573,11 @@ class TransactionSendClosureHandlerTest {
         RuntimeException redisError = new RuntimeException("Network error");
 
         /* preconditions */
-        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.error(redisError));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
-        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
+        // first call to redis is ko, second one is ok
+        Mockito.when(transactionEventStoreRepository.save(any()))
+                .thenReturn(Mono.error(redisError), Mono.just(errorEvent));
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());

@@ -1,18 +1,15 @@
 package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptAddedEvent;
-import it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction;
 import it.pagopa.ecommerce.commons.domain.v1.Transaction;
-import it.pagopa.ecommerce.commons.domain.v1.TransactionWithUserReceipt;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionClosed;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.notifications.templates.ko.KoTemplate;
 import it.pagopa.generated.notifications.templates.success.*;
 import it.pagopa.generated.notifications.v1.dto.NotificationEmailResponseDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
-import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.NotificationsServiceClient;
 import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
@@ -20,29 +17,31 @@ import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
-import java.util.UUID;
 
 @Component
 @Slf4j
 public class TransactionAddUserReceiptHandler
-        implements CommandHandler<TransactionAddUserReceiptCommand, Mono<TransactionUserReceiptAddedEvent>> {
+        extends BaseHandler<TransactionAddUserReceiptCommand, Mono<TransactionUserReceiptAddedEvent>> {
+
+    private final TransactionsEventStoreRepository<Void> transactionEventStoreRepository;
+
+    private final NotificationsServiceClient notificationsServiceClient;
 
     @Autowired
-    NodeForPspClient nodeForPspClient;
-
-    @Autowired
-    private TransactionsEventStoreRepository<Void> transactionEventStoreRepository;
-    @Autowired
-    private TransactionsEventStoreRepository<Object> eventStoreRepository;
-
-    @Autowired
-    NotificationsServiceClient notificationsServiceClient;
+    public TransactionAddUserReceiptHandler(
+            TransactionsEventStoreRepository<Object> eventStoreRepository,
+            TransactionsEventStoreRepository<Void> transactionEventStoreRepository,
+            NotificationsServiceClient notificationsServiceClient
+    ) {
+        super(eventStoreRepository);
+        this.transactionEventStoreRepository = transactionEventStoreRepository;
+        this.notificationsServiceClient = notificationsServiceClient;
+    }
 
     @Override
     public Mono<TransactionUserReceiptAddedEvent> handle(TransactionAddUserReceiptCommand command) {
@@ -63,10 +62,10 @@ public class TransactionAddUserReceiptHandler
         return transaction
                 .cast(BaseTransaction.class)
                 .filter(
-                        t -> t.getStatus() == TransactionStatusDto.NOTIFIED
+                        t -> t.getStatus() == TransactionStatusDto.CLOSED
                 )
                 .switchIfEmpty(alreadyProcessedError)
-                .cast(TransactionWithUserReceipt.class)
+                .cast(TransactionClosed.class)
                 .flatMap(tx -> {
                     AddUserReceiptRequestDto addUserReceiptRequestDto = command.getData().addUserReceiptRequest();
                     TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
@@ -100,9 +99,9 @@ public class TransactionAddUserReceiptHandler
     }
 
     private Mono<NotificationEmailResponseDto> sendKoEmail(
-            TransactionWithUserReceipt tx,
-            AddUserReceiptRequestDto addUserReceiptRequestDto,
-            String language
+                                                           TransactionClosed tx,
+                                                           AddUserReceiptRequestDto addUserReceiptRequestDto,
+                                                           String language
     ) {
         return notificationsServiceClient.sendKoEmail(
                 new NotificationsServiceClient.KoTemplateRequest(
@@ -131,9 +130,9 @@ public class TransactionAddUserReceiptHandler
     }
 
     private Mono<NotificationEmailResponseDto> sendSuccessEmail(
-            TransactionWithUserReceipt tx,
-            AddUserReceiptRequestDto addUserReceiptRequestDto,
-            String language
+                                                                TransactionClosed tx,
+                                                                AddUserReceiptRequestDto addUserReceiptRequestDto,
+                                                                String language
     ) {
         TransactionAuthorizationRequestData transactionAuthorizationRequestData = tx
                 .getTransactionAuthorizationRequestData();
@@ -210,12 +209,6 @@ public class TransactionAddUserReceiptHandler
                         )
                 )
         );
-    }
-
-    private Mono<Transaction> replayTransactionEvents(UUID transactionId) {
-        Flux<TransactionEvent<Object>> events = eventStoreRepository.findByTransactionId(transactionId.toString());
-
-        return events.reduce(new EmptyTransaction(), Transaction::applyEvent);
     }
 
     private String amountToHumanReadableString(int amount) {

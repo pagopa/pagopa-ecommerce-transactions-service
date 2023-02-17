@@ -4,13 +4,13 @@ import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.v1.*;
-import it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction;
 import it.pagopa.ecommerce.commons.domain.v1.Transaction;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionAuthorizationCompleted;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
+import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
@@ -23,22 +23,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
-import java.util.UUID;
 
 @Component
 @Slf4j
-public class TransactionSendClosureHandler
-        implements
-        CommandHandler<TransactionClosureSendCommand, Mono<Either<TransactionClosureErrorEvent, TransactionEvent<Void>>>> {
+public class TransactionSendClosureHandler extends
+        BaseHandler<TransactionClosureSendCommand, Mono<Either<TransactionClosureErrorEvent, TransactionEvent<Void>>>> {
 
     private final TransactionsEventStoreRepository<Void> transactionEventStoreRepository;
-    private final TransactionsEventStoreRepository<Object> eventStoreRepository;
 
     private final NodeForPspClient nodeForPspClient;
 
@@ -62,8 +58,8 @@ public class TransactionSendClosureHandler
             @Value("${transactions.ecommerce.retry.offset}") Integer softTimeoutOffset,
             @Value("${transactions.closure_handler.retry_interval}") Integer retryTimeoutInterval
     ) {
+        super(eventStoreRepository);
         this.transactionEventStoreRepository = transactionEventStoreRepository;
-        this.eventStoreRepository = eventStoreRepository;
         this.nodeForPspClient = nodeForPspClient;
         this.transactionClosureSentEventQueueClient = transactionClosureSentEventQueueClient;
         this.paymentTokenValidity = paymentTokenValidity;
@@ -144,7 +140,7 @@ public class TransactionSendClosureHandler
                     it.pagopa.ecommerce.commons.domain.v1.PaymentNotice paymentNotice = tx.getPaymentNotices().get(0);
                     log.info("Invoking closePaymentV2 for RptId: {}", paymentNotice.rptId().value());
                     return nodeForPspClient.closePaymentV2(closePaymentRequest)
-                            .flatMap(response -> buildClosureEvent(command, closePaymentRequest.getOutcome()))
+                            .flatMap(response -> buildClosureEvent(command, response.getOutcome()))
                             .flatMap(transactionEventStoreRepository::save)
                             .map(Either::<TransactionClosureErrorEvent, TransactionEvent<Void>>right)
                             .onErrorResume(exception -> {
@@ -238,14 +234,9 @@ public class TransactionSendClosureHandler
         }
     }
 
-    private Mono<it.pagopa.ecommerce.commons.domain.v1.Transaction> replayTransactionEvents(UUID transactionId) {
-        Flux<TransactionEvent<Object>> events = eventStoreRepository.findByTransactionId(transactionId.toString());
-        return events.reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent);
-    }
-
     private Mono<TransactionEvent<Void>> buildClosureEvent(
             TransactionClosureSendCommand command,
-            ClosePaymentRequestV2Dto.OutcomeEnum outcome) {
+            ClosePaymentResponseDto.OutcomeEnum outcome) {
         String transactionId = command.getData().transaction().getTransactionId().value().toString();
         return switch (outcome) {
             case OK -> Mono.just(new TransactionClosedEvent(transactionId));
