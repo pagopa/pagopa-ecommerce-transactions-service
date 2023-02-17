@@ -5,7 +5,7 @@ import it.pagopa.ecommerce.commons.documents.v1.TransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptAddedEvent;
 import it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction;
 import it.pagopa.ecommerce.commons.domain.v1.Transaction;
-import it.pagopa.ecommerce.commons.domain.v1.TransactionClosed;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionWithUserReceipt;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.notifications.templates.ko.KoTemplate;
@@ -63,10 +63,10 @@ public class TransactionAddUserReceiptHandler
         return transaction
                 .cast(BaseTransaction.class)
                 .filter(
-                        t -> t.getStatus() == TransactionStatusDto.CLOSED
+                        t -> t.getStatus() == TransactionStatusDto.NOTIFIED
                 )
                 .switchIfEmpty(alreadyProcessedError)
-                .cast(TransactionClosed.class)
+                .cast(TransactionWithUserReceipt.class)
                 .flatMap(tx -> {
                     AddUserReceiptRequestDto addUserReceiptRequestDto = command.getData().addUserReceiptRequest();
                     TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
@@ -100,9 +100,9 @@ public class TransactionAddUserReceiptHandler
     }
 
     private Mono<NotificationEmailResponseDto> sendKoEmail(
-                                                           TransactionClosed tx,
-                                                           AddUserReceiptRequestDto addUserReceiptRequestDto,
-                                                           String language
+            TransactionWithUserReceipt tx,
+            AddUserReceiptRequestDto addUserReceiptRequestDto,
+            String language
     ) {
         return notificationsServiceClient.sendKoEmail(
                 new NotificationsServiceClient.KoTemplateRequest(
@@ -131,9 +131,9 @@ public class TransactionAddUserReceiptHandler
     }
 
     private Mono<NotificationEmailResponseDto> sendSuccessEmail(
-                                                                TransactionClosed tx,
-                                                                AddUserReceiptRequestDto addUserReceiptRequestDto,
-                                                                String language
+            TransactionWithUserReceipt tx,
+            AddUserReceiptRequestDto addUserReceiptRequestDto,
+            String language
     ) {
         TransactionAuthorizationRequestData transactionAuthorizationRequestData = tx
                 .getTransactionAuthorizationRequestData();
