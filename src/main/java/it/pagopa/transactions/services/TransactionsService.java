@@ -21,6 +21,7 @@ import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
 import it.pagopa.transactions.projections.handlers.*;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
+import it.pagopa.transactions.utils.UUIDUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -72,6 +73,8 @@ public class TransactionsService {
 
     @Autowired
     private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
+    @Autowired
+    private UUIDUtils uuidUtils;
 
     @CircuitBreaker(name = "node-backend")
     @Retry(name = "newTransaction")
@@ -320,9 +323,11 @@ public class TransactionsService {
                                                                    String transactionId,
                                                                    UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
+
+        String transactionIdDecoded = uuidUtils.uuidFromBase64(transactionId).toString();
         return transactionsViewRepository
-                .findById(transactionId)
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+                .findById(transactionIdDecoded)
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionIdDecoded)))
                 .flatMap(
                         transactionDocument -> {
                             TransactionActivated transaction = new TransactionActivated(
