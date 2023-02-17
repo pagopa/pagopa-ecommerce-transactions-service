@@ -250,14 +250,30 @@ public class TransactionSendClosureHandler extends
             ClosePaymentResponseDto.OutcomeEnum nodoOutcome) {
         String transactionId = command.getData().transaction().getTransactionId().value().toString();
         return switch (authorizationResult) {
-            case OK -> Mono.just(new TransactionClosedEvent(transactionId, new TransactionClosureData(nodoOutcome)));
+            case OK ->
+                    Mono.just(new TransactionClosedEvent(transactionId, new TransactionClosureData(outcomeV2ToTransactionClosureDataOutcome(nodoOutcome))));
 
-            case KO ->
-                    Mono.just(new TransactionClosureFailedEvent(transactionId, new TransactionClosureData(nodoOutcome)));
+            case KO -> Mono.just(new TransactionClosureFailedEvent(transactionId, new TransactionClosureData(null)));
 
             case null, default -> Mono.error(new IllegalArgumentException(
                     "Unhandled authorization result: %s".formatted(authorizationResult)
             ));
         };
+    }
+
+    private TransactionClosureData.Outcome outcomeV2ToTransactionClosureDataOutcome(
+                                                                                    ClosePaymentResponseDto.OutcomeEnum closePaymentOutcome
+    ) {
+        switch (closePaymentOutcome) {
+            case OK -> {
+                return TransactionClosureData.Outcome.OK;
+            }
+            case KO -> {
+                return TransactionClosureData.Outcome.KO;
+            }
+            default -> throw new IllegalArgumentException(
+                    "Missing transaction closure data outcome mapping to Nodo closePaymentV2 outcome"
+            );
+        }
     }
 }

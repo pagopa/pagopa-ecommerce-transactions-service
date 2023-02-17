@@ -7,7 +7,6 @@ import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
-import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PSPsResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PaymentMethodResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
@@ -345,7 +344,7 @@ public class TransactionServiceTests {
         );
 
         TransactionClosedEvent closureSentEvent = TransactionTestUtils
-                .transactionClosedEvent(ClosePaymentResponseDto.OutcomeEnum.OK);
+                .transactionClosedEvent(TransactionClosureData.Outcome.OK);
 
         TransactionInfoDto expectedResponse = new TransactionInfoDto()
                 .transactionId(transactionDocument.getTransactionId())
