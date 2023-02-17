@@ -139,7 +139,12 @@ public class TransactionSendClosureHandler extends
                     it.pagopa.ecommerce.commons.domain.v1.PaymentNotice paymentNotice = tx.getPaymentNotices().get(0);
                     log.info("Invoking closePaymentV2 for RptId: {}", paymentNotice.rptId().value());
                     return nodeForPspClient.closePaymentV2(closePaymentRequest)
-                            .flatMap(response -> buildClosureEvent(command, closePaymentRequest.getOutcome()))
+                            .flatMap(
+                                    response -> buildClosureEvent(
+                                            command,
+                                            transactionAuthorizationCompletedData.getAuthorizationResultDto()
+                                    )
+                            )
                             .flatMap(transactionEventStoreRepository::save)
                             .map(Either::<TransactionClosureErrorEvent, TransactionEvent<Void>>right)
                             .onErrorResume(exception -> {
@@ -235,15 +240,15 @@ public class TransactionSendClosureHandler extends
 
     private Mono<TransactionEvent<Void>> buildClosureEvent(
             TransactionClosureSendCommand command,
-            ClosePaymentRequestV2Dto.OutcomeEnum outcome) {
+            AuthorizationResultDto authorizationResult) {
         String transactionId = command.getData().transaction().getTransactionId().value().toString();
-        return switch (outcome) {
+        return switch (authorizationResult) {
             case OK -> Mono.just(new TransactionClosedEvent(transactionId));
 
             case KO -> Mono.just(new TransactionClosureFailedEvent(transactionId));
 
             case null, default -> Mono.error(new IllegalArgumentException(
-                    "Missing authorization result enum value mapping to Nodo closePaymentV2 outcome"
+                    "Unhandled authorization result: %s".formatted(authorizationResult)
             ));
         };
     }

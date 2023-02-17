@@ -227,12 +227,12 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value().toString(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
-                        AuthorizationResultDto.OK
+                        AuthorizationResultDto.KO
                 )
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
+                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.KO)
                 .authorizationCode("authorizationCode")
                 .timestampOperation(OffsetDateTime.now());
 
@@ -265,7 +265,7 @@ class TransactionSendClosureHandlerTest {
                                         .getPaymentNotices().get(0).getPaymentToken()
                         )
                 )
-                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
+                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.KO)
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
