@@ -45,7 +45,6 @@ public class PaymentGatewayClient {
     public Mono<PostePayAuthResponseEntityDto> requestPostepayAuthorization(
                                                                             AuthorizationRequestData authorizationData
     ) {
-
         return Mono.just(authorizationData)
                 .filter(authorizationRequestData -> "PPAY".equals(authorizationRequestData.paymentTypeCode()))
                 .map(authorizationRequestData -> {
@@ -160,7 +159,7 @@ public class PaymentGatewayClient {
                                         .holder(cardData.getHolderName())
                                         .securitycode(cardData.getCvv())
                                         .isFirstPayment(true) // TODO TO BE CHECKED
-                                        .threeDsData(cardData.getThreeDsData())
+                                        .threeDsData(new String(Base64.getDecoder().decode(cardData.getThreeDsData())))
                                         .circuit(cardData.getBrand())
                                         .idPsp(authorizationData.pspId())
                         );

@@ -291,7 +291,7 @@ class PaymentGatewayClientTest {
                 .detailType("card")
                 .holderName("John Doe")
                 .brand("VISA")
-                .threeDsData("threeDsData");
+                .threeDsData(Base64.getEncoder().encodeToString("threeDsData".getBytes(StandardCharsets.UTF_8)));
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
@@ -797,7 +797,7 @@ class PaymentGatewayClientTest {
                 .pan("16589654852")
                 .expiryDate("203012")
                 .brand("VISA")
-                .threeDsData("threeDsData");
+                .threeDsData(Base64.getEncoder().encodeToString("threeDsData".getBytes(StandardCharsets.UTF_8)));
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
@@ -1046,12 +1046,13 @@ class PaymentGatewayClientTest {
                 TransactionStatusDto.ACTIVATED,
                 it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
         );
+        String encoded3DSData = Base64.getEncoder().encodeToString("threeDsData".getBytes(StandardCharsets.UTF_8));
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
                 .pan("16589654852")
                 .expiryDate("203012")
                 .brand("VISA")
-                .threeDsData("threeDsData");
+                .threeDsData(encoded3DSData);
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
