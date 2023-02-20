@@ -15,7 +15,7 @@ public class BadGatewayException extends RuntimeException {
             String detail,
             HttpStatus httpStatus
     ) {
-        super(detail);
+        super(detail.concat(", HTTP status code: %s".formatted(httpStatus)));
         this.detail = detail;
         this.httpStatus = httpStatus;
     }
