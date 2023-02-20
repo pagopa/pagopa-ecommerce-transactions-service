@@ -80,7 +80,8 @@ public class PaymentGatewayClient {
                                         );
                                         case GATEWAY_TIMEOUT -> new GatewayTimeoutException();
                                         case INTERNAL_SERVER_ERROR -> new BadGatewayException(
-                                                "PostePay API returned 500"
+                                                "PostePay API returned 500",
+                                                exception.getStatusCode()
                                         );
                                         default -> exception;
                                         }
@@ -134,7 +135,10 @@ public class PaymentGatewayClient {
                                         case UNAUTHORIZED -> new AlreadyProcessedException(
                                                 authorizationData.transaction().getTransactionId()
                                         ); // 401
-                                        case INTERNAL_SERVER_ERROR -> new BadGatewayException(""); // 500
+                                        case INTERNAL_SERVER_ERROR -> new BadGatewayException(
+                                                "",
+                                                exception.getStatusCode()
+                                        ); // 500
                                         default -> exception;
                                         }
                                 )
@@ -195,7 +199,10 @@ public class PaymentGatewayClient {
                                         case UNAUTHORIZED -> new AlreadyProcessedException(
                                                 authorizationData.transaction().getTransactionId()
                                         ); // 401
-                                        case INTERNAL_SERVER_ERROR -> new BadGatewayException(""); // 500
+                                        case INTERNAL_SERVER_ERROR -> new BadGatewayException(
+                                                "",
+                                                exception.getStatusCode()
+                                        ); // 500
                                         default -> exception;
                                         }
                                 )

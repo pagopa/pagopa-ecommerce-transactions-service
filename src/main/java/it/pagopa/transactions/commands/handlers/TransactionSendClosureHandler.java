@@ -15,6 +15,7 @@ import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestD
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.EuroUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -154,12 +155,23 @@ public class TransactionSendClosureHandler extends
                             .flatMap(transactionEventStoreRepository::save)
                             .map(Either::<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>right)
                             .onErrorResume(exception -> {
-                                log.error("Got exception while invoking closePaymentV2", exception);
-                                TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
-                                        tx.getTransactionId().value().toString()
-                                );
 
-                                /* @formatter:off
+                                // in case response code from Nodo is a 4xx class error retrying closure have no
+                                // meaning since it will mean that build request have an error
+                                // transactions-service side
+                                boolean unrecoverableError = exception instanceof BadGatewayException responseStatusException
+                                        && responseStatusException.getHttpStatus().is4xxClientError();
+                                log.error(
+                                        "Got exception while invoking closePaymentV2, unrecoverable error: %s"
+                                                .formatted(unrecoverableError),
+                                        exception
+                                );
+                                if (!unrecoverableError) {
+                                    TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
+                                            tx.getTransactionId().value().toString()
+                                    );
+
+                                    /* @formatter:off
                                 Conceptual view of visibility timeout computation:
 
                                 end = start + paymentTokenTimeout
@@ -187,43 +199,46 @@ public class TransactionSendClosureHandler extends
                                 @formatter:on
                                 */
 
-                                Instant validityEnd = tx.getCreationDate().plusSeconds(paymentTokenValidity)
-                                        .toInstant();
-                                Instant softValidityEnd = validityEnd.minusSeconds(softTimeoutOffset);
+                                    Instant validityEnd = tx.getCreationDate().plusSeconds(paymentTokenValidity)
+                                            .toInstant();
+                                    Instant softValidityEnd = validityEnd.minusSeconds(softTimeoutOffset);
 
-                                Mono<TransactionClosureErrorEvent> eventSaved = transactionClosureErrorEventStoreRepository
-                                        .save(errorEvent);
-                                if (softValidityEnd.isAfter(Instant.now())) {
-                                    Duration latestAllowedVisibilityTimeout = Duration
-                                            .between(Instant.now(), softValidityEnd);
-                                    Duration candidateVisibilityTimeout = Duration.ofSeconds(retryTimeoutInterval);
+                                    Mono<TransactionClosureErrorEvent> eventSaved = transactionClosureErrorEventStoreRepository
+                                            .save(errorEvent);
+                                    if (softValidityEnd.isAfter(Instant.now())) {
+                                        Duration latestAllowedVisibilityTimeout = Duration
+                                                .between(Instant.now(), softValidityEnd);
+                                        Duration candidateVisibilityTimeout = Duration.ofSeconds(retryTimeoutInterval);
 
-                                    Duration visibilityTimeout = ObjectUtils
-                                            .min(candidateVisibilityTimeout, latestAllowedVisibilityTimeout);
-                                    log.info(
-                                            "Enqueued closure error retry event with visibility timeout {}",
-                                            visibilityTimeout
-                                    );
+                                        Duration visibilityTimeout = ObjectUtils
+                                                .min(candidateVisibilityTimeout, latestAllowedVisibilityTimeout);
+                                        log.info(
+                                                "Enqueued closure error retry event with visibility timeout {}",
+                                                visibilityTimeout
+                                        );
 
-                                    eventSaved = eventSaved
-                                            .flatMap(
-                                                    e -> transactionClosureSentEventQueueClient
-                                                            .sendMessageWithResponse(
-                                                                    BinaryData.fromObject(e),
-                                                                    visibilityTimeout,
-                                                                    null
-                                                            )
-                                                            .thenReturn(e)
-                                            );
-                                } else {
-                                    log.info(
-                                            "Skipped enqueueing of closure error retry event: too near payment token expiry (offset={}, expiration at {})",
-                                            softTimeoutOffset,
-                                            validityEnd
-                                    );
+                                        eventSaved = eventSaved
+                                                .flatMap(
+                                                        e -> transactionClosureSentEventQueueClient
+                                                                .sendMessageWithResponse(
+                                                                        BinaryData.fromObject(e),
+                                                                        visibilityTimeout,
+                                                                        null
+                                                                )
+                                                                .thenReturn(e)
+                                                );
+                                    } else {
+                                        log.info(
+                                                "Skipped enqueueing of closure error retry event: too near payment token expiry (offset={}, expiration at {})",
+                                                softTimeoutOffset,
+                                                validityEnd
+                                        );
+                                    }
+
+                                    return eventSaved.map(Either::left);
                                 }
-
-                                return eventSaved.map(Either::left);
+                                // TODO after propagate error here transaction should go to a new generic error
+                                return Mono.error(exception);
                             });
                 });
     }

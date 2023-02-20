@@ -57,7 +57,7 @@ public class TransactionAddUserReceiptHandler
                                 "Error: requesting closure status update for transaction in state {}, Nodo closure outcome {}",
                                 t.getStatus(),
                                 t instanceof TransactionClosed transactionClosed
-                                        ? transactionClosed.getTransactionClosedEvent().getData().getOutcome()
+                                        ? transactionClosed.getTransactionClosedEvent().getData().getResponseOutcome()
                                         : "N/A"
                         )
                 )
@@ -69,7 +69,10 @@ public class TransactionAddUserReceiptHandler
                         t -> t.getStatus() == TransactionStatusDto.CLOSED &&
                                 t instanceof TransactionClosed transactionClosed &&
                                 TransactionClosureData.Outcome.OK
-                                        .equals(transactionClosed.getTransactionClosedEvent().getData().getOutcome())
+                                        .equals(
+                                                transactionClosed.getTransactionClosedEvent().getData()
+                                                        .getResponseOutcome()
+                                        )
                 )
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(TransactionClosed.class)
