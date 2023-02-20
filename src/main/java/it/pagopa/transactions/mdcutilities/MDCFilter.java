@@ -23,7 +23,6 @@ public class MDCFilter implements WebFilter {
 
     public static final String CONTEXT_KEY = "contextKey";
     public static final String TRANSACTION_ID = "transactionId";
-    public static final String PAYMENT_CONTEXT_CODE = "paymentContextCode";
     public static final String RPT_ID = "rptId";
 
     private ServerWebExchange decorate(ServerWebExchange exchange) {
@@ -61,38 +60,28 @@ public class MDCFilter implements WebFilter {
                                     .getInfoFromValuesMap()
                     );
                     ((MDCCachingValuesServerHttpRequestDecorator) serverWebExchange.getRequest()).getObjectAsMap()
-                            .forEach(
-                                    (
-                                     k,
-                                     v
-                                    ) -> transactionMap.put(k, v.toString())
+                            .entrySet().stream().filter(entry -> entry.getKey().equals(TRANSACTION_ID) || entry.getKey().equals(RPT_ID))
+                            .forEach((entry) -> transactionMap.put(entry.getKey(), entry.getValue().toString())
                             );
                 }))
                 .contextWrite(Context.of(CONTEXT_KEY, UUID.randomUUID().toString()))
                 .contextWrite(Context.of(TRANSACTION_ID, transactionMap.getOrDefault(TRANSACTION_ID, "")))
-                .contextWrite(Context.of(PAYMENT_CONTEXT_CODE, transactionMap.getOrDefault(PAYMENT_CONTEXT_CODE, "")))
                 .contextWrite(Context.of(RPT_ID, transactionMap.getOrDefault(RPT_ID, "")));
     }
 
     private Map<String, String> getTransactionId(ServerHttpRequest request) {
-        UriTemplate uriTemplatePCC = new UriTemplate(
-                "/transactions/payment-context-codes/{paymentContextCode}/activation-results"
-        );
         UriTemplate uriTemplateStandard = new UriTemplate("/transactions/{transactionId}");
-        return uriTemplatePCC.matches(request.getPath().value()) ? uriTemplatePCC.match(request.getPath().value())
-                : uriTemplateStandard.match(request.getPath().value());
+        return uriTemplateStandard.match(request.getPath().value());
     }
 
     public static <T> Consumer<Signal<T>> logOnEach(Consumer<T> logStatement) {
         return signal -> {
             String contextValue = signal.getContextView().getOrDefault(CONTEXT_KEY, "");
             String rptId = signal.getContextView().getOrDefault(RPT_ID, "");
-            String paymentContextCode = signal.getContextView().getOrDefault(PAYMENT_CONTEXT_CODE, "");
             String transactionId = signal.getContextView().getOrDefault(TRANSACTION_ID, "");
             try (
                     MDC.MDCCloseable mdcCloseable1 = MDC.putCloseable(CONTEXT_KEY, contextValue);
                     MDC.MDCCloseable mdcCloseable2 = MDC.putCloseable(RPT_ID, rptId);
-                    MDC.MDCCloseable mdcCloseable3 = MDC.putCloseable(PAYMENT_CONTEXT_CODE, paymentContextCode);
                     MDC.MDCCloseable mdcCloseable4 = MDC.putCloseable(TRANSACTION_ID, transactionId);) {
                 logStatement.accept(signal.get());
             }
