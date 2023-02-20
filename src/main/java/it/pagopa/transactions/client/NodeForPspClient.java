@@ -79,43 +79,6 @@ public class NodeForPspClient {
                 );
     }
 
-    public Mono<ClosePaymentResponseDto> closePayment(
-                                                      ClosePaymentRequestV2Dto request
-    ) {
-        log.info("closePayment paymentTokens: {} ", request.getPaymentTokens());
-        return nodoWebClient.post()
-                .uri("/v2/closepayment")
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .body(Mono.just(request), ClosePaymentRequestV2Dto.class)
-                .retrieve()
-                .onStatus(
-                        HttpStatus::isError,
-                        clientResponse -> clientResponse
-                                .bodyToMono(String.class)
-                                .flatMap(
-                                        errorResponseBody -> Mono.error(
-                                                new ResponseStatusException(
-                                                        clientResponse.statusCode(),
-                                                        errorResponseBody
-                                                )
-                                        )
-                                )
-                )
-                .bodyToMono(ClosePaymentResponseDto.class)
-                .doOnSuccess(
-                        closePaymentResponse -> log
-                                .info("Requested closePayment for paymentTokens {}", request.getPaymentTokens())
-                )
-                .onErrorMap(
-                        ResponseStatusException.class,
-                        error -> {
-                            log.error("ResponseStatus Error:", error);
-                            return new BadGatewayException(error.getReason(), error.getStatus());
-                        }
-                )
-                .doOnError(Exception.class, error -> log.error("Generic Error:", error));
-    }
-
     public Mono<ClosePaymentResponseDto> closePaymentV2(ClosePaymentRequestV2Dto request) {
         log.info("Requested closePaymentV2 for paymentTokens {}", request.getPaymentTokens());
         return nodoWebClient.post()
