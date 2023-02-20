@@ -247,17 +247,19 @@ public class TransactionSendClosureHandler extends
     private Mono<TransactionEvent<TransactionClosureData>> buildClosureEvent(
             TransactionClosureSendCommand command,
             AuthorizationResultDto authorizationResult,
-            ClosePaymentResponseDto.OutcomeEnum nodoOutcome) {
+            ClosePaymentResponseDto.OutcomeEnum nodoOutcome
+    ) {
         String transactionId = command.getData().transaction().getTransactionId().value().toString();
+        TransactionClosureData.Outcome eventNodoOutcome = outcomeV2ToTransactionClosureDataOutcome(nodoOutcome);
+        TransactionClosureData transactionClosureData = new TransactionClosureData(eventNodoOutcome);
         return switch (authorizationResult) {
-            case OK ->
-                    Mono.just(new TransactionClosedEvent(transactionId, new TransactionClosureData(outcomeV2ToTransactionClosureDataOutcome(nodoOutcome))));
-
-            case KO -> Mono.just(new TransactionClosureFailedEvent(transactionId, new TransactionClosureData(null)));
-
-            case null, default -> Mono.error(new IllegalArgumentException(
-                    "Unhandled authorization result: %s".formatted(authorizationResult)
-            ));
+            case OK -> Mono.just(new TransactionClosedEvent(transactionId, transactionClosureData));
+            case KO -> Mono.just(new TransactionClosureFailedEvent(transactionId, transactionClosureData));
+            case null, default -> Mono.error(
+                    new IllegalArgumentException(
+                            "Unhandled authorization result: %s".formatted(authorizationResult)
+                    )
+            );
         };
     }
 
