@@ -60,8 +60,10 @@ public class MDCFilter implements WebFilter {
                                     .getInfoFromValuesMap()
                     );
                     ((MDCCachingValuesServerHttpRequestDecorator) serverWebExchange.getRequest()).getObjectAsMap()
-                            .entrySet().stream().filter(entry -> entry.getKey().equals(TRANSACTION_ID) || entry.getKey().equals(RPT_ID))
-                            .forEach((entry) -> transactionMap.put(entry.getKey(), entry.getValue().toString())
+                            .entrySet().stream()
+                            .filter(entry -> entry.getKey().equals(TRANSACTION_ID) || entry.getKey().equals(RPT_ID))
+                            .forEach(
+                                    (entry) -> transactionMap.put(entry.getKey(), entry.getValue().toString())
                             );
                 }))
                 .contextWrite(Context.of(CONTEXT_KEY, UUID.randomUUID().toString()))
