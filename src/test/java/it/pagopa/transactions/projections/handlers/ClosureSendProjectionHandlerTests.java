@@ -85,23 +85,11 @@ class ClosureSendProjectionHandlerTests {
     }
 
     @Test
-    void shouldThrowExceptionHandlingProjectionForUnexpectedEvent() {
-        Transaction transaction = transactionDocument();
-
-        TransactionUserCanceledEvent event = TransactionTestUtils.transactionUserCanceledEvent();
-
-        Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId()))
-                .thenReturn(Mono.just(transaction));
-
-        StepVerifier.create(closureSendProjectionHandler.handle(event))
-                .expectErrorMatches(t -> t instanceof IllegalArgumentException);
-    }
-
-    @Test
     void shouldThrowTransactionNotFoundExceptionForUnknownTransactionId() {
         Transaction transaction = transactionDocument();
 
-        TransactionUserCanceledEvent event = TransactionTestUtils.transactionUserCanceledEvent();
+        TransactionClosureFailedEvent event = TransactionTestUtils
+                .transactionClosureFailedEvent(TransactionClosureData.Outcome.OK);
 
         Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId()))
                 .thenReturn(Mono.empty());

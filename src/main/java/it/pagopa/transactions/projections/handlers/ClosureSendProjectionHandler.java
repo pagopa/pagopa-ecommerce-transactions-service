@@ -1,9 +1,6 @@
 package it.pagopa.transactions.projections.handlers;
 
-import it.pagopa.ecommerce.commons.documents.v1.Transaction;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionClosedEvent;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionClosureFailedEvent;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionEvent;
+import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
@@ -14,12 +11,13 @@ import reactor.core.publisher.Mono;
 
 @Component
 @Slf4j
-public class ClosureSendProjectionHandler implements ProjectionHandler<TransactionEvent<?>, Mono<Transaction>> {
+public class ClosureSendProjectionHandler
+        implements ProjectionHandler<TransactionEvent<TransactionClosureData>, Mono<Transaction>> {
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
 
     @Override
-    public Mono<Transaction> handle(TransactionEvent<?> event) {
+    public Mono<Transaction> handle(TransactionEvent<TransactionClosureData> event) {
         return transactionsViewRepository.findById(event.getTransactionId())
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(event.getTransactionId())))
                 .flatMap(transactionDocument -> {
