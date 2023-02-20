@@ -52,22 +52,6 @@ public class MDCFilter implements WebFilter {
 
         ServerWebExchange serverWebExchange = decorate(exchange);
         return chain.filter(serverWebExchange)
-                .doOnEach(logOnEach(r -> {
-                    log.debug(
-                            "{} {} {}",
-                            request.getMethod(),
-                            request.getURI(),
-                            ((MDCCachingValuesServerHttpRequestDecorator) serverWebExchange.getRequest())
-                                    .getInfoFromValuesMap()
-                    );
-                    ((MDCCachingValuesServerHttpRequestDecorator) serverWebExchange.getRequest()).getObjectAsMap()
-                            .forEach(
-                                    (
-                                     k,
-                                     v
-                                    ) -> transactionMap.put(k, v.toString())
-                            );
-                }))
                 .contextWrite(Context.of(CONTEXT_KEY, UUID.randomUUID().toString()))
                 .contextWrite(Context.of(TRANSACTION_ID, transactionMap.getOrDefault(TRANSACTION_ID, "")))
                 .contextWrite(Context.of(PAYMENT_CONTEXT_CODE, transactionMap.getOrDefault(PAYMENT_CONTEXT_CODE, "")))
