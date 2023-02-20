@@ -237,8 +237,15 @@ public class TransactionSendClosureHandler extends
 
                                     return eventSaved.map(Either::left);
                                 }
-                                // TODO after propagate error here transaction should go to a new generic error
-                                return Mono.error(exception);
+                                // Unrecoverable error calling Nodo for perform close payment.
+                                // Generate closure event setting closure outcome to KO
+                                return buildClosureEvent(
+                                        command,
+                                        transactionAuthorizationCompletedData.getAuthorizationResultDto(),
+                                        ClosePaymentResponseDto.OutcomeEnum.KO
+                                )
+                                        .flatMap(transactionEventStoreRepository::save)
+                                        .map(Either::right);
                             });
                 });
     }
