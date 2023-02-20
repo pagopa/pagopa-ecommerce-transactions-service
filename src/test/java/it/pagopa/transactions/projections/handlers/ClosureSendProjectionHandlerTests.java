@@ -61,7 +61,8 @@ class ClosureSendProjectionHandlerTests {
     void shouldHandleProjectionForClosureFailedEvent() {
         Transaction transaction = transactionDocument();
 
-        TransactionClosureFailedEvent event = TransactionTestUtils.transactionClosureFailedEvent();
+        TransactionClosureFailedEvent event = TransactionTestUtils
+                .transactionClosureFailedEvent(TransactionClosureData.Outcome.OK);
 
         Transaction expected = new Transaction(
                 transaction.getTransactionId(),

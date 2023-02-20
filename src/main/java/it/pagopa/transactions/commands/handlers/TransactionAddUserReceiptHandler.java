@@ -1,6 +1,7 @@
 package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionClosureData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptAddedEvent;
 import it.pagopa.ecommerce.commons.domain.v1.Transaction;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionClosed;
@@ -49,12 +50,15 @@ public class TransactionAddUserReceiptHandler
                 command.getData().transaction().getTransactionId().value()
         );
 
-        Mono<? extends BaseTransaction> alreadyProcessedError = transaction
+        Mono<TransactionClosed> alreadyProcessedError = transaction
                 .cast(BaseTransaction.class)
                 .doOnNext(
                         t -> log.error(
-                                "Error: requesting closure status update for transaction in state {}",
-                                t.getStatus()
+                                "Error: requesting closure status update for transaction in state {}, Nodo closure outcome {}",
+                                t.getStatus(),
+                                t instanceof TransactionClosed transactionClosed
+                                        ? transactionClosed.getTransactionClosedEvent().getData().getOutcome()
+                                        : "N/A"
                         )
                 )
                 .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
@@ -62,7 +66,10 @@ public class TransactionAddUserReceiptHandler
         return transaction
                 .cast(BaseTransaction.class)
                 .filter(
-                        t -> t.getStatus() == TransactionStatusDto.CLOSED
+                        t -> t.getStatus() == TransactionStatusDto.CLOSED &&
+                                t instanceof TransactionClosed transactionClosed &&
+                                TransactionClosureData.Outcome.OK
+                                        .equals(transactionClosed.getTransactionClosedEvent().getData().getOutcome())
                 )
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(TransactionClosed.class)

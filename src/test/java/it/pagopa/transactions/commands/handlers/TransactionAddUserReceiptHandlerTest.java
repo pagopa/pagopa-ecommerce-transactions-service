@@ -128,7 +128,7 @@ class TransactionAddUserReceiptHandlerTest {
         );
 
         TransactionClosedEvent closureSentEvent = TransactionTestUtils
-                .transactionClosedEvent();
+                .transactionClosedEvent(TransactionClosureData.Outcome.OK);
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
                 .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
@@ -185,7 +185,7 @@ class TransactionAddUserReceiptHandlerTest {
     }
 
     @Test
-    void shouldSaveSuccessfulUpdateWithStatusClousureFailed() {
+    void shouldSaveSuccessfulUpdateWithStatusClosureFailed() {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -256,7 +256,7 @@ class TransactionAddUserReceiptHandlerTest {
         );
 
         TransactionClosedEvent closureSentEvent = TransactionTestUtils
-                .transactionClosedEvent();
+                .transactionClosedEvent(TransactionClosureData.Outcome.OK);
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
                 .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
@@ -384,7 +384,7 @@ class TransactionAddUserReceiptHandlerTest {
         );
 
         TransactionClosedEvent closureSentEvent = TransactionTestUtils
-                .transactionClosedEvent();
+                .transactionClosedEvent(TransactionClosureData.Outcome.OK);
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
                 .outcome(AddUserReceiptRequestDto.OutcomeEnum.KO)
@@ -537,6 +537,122 @@ class TransactionAddUserReceiptHandlerTest {
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
+
+        /* preconditions */
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+
+        /* test */
+        StepVerifier.create(updateStatusHandler.handle(requestStatusCommand))
+                .expectErrorMatches(error -> error instanceof AlreadyProcessedException)
+                .verify();
+
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(any());
+    }
+
+    @Test
+    void shouldRejectTransactionWithClosureOutcomeKO() {
+        PaymentToken paymentToken = new PaymentToken("paymentToken");
+        RptId rptId = new RptId("77777777777111111111111111111");
+        TransactionDescription description = new TransactionDescription("description");
+        TransactionAmount amount = new TransactionAmount(100);
+        Email email = new Email("foo@example.com");
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
+
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                List.of(
+                        new PaymentNotice(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description,
+                                nullPaymentContextCode
+                        )
+                ),
+                email,
+                faultCode,
+                faultCodeString,
+                Transaction.ClientId.CHECKOUT
+        );
+
+        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
+                transactionId.value().toString(),
+                new TransactionActivatedData(
+                        email.value(),
+                        List.of(
+                                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
+                                        paymentToken.value(),
+                                        rptId.value(),
+                                        description.value(),
+                                        amount.value(),
+                                        nullPaymentContextCode.value()
+                                )
+                        ),
+                        faultCode,
+                        faultCodeString,
+                        Transaction.ClientId.CHECKOUT
+                )
+        );
+
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
+                transactionId.value().toString(),
+                new TransactionAuthorizationRequestData(
+                        amount.value(),
+                        10,
+                        "paymentInstrumentId",
+                        "pspId",
+                        "paymentTypeCode",
+                        "brokerName",
+                        "pspChannelCode",
+                        "paymentMethodName",
+                        "pspBusinessName",
+                        "authorizationRequestId"
+                )
+        );
+
+        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
+                transactionId.value().toString(),
+                new TransactionAuthorizationCompletedData(
+                        "authorizationCode",
+                        AuthorizationResultDto.OK
+                )
+        );
+        TransactionClosedEvent closureSentEvent = TransactionTestUtils
+                .transactionClosedEvent(TransactionClosureData.Outcome.KO);
+
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(
+                        new AddUserReceiptRequestPaymentsInnerDto()
+                                .paymentToken("paymentToken")
+                                .companyName("companyName")
+                                .creditorReferenceId("creditorReferenceId")
+                                .description("description")
+                                .debtor("debtor")
+                                .fiscalCode("fiscalCode")
+                                .officeName("officeName")
+                );
+
+        AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
+                transaction,
+                addUserReceiptRequest
+        );
+
+        TransactionAddUserReceiptCommand requestStatusCommand = new TransactionAddUserReceiptCommand(
+                transaction.getPaymentNotices().get(0).rptId(),
+                addUserReceiptData
+        );
+
+        Flux<TransactionEvent<Object>> events = ((Flux) Flux
+                .just(
+                        transactionActivatedEvent,
+                        authorizationRequestedEvent,
+                        authorizationCompletedEvent,
+                        closureSentEvent
+                ));
 
         /* preconditions */
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);

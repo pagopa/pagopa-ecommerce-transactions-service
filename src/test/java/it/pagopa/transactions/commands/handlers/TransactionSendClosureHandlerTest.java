@@ -161,7 +161,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionClosedEvent closedEvent = TransactionTestUtils
-                .transactionClosedEvent();
+                .transactionClosedEvent(TransactionClosureData.Outcome.OK);
 
         Flux events = Flux.just(
                 transactionActivatedEvent,
@@ -256,7 +256,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionClosedEvent event = TransactionTestUtils
-                .transactionClosedEvent();
+                .transactionClosedEvent(TransactionClosureData.Outcome.OK);
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
@@ -387,7 +387,8 @@ class TransactionSendClosureHandlerTest {
                 closureSendData
         );
 
-        TransactionClosureFailedEvent event = TransactionTestUtils.transactionClosureFailedEvent();
+        TransactionClosureFailedEvent event = TransactionTestUtils
+                .transactionClosureFailedEvent(TransactionClosureData.Outcome.OK);
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
@@ -519,7 +520,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionClosedEvent event = TransactionTestUtils
-                .transactionClosedEvent();
+                .transactionClosedEvent(TransactionClosureData.Outcome.OK);
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
@@ -650,7 +651,8 @@ class TransactionSendClosureHandlerTest {
                 closureSendData
         );
 
-        TransactionClosureFailedEvent event = TransactionTestUtils.transactionClosureFailedEvent();
+        TransactionClosureFailedEvent event = TransactionTestUtils
+                .transactionClosureFailedEvent(TransactionClosureData.Outcome.OK);
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
