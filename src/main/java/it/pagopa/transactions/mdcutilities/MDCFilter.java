@@ -47,15 +47,7 @@ public class MDCFilter implements WebFilter {
                              ServerWebExchange exchange,
                              WebFilterChain chain
     ) {
-        ServerHttpRequest request = exchange.getRequest();
-        Map<String, String> transactionMap = getTransactionId(exchange.getRequest());
-
-        ServerWebExchange serverWebExchange = decorate(exchange);
-        return chain.filter(serverWebExchange)
-                .contextWrite(Context.of(CONTEXT_KEY, UUID.randomUUID().toString()))
-                .contextWrite(Context.of(TRANSACTION_ID, transactionMap.getOrDefault(TRANSACTION_ID, "")))
-                .contextWrite(Context.of(PAYMENT_CONTEXT_CODE, transactionMap.getOrDefault(PAYMENT_CONTEXT_CODE, "")))
-                .contextWrite(Context.of(RPT_ID, transactionMap.getOrDefault(RPT_ID, "")));
+        return Mono.just(null);
     }
 
     private Map<String, String> getTransactionId(ServerHttpRequest request) {
