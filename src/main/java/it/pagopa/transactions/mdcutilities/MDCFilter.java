@@ -27,9 +27,9 @@ public class MDCFilter implements WebFilter {
                              WebFilterChain chain
     ) {
         final HttpHeaders headers = exchange.getRequest().getHeaders();
-        final String transactionId = Optional.of(headers.get(TRANSACTION_ID)).orElse(new ArrayList<>()).stream()
+        final String transactionId = Optional.ofNullable(headers.get(TRANSACTION_ID)).orElse(new ArrayList<>()).stream()
                 .findFirst().orElse("transactionId-not-found");
-        final String rptId = Optional.of(headers.get(RPT_ID)).orElse(new ArrayList<>()).stream()
+        final String rptId = Optional.ofNullable(headers.get(RPT_ID)).orElse(new ArrayList<>()).stream()
                 .findFirst().orElse("rptId-not-found");
 
         return chain.filter(exchange)
