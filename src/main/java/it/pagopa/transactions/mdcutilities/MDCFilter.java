@@ -9,6 +9,8 @@ import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 import reactor.util.context.Context;
 
+import java.util.ArrayList;
+import java.util.Optional;
 import java.util.UUID;
 
 @Component
@@ -25,8 +27,10 @@ public class MDCFilter implements WebFilter {
                              WebFilterChain chain
     ) {
         final HttpHeaders headers = exchange.getRequest().getHeaders();
-        final String transactionId = headers.get(TRANSACTION_ID).stream().findFirst().orElse("transactionId-not-found");
-        final String rptId = headers.get(RPT_ID).stream().findFirst().orElse("rptId-not-found");
+        final String transactionId = Optional.of(headers.get(TRANSACTION_ID)).orElse(new ArrayList<>()).stream()
+                .findFirst().orElse("transactionId-not-found");
+        final String rptId = Optional.of(headers.get(RPT_ID)).orElse(new ArrayList<>()).stream()
+                .findFirst().orElse("rptId-not-found");
 
         return chain.filter(exchange)
                 .contextWrite(Context.of(CONTEXT_KEY, UUID.randomUUID().toString()))
