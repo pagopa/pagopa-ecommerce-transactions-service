@@ -1,10 +1,9 @@
 package it.pagopa.transactions.projections.handlers;
 
-import it.pagopa.ecommerce.commons.documents.Transaction.ClientId;
-import it.pagopa.ecommerce.commons.documents.TransactionActivatedData;
-import it.pagopa.ecommerce.commons.documents.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.domain.*;
-import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,11 +45,10 @@ public class TransactionsActivationProjectionHandler
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.ACTIVATED,
                 clientId
         );
 
-        it.pagopa.ecommerce.commons.documents.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.Transaction
+        it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.v1.Transaction
                 .from(transaction);
 
         return viewEventStoreRepository

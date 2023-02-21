@@ -1,8 +1,8 @@
 package it.pagopa.transactions.projections.handlers;
 
-import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationStatusUpdateData;
-import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationStatusUpdatedEvent;
-import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedEvent;
+import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
@@ -53,58 +53,45 @@ class AuthorizationUpdateProjectionHandlerTest {
                 new Email("email@example.com"),
                 "faultCode",
                 "faultCodeString",
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_REQUESTED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.UNKNOWN
         );
 
-        it.pagopa.ecommerce.commons.documents.Transaction expectedDocument = new it.pagopa.ecommerce.commons.documents.Transaction(
+        it.pagopa.ecommerce.commons.documents.v1.Transaction expectedDocument = new it.pagopa.ecommerce.commons.documents.v1.Transaction(
                 transaction.getTransactionId().value().toString(),
-                transaction.getTransactionActivatedData().getPaymentNotices().get(0).getPaymentToken(),
-                transaction.getTransactionActivatedData().getPaymentNotices().get(0).getRptId(),
-                transaction.getTransactionActivatedData().getPaymentNotices().get(0).getDescription(),
-                transaction.getTransactionActivatedData().getPaymentNotices().get(0).getAmount(),
+                transaction.getTransactionActivatedData().getPaymentNotices(),
+                null,
                 transaction.getEmail().value(),
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZED,
-                transaction.getCreationDate()
+                TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.UNKNOWN,
+                transaction.getCreationDate().toString()
         );
 
-        TransactionAuthorizationStatusUpdateData statusUpdateData = new TransactionAuthorizationStatusUpdateData(
+        TransactionAuthorizationCompletedData statusAuthCompleted = new TransactionAuthorizationCompletedData(
+                updateAuthorizationRequest.getAuthorizationCode(),
                 it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto
-                        .fromValue(updateAuthorizationRequest.getAuthorizationResult().toString()),
-                expectedDocument.getStatus(),
-                updateAuthorizationRequest.getAuthorizationCode()
+                        .fromValue(updateAuthorizationRequest.getAuthorizationResult().toString())
         );
 
-        TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
+        TransactionAuthorizationCompletedEvent event = new TransactionAuthorizationCompletedEvent(
                 transaction.getTransactionId().value().toString(),
-                statusUpdateData
+                statusAuthCompleted
         );
 
         TransactionActivated expected = new TransactionActivated(
                 transaction.getTransactionId(),
-                transaction.getPaymentNotices().stream()
-                        .map(
-                                PaymentNotice -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
-                                        PaymentNotice.paymentToken(),
-                                        PaymentNotice.rptId(),
-                                        PaymentNotice.transactionAmount(),
-                                        PaymentNotice.transactionDescription(),
-                                        PaymentNotice.paymentContextCode()
-                                )
-                        ).toList(),
+                transaction.getPaymentNotices(),
                 transaction.getEmail(),
                 null,
                 null,
                 ZonedDateTime.parse(expectedDocument.getCreationDate()),
-                expectedDocument.getStatus(),
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.UNKNOWN
         );
 
         /*
          * Preconditions
          */
         Mockito.when(viewRepository.findById(transaction.getTransactionId().value().toString()))
-                .thenReturn(Mono.just(it.pagopa.ecommerce.commons.documents.Transaction.from(transaction)));
+                .thenReturn(Mono.just(it.pagopa.ecommerce.commons.documents.v1.Transaction.from(transaction)));
 
         Mockito.when(viewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
 
@@ -119,7 +106,10 @@ class AuthorizationUpdateProjectionHandlerTest {
          * Assertions
          */
         Mockito.verify(viewRepository, Mockito.times(1)).save(
-                argThat(savedTransaction -> savedTransaction.getStatus().equals(TransactionStatusDto.AUTHORIZED))
+                argThat(
+                        savedTransaction -> savedTransaction.getStatus()
+                                .equals(TransactionStatusDto.AUTHORIZATION_COMPLETED)
+                )
         );
     }
 }

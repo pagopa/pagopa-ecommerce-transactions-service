@@ -1,10 +1,12 @@
 package it.pagopa.transactions.commands.handlers;
 
-import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationStatusUpdateData;
-import it.pagopa.ecommerce.commons.documents.TransactionAuthorizationStatusUpdatedEvent;
-import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedEvent;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestedEvent;
+import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
-import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
@@ -16,11 +18,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.OffsetDateTime;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -32,9 +36,9 @@ class TransactionUpdateAuthorizationHandlerTest {
     @InjectMocks
     private TransactionUpdateAuthorizationHandler updateAuthorizationHandler;
     @Mock
-    private TransactionsEventStoreRepository<TransactionAuthorizationStatusUpdateData> transactionEventStoreRepository;
+    private TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> transactionEventStoreRepository;
 
-    private TransactionId transactionId = new TransactionId(UUID.randomUUID());
+    private TransactionId transactionId = new TransactionId(UUID.fromString(TransactionTestUtils.TRANSACTION_ID));
 
     @Test
     void shouldSaveSuccessfulUpdate() {
@@ -61,8 +65,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.AUTHORIZATION_REQUESTED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -80,19 +83,18 @@ class TransactionUpdateAuthorizationHandlerTest {
                 updateAuthorizationStatusData
         );
 
-        TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = new TransactionAuthorizationStatusUpdateData(
-                AuthorizationResultDto.KO,
-                TransactionStatusDto.AUTHORIZED,
-                "authorizationCode"
-        );
+        TransactionActivatedEvent activatedEvent = TransactionTestUtils.transactionActivateEvent();
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
+                .transactionAuthorizationRequestedEvent();
 
-        TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
-                transactionId.toString(),
-                transactionAuthorizationStatusUpdateData
-        );
+        TransactionAuthorizationCompletedEvent event = TransactionTestUtils
+                .transactionAuthorizationCompletedEvent(AuthorizationResultDto.OK);
 
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
+
+        Mockito.when(transactionEventStoreRepository.findByTransactionId(transactionId.value().toString()))
+                .thenReturn((Flux) Flux.just(activatedEvent, authorizationRequestedEvent));
 
         /* test */
         StepVerifier.create(updateAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -102,8 +104,8 @@ class TransactionUpdateAuthorizationHandlerTest {
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1))
                 .save(
                         argThat(
-                                eventArg -> eventArg.getData().getNewTransactionStatus()
-                                        .equals(TransactionStatusDto.AUTHORIZED)
+                                eventArg -> TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT
+                                        .equals(eventArg.getEventCode())
                         )
                 );
     }
@@ -121,8 +123,8 @@ class TransactionUpdateAuthorizationHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                Arrays.asList(
-                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                List.of(
+                        new PaymentNotice(
                                 paymentToken,
                                 rptId,
                                 amount,
@@ -133,8 +135,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -150,6 +151,17 @@ class TransactionUpdateAuthorizationHandlerTest {
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
                 transaction.getPaymentNotices().get(0).rptId(),
                 updateAuthorizationStatusData
+        );
+        TransactionActivatedEvent activatedEvent = TransactionTestUtils.transactionActivateEvent();
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
+                .transactionAuthorizationRequestedEvent();
+
+        TransactionAuthorizationCompletedEvent transactionAuthorizationCompletedEvent = TransactionTestUtils
+                .transactionAuthorizationCompletedEvent(AuthorizationResultDto.OK);
+
+        /* preconditions */
+        Mockito.when(transactionEventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(
+                (Flux) Flux.just(activatedEvent, authorizationRequestedEvent, transactionAuthorizationCompletedEvent)
         );
 
         /* test */
@@ -173,8 +185,8 @@ class TransactionUpdateAuthorizationHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                Arrays.asList(
-                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                List.of(
+                        new it.pagopa.ecommerce.commons.domain.v1.PaymentNotice(
                                 paymentToken,
                                 rptId,
                                 amount,
@@ -185,8 +197,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.AUTHORIZATION_REQUESTED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -204,19 +215,28 @@ class TransactionUpdateAuthorizationHandlerTest {
                 updateAuthorizationStatusData
         );
 
-        TransactionAuthorizationStatusUpdateData transactionAuthorizationStatusUpdateData = new TransactionAuthorizationStatusUpdateData(
-                AuthorizationResultDto.KO,
-                TransactionStatusDto.AUTHORIZATION_FAILED,
-                "authorizationCode"
+        TransactionAuthorizationCompletedData transactionAuthorizationCompletedData = new TransactionAuthorizationCompletedData(
+                "authorizationCode",
+                AuthorizationResultDto.KO
         );
 
-        TransactionAuthorizationStatusUpdatedEvent event = new TransactionAuthorizationStatusUpdatedEvent(
+        TransactionAuthorizationCompletedEvent event = new TransactionAuthorizationCompletedEvent(
                 transactionId.toString(),
-                transactionAuthorizationStatusUpdateData
+                transactionAuthorizationCompletedData
         );
 
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
+        TransactionActivatedEvent activatedEvent = TransactionTestUtils.transactionActivateEvent();
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
+                .transactionAuthorizationRequestedEvent();
+
+        TransactionAuthorizationCompletedEvent transactionAuthorizationCompletedEvent = TransactionTestUtils
+                .transactionAuthorizationCompletedEvent(AuthorizationResultDto.OK);
+
+        /* preconditions */
+        Mockito.when(transactionEventStoreRepository.findByTransactionId(transactionId.value().toString()))
+                .thenReturn((Flux) Flux.just(activatedEvent, authorizationRequestedEvent));
 
         /* test */
         StepVerifier.create(updateAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -225,8 +245,8 @@ class TransactionUpdateAuthorizationHandlerTest {
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
                 argThat(
-                        eventArg -> eventArg.getData().getNewTransactionStatus()
-                                .equals(TransactionStatusDto.AUTHORIZATION_FAILED)
+                        eventArg -> TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT
+                                .equals(eventArg.getEventCode())
                 )
         );
     }

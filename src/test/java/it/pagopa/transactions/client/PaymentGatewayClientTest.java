@@ -2,10 +2,9 @@ package it.pagopa.transactions.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.pagopa.ecommerce.commons.domain.*;
-import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
-import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
+import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
+import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.*;
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
@@ -22,7 +21,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -77,8 +75,7 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -128,8 +125,7 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
@@ -215,8 +211,7 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -293,8 +288,7 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
@@ -345,7 +339,7 @@ class PaymentGatewayClientTest {
                 .urlRedirect("https://example.com");
 
         /* preconditions */
-        Mockito.when(creditCardInternalApi.step0Vpos(eq(vposAuthRequestDto), eq(encodedMdcFields)))
+        Mockito.when(creditCardInternalApi.step0Vpos(vposAuthRequestDto, encodedMdcFields))
                 .thenReturn(Mono.just(vposAuthResponseDto));
 
         Mockito.when(mockUuidUtils.uuidToBase64(any()))
@@ -385,8 +379,7 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .detailType("card")
@@ -482,8 +475,7 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -554,7 +546,7 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldThrowGatewayTimeoutOn504() throws JsonProcessingException {
+    void shouldThrowGatewayTimeoutOn504() {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
@@ -569,8 +561,7 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 "faultCode",
                 "faultCodeString",
-                TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -638,8 +629,7 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -722,8 +712,7 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
@@ -812,8 +801,7 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
@@ -858,7 +846,7 @@ class PaymentGatewayClientTest {
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
 
         /* preconditions */
-        Mockito.when(creditCardInternalApi.step0Vpos(eq(vposAuthRequestDto), eq(encodedMdcFields)))
+        Mockito.when(creditCardInternalApi.step0Vpos(vposAuthRequestDto, encodedMdcFields))
                 .thenReturn(
                         Mono.error(
                                 new WebClientResponseException(
@@ -907,8 +895,7 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -985,8 +972,7 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
@@ -1069,8 +1055,7 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
@@ -1121,7 +1106,7 @@ class PaymentGatewayClientTest {
         Mockito.when(objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID)))
                 .thenThrow(new JsonProcessingException("") {
                 });
-        Mockito.when(creditCardInternalApi.step0Vpos(eq(vposAuthRequestDto), eq(encodedMdcFields)))
+        Mockito.when(creditCardInternalApi.step0Vpos(vposAuthRequestDto, encodedMdcFields))
                 .thenReturn(Mono.just(creditCardAuthResponseDto));
         Mockito.when(mockUuidUtils.uuidToBase64(any()))
                 .thenReturn(vposAuthRequestDto.getIdTransaction());
@@ -1159,8 +1144,7 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -1211,8 +1195,7 @@ class PaymentGatewayClientTest {
                 new Email("foo@example.com"),
                 null,
                 null,
-                TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(

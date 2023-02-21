@@ -2,7 +2,7 @@ package it.pagopa.transactions.utils;
 
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.transactions.exceptions.JWTTokenGenerationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

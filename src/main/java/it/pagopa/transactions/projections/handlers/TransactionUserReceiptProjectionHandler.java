@@ -1,7 +1,8 @@
 package it.pagopa.transactions.projections.handlers;
 
-import it.pagopa.ecommerce.commons.documents.TransactionUserReceiptAddedEvent;
-import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptAddedEvent;
+import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +25,7 @@ public class TransactionUserReceiptProjectionHandler
         return transactionsViewRepository.findById(data.getTransactionId())
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(data.getTransactionId())))
                 .flatMap(transactionDocument -> {
-                    transactionDocument.setStatus(data.getData().getNewTransactionStatus());
+                    transactionDocument.setStatus(TransactionStatusDto.NOTIFIED);
                     return transactionsViewRepository.save(transactionDocument);
                 })
                 .map(
@@ -43,7 +44,6 @@ public class TransactionUserReceiptProjectionHandler
                                 null,
                                 null,
                                 ZonedDateTime.parse(transactionDocument.getCreationDate()),
-                                transactionDocument.getStatus(),
                                 transactionDocument.getClientId()
                         )
                 );

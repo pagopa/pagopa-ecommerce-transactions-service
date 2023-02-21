@@ -1,7 +1,6 @@
 package it.pagopa.transactions.utils;
 
-import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
-import it.pagopa.ecommerce.commons.domain.RptId;
+import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.generated.transactions.model.*;
 import it.pagopa.transactions.client.NodeForPspClient;

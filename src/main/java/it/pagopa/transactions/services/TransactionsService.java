@@ -2,9 +2,9 @@ package it.pagopa.transactions.services;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
-import it.pagopa.ecommerce.commons.documents.Transaction.ClientId;
-import it.pagopa.ecommerce.commons.documents.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PaymentMethodResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
 import it.pagopa.generated.transactions.server.model.*;
@@ -159,7 +159,7 @@ public class TransactionsService {
                         transaction -> {
                             Integer amountTotal = transaction.getPaymentNotices().stream()
                                     .mapToInt(
-                                            it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount
+                                            it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount
                                     ).sum();
                             log.info(
                                     "Authorization request amount validation for transactionId: {}",
@@ -183,7 +183,7 @@ public class TransactionsService {
                             );
                             Integer amountTotal = transaction.getPaymentNotices().stream()
                                     .mapToInt(
-                                            it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount
+                                            it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount
                                     ).sum();
                             return ecommercePaymentInstrumentsClient
                                     .getPSPs(
@@ -240,7 +240,7 @@ public class TransactionsService {
                 )
                 .flatMap(
                         args -> {
-                            it.pagopa.ecommerce.commons.documents.Transaction transactionDocument = args
+                            it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument = args
                                     .getT1();
                             PspDto psp = args.getT2();
                             PaymentMethodResponseDto paymentMethod = args.getT3();
@@ -276,7 +276,6 @@ public class TransactionsService {
                                     new Email(transactionDocument.getEmail()),
                                     null,
                                     null,
-                                    transactionDocument.getStatus(),
                                     transactionDocument.getClientId()
                             );
 
@@ -347,7 +346,6 @@ public class TransactionsService {
                                     new Email(transactionDocument.getEmail()),
                                     null,
                                     null,
-                                    transactionDocument.getStatus(),
                                     transactionDocument.getClientId()
                             );
 
@@ -462,7 +460,6 @@ public class TransactionsService {
                                     new Email(transactionDocument.getEmail()),
                                     null,
                                     null,
-                                    transactionDocument.getStatus(),
                                     transactionDocument.getClientId()
                             );
                             AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
@@ -516,7 +513,7 @@ public class TransactionsService {
                                                         .rptId(paymentNotice.rptId().value())
                                         ).toList()
                                 )
-                                .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
+                                .status(TransactionStatusDto.NOTIFIED)
                 )
                 .doOnNext(
                         transaction -> log.info(
@@ -562,7 +559,7 @@ public class TransactionsService {
     }
 
     NewTransactionResponseDto.ClientIdEnum convertClientId(
-                                                           it.pagopa.ecommerce.commons.documents.Transaction.ClientId clientId
+                                                           it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId clientId
     ) {
         return Optional.ofNullable(clientId)
                 .map(

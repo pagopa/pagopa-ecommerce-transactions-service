@@ -1,9 +1,8 @@
 package it.pagopa.transactions.projections.handlers;
 
-import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
-import it.pagopa.ecommerce.commons.documents.v1.Transaction;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionClosureErrorEvent;
+import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.jetbrains.annotations.NotNull;
@@ -18,32 +17,32 @@ import reactor.test.StepVerifier;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
-class ClosureErrorProjectionHandlerTest {
+class ClosureSendProjectionHandlerTests {
     @Mock
     private TransactionsViewRepository transactionsViewRepository;
 
     @InjectMocks
-    private ClosureErrorProjectionHandler closureErrorProjectionHandler;
+    private ClosureSendProjectionHandler closureSendProjectionHandler;
+
+    private String transactionId = TransactionTestUtils.TRANSACTION_ID;
 
     @Test
-    void shouldHandleProjection() {
+    void shouldHandleProjectionForClosedEvent() {
         Transaction transaction = transactionDocument();
 
-        TransactionClosureErrorEvent closureErrorEvent = new TransactionClosureErrorEvent(
-                transaction.getTransactionId()
-        );
+        TransactionClosedEvent event = TransactionTestUtils
+                .transactionClosedEvent(TransactionClosureData.Outcome.OK);
 
         Transaction expected = new Transaction(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
                 transaction.getFeeTotal(),
                 transaction.getEmail(),
-                TransactionStatusDto.CLOSURE_ERROR,
+                TransactionStatusDto.CLOSED,
                 Transaction.ClientId.CHECKOUT,
                 transaction.getCreationDate()
         );
@@ -53,30 +52,56 @@ class ClosureErrorProjectionHandlerTest {
         Mockito.when(transactionsViewRepository.save(any()))
                 .thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
 
-        StepVerifier.create(closureErrorProjectionHandler.handle(closureErrorEvent))
+        StepVerifier.create(closureSendProjectionHandler.handle(event))
                 .expectNext(expected)
                 .verifyComplete();
     }
 
     @Test
-    void shouldReturnTransactionNotFoundExceptionOnTransactionNotFound() {
+    void shouldHandleProjectionForClosureFailedEvent() {
         Transaction transaction = transactionDocument();
 
-        TransactionClosureErrorEvent closureErrorEvent = new TransactionClosureErrorEvent(
-                transaction.getTransactionId()
+        TransactionClosureFailedEvent event = TransactionTestUtils
+                .transactionClosureFailedEvent(TransactionClosureData.Outcome.OK);
+
+        Transaction expected = new Transaction(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getFeeTotal(),
+                transaction.getEmail(),
+                TransactionStatusDto.UNAUTHORIZED,
+                Transaction.ClientId.CHECKOUT,
+                transaction.getCreationDate()
         );
 
-        Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId())).thenReturn(Mono.empty());
+        Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId()))
+                .thenReturn(Mono.just(transaction));
+        Mockito.when(transactionsViewRepository.save(any()))
+                .thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
 
-        StepVerifier.create(closureErrorProjectionHandler.handle(closureErrorEvent))
-                .expectError(TransactionNotFoundException.class)
-                .verify();
+        StepVerifier.create(closureSendProjectionHandler.handle(event))
+                .expectNext(expected)
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldThrowTransactionNotFoundExceptionForUnknownTransactionId() {
+        Transaction transaction = transactionDocument();
+
+        TransactionClosureFailedEvent event = TransactionTestUtils
+                .transactionClosureFailedEvent(TransactionClosureData.Outcome.OK);
+
+        Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId()))
+                .thenReturn(Mono.empty());
+
+        StepVerifier.create(closureSendProjectionHandler.handle(event))
+                .expectErrorMatches(t -> t instanceof TransactionNotFoundException);
     }
 
     @NotNull
     private Transaction transactionDocument() {
         return new Transaction(
-                UUID.randomUUID().toString(),
+                transactionId,
                 List.of(
                         new PaymentNotice(
                                 "paymentToken",

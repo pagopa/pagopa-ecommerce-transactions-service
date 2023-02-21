@@ -1,13 +1,11 @@
 package it.pagopa.transactions.commands.handlers;
 
-import it.pagopa.ecommerce.commons.documents.PaymentNotice;
-import it.pagopa.ecommerce.commons.documents.TransactionActivatedData;
-import it.pagopa.ecommerce.commons.documents.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.domain.*;
-import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.transactions.projections.handlers.TransactionsActivationProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,8 +14,11 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 
-import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionsActivationProjectionHandlerTest {
@@ -30,7 +31,7 @@ class TransactionsActivationProjectionHandlerTest {
 
     @Test
     void shouldSaveTransaction() {
-        /** preconditions */
+        /* preconditions */
 
         String transactionIdString = UUID.randomUUID().toString();
         String rptIdString = "77777777777111111111111111111";
@@ -40,7 +41,7 @@ class TransactionsActivationProjectionHandlerTest {
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
         transactionActivatedData.setEmail("jon.doe@email.it");
         transactionActivatedData.setPaymentNotices(
-                Arrays.asList(
+                List.of(
                         new PaymentNotice(
                                 paymentTokenString,
                                 rptIdString,
@@ -71,8 +72,8 @@ class TransactionsActivationProjectionHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                Arrays.asList(
-                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                List.of(
+                        new it.pagopa.ecommerce.commons.domain.v1.PaymentNotice(
                                 paymentToken,
                                 rptId,
                                 amount,
@@ -83,37 +84,36 @@ class TransactionsActivationProjectionHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.ACTIVATED,
-                it.pagopa.ecommerce.commons.documents.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
 
-        it.pagopa.ecommerce.commons.documents.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.Transaction
+        it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.v1.Transaction
                 .from(transaction);
 
         Mockito.when(
-                transactionsViewRepository.save(Mockito.any(it.pagopa.ecommerce.commons.documents.Transaction.class))
+                transactionsViewRepository.save(Mockito.any(it.pagopa.ecommerce.commons.documents.v1.Transaction.class))
         ).thenReturn(Mono.just(transactionDocument));
 
-        /** test */
+        /* test */
 
         TransactionActivated transactionResult = handler.handle(event).block();
 
-        Assert.assertNotEquals(transactionResult, transaction);
-        Assert.assertEquals(transactionResult.getTransactionId(), transaction.getTransactionId());
-        Assert.assertEquals(transactionResult.getStatus(), transaction.getStatus());
-        Assert.assertEquals(
+        assertNotEquals(transactionResult, transaction);
+        assertEquals(transactionResult.getTransactionId(), transaction.getTransactionId());
+        assertEquals(transactionResult.getStatus(), transaction.getStatus());
+        assertEquals(
                 transactionResult.getPaymentNotices().get(0).transactionAmount(),
                 transaction.getPaymentNotices().get(0).transactionAmount()
         );
-        Assert.assertEquals(
+        assertEquals(
                 transactionResult.getPaymentNotices().get(0).transactionDescription(),
                 transaction.getPaymentNotices().get(0).transactionDescription()
         );
-        Assert.assertEquals(
+        assertEquals(
                 transactionResult.getPaymentNotices().get(0).rptId(),
                 transaction.getPaymentNotices().get(0).rptId()
         );
-        Assert.assertEquals(
+        assertEquals(
                 transactionResult.getTransactionActivatedData().getPaymentNotices().get(0).getPaymentToken(),
                 transaction.getTransactionActivatedData().getPaymentNotices().get(0).getPaymentToken()
         );

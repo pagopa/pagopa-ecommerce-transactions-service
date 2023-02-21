@@ -1,9 +1,8 @@
 package it.pagopa.transactions.controllers;
 
-import it.pagopa.ecommerce.commons.domain.PaymentToken;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.v1.PaymentToken;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
 import it.pagopa.generated.transactions.model.CtFaultBean;
-import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.TransactionsService;
@@ -200,7 +199,7 @@ class TransactionsControllerTest {
                                 .paymentToken(paymentToken)
                 )
                 .authToken("authToken")
-                .status(TransactionStatusDto.AUTHORIZED);
+                .status(TransactionStatusDto.AUTHORIZATION_COMPLETED);
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .authorizationResult(AuthorizationResultDto.OK)
@@ -252,7 +251,7 @@ class TransactionsControllerTest {
 
         /* preconditions */
         Mockito.when(transactionsService.updateTransactionAuthorization(paymentToken, updateAuthorizationRequest))
-                .thenReturn(Mono.error(new BadGatewayException("")));
+                .thenReturn(Mono.error(new BadGatewayException("", HttpStatus.BAD_REQUEST)));
 
         /* test */
 
@@ -333,7 +332,7 @@ class TransactionsControllerTest {
                         .detail(null),
                 HttpStatus.BAD_GATEWAY
         );
-        BadGatewayException exception = new BadGatewayException("");
+        BadGatewayException exception = new BadGatewayException("", HttpStatus.BAD_REQUEST);
         ResponseEntity<ProblemJsonDto> response = transactionsController.badGatewayHandler(exception);
 
         assertEquals(responseCheck.getStatusCode(), response.getStatusCode());
