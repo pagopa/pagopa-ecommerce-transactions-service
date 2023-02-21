@@ -20,6 +20,8 @@ public class MDCFilter implements WebFilter {
     public static final String CONTEXT_KEY = "contextKey";
     public static final String TRANSACTION_ID = "transactionId";
     public static final String RPT_ID = "rptId";
+    public static final String HEADER_TRANSACTION_ID = "x-transaction-id";
+    public static final String HEADER_RPT_ID = "x-rpt-id";
 
     @Override
     public Mono<Void> filter(
@@ -27,9 +29,10 @@ public class MDCFilter implements WebFilter {
                              WebFilterChain chain
     ) {
         final HttpHeaders headers = exchange.getRequest().getHeaders();
-        final String transactionId = Optional.ofNullable(headers.get(TRANSACTION_ID)).orElse(new ArrayList<>()).stream()
+        final String transactionId = Optional.ofNullable(headers.get(HEADER_TRANSACTION_ID)).orElse(new ArrayList<>())
+                .stream()
                 .findFirst().orElse("transactionId-not-found");
-        final String rptId = Optional.ofNullable(headers.get(RPT_ID)).orElse(new ArrayList<>()).stream()
+        final String rptId = Optional.ofNullable(headers.get(HEADER_RPT_ID)).orElse(new ArrayList<>()).stream()
                 .findFirst().orElse("rptId-not-found");
 
         return chain.filter(exchange)
