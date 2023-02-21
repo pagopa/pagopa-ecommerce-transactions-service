@@ -24,6 +24,7 @@ import it.pagopa.transactions.projections.handlers.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.JwtTokenUtils;
+import it.pagopa.transactions.utils.UUIDUtils;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -55,7 +56,8 @@ import static org.mockito.Mockito.when;
             TransactionRequestAuthorizationHandler.class,
             AuthorizationRequestProjectionHandler.class,
             TransactionsEventStoreRepository.class,
-            TransactionsActivationProjectionHandler.class
+            TransactionsActivationProjectionHandler.class,
+            UUIDUtils.class
     }
 )
 @AutoConfigureDataRedis
@@ -65,6 +67,9 @@ public class TransactionServiceTests {
 
     @Autowired
     private TransactionsService transactionsService;
+
+    @Autowired
+    private UUIDUtils uuidUtils;
 
     @MockBean
     private EcommercePaymentInstrumentsClient ecommercePaymentInstrumentsClient;
@@ -275,6 +280,8 @@ public class TransactionServiceTests {
     void shouldReturnTransactionInfoForSuccessfulAuthAndClosure() {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
+        String transactionIdEncoded = uuidUtils.uuidToBase64(transactionId.value());
+
         Transaction transactionDocument = new Transaction(
                 transactionId.value().toString(),
                 PAYMENT_TOKEN,
@@ -369,13 +376,15 @@ public class TransactionServiceTests {
 
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
-                .updateTransactionAuthorization(transactionId.value().toString(), updateAuthorizationRequest).block();
+                .updateTransactionAuthorization(transactionIdEncoded, updateAuthorizationRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
     }
 
     @Test
     void shouldReturnNotFoundExceptionForNonExistingTransaction() {
+
+        String transactionIdEncoded = uuidUtils.uuidToBase64(UUID.fromString(TRANSACION_ID));
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .authorizationResult(AuthorizationResultDto.OK)
@@ -388,7 +397,10 @@ public class TransactionServiceTests {
 
         /* test */
         StepVerifier
-                .create(transactionsService.updateTransactionAuthorization(TRANSACION_ID, updateAuthorizationRequest))
+                .create(
+                        transactionsService
+                                .updateTransactionAuthorization(transactionIdEncoded, updateAuthorizationRequest)
+                )
                 .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
                 .verify();
     }

@@ -15,12 +15,14 @@ import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.GatewayTimeoutException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.utils.UUIDUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -50,6 +52,9 @@ class PaymentGatewayClientTest {
 
     @Mock
     XPayInternalApi xPayInternalApi;
+
+    @Mock
+    UUIDUtils mockUuidUtils;
 
     private final UUID transactionIdUUID = UUID.randomUUID();
 
@@ -107,6 +112,7 @@ class PaymentGatewayClientTest {
 
     @Test
     void shouldReturnAuthorizationResponseForCreditCardWithXPay() throws JsonProcessingException {
+
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
@@ -169,6 +175,9 @@ class PaymentGatewayClientTest {
         /* preconditions */
         Mockito.when(xPayInternalApi.authRequestXpay(xPayAuthRequestDto, encodedMdcFields))
                 .thenReturn(Mono.just(xPayResponse));
+
+        Mockito.when(mockUuidUtils.uuidToBase64(any()))
+                .thenReturn(xPayAuthRequestDto.getIdTransaction());
 
         /* test */
         StepVerifier.create(client.requestXPayAuthorization(authorizationData))
@@ -243,6 +252,9 @@ class PaymentGatewayClientTest {
         /* preconditions */
         Mockito.when(postePayInternalApi.authRequest(postePayAuthRequest, false, encodedMdcFields))
                 .thenReturn(Mono.just(postePayResponse));
+
+        Mockito.when(mockUuidUtils.uuidToBase64(any()))
+                .thenReturn(postePayAuthRequest.getIdTransaction());
 
         /* test */
         StepVerifier.create(client.requestXPayAuthorization(authorizationData))
@@ -333,6 +345,9 @@ class PaymentGatewayClientTest {
         Mockito.when(creditCardInternalApi.step0Vpos(eq(vposAuthRequestDto), eq(encodedMdcFields)))
                 .thenReturn(Mono.just(vposAuthResponseDto));
 
+        Mockito.when(mockUuidUtils.uuidToBase64(any()))
+                .thenReturn(vposAuthRequestDto.getIdTransaction());
+
         /* test */
         StepVerifier.create(client.requestXPayAuthorization(authorizationData))
                 .expectNextCount(0)
@@ -421,6 +436,9 @@ class PaymentGatewayClientTest {
                         )
                 );
 
+        Mockito.when(mockUuidUtils.uuidToBase64(any()))
+                .thenReturn(xPayAuthRequestDto.getIdTransaction());
+
         /* test */
 
         StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
@@ -506,7 +524,8 @@ class PaymentGatewayClientTest {
                                 )
                         )
                 );
-
+        Mockito.when(mockUuidUtils.uuidToBase64(any()))
+                .thenReturn(postePayAuthRequest.getIdTransaction());
         /* test */
         StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
                 .expectErrorMatches(
@@ -659,6 +678,8 @@ class PaymentGatewayClientTest {
                                 )
                         )
                 );
+        Mockito.when(mockUuidUtils.uuidToBase64(any()))
+                .thenReturn(postePayAuthRequest.getIdTransaction());
 
         /* test */
         StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
@@ -747,6 +768,8 @@ class PaymentGatewayClientTest {
                         )
                 );
 
+        Mockito.when(mockUuidUtils.uuidToBase64(any()))
+                .thenReturn(xPayAuthRequestDto.getIdTransaction());
         /* test */
         StepVerifier.create(client.requestXPayAuthorization(authorizationData))
                 .expectErrorMatches(error -> error instanceof BadGatewayException)
@@ -840,7 +863,8 @@ class PaymentGatewayClientTest {
                                 )
                         )
                 );
-
+        Mockito.when(mockUuidUtils.uuidToBase64(any()))
+                .thenReturn(vposAuthRequestDto.getIdTransaction());
         /* test */
         StepVerifier.create(client.requestCreditCardAuthorization(authorizationData))
                 .expectErrorMatches(error -> error instanceof BadGatewayException)
@@ -916,7 +940,8 @@ class PaymentGatewayClientTest {
                 });
         Mockito.when(postePayInternalApi.authRequest(postePayAuthRequest, false, encodedMdcFields))
                 .thenReturn(Mono.just(postePayResponse));
-
+        Mockito.when(mockUuidUtils.uuidToBase64(any()))
+                .thenReturn(postePayAuthRequest.getIdTransaction());
         /* test */
         StepVerifier.create(client.requestPostepayAuthorization(authorizationData))
                 .expectNext(postePayResponse)
@@ -998,7 +1023,8 @@ class PaymentGatewayClientTest {
                 });
         Mockito.when(xPayInternalApi.authRequestXpay(xPayAuthRequestDto, encodedMdcFields))
                 .thenReturn(Mono.just(xPayResponse));
-
+        Mockito.when(mockUuidUtils.uuidToBase64(any()))
+                .thenReturn(xPayAuthRequestDto.getIdTransaction());
         /* test */
         StepVerifier.create(client.requestXPayAuthorization(authorizationData))
                 .expectNext(xPayResponse)
@@ -1087,7 +1113,8 @@ class PaymentGatewayClientTest {
                 });
         Mockito.when(creditCardInternalApi.step0Vpos(eq(vposAuthRequestDto), eq(encodedMdcFields)))
                 .thenReturn(Mono.just(creditCardAuthResponseDto));
-
+        Mockito.when(mockUuidUtils.uuidToBase64(any()))
+                .thenReturn(vposAuthRequestDto.getIdTransaction());
         /* test */
         StepVerifier.create(client.requestCreditCardAuthorization(authorizationData))
                 .expectNext(creditCardAuthResponseDto)
