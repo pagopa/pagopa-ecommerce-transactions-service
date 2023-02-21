@@ -21,7 +21,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -340,7 +339,7 @@ class PaymentGatewayClientTest {
                 .urlRedirect("https://example.com");
 
         /* preconditions */
-        Mockito.when(creditCardInternalApi.step0Vpos(eq(vposAuthRequestDto), eq(encodedMdcFields)))
+        Mockito.when(creditCardInternalApi.step0Vpos(vposAuthRequestDto, encodedMdcFields))
                 .thenReturn(Mono.just(vposAuthResponseDto));
 
         Mockito.when(mockUuidUtils.uuidToBase64(any()))
@@ -547,7 +546,7 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldThrowGatewayTimeoutOn504() throws JsonProcessingException {
+    void shouldThrowGatewayTimeoutOn504() {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
@@ -847,7 +846,7 @@ class PaymentGatewayClientTest {
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
 
         /* preconditions */
-        Mockito.when(creditCardInternalApi.step0Vpos(eq(vposAuthRequestDto), eq(encodedMdcFields)))
+        Mockito.when(creditCardInternalApi.step0Vpos(vposAuthRequestDto, encodedMdcFields))
                 .thenReturn(
                         Mono.error(
                                 new WebClientResponseException(
@@ -1107,7 +1106,7 @@ class PaymentGatewayClientTest {
         Mockito.when(objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID)))
                 .thenThrow(new JsonProcessingException("") {
                 });
-        Mockito.when(creditCardInternalApi.step0Vpos(eq(vposAuthRequestDto), eq(encodedMdcFields)))
+        Mockito.when(creditCardInternalApi.step0Vpos(vposAuthRequestDto, encodedMdcFields))
                 .thenReturn(Mono.just(creditCardAuthResponseDto));
         Mockito.when(mockUuidUtils.uuidToBase64(any()))
                 .thenReturn(vposAuthRequestDto.getIdTransaction());

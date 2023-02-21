@@ -8,7 +8,6 @@ import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
-import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -23,23 +22,15 @@ import reactor.util.function.Tuples;
 public class TransactionUpdateAuthorizationHandler extends
         BaseHandler<TransactionUpdateAuthorizationCommand, Mono<TransactionAuthorizationCompletedEvent>> {
 
-    private final NodeForPspClient nodeForPspClient;
-
     private final TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> transactionEventStoreRepository;
-
-    private final TransactionsEventStoreRepository<Object> eventStoreRepository;
 
     @Autowired
     protected TransactionUpdateAuthorizationHandler(
             TransactionsEventStoreRepository<Object> eventStoreRepository,
-            NodeForPspClient nodeForPspClient,
-            TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> transactionEventStoreRepository,
-            TransactionsEventStoreRepository<Object> eventStoreRepository1
+            TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> transactionEventStoreRepository
     ) {
         super(eventStoreRepository);
-        this.nodeForPspClient = nodeForPspClient;
         this.transactionEventStoreRepository = transactionEventStoreRepository;
-        this.eventStoreRepository = eventStoreRepository1;
     }
 
     @Override
