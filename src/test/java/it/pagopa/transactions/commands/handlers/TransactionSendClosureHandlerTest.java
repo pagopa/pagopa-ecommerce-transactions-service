@@ -6,7 +6,6 @@ import com.azure.core.http.rest.Response;
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
 import com.azure.storage.queue.models.SendMessageResult;
-import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.PaymentNotice;
@@ -258,8 +257,8 @@ class TransactionSendClosureHandlerTest {
                 closureSendData
         );
 
-        TransactionClosedEvent event = TransactionTestUtils
-                .transactionClosedEvent(TransactionClosureData.Outcome.OK);
+        TransactionClosureFailedEvent event = TransactionTestUtils
+                .transactionClosureFailedEvent(TransactionClosureData.Outcome.KO);
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
@@ -304,7 +303,13 @@ class TransactionSendClosureHandlerTest {
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
-                .expectNext(Either.right(event))
+                .consumeNextWith(next -> {
+                    assertTrue(next.isRight());
+                    assertNotNull(next.get());
+                    assertEquals(event.getData().getResponseOutcome(), next.get().getData().getResponseOutcome());
+                    assertEquals(event.getEventCode(), next.get().getEventCode());
+                    assertEquals(event.getTransactionId(), next.get().getTransactionId());
+                })
                 .verifyComplete();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
@@ -427,7 +432,7 @@ class TransactionSendClosureHandlerTest {
                 );
 
         ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
-                .outcome(ClosePaymentResponseDto.OutcomeEnum.KO);
+                .outcome(ClosePaymentResponseDto.OutcomeEnum.OK);
 
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
@@ -436,7 +441,13 @@ class TransactionSendClosureHandlerTest {
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
-                .expectNext(Either.right(event))
+                .consumeNextWith(next -> {
+                    assertTrue(next.isRight());
+                    assertNotNull(next.get());
+                    assertEquals(event.getData().getResponseOutcome(), next.get().getData().getResponseOutcome());
+                    assertEquals(event.getEventCode(), next.get().getEventCode());
+                    assertEquals(event.getTransactionId(), next.get().getTransactionId());
+                })
                 .verifyComplete();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
@@ -568,7 +579,13 @@ class TransactionSendClosureHandlerTest {
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
-                .expectNext(Either.right(event))
+                .consumeNextWith(next -> {
+                    assertTrue(next.isRight());
+                    assertNotNull(next.get());
+                    assertEquals(event.getData().getResponseOutcome(), next.get().getData().getResponseOutcome());
+                    assertEquals(event.getEventCode(), next.get().getEventCode());
+                    assertEquals(event.getTransactionId(), next.get().getTransactionId());
+                })
                 .verifyComplete();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
@@ -708,7 +725,12 @@ class TransactionSendClosureHandlerTest {
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
-                .expectNext(Either.left(errorEvent))
+                .consumeNextWith(next -> {
+                    assertTrue(next.isLeft());
+                    assertNotNull(next.getLeft());
+                    assertEquals(errorEvent.getEventCode(), next.getLeft().getEventCode());
+                    assertEquals(errorEvent.getTransactionId(), next.getLeft().getTransactionId());
+                })
                 .verifyComplete();
 
         Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
@@ -856,7 +878,12 @@ class TransactionSendClosureHandlerTest {
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
-                .expectNext(Either.left(errorEvent))
+                .consumeNextWith(next -> {
+                    assertTrue(next.isLeft());
+                    assertNotNull(next.getLeft());
+                    assertEquals(errorEvent.getEventCode(), next.getLeft().getEventCode());
+                    assertEquals(errorEvent.getTransactionId(), next.getLeft().getTransactionId());
+                })
                 .verifyComplete();
 
         Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
@@ -1483,7 +1510,12 @@ class TransactionSendClosureHandlerTest {
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
-                .expectNext(Either.left(errorEvent))
+                .consumeNextWith(next -> {
+                    assertTrue(next.isLeft());
+                    assertNotNull(next.getLeft());
+                    assertEquals(errorEvent.getEventCode(), next.getLeft().getEventCode());
+                    assertEquals(errorEvent.getTransactionId(), next.getLeft().getTransactionId());
+                })
                 .verifyComplete();
 
         Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
@@ -1631,7 +1663,12 @@ class TransactionSendClosureHandlerTest {
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
-                .expectNext(Either.left(errorEvent))
+                .consumeNextWith(next -> {
+                    assertTrue(next.isLeft());
+                    assertNotNull(next.getLeft());
+                    assertEquals(errorEvent.getEventCode(), next.getLeft().getEventCode());
+                    assertEquals(errorEvent.getTransactionId(), next.getLeft().getTransactionId());
+                })
                 .verifyComplete();
 
         Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))

@@ -146,13 +146,12 @@ public class TransactionSendClosureHandler extends
                     log.info("Invoking closePaymentV2 for RptId: {}", paymentNotice.rptId().value());
                     return nodeForPspClient.closePaymentV2(closePaymentRequest)
                             .flatMap(
-                                    response -> buildClosureEvent(
+                                    response -> processClosureEvent(
                                             command,
                                             transactionAuthorizationCompletedData.getAuthorizationResultDto(),
                                             response.getOutcome()
                                     )
                             )
-                            .flatMap(transactionEventStoreRepository::save)
                             .map(Either::<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>right)
                             .onErrorResume(exception -> {
 
@@ -243,13 +242,11 @@ public class TransactionSendClosureHandler extends
                                 }
                                 // Unrecoverable error calling Nodo for perform close payment.
                                 // Generate closure event setting closure outcome to KO
-                                return buildClosureEvent(
+                                return processClosureEvent(
                                         command,
                                         transactionAuthorizationCompletedData.getAuthorizationResultDto(),
                                         ClosePaymentResponseDto.OutcomeEnum.KO
-                                )
-                                        .flatMap(transactionEventStoreRepository::save)
-                                        .map(Either::right);
+                                ).map(Either::right);
                             });
                 });
     }
@@ -270,7 +267,7 @@ public class TransactionSendClosureHandler extends
         }
     }
 
-    private Mono<TransactionEvent<TransactionClosureData>> buildClosureEvent(
+    private Mono<TransactionEvent<TransactionClosureData>> processClosureEvent(
             TransactionClosureSendCommand command,
             AuthorizationResultDto authorizationResult,
             ClosePaymentResponseDto.OutcomeEnum nodoOutcome
@@ -278,7 +275,7 @@ public class TransactionSendClosureHandler extends
         String transactionId = command.getData().transaction().getTransactionId().value().toString();
         TransactionClosureData.Outcome eventNodoOutcome = outcomeV2ToTransactionClosureDataOutcome(nodoOutcome);
         TransactionClosureData transactionClosureData = new TransactionClosureData(eventNodoOutcome);
-        return switch (authorizationResult) {
+        Mono<TransactionEvent<TransactionClosureData>> closureEvent = switch (authorizationResult) {
             case OK -> Mono.just(new TransactionClosedEvent(transactionId, transactionClosureData));
             case KO -> Mono.just(new TransactionClosureFailedEvent(transactionId, transactionClosureData));
             case null, default -> Mono.error(
@@ -287,6 +284,22 @@ public class TransactionSendClosureHandler extends
                     )
             );
         };
+        return closureEvent
+                .flatMap(transactionEventStoreRepository::save)
+
+                .filter(e ->
+                        //Closed event sent on the queue only if the transaction was previously authorized and the Nodo outcome is KO
+                        TransactionClosureData.Outcome.KO.equals(eventNodoOutcome)
+                                && AuthorizationResultDto.OK.equals(authorizationResult))
+                .flatMap(e -> {
+                    log.info("Enqueue transaction closed event: {}", e);
+                    return transactionClosureSentEventQueueClient
+                            .sendMessageWithResponse(
+                                    BinaryData.fromObject(e),
+                                    null,
+                                    null
+                            );
+                }).then(closureEvent);
     }
 
     private TransactionClosureData.Outcome outcomeV2ToTransactionClosureDataOutcome(
