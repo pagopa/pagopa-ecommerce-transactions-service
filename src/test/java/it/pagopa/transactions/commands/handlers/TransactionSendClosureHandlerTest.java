@@ -1323,18 +1323,17 @@ class TransactionSendClosureHandlerTest {
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
                 .consumeNextWith(next -> {
-                    assertTrue(next.isRight());
-                    assertNotNull(next.get());
-                    assertEquals(event.getData().getResponseOutcome(), next.get().getData().getResponseOutcome());
-                    assertEquals(event.getEventCode(), next.get().getEventCode());
-                    assertEquals(event.getTransactionId(), next.get().getTransactionId());
+                    assertTrue(next.isLeft());
+                    assertNotNull(next.getLeft());
+                    assertEquals(errorEvent.getEventCode(), next.getLeft().getEventCode());
+                    assertEquals(errorEvent.getTransactionId(), next.getLeft().getTransactionId());
                 })
                 .verifyComplete();
 
         // check that no closure error event is saved and sent to event dispatcher
-        Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(0))
+        Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
                 .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT)));
-        Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(0))
+        Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
                 .sendMessageWithResponse(
                         argThat(
                                 (BinaryData b) -> b.toByteBuffer()
@@ -1343,8 +1342,8 @@ class TransactionSendClosureHandlerTest {
                         argThat(d -> d.compareTo(Duration.ofSeconds(RETRY_TIMEOUT_INTERVAL)) <= 0),
                         isNull()
                 );
-        // check that closure event with KO status is saved
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
+        // check that closure event with KO status is not saved
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(
                 argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_CLOSURE_FAILED_EVENT
                                 .equals(eventArg.getEventCode())

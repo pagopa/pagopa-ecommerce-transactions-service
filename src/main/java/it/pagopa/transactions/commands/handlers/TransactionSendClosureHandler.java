@@ -162,17 +162,15 @@ public class TransactionSendClosureHandler extends
                                 boolean unrecoverableError = exception instanceof BadGatewayException responseStatusException
                                         && responseStatusException.getHttpStatus().is4xxClientError();
 
-                                boolean isAuthorized = AuthorizationResultDto.OK
-                                        .equals(transactionAuthorizationCompletedData.getAuthorizationResultDto());
                                 log.error(
-                                        "Got exception while invoking closePaymentV2 unrecoverable error: %s, is authorized: %s"
-                                                .formatted(unrecoverableError, isAuthorized),
+                                        "Got exception while invoking closePaymentV2 unrecoverable error: %s"
+                                                .formatted(unrecoverableError),
                                         exception
                                 );
                                 // the closure error event is build and sent iff the transaction was previously
                                 // authorized
                                 // and the error received from Nodo is a recoverable ones such as http code 500
-                                if (isAuthorized && !unrecoverableError) {
+                                if (!unrecoverableError) {
                                     TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
                                             tx.getTransactionId().value().toString()
                                     );
