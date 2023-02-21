@@ -2,8 +2,8 @@ package it.pagopa.transactions.utils;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import it.pagopa.ecommerce.commons.domain.v1.*;
-import it.pagopa.transactions.configurations.JwtConfigurations;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
+import it.pagopa.transactions.configurations.SecretsConfigurations;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -18,7 +18,7 @@ class JwtTokenUtilsTests {
     private static final String STRONG_KEY = "ODMzNUZBNTZENDg3NTYyREUyNDhGNDdCRUZDNzI3NDMzMzQwNTFEREZGQ0MyQzA5Mjc1RjY2NTQ1NDk5MDMxNzU5NDc0NUVFMTdDMDhGNzk4Q0Q3RENFMEJBODE1NURDREExNEY2Mzk4QzFEMTU0NTExNjUyMEExMzMwMTdDMDk";
 
     private static final int TOKEN_VALIDITY_TIME = 10000;
-    private final SecretKey jwtSecretKey = new JwtConfigurations().jwtSigningKey(STRONG_KEY);
+    private final SecretKey jwtSecretKey = new SecretsConfigurations().jwtSigningKey(STRONG_KEY);
     private final JwtTokenUtils jwtTokenUtils = new JwtTokenUtils(jwtSecretKey, TOKEN_VALIDITY_TIME);
 
     @Test
