@@ -118,6 +118,9 @@ public class TransactionServiceTests {
     @MockBean
     private JwtTokenUtils jwtTokenUtils;
 
+    @MockBean
+    private it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId clientId;
+
     final String PAYMENT_TOKEN = "aaa";
     final String TRANSACION_ID = "833d303a-f857-11ec-b939-0242ac120002";
 
@@ -722,6 +725,12 @@ public class TransactionServiceTests {
             assertEquals(clientId.toString(), transactionsService.convertClientId(clientId).toString());
         }
         assertThrows(InvalidRequestException.class, () -> transactionsService.convertClientId(null));
+    }
+
+    @Test
+    void shouldThrowsInvalidRequestExceptionForInvalidClientID() {
+        Mockito.when(clientId.toString()).thenReturn("InvalidClientID");
+        assertThrows(InvalidRequestException.class, () -> transactionsService.convertClientId(clientId));
     }
 
 }
