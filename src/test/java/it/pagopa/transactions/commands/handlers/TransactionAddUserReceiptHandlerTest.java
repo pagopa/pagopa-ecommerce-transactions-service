@@ -7,7 +7,6 @@ import it.pagopa.ecommerce.commons.domain.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
-import it.pagopa.generated.notifications.v1.dto.NotificationEmailRequestDto;
 import it.pagopa.generated.notifications.v1.dto.NotificationEmailResponseDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestPaymentsInnerDto;
@@ -74,7 +73,7 @@ class TransactionAddUserReceiptHandlerTest {
     }
 
     @Test
-    void shouldSaveSuccessfulUpdateWithStatusClosed() {
+    void shouldSaveSuccessfulUpdateWithStatusClosed() throws Exception {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -199,12 +198,13 @@ class TransactionAddUserReceiptHandlerTest {
                                 .equals(eventArg.getEventCode())
                 )
         );
-        NotificationsServiceClient.SuccessTemplateRequest successTemplateRequest =  successTemplateMailCaptor.getAllValues().get(0);
-        assertEquals(successTemplateRequest.to(),);
+        NotificationsServiceClient.SuccessTemplateRequest successTemplateRequest = successTemplateMailCaptor
+                .getAllValues().get(0);
+        assertEquals(successTemplateRequest.to(), TransactionTestUtils.confidentialDataManager.decrypt(email));
     }
 
     @Test
-    void shouldSaveSuccessfulUpdateWithStatusClosureFailed() {
+    void shouldSaveSuccessfulUpdateWithStatusClosureFailed() throws Exception {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -315,7 +315,7 @@ class TransactionAddUserReceiptHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
-        Mockito.when(notificationsServiceClient.sendSuccessEmail(any()))
+        Mockito.when(notificationsServiceClient.sendSuccessEmail(successTemplateMailCaptor.capture()))
                 .thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
 
         /* test */
@@ -329,10 +329,13 @@ class TransactionAddUserReceiptHandlerTest {
                                 .equals(eventArg.getEventCode())
                 )
         );
+        NotificationsServiceClient.SuccessTemplateRequest successTemplateRequest = successTemplateMailCaptor
+                .getAllValues().get(0);
+        assertEquals(successTemplateRequest.to(), TransactionTestUtils.confidentialDataManager.decrypt(email));
     }
 
     @Test
-    void shouldSaveKoUpdate() {
+    void shouldSaveKoUpdate() throws Exception {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -443,7 +446,7 @@ class TransactionAddUserReceiptHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
-        Mockito.when(notificationsServiceClient.sendKoEmail(any()))
+        Mockito.when(notificationsServiceClient.sendKoEmail(koTemplateMailCaptor.capture()))
                 .thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
 
         /* test */
@@ -457,6 +460,8 @@ class TransactionAddUserReceiptHandlerTest {
                                 .equals(eventArg.getEventCode())
                 )
         );
+        NotificationsServiceClient.KoTemplateRequest koTemplateRequest = koTemplateMailCaptor.getAllValues().get(0);
+        assertEquals(koTemplateRequest.to(), TransactionTestUtils.confidentialDataManager.decrypt(email));
     }
 
     @Test
