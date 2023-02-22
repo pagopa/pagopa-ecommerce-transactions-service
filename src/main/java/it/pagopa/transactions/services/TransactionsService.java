@@ -1,5 +1,6 @@
 package it.pagopa.transactions.services;
 
+import com.azure.cosmos.implementation.BadRequestException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId;
@@ -15,10 +16,7 @@ import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.data.ClosureSendData;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
 import it.pagopa.transactions.commands.handlers.*;
-import it.pagopa.transactions.exceptions.NotImplementedException;
-import it.pagopa.transactions.exceptions.TransactionAmountMismatchException;
-import it.pagopa.transactions.exceptions.TransactionNotFoundException;
-import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
+import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.projections.handlers.*;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.UUIDUtils;
@@ -28,6 +26,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -561,16 +560,16 @@ public class TransactionsService {
     NewTransactionResponseDto.ClientIdEnum convertClientId(
                                                            it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId clientId
     ) {
-        return Optional.ofNullable(clientId)
+        return Optional.ofNullable(clientId).filter(Objects::nonNull)
                 .map(
                         enumVal -> {
                             try {
                                 return NewTransactionResponseDto.ClientIdEnum.fromValue(enumVal.toString());
                             } catch (IllegalArgumentException e) {
                                 log.error("Unknown input origin ", e);
-                                return NewTransactionResponseDto.ClientIdEnum.UNKNOWN;
+                                throw new InvalidRequestException("Unknown input origin", e);
                             }
                         }
-                ).orElse(NewTransactionResponseDto.ClientIdEnum.UNKNOWN);
+                ).orElseThrow(() -> new InvalidRequestException("Null value as input origin"));
     }
 }

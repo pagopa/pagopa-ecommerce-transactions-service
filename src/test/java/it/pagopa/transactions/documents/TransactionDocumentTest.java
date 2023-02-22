@@ -146,7 +146,7 @@ class TransactionDocumentTest {
                 email,
                 faultCode,
                 faultCodeString,
-                Transaction.ClientId.UNKNOWN
+                Transaction.ClientId.CHECKOUT
         );
 
         Transaction transactionDocument = Transaction.from(transaction);

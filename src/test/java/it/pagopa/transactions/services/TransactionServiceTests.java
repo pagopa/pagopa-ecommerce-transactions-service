@@ -1,5 +1,6 @@
 package it.pagopa.transactions.services;
 
+import com.azure.cosmos.implementation.BadRequestException;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
@@ -17,6 +18,7 @@ import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.*;
+import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.NotImplementedException;
 import it.pagopa.transactions.exceptions.TransactionAmountMismatchException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
@@ -115,6 +117,9 @@ public class TransactionServiceTests {
 
     @MockBean
     private JwtTokenUtils jwtTokenUtils;
+
+    @MockBean
+    private it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId clientId;
 
     final String PAYMENT_TOKEN = "aaa";
     final String TRANSACION_ID = "833d303a-f857-11ec-b939-0242ac120002";
@@ -719,7 +724,13 @@ public class TransactionServiceTests {
                 .values()) {
             assertEquals(clientId.toString(), transactionsService.convertClientId(clientId).toString());
         }
-        assertEquals("UNKNOWN", transactionsService.convertClientId(null).toString());
+        assertThrows(InvalidRequestException.class, () -> transactionsService.convertClientId(null));
+    }
+
+    @Test
+    void shouldThrowsInvalidRequestExceptionForInvalidClientID() {
+        Mockito.when(clientId.toString()).thenReturn("InvalidClientID");
+        assertThrows(InvalidRequestException.class, () -> transactionsService.convertClientId(clientId));
     }
 
 }

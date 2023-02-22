@@ -84,7 +84,7 @@ class TransactionServiceTest {
                 new Email("foo@example.com"),
                 "faultCode",
                 "faultCodeString",
-                Transaction.ClientId.UNKNOWN
+                Transaction.ClientId.CHECKOUT
         );
 
         /**

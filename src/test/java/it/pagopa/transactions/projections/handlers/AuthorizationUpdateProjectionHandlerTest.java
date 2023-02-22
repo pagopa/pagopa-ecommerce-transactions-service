@@ -53,7 +53,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 new Email("email@example.com"),
                 "faultCode",
                 "faultCodeString",
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
 
         it.pagopa.ecommerce.commons.documents.v1.Transaction expectedDocument = new it.pagopa.ecommerce.commons.documents.v1.Transaction(
@@ -62,7 +62,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 null,
                 transaction.getEmail().value(),
                 TransactionStatusDto.AUTHORIZATION_COMPLETED,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.UNKNOWN,
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
                 transaction.getCreationDate().toString()
         );
 
@@ -84,7 +84,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 null,
                 null,
                 ZonedDateTime.parse(expectedDocument.getCreationDate()),
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.UNKNOWN
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
 
         /*

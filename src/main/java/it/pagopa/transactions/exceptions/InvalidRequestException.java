@@ -6,4 +6,11 @@ public class InvalidRequestException extends RuntimeException {
         super(message);
     }
 
+    public InvalidRequestException(
+            String message,
+            Throwable t
+    ) {
+        super(message, t);
+    }
+
 }
