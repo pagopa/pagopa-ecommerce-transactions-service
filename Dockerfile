@@ -38,4 +38,4 @@ RUN true
 COPY --from=build --chown=user ${EXTRACTED}/application/ ./
 RUN true
 
-ENTRYPOINT ["java","-javaagent:applicationinsights-agent.jar","--enable-preview","org.springframework.boot.loader.JarLauncher"]
+ENTRYPOINT ["java","-javaagent:applicationinsights-agent.jar","--enable-preview","--add-opens=java.base/javax.crypto.spec=ALL-UNNAMED","org.springframework.boot.loader.JarLauncher"]

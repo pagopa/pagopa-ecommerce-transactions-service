@@ -217,7 +217,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <jvmArguments>--enable-preview</jvmArguments>
+                    <jvmArguments>--enable-preview --add-opens=java.base/javax.crypto.spec=ALL-UNNAMED</jvmArguments>
                 </configuration>
 
             </plugin>
