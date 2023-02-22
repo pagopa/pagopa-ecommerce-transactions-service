@@ -9,6 +9,7 @@ import com.azure.storage.queue.models.SendMessageResult;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.*;
+import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken;
@@ -82,7 +83,7 @@ class TransactionSendClosureHandlerTest {
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
@@ -131,7 +132,7 @@ class TransactionSendClosureHandlerTest {
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
                 new TransactionActivatedData(
-                        email.value(),
+                        email,
                         transaction.getTransactionActivatedData().getPaymentNotices(),
                         faultCode,
                         faultCodeString,
@@ -189,7 +190,7 @@ class TransactionSendClosureHandlerTest {
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
@@ -205,7 +206,7 @@ class TransactionSendClosureHandlerTest {
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
                 new TransactionActivatedData(
-                        email.value(),
+                        email,
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
@@ -321,7 +322,7 @@ class TransactionSendClosureHandlerTest {
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
@@ -337,7 +338,7 @@ class TransactionSendClosureHandlerTest {
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
                 new TransactionActivatedData(
-                        email.value(),
+                        email,
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
@@ -453,7 +454,7 @@ class TransactionSendClosureHandlerTest {
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
@@ -469,7 +470,7 @@ class TransactionSendClosureHandlerTest {
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
                 new TransactionActivatedData(
-                        email.value(),
+                        email,
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
@@ -585,7 +586,7 @@ class TransactionSendClosureHandlerTest {
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
@@ -601,7 +602,7 @@ class TransactionSendClosureHandlerTest {
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
                 new TransactionActivatedData(
-                        email.value(),
+                        email,
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
@@ -730,7 +731,7 @@ class TransactionSendClosureHandlerTest {
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
@@ -746,7 +747,7 @@ class TransactionSendClosureHandlerTest {
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
                 new TransactionActivatedData(
-                        email.value(),
+                        email,
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
@@ -879,7 +880,7 @@ class TransactionSendClosureHandlerTest {
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
@@ -895,7 +896,7 @@ class TransactionSendClosureHandlerTest {
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
                 new TransactionActivatedData(
-                        email.value(),
+                        email,
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
@@ -1038,7 +1039,7 @@ class TransactionSendClosureHandlerTest {
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
@@ -1054,7 +1055,7 @@ class TransactionSendClosureHandlerTest {
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
                 new TransactionActivatedData(
-                        email.value(),
+                        email,
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
@@ -1197,7 +1198,7 @@ class TransactionSendClosureHandlerTest {
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
@@ -1213,7 +1214,7 @@ class TransactionSendClosureHandlerTest {
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
                 new TransactionActivatedData(
-                        email.value(),
+                        email,
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
@@ -1358,7 +1359,7 @@ class TransactionSendClosureHandlerTest {
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
@@ -1374,7 +1375,7 @@ class TransactionSendClosureHandlerTest {
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
                 new TransactionActivatedData(
-                        email.value(),
+                        email,
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
@@ -1505,7 +1506,7 @@ class TransactionSendClosureHandlerTest {
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
@@ -1521,7 +1522,7 @@ class TransactionSendClosureHandlerTest {
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
                 new TransactionActivatedData(
-                        email.value(),
+                        email,
                         PaymentNotices,
                         faultCode,
                         faultCodeString,

@@ -16,15 +16,11 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
-
-
-
 @Component
 @Slf4j
 public class MailConfidentialDataUtility {
 
     private final ConfidentialDataManager confidentialDataManager;
-
 
     @Autowired
     public MailConfidentialDataUtility(ConfidentialDataManager confidentialDataManager) {
@@ -34,8 +30,8 @@ public class MailConfidentialDataUtility {
     public Email toEmail(Confidential<Email> encrypted) {
         try {
             return confidentialDataManager.decrypt(encrypted, Email::new);
-        } catch (InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException |
-                 IllegalBlockSizeException | NoSuchPaddingException | NoSuchAlgorithmException e) {
+        } catch (InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException
+                | IllegalBlockSizeException | NoSuchPaddingException | NoSuchAlgorithmException e) {
             log.error("Exception decrypting confidential data", e);
             throw new ConfidentialDataException(e);
         }
@@ -43,13 +39,17 @@ public class MailConfidentialDataUtility {
 
     public Confidential<Email> toConfidential(Email clearText) {
         try {
-            //TODO change mode with the reversible ones
+            // TODO change mode with the reversible ones
             return confidentialDataManager.encrypt(ConfidentialDataManager.Mode.AES_GCM_NOPAD, clearText);
-        } catch (InvalidKeySpecException | InvalidAlgorithmParameterException | InvalidKeyException |
-                 BadPaddingException |
-                 IllegalBlockSizeException | NoSuchPaddingException | NoSuchAlgorithmException e) {
+        } catch (InvalidKeySpecException | InvalidAlgorithmParameterException | InvalidKeyException
+                | BadPaddingException | IllegalBlockSizeException | NoSuchPaddingException
+                | NoSuchAlgorithmException e) {
             log.error("Exception encrypting confidential data", e);
             throw new ConfidentialDataException(e);
         }
+    }
+
+    public Confidential<Email> toConfidential(String email) {
+        return toConfidential(new Email(email));
     }
 }

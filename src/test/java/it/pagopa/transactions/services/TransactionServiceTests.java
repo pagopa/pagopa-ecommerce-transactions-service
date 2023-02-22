@@ -1,7 +1,6 @@
 package it.pagopa.transactions.services;
 
 import io.vavr.control.Either;
-import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.*;
@@ -117,69 +116,58 @@ public class TransactionServiceTests {
     private JwtTokenUtils jwtTokenUtils;
 
     final String PAYMENT_TOKEN = "aaa";
-    final String TRANSACION_ID = "833d303a-f857-11ec-b939-0242ac120002";
+    final String TRANSACTION_ID = TransactionTestUtils.TRANSACTION_ID;
 
     @Test
     void getTransactionReturnsTransactionDataOriginProvided() {
 
-        it.pagopa.ecommerce.commons.documents.v1.PaymentNotice paymentNotice = new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
-                PAYMENT_TOKEN,
-                "77777777777111111111111111111",
-                "reason",
-                100,
-                ""
-        );
-
-        final Transaction transaction = new Transaction(
-                TRANSACION_ID,
-                List.of(paymentNotice),
-                null,
-                "foo@example.com",
+        final Transaction transaction = TransactionTestUtils.transactionDocument(
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
-                Transaction.ClientId.CHECKOUT,
-                ZonedDateTime.now().toString()
+                ZonedDateTime.now()
         );
 
         final TransactionInfoDto expected = new TransactionInfoDto()
-                .transactionId(TRANSACION_ID)
-                .addPaymentsItem(
-                        new PaymentInfoDto()
-                                .amount(transaction.getPaymentNotices().get(0).getAmount())
-                                .reason("reason")
-                                .paymentToken(PAYMENT_TOKEN)
-                                .rptId("77777777777111111111111111111")
+                .transactionId(TRANSACTION_ID)
+                .payments(
+                        transaction.getPaymentNotices().stream().map(
+                                p -> new PaymentInfoDto()
+                                        .paymentToken(p.getPaymentToken())
+                                        .rptId(p.getRptId())
+                                        .reason(p.getDescription())
+                                        .amount(p.getAmount())
+                        ).toList()
                 )
-                .clientId(TransactionInfoDto.ClientIdEnum.CHECKOUT)
+                .clientId(TransactionInfoDto.ClientIdEnum.UNKNOWN)
                 .feeTotal(null)
                 .status(TransactionStatusDto.ACTIVATED);
 
-        when(repository.findById(TRANSACION_ID)).thenReturn(Mono.just(transaction));
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
 
         assertEquals(
-                transactionsService.getTransactionInfo(TRANSACION_ID).block(),
+                transactionsService.getTransactionInfo(TRANSACTION_ID).block(),
                 expected
         );
     }
 
     @Test
     void getTransactionThrowsOnTransactionNotFound() {
-        when(repository.findById(TRANSACION_ID)).thenReturn(Mono.empty());
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.empty());
 
         assertThrows(
                 TransactionNotFoundException.class,
-                () -> transactionsService.getTransactionInfo(TRANSACION_ID).block(),
-                TRANSACION_ID
+                () -> transactionsService.getTransactionInfo(TRANSACTION_ID).block(),
+                TRANSACTION_ID
         );
     }
 
     @Test
     void getPaymentTokenByTransactionNotFound() {
 
-        TransactionNotFoundException exception = new TransactionNotFoundException(TRANSACION_ID);
+        TransactionNotFoundException exception = new TransactionNotFoundException(TRANSACTION_ID);
 
         assertEquals(
                 exception.getPaymentToken(),
-                TRANSACION_ID
+                TRANSACTION_ID
         );
     }
 
@@ -191,23 +179,9 @@ public class TransactionServiceTests {
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
                 .pspId("PSP_CODE");
 
-        Transaction transaction = new Transaction(
-                TRANSACION_ID,
-                List.of(
-                        new PaymentNotice(
-                                PAYMENT_TOKEN,
-                                "77777777777111111111111111111",
-                                "description",
-                                100,
-                                null
-                        )
-                ),
-                0,
-                "foo@example.com",
+        Transaction transaction = TransactionTestUtils.transactionDocument(
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
-                Transaction.ClientId.CHECKOUT,
-                ZonedDateTime.now().toString()
-
+                ZonedDateTime.now()
         );
 
         /* preconditions */
@@ -242,7 +216,7 @@ public class TransactionServiceTests {
 
         Mockito.when(ecommercePaymentInstrumentsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
 
-        Mockito.when(repository.findById(TRANSACION_ID))
+        Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
 
         Mockito.when(paymentGatewayClient.requestPostepayAuthorization(any()))
@@ -256,7 +230,7 @@ public class TransactionServiceTests {
 
         /* test */
         RequestAuthorizationResponseDto postePayAuthorizationResponse = transactionsService
-                .requestTransactionAuthorization(TRANSACION_ID, null, authorizationRequest).block();
+                .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest).block();
 
         assertNotNull(postePayAuthorizationResponse);
         assertFalse(postePayAuthorizationResponse.getAuthorizationUrl().isEmpty());
@@ -271,12 +245,12 @@ public class TransactionServiceTests {
                 .pspId("pspId");
 
         /* preconditions */
-        Mockito.when(repository.findById(TRANSACION_ID))
+        Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.empty());
 
         /* test */
         Mono<RequestAuthorizationResponseDto> requestAuthorizationResponseDtoMono = transactionsService
-                .requestTransactionAuthorization(TRANSACION_ID, null, authorizationRequest);
+                .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest);
         assertThrows(
                 TransactionNotFoundException.class,
                 () -> {
@@ -291,23 +265,9 @@ public class TransactionServiceTests {
 
         String transactionIdEncoded = uuidUtils.uuidToBase64(transactionId.value());
 
-        Transaction transactionDocument = new Transaction(
-                TRANSACION_ID,
-                List.of(
-                        new PaymentNotice(
-                                PAYMENT_TOKEN,
-                                "77777777777111111111111111111",
-                                "description",
-                                100,
-                                null
-                        )
-                ),
-                0,
-                "foo@example.com",
+        Transaction transactionDocument = TransactionTestUtils.transactionDocument(
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
-                Transaction.ClientId.CHECKOUT,
-                ZonedDateTime.now().toString()
-
+                ZonedDateTime.now()
         );
 
         TransactionActivated transaction = new TransactionActivated(
@@ -321,7 +281,7 @@ public class TransactionServiceTests {
                                 new PaymentContextCode(paymentNotice.getPaymentContextCode())
                         )
                 ).toList(),
-                new Email(transactionDocument.getEmail()),
+                transactionDocument.getEmail(),
                 "faultCode",
                 "faultCodeString",
                 Transaction.ClientId.CHECKOUT
@@ -394,7 +354,7 @@ public class TransactionServiceTests {
     @Test
     void shouldReturnNotFoundExceptionForNonExistingTransaction() {
 
-        String transactionIdEncoded = uuidUtils.uuidToBase64(UUID.fromString(TRANSACION_ID));
+        String transactionIdEncoded = uuidUtils.uuidToBase64(UUID.fromString(TRANSACTION_ID));
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .authorizationResult(AuthorizationResultDto.OK)
@@ -402,7 +362,7 @@ public class TransactionServiceTests {
                 .timestampOperation(OffsetDateTime.now());
 
         /* preconditions */
-        Mockito.when(repository.findById(TRANSACION_ID))
+        Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.empty());
 
         /* test */
@@ -419,23 +379,9 @@ public class TransactionServiceTests {
     void shouldReturnTransactionInfoForSuccessfulNotified() {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
-        Transaction transactionDocument = new Transaction(
-                TRANSACION_ID,
-                List.of(
-                        new PaymentNotice(
-                                PAYMENT_TOKEN,
-                                "77777777777111111111111111111",
-                                "description",
-                                100,
-                                null
-                        )
-                ),
-                0,
-                "foo@example.com",
+        Transaction transactionDocument = TransactionTestUtils.transactionDocument(
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSED,
-                Transaction.ClientId.CHECKOUT,
-                ZonedDateTime.now().toString()
-
+                ZonedDateTime.now()
         );
 
         TransactionActivated transaction = new TransactionActivated(
@@ -449,7 +395,7 @@ public class TransactionServiceTests {
                                 new PaymentContextCode(paymentNotice.getPaymentContextCode())
                         )
                 ).toList(),
-                new Email(transactionDocument.getEmail()),
+                transactionDocument.getEmail(),
                 null,
                 null,
                 Transaction.ClientId.CHECKOUT
@@ -519,11 +465,11 @@ public class TransactionServiceTests {
                 );
 
         /* preconditions */
-        Mockito.when(repository.findById(TRANSACION_ID))
+        Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.empty());
 
         /* test */
-        StepVerifier.create(transactionsService.addUserReceipt(TRANSACION_ID, addUserReceiptRequest))
+        StepVerifier.create(transactionsService.addUserReceipt(TRANSACTION_ID, addUserReceiptRequest))
                 .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
                 .verify();
     }
@@ -537,7 +483,7 @@ public class TransactionServiceTests {
                 .paymentToken(UUID.randomUUID().toString());
 
         /** test */
-        StepVerifier.create(transactionsService.activateTransaction(TRANSACION_ID, activationResultRequestDto))
+        StepVerifier.create(transactionsService.activateTransaction(TRANSACTION_ID, activationResultRequestDto))
                 .expectErrorMatches(error -> error instanceof NotImplementedException)
                 .verify();
 
@@ -556,23 +502,9 @@ public class TransactionServiceTests {
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
                 .pspId("PSP_CODE")
                 .details(cardAuthRequestDetailsDto);
-        Transaction transaction = new Transaction(
-                TRANSACION_ID,
-                List.of(
-                        new PaymentNotice(
-                                PAYMENT_TOKEN,
-                                "77777777777111111111111111111",
-                                "description",
-                                100,
-                                null
-                        )
-                ),
-                0,
-                "foo@example.com",
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
-                Transaction.ClientId.CHECKOUT,
-                ZonedDateTime.now().toString()
-
+        Transaction transaction = TransactionTestUtils.transactionDocument(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSED,
+                ZonedDateTime.now()
         );
 
         /* preconditions */
@@ -607,7 +539,7 @@ public class TransactionServiceTests {
 
         Mockito.when(ecommercePaymentInstrumentsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
 
-        Mockito.when(repository.findById(TRANSACION_ID))
+        Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
 
         Mockito.when(paymentGatewayClient.requestPostepayAuthorization(any())).thenReturn(Mono.just(gatewayResponse));
@@ -619,7 +551,7 @@ public class TransactionServiceTests {
                 .thenReturn(Mono.just(requestAuthorizationResponse));
         /* test */
         RequestAuthorizationResponseDto authorizationResponse = transactionsService
-                .requestTransactionAuthorization(TRANSACION_ID, "XPAY", authorizationRequest).block();
+                .requestTransactionAuthorization(TRANSACTION_ID, "XPAY", authorizationRequest).block();
 
         assertNotNull(authorizationResponse);
         assertFalse(authorizationResponse.getAuthorizationUrl().isEmpty());
@@ -646,23 +578,9 @@ public class TransactionServiceTests {
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
                 .pspId("PSP_CODE")
                 .details(cardAuthRequestDetailsDto);
-        Transaction transaction = new Transaction(
-                TRANSACION_ID,
-                List.of(
-                        new PaymentNotice(
-                                PAYMENT_TOKEN,
-                                "77777777777111111111111111111",
-                                "description",
-                                100,
-                                null
-                        )
-                ),
-                0,
-                "foo@example.com",
+        Transaction transaction = TransactionTestUtils.transactionDocument(
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
-                Transaction.ClientId.CHECKOUT,
-                ZonedDateTime.now().toString()
-
+                ZonedDateTime.now()
         );
 
         /* preconditions */
@@ -697,7 +615,7 @@ public class TransactionServiceTests {
 
         Mockito.when(ecommercePaymentInstrumentsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
 
-        Mockito.when(repository.findById(TRANSACION_ID))
+        Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
 
         Mockito.when(paymentGatewayClient.requestPostepayAuthorization(any())).thenReturn(Mono.just(gatewayResponse));
@@ -708,7 +626,8 @@ public class TransactionServiceTests {
         /* test */
         StepVerifier
                 .create(
-                        transactionsService.requestTransactionAuthorization(TRANSACION_ID, "XPAY", authorizationRequest)
+                        transactionsService
+                                .requestTransactionAuthorization(TRANSACTION_ID, "XPAY", authorizationRequest)
                 )
                 .expectErrorMatches(exception -> exception instanceof TransactionAmountMismatchException);
     }

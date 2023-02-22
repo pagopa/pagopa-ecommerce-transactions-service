@@ -3,6 +3,7 @@ package it.pagopa.transactions.projections.handlers;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +35,7 @@ public class TransactionsActivationProjectionHandler
                         new PaymentContextCode(paymentNoticeData.getPaymentContextCode())
                 )
         ).toList();
-        Email email = new Email(event.getData().getEmail());
+        Confidential<Email> email = event.getData().getEmail();
         String faultCode = event.getData().getFaultCode();
         String faultCodeString = event.getData().getFaultCodeString();
         ClientId clientId = event.getData().getClientId();

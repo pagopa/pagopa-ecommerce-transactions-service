@@ -4,7 +4,10 @@ import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
+import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.ClientIdDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
@@ -40,9 +43,13 @@ class TransactionServiceTest {
     @Mock
     private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
 
+    private ConfidentialDataManager confidentialDataManager = TransactionTestUtils.confidentialDataManager;
+
     @Test
-    void shouldHandleNewTransactionTransactionActivated() {
-        String TEST_EMAIL = "j.doe@mail.com";
+    void shouldHandleNewTransactionTransactionActivated() throws Exception {
+        String TEST_EMAIL_STRING = "j.doe@mail.com";
+        Confidential<Email> TEST_EMAIL = confidentialDataManager
+                .encrypt(ConfidentialDataManager.Mode.AES_GCM_NOPAD, new Email(TEST_EMAIL_STRING));
         String TEST_RPTID = "77777777777302016723749670035";
         String TEST_TOKEN = "token";
         ClientIdDto clientIdDto = ClientIdDto.CHECKOUT;
@@ -51,7 +58,7 @@ class TransactionServiceTest {
         UUID TRANSACTION_ID = UUID.randomUUID();
 
         NewTransactionRequestDto transactionRequestDto = new NewTransactionRequestDto()
-                .email(TEST_EMAIL)
+                .email(TEST_EMAIL_STRING)
                 .addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(TEST_RPTID));
 
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
@@ -81,7 +88,7 @@ class TransactionServiceTest {
                                 new PaymentContextCode(TEST_CPP.toString())
                         )
                 ),
-                new Email("foo@example.com"),
+                TEST_EMAIL,
                 "faultCode",
                 "faultCodeString",
                 Transaction.ClientId.UNKNOWN

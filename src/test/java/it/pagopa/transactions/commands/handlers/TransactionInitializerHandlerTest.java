@@ -15,6 +15,7 @@ import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
+import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.generated.transactions.server.model.PaymentInfoDto;
@@ -25,6 +26,7 @@ import it.pagopa.transactions.exceptions.JWTTokenGenerationException;
 import it.pagopa.transactions.projections.TransactionsProjection;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.JwtTokenUtils;
+import it.pagopa.transactions.utils.MailConfidentialDataUtility;
 import it.pagopa.transactions.utils.NodoOperations;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -60,6 +62,10 @@ class TransactionInitializerHandlerTest {
 
     private final JwtTokenUtils jwtTokenUtils = Mockito.mock(JwtTokenUtils.class);
 
+    private final MailConfidentialDataUtility mailConfidentialDataUtility = new MailConfidentialDataUtility(
+            TransactionTestUtils.confidentialDataManager
+    );
+
     private final TransactionActivateHandler handler = new TransactionActivateHandler(
             paymentRequestInfoRepository,
             eventStoreRepository,
@@ -67,7 +73,8 @@ class TransactionInitializerHandlerTest {
             nodoOperations,
             jwtTokenUtils,
             transactionClosureSentEventQueueClient,
-            120
+            120,
+            mailConfidentialDataUtility
     );
 
     @Test

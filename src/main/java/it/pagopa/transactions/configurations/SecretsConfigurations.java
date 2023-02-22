@@ -26,14 +26,17 @@ public class SecretsConfigurations {
     }
 
     @Bean
-    public ConfidentialDataManager confidentialDataManager(@Value("${confidentialDataManager.key}") String key,
-                                                           @Value("${confidentialDataManager.encryptionAlgorithm}") String algorithm) {
+    public ConfidentialDataManager confidentialDataManager(
+                                                           @Value("${confidentialDataManager.key}") String key,
+                                                           @Value(
+                                                               "${confidentialDataManager.encryptionAlgorithm}"
+                                                           ) String algorithm
+    ) {
         try {
             return new ConfidentialDataManager(new SecretKeySpec(Base64.getDecoder().decode(key), algorithm));
         } catch (IllegalArgumentException e) {
             throw new IllegalStateException("Invalid configured confidential data manager key", e);
         }
     }
-
 
 }

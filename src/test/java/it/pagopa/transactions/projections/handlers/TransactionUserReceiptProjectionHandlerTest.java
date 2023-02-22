@@ -3,8 +3,7 @@ package it.pagopa.transactions.projections.handlers;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptAddedEvent;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
-import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
-import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
+import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,7 +14,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -33,10 +31,6 @@ class TransactionUserReceiptProjectionHandlerTest {
 
     @Test
     void shouldHandleTransaction() {
-        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(AuthorizationResultDto.OK)
-                .authorizationCode("OK")
-                .timestampOperation(OffsetDateTime.now());
 
         String faultCode = null;
         String faultCodeString = null; // FIXME, make handle pass fault codes correctly
@@ -52,7 +46,7 @@ class TransactionUserReceiptProjectionHandlerTest {
                                 new PaymentContextCode(null)
                         )
                 ),
-                new Email("foo@example.com"),
+                TransactionTestUtils.EMAIL,
                 faultCode,
                 faultCodeString,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
@@ -62,7 +56,7 @@ class TransactionUserReceiptProjectionHandlerTest {
                 transaction.getTransactionId().value().toString(),
                 transaction.getTransactionActivatedData().getPaymentNotices(),
                 null,
-                transaction.getEmail().value(),
+                transaction.getEmail(),
                 TransactionStatusDto.NOTIFIED,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
                 transaction.getCreationDate().toString()

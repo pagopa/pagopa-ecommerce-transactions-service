@@ -2,6 +2,7 @@ package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.*;
+import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
@@ -14,6 +15,7 @@ import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.data.AddUserReceiptData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import it.pagopa.transactions.utils.MailConfidentialDataUtility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,12 +49,17 @@ class TransactionAddUserReceiptHandlerTest {
 
     private final TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
+    private final MailConfidentialDataUtility mailConfidentialDataUtility = new MailConfidentialDataUtility(
+            TransactionTestUtils.confidentialDataManager
+    );
+
     @BeforeEach
     private void initTest() {
         updateStatusHandler = new TransactionAddUserReceiptHandler(
                 eventStoreRepository,
                 transactionEventStoreRepository,
-                notificationsServiceClient
+                notificationsServiceClient,
+                mailConfidentialDataUtility
         );
     }
 
@@ -62,7 +69,7 @@ class TransactionAddUserReceiptHandlerTest {
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
@@ -87,7 +94,7 @@ class TransactionAddUserReceiptHandlerTest {
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
                 new TransactionActivatedData(
-                        email.value(),
+                        email,
                         List.of(
                                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                                         paymentToken.value(),
@@ -190,7 +197,7 @@ class TransactionAddUserReceiptHandlerTest {
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
@@ -215,7 +222,7 @@ class TransactionAddUserReceiptHandlerTest {
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
                 new TransactionActivatedData(
-                        email.value(),
+                        email,
                         List.of(
                                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                                         paymentToken.value(),
@@ -318,7 +325,7 @@ class TransactionAddUserReceiptHandlerTest {
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
@@ -343,7 +350,7 @@ class TransactionAddUserReceiptHandlerTest {
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
                 new TransactionActivatedData(
-                        email.value(),
+                        email,
                         List.of(
                                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                                         paymentToken.value(),
@@ -446,7 +453,7 @@ class TransactionAddUserReceiptHandlerTest {
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
@@ -471,7 +478,7 @@ class TransactionAddUserReceiptHandlerTest {
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
                 new TransactionActivatedData(
-                        email.value(),
+                        email,
                         List.of(
                                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                                         paymentToken.value(),
@@ -555,7 +562,7 @@ class TransactionAddUserReceiptHandlerTest {
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
@@ -580,7 +587,7 @@ class TransactionAddUserReceiptHandlerTest {
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
                 new TransactionActivatedData(
-                        email.value(),
+                        email,
                         List.of(
                                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                                         paymentToken.value(),
