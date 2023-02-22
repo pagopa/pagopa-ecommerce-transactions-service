@@ -18,6 +18,7 @@ import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.*;
+import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.NotImplementedException;
 import it.pagopa.transactions.exceptions.TransactionAmountMismatchException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
@@ -720,7 +721,7 @@ public class TransactionServiceTests {
                 .values()) {
             assertEquals(clientId.toString(), transactionsService.convertClientId(clientId).toString());
         }
-        assertThrows(BadRequestException.class, () -> transactionsService.convertClientId(null));
+        assertThrows(InvalidRequestException.class, () -> transactionsService.convertClientId(null));
     }
 
 }
