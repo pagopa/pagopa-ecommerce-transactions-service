@@ -7,6 +7,7 @@ import it.pagopa.ecommerce.commons.domain.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
+import it.pagopa.generated.notifications.v1.dto.NotificationEmailRequestDto;
 import it.pagopa.generated.notifications.v1.dto.NotificationEmailResponseDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestPaymentsInnerDto;
@@ -19,6 +20,8 @@ import it.pagopa.transactions.utils.MailConfidentialDataUtility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -30,6 +33,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 
@@ -46,6 +50,12 @@ class TransactionAddUserReceiptHandlerTest {
 
     @Mock
     NotificationsServiceClient notificationsServiceClient;
+
+    @Captor
+    ArgumentCaptor<NotificationsServiceClient.SuccessTemplateRequest> successTemplateMailCaptor;
+
+    @Captor
+    ArgumentCaptor<NotificationsServiceClient.KoTemplateRequest> koTemplateMailCaptor;
 
     private final TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
@@ -175,7 +185,7 @@ class TransactionAddUserReceiptHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
-        Mockito.when(notificationsServiceClient.sendSuccessEmail(any()))
+        Mockito.when(notificationsServiceClient.sendSuccessEmail(successTemplateMailCaptor.capture()))
                 .thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
 
         /* test */
@@ -189,6 +199,8 @@ class TransactionAddUserReceiptHandlerTest {
                                 .equals(eventArg.getEventCode())
                 )
         );
+        NotificationsServiceClient.SuccessTemplateRequest successTemplateRequest =  successTemplateMailCaptor.getAllValues().get(0);
+        assertEquals(successTemplateRequest.to(),);
     }
 
     @Test
