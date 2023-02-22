@@ -146,10 +146,16 @@ public class TransactionSendClosureHandler extends
                     log.info("Invoking closePaymentV2 for RptId: {}", paymentNotice.rptId().value());
                     return nodeForPspClient.closePaymentV2(closePaymentRequest)
                             .flatMap(
-                                    response -> processClosureEvent(
+                                    response -> buildAndSaveClosureEvent(
                                             command,
                                             transactionAuthorizationCompletedData.getAuthorizationResultDto(),
                                             response.getOutcome()
+                                    )
+                            )
+                            .flatMap(
+                                    event -> sendClosureEvent(
+                                            event,
+                                            transactionAuthorizationCompletedData.getAuthorizationResultDto()
                                     )
                             )
                             .map(Either::<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>right)
@@ -242,11 +248,19 @@ public class TransactionSendClosureHandler extends
                                 }
                                 // Unrecoverable error calling Nodo for perform close payment.
                                 // Generate closure event setting closure outcome to KO
-                                return processClosureEvent(
+                                return buildAndSaveClosureEvent(
                                         command,
                                         transactionAuthorizationCompletedData.getAuthorizationResultDto(),
                                         ClosePaymentResponseDto.OutcomeEnum.KO
-                                ).map(Either::right);
+                                )
+                                        .flatMap(
+                                                event -> sendClosureEvent(
+                                                        event,
+                                                        transactionAuthorizationCompletedData
+                                                                .getAuthorizationResultDto()
+                                                )
+                                        )
+                                        .map(Either::right);
                             });
                 });
     }
@@ -267,7 +281,29 @@ public class TransactionSendClosureHandler extends
         }
     }
 
-    private Mono<TransactionEvent<TransactionClosureData>> processClosureEvent(
+    private Mono<TransactionEvent<TransactionClosureData>> sendClosureEvent(
+                                                                            TransactionEvent<TransactionClosureData> closureEvent,
+                                                                            AuthorizationResultDto authorizationResult
+    ) {
+        return Mono.just(closureEvent)
+                .filter(e ->
+                // Closed event sent on the queue only if the transaction was previously
+                // authorized and the Nodo outcome is KO
+                TransactionClosureData.Outcome.KO.equals(e.getData().getResponseOutcome())
+                        && AuthorizationResultDto.OK.equals(authorizationResult)
+                )
+                .flatMap(e -> {
+                    log.info("Enqueue transaction closed event: {}", e);
+                    return transactionClosureSentEventQueueClient
+                            .sendMessageWithResponse(
+                                    BinaryData.fromObject(e),
+                                    null,
+                                    null
+                            );
+                }).thenReturn(closureEvent);
+    }
+
+    private Mono<TransactionEvent<TransactionClosureData>> buildAndSaveClosureEvent(
             TransactionClosureSendCommand command,
             AuthorizationResultDto authorizationResult,
             ClosePaymentResponseDto.OutcomeEnum nodoOutcome
@@ -285,21 +321,7 @@ public class TransactionSendClosureHandler extends
             );
         };
         return closureEvent
-                .flatMap(transactionEventStoreRepository::save)
-
-                .filter(e ->
-                        //Closed event sent on the queue only if the transaction was previously authorized and the Nodo outcome is KO
-                        TransactionClosureData.Outcome.KO.equals(eventNodoOutcome)
-                                && AuthorizationResultDto.OK.equals(authorizationResult))
-                .flatMap(e -> {
-                    log.info("Enqueue transaction closed event: {}", e);
-                    return transactionClosureSentEventQueueClient
-                            .sendMessageWithResponse(
-                                    BinaryData.fromObject(e),
-                                    null,
-                                    null
-                            );
-                }).then(closureEvent);
+                .flatMap(transactionEventStoreRepository::save);
     }
 
     private TransactionClosureData.Outcome outcomeV2ToTransactionClosureDataOutcome(

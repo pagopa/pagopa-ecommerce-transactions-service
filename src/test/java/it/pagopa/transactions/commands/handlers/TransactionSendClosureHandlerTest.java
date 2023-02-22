@@ -1686,57 +1686,14 @@ class TransactionSendClosureHandlerTest {
 
     @Test
     void shouldSendClosedEventOnQueueForAuthorizedTransactionAndNodoClosePaymentResponseOutcomeKO() {
-        PaymentToken paymentToken = new PaymentToken("paymentToken");
-        RptId rptId = new RptId("77777777777111111111111111111");
-        TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
-        String faultCode = "faultCode";
-        String faultCodeString = "faultCodeString";
-        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
-                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
-                        paymentToken.value(),
-                        rptId.value(),
-                        description.value(),
-                        amount.value(),
-                        null
-                )
-        );
 
-        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
-                new TransactionActivatedData(
-                        email.value(),
-                        PaymentNotices,
-                        faultCode,
-                        faultCodeString,
-                        Transaction.ClientId.CHECKOUT
-                )
-        );
+        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
 
-        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
-                new TransactionAuthorizationRequestData(
-                        amount.value(),
-                        10,
-                        "paymentInstrumentId",
-                        "pspId",
-                        "paymentTypeCode",
-                        "brokerName",
-                        "pspChannelCode",
-                        "paymentMethodName",
-                        "pspBusinessName",
-                        "authorizationRequestId"
-                )
-        );
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
+                .transactionAuthorizationRequestedEvent();
 
-        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
-                new TransactionAuthorizationCompletedData(
-                        "authorizationCode",
-                        AuthorizationResultDto.OK
-                )
-        );
+        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = TransactionTestUtils
+                .transactionAuthorizationCompletedEvent(AuthorizationResultDto.OK);
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
@@ -1836,58 +1793,14 @@ class TransactionSendClosureHandlerTest {
 
     @Test
     void shouldSendClosedEventOnQueueForAuthorizedTransactionAndNodoClosePaymentUnrecoverableError() {
-        PaymentToken paymentToken = new PaymentToken("paymentToken");
-        RptId rptId = new RptId("77777777777111111111111111111");
-        TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
-        String faultCode = "faultCode";
-        String faultCodeString = "faultCodeString";
-        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
-                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
-                        paymentToken.value(),
-                        rptId.value(),
-                        description.value(),
-                        amount.value(),
-                        null
-                )
-        );
 
-        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
-                new TransactionActivatedData(
-                        email.value(),
-                        PaymentNotices,
-                        faultCode,
-                        faultCodeString,
-                        Transaction.ClientId.CHECKOUT
-                )
-        );
+        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
 
-        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
-                new TransactionAuthorizationRequestData(
-                        amount.value(),
-                        10,
-                        "paymentInstrumentId",
-                        "pspId",
-                        "paymentTypeCode",
-                        "brokerName",
-                        "pspChannelCode",
-                        "paymentMethodName",
-                        "pspBusinessName",
-                        "authorizationRequestId"
-                )
-        );
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
+                .transactionAuthorizationRequestedEvent();
 
-        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
-                new TransactionAuthorizationCompletedData(
-                        "authorizationCode",
-                        AuthorizationResultDto.OK
-                )
-        );
-
+        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = TransactionTestUtils
+                .transactionAuthorizationCompletedEvent(AuthorizationResultDto.OK);
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
                 .authorizationCode("authorizationCode")
@@ -1985,57 +1898,13 @@ class TransactionSendClosureHandlerTest {
 
     @Test
     void shouldNotSendClosedEventOnQueueForNotAuthorizedTransactionAndNodoClosePaymentResponseOutcomeKO() {
-        PaymentToken paymentToken = new PaymentToken("paymentToken");
-        RptId rptId = new RptId("77777777777111111111111111111");
-        TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
-        String faultCode = "faultCode";
-        String faultCodeString = "faultCodeString";
-        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
-                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
-                        paymentToken.value(),
-                        rptId.value(),
-                        description.value(),
-                        amount.value(),
-                        null
-                )
-        );
 
-        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
-                new TransactionActivatedData(
-                        email.value(),
-                        PaymentNotices,
-                        faultCode,
-                        faultCodeString,
-                        Transaction.ClientId.CHECKOUT
-                )
-        );
+        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
+                .transactionAuthorizationRequestedEvent();
 
-        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
-                new TransactionAuthorizationRequestData(
-                        amount.value(),
-                        10,
-                        "paymentInstrumentId",
-                        "pspId",
-                        "paymentTypeCode",
-                        "brokerName",
-                        "pspChannelCode",
-                        "paymentMethodName",
-                        "pspBusinessName",
-                        "authorizationRequestId"
-                )
-        );
-
-        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
-                new TransactionAuthorizationCompletedData(
-                        "authorizationCode",
-                        AuthorizationResultDto.KO
-                )
-        );
+        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = TransactionTestUtils
+                .transactionAuthorizationCompletedEvent(AuthorizationResultDto.KO);
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.KO)
@@ -2132,57 +2001,16 @@ class TransactionSendClosureHandlerTest {
 
     @Test
     void shouldNotSendClosedEventOnQueueForNotAuthorizedTransactionAndNodoClosePaymentUnrecoverableError() {
-        PaymentToken paymentToken = new PaymentToken("paymentToken");
-        RptId rptId = new RptId("77777777777111111111111111111");
-        TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
-        String faultCode = "faultCode";
-        String faultCodeString = "faultCodeString";
-        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
-                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
-                        paymentToken.value(),
-                        rptId.value(),
-                        description.value(),
-                        amount.value(),
-                        null
-                )
-        );
 
-        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
-                new TransactionActivatedData(
-                        email.value(),
-                        PaymentNotices,
-                        faultCode,
-                        faultCodeString,
-                        Transaction.ClientId.CHECKOUT
-                )
-        );
+        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
 
-        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
-                new TransactionAuthorizationRequestData(
-                        amount.value(),
-                        10,
-                        "paymentInstrumentId",
-                        "pspId",
-                        "paymentTypeCode",
-                        "brokerName",
-                        "pspChannelCode",
-                        "paymentMethodName",
-                        "pspBusinessName",
-                        "authorizationRequestId"
-                )
-        );
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
+                .transactionAuthorizationRequestedEvent();
 
-        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
-                new TransactionAuthorizationCompletedData(
-                        "authorizationCode",
+        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = TransactionTestUtils
+                .transactionAuthorizationCompletedEvent(
                         AuthorizationResultDto.KO
-                )
-        );
+                );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.KO)
