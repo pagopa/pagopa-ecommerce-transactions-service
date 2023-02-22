@@ -6,7 +6,6 @@ import com.azure.core.http.rest.Response;
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
 import com.azure.storage.queue.models.SendMessageResult;
-import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.PaymentNotice;
@@ -258,8 +257,8 @@ class TransactionSendClosureHandlerTest {
                 closureSendData
         );
 
-        TransactionClosedEvent event = TransactionTestUtils
-                .transactionClosedEvent(TransactionClosureData.Outcome.OK);
+        TransactionClosureFailedEvent event = TransactionTestUtils
+                .transactionClosureFailedEvent(TransactionClosureData.Outcome.KO);
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
@@ -304,7 +303,13 @@ class TransactionSendClosureHandlerTest {
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
-                .expectNext(Either.right(event))
+                .consumeNextWith(next -> {
+                    assertTrue(next.isRight());
+                    assertNotNull(next.get());
+                    assertEquals(event.getData().getResponseOutcome(), next.get().getData().getResponseOutcome());
+                    assertEquals(event.getEventCode(), next.get().getEventCode());
+                    assertEquals(event.getTransactionId(), next.get().getTransactionId());
+                })
                 .verifyComplete();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
@@ -427,7 +432,7 @@ class TransactionSendClosureHandlerTest {
                 );
 
         ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
-                .outcome(ClosePaymentResponseDto.OutcomeEnum.KO);
+                .outcome(ClosePaymentResponseDto.OutcomeEnum.OK);
 
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
@@ -436,7 +441,13 @@ class TransactionSendClosureHandlerTest {
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
-                .expectNext(Either.right(event))
+                .consumeNextWith(next -> {
+                    assertTrue(next.isRight());
+                    assertNotNull(next.get());
+                    assertEquals(event.getData().getResponseOutcome(), next.get().getData().getResponseOutcome());
+                    assertEquals(event.getEventCode(), next.get().getEventCode());
+                    assertEquals(event.getTransactionId(), next.get().getTransactionId());
+                })
                 .verifyComplete();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
@@ -568,7 +579,13 @@ class TransactionSendClosureHandlerTest {
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
-                .expectNext(Either.right(event))
+                .consumeNextWith(next -> {
+                    assertTrue(next.isRight());
+                    assertNotNull(next.get());
+                    assertEquals(event.getData().getResponseOutcome(), next.get().getData().getResponseOutcome());
+                    assertEquals(event.getEventCode(), next.get().getEventCode());
+                    assertEquals(event.getTransactionId(), next.get().getTransactionId());
+                })
                 .verifyComplete();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
@@ -708,7 +725,12 @@ class TransactionSendClosureHandlerTest {
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
-                .expectNext(Either.left(errorEvent))
+                .consumeNextWith(next -> {
+                    assertTrue(next.isLeft());
+                    assertNotNull(next.getLeft());
+                    assertEquals(errorEvent.getEventCode(), next.getLeft().getEventCode());
+                    assertEquals(errorEvent.getTransactionId(), next.getLeft().getTransactionId());
+                })
                 .verifyComplete();
 
         Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
@@ -856,7 +878,12 @@ class TransactionSendClosureHandlerTest {
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
-                .expectNext(Either.left(errorEvent))
+                .consumeNextWith(next -> {
+                    assertTrue(next.isLeft());
+                    assertNotNull(next.getLeft());
+                    assertEquals(errorEvent.getEventCode(), next.getLeft().getEventCode());
+                    assertEquals(errorEvent.getTransactionId(), next.getLeft().getTransactionId());
+                })
                 .verifyComplete();
 
         Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
@@ -1012,7 +1039,7 @@ class TransactionSendClosureHandlerTest {
 
         // check that no closure error event is saved and sent to event dispatcher
         Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(0))
-                .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT)));
+                .save(any());
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(0))
                 .sendMessageWithResponse(
                         argThat(
@@ -1171,7 +1198,7 @@ class TransactionSendClosureHandlerTest {
 
         // check that no closure error event is saved and sent to event dispatcher
         Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(0))
-                .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT)));
+                .save(any());
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(0))
                 .sendMessageWithResponse(
                         argThat(
@@ -1483,7 +1510,12 @@ class TransactionSendClosureHandlerTest {
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
-                .expectNext(Either.left(errorEvent))
+                .consumeNextWith(next -> {
+                    assertTrue(next.isLeft());
+                    assertNotNull(next.getLeft());
+                    assertEquals(errorEvent.getEventCode(), next.getLeft().getEventCode());
+                    assertEquals(errorEvent.getTransactionId(), next.getLeft().getTransactionId());
+                })
                 .verifyComplete();
 
         Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
@@ -1631,7 +1663,12 @@ class TransactionSendClosureHandlerTest {
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
-                .expectNext(Either.left(errorEvent))
+                .consumeNextWith(next -> {
+                    assertTrue(next.isLeft());
+                    assertNotNull(next.getLeft());
+                    assertEquals(errorEvent.getEventCode(), next.getLeft().getEventCode());
+                    assertEquals(errorEvent.getTransactionId(), next.getLeft().getTransactionId());
+                })
                 .verifyComplete();
 
         Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
@@ -1644,6 +1681,426 @@ class TransactionSendClosureHandlerTest {
                         ),
                         argThat(d -> d.compareTo(Duration.ofSeconds(RETRY_TIMEOUT_INTERVAL)) <= 0),
                         isNull()
+                );
+    }
+
+    @Test
+    void shouldSendClosedEventOnQueueForAuthorizedTransactionAndNodoClosePaymentResponseOutcomeKO() {
+
+        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
+
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
+                .transactionAuthorizationRequestedEvent();
+
+        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = TransactionTestUtils
+                .transactionAuthorizationCompletedEvent(AuthorizationResultDto.OK);
+
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
+                .authorizationCode("authorizationCode")
+                .timestampOperation(OffsetDateTime.now());
+
+        Flux<TransactionEvent<Object>> events = ((Flux) Flux
+                .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
+
+        it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
+                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
+
+        ClosureSendData closureSendData = new ClosureSendData(
+                (BaseTransactionWithPaymentToken) transaction,
+                updateAuthorizationRequest
+        );
+
+        TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(
+                new RptId(transactionActivatedEvent.getData().getPaymentNotices().get(0).getRptId()),
+                closureSendData
+        );
+
+        TransactionClosedEvent event = TransactionTestUtils
+                .transactionClosedEvent(TransactionClosureData.Outcome.KO);
+
+        TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
+
+        ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
+                .paymentTokens(
+                        List.of(
+                                ((BaseTransactionWithPaymentToken) transaction).getTransactionActivatedData()
+                                        .getPaymentNotices().get(0).getPaymentToken()
+                        )
+                )
+                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
+                .idPSP(authorizationRequestData.getPspId())
+                .idBrokerPSP(authorizationRequestData.getBrokerName())
+                .idChannel(authorizationRequestData.getPspChannelCode())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .totalAmount(
+                        EuroUtils.euroCentsToEuro(
+                                ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                        + authorizationRequestData.getFee()
+                        )
+                )
+                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
+                .paymentMethod(authorizationRequestData.getPaymentTypeCode())
+                .additionalPaymentInformations(
+                        Map.of(
+                                "outcome_payment_gateway",
+                                updateAuthorizationRequest.getAuthorizationResult().toString(),
+                                "authorization_code",
+                                updateAuthorizationRequest.getAuthorizationCode()
+                        )
+                );
+
+        ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
+                .outcome(ClosePaymentResponseDto.OutcomeEnum.KO);
+
+        /* preconditions */
+        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(
+                transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
+        ).thenReturn(queueSuccessfulResponse());
+
+        /* test */
+        StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
+                .consumeNextWith(next -> {
+                    assertTrue(next.isRight());
+                    assertNotNull(next.get());
+                    assertEquals(event.getData().getResponseOutcome(), next.get().getData().getResponseOutcome());
+                    assertEquals(event.getEventCode(), next.get().getEventCode());
+                    assertEquals(event.getTransactionId(), next.get().getTransactionId());
+                })
+                .verifyComplete();
+
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
+                argThat(
+                        eventArg -> TransactionEventCode.TRANSACTION_CLOSED_EVENT
+                                .equals(eventArg.getEventCode())
+                )
+        );
+        Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
+                .sendMessageWithResponse(
+                        argThat(
+                                (BinaryData b) -> b.toByteBuffer()
+                                        .equals(BinaryData.fromObject(event).toByteBuffer())
+                        ),
+                        isNull(),
+                        isNull()
+                );
+    }
+
+    @Test
+    void shouldSendClosedEventOnQueueForAuthorizedTransactionAndNodoClosePaymentUnrecoverableError() {
+
+        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
+
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
+                .transactionAuthorizationRequestedEvent();
+
+        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = TransactionTestUtils
+                .transactionAuthorizationCompletedEvent(AuthorizationResultDto.OK);
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
+                .authorizationCode("authorizationCode")
+                .timestampOperation(OffsetDateTime.now());
+
+        Flux<TransactionEvent<Object>> events = ((Flux) Flux
+                .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
+
+        it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
+                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
+
+        ClosureSendData closureSendData = new ClosureSendData(
+                (BaseTransactionWithPaymentToken) transaction,
+                updateAuthorizationRequest
+        );
+
+        TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(
+                new RptId(transactionActivatedEvent.getData().getPaymentNotices().get(0).getRptId()),
+                closureSendData
+        );
+
+        TransactionClosedEvent event = TransactionTestUtils
+                .transactionClosedEvent(TransactionClosureData.Outcome.KO);
+
+        TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
+
+        ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
+                .paymentTokens(
+                        List.of(
+                                ((BaseTransactionWithPaymentToken) transaction).getTransactionActivatedData()
+                                        .getPaymentNotices().get(0).getPaymentToken()
+                        )
+                )
+                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
+                .idPSP(authorizationRequestData.getPspId())
+                .idBrokerPSP(authorizationRequestData.getBrokerName())
+                .idChannel(authorizationRequestData.getPspChannelCode())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .totalAmount(
+                        EuroUtils.euroCentsToEuro(
+                                ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                        + authorizationRequestData.getFee()
+                        )
+                )
+                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
+                .paymentMethod(authorizationRequestData.getPaymentTypeCode())
+                .additionalPaymentInformations(
+                        Map.of(
+                                "outcome_payment_gateway",
+                                updateAuthorizationRequest.getAuthorizationResult().toString(),
+                                "authorization_code",
+                                updateAuthorizationRequest.getAuthorizationCode()
+                        )
+                );
+
+        RuntimeException closePaymentError = new BadGatewayException("Bad request error", HttpStatus.BAD_REQUEST);
+
+        /* preconditions */
+        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.error(closePaymentError));
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(
+                transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
+        ).thenReturn(queueSuccessfulResponse());
+
+        /* test */
+        StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
+                .consumeNextWith(next -> {
+                    assertTrue(next.isRight());
+                    assertNotNull(next.get());
+                    assertEquals(event.getData().getResponseOutcome(), next.get().getData().getResponseOutcome());
+                    assertEquals(event.getEventCode(), next.get().getEventCode());
+                    assertEquals(event.getTransactionId(), next.get().getTransactionId());
+                })
+                .verifyComplete();
+
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
+                argThat(
+                        eventArg -> TransactionEventCode.TRANSACTION_CLOSED_EVENT
+                                .equals(eventArg.getEventCode())
+                )
+        );
+        Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
+                .sendMessageWithResponse(
+                        argThat(
+                                (BinaryData b) -> b.toByteBuffer()
+                                        .equals(BinaryData.fromObject(event).toByteBuffer())
+                        ),
+                        isNull(),
+                        isNull()
+                );
+    }
+
+    @Test
+    void shouldNotSendClosedEventOnQueueForNotAuthorizedTransactionAndNodoClosePaymentResponseOutcomeKO() {
+
+        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
+                .transactionAuthorizationRequestedEvent();
+
+        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = TransactionTestUtils
+                .transactionAuthorizationCompletedEvent(AuthorizationResultDto.KO);
+
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.KO)
+                .authorizationCode("authorizationCode")
+                .timestampOperation(OffsetDateTime.now());
+
+        Flux<TransactionEvent<Object>> events = ((Flux) Flux
+                .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
+
+        it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
+                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
+
+        ClosureSendData closureSendData = new ClosureSendData(
+                (BaseTransactionWithPaymentToken) transaction,
+                updateAuthorizationRequest
+        );
+
+        TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(
+                new RptId(transactionActivatedEvent.getData().getPaymentNotices().get(0).getRptId()),
+                closureSendData
+        );
+
+        TransactionClosureFailedEvent event = TransactionTestUtils
+                .transactionClosureFailedEvent(TransactionClosureData.Outcome.KO);
+
+        TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
+
+        ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
+                .paymentTokens(
+                        List.of(
+                                ((BaseTransactionWithPaymentToken) transaction).getTransactionActivatedData()
+                                        .getPaymentNotices().get(0).getPaymentToken()
+                        )
+                )
+                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.KO)
+                .idPSP(authorizationRequestData.getPspId())
+                .idBrokerPSP(authorizationRequestData.getBrokerName())
+                .idChannel(authorizationRequestData.getPspChannelCode())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .totalAmount(
+                        EuroUtils.euroCentsToEuro(
+                                ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                        + authorizationRequestData.getFee()
+                        )
+                )
+                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
+                .paymentMethod(authorizationRequestData.getPaymentTypeCode())
+                .additionalPaymentInformations(
+                        Map.of(
+                                "outcome_payment_gateway",
+                                updateAuthorizationRequest.getAuthorizationResult().toString(),
+                                "authorization_code",
+                                updateAuthorizationRequest.getAuthorizationCode()
+                        )
+                );
+
+        ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
+                .outcome(ClosePaymentResponseDto.OutcomeEnum.KO);
+
+        /* preconditions */
+        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(
+                transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
+        ).thenReturn(queueSuccessfulResponse());
+
+        /* test */
+        StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
+                .consumeNextWith(next -> {
+                    assertTrue(next.isRight());
+                    assertNotNull(next.get());
+                    assertEquals(event.getData().getResponseOutcome(), next.get().getData().getResponseOutcome());
+                    assertEquals(event.getEventCode(), next.get().getEventCode());
+                    assertEquals(event.getTransactionId(), next.get().getTransactionId());
+                })
+                .verifyComplete();
+
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
+                argThat(
+                        eventArg -> TransactionEventCode.TRANSACTION_CLOSURE_FAILED_EVENT
+                                .equals(eventArg.getEventCode())
+                )
+        );
+        Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(0))
+                .sendMessageWithResponse(
+                        any(BinaryData.class),
+                        any(),
+                        any()
+                );
+    }
+
+    @Test
+    void shouldNotSendClosedEventOnQueueForNotAuthorizedTransactionAndNodoClosePaymentUnrecoverableError() {
+
+        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
+
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
+                .transactionAuthorizationRequestedEvent();
+
+        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = TransactionTestUtils
+                .transactionAuthorizationCompletedEvent(
+                        AuthorizationResultDto.KO
+                );
+
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.KO)
+                .authorizationCode("authorizationCode")
+                .timestampOperation(OffsetDateTime.now());
+
+        Flux<TransactionEvent<Object>> events = ((Flux) Flux
+                .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
+
+        it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
+                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
+
+        ClosureSendData closureSendData = new ClosureSendData(
+                (BaseTransactionWithPaymentToken) transaction,
+                updateAuthorizationRequest
+        );
+
+        TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(
+                new RptId(transactionActivatedEvent.getData().getPaymentNotices().get(0).getRptId()),
+                closureSendData
+        );
+
+        TransactionClosureFailedEvent event = TransactionTestUtils
+                .transactionClosureFailedEvent(TransactionClosureData.Outcome.KO);
+
+        TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
+
+        ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
+                .paymentTokens(
+                        List.of(
+                                ((BaseTransactionWithPaymentToken) transaction).getTransactionActivatedData()
+                                        .getPaymentNotices().get(0).getPaymentToken()
+                        )
+                )
+                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.KO)
+                .idPSP(authorizationRequestData.getPspId())
+                .idBrokerPSP(authorizationRequestData.getBrokerName())
+                .idChannel(authorizationRequestData.getPspChannelCode())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .totalAmount(
+                        EuroUtils.euroCentsToEuro(
+                                ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
+                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                        + authorizationRequestData.getFee()
+                        )
+                )
+                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
+                .paymentMethod(authorizationRequestData.getPaymentTypeCode())
+                .additionalPaymentInformations(
+                        Map.of(
+                                "outcome_payment_gateway",
+                                updateAuthorizationRequest.getAuthorizationResult().toString(),
+                                "authorization_code",
+                                updateAuthorizationRequest.getAuthorizationCode()
+                        )
+                );
+
+        RuntimeException closePaymentError = new BadGatewayException("Bad request error", HttpStatus.BAD_REQUEST);
+
+        /* preconditions */
+        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.error(closePaymentError));
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(
+                transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
+        ).thenReturn(queueSuccessfulResponse());
+
+        /* test */
+        StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
+                .consumeNextWith(next -> {
+                    assertTrue(next.isRight());
+                    assertNotNull(next.get());
+                    assertEquals(event.getData().getResponseOutcome(), next.get().getData().getResponseOutcome());
+                    assertEquals(event.getEventCode(), next.get().getEventCode());
+                    assertEquals(event.getTransactionId(), next.get().getTransactionId());
+                })
+                .verifyComplete();
+
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
+                argThat(
+                        eventArg -> TransactionEventCode.TRANSACTION_CLOSURE_FAILED_EVENT
+                                .equals(eventArg.getEventCode())
+                )
+        );
+        Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(0))
+                .sendMessageWithResponse(
+                        any(BinaryData.class),
+                        any(),
+                        any()
                 );
     }
 
