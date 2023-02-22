@@ -1,5 +1,6 @@
 package it.pagopa.transactions.services;
 
+import com.azure.cosmos.implementation.BadRequestException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -561,16 +563,16 @@ public class TransactionsService {
     NewTransactionResponseDto.ClientIdEnum convertClientId(
                                                            it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId clientId
     ) {
-        return Optional.ofNullable(clientId)
+        return Optional.ofNullable(clientId).filter(Objects::nonNull)
                 .map(
                         enumVal -> {
                             try {
                                 return NewTransactionResponseDto.ClientIdEnum.fromValue(enumVal.toString());
                             } catch (IllegalArgumentException e) {
                                 log.error("Unknown input origin ", e);
-                                return NewTransactionResponseDto.ClientIdEnum.UNKNOWN;
+                                throw new BadRequestException();
                             }
                         }
-                ).orElse(NewTransactionResponseDto.ClientIdEnum.UNKNOWN);
+                ).orElseThrow(BadRequestException::new);
     }
 }

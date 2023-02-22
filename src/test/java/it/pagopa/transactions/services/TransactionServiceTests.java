@@ -1,5 +1,6 @@
 package it.pagopa.transactions.services;
 
+import com.azure.cosmos.implementation.BadRequestException;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
@@ -719,7 +720,7 @@ public class TransactionServiceTests {
                 .values()) {
             assertEquals(clientId.toString(), transactionsService.convertClientId(clientId).toString());
         }
-        assertEquals("UNKNOWN", transactionsService.convertClientId(null).toString());
+        assertThrows(BadRequestException.class, () -> transactionsService.convertClientId(null));
     }
 
 }
