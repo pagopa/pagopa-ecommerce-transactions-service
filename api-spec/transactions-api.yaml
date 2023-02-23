@@ -323,7 +323,6 @@ components:
             - IO
             - CHECKOUT
             - CHECKOUT_CART
-            - UNKNOWN
         authToken:
           type: string
       required:
@@ -331,6 +330,7 @@ components:
         - amountTotal
         - status
         - payments
+        - clientId
     RequestAuthorizationRequest:
       type: object
       description: Request body for requesting an authorization for a transaction

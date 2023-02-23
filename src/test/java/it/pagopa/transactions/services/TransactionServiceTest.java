@@ -91,7 +91,7 @@ class TransactionServiceTest {
                 TEST_EMAIL,
                 "faultCode",
                 "faultCodeString",
-                Transaction.ClientId.UNKNOWN
+                Transaction.ClientId.CHECKOUT
         );
 
         /**
