@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.transactionActivateEvent;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 
@@ -350,21 +351,22 @@ class TransactionInitializerHandlerTest {
 
     @Test
     void shouldHandleCommandForOnlyIdempotencyKeyCachedPaymentRequest() {
-        RptId rptId = new RptId("77777777777302016723749670035");
-        IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
-        String transactionId = UUID.randomUUID().toString();
-        String paymentToken = UUID.randomUUID().toString();
-        String paName = "paName";
-        String paTaxcode = "77777777777";
-        String description = "Description";
-        Integer amount = Integer.valueOf(1000);
+        TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
+        PaymentNotice paymentNotice = transactionActivatedEvent.getData().getPaymentNotices().get(0);
 
-        NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
-        PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto();
-        requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
-        paymentNoticeInfoDto.setRptId(rptId.value());
-        requestDto.setEmail("jhon.doe@email.com");
-        paymentNoticeInfoDto.setAmount(1200);
+        RptId rptId = new RptId(paymentNotice.getRptId());
+        IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
+        String paName = "paName";
+        String paTaxcode = rptId.getFiscalCode();
+
+        PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto()
+                .rptId(rptId.value())
+                .amount(paymentNotice.getAmount());
+
+        NewTransactionRequestDto requestDto = new NewTransactionRequestDto()
+                .addPaymentNoticesItem(paymentNoticeInfoDto)
+                .email(transactionActivatedEvent.getData().getEmail());
+
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
                 requestDto,
@@ -382,33 +384,18 @@ class TransactionInitializerHandlerTest {
                 null,
                 idempotencyKey
         );
+
         PaymentRequestInfo paymentRequestInfoAfterActivation = new PaymentRequestInfo(
                 rptId,
                 paTaxcode,
                 paName,
-                description,
-                amount,
+                paymentNotice.getDescription(),
+                paymentNotice.getAmount(),
                 null,
                 true,
-                paymentToken,
+                paymentNotice.getPaymentToken(),
                 idempotencyKey
         );
-        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
-        transactionActivatedEvent.setTransactionId(transactionId);
-        transactionActivatedEvent.setEventCode(TransactionEventCode.TRANSACTION_ACTIVATED_EVENT);
-        TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
-        transactionActivatedData.setPaymentNotices(
-                List.of(
-                        new PaymentNotice(
-                                paymentToken,
-                                rptId.value(),
-                                null,
-                                null,
-                                null
-                        )
-                )
-        );
-        transactionActivatedEvent.setData(transactionActivatedData);
 
         /** preconditions */
         Mockito.when(paymentRequestInfoRepository.findById(rptId))
@@ -448,21 +435,22 @@ class TransactionInitializerHandlerTest {
 
     @Test
     void shouldHandleCommandWithoutCachedPaymentRequest() {
-        RptId rptId = new RptId("77777777777302016723749670035");
-        IdempotencyKey idempotencyKey = new IdempotencyKey("77700000000", "aabbccddee");
-        String transactionId = UUID.randomUUID().toString();
-        String paymentToken = UUID.randomUUID().toString();
-        String paName = "paName";
-        String paTaxcode = "77777777777";
-        String description = "Description";
-        Integer amount = Integer.valueOf(1000);
+        TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
+        PaymentNotice paymentNotice = transactionActivatedEvent.getData().getPaymentNotices().get(0);
 
-        NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
-        PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto();
-        requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
-        paymentNoticeInfoDto.setRptId(rptId.value());
-        requestDto.setEmail("jhon.doe@email.com");
-        paymentNoticeInfoDto.setAmount(1200);
+        RptId rptId = new RptId(paymentNotice.getRptId());
+        IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
+        String paName = "paName";
+        String paTaxcode = rptId.getFiscalCode();
+
+        PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto()
+                .rptId(rptId.value())
+                .amount(paymentNotice.getAmount());
+
+        NewTransactionRequestDto requestDto = new NewTransactionRequestDto()
+                .addPaymentNoticesItem(paymentNoticeInfoDto)
+                .email(transactionActivatedEvent.getData().getEmail());
+
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
                 requestDto,
@@ -473,29 +461,13 @@ class TransactionInitializerHandlerTest {
                 rptId,
                 paTaxcode,
                 paName,
-                description,
-                amount,
+                paymentNotice.getDescription(),
+                paymentNotice.getAmount(),
                 null,
                 true,
-                paymentToken,
+                paymentNotice.getPaymentToken(),
                 idempotencyKey
         );
-        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
-        transactionActivatedEvent.setTransactionId(transactionId);
-        transactionActivatedEvent.setEventCode(TransactionEventCode.TRANSACTION_ACTIVATED_EVENT);
-        TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
-        transactionActivatedData.setPaymentNotices(
-                Arrays.asList(
-                        new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
-                                paymentToken,
-                                rptId.value(),
-                                null,
-                                null,
-                                null
-                        )
-                )
-        );
-        transactionActivatedEvent.setData(transactionActivatedData);
 
         /** preconditions */
         Mockito.when(paymentRequestInfoRepository.findById(rptId))
