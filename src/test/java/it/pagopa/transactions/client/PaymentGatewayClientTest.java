@@ -313,7 +313,7 @@ class PaymentGatewayClientTest {
         );
 
         VposAuthRequestDto vposAuthRequestDto = new VposAuthRequestDto()
-                .securitycode(cardDetails.getCvv())
+                .securityCode(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
                 .expireDate(cardDetails.getExpiryDate())
                 .idTransaction(transactionIdUUID.toString())
@@ -324,7 +324,7 @@ class PaymentGatewayClientTest {
                                         + authorizationData.fee()
                         )
                 )
-                .emailCh(transaction.getEmail().value())
+                .emailCH(transaction.getEmail().value())
                 .circuit(cardDetails.getBrand())
                 .holder(cardDetails.getHolderName())
                 .isFirstPayment(true)
@@ -824,7 +824,7 @@ class PaymentGatewayClientTest {
         );
 
         VposAuthRequestDto vposAuthRequestDto = new VposAuthRequestDto()
-                .securitycode(cardDetails.getCvv())
+                .securityCode(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
                 .expireDate(cardDetails.getExpiryDate())
                 .idTransaction(transactionIdUUID.toString())
@@ -835,7 +835,7 @@ class PaymentGatewayClientTest {
                                         + authorizationData.fee()
                         )
                 )
-                .emailCh(transaction.getEmail().value())
+                .emailCH(transaction.getEmail().value())
                 .circuit(cardDetails.getBrand())
                 .holder(cardDetails.getHolderName())
                 .isFirstPayment(true)
@@ -1078,7 +1078,7 @@ class PaymentGatewayClientTest {
         );
 
         VposAuthRequestDto vposAuthRequestDto = new VposAuthRequestDto()
-                .securitycode(cardDetails.getCvv())
+                .securityCode(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
                 .expireDate(cardDetails.getExpiryDate())
                 .idTransaction(transactionIdUUID.toString())
@@ -1089,7 +1089,7 @@ class PaymentGatewayClientTest {
                                         + authorizationData.fee()
                         )
                 )
-                .emailCh(transaction.getEmail().value())
+                .emailCH(transaction.getEmail().value())
                 .circuit(cardDetails.getBrand())
                 .holder(cardDetails.getHolderName())
                 .isFirstPayment(true)
