@@ -183,12 +183,9 @@ public class PaymentGatewayClient {
                                                 )
                                         )
                                         .amount(grandTotal)
-                                        .emailCh(
-                                                mailConfidentialDataUtility
-                                                        .toEmail(authorizationData.transaction().getEmail()).value()
-                                        )
+                                        .emailCH(authorizationData.transaction().getEmail().value())
                                         .holder(cardData.getHolderName())
-                                        .securitycode(cardData.getCvv())
+                                        .securityCode(cardData.getCvv())
                                         .isFirstPayment(true) // TODO TO BE CHECKED
                                         .threeDsData(cardData.getThreeDsData())
                                         .circuit(cardData.getBrand())
