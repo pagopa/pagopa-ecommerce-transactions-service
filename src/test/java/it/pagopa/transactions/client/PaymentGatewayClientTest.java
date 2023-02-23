@@ -331,7 +331,7 @@ class PaymentGatewayClientTest {
         );
 
         VposAuthRequestDto vposAuthRequestDto = new VposAuthRequestDto()
-                .securitycode(cardDetails.getCvv())
+                .securityCode(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
                 .expireDate(cardDetails.getExpiryDate())
                 .idTransaction(transactionIdUUID.toString())
@@ -342,7 +342,7 @@ class PaymentGatewayClientTest {
                                         + authorizationData.fee()
                         )
                 )
-                .emailCh(
+                .emailCH(
                         TransactionTestUtils.confidentialDataManager.decrypt(transaction.getEmail(), Email::new).value()
                 )
                 .circuit(cardDetails.getBrand())
@@ -844,7 +844,7 @@ class PaymentGatewayClientTest {
         );
 
         VposAuthRequestDto vposAuthRequestDto = new VposAuthRequestDto()
-                .securitycode(cardDetails.getCvv())
+                .securityCode(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
                 .expireDate(cardDetails.getExpiryDate())
                 .idTransaction(transactionIdUUID.toString())
@@ -855,7 +855,7 @@ class PaymentGatewayClientTest {
                                         + authorizationData.fee()
                         )
                 )
-                .emailCh(
+                .emailCH(
                         TransactionTestUtils.confidentialDataManager.decrypt(transaction.getEmail(), Email::new).value()
                 )
                 .circuit(cardDetails.getBrand())
@@ -1100,7 +1100,7 @@ class PaymentGatewayClientTest {
         );
 
         VposAuthRequestDto vposAuthRequestDto = new VposAuthRequestDto()
-                .securitycode(cardDetails.getCvv())
+                .securityCode(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
                 .expireDate(cardDetails.getExpiryDate())
                 .idTransaction(transactionIdUUID.toString())
@@ -1111,7 +1111,7 @@ class PaymentGatewayClientTest {
                                         + authorizationData.fee()
                         )
                 )
-                .emailCh(
+                .emailCH(
                         TransactionTestUtils.confidentialDataManager.decrypt(transaction.getEmail(), Email::new).value()
                 )
                 .circuit(cardDetails.getBrand())

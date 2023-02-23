@@ -199,7 +199,7 @@ class TransactionsControllerTest {
                                 .paymentToken(paymentToken)
                 )
                 .authToken("authToken")
-                .status(TransactionStatusDto.AUTHORIZED);
+                .status(TransactionStatusDto.AUTHORIZATION_COMPLETED);
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .authorizationResult(AuthorizationResultDto.OK)

@@ -93,7 +93,6 @@ public class NodoOperations {
                                 response.getPaymentDescription(),
                                 amount.multiply(BigDecimal.valueOf(100)).intValue(),
                                 null,
-                                true,
                                 response.getPaymentToken(),
                                 new IdempotencyKey(idempotencyKey)
                         )

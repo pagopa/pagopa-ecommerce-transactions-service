@@ -37,6 +37,12 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -109,7 +115,6 @@ class TransactionInitializerHandlerTest {
                 description,
                 amount,
                 null,
-                true,
                 paymentToken,
                 idempotencyKey
         );
@@ -149,7 +154,7 @@ class TransactionInitializerHandlerTest {
         Mockito.when(jwtTokenUtils.generateToken(any()))
                 .thenReturn(Mono.just("authToken"));
         ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
-        /** run test */
+        /* run test */
         Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
                 .handle(command).block();
 
@@ -188,7 +193,6 @@ class TransactionInitializerHandlerTest {
                 description,
                 amount,
                 null,
-                true,
                 paymentToken,
                 idempotencyKey
         );
@@ -303,7 +307,6 @@ class TransactionInitializerHandlerTest {
                 description,
                 amount,
                 null,
-                true,
                 null,
                 idempotencyKey
         );
@@ -350,7 +353,9 @@ class TransactionInitializerHandlerTest {
     }
 
     @Test
-    void shouldHandleCommandForOnlyIdempotencyKeyCachedPaymentRequest() {
+    void shouldHandleCommandForOnlyIdempotencyKeyCachedPaymentRequest()
+            throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException,
+            NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
         TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
         PaymentNotice paymentNotice = transactionActivatedEvent.getData().getPaymentNotices().get(0);
 
@@ -365,7 +370,10 @@ class TransactionInitializerHandlerTest {
 
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto()
                 .addPaymentNoticesItem(paymentNoticeInfoDto)
-                .email(transactionActivatedEvent.getData().getEmail());
+                .email(
+                        TransactionTestUtils.confidentialDataManager
+                                .decrypt(transactionActivatedEvent.getData().getEmail())
+                );
 
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
@@ -380,7 +388,6 @@ class TransactionInitializerHandlerTest {
                 null,
                 null,
                 null,
-                true,
                 null,
                 idempotencyKey
         );
@@ -392,12 +399,11 @@ class TransactionInitializerHandlerTest {
                 paymentNotice.getDescription(),
                 paymentNotice.getAmount(),
                 null,
-                true,
                 paymentNotice.getPaymentToken(),
                 idempotencyKey
         );
 
-        /** preconditions */
+        /* preconditions */
         Mockito.when(paymentRequestInfoRepository.findById(rptId))
                 .thenReturn(Optional.of(paymentRequestInfoBeforeActivation));
         Mockito.when(transactionEventActivatedStoreRepository.save(any()))
@@ -420,11 +426,11 @@ class TransactionInitializerHandlerTest {
                 .thenReturn(queueSuccessfulResponse());
 
         ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
-        /** run test */
+        /* run test */
         Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
                 .handle(command).block();
 
-        /** asserts */
+        /* asserts */
         TransactionActivatedEvent event = response.getT1().block();
         Mockito.verify(paymentRequestInfoRepository, Mockito.times(1)).findById(rptId);
         assertNotNull(event.getTransactionId());
@@ -434,7 +440,9 @@ class TransactionInitializerHandlerTest {
     }
 
     @Test
-    void shouldHandleCommandWithoutCachedPaymentRequest() {
+    void shouldHandleCommandWithoutCachedPaymentRequest()
+            throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException,
+            NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
         TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
         PaymentNotice paymentNotice = transactionActivatedEvent.getData().getPaymentNotices().get(0);
 
@@ -449,7 +457,10 @@ class TransactionInitializerHandlerTest {
 
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto()
                 .addPaymentNoticesItem(paymentNoticeInfoDto)
-                .email(transactionActivatedEvent.getData().getEmail());
+                .email(
+                        TransactionTestUtils.confidentialDataManager
+                                .decrypt(transactionActivatedEvent.getData().getEmail())
+                );
 
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
@@ -464,12 +475,11 @@ class TransactionInitializerHandlerTest {
                 paymentNotice.getDescription(),
                 paymentNotice.getAmount(),
                 null,
-                true,
                 paymentNotice.getPaymentToken(),
                 idempotencyKey
         );
 
-        /** preconditions */
+        /* preconditions */
         Mockito.when(paymentRequestInfoRepository.findById(rptId))
                 .thenReturn(Optional.empty());
         Mockito.when(transactionEventActivatedStoreRepository.save(any()))
@@ -500,11 +510,11 @@ class TransactionInitializerHandlerTest {
                 .thenReturn(queueSuccessfulResponse());
 
         ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
-        /** run test */
+        /* run test */
         Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
                 .handle(command).block();
 
-        /** asserts */
+        /* asserts */
         TransactionActivatedEvent event = response.getT1().block();
         Mockito.verify(paymentRequestInfoRepository, Mockito.times(1)).findById(rptId);
         assertNotNull(event.getTransactionId());

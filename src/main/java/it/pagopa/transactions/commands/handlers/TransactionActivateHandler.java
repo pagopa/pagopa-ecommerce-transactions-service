@@ -127,7 +127,6 @@ public class TransactionActivateHandler
                                                                                 null,
                                                                                 null,
                                                                                 null,
-                                                                                true,
                                                                                 null,
                                                                                 new IdempotencyKey(
                                                                                         nodoOperations
