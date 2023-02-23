@@ -43,7 +43,7 @@ class ClosureSendProjectionHandlerTests {
                 transaction.getFeeTotal(),
                 transaction.getEmail(),
                 TransactionStatusDto.CLOSED,
-                Transaction.ClientId.UNKNOWN,
+                Transaction.ClientId.CHECKOUT,
                 transaction.getCreationDate()
         );
 
@@ -71,7 +71,7 @@ class ClosureSendProjectionHandlerTests {
                 transaction.getFeeTotal(),
                 transaction.getEmail(),
                 TransactionStatusDto.UNAUTHORIZED,
-                Transaction.ClientId.UNKNOWN,
+                Transaction.ClientId.CHECKOUT,
                 transaction.getCreationDate()
         );
 

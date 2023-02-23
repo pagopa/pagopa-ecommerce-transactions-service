@@ -1,6 +1,5 @@
 package it.pagopa.transactions.services;
 
-import com.azure.cosmos.implementation.BadRequestException;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.*;
@@ -142,7 +141,7 @@ public class TransactionServiceTests {
                                         .amount(p.getAmount())
                         ).toList()
                 )
-                .clientId(TransactionInfoDto.ClientIdEnum.UNKNOWN)
+                .clientId(TransactionInfoDto.ClientIdEnum.CHECKOUT)
                 .feeTotal(null)
                 .status(TransactionStatusDto.ACTIVATED);
 

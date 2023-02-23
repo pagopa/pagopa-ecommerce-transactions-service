@@ -42,7 +42,7 @@ class ClosureErrorProjectionHandlerTest {
                 transaction.getFeeTotal(),
                 transaction.getEmail(),
                 TransactionStatusDto.CLOSURE_ERROR,
-                Transaction.ClientId.UNKNOWN,
+                Transaction.ClientId.CHECKOUT,
                 transaction.getCreationDate()
         );
 
