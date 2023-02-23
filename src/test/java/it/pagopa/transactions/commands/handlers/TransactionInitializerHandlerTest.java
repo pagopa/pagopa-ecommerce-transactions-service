@@ -25,8 +25,8 @@ import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
 import it.pagopa.transactions.exceptions.JWTTokenGenerationException;
 import it.pagopa.transactions.projections.TransactionsProjection;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.JwtTokenUtils;
-import it.pagopa.transactions.utils.MailConfidentialDataUtility;
 import it.pagopa.transactions.utils.NodoOperations;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,7 +62,7 @@ class TransactionInitializerHandlerTest {
 
     private final JwtTokenUtils jwtTokenUtils = Mockito.mock(JwtTokenUtils.class);
 
-    private final MailConfidentialDataUtility mailConfidentialDataUtility = new MailConfidentialDataUtility(
+    private final ConfidentialMailUtils confidentialMailUtils = new ConfidentialMailUtils(
             TransactionTestUtils.confidentialDataManager
     );
 
@@ -74,7 +74,7 @@ class TransactionInitializerHandlerTest {
             jwtTokenUtils,
             transactionClosureSentEventQueueClient,
             120,
-            mailConfidentialDataUtility
+            confidentialMailUtils
     );
 
     @Test

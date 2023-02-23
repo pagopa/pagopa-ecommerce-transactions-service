@@ -21,14 +21,12 @@ class SecretsConfigurationsTests {
 
     private static final String INVALID_KEY = ".";
 
-    private static final String CONFIDENTIAL_DATA_MANAGER_ALGORITHM = "AES";
-
-    private static final String CONFIDENTIAL_DATA_MANAGER_KEY;
+    private static final String EMAIL_ENCRYPTION_KEY;
 
     static {
         byte[] randomKey = new byte[16];
         new Random().nextBytes(randomKey);
-        CONFIDENTIAL_DATA_MANAGER_KEY = Base64.getEncoder().encodeToString(randomKey);
+        EMAIL_ENCRYPTION_KEY = Base64.getEncoder().encodeToString(randomKey);
     }
 
     @Test
@@ -50,15 +48,7 @@ class SecretsConfigurationsTests {
     void shouldBuildConfidentialDataManager() {
         assertDoesNotThrow(
                 () -> secretsConfigurations
-                        .confidentialDataManager(CONFIDENTIAL_DATA_MANAGER_KEY, CONFIDENTIAL_DATA_MANAGER_ALGORITHM)
-        );
-    }
-
-    @Test
-    void shouldThrowIllegalStateExceptionForInvalidAlgorithmBuildingConfidentialDataManager() {
-        assertThrows(
-                IllegalStateException.class,
-                () -> secretsConfigurations.confidentialDataManager(CONFIDENTIAL_DATA_MANAGER_KEY, null)
+                        .emailConfidentialDataManager(EMAIL_ENCRYPTION_KEY)
         );
     }
 
@@ -66,7 +56,7 @@ class SecretsConfigurationsTests {
     void shouldThrowIllegalStateExceptionForInvalidKeyBuildingConfidentialDataManager() {
         assertThrows(
                 IllegalStateException.class,
-                () -> secretsConfigurations.confidentialDataManager(INVALID_KEY, CONFIDENTIAL_DATA_MANAGER_ALGORITHM)
+                () -> secretsConfigurations.emailConfidentialDataManager(INVALID_KEY)
         );
     }
 }

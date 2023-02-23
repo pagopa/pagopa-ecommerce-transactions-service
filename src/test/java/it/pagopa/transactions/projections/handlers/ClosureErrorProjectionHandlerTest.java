@@ -56,42 +56,6 @@ class ClosureErrorProjectionHandlerTest {
                 .verifyComplete();
     }
 
-    /*
-     * expectNext( Transaction(transactionId=21adff9a-3679-4704-800e-ae08465b2cb5,
-     * clientId=CHECKOUT,
-     * email=Confidential[confidentialMetadata=AESMetadata{salt=[36, 62, 6, -119,
-     * -6, 121, -55, 83, -73, 68, 56, 32, -81, -109, -82, -71],
-     * iv=javax.crypto.spec.IvParameterSpec@5568c66f},
-     * opaqueData=6z0M1JlS6m2XZKU2ryfSiwkPStx+e30eeH/0l/8vLeEhhBXch0JQ4i0kYiN0asY=],
-     * status=CLOSURE_ERROR, feeTotal=null,
-     * creationDate=2023-02-22T10:28:02.595734+01:00[Europe/Rome],
-     * paymentNotices=[PaymentNotice(paymentToken=paymentToken,
-     * rptId=77777777777111111111111111111, description=description, amount=100,
-     * paymentContextCode=paymentContextCode)]))" failed (expected value:
-     * Transaction(transactionId=21adff9a-3679-4704-800e-ae08465b2cb5,
-     * clientId=CHECKOUT,
-     * email=Confidential[confidentialMetadata=AESMetadata{salt=[36, 62, 6, -119,
-     * -6, 121, -55, 83, -73, 68, 56, 32, -81, -109, -82, -71],
-     * iv=javax.crypto.spec.IvParameterSpec@5568c66f},
-     * opaqueData=6z0M1JlS6m2XZKU2ryfSiwkPStx+e30eeH/0l/8vLeEhhBXch0JQ4i0kYiN0asY=],
-     * status=CLOSURE_ERROR, feeTotal=null,
-     * creationDate=2023-02-22T10:28:02.595734+01:00[Europe/Rome],
-     * paymentNotices=[PaymentNotice(paymentToken=paymentToken,
-     * rptId=77777777777111111111111111111, description=description, amount=100,
-     * paymentContextCode=paymentContextCode)]); actual value:
-     * Transaction(transactionId=21adff9a-3679-4704-800e-ae08465b2cb5,
-     * clientId=UNKNOWN,
-     * email=Confidential[confidentialMetadata=AESMetadata{salt=[36, 62, 6, -119,
-     * -6, 121, -55, 83, -73, 68, 56, 32, -81, -109, -82, -71],
-     * iv=javax.crypto.spec.IvParameterSpec@5568c66f},
-     * opaqueData=6z0M1JlS6m2XZKU2ryfSiwkPStx+e30eeH/0l/8vLeEhhBXch0JQ4i0kYiN0asY=],
-     * status=CLOSURE_ERROR, feeTotal=null,
-     * creationDate=2023-02-22T10:28:02.595734+01:00[Europe/Rome],
-     * paymentNotices=[PaymentNotice(paymentToken=paymentToken,
-     * rptId=77777777777111111111111111111, description=description, amount=100,
-     * paymentContextCode=paymentContextCode)]))
-     */
-
     @Test
     void shouldReturnTransactionNotFoundExceptionOnTransactionNotFound() {
         Transaction transaction = TransactionTestUtils

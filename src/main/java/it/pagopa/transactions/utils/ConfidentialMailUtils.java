@@ -18,18 +18,18 @@ import java.security.spec.InvalidKeySpecException;
 
 @Component
 @Slf4j
-public class MailConfidentialDataUtility {
+public class ConfidentialMailUtils {
 
-    private final ConfidentialDataManager confidentialDataManager;
+    private final ConfidentialDataManager emailConfidentialDataManager;
 
     @Autowired
-    public MailConfidentialDataUtility(ConfidentialDataManager confidentialDataManager) {
-        this.confidentialDataManager = confidentialDataManager;
+    public ConfidentialMailUtils(ConfidentialDataManager emailConfidentialDataManager) {
+        this.emailConfidentialDataManager = emailConfidentialDataManager;
     }
 
     public Email toEmail(Confidential<Email> encrypted) {
         try {
-            return confidentialDataManager.decrypt(encrypted, Email::new);
+            return emailConfidentialDataManager.decrypt(encrypted, Email::new);
         } catch (InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException
                 | IllegalBlockSizeException | NoSuchPaddingException | NoSuchAlgorithmException e) {
             log.error("Exception decrypting confidential data", e);
@@ -40,7 +40,7 @@ public class MailConfidentialDataUtility {
     public Confidential<Email> toConfidential(Email clearText) {
         try {
             // TODO change mode with the reversible ones
-            return confidentialDataManager.encrypt(ConfidentialDataManager.Mode.AES_GCM_NOPAD, clearText);
+            return emailConfidentialDataManager.encrypt(ConfidentialDataManager.Mode.AES_GCM_NOPAD, clearText);
         } catch (InvalidKeySpecException | InvalidAlgorithmParameterException | InvalidKeyException
                 | BadPaddingException | IllegalBlockSizeException | NoSuchPaddingException
                 | NoSuchAlgorithmException e) {

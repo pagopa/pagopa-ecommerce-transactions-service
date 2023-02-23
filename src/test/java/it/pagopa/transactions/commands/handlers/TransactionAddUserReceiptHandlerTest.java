@@ -15,7 +15,7 @@ import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.data.AddUserReceiptData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
-import it.pagopa.transactions.utils.MailConfidentialDataUtility;
+import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,7 +58,7 @@ class TransactionAddUserReceiptHandlerTest {
 
     private final TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
-    private final MailConfidentialDataUtility mailConfidentialDataUtility = new MailConfidentialDataUtility(
+    private final ConfidentialMailUtils confidentialMailUtils = new ConfidentialMailUtils(
             TransactionTestUtils.confidentialDataManager
     );
 
@@ -68,7 +68,7 @@ class TransactionAddUserReceiptHandlerTest {
                 eventStoreRepository,
                 transactionEventStoreRepository,
                 notificationsServiceClient,
-                mailConfidentialDataUtility
+                confidentialMailUtils
         );
     }
 

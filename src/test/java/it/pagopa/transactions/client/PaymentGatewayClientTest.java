@@ -15,7 +15,7 @@ import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.GatewayTimeoutException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
-import it.pagopa.transactions.utils.MailConfidentialDataUtility;
+import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,7 +56,7 @@ class PaymentGatewayClientTest {
     @Mock
     UUIDUtils mockUuidUtils;
 
-    MailConfidentialDataUtility mailConfidentialDataUtility = new MailConfidentialDataUtility(
+    ConfidentialMailUtils confidentialMailUtils = new ConfidentialMailUtils(
             TransactionTestUtils.confidentialDataManager
     );
 
@@ -73,7 +73,7 @@ class PaymentGatewayClientTest {
                 creditCardInternalApi,
                 objectMapper,
                 mockUuidUtils,
-                mailConfidentialDataUtility
+                confidentialMailUtils
         );
     }
 

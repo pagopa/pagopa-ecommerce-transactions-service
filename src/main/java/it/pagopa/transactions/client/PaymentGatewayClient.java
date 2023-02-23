@@ -12,7 +12,7 @@ import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.GatewayTimeoutException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
-import it.pagopa.transactions.utils.MailConfidentialDataUtility;
+import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -38,7 +38,7 @@ public class PaymentGatewayClient {
 
     private final UUIDUtils uuidUtils;
 
-    private final MailConfidentialDataUtility mailConfidentialDataUtility;
+    private final ConfidentialMailUtils confidentialMailUtils;
 
     @Autowired
     public PaymentGatewayClient(
@@ -47,14 +47,14 @@ public class PaymentGatewayClient {
             @Qualifier("creditCardInternalApiClient") VposInternalApi creditCardInternalApiClient,
             ObjectMapper objectMapper,
             UUIDUtils uuidUtils,
-            MailConfidentialDataUtility mailConfidentialDataUtility
+            ConfidentialMailUtils confidentialMailUtils
     ) {
         this.postePayInternalApi = postePayInternalApi;
         this.paymentTransactionGatewayXPayWebClient = paymentTransactionGatewayXPayWebClient;
         this.creditCardInternalApiClient = creditCardInternalApiClient;
         this.objectMapper = objectMapper;
         this.uuidUtils = uuidUtils;
-        this.mailConfidentialDataUtility = mailConfidentialDataUtility;
+        this.confidentialMailUtils = confidentialMailUtils;
     }
 
     // TODO Handle multiple rptId
@@ -184,7 +184,7 @@ public class PaymentGatewayClient {
                                         )
                                         .amount(grandTotal)
                                         .emailCH(
-                                                mailConfidentialDataUtility
+                                                confidentialMailUtils
                                                         .toEmail(authorizationData.transaction().getEmail()).value()
                                         )
                                         .holder(cardData.getHolderName())
