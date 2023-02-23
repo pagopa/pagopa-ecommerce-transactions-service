@@ -109,45 +109,42 @@ public class TransactionActivateHandler
                                     return Mono.just(
                                             Tuples.of(
                                                     paymentNotice,
-                                                    Optional.of(
-                                                            maybePaymentRequestInfo
-                                                                    .filter(
-                                                                            requestInfo -> isValidIdempotencyKey(
-                                                                                    requestInfo.idempotencyKey()
-                                                                                            .rawValue()
-                                                                            )
+                                                    maybePaymentRequestInfo
+                                                            .filter(
+                                                                    requestInfo -> isValidIdempotencyKey(
+                                                                            requestInfo.idempotencyKey()
+                                                                                    .rawValue()
                                                                     )
-                                                                    .orElseGet(
-                                                                            () -> {
-                                                                                PaymentRequestInfo paymentRequestWithOnlyIdempotencyKey = new PaymentRequestInfo(
-                                                                                        new RptId(
-                                                                                                paymentNotice.getRptId()
-                                                                                        ),
-                                                                                        null,
-                                                                                        null,
-                                                                                        null,
-                                                                                        null,
-                                                                                        null,
-                                                                                        true,
-                                                                                        null,
-                                                                                        new IdempotencyKey(
-                                                                                                nodoOperations
-                                                                                                        .getEcommerceFiscalCode(),
-                                                                                                nodoOperations
-                                                                                                        .generateRandomStringToIdempotencyKey()
-                                                                                        )
+                                                            )
+                                                            .orElseGet(
+                                                                    () -> {
+                                                                        PaymentRequestInfo paymentRequestWithOnlyIdempotencyKey = new PaymentRequestInfo(
+                                                                                new RptId(
+                                                                                        paymentNotice.getRptId()
+                                                                                ),
+                                                                                null,
+                                                                                null,
+                                                                                null,
+                                                                                null,
+                                                                                null,
+                                                                                true,
+                                                                                null,
+                                                                                new IdempotencyKey(
+                                                                                        nodoOperations
+                                                                                                .getEcommerceFiscalCode(),
+                                                                                        nodoOperations
+                                                                                                .generateRandomStringToIdempotencyKey()
+                                                                                )
+                                                                        );
+                                                                        return paymentRequestsInfoRepository
+                                                                                .save(
+                                                                                        paymentRequestWithOnlyIdempotencyKey
                                                                                 );
-                                                                                return paymentRequestsInfoRepository
-                                                                                        .save(
-                                                                                                paymentRequestWithOnlyIdempotencyKey
-                                                                                        );
-                                                                            }
-                                                                    )
-                                                    )
+                                                                    }
+                                                            )
                                             )
                                     );
                                 }
-
                         ).flatMap(
                                 cacheResult -> {
                                     /* @formatter:off
@@ -161,12 +158,11 @@ public class TransactionActivateHandler
                                      */
 
                                     final PaymentNoticeInfoDto paymentNotice = cacheResult.getT1();
-                                    final Optional<PaymentRequestInfo> partialPaymentRequestInfo = cacheResult.getT2();
-                                    final IdempotencyKey idempotencyKey = partialPaymentRequestInfo.get()
-                                            .idempotencyKey();
+                                    final PaymentRequestInfo partialPaymentRequestInfo = cacheResult.getT2();
+                                    final IdempotencyKey idempotencyKey = partialPaymentRequestInfo.idempotencyKey();
                                     final RptId rptId = new RptId(paymentNotice.getRptId());
 
-                                    return partialPaymentRequestInfo
+                                    return Optional.of(partialPaymentRequestInfo)
                                             .filter(requestInfo -> isValidPaymentToken(requestInfo.paymentToken()))
                                             .map(
                                                     requestInfo -> Mono.just(requestInfo)
