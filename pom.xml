@@ -454,7 +454,7 @@
                     <skipCheckoutIfExists>false</skipCheckoutIfExists>
                     <connectionUrl>scm:git:https://github.com/pagopa/pagopa-ecommerce-commons.git</connectionUrl>
                     <scmVersionType>branch</scmVersionType>
-                    <scmVersion>confidential-email-transaction-service-integration</scmVersion>
+                    <scmVersion>confidential-email</scmVersion>
                     <goals>install -DskipTests</goals>
                 </configuration>
                 <executions>
