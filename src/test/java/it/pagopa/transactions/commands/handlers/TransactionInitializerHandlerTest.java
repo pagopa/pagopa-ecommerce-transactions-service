@@ -37,6 +37,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -367,7 +368,7 @@ class TransactionInitializerHandlerTest {
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
                 requestDto,
-                Transaction.ClientId.UNKNOWN
+                Transaction.ClientId.CHECKOUT
         );
 
         PaymentRequestInfo paymentRequestInfoBeforeActivation = new PaymentRequestInfo(
@@ -397,8 +398,8 @@ class TransactionInitializerHandlerTest {
         transactionActivatedEvent.setEventCode(TransactionEventCode.TRANSACTION_ACTIVATED_EVENT);
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
         transactionActivatedData.setPaymentNotices(
-                Arrays.asList(
-                        new it.pagopa.ecommerce.commons.documents.PaymentNotice(
+                List.of(
+                        new PaymentNotice(
                                 paymentToken,
                                 rptId.value(),
                                 null,
@@ -465,7 +466,7 @@ class TransactionInitializerHandlerTest {
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
                 requestDto,
-                Transaction.ClientId.UNKNOWN
+                Transaction.ClientId.CHECKOUT
         );
 
         PaymentRequestInfo paymentRequestInfoActivation = new PaymentRequestInfo(
@@ -485,7 +486,7 @@ class TransactionInitializerHandlerTest {
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
         transactionActivatedData.setPaymentNotices(
                 Arrays.asList(
-                        new it.pagopa.ecommerce.commons.documents.PaymentNotice(
+                        new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                                 paymentToken,
                                 rptId.value(),
                                 null,
