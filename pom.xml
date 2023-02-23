@@ -491,11 +491,9 @@
                     <!-- define a language-specific format -->
                     <java>
                         <toggleOffOn/>
-
                         <eclipse>
                             <file>${project.basedir}/eclipse-style.xml</file>
                         </eclipse>
-
                         <trimTrailingWhitespace/>
                         <endWithNewline/>
                     </java>
