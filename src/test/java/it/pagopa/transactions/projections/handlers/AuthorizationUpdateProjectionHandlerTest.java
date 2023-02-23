@@ -4,6 +4,8 @@ import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationComplete
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedEvent;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
+import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
@@ -32,8 +34,10 @@ class AuthorizationUpdateProjectionHandlerTest {
     @Mock
     private TransactionsViewRepository viewRepository;
 
+    private ConfidentialDataManager confidentialDataManager = TransactionTestUtils.confidentialDataManager;
+
     @Test
-    void shouldHandleTransaction() {
+    void shouldHandleTransaction() throws Exception {
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .authorizationResult(AuthorizationResultDto.OK)
                 .authorizationCode("OK")
@@ -50,7 +54,8 @@ class AuthorizationUpdateProjectionHandlerTest {
                                 new PaymentContextCode(null)
                         )
                 ),
-                new Email("email@example.com"),
+                confidentialDataManager
+                        .encrypt(ConfidentialDataManager.Mode.AES_GCM_NOPAD, new Email("email@example.com")),
                 "faultCode",
                 "faultCodeString",
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
@@ -60,7 +65,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 transaction.getTransactionId().value().toString(),
                 transaction.getTransactionActivatedData().getPaymentNotices(),
                 null,
-                transaction.getEmail().value(),
+                transaction.getEmail(),
                 TransactionStatusDto.AUTHORIZATION_COMPLETED,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
                 transaction.getCreationDate().toString()

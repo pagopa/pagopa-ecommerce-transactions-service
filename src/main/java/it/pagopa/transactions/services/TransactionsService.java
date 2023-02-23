@@ -272,7 +272,7 @@ public class TransactionsService {
                                                             )
                                                     )
                                             ).toList(),
-                                    new Email(transactionDocument.getEmail()),
+                                    transactionDocument.getEmail(),
                                     null,
                                     null,
                                     transactionDocument.getClientId()
@@ -342,7 +342,7 @@ public class TransactionsService {
                                                             )
                                                     )
                                             ).toList(),
-                                    new Email(transactionDocument.getEmail()),
+                                    transactionDocument.getEmail(),
                                     null,
                                     null,
                                     transactionDocument.getClientId()
@@ -456,7 +456,7 @@ public class TransactionsService {
                                                     )
                                             )
                                             .toList(),
-                                    new Email(transactionDocument.getEmail()),
+                                    transactionDocument.getEmail(),
                                     null,
                                     null,
                                     transactionDocument.getClientId()

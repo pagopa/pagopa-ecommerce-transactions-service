@@ -1,12 +1,11 @@
 package it.pagopa.transactions.projections.handlers;
 
-import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionClosureErrorEvent;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -17,8 +16,6 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 
@@ -32,7 +29,8 @@ class ClosureErrorProjectionHandlerTest {
 
     @Test
     void shouldHandleProjection() {
-        Transaction transaction = transactionDocument();
+        Transaction transaction = TransactionTestUtils
+                .transactionDocument(TransactionStatusDto.AUTHORIZATION_COMPLETED, ZonedDateTime.now());
 
         TransactionClosureErrorEvent closureErrorEvent = new TransactionClosureErrorEvent(
                 transaction.getTransactionId()
@@ -60,7 +58,8 @@ class ClosureErrorProjectionHandlerTest {
 
     @Test
     void shouldReturnTransactionNotFoundExceptionOnTransactionNotFound() {
-        Transaction transaction = transactionDocument();
+        Transaction transaction = TransactionTestUtils
+                .transactionDocument(TransactionStatusDto.AUTHORIZATION_COMPLETED, ZonedDateTime.now());
 
         TransactionClosureErrorEvent closureErrorEvent = new TransactionClosureErrorEvent(
                 transaction.getTransactionId()
@@ -73,24 +72,4 @@ class ClosureErrorProjectionHandlerTest {
                 .verify();
     }
 
-    @NotNull
-    private Transaction transactionDocument() {
-        return new Transaction(
-                UUID.randomUUID().toString(),
-                List.of(
-                        new PaymentNotice(
-                                "paymentToken",
-                                "77777777777302016723749670035",
-                                "description",
-                                100,
-                                null
-                        )
-                ),
-                0,
-                "foo@example.com",
-                TransactionStatusDto.AUTHORIZATION_COMPLETED,
-                Transaction.ClientId.CHECKOUT,
-                ZonedDateTime.now().toString()
-        );
-    }
 }

@@ -14,6 +14,7 @@ import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.JwtTokenUtils;
 import it.pagopa.transactions.utils.NodoOperations;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +50,8 @@ public class TransactionActivateHandler
 
     private final JwtTokenUtils jwtTokenUtils;
 
+    private final ConfidentialMailUtils confidentialMailUtils;
+
     @Value("${nodo.parallelRequests}")
     private int nodoParallelRequests;
 
@@ -60,7 +63,8 @@ public class TransactionActivateHandler
             NodoOperations nodoOperations,
             JwtTokenUtils jwtTokenUtils,
             @Qualifier("transactionActivatedQueueAsyncClient") QueueAsyncClient transactionActivatedQueueAsyncClient,
-            @Value("${payment.token.validity}") Integer paymentTokenTimeout
+            @Value("${payment.token.validity}") Integer paymentTokenTimeout,
+            ConfidentialMailUtils confidentialMailUtils
     ) {
         super(eventStoreRepository);
         this.paymentRequestsInfoRepository = paymentRequestsInfoRepository;
@@ -69,6 +73,7 @@ public class TransactionActivateHandler
         this.paymentTokenTimeout = paymentTokenTimeout;
         this.transactionActivatedQueueAsyncClient = transactionActivatedQueueAsyncClient;
         this.jwtTokenUtils = jwtTokenUtils;
+        this.confidentialMailUtils = confidentialMailUtils;
     }
 
     public Mono<Tuple2<Mono<TransactionActivatedEvent>, String>> handle(
@@ -194,7 +199,7 @@ public class TransactionActivateHandler
     ) {
         List<PaymentNotice> paymentNotices = toPaymentNoticeList(paymentRequestsInfo);
         TransactionActivatedData data = new TransactionActivatedData(
-                email,
+                confidentialMailUtils.toConfidential(email),
                 paymentNotices,
                 null,
                 null,

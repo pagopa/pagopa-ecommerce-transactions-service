@@ -2,6 +2,7 @@ package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.*;
+import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
@@ -14,9 +15,12 @@ import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.data.AddUserReceiptData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -28,6 +32,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 
@@ -45,24 +50,35 @@ class TransactionAddUserReceiptHandlerTest {
     @Mock
     NotificationsServiceClient notificationsServiceClient;
 
+    @Captor
+    ArgumentCaptor<NotificationsServiceClient.SuccessTemplateRequest> successTemplateMailCaptor;
+
+    @Captor
+    ArgumentCaptor<NotificationsServiceClient.KoTemplateRequest> koTemplateMailCaptor;
+
     private final TransactionId transactionId = new TransactionId(UUID.randomUUID());
+
+    private final ConfidentialMailUtils confidentialMailUtils = new ConfidentialMailUtils(
+            TransactionTestUtils.confidentialDataManager
+    );
 
     @BeforeEach
     private void initTest() {
         updateStatusHandler = new TransactionAddUserReceiptHandler(
                 eventStoreRepository,
                 transactionEventStoreRepository,
-                notificationsServiceClient
+                notificationsServiceClient,
+                confidentialMailUtils
         );
     }
 
     @Test
-    void shouldSaveSuccessfulUpdateWithStatusClosed() {
+    void shouldSaveSuccessfulUpdateWithStatusClosed() throws Exception {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
@@ -87,7 +103,7 @@ class TransactionAddUserReceiptHandlerTest {
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
                 new TransactionActivatedData(
-                        email.value(),
+                        email,
                         List.of(
                                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                                         paymentToken.value(),
@@ -168,7 +184,7 @@ class TransactionAddUserReceiptHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
-        Mockito.when(notificationsServiceClient.sendSuccessEmail(any()))
+        Mockito.when(notificationsServiceClient.sendSuccessEmail(successTemplateMailCaptor.capture()))
                 .thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
 
         /* test */
@@ -182,15 +198,20 @@ class TransactionAddUserReceiptHandlerTest {
                                 .equals(eventArg.getEventCode())
                 )
         );
+        NotificationsServiceClient.SuccessTemplateRequest successTemplateRequest = successTemplateMailCaptor
+                .getAllValues().get(0);
+        String decryptedMail = TransactionTestUtils.confidentialDataManager.decrypt(email);
+        assertEquals(successTemplateRequest.to(), decryptedMail);
+        assertEquals(successTemplateRequest.templateParameters().getUser().getEmail(), decryptedMail);
     }
 
     @Test
-    void shouldSaveSuccessfulUpdateWithStatusClosureFailed() {
+    void shouldSaveSuccessfulUpdateWithStatusClosureFailed() throws Exception {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
@@ -215,7 +236,7 @@ class TransactionAddUserReceiptHandlerTest {
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
                 new TransactionActivatedData(
-                        email.value(),
+                        email,
                         List.of(
                                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                                         paymentToken.value(),
@@ -296,7 +317,7 @@ class TransactionAddUserReceiptHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
-        Mockito.when(notificationsServiceClient.sendSuccessEmail(any()))
+        Mockito.when(notificationsServiceClient.sendSuccessEmail(successTemplateMailCaptor.capture()))
                 .thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
 
         /* test */
@@ -310,15 +331,21 @@ class TransactionAddUserReceiptHandlerTest {
                                 .equals(eventArg.getEventCode())
                 )
         );
+        NotificationsServiceClient.SuccessTemplateRequest successTemplateRequest = successTemplateMailCaptor
+                .getAllValues().get(0);
+
+        String decryptedMail = TransactionTestUtils.confidentialDataManager.decrypt(email);
+        assertEquals(successTemplateRequest.to(), decryptedMail);
+        assertEquals(successTemplateRequest.templateParameters().getUser().getEmail(), decryptedMail);
     }
 
     @Test
-    void shouldSaveKoUpdate() {
+    void shouldSaveKoUpdate() throws Exception {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
@@ -343,7 +370,7 @@ class TransactionAddUserReceiptHandlerTest {
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
                 new TransactionActivatedData(
-                        email.value(),
+                        email,
                         List.of(
                                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                                         paymentToken.value(),
@@ -424,7 +451,7 @@ class TransactionAddUserReceiptHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
-        Mockito.when(notificationsServiceClient.sendKoEmail(any()))
+        Mockito.when(notificationsServiceClient.sendKoEmail(koTemplateMailCaptor.capture()))
                 .thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
 
         /* test */
@@ -438,6 +465,8 @@ class TransactionAddUserReceiptHandlerTest {
                                 .equals(eventArg.getEventCode())
                 )
         );
+        NotificationsServiceClient.KoTemplateRequest koTemplateRequest = koTemplateMailCaptor.getAllValues().get(0);
+        assertEquals(koTemplateRequest.to(), TransactionTestUtils.confidentialDataManager.decrypt(email));
     }
 
     @Test
@@ -446,7 +475,7 @@ class TransactionAddUserReceiptHandlerTest {
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
@@ -471,7 +500,7 @@ class TransactionAddUserReceiptHandlerTest {
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
                 new TransactionActivatedData(
-                        email.value(),
+                        email,
                         List.of(
                                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                                         paymentToken.value(),
@@ -555,7 +584,7 @@ class TransactionAddUserReceiptHandlerTest {
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
-        Email email = new Email("foo@example.com");
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
@@ -580,7 +609,7 @@ class TransactionAddUserReceiptHandlerTest {
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 transactionId.value().toString(),
                 new TransactionActivatedData(
-                        email.value(),
+                        email,
                         List.of(
                                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                                         paymentToken.value(),

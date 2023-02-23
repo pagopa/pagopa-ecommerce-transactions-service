@@ -15,6 +15,7 @@ import it.pagopa.transactions.client.NotificationsServiceClient;
 import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -33,15 +34,19 @@ public class TransactionAddUserReceiptHandler
 
     private final NotificationsServiceClient notificationsServiceClient;
 
+    private final ConfidentialMailUtils confidentialMailUtils;
+
     @Autowired
     public TransactionAddUserReceiptHandler(
             TransactionsEventStoreRepository<Object> eventStoreRepository,
             TransactionsEventStoreRepository<Void> transactionEventStoreRepository,
-            NotificationsServiceClient notificationsServiceClient
+            NotificationsServiceClient notificationsServiceClient,
+            ConfidentialMailUtils confidentialMailUtils
     ) {
         super(eventStoreRepository);
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.notificationsServiceClient = notificationsServiceClient;
+        this.confidentialMailUtils = confidentialMailUtils;
     }
 
     @Override
@@ -115,7 +120,7 @@ public class TransactionAddUserReceiptHandler
     ) {
         return notificationsServiceClient.sendKoEmail(
                 new NotificationsServiceClient.KoTemplateRequest(
-                        tx.getEmail().value(),
+                        confidentialMailUtils.toEmail(tx.getEmail()).value(),
                         "Il pagamento non è riuscito",
                         language,
                         new KoTemplate(
@@ -149,7 +154,7 @@ public class TransactionAddUserReceiptHandler
 
         return notificationsServiceClient.sendSuccessEmail(
                 new NotificationsServiceClient.SuccessTemplateRequest(
-                        tx.getEmail().value(),
+                        confidentialMailUtils.toEmail(tx.getEmail()).value(),
                         "Il riepilogo del tuo pagamento",
                         language,
                         new SuccessTemplate(
@@ -186,7 +191,7 @@ public class TransactionAddUserReceiptHandler
                                 ),
                                 new UserTemplate(
                                         null,
-                                        tx.getEmail().value()
+                                        confidentialMailUtils.toEmail(tx.getEmail()).value()
                                 ),
                                 new CartTemplate(
                                         tx.getPaymentNotices().stream().map(

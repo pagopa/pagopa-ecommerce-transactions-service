@@ -3,7 +3,9 @@ package it.pagopa.transactions.commands.handlers;
 import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.transactions.projections.handlers.TransactionsActivationProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
@@ -39,7 +41,7 @@ class TransactionsActivationProjectionHandlerTest {
         String transactionDescription = "transaction description";
         int amountInt = 100;
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
-        transactionActivatedData.setEmail("jon.doe@email.it");
+        transactionActivatedData.setEmail(TransactionTestUtils.EMAIL);
         transactionActivatedData.setPaymentNotices(
                 List.of(
                         new PaymentNotice(
@@ -65,7 +67,7 @@ class TransactionsActivationProjectionHandlerTest {
                 data.getPaymentNotices().get(0).getDescription()
         );
         TransactionAmount amount = new TransactionAmount(data.getPaymentNotices().get(0).getAmount());
-        Email email = new Email("foo@example.com");
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);

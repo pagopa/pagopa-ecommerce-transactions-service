@@ -3,6 +3,7 @@ package it.pagopa.transactions.client;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
@@ -14,10 +15,11 @@ import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.GatewayTimeoutException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
@@ -39,7 +41,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
 class PaymentGatewayClientTest {
-    @InjectMocks
+
     private PaymentGatewayClient client;
 
     @Mock
@@ -54,10 +56,26 @@ class PaymentGatewayClientTest {
     @Mock
     UUIDUtils mockUuidUtils;
 
+    ConfidentialMailUtils confidentialMailUtils = new ConfidentialMailUtils(
+            TransactionTestUtils.confidentialDataManager
+    );
+
     private final UUID transactionIdUUID = UUID.randomUUID();
 
     @Spy
     ObjectMapper objectMapper = new ObjectMapper();
+
+    @BeforeEach
+    private void init() {
+        client = new PaymentGatewayClient(
+                postePayInternalApi,
+                xPayInternalApi,
+                creditCardInternalApi,
+                objectMapper,
+                mockUuidUtils,
+                confidentialMailUtils
+        );
+    }
 
     @Test
     void shouldNotCallAuthorizationGatewayWithInvalidDetailTypeGatewayIdTuple() {
@@ -72,7 +90,7 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null)
                         )
                 ),
-                new Email("foo@example.com"),
+                TransactionTestUtils.EMAIL,
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
@@ -122,7 +140,7 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null)
                         )
                 ),
-                new Email("foo@example.com"),
+                TransactionTestUtils.EMAIL,
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
@@ -208,7 +226,7 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null)
                         )
                 ),
-                new Email("foo@example.com"),
+                TransactionTestUtils.EMAIL,
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
@@ -273,7 +291,7 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldReturnAuthorizationResponseForCreditCardWithVPOS() throws JsonProcessingException {
+    void shouldReturnAuthorizationResponseForCreditCardWithVPOS() throws Exception {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
@@ -285,7 +303,7 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null)
                         )
                 ),
-                new Email("foo@example.com"),
+                TransactionTestUtils.EMAIL,
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
@@ -324,7 +342,9 @@ class PaymentGatewayClientTest {
                                         + authorizationData.fee()
                         )
                 )
-                .emailCH(transaction.getEmail().value())
+                .emailCH(
+                        TransactionTestUtils.confidentialDataManager.decrypt(transaction.getEmail(), Email::new).value()
+                )
                 .circuit(cardDetails.getBrand())
                 .holder(cardDetails.getHolderName())
                 .isFirstPayment(true)
@@ -376,7 +396,7 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null)
                         )
                 ),
-                new Email("foo@example.com"),
+                TransactionTestUtils.EMAIL,
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
@@ -472,7 +492,7 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null)
                         )
                 ),
-                new Email("foo@example.com"),
+                TransactionTestUtils.EMAIL,
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
@@ -558,7 +578,7 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null)
                         )
                 ),
-                new Email("foo@example.com"),
+                TransactionTestUtils.EMAIL,
                 "faultCode",
                 "faultCodeString",
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
@@ -626,7 +646,7 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null)
                         )
                 ),
-                new Email("foo@example.com"),
+                TransactionTestUtils.EMAIL,
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
@@ -709,7 +729,7 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null)
                         )
                 ),
-                new Email("foo@example.com"),
+                TransactionTestUtils.EMAIL,
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
@@ -786,7 +806,7 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldThrowBadGatewayOn500ForCreditCardWithVPOS() throws JsonProcessingException {
+    void shouldThrowBadGatewayOn500ForCreditCardWithVPOS() throws Exception {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
@@ -798,7 +818,7 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null)
                         )
                 ),
-                new Email("foo@example.com"),
+                TransactionTestUtils.EMAIL,
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
@@ -835,7 +855,9 @@ class PaymentGatewayClientTest {
                                         + authorizationData.fee()
                         )
                 )
-                .emailCH(transaction.getEmail().value())
+                .emailCH(
+                        TransactionTestUtils.confidentialDataManager.decrypt(transaction.getEmail(), Email::new).value()
+                )
                 .circuit(cardDetails.getBrand())
                 .holder(cardDetails.getHolderName())
                 .isFirstPayment(true)
@@ -892,7 +914,7 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null)
                         )
                 ),
-                new Email("foo@example.com"),
+                TransactionTestUtils.EMAIL,
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
@@ -969,7 +991,7 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null)
                         )
                 ),
-                new Email("foo@example.com"),
+                TransactionTestUtils.EMAIL,
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
@@ -1040,7 +1062,7 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void fallbackOnEmptyMdcInfoOnMapperErrorForCreditCardWithVPOS() throws JsonProcessingException {
+    void fallbackOnEmptyMdcInfoOnMapperErrorForCreditCardWithVPOS() throws Exception {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionIdUUID),
                 List.of(
@@ -1052,7 +1074,7 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null)
                         )
                 ),
-                new Email("foo@example.com"),
+                TransactionTestUtils.EMAIL,
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
@@ -1089,7 +1111,9 @@ class PaymentGatewayClientTest {
                                         + authorizationData.fee()
                         )
                 )
-                .emailCH(transaction.getEmail().value())
+                .emailCH(
+                        TransactionTestUtils.confidentialDataManager.decrypt(transaction.getEmail(), Email::new).value()
+                )
                 .circuit(cardDetails.getBrand())
                 .holder(cardDetails.getHolderName())
                 .isFirstPayment(true)
@@ -1141,7 +1165,7 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null)
                         )
                 ),
-                new Email("foo@example.com"),
+                TransactionTestUtils.EMAIL,
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
@@ -1192,7 +1216,7 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null)
                         )
                 ),
-                new Email("foo@example.com"),
+                TransactionTestUtils.EMAIL,
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT

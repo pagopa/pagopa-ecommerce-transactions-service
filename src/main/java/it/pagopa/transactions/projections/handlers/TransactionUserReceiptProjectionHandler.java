@@ -40,7 +40,7 @@ public class TransactionUserReceiptProjectionHandler
                                                 new PaymentContextCode(paymentNotice.getPaymentContextCode())
                                         )
                                 ).toList(),
-                                new Email(transactionDocument.getEmail()),
+                                transactionDocument.getEmail(),
                                 null,
                                 null,
                                 ZonedDateTime.parse(transactionDocument.getCreationDate()),

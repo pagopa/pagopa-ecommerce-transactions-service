@@ -12,6 +12,7 @@ import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.GatewayTimeoutException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -26,23 +27,35 @@ import java.util.Map;
 
 @Component
 public class PaymentGatewayClient {
-    @Autowired
-    @Qualifier("paymentTransactionGatewayPostepayWebClient")
-    PostePayInternalApi postePayInternalApi;
+
+    private final PostePayInternalApi postePayInternalApi;
+
+    private final XPayInternalApi paymentTransactionGatewayXPayWebClient;
+
+    private final VposInternalApi creditCardInternalApiClient;
+
+    private final ObjectMapper objectMapper;
+
+    private final UUIDUtils uuidUtils;
+
+    private final ConfidentialMailUtils confidentialMailUtils;
 
     @Autowired
-    @Qualifier("paymentTransactionGatewayXPayWebClient")
-    XPayInternalApi paymentTransactionGatewayXPayWebClient;
-
-    @Autowired
-    @Qualifier("creditCardInternalApiClient")
-    VposInternalApi creditCardInternalApiClient;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private UUIDUtils uuidUtils;
+    public PaymentGatewayClient(
+            @Qualifier("paymentTransactionGatewayPostepayWebClient") PostePayInternalApi postePayInternalApi,
+            @Qualifier("paymentTransactionGatewayXPayWebClient") XPayInternalApi paymentTransactionGatewayXPayWebClient,
+            @Qualifier("creditCardInternalApiClient") VposInternalApi creditCardInternalApiClient,
+            ObjectMapper objectMapper,
+            UUIDUtils uuidUtils,
+            ConfidentialMailUtils confidentialMailUtils
+    ) {
+        this.postePayInternalApi = postePayInternalApi;
+        this.paymentTransactionGatewayXPayWebClient = paymentTransactionGatewayXPayWebClient;
+        this.creditCardInternalApiClient = creditCardInternalApiClient;
+        this.objectMapper = objectMapper;
+        this.uuidUtils = uuidUtils;
+        this.confidentialMailUtils = confidentialMailUtils;
+    }
 
     // TODO Handle multiple rptId
 
@@ -170,7 +183,10 @@ public class PaymentGatewayClient {
                                                 )
                                         )
                                         .amount(grandTotal)
-                                        .emailCH(authorizationData.transaction().getEmail().value())
+                                        .emailCH(
+                                                confidentialMailUtils
+                                                        .toEmail(authorizationData.transaction().getEmail()).value()
+                                        )
                                         .holder(cardData.getHolderName())
                                         .securityCode(cardData.getCvv())
                                         .isFirstPayment(true) // TODO TO BE CHECKED

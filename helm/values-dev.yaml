@@ -108,6 +108,7 @@ microservice-chart:
     APPLICATIONINSIGHTS_CONNECTION_STRING: applicationinsights-connection-string
     PAYMENT_TRANSACTIONS_GATEWAY_API_KEY: payment-transactions-gateway-api-key
     JWT_SECRET: sessions-jwt-secret
+    EMAIL_ENCRYPTION_KEY: email-confidential-data-encryption-key
   keyvault:
     name: "pagopa-d-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"

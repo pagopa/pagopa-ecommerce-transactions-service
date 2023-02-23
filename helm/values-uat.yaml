@@ -55,6 +55,7 @@ microservice-chart:
       APPLICATIONINSIGHTS_CONNECTION_STRING: applicationinsights-connection-string
       PAYMENT_TRANSACTIONS_GATEWAY_API_KEY: payment-transactions-gateway-api-key
       JWT_SECRET: sessions-jwt-secret
+      EMAIL_ENCRYPTION_KEY: email-confidential-data-encryption-key
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
     tag: "0.9.2"
@@ -159,6 +160,7 @@ microservice-chart:
     APPLICATIONINSIGHTS_CONNECTION_STRING: applicationinsights-connection-string
     PAYMENT_TRANSACTIONS_GATEWAY_API_KEY: payment-transactions-gateway-api-key
     JWT_SECRET: sessions-jwt-secret
+    EMAIL_ENCRYPTION_KEY: email-confidential-data-encryption-key
   keyvault:
     name: "pagopa-u-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
