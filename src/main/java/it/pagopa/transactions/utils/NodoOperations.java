@@ -128,4 +128,9 @@ public class NodoOperations {
         }
         return sb.toString();
     }
+
+    public static void main(String[] args) {
+        Integer number = null;
+        System.out.println(BigInteger.valueOf(number));
+    }
 }
