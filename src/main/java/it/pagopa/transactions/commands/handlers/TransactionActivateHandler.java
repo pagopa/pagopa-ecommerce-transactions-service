@@ -113,7 +113,6 @@ public class TransactionActivateHandler
                                                             .filter(
                                                                     requestInfo -> isValidIdempotencyKey(
                                                                             requestInfo.idempotencyKey()
-                                                                                    .rawValue()
                                                                     )
                                                             )
                                                             .orElseGet(
@@ -237,8 +236,8 @@ public class TransactionActivateHandler
         return paymentToken != null && !paymentToken.isBlank();
     }
 
-    private boolean isValidIdempotencyKey(String idempotencyKey) {
-        return idempotencyKey != null && !idempotencyKey.isBlank();
+    private boolean isValidIdempotencyKey(IdempotencyKey idempotencyKey) {
+        return idempotencyKey != null && !idempotencyKey.rawValue().isBlank();
     }
 
     private Mono<TransactionActivatedEvent> newTransactionActivatedEvent(
