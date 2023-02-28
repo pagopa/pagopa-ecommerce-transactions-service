@@ -269,9 +269,9 @@ public class TransactionSendClosureHandler extends
                             })
                             .doFinally(response -> {
                                 tx.getPaymentNotices().forEach(el -> {
-                                            log.info("Invalidate cache for RptId : {}", el.rptId().value());
-                                            paymentRequestsInfoRepository.deleteById(el.rptId());
-                                        }
+                                    log.info("Invalidate cache for RptId : {}", el.rptId().value());
+                                    paymentRequestsInfoRepository.deleteById(el.rptId());
+                                }
                                 );
                             });
                 });
