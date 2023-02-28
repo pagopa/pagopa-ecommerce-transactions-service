@@ -99,7 +99,8 @@ class NodoOperationsTest {
                         rptId,
                         Optional.of(paymentRequestInfo),
                         amount,
-                        transactionId
+                        transactionId,
+                        900
                 )
                 .block();
 
@@ -169,7 +170,8 @@ class NodoOperationsTest {
                         rptId,
                         Optional.of(paymentRequestInfo),
                         amount,
-                        transactionId
+                        transactionId,
+                        900
                 );
 
         Assert.assertThrows(
@@ -237,7 +239,8 @@ class NodoOperationsTest {
                         rptId,
                         Optional.of(paymentRequestInfo),
                         amount,
-                        transactionId
+                        transactionId,
+                        900
                 );
 
         InvalidNodoResponseException exception = Assert.assertThrows(
@@ -324,7 +327,8 @@ class NodoOperationsTest {
                         rptId,
                         Optional.of(paymentRequestInfo),
                         amount,
-                        transactionId
+                        transactionId,
+                        900
                 )
                 .block();
 
