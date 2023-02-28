@@ -58,6 +58,8 @@ class TransactionSendClosureHandlerTest {
 
     private final QueueAsyncClient transactionClosureSentEventQueueClient = Mockito.mock(QueueAsyncClient.class);
 
+    private final QueueAsyncClient transactionActivatedQueueAsyncClient = Mockito.mock(QueueAsyncClient.class);
+
     private static final int PAYMENT_TOKEN_VALIDITY = 120;
     private static final int SOFT_TIMEOUT_OFFSET = 10;
     private static final int RETRY_TIMEOUT_INTERVAL = 5;
@@ -70,7 +72,8 @@ class TransactionSendClosureHandlerTest {
             transactionClosureSentEventQueueClient,
             PAYMENT_TOKEN_VALIDITY,
             SOFT_TIMEOUT_OFFSET,
-            RETRY_TIMEOUT_INTERVAL
+            RETRY_TIMEOUT_INTERVAL,
+            transactionActivatedQueueAsyncClient
     );
 
     private final TransactionId transactionId = new TransactionId(UUID.fromString(TransactionTestUtils.TRANSACTION_ID));
@@ -1024,6 +1027,10 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());
+        Mockito.when(
+                transactionActivatedQueueAsyncClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
+
+        ).thenReturn(queueSuccessfulResponse());
 
         Hooks.onOperatorDebug();
 
@@ -1763,6 +1770,10 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());
+        Mockito.when(
+                transactionActivatedQueueAsyncClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
+
+        ).thenReturn(queueSuccessfulResponse());
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
@@ -1781,7 +1792,7 @@ class TransactionSendClosureHandlerTest {
                                 .equals(eventArg.getEventCode())
                 )
         );
-        Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
+        Mockito.verify(transactionActivatedQueueAsyncClient, Mockito.times(1))
                 .sendMessageWithResponse(
                         argThat(
                                 (BinaryData b) -> b.toByteBuffer()
@@ -1866,7 +1877,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.error(closePaymentError));
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
         Mockito.when(
-                transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
+                transactionActivatedQueueAsyncClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());
 
         /* test */
@@ -1886,7 +1897,25 @@ class TransactionSendClosureHandlerTest {
                                 .equals(eventArg.getEventCode())
                 )
         );
-        Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
+
+        /*
+         * check that the closure event with outcome KO is sent in the transaction
+         * activated queue
+         */
+        Mockito.verify(transactionActivatedQueueAsyncClient, Mockito.times(1))
+                .sendMessageWithResponse(
+                        argThat(
+                                (BinaryData b) -> b.toByteBuffer()
+                                        .equals(BinaryData.fromObject(event).toByteBuffer())
+                        ),
+                        isNull(),
+                        isNull()
+                );
+
+        /*
+         * check that no event is sent on the closure error queue
+         */
+        Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(0))
                 .sendMessageWithResponse(
                         argThat(
                                 (BinaryData b) -> b.toByteBuffer()
