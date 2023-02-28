@@ -12,7 +12,7 @@ import static org.junit.Assert.assertEquals;
 public class LogMaskPatternTests {
 
     @Test
-    public void testPattern() {
+    public void testPatternMatch() {
         LogMaskerPatternLayout layout = new LogMaskerPatternLayout();
         layout.setPattern("test 1234 abcd 1234 test");
         layout.addMaskPattern("(abcd)");
@@ -25,5 +25,21 @@ public class LogMaskPatternTests {
         layout.stop();
         assertEquals("test 1234 **** 1234 test", maskedMessage);
     }
+
+    @Test
+    public void testPatternNotMatch() {
+        LogMaskerPatternLayout layout = new LogMaskerPatternLayout();
+        layout.setPattern("test 1234 test");
+        layout.addMaskPattern("(abcd)");
+        layout.setContext(new LoggerContext());
+        layout.start();
+        LoggingEvent event = new LoggingEvent();
+        event.setLevel(Level.INFO);
+        event.setMessage("Message test");
+        String maskedMessage = layout.doLayout(event);
+        layout.stop();
+        assertEquals("test 1234 test", maskedMessage);
+    }
+
 
 }
