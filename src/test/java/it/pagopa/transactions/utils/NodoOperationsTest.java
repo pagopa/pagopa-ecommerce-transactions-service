@@ -80,7 +80,8 @@ class NodoOperationsTest {
                         rptId,
                         idempotencyKey,
                         amount,
-                        transactionId
+                        transactionId,
+                        900
                 )
                 .block();
 
@@ -132,7 +133,8 @@ class NodoOperationsTest {
                         rptId,
                         idempotencyKey,
                         amount,
-                        transactionId
+                        transactionId,
+                        900
                 );
 
         Assert.assertThrows(
@@ -181,7 +183,8 @@ class NodoOperationsTest {
                         rptId,
                         idempotencyKey,
                         amount,
-                        transactionId
+                        transactionId,
+                        900
                 );
 
         InvalidNodoResponseException exception = Assert.assertThrows(
@@ -253,7 +256,8 @@ class NodoOperationsTest {
                         rptId,
                         idempotencyKey,
                         amount,
-                        transactionId
+                        transactionId,
+                        900
                 )
                 .block();
 

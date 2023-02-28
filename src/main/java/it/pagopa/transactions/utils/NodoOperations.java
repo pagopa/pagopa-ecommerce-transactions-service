@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.util.Optional;
@@ -38,7 +39,8 @@ public class NodoOperations {
                                                            RptId rptId,
                                                            IdempotencyKey idempotencyKey,
                                                            Integer amount,
-                                                           String transactionId
+                                                           String transactionId,
+                                                           Integer paymentTokenTimeout
     ) {
 
         final BigDecimal amountAsBigDecimal = BigDecimal.valueOf(amount.doubleValue() / 100)
@@ -48,7 +50,8 @@ public class NodoOperations {
                 rptId,
                 amountAsBigDecimal,
                 idempotencyKey.rawValue(),
-                transactionId
+                transactionId,
+                paymentTokenTimeout
         );
     }
 
@@ -56,7 +59,8 @@ public class NodoOperations {
                                                                         RptId rptId,
                                                                         BigDecimal amount,
                                                                         String idempotencyKey,
-                                                                        String transactionId
+                                                                        String transactionId,
+                                                                        Integer paymentTokenTimeout
     ) {
         CtQrCode qrCode = new CtQrCode();
         qrCode.setFiscalCode(rptId.getFiscalCode());
@@ -65,7 +69,9 @@ public class NodoOperations {
         request.setAmount(amount);
         request.setQrCode(qrCode);
         request.setIdempotencyKey(idempotencyKey);
-
+        // multiply paymentTokenTimeout by 1000 because on ecommerce it is represented
+        // in seconds
+        request.setExpirationTime(BigInteger.valueOf(paymentTokenTimeout).multiply(BigInteger.valueOf(1000)));
         return nodeForPspClient
                 .activatePaymentNotice(objectFactoryNodeForPsp.createActivatePaymentNoticeReq(request))
                 .flatMap(

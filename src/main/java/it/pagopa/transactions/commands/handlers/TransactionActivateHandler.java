@@ -178,7 +178,8 @@ public class TransactionActivateHandler
                                                                     rptId,
                                                                     idempotencyKey,
                                                                     paymentNotice.getAmount(),
-                                                                    transactionId
+                                                                    transactionId,
+                                                                    paymentTokenTimeout
                                                             )
                                                             .doOnSuccess(
                                                                     p -> log.info(
