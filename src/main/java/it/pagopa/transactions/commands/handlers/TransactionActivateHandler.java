@@ -133,7 +133,8 @@ public class TransactionActivateHandler
                                                                     new RptId(paymentNotice.getRptId()),
                                                                     partialPaymentRequestInfo,
                                                                     paymentNotice.getAmount(),
-                                                                    transactionId
+                                                                    transactionId,
+                                                                    paymentTokenTimeout
                                                             )
                                                             .doOnSuccess(
                                                                     p -> log.info(
