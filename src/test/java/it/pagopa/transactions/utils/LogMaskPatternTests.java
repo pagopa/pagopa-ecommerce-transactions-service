@@ -41,5 +41,4 @@ public class LogMaskPatternTests {
         assertEquals("test 1234 test", maskedMessage);
     }
 
-
 }
