@@ -157,13 +157,6 @@ public class TransactionSendClosureHandler extends
                                             response.getOutcome()
                                     )
                             )
-                            .doOnSuccess(success -> {
-                                tx.getPaymentNotices().forEach(el -> {
-                                    log.info("Invalidate cache for RptId : {}", el.rptId().value());
-                                    paymentRequestsInfoRepository.deleteById(el.rptId());
-                                }
-                                );
-                            })
                             .flatMap(
                                     event -> sendClosureEvent(
                                             event,
@@ -273,6 +266,13 @@ public class TransactionSendClosureHandler extends
                                                 )
                                         )
                                         .map(Either::right);
+                            })
+                            .doFinally(response -> {
+                                tx.getPaymentNotices().forEach(el -> {
+                                            log.info("Invalidate cache for RptId : {}", el.rptId().value());
+                                            paymentRequestsInfoRepository.deleteById(el.rptId());
+                                        }
+                                );
                             });
                 });
     }
