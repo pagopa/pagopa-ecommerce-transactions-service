@@ -4,7 +4,6 @@ import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.v1.*;
-import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.ecommerce.commons.domain.v1.Transaction;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionAuthorizationCompleted;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
@@ -158,13 +157,13 @@ public class TransactionSendClosureHandler extends
                                             response.getOutcome()
                                     )
                             )
-                            .doOnNext(
-                                    response -> {
-                                        log.info("Invalidate cache for RptId: {}", paymentNotice.rptId().value());
-                                        paymentRequestsInfoRepository
-                                                .deleteById(new RptId(paymentNotice.rptId().value()));
-                                    }
-                            )
+                            .doOnSuccess(success -> {
+                                tx.getPaymentNotices().forEach(el -> {
+                                    log.info("Invalidate cache for RptId : {}", el.rptId().value());
+                                    paymentRequestsInfoRepository.deleteById(el.rptId());
+                                }
+                                );
+                            })
                             .flatMap(
                                     event -> sendClosureEvent(
                                             event,
