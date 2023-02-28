@@ -95,7 +95,8 @@ public class LogMaskTests {
                 .holderName("John Doe")
                 .brand("VISA")
                 .threeDsData(
-                        "{\"acctID\":\"ACCT_eac3c21b-78fa-4ae7-a553-84ba9e1945ca\",\"deliveryEmailAddress\":\""+email3ds+"\",\"mobilePhone\":null}"
+                        "{\"acctID\":\"ACCT_eac3c21b-78fa-4ae7-a553-84ba9e1945ca\",\"deliveryEmailAddress\":\""
+                                + email3ds + "\",\"mobilePhone\":null}"
                 );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
