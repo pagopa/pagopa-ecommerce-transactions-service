@@ -78,7 +78,8 @@ public class NodoOperations {
         request.setAmount(amount);
         request.setQrCode(qrCode);
         request.setIdempotencyKey(idempotencyKey);
-        // multiply paymentTokenTimeout by 1000 because on ecommerce it is represented in seconds
+        // multiply paymentTokenTimeout by 1000 because on ecommerce it is represented
+        // in seconds
         request.setExpirationTime(BigInteger.valueOf(paymentTokenTimeout).multiply(BigInteger.valueOf(1000)));
         return nodeForPspClient
                 .activatePaymentNotice(objectFactoryNodeForPsp.createActivatePaymentNoticeReq(request))
