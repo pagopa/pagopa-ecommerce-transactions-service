@@ -1,48 +1,42 @@
 package it.pagopa.transactions.utils;
 
-import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.UUID;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
-@ExtendWith(MockitoExtension.class)
-public class LogMaskTests {
+class LogMaskTests {
 
-    private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-    private final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
-    private final PrintStream originalOut = System.out;
-    private final PrintStream originalErr = System.err;
+    private static final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+    private static final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
+    private static final PrintStream originalOut = System.out;
+    private static final PrintStream originalErr = System.err;
 
-    @Before
-    public void setUpStreams() {
+    @BeforeAll
+    public static void setUpStreams() {
         System.setOut(new PrintStream(outContent));
         System.setErr(new PrintStream(errContent));
     }
 
-    @After
-    public void restoreStreams() {
+    @AfterAll
+    public static void restoreStreams() {
         System.setOut(originalOut);
         System.setErr(originalErr);
     }
 
     @Test
-    public void testSimpleLog() {
+    void testSimpleLog() {
         String simpleMail = "test@test.it";
         log.info(simpleMail);
         String complexmail = "test.test@test.it";
@@ -71,7 +65,7 @@ public class LogMaskTests {
     }
 
     @Test
-    public void shouldMaskCvvPanEmail() {
+    void shouldMaskCvvPanEmail() {
         String cvv = "345";
         String pan = "1658965485269856";
         String email3ds = "g.c@gia.it";

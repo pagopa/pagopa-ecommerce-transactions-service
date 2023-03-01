@@ -3,17 +3,14 @@ package it.pagopa.transactions.utils;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.LoggingEvent;
-import org.junit.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@ExtendWith(MockitoExtension.class)
-public class LogMaskPatternTests {
+class LogMaskPatternTests {
 
     @Test
-    public void testPatternMatch() {
+    void testPatternMatch() {
         LoggerContext loggerContext = new LoggerContext();
         LogMaskerPatternLayout layout = new LogMaskerPatternLayout();
         layout.setPattern("%d{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n");
@@ -34,7 +31,7 @@ public class LogMaskPatternTests {
     }
 
     @Test
-    public void testPatternNotMatch() {
+    void testPatternNotMatch() {
         LoggerContext loggerContext = new LoggerContext();
         LogMaskerPatternLayout layout = new LogMaskerPatternLayout();
         layout.setPattern("%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n");
