@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -17,6 +19,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
+@ExtendWith(MockitoExtension.class)
 public class LogMaskTests {
 
     private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
