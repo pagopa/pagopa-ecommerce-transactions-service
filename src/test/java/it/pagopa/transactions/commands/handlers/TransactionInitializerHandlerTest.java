@@ -37,10 +37,18 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.transactionActivateEvent;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 
@@ -107,7 +115,6 @@ class TransactionInitializerHandlerTest {
                 description,
                 amount,
                 null,
-                true,
                 paymentToken,
                 idempotencyKey
         );
@@ -147,7 +154,7 @@ class TransactionInitializerHandlerTest {
         Mockito.when(jwtTokenUtils.generateToken(any()))
                 .thenReturn(Mono.just("authToken"));
         ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
-        /** run test */
+        /* run test */
         Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
                 .handle(command).block();
 
@@ -186,7 +193,6 @@ class TransactionInitializerHandlerTest {
                 description,
                 amount,
                 null,
-                true,
                 paymentToken,
                 idempotencyKey
         );
@@ -301,7 +307,6 @@ class TransactionInitializerHandlerTest {
                 description,
                 amount,
                 null,
-                true,
                 null,
                 idempotencyKey
         );
@@ -345,5 +350,176 @@ class TransactionInitializerHandlerTest {
                     }
                 }
         );
+    }
+
+    @Test
+    void shouldHandleCommandForOnlyIdempotencyKeyCachedPaymentRequest()
+            throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException,
+            NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
+        TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
+        PaymentNotice paymentNotice = transactionActivatedEvent.getData().getPaymentNotices().get(0);
+
+        RptId rptId = new RptId(paymentNotice.getRptId());
+        IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
+        String paName = "paName";
+        String paTaxcode = rptId.getFiscalCode();
+
+        PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto()
+                .rptId(rptId.value())
+                .amount(paymentNotice.getAmount());
+
+        NewTransactionRequestDto requestDto = new NewTransactionRequestDto()
+                .addPaymentNoticesItem(paymentNoticeInfoDto)
+                .email(
+                        TransactionTestUtils.confidentialDataManager
+                                .decrypt(transactionActivatedEvent.getData().getEmail())
+                );
+
+        TransactionActivateCommand command = new TransactionActivateCommand(
+                rptId,
+                requestDto,
+                Transaction.ClientId.CHECKOUT
+        );
+
+        PaymentRequestInfo paymentRequestInfoBeforeActivation = new PaymentRequestInfo(
+                rptId,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                idempotencyKey
+        );
+
+        PaymentRequestInfo paymentRequestInfoAfterActivation = new PaymentRequestInfo(
+                rptId,
+                paTaxcode,
+                paName,
+                paymentNotice.getDescription(),
+                paymentNotice.getAmount(),
+                null,
+                paymentNotice.getPaymentToken(),
+                idempotencyKey
+        );
+
+        /* preconditions */
+        Mockito.when(paymentRequestInfoRepository.findById(rptId))
+                .thenReturn(Optional.of(paymentRequestInfoBeforeActivation));
+        Mockito.when(transactionEventActivatedStoreRepository.save(any()))
+                .thenReturn(Mono.just(transactionActivatedEvent));
+        Mockito.when(paymentRequestInfoRepository.save(any(PaymentRequestInfo.class)))
+                .thenReturn(paymentRequestInfoBeforeActivation);
+        Mockito.when(
+                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any())
+        )
+                .thenReturn(Mono.just(paymentRequestInfoAfterActivation));
+        Mockito.when(jwtTokenUtils.generateToken(any()))
+                .thenReturn(Mono.just("authToken"));
+        Mockito.when(
+                transactionClosureSentEventQueueClient.sendMessageWithResponse(
+                        any(BinaryData.class),
+                        any(),
+                        any()
+                )
+        )
+                .thenReturn(queueSuccessfulResponse());
+
+        ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
+        /* run test */
+        Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
+                .handle(command).block();
+
+        /* asserts */
+        TransactionActivatedEvent event = response.getT1().block();
+        Mockito.verify(paymentRequestInfoRepository, Mockito.times(1)).findById(rptId);
+        assertNotNull(event.getTransactionId());
+        assertNotNull(event.getEventCode());
+        assertNotNull(event.getCreationDate());
+        assertNotNull(event.getId());
+    }
+
+    @Test
+    void shouldHandleCommandWithoutCachedPaymentRequest()
+            throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException,
+            NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
+        TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
+        PaymentNotice paymentNotice = transactionActivatedEvent.getData().getPaymentNotices().get(0);
+
+        RptId rptId = new RptId(paymentNotice.getRptId());
+        IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
+        String paName = "paName";
+        String paTaxcode = rptId.getFiscalCode();
+
+        PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto()
+                .rptId(rptId.value())
+                .amount(paymentNotice.getAmount());
+
+        NewTransactionRequestDto requestDto = new NewTransactionRequestDto()
+                .addPaymentNoticesItem(paymentNoticeInfoDto)
+                .email(
+                        TransactionTestUtils.confidentialDataManager
+                                .decrypt(transactionActivatedEvent.getData().getEmail())
+                );
+
+        TransactionActivateCommand command = new TransactionActivateCommand(
+                rptId,
+                requestDto,
+                Transaction.ClientId.CHECKOUT
+        );
+
+        PaymentRequestInfo paymentRequestInfoActivation = new PaymentRequestInfo(
+                rptId,
+                paTaxcode,
+                paName,
+                paymentNotice.getDescription(),
+                paymentNotice.getAmount(),
+                null,
+                paymentNotice.getPaymentToken(),
+                idempotencyKey
+        );
+
+        /* preconditions */
+        Mockito.when(paymentRequestInfoRepository.findById(rptId))
+                .thenReturn(Optional.empty());
+        Mockito.when(transactionEventActivatedStoreRepository.save(any()))
+                .thenReturn(Mono.just(transactionActivatedEvent));
+        Mockito.when(paymentRequestInfoRepository.save(any(PaymentRequestInfo.class)))
+                .thenReturn(paymentRequestInfoActivation);
+        Mockito.when(
+                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any())
+        )
+                .thenReturn(Mono.just(paymentRequestInfoActivation));
+        Mockito.when(
+                nodoOperations.getEcommerceFiscalCode()
+        )
+                .thenReturn("77700000000");
+        Mockito.when(
+                nodoOperations.generateRandomStringToIdempotencyKey()
+        )
+                .thenReturn("aabbccddee");
+        Mockito.when(jwtTokenUtils.generateToken(any()))
+                .thenReturn(Mono.just("authToken"));
+        Mockito.when(
+                transactionClosureSentEventQueueClient.sendMessageWithResponse(
+                        any(BinaryData.class),
+                        any(),
+                        any()
+                )
+        )
+                .thenReturn(queueSuccessfulResponse());
+
+        ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
+        /* run test */
+        Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
+                .handle(command).block();
+
+        /* asserts */
+        TransactionActivatedEvent event = response.getT1().block();
+        Mockito.verify(paymentRequestInfoRepository, Mockito.times(1)).findById(rptId);
+        assertNotNull(event.getTransactionId());
+        assertNotNull(event.getEventCode());
+        assertNotNull(event.getCreationDate());
+        assertNotNull(event.getId());
     }
 }
