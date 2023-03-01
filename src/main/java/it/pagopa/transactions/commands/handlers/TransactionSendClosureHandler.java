@@ -52,6 +52,8 @@ public class TransactionSendClosureHandler extends
 
     private final Integer softTimeoutOffset;
 
+    private final QueueAsyncClient transactionActivatedQueueAsyncClient;
+
     @Autowired
     public TransactionSendClosureHandler(
             TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository,
@@ -64,7 +66,8 @@ public class TransactionSendClosureHandler extends
             ) QueueAsyncClient transactionClosureSentEventQueueClient,
             @Value("${payment.token.validity}") Integer paymentTokenValidity,
             @Value("${transactions.ecommerce.retry.offset}") Integer softTimeoutOffset,
-            @Value("${transactions.closure_handler.retry_interval}") Integer retryTimeoutInterval
+            @Value("${transactions.closure_handler.retry_interval}") Integer retryTimeoutInterval,
+            QueueAsyncClient transactionActivatedQueueAsyncClient
     ) {
         super(eventStoreRepository);
         this.transactionEventStoreRepository = transactionEventStoreRepository;
@@ -75,6 +78,7 @@ public class TransactionSendClosureHandler extends
         this.paymentTokenValidity = paymentTokenValidity;
         this.softTimeoutOffset = softTimeoutOffset;
         this.retryTimeoutInterval = retryTimeoutInterval;
+        this.transactionActivatedQueueAsyncClient = transactionActivatedQueueAsyncClient;
     }
 
     @Override
@@ -300,13 +304,13 @@ public class TransactionSendClosureHandler extends
         return Mono.just(closureEvent)
                 .filter(e ->
                 // Closed event sent on the queue only if the transaction was previously
-                // authorized and the Nodo outcome is KO
+                // authorized and the Nodo response outcome is KO
                 TransactionClosureData.Outcome.KO.equals(e.getData().getResponseOutcome())
                         && AuthorizationResultDto.OK.equals(authorizationResult)
                 )
                 .flatMap(e -> {
                     log.info("Enqueue transaction closed event: {}", e);
-                    return transactionClosureSentEventQueueClient
+                    return transactionActivatedQueueAsyncClient
                             .sendMessageWithResponse(
                                     BinaryData.fromObject(e),
                                     null,
