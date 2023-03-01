@@ -1,6 +1,7 @@
 package it.pagopa.transactions.utils;
 
 import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -70,23 +72,6 @@ public class LogMaskTests {
 
     @Test
     public void shouldMaskCvvPanEmail() {
-        TransactionActivated transaction = new TransactionActivated(
-                new TransactionId(UUID.randomUUID()),
-                List.of(
-                        new PaymentNotice(
-                                new PaymentToken("paymentToken"),
-                                new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
-                                new TransactionDescription("description"),
-                                new PaymentContextCode(null)
-                        )
-                ),
-                null,
-                null,
-                null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
-        );
-
         String cvv = "345";
         String pan = "1658965485269856";
         String email3ds = "g.c@gia.it";
@@ -103,7 +88,7 @@ public class LogMaskTests {
                 );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString()),
                 10,
                 "paymentInstrumentId",
                 "pspId",
