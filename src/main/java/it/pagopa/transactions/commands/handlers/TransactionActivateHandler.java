@@ -6,6 +6,7 @@ import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
@@ -101,6 +102,48 @@ public class TransactionActivateHandler
                                         )
                                 )
                         ).flatMap(
+                                paymentRequest -> {
+                                    final PaymentNoticeInfoDto paymentNotice = paymentRequest.getT1();
+                                    final Optional<PaymentRequestInfo> maybePaymentRequestInfo = paymentRequest
+                                            .getT2();
+                                    return Mono.just(
+                                            Tuples.of(
+                                                    paymentNotice,
+                                                    maybePaymentRequestInfo
+                                                            .filter(
+                                                                    requestInfo -> isValidIdempotencyKey(
+                                                                            requestInfo.idempotencyKey()
+                                                                    )
+                                                            )
+                                                            .orElseGet(
+                                                                    () -> {
+                                                                        PaymentRequestInfo paymentRequestWithOnlyIdempotencyKey = new PaymentRequestInfo(
+                                                                                new RptId(
+                                                                                        paymentNotice.getRptId()
+                                                                                ),
+                                                                                null,
+                                                                                null,
+                                                                                null,
+                                                                                null,
+                                                                                null,
+                                                                                null,
+                                                                                new IdempotencyKey(
+                                                                                        nodoOperations
+                                                                                                .getEcommerceFiscalCode(),
+                                                                                        nodoOperations
+                                                                                                .generateRandomStringToIdempotencyKey()
+                                                                                )
+                                                                        );
+                                                                        return paymentRequestsInfoRepository
+                                                                                .save(
+                                                                                        paymentRequestWithOnlyIdempotencyKey
+                                                                                );
+                                                                    }
+                                                            )
+                                            )
+                                    );
+                                }
+                        ).flatMap(
                                 cacheResult -> {
                                     /* @formatter:off
                                      *
@@ -112,10 +155,12 @@ public class TransactionActivateHandler
                                      * @formatter:on
                                      */
 
-                                    PaymentNoticeInfoDto paymentNotice = cacheResult.getT1();
-                                    Optional<PaymentRequestInfo> partialPaymentRequestInfo = cacheResult.getT2();
+                                    final PaymentNoticeInfoDto paymentNotice = cacheResult.getT1();
+                                    final PaymentRequestInfo partialPaymentRequestInfo = cacheResult.getT2();
+                                    final IdempotencyKey idempotencyKey = partialPaymentRequestInfo.idempotencyKey();
+                                    final RptId rptId = new RptId(paymentNotice.getRptId());
 
-                                    return partialPaymentRequestInfo
+                                    return Optional.of(partialPaymentRequestInfo)
                                             .filter(requestInfo -> isValidPaymentToken(requestInfo.paymentToken()))
                                             .map(
                                                     requestInfo -> Mono.just(requestInfo)
@@ -130,8 +175,8 @@ public class TransactionActivateHandler
                                             .orElseGet(
                                                     () -> nodoOperations
                                                             .activatePaymentRequest(
-                                                                    new RptId(paymentNotice.getRptId()),
-                                                                    partialPaymentRequestInfo,
+                                                                    rptId,
+                                                                    idempotencyKey,
                                                                     paymentNotice.getAmount(),
                                                                     transactionId,
                                                                     paymentTokenTimeout
@@ -190,6 +235,10 @@ public class TransactionActivateHandler
 
     private boolean isValidPaymentToken(String paymentToken) {
         return paymentToken != null && !paymentToken.isBlank();
+    }
+
+    private boolean isValidIdempotencyKey(IdempotencyKey idempotencyKey) {
+        return idempotencyKey != null && !idempotencyKey.rawValue().isBlank();
     }
 
     private Mono<TransactionActivatedEvent> newTransactionActivatedEvent(

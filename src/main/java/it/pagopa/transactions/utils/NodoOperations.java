@@ -24,8 +24,6 @@ import java.util.Optional;
 @Component
 public class NodoOperations {
 
-    private static final String PSP_PAGOPA_ECOMMERCE_FISCAL_CODE = "00000000000";
-
     private static final String ALPHANUMERICS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -39,18 +37,11 @@ public class NodoOperations {
 
     public Mono<PaymentRequestInfo> activatePaymentRequest(
                                                            RptId rptId,
-                                                           Optional<PaymentRequestInfo> paymentRequestInfo,
+                                                           IdempotencyKey idempotencyKey,
                                                            Integer amount,
                                                            String transactionId,
                                                            Integer paymentTokenTimeout
     ) {
-        IdempotencyKey idempotencyKey = paymentRequestInfo.map(PaymentRequestInfo::idempotencyKey)
-                .orElseGet(
-                        () -> new IdempotencyKey(
-                                PSP_PAGOPA_ECOMMERCE_FISCAL_CODE,
-                                randomString(10)
-                        )
-                );
 
         final BigDecimal amountAsBigDecimal = BigDecimal.valueOf(amount.doubleValue() / 100)
                 .setScale(2, RoundingMode.CEILING);
@@ -108,7 +99,6 @@ public class NodoOperations {
                                 response.getPaymentDescription(),
                                 amount.multiply(BigDecimal.valueOf(100)).intValue(),
                                 null,
-                                true,
                                 response.getPaymentToken(),
                                 new IdempotencyKey(idempotencyKey)
                         )
@@ -123,11 +113,16 @@ public class NodoOperations {
         return amountFromNodo.multiply(BigDecimal.valueOf(100)).intValue();
     }
 
-    private String randomString(int len) {
+    public String generateRandomStringToIdempotencyKey() {
+        int len = 10;
         StringBuilder sb = new StringBuilder(len);
         for (int i = 0; i < len; i++) {
             sb.append(ALPHANUMERICS.charAt(RANDOM.nextInt(ALPHANUMERICS.length())));
         }
         return sb.toString();
+    }
+
+    public String getEcommerceFiscalCode() {
+        return nodoConfig.nodoConnectionString().getIdBrokerPSP();
     }
 }
