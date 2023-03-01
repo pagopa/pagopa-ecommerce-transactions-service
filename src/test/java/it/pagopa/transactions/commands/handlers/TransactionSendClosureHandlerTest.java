@@ -13,6 +13,8 @@ import it.pagopa.ecommerce.commons.domain.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
+import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
+import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
@@ -51,6 +53,9 @@ class TransactionSendClosureHandlerTest {
     private final TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
 
+    private final PaymentRequestsInfoRepository paymentRequestsInfoRepositoryRepository = Mockito
+            .mock(PaymentRequestsInfoRepository.class);
+
     private final TransactionsEventStoreRepository<Object> eventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
 
@@ -67,6 +72,7 @@ class TransactionSendClosureHandlerTest {
     private final TransactionSendClosureHandler transactionSendClosureHandler = new TransactionSendClosureHandler(
             transactionEventStoreRepository,
             transactionClosureErrorEventStoreRepository,
+            paymentRequestsInfoRepositoryRepository,
             eventStoreRepository,
             nodeForPspClient,
             transactionClosureSentEventQueueClient,
