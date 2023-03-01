@@ -9,6 +9,7 @@ import it.pagopa.ecommerce.commons.domain.v1.TransactionAuthorizationCompleted;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
@@ -39,6 +40,8 @@ public class TransactionSendClosureHandler extends
 
     private final TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository;
 
+    private final PaymentRequestsInfoRepository paymentRequestsInfoRepository;
+
     private final NodeForPspClient nodeForPspClient;
 
     private final QueueAsyncClient transactionClosureSentEventQueueClient;
@@ -55,6 +58,7 @@ public class TransactionSendClosureHandler extends
     public TransactionSendClosureHandler(
             TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository,
             TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository,
+            PaymentRequestsInfoRepository paymentRequestsInfoRepository,
             TransactionsEventStoreRepository<Object> eventStoreRepository,
             NodeForPspClient nodeForPspClient,
             @Qualifier(
@@ -68,6 +72,7 @@ public class TransactionSendClosureHandler extends
         super(eventStoreRepository);
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionClosureErrorEventStoreRepository = transactionClosureErrorEventStoreRepository;
+        this.paymentRequestsInfoRepository = paymentRequestsInfoRepository;
         this.nodeForPspClient = nodeForPspClient;
         this.transactionClosureSentEventQueueClient = transactionClosureSentEventQueueClient;
         this.paymentTokenValidity = paymentTokenValidity;
@@ -265,6 +270,13 @@ public class TransactionSendClosureHandler extends
                                                 )
                                         )
                                         .map(Either::right);
+                            })
+                            .doFinally(response -> {
+                                tx.getPaymentNotices().forEach(el -> {
+                                    log.info("Invalidate cache for RptId : {}", el.rptId().value());
+                                    paymentRequestsInfoRepository.deleteById(el.rptId());
+                                }
+                                );
                             });
                 });
     }
