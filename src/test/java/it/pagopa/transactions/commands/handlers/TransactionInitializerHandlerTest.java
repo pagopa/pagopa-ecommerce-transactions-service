@@ -411,7 +411,7 @@ class TransactionInitializerHandlerTest {
         Mockito.when(paymentRequestInfoRepository.save(any(PaymentRequestInfo.class)))
                 .thenReturn(paymentRequestInfoBeforeActivation);
         Mockito.when(
-                nodoOperations.activatePaymentRequest(any(), any(), any(), any())
+                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any())
         )
                 .thenReturn(Mono.just(paymentRequestInfoAfterActivation));
         Mockito.when(jwtTokenUtils.generateToken(any()))
@@ -487,7 +487,7 @@ class TransactionInitializerHandlerTest {
         Mockito.when(paymentRequestInfoRepository.save(any(PaymentRequestInfo.class)))
                 .thenReturn(paymentRequestInfoActivation);
         Mockito.when(
-                nodoOperations.activatePaymentRequest(any(), any(), any(), any())
+                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any())
         )
                 .thenReturn(Mono.just(paymentRequestInfoActivation));
         Mockito.when(
