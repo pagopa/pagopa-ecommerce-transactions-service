@@ -1,18 +1,18 @@
 package it.pagopa.transactions.exceptions;
 
-import it.pagopa.transactions.domain.RptId;
+import it.pagopa.ecommerce.commons.domain.v1.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(value = HttpStatus.CONFLICT)
 public class AlreadyProcessedException extends Exception {
-    private final RptId rptId;
+    private final TransactionId transactionId;
 
-    public AlreadyProcessedException(RptId rptId) {
-        this.rptId = rptId;
+    public AlreadyProcessedException(TransactionId transactionId) {
+        this.transactionId = transactionId;
     }
 
-    public RptId getRptId() {
-        return rptId;
+    public TransactionId getTransactionId() {
+        return transactionId;
     }
 }

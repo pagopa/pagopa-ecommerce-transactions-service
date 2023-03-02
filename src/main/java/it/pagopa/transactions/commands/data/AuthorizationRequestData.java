@@ -1,9 +1,10 @@
 package it.pagopa.transactions.commands.data;
 
-import it.pagopa.transactions.domain.TransactionActivated;
+import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDetailsDto;
 
 public record AuthorizationRequestData(
-		TransactionActivated transaction,
+        TransactionActivated transaction,
         int fee,
         String paymentInstrumentId,
         String pspId,
@@ -11,5 +12,8 @@ public record AuthorizationRequestData(
         String brokerName,
         String pspChannelCode,
         String paymentMethodName,
-        String pspBusinessName
-) {}
+        String pspBusinessName,
+        String paymentGatewayId,
+        RequestAuthorizationRequestDetailsDto authDetails
+) {
+}

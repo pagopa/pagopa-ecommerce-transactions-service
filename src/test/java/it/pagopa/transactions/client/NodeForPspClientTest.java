@@ -1,20 +1,24 @@
 package it.pagopa.transactions.client;
 
-import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
+import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.transactions.model.*;
+import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.utils.soap.SoapEnvelope;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.RequestBodyUriSpec;
 import org.springframework.web.reactive.function.client.WebClient.RequestHeadersSpec;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import javax.xml.bind.JAXBElement;
 import java.math.BigDecimal;
@@ -46,105 +50,6 @@ class NodeForPspClientTest {
 
     @Mock
     private ResponseSpec responseSpec;
-
-    @Test
-    void shouldReturnVerifyPaymentResponseGivenValidPaymentNoticeTest() {
-
-        ObjectFactory objectFactory = new ObjectFactory();
-        BigDecimal amount = BigDecimal.valueOf(1200);
-        String fiscalCode = "77777777777";
-        String paymentNotice = "302000100000009424";
-        String paymentToken = UUID.randomUUID().toString();
-        String paymentDescription = "paymentDescription";
-
-        VerifyPaymentNoticeReq request = objectFactory.createVerifyPaymentNoticeReq();
-        CtQrCode qrCode = new CtQrCode();
-        qrCode.setFiscalCode(fiscalCode);
-        qrCode.setNoticeNumber(paymentNotice);
-        request.setQrCode(qrCode);
-
-        VerifyPaymentNoticeRes response = objectFactory.createVerifyPaymentNoticeRes();
-        response.setOutcome(StOutcome.OK);
-        response.setFiscalCodePA(fiscalCode);
-        response.setPaymentDescription(paymentDescription);
-        CtPaymentOptionsDescriptionList paymentList = objectFactory.createCtPaymentOptionsDescriptionList();
-        response.setPaymentList(paymentList);
-
-        /**
-         * preconditions
-         */
-        when(nodoWebClient.post()).thenReturn((RequestBodyUriSpec) requestBodyUriSpec);
-        when(requestBodyUriSpec.uri(any(), any(Object[].class))).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.header(any(), any())).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.body(any(), eq(SoapEnvelope.class))).thenReturn(requestHeadersSpec);
-        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
-        when(responseSpec.onStatus(any(Predicate.class), any(Function.class))).thenReturn(responseSpec);
-        when(responseSpec.bodyToMono(VerifyPaymentNoticeRes.class)).thenReturn(Mono.just(response));
-
-        /**
-         * test
-         */
-        VerifyPaymentNoticeRes testResponse = client
-                .verifyPaymentNotice(objectFactory.createVerifyPaymentNoticeReq(request)).block();
-
-        /**
-         * asserts
-         */
-        assertThat(testResponse.getFiscalCodePA()).isEqualTo(fiscalCode);
-        assertThat(testResponse.getPaymentDescription()).isEqualTo(paymentDescription);
-        assertThat(testResponse.getOutcome()).isEqualTo(StOutcome.OK);
-    }
-
-    @Test
-    void shouldReturnVerifyFaultGivenDuplicatePaymentNoticeTest() {
-
-        /**
-         * preconditions
-         */
-        ObjectFactory objectFactory = new ObjectFactory();
-        BigDecimal amount = BigDecimal.valueOf(1200);
-        String fiscalCode = "77777777777";
-        String paymentNotice = "30200010000000999";
-        String faultError = "PAA_PAGAMENTO_DUPLICATO";
-
-        VerifyPaymentNoticeReq request = objectFactory.createVerifyPaymentNoticeReq();
-        CtQrCode qrCode = new CtQrCode();
-        qrCode.setFiscalCode(fiscalCode);
-        qrCode.setNoticeNumber(paymentNotice);
-        request.setQrCode(qrCode);
-        JAXBElement<VerifyPaymentNoticeReq> jaxbElementRequest = objectFactory
-                .createVerifyPaymentNoticeReq(request);
-
-        VerifyPaymentNoticeRes verifyPaymentRes = objectFactory.createVerifyPaymentNoticeRes();
-        CtFaultBean fault = objectFactory.createCtFaultBean();
-        fault.setFaultCode(faultError);
-        fault.setFaultString(faultError);
-        verifyPaymentRes.setFault(fault);
-
-        /**
-         * preconditions
-         */
-        when(nodoWebClient.post()).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.header(any(),any())).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.uri(any(), any(Object[].class))).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.body(any(), eq(SoapEnvelope.class))).thenReturn(requestHeadersSpec);
-        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
-
-        when(responseSpec.onStatus(any(Predicate.class), any(Function.class))).thenReturn(responseSpec);
-        when(responseSpec.bodyToMono(VerifyPaymentNoticeRes.class)).thenReturn(Mono.just(verifyPaymentRes));
-
-        /**
-         * test
-         */
-        VerifyPaymentNoticeRes testResponse = client
-                .verifyPaymentNotice(objectFactory.createVerifyPaymentNoticeReq(request)).block();
-
-        /**
-         * asserts
-         */
-        assertThat(testResponse.getFault().getFaultCode()).isEqualTo(faultError);
-        assertThat(testResponse.getFault().getFaultString()).isEqualTo(faultError);
-    }
 
     @Test
     void shouldReturnActivatePaymentResponseGivenValidPaymentNoticeTest() {
@@ -223,7 +128,7 @@ class NodeForPspClientTest {
          * preconditions
          */
         when(nodoWebClient.post()).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.header(any(),any())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.header(any(), any())).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(any(), any(Object[].class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(), eq(SoapEnvelope.class))).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
@@ -306,5 +211,44 @@ class NodeForPspClientTest {
 
         /* test */
         assertThat(clientResponse.getOutcome()).isEqualTo(closePaymentResponse.getOutcome());
+    }
+
+    @Test
+    void shouldMapClosePaymentErrorToBadGatewayException() {
+        ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
+                .paymentTokens(List.of("paymentToken"))
+                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
+                .idPSP("identificativoPsp")
+                .idBrokerPSP("identificativoIntermediario")
+                .idChannel("identificativoCanale")
+                .transactionId("transactionId")
+                .fee(new BigDecimal(1))
+                .timestampOperation(OffsetDateTime.now())
+                .totalAmount(new BigDecimal(101))
+                .additionalPaymentInformations(null);
+
+        ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
+                .outcome(ClosePaymentResponseDto.OutcomeEnum.KO);
+
+        /* preconditions */
+        when(nodoWebClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.header(any(), eq(MediaType.APPLICATION_JSON_VALUE))).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(any(String.class), any(Object[].class))).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.body(any(), eq(ClosePaymentRequestV2Dto.class))).thenReturn(requestHeadersSpec);
+        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.onStatus(any(Predicate.class), any(Function.class))).thenReturn(responseSpec);
+        ResponseStatusException exception = new ResponseStatusException(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Internal server error"
+        );
+        when(responseSpec.bodyToMono(ClosePaymentResponseDto.class)).thenReturn(Mono.error(exception));
+        /* test */
+        StepVerifier.create(client.closePaymentV2(closePaymentRequest))
+                .expectErrorMatches(
+                        e -> e instanceof BadGatewayException badGatewayException
+                                && badGatewayException.getHttpStatus().equals(exception.getStatus())
+                                && badGatewayException.getDetail().equals(exception.getReason())
+                )
+                .verify();
     }
 }

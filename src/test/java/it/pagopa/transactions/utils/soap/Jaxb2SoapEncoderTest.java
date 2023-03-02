@@ -1,6 +1,5 @@
 package it.pagopa.transactions.utils.soap;
 
-import it.pagopa.transactions.utils.soap.Jaxb2SoapEncoder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,16 +14,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @ExtendWith(MockitoExtension.class)
 class Jaxb2SoapEncoderTest {
 
-  @InjectMocks private Jaxb2SoapEncoder jaxb2SoapEncoder = new Jaxb2SoapEncoder();
+    @InjectMocks
+    private Jaxb2SoapEncoder jaxb2SoapEncoder = new Jaxb2SoapEncoder();
 
-  @Test
-  void shouldConstructTransactionAmount()
-      throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-    Method method = Jaxb2SoapEncoder.class.getDeclaredMethod("getMarshaller");
-    method.setAccessible(true);
+    @Test
+    void shouldConstructTransactionAmount()
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Method method = Jaxb2SoapEncoder.class.getDeclaredMethod("getMarshaller");
+        method.setAccessible(true);
 
-    Marshaller marshaller = (Marshaller) method.invoke(jaxb2SoapEncoder);
+        Marshaller marshaller = (Marshaller) method.invoke(jaxb2SoapEncoder);
 
-    assertEquals(Boolean.TRUE, marshaller != null);
-  }
+        assertEquals(Boolean.TRUE, marshaller != null);
+    }
 }

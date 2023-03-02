@@ -1,11 +1,9 @@
 package it.pagopa.transactions.projections.handlers;
 
-import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
-import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
-import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
-import it.pagopa.transactions.documents.TransactionAddReceiptData;
-import it.pagopa.transactions.documents.TransactionUserReceiptAddedEvent;
-import it.pagopa.transactions.domain.*;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptAddedEvent;
+import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,8 +14,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.argThat;
@@ -33,64 +31,64 @@ class TransactionUserReceiptProjectionHandlerTest {
 
     @Test
     void shouldHandleTransaction() {
-        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(AuthorizationResultDto.OK)
-                .authorizationCode("OK")
-                .timestampOperation(OffsetDateTime.now());
 
         String faultCode = null;
         String faultCodeString = null; // FIXME, make handle pass fault codes correctly
 
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(UUID.randomUUID()),
-                new PaymentToken("paymentToken"),
-                new RptId("77777777777111111111111111111"),
-                new TransactionDescription("description"),
-                new TransactionAmount(100),
-                new Email("foo@example.com"),
+                List.of(
+                        new PaymentNotice(
+                                new PaymentToken("paymentToken"),
+                                new RptId("77777777777111111111111111111"),
+                                new TransactionAmount(100),
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null)
+                        )
+                ),
+                TransactionTestUtils.EMAIL,
                 faultCode,
                 faultCodeString,
-                TransactionStatusDto.CLOSED
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
 
-        it.pagopa.transactions.documents.Transaction expectedDocument = new it.pagopa.transactions.documents.Transaction(
+        it.pagopa.ecommerce.commons.documents.v1.Transaction expectedDocument = new it.pagopa.ecommerce.commons.documents.v1.Transaction(
                 transaction.getTransactionId().value().toString(),
-                transaction.getTransactionActivatedData().getPaymentToken(),
-                transaction.getRptId().value(),
-                transaction.getDescription().value(),
-                transaction.getAmount().value(),
-                transaction.getEmail().value(),
+                transaction.getTransactionActivatedData().getPaymentNotices(),
+                null,
+                transaction.getEmail(),
                 TransactionStatusDto.NOTIFIED,
-                transaction.getCreationDate()
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                transaction.getCreationDate().toString()
         );
-
-        TransactionAddReceiptData transactionAddReceiptData = new TransactionAddReceiptData(expectedDocument.getStatus());
 
         TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
-                transaction.getTransactionId().value().toString(),
-                transaction.getRptId().value(),
-                transaction.getTransactionActivatedData().getPaymentToken(),
-                transactionAddReceiptData
+                transaction.getTransactionId().value().toString()
         );
 
         TransactionActivated expected = new TransactionActivated(
                 transaction.getTransactionId(),
-                new PaymentToken(transaction.getTransactionActivatedData().getPaymentToken()),
-                transaction.getRptId(),
-                transaction.getDescription(),
-                transaction.getAmount(),
+                transaction.getTransactionActivatedData().getPaymentNotices().stream().map(
+                        PaymentNotice -> new PaymentNotice(
+                                new PaymentToken(PaymentNotice.getPaymentToken()),
+                                new RptId(PaymentNotice.getRptId()),
+                                new TransactionAmount(PaymentNotice.getAmount()),
+                                new TransactionDescription(PaymentNotice.getDescription()),
+                                new PaymentContextCode(PaymentNotice.getPaymentContextCode())
+                        )
+                ).toList(),
                 transaction.getEmail(),
                 transaction.getTransactionActivatedData().getFaultCode(),
                 transaction.getTransactionActivatedData().getFaultCodeString(),
                 ZonedDateTime.parse(expectedDocument.getCreationDate()),
-                expectedDocument.getStatus()
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
         );
 
         /*
          * Preconditions
          */
         Mockito.when(viewRepository.findById(transaction.getTransactionId().value().toString()))
-                .thenReturn(Mono.just(it.pagopa.transactions.documents.Transaction.from(transaction)));
+                .thenReturn(Mono.just(it.pagopa.ecommerce.commons.documents.v1.Transaction.from(transaction)));
 
         Mockito.when(viewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
 
@@ -104,6 +102,7 @@ class TransactionUserReceiptProjectionHandlerTest {
         /*
          * Assertions
          */
-        Mockito.verify(viewRepository, Mockito.times(1)).save(argThat(savedTransaction -> savedTransaction.getStatus().equals(TransactionStatusDto.NOTIFIED)));
+        Mockito.verify(viewRepository, Mockito.times(1))
+                .save(argThat(savedTransaction -> savedTransaction.getStatus().equals(TransactionStatusDto.NOTIFIED)));
     }
 }

@@ -1,0 +1,43 @@
+resilience4j.retry:
+  instances:
+    getPaymentRequestInfo:
+      maxAttempts: 3
+      waitDuration: 2s
+      enableExponentialBackoff: false
+    newTransaction:
+      maxAttempts: 3
+      waitDuration: 2s
+      enableExponentialBackoff: false
+    getTransactionInfo:
+      maxAttempts: 3
+      waitDuration: 2s
+      enableExponentialBackoff: false
+    requestTransactionAuthorization:
+      maxAttempts: 3
+      waitDuration: 2s
+      enableExponentialBackoff: false
+    updateTransactionAuthorization:
+      maxAttempts: 3
+      waitDuration: 2s
+      enableExponentialBackoff: false
+    activateTransaction:
+      maxAttempts: 3
+      waitDuration: 2s
+      enableExponentialBackoff: false
+
+resilience4j.circuitbreaker:
+  configs:
+    default:
+      slidingWindowSize: 2
+      permittedNumberOfCallsInHalfOpenState: 10
+      waitDurationInOpenState: 10000
+      failureRateThreshold: 50
+      eventConsumerBufferSize: 10
+      registerHealthIndicator: true
+  instances:
+    transactions-backend:
+      baseConfig: default
+  instance:
+      node-backend:
+        baseConfig: default
+

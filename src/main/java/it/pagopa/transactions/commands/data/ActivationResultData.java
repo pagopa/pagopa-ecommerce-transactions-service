@@ -1,11 +1,10 @@
 package it.pagopa.transactions.commands.data;
 
+import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.generated.transactions.server.model.ActivationResultRequestDto;
-import it.pagopa.transactions.domain.TransactionActivated;
-import it.pagopa.transactions.domain.TransactionActivationRequested;
 
 public record ActivationResultData(
-		TransactionActivationRequested transactionActivationRequested,
-		ActivationResultRequestDto activationResultData
+        TransactionActivated transactionActivated,
+        ActivationResultRequestDto activationResultData
 ) {
 }

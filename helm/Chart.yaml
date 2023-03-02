@@ -2,9 +2,9 @@ apiVersion: v2
 name: pagopa-ecommerce-transactions-service
 description: Microservice that handles transactions lifecycle and workflow in ecommerce pagoPA
 type: application
-version: 0.5.0
-appVersion: 0.5.0
+version: 0.9.2
+appVersion: 0.9.2
 dependencies:
   - name: microservice-chart
-    version: 1.21.0
+    version: 2.3.1
     repository: "https://pagopa.github.io/aks-microservice-chart-blueprint"

@@ -25,20 +25,14 @@ microservice-chart:
       REDIS_PORT: "6380"
       REDIS_SSL_ENABLED: "true"
       NODO_HOSTNAME: https://api.uat.platform.pagopa.it
-      NODO_PER_PSP_URI: /nodo/nodo-per-psp/v1
       NODE_FOR_PSP_URI: /nodo/node-for-psp/v1
-      NODOPERPM_URI: /nodo/nodo-per-pm/v1/informazioniPagamento
-      NODOPERPM_READ_TIMEOUT: "10000"
-      NODOPERPM_CONNECTION_TIMEOUT: "10000"
       NODO_READ_TIMEOUT: "10000"
       NODO_CONNECTION_TIMEOUT: "10000"
-      ECOMMERCE_SESSIONS_URI: https://api.uat.platform.pagopa.it/ecommerce/sessions-service/v1
-      ECOMMERCE_SESSIONS_READ_TIMEOUT: "10000"
-      ECOMMERCE_SESSIONS_CONNECTION_TIMEOUT: "10000"
-      ECOMMERCE_PAYMENT_INSTRUMENTS_URI: https://api.uat.platform.pagopa.it/ecommerce/payment-instruments-service/v1
+      NODO_PARALLEL_REQUESTS: "5"
+      ECOMMERCE_PAYMENT_INSTRUMENTS_URI: https://api.uat.platform.pagopa.it/ecommerce/payment-methods-service/v1
       ECOMMERCE_PAYMENT_INSTRUMENTS_READ_TIMEOUT: "10000"
       ECOMMERCE_PAYMENT_INSTRUMENTS_CONNECTION_TIMEOUT: "10000"
-      PAYMENT_TRANSACTIONS_GATEWAY_URI: http://pagopa-ecommerce-payment-instruments-service:8080
+      PAYMENT_TRANSACTIONS_GATEWAY_URI: https://api.uat.platform.pagopa.it/payment-transactions-gateway/internal/v1
       PAYMENT_TRANSACTIONS_GATEWAY_READ_TIMEOUT: "10000"
       PAYMENT_TRANSACTIONS_GATEWAY_CONNECTION_TIMEOUT: "10000"
       NOTIFICATIONS_SERVICE_URI: https://api.uat.platform.pagopa.it/ecommerce/notifications-service/v1
@@ -46,15 +40,25 @@ microservice-chart:
       NOTIFICATIONS_SERVICE_CONNECTION_TIMEOUT: "10000"
       TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_NAME: transaction-events
       TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_VISIBILITY_TIMEOUT: "600"
+      TRANSACTION_ACTIVATED_EVENT_QUEUE_NAME: pagopa-u-weu-ecommerce-activated-events-queue
+      TRANSACTION_CLOSURE_SENT_EVENT_QUEUE_NAME: pagopa-u-weu-ecommerce-closed-events-queue
+      PAYMENT_TOKEN_VALIDITY_TIME: "900"
+      TRANSACTIONS_RETRY_OFFSET: "60"
+      CLOSURE_RETRY_INTERVAL: "30"
+      WEB_LOGGING_LEVEL: "off"
+      SERVICE_LOGGING_LEVEL: "info"
+      JWT_TOKEN_VALIDITY_TIME_MILLIS: "1800000"
     envSecret:
       MONGO_PASSWORD: mongo-ecommerce-password
       REDIS_PASSWORD: redis-ecommerce-password
       NODO_CONNECTION_STRING: nodo-connection-string
       APPLICATIONINSIGHTS_CONNECTION_STRING: applicationinsights-connection-string
       PAYMENT_TRANSACTIONS_GATEWAY_API_KEY: payment-transactions-gateway-api-key
+      JWT_SECRET: sessions-jwt-secret
+      EMAIL_ENCRYPTION_KEY: email-encryption-key
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.5.0"
+    tag: "0.9.2"
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -73,11 +77,13 @@ microservice-chart:
   service:
     create: true
     type: ClusterIP
-    port: 8080
+    ports:
+      - 8080
   ingress:
     create: true
     host: "weuuat.ecommerce.internal.uat.platform.pagopa.it"
     path: /pagopa-ecommerce-transactions-service/(.*)
+    servicePort: 8080
   serviceAccount:
     create: false
     annotations: {}
@@ -122,16 +128,10 @@ microservice-chart:
     REDIS_PORT: "6380"
     REDIS_SSL_ENABLED: "true"
     NODO_HOSTNAME: https://api.uat.platform.pagopa.it
-    NODO_PER_PSP_URI: /nodo/nodo-per-psp/v1
     NODE_FOR_PSP_URI: /nodo/node-for-psp/v1
     NODO_READ_TIMEOUT: "10000"
     NODO_CONNECTION_TIMEOUT: "10000"
-    NODOPERPM_URI: /nodo/nodo-per-pm/v1/informazioniPagamento
-    NODOPERPM_READ_TIMEOUT: "10000"
-    NODOPERPM_CONNECTION_TIMEOUT: "10000"
-    ECOMMERCE_SESSIONS_URI: https://api.uat.platform.pagopa.it/ecommerce/sessions-service/v1
-    ECOMMERCE_SESSIONS_READ_TIMEOUT: "10000"
-    ECOMMERCE_SESSIONS_CONNECTION_TIMEOUT: "10000"
+    NODO_PARALLEL_REQUESTS: "5"
     ECOMMERCE_PAYMENT_INSTRUMENTS_URI: https://api.uat.platform.pagopa.it/ecommerce/payment-methods-service/v1
     ECOMMERCE_PAYMENT_INSTRUMENTS_READ_TIMEOUT: "10000"
     ECOMMERCE_PAYMENT_INSTRUMENTS_CONNECTION_TIMEOUT: "10000"
@@ -143,6 +143,14 @@ microservice-chart:
     NOTIFICATIONS_SERVICE_CONNECTION_TIMEOUT: "10000"
     TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_NAME: transaction-events
     TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_VISIBILITY_TIMEOUT: "600"
+    TRANSACTION_CLOSURE_SENT_EVENT_QUEUE_NAME: transactionclosuresentevents
+    TRANSACTION_ACTIVATED_EVENT_QUEUE_NAME: pagopa-u-weu-ecommerce-activated-events-queue
+    PAYMENT_TOKEN_VALIDITY_TIME: "1800"
+    TRANSACTIONS_RETRY_OFFSET: "60"
+    CLOSURE_RETRY_INTERVAL: "30"
+    WEB_LOGGING_LEVEL: "off"
+    SERVICE_LOGGING_LEVEL: "info"
+    JWT_TOKEN_VALIDITY_TIME_MILLIS: "1800000"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password
@@ -151,9 +159,19 @@ microservice-chart:
     ECOMMERCE_STORAGE_CONNECTION_STRING: ecommerce-storage-connection-string
     APPLICATIONINSIGHTS_CONNECTION_STRING: applicationinsights-connection-string
     PAYMENT_TRANSACTIONS_GATEWAY_API_KEY: payment-transactions-gateway-api-key
+    JWT_SECRET: sessions-jwt-secret
+    EMAIL_ENCRYPTION_KEY: email-encryption-key
   keyvault:
     name: "pagopa-u-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
   nodeSelector: {}
   tolerations: []
-  affinity: {}
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node_type
+                operator: In
+                values:
+                  - user

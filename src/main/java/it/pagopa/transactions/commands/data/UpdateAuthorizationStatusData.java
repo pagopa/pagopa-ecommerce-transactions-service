@@ -1,9 +1,10 @@
 package it.pagopa.transactions.commands.data;
 
+import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
-import it.pagopa.transactions.domain.TransactionActivated;
 
 public record UpdateAuthorizationStatusData(
-		TransactionActivated transaction,
+        TransactionActivated transaction,
         UpdateAuthorizationRequestDto updateAuthorizationRequest
-) {}
+) {
+}

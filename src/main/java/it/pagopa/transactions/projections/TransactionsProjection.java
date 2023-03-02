@@ -1,6 +1,6 @@
 package it.pagopa.transactions.projections;
 
-import it.pagopa.transactions.domain.RptId;
+import it.pagopa.ecommerce.commons.domain.v1.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Generated;
@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Generated
 public class TransactionsProjection<T> {
-    
+
     private RptId rptId;
     private T data;
 }

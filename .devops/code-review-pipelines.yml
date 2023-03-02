@@ -12,7 +12,7 @@ resources:
     - repository: pagopaEcommerceLocal
       type: github
       name: pagopa/pagopa-ecommerce-local 
-      ref: minor-fix
+      ref: main
       endpoint: 'io-azure-devops-github-ro'
 
 stages:
@@ -55,6 +55,18 @@ stages:
             jdkArchitectureOption: 'x64'
             publishJUnitResults: false
             testResultsFiles: '**/surefire-reports/TEST-*.xml'
+            goals: 'clean validate'
+            sonarQubeRunAnalysis: false
+
+        - task: Maven@3
+          inputs:
+            mavenPomFile: 'pom.xml'
+            mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
+            javaHomeOption: 'JDKVersion'
+            jdkVersionOption: '17'
+            jdkArchitectureOption: 'x64'
+            publishJUnitResults: false
+            testResultsFiles: '**/surefire-reports/TEST-*.xml'
             goals: 'clean verify'
             sonarQubeRunAnalysis: true
 
@@ -78,7 +90,7 @@ stages:
         - checkout: pagopaEcommerceLocal
         - script: | 
             echo "##[debug] Change placeholder for ecommerce-transaction-service ..."
-            sed "s/\${ECOMMERCE_TRANSACTIONS_COMMIT_SHA}/$(BRANCH_NAME)/" global-transaction-service.env > .env
+            sed -i "s/^ECOMMERCE_TRANSACTIONS_COMMIT_SHA=.*$/ECOMMERCE_TRANSACTIONS_COMMIT_SHA=$(BRANCH_NAME)/" .env
           displayName: 'Change transaction branch name ecommerce-local .env'
         - script: docker-compose up --scale mongo-express=0 --scale redis-insight=0 --scale pagopa-notifications-service=0 -d
           displayName: 'Run app with docker-compose'
@@ -89,15 +101,9 @@ stages:
           displayName: 'newman installation'
         - script: newman run api-tests/ecommerce-for-checkout/transaction-service/transaction-service_ecommerce_local.postman_collection.json --environment=api-tests/ecommerce-for-checkout/transaction-service/transaction-service_ecommerce_local.postman_environment.json --reporters cli,junit --reporter-junit-export Results/checkout-api-TEST.xml
           displayName: 'Run api test'
-          continueOnError: true 
+          continueOnError: false
         - task: PublishTestResults@2
           inputs:
             testResultsFormat: 'JUnit'
             testResultsFiles: '**/*-TEST.xml' 
             searchFolder: '$(System.DefaultWorkingDirectory)'
-      
-
-
-
-
-

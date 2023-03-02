@@ -1,46 +1,60 @@
 package it.pagopa.transactions.projections.handlers;
 
-import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
-import it.pagopa.transactions.documents.TransactionActivatedData;
-import it.pagopa.transactions.documents.TransactionActivatedEvent;
-import it.pagopa.transactions.domain.*;
+import it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.domain.Confidential;
+import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.UUID;
 
 @Component
 @Slf4j
 public class TransactionsActivationProjectionHandler
-		implements ProjectionHandler<TransactionActivatedEvent, Mono<TransactionActivated>> {
+        implements ProjectionHandler<TransactionActivatedEvent, Mono<TransactionActivated>> {
 
-	@Autowired
-	private TransactionsViewRepository viewEventStoreRepository;
+    @Autowired
+    private TransactionsViewRepository viewEventStoreRepository;
 
-	@Override
-	public Mono<TransactionActivated> handle(TransactionActivatedEvent event) {
-		TransactionActivatedData data = event.getData();
-		TransactionId transactionId = new TransactionId(UUID.fromString(event.getTransactionId()));
-		PaymentToken paymentToken = new PaymentToken(event.getPaymentToken());
-		RptId rptId = new RptId(event.getRptId());
-		TransactionDescription description = new TransactionDescription(data.getDescription());
-		TransactionAmount amount = new TransactionAmount(data.getAmount());
-		Email email = new Email(event.getData().getEmail());
-		String faultCode = event.getData().getFaultCode();
-		String faultCodeString = event.getData().getFaultCodeString();
+    @Override
+    public Mono<TransactionActivated> handle(TransactionActivatedEvent event) {
+        TransactionActivatedData data = event.getData();
+        TransactionId transactionId = new TransactionId(UUID.fromString(event.getTransactionId()));
+        List<PaymentNotice> paymentNoticeList = data.getPaymentNotices().stream().map(
+                paymentNoticeData -> new PaymentNotice(
+                        new PaymentToken(paymentNoticeData.getPaymentToken()),
+                        new RptId(paymentNoticeData.getRptId()),
+                        new TransactionAmount(paymentNoticeData.getAmount()),
+                        new TransactionDescription(paymentNoticeData.getDescription()),
+                        new PaymentContextCode(paymentNoticeData.getPaymentContextCode())
+                )
+        ).toList();
+        Confidential<Email> email = event.getData().getEmail();
+        String faultCode = event.getData().getFaultCode();
+        String faultCodeString = event.getData().getFaultCodeString();
+        ClientId clientId = event.getData().getClientId();
 
-		TransactionActivated transaction =
-				new TransactionActivated(transactionId, paymentToken, rptId, description, amount, email, faultCode, faultCodeString, TransactionStatusDto.ACTIVATED);
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                paymentNoticeList,
+                email,
+                faultCode,
+                faultCodeString,
+                clientId
+        );
 
-		it.pagopa.transactions.documents.Transaction transactionDocument =
-				it.pagopa.transactions.documents.Transaction.from(transaction);
+        it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.v1.Transaction
+                .from(transaction);
 
-		return viewEventStoreRepository
-				.save(transactionDocument)
-				.doOnNext(t -> log.info("Transactions update view for rptId: {}", t.getRptId()))
-				.thenReturn(transaction);
-	}
+        return viewEventStoreRepository
+                .save(transactionDocument)
+                .doOnNext(t -> log.info("Transactions update view for transactionId: {}", t.getTransactionId()))
+                .thenReturn(transaction);
+    }
 }

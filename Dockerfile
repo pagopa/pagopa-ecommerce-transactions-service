@@ -1,15 +1,19 @@
-FROM openjdk:17-slim as build
+FROM openjdk:17-jdk as build
 WORKDIR /workspace/app
+
+RUN microdnf install git
 
 COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
+#validate step will execute the scm plugin to perform checkout and installation of the pagopa-commons library
+RUN ./mvnw validate -DskipTests
 RUN ./mvnw dependency:copy-dependencies
 RUN ./mvnw dependency:go-offline
 
 COPY src src
 COPY api-spec api-spec
-COPY nodo-wsdl nodo-wsdl
+COPY eclipse-style.xml eclipse-style.xml
 RUN ./mvnw install -DskipTests --offline
 RUN mkdir target/extracted && java -Djarmode=layertools -jar target/*.jar extract --destination target/extracted
 

@@ -7,9 +7,17 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
 
 /**
- * <p>An identifier for aggregate roots. Note that this identifier should be globally unique.</p>
+ * <p>
+ * An identifier for aggregate roots. Note that this identifier should be
+ * globally unique.
+ * </p>
  */
 @Documented
-@Target({FIELD, METHOD})
+@Target(
+    {
+            FIELD,
+            METHOD
+    }
+)
 public @interface AggregateRootId {
 }

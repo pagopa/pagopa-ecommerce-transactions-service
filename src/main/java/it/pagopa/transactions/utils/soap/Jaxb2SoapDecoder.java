@@ -21,7 +21,6 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.UnmarshalException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.stream.XMLStreamException;
-
 import java.util.Map;
 
 public class Jaxb2SoapDecoder extends Jaxb2XmlDecoder {
@@ -29,13 +28,21 @@ public class Jaxb2SoapDecoder extends Jaxb2XmlDecoder {
     private final JaxbContextContainer jaxbContexts = new JaxbContextContainer();
 
     public Jaxb2SoapDecoder() {
-        super(MimeTypeUtils.APPLICATION_XML, MimeTypeUtils.TEXT_XML, new MediaType("application", "*+xml"),
-                new MediaType("text", "*"));
+        super(
+                MimeTypeUtils.APPLICATION_XML,
+                MimeTypeUtils.TEXT_XML,
+                new MediaType("application", "*+xml"),
+                new MediaType("text", "*")
+        );
     }
 
     @Override
-    public Object decode(DataBuffer dataBuffer, ResolvableType targetType, @Nullable MimeType mimeType,
-                         @Nullable Map<String, Object> hints) throws DecodingException {
+    public Object decode(
+                         DataBuffer dataBuffer,
+                         ResolvableType targetType,
+                         @Nullable MimeType mimeType,
+                         @Nullable Map<String, Object> hints
+    ) throws DecodingException {
 
         try {
 
@@ -51,7 +58,10 @@ public class Jaxb2SoapDecoder extends Jaxb2XmlDecoder {
         }
     }
 
-    private Object unmarshal(WebServiceMessage message, Class<?> outputClass) {
+    private Object unmarshal(
+                             WebServiceMessage message,
+                             Class<?> outputClass
+    ) {
         try {
 
             Unmarshaller unmarshaller = getUnmarshaller();

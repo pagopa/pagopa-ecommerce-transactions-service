@@ -1,11 +1,11 @@
 package it.pagopa.transactions.utils.soap;
 
-import javax.xml.bind.annotation.XmlRootElement;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Generated;
 import lombok.NoArgsConstructor;
+
+import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
 @Data

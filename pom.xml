@@ -9,13 +9,15 @@
     </parent>
     <groupId>it.pagopa</groupId>
     <artifactId>pagopa-ecommerce-transactions-service</artifactId>
-    <version>0.5.0</version>
+    <version>0.9.2</version>
     <name>pagopa-ecommerce-transactions-service</name>
     <description>pagopa-ecommerce-transactions-service</description>
     <properties>
         <java.version>17</java.version>
         <spring-cloud-azure.version>4.0.0</spring-cloud-azure.version>
         <jacoco.version>0.8.8</jacoco.version>
+        <pagopa-ecommerce-commons.version>0.7.3</pagopa-ecommerce-commons.version>
+        <spotless.version>2.28.0</spotless.version>
     </properties>
     <dependencies>
         <dependency>
@@ -33,6 +35,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>it.pagopa</groupId>
+            <artifactId>pagopa-ecommerce-commons</artifactId>
+            <version>${pagopa-ecommerce-commons.version}</version>
         </dependency>
         <dependency>
             <groupId>com.azure.spring</groupId>
@@ -154,12 +161,49 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-spring-boot2</artifactId>
+            <version>1.7.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-reactor</artifactId>
+            <version>1.7.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.11.4</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.11.4</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId> <!-- or jjwt-gson if Gson is preferred -->
+            <version>0.11.4</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>it.pagopa</groupId>
+            <artifactId>pagopa-ecommerce-commons</artifactId>
+            <version>${pagopa-ecommerce-commons.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-resolver-dns-native-macos</artifactId>
             <version>4.1.82.Final</version>
             <classifier>osx-aarch_64</classifier>
         </dependency>
-
     </dependencies>
     <dependencyManagement>
         <dependencies>
@@ -178,11 +222,15 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <jvmArguments>--enable-preview</jvmArguments>
+                </configuration>
+
             </plugin>
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>5.4.0</version>
+                <version>6.2.1</version>
                 <executions>
                     <execution>
                         <id>transaction-api</id>
@@ -210,53 +258,6 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>payment-requests-api</id>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <inputSpec>${project.basedir}/api-spec/payment-requests-api.yaml</inputSpec>
-                            <generatorName>spring</generatorName>
-                            <library>spring-boot</library>
-                            <modelNameSuffix>Dto</modelNameSuffix>
-                            <generateApiTests>false</generateApiTests>
-                            <generateModelTests>false</generateModelTests>
-                            <configOptions>
-                                <basePackage>it.pagopa.generated.payment.requests</basePackage>
-                                <modelPackage>it.pagopa.generated.payment.requests.model</modelPackage>
-                                <apiPackage>it.pagopa.generated.payment.requests.api</apiPackage>
-                                <configPackage>it.pagopa.generated.payment.requests.config</configPackage>
-                                <interfaceOnly>true</interfaceOnly>
-                                <hideGenerationTimestamp>true</hideGenerationTimestamp>
-                                <skipDefaultInterface>true</skipDefaultInterface>
-                                <useSwaggerUI>false</useSwaggerUI>
-                                <reactive>true</reactive>
-                            </configOptions>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>sessions-api</id>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-ecommerce-sessions-service/main/api-spec/pagopa-ecommerce-sessions-api.yaml</inputSpec>
-                            <generatorName>java</generatorName>
-                            <library>webclient</library>
-                            <generateApiDocumentation>false</generateApiDocumentation>
-                            <generateApiTests>false</generateApiTests>
-                            <generateModelTests>false</generateModelTests>
-                            <generateSupportingFiles>true</generateSupportingFiles>
-                            <configOptions>
-                                <swaggerAnnotations>false</swaggerAnnotations>
-                                <openApiNullable>false</openApiNullable>
-                            </configOptions>
-                            <modelPackage>it.pagopa.generated.ecommerce.sessions.v1.dto</modelPackage>
-                            <apiPackage>it.pagopa.generated.ecommerce.sessions.v1.api</apiPackage>
-                            <modelNameSuffix>dto</modelNameSuffix>
-                        </configuration>
-                    </execution>
-                     <execution>
                         <id>payment-instruments-api</id>
                         <goals>
                             <goal>generate</goal>
@@ -297,28 +298,6 @@
                             </configOptions>
                             <modelPackage>it.pagopa.generated.ecommerce.gateway.v1.dto</modelPackage>
                             <apiPackage>it.pagopa.generated.ecommerce.gateway.v1.api</apiPackage>
-                            <modelNameSuffix>dto</modelNameSuffix>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>nodo-rest-api</id>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-infra/8400e0ef51f9fd6ef9386ccc4e520d24465ba2b5/src/api/nodopagamenti_api/nodoPerPM/v1/_swagger.json.tpl</inputSpec>
-                            <generatorName>java</generatorName>
-                            <library>webclient</library>
-                            <generateApiDocumentation>false</generateApiDocumentation>
-                            <generateApiTests>false</generateApiTests>
-                            <generateModelTests>false</generateModelTests>
-                            <generateSupportingFiles>true</generateSupportingFiles>
-                            <configOptions>
-                                <swaggerAnnotations>false</swaggerAnnotations>
-                                <openApiNullable>false</openApiNullable>
-                            </configOptions>
-                            <modelPackage>it.pagopa.generated.ecommerce.nodo.v1.dto</modelPackage>
-                            <apiPackage>it.pagopa.generated.ecommerce.nodo.v1.api</apiPackage>
                             <modelNameSuffix>dto</modelNameSuffix>
                         </configuration>
                     </execution>
@@ -386,23 +365,6 @@
                                 <schema>
                                     <url>
                                         https://raw.githubusercontent.com/pagopa/pagopa-infra/main/src/core/api/nodopagamenti_api/nodeForPsp/v1/nodeForPsp.wsdl
-                                    </url>
-                                </schema>
-                            </schemas>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>nodo-per-psp</id>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <schemaLanguage>WSDL</schemaLanguage>
-                            <generatePackage>it.pagopa.generated.nodoperpsp.model</generatePackage>
-                            <schemas>
-                                <schema>
-                                    <url>
-                                        ${project.basedir}/nodo-wsdl/nodoPerPsp.wsdl
                                     </url>
                                 </schema>
                             </schemas>
@@ -488,26 +450,66 @@
                             <includeConstructors>true</includeConstructors>
                         </configuration>
                     </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-scm-plugin</artifactId>
+                <version>2.0.0-M3</version>
+                <configuration>
+                    <skipCheckoutIfExists>false</skipCheckoutIfExists>
+                    <connectionUrl>scm:git:https://github.com/pagopa/pagopa-ecommerce-commons.git</connectionUrl>
+                    <scmVersionType>tag</scmVersionType>
+                    <scmVersion>${pagopa-ecommerce-commons.version}</scmVersion>
+                    <goals>install -DskipTests</goals>
+                </configuration>
+                <executions>
                     <execution>
-                        <id>event-schemas</id>
+                        <phase>validate</phase>
                         <goals>
-                            <goal>generate</goal>
+                            <goal>bootstrap</goal>
                         </goals>
-                        <configuration>
-                            <sourcePaths>
-                                <sourcePath>${basedir}/src/main/resources/schemas/events/v1/event_version.json</sourcePath>
-                                <sourcePath>${basedir}/src/main/resources/schemas/events/v1/transaction_activated_event.json</sourcePath>
-                                <sourcePath>${basedir}/src/main/resources/schemas/events/v1/transaction_activation_requested_event.json</sourcePath>
-                                <sourcePath>${basedir}/src/main/resources/schemas/events/v1/transaction_authorization_requested_event.json</sourcePath>
-                                <sourcePath>${basedir}/src/main/resources/schemas/events/v1/transaction_authorization_status_updated_event.json</sourcePath>
-                                <sourcePath>${basedir}/src/main/resources/schemas/events/v1/transaction_closure_sent_event.json</sourcePath>
-                                <sourcePath>${basedir}/src/main/resources/schemas/events/v1/transaction_user_receipt_added_event.json</sourcePath>
-                            </sourcePaths>
-                            <targetPackage>it.pagopa.generated.ecommerce.events.v1</targetPackage>
-                            <includeConstructors>true</includeConstructors>
-                            <generateBuilders>true</generateBuilders>
-                            <usePrimitives>true</usePrimitives>
-                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>${spotless.version}</version>
+                <configuration>
+                    <formats>
+                        <!-- you can define as many formats as you want, each is independent -->
+                        <format>
+                            <!-- define the files to apply to -->
+                            <includes>
+                                <include>*.md</include>
+                                <include>.gitignore</include>
+                            </includes>
+                            <!-- define the steps to apply to those files -->
+                            <trimTrailingWhitespace/>
+                            <endWithNewline/>
+                            <indent>
+                                <tabs>true</tabs>
+                                <spacesPerTab>4</spacesPerTab>
+                            </indent>
+                        </format>
+                    </formats>
+                    <!-- define a language-specific format -->
+                    <java>
+                        <toggleOffOn/>
+                        <eclipse>
+                            <file>${project.basedir}/eclipse-style.xml</file>
+                        </eclipse>
+                        <trimTrailingWhitespace/>
+                        <endWithNewline/>
+                    </java>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <phase>compile</phase>
                     </execution>
                 </executions>
             </plugin>
