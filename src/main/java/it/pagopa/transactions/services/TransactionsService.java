@@ -1,13 +1,14 @@
 package it.pagopa.transactions.services;
 
-import com.azure.cosmos.implementation.BadRequestException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PaymentMethodResponseDto;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
+import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PaymentOptionDto;
+import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.TransferDto;
+import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.TransferListItemDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.commands.*;
@@ -26,9 +27,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -184,21 +183,45 @@ public class TransactionsService {
                                     .mapToInt(
                                             it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount
                                     ).sum();
-                            return ecommercePaymentInstrumentsClient
-                                    .getPSPs(
-                                            amountTotal,
-                                            requestAuthorizationRequestDto.getLanguage().getValue(),
-                                            requestAuthorizationRequestDto.getPaymentInstrumentId()
+                            return ecommercePaymentInstrumentsClient // TODO gestione del carrello
+                                    .calculateFee(
+                                            new PaymentOptionDto()
+                                                    .paymentMethodId(
+                                                            requestAuthorizationRequestDto.getPaymentInstrumentId()
+                                                    )
+                                                    .touchpoint(transaction.getClientId().toString())
+                                                    .bin(
+                                                            requestAuthorizationRequestDto
+                                                                    .getDetails()instanceof CardAuthRequestDetailsDto cardData
+                                                                            ? cardData.getPan().substring(0, 8)
+                                                                            : null
+                                                    )
+                                                    .idPspList(List.of(requestAuthorizationRequestDto.getPspId()))
+                                                    .paymentAmount(amountTotal.longValue())
+                                                    .primaryCreditorInstitution(
+                                                            transaction.getPaymentNotices().get(0).getRptId()
+                                                                    .substring(0, 11)
+                                                    )
+                                                    .transferList(
+                                                            List.of(
+                                                                    new TransferListItemDto().creditorInstitution(
+                                                                            transaction.getPaymentNotices().get(0)
+                                                                                    .getRptId().substring(0, 11)
+                                                                    ).digitalStamp(false)
+                                                            )
+                                                    ),
+                                            null
                                     )
+                                    .mapNotNull(el -> el.getBundleOptions() != null ? (el.getBundleOptions()) : null)
                                     .mapNotNull(
-                                            pspResponse -> pspResponse.getPsp().stream()
+                                            fee -> fee.stream()
                                                     .filter(
-                                                            psp -> psp.getCode()
+                                                            psp -> psp.getIdPsp()
                                                                     .equals(
                                                                             requestAuthorizationRequestDto
                                                                                     .getPspId()
                                                                     )
-                                                                    && psp.getFixedCost()
+                                                                    && psp.getTaxPayerFee()
                                                                             .equals(
                                                                                     Long.valueOf(
                                                                                             requestAuthorizationRequestDto
@@ -209,7 +232,7 @@ public class TransactionsService {
                                                     .findFirst()
                                                     .orElse(null)
                                     )
-                                    .map(psp -> Tuples.of(transaction, psp));
+                                    .map(bundle -> Tuples.of(transaction, bundle));
                         }
                 )
                 .flatMap(transactionAndPsp -> {
@@ -241,7 +264,7 @@ public class TransactionsService {
                         args -> {
                             it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument = args
                                     .getT1();
-                            PspDto psp = args.getT2();
+                            TransferDto bundle = args.getT2();
                             PaymentMethodResponseDto paymentMethod = args.getT3();
 
                             log.info(
@@ -283,11 +306,11 @@ public class TransactionsService {
                                     requestAuthorizationRequestDto.getFee(),
                                     requestAuthorizationRequestDto.getPaymentInstrumentId(),
                                     requestAuthorizationRequestDto.getPspId(),
-                                    psp.getPaymentTypeCode(),
-                                    psp.getBrokerName(),
-                                    psp.getChannelCode(),
+                                    bundle.getPaymentMethod(),
+                                    bundle.getIdBrokerPsp(),
+                                    bundle.getIdChannel(),
                                     paymentMethod.getName(),
-                                    psp.getBusinessName(),
+                                    bundle.getBundleName(),
                                     paymentGatewayId,
                                     requestAuthorizationRequestDto.getDetails()
                             );

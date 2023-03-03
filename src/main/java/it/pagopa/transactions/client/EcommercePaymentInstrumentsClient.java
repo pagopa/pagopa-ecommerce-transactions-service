@@ -1,8 +1,9 @@
 package it.pagopa.transactions.client;
 
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.api.DefaultApi;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PSPsResponseDto;
+import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.BundleOptionDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PaymentMethodResponseDto;
+import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PaymentOptionDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -15,13 +16,12 @@ public class EcommercePaymentInstrumentsClient {
     @Qualifier("ecommercePaymentInstrumentsWebClient")
     private DefaultApi ecommercePaymentInstrumentsWebClient;
 
-    public Mono<PSPsResponseDto> getPSPs(
-                                         Integer amount,
-                                         String language,
-                                         String idPaymentMethod
+    public Mono<BundleOptionDto> calculateFee(
+                                              PaymentOptionDto paymentOptionDto,
+                                              Integer maxOccurrences
+
     ) {
-        return ecommercePaymentInstrumentsWebClient
-                .getPaymentMethodsPSPs(idPaymentMethod, amount, language);
+        return ecommercePaymentInstrumentsWebClient.calculateFees(paymentOptionDto, maxOccurrences);
     }
 
     public Mono<PaymentMethodResponseDto> getPaymentMethod(String paymentMethodId) {
