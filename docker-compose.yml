@@ -95,11 +95,11 @@ services:
       mongo:
         condition: service_healthy
 
-  pagopa-api-config-mock:
+  pagopa-gec-mock:
     build:
       context: .
-      dockerfile: Dockerfile.api-config-mock
-    container_name: pagopa-api-config-mock
+      dockerfile: Dockerfile.gec-mock
+    container_name: gec-mock
     ports:
       - "8084:3000"
     networks:
