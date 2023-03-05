@@ -99,7 +99,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.gec-mock
-    container_name: gec-mock
+    container_name: pagopa-gec-mock
     ports:
       - "8084:3000"
     networks:
