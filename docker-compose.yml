@@ -105,6 +105,18 @@ services:
     networks:
       - pagopa-ecommerce-net
 
+  storage:
+    image: mcr.microsoft.com/azure-storage/azurite:3.21.0
+    container_name: azurite
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    volumes:
+      - ./.data:/opt/azurite/folder
+    networks:
+      - pagopa-ecommerce-net
+
 networks:
   pagopa-ecommerce-net:
     name: pagopa-ecommerce-net
