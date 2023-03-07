@@ -186,15 +186,12 @@ public class TransactionsService {
                             return ecommercePaymentInstrumentsClient // TODO gestione del carrello
                                     .calculateFee(
                                             new PaymentOptionDto()
-                                                    .paymentMethodId(
+                                                    .paymentMethod(
                                                             requestAuthorizationRequestDto.getPaymentInstrumentId()
                                                     )
                                                     .touchpoint(transaction.getClientId().toString())
                                                     .bin(
-                                                            requestAuthorizationRequestDto
-                                                                    .getDetails()instanceof CardAuthRequestDetailsDto cardData
-                                                                            ? cardData.getPan().substring(0, 8)
-                                                                            : null
+                                                            extractBinFromPan(requestAuthorizationRequestDto)
                                                     )
                                                     .idPspList(List.of(requestAuthorizationRequestDto.getPspId()))
                                                     .paymentAmount(amountTotal.longValue())
@@ -594,5 +591,12 @@ public class TransactionsService {
                             }
                         }
                 ).orElseThrow(() -> new InvalidRequestException("Null value as input origin"));
+    }
+
+    private String extractBinFromPan(RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
+        return requestAuthorizationRequestDto
+                .getDetails()instanceof CardAuthRequestDetailsDto cardData
+                        ? cardData.getPan().substring(0, 8)
+                        : null;
     }
 }

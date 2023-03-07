@@ -29,7 +29,7 @@ class EcommercePaymentMethodsClientTest {
     void shouldReturnBundleList() {
         Integer TEST_MAX_OCCURRERNCES = 10;
         PaymentOptionDto paymentOptionDto = new PaymentOptionDto()
-                .paymentMethodId("paymentMethodId").paymentAmount(BigInteger.TEN.longValue()).bin("57497554")
+                .paymentMethod("paymentMethodId").paymentAmount(BigInteger.TEN.longValue()).bin("57497554")
                 .touchpoint("CHECKOUT").primaryCreditorInstitution("7777777777").idPspList(List.of("pspId"));
 
         BundleOptionDto bundleOptionDto = new BundleOptionDto().belowThreshold(true).bundleOptions(
