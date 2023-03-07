@@ -1,8 +1,6 @@
 package it.pagopa.transactions.commands.handlers;
 
-import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionClosureData;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptAddedEvent;
+import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.Transaction;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionClosed;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
@@ -30,7 +28,7 @@ import java.util.Locale;
 public class TransactionAddUserReceiptHandler
         extends BaseHandler<TransactionAddUserReceiptCommand, Mono<TransactionUserReceiptAddedEvent>> {
 
-    private final TransactionsEventStoreRepository<Void> transactionEventStoreRepository;
+    private final TransactionsEventStoreRepository<TransactionUserReceiptData> transactionEventStoreRepository;
 
     private final NotificationsServiceClient notificationsServiceClient;
 
@@ -39,12 +37,12 @@ public class TransactionAddUserReceiptHandler
     @Autowired
     public TransactionAddUserReceiptHandler(
             TransactionsEventStoreRepository<Object> eventStoreRepository,
-            TransactionsEventStoreRepository<Void> transactionEventStoreRepository,
+            TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptAddedEventRepository,
             NotificationsServiceClient notificationsServiceClient,
             ConfidentialMailUtils confidentialMailUtils
     ) {
         super(eventStoreRepository);
-        this.transactionEventStoreRepository = transactionEventStoreRepository;
+        this.transactionEventStoreRepository = userReceiptAddedEventRepository;
         this.notificationsServiceClient = notificationsServiceClient;
         this.confidentialMailUtils = confidentialMailUtils;
     }
@@ -62,7 +60,7 @@ public class TransactionAddUserReceiptHandler
                                 "Error: requesting closure status update for transaction in state {}, Nodo closure outcome {}",
                                 t.getStatus(),
                                 t instanceof TransactionClosed transactionClosed
-                                        ? transactionClosed.getTransactionClosedEvent().getData().getResponseOutcome()
+                                        ? transactionClosed.getTransactionClosureData().getResponseOutcome()
                                         : "N/A"
                         )
                 )
@@ -75,21 +73,26 @@ public class TransactionAddUserReceiptHandler
                                 t instanceof TransactionClosed transactionClosed &&
                                 TransactionClosureData.Outcome.OK
                                         .equals(
-                                                transactionClosed.getTransactionClosedEvent().getData()
-                                                        .getResponseOutcome()
+                                                transactionClosed.getTransactionClosureData().getResponseOutcome()
                                         )
                 )
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(TransactionClosed.class)
                 .flatMap(tx -> {
                     AddUserReceiptRequestDto addUserReceiptRequestDto = command.getData().addUserReceiptRequest();
+                    String transactionId = command.getData().transaction().getTransactionId().value().toString();
                     TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
-                            command.getData().transaction().getTransactionId().value().toString()
+                            transactionId,
+                            new TransactionUserReceiptData(
+                                    requestOutcomeToReceiptOutcome(
+                                            command.getData().addUserReceiptRequest().getOutcome()
+                                    )
+                            )
                     );
 
                     String language = "it-IT"; // FIXME: Add language to AuthorizationRequestData
                     Mono<NotificationEmailResponseDto> emailResponse = Mono
-                            .just(command.getData().addUserReceiptRequest().getOutcome())
+                            .just(event.getData().getResponseOutcome())
                             .flatMap(status -> {
                                 switch (status) {
                                     case OK -> {
@@ -250,5 +253,14 @@ public class TransactionAddUserReceiptHandler
     ) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd LLLL yyyy, kk:mm:ss").withLocale(locale);
         return dateTime.format(formatter);
+    }
+
+    private static TransactionUserReceiptData.Outcome requestOutcomeToReceiptOutcome(
+                                                                                     AddUserReceiptRequestDto.OutcomeEnum requestOutcome
+    ) {
+        return switch (requestOutcome) {
+            case OK -> TransactionUserReceiptData.Outcome.OK;
+            case KO -> TransactionUserReceiptData.Outcome.KO;
+        };
     }
 }

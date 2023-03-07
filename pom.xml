@@ -16,7 +16,7 @@
         <java.version>17</java.version>
         <spring-cloud-azure.version>4.0.0</spring-cloud-azure.version>
         <jacoco.version>0.8.8</jacoco.version>
-        <pagopa-ecommerce-commons.version>0.7.3</pagopa-ecommerce-commons.version>
+        <pagopa-ecommerce-commons.version>0.8.3</pagopa-ecommerce-commons.version>
         <spotless.version>2.28.0</spotless.version>
     </properties>
     <dependencies>
