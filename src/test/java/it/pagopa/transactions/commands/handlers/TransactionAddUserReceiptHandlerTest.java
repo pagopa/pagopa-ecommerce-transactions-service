@@ -1,10 +1,10 @@
 package it.pagopa.transactions.commands.handlers;
 
-import it.pagopa.ecommerce.commons.documents.v1.Transaction;
+import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.*;
-import it.pagopa.ecommerce.commons.domain.Confidential;
-import it.pagopa.ecommerce.commons.domain.v1.PaymentNotice;
-import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.notifications.v1.dto.NotificationEmailResponseDto;
@@ -29,9 +29,10 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.OffsetDateTime;
-import java.util.List;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
+import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -42,7 +43,7 @@ class TransactionAddUserReceiptHandlerTest {
     private TransactionAddUserReceiptHandler updateStatusHandler;
 
     @Mock
-    private TransactionsEventStoreRepository<Void> transactionEventStoreRepository;
+    private TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptDataEventRepository;
 
     @Mock
     private TransactionsEventStoreRepository<Object> eventStoreRepository;
@@ -56,8 +57,6 @@ class TransactionAddUserReceiptHandlerTest {
     @Captor
     ArgumentCaptor<NotificationsServiceClient.KoTemplateRequest> koTemplateMailCaptor;
 
-    private final TransactionId transactionId = new TransactionId(UUID.randomUUID());
-
     private final ConfidentialMailUtils confidentialMailUtils = new ConfidentialMailUtils(
             TransactionTestUtils.confidentialDataManager
     );
@@ -66,7 +65,7 @@ class TransactionAddUserReceiptHandlerTest {
     private void initTest() {
         updateStatusHandler = new TransactionAddUserReceiptHandler(
                 eventStoreRepository,
-                transactionEventStoreRepository,
+                userReceiptDataEventRepository,
                 notificationsServiceClient,
                 confidentialMailUtils
         );
@@ -74,73 +73,12 @@ class TransactionAddUserReceiptHandlerTest {
 
     @Test
     void shouldSaveSuccessfulUpdateWithStatusClosed() throws Exception {
-        PaymentToken paymentToken = new PaymentToken("paymentToken");
-        RptId rptId = new RptId("77777777777111111111111111111");
-        TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
-        Confidential<Email> email = TransactionTestUtils.EMAIL;
-        String faultCode = "faultCode";
-        String faultCodeString = "faultCodeString";
-        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
+        TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
 
-        TransactionActivated transaction = new TransactionActivated(
-                transactionId,
-                List.of(
-                        new PaymentNotice(
-                                paymentToken,
-                                rptId,
-                                amount,
-                                description,
-                                nullPaymentContextCode
-                        )
-                ),
-                email,
-                faultCode,
-                faultCodeString,
-                Transaction.ClientId.CHECKOUT
-        );
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
 
-        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
-                new TransactionActivatedData(
-                        email,
-                        List.of(
-                                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
-                                        paymentToken.value(),
-                                        rptId.value(),
-                                        description.value(),
-                                        amount.value(),
-                                        nullPaymentContextCode.value()
-                                )
-                        ),
-                        faultCode,
-                        faultCodeString,
-                        Transaction.ClientId.CHECKOUT
-                )
-        );
-
-        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
-                new TransactionAuthorizationRequestData(
-                        amount.value(),
-                        10,
-                        "paymentInstrumentId",
-                        "pspId",
-                        "paymentTypeCode",
-                        "brokerName",
-                        "pspChannelCode",
-                        "paymentMethodName",
-                        "pspBusinessName",
-                        "authorizationRequestId"
-                )
-        );
-
-        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
-                new TransactionAuthorizationCompletedData(
-                        "authorizationCode",
-                        AuthorizationResultDto.OK
-                )
+        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
+                AuthorizationResultDto.OK
         );
 
         TransactionClosedEvent closureSentEvent = TransactionTestUtils
@@ -160,6 +98,8 @@ class TransactionAddUserReceiptHandlerTest {
                                 .officeName("officeName")
                 );
 
+        TransactionActivated transaction = transactionActivated(ZonedDateTime.now().toString());
+
         AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
                 transaction,
                 addUserReceiptRequest
@@ -170,8 +110,8 @@ class TransactionAddUserReceiptHandlerTest {
                 addUserReceiptData
         );
 
-        TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
-                transactionId.toString()
+        TransactionUserReceiptAddedEvent event = transactionUserReceiptAddedEvent(
+                TransactionUserReceiptData.Outcome.OK
         );
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(
@@ -182,8 +122,8 @@ class TransactionAddUserReceiptHandlerTest {
         ));
 
         /* preconditions */
-        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(eventStoreRepository.findByTransactionId(TRANSACTION_ID)).thenReturn(events);
         Mockito.when(notificationsServiceClient.sendSuccessEmail(successTemplateMailCaptor.capture()))
                 .thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
 
@@ -192,7 +132,7 @@ class TransactionAddUserReceiptHandlerTest {
                 .expectNext(event)
                 .verifyComplete();
 
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
                 argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_ADDED_EVENT
                                 .equals(eventArg.getEventCode())
@@ -200,80 +140,19 @@ class TransactionAddUserReceiptHandlerTest {
         );
         NotificationsServiceClient.SuccessTemplateRequest successTemplateRequest = successTemplateMailCaptor
                 .getAllValues().get(0);
-        String decryptedMail = TransactionTestUtils.confidentialDataManager.decrypt(email);
+        String decryptedMail = TransactionTestUtils.confidentialDataManager.decrypt(TransactionTestUtils.EMAIL);
         assertEquals(successTemplateRequest.to(), decryptedMail);
         assertEquals(successTemplateRequest.templateParameters().getUser().getEmail(), decryptedMail);
     }
 
     @Test
     void shouldSaveSuccessfulUpdateWithStatusClosureFailed() throws Exception {
-        PaymentToken paymentToken = new PaymentToken("paymentToken");
-        RptId rptId = new RptId("77777777777111111111111111111");
-        TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
-        Confidential<Email> email = TransactionTestUtils.EMAIL;
-        String faultCode = "faultCode";
-        String faultCodeString = "faultCodeString";
-        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
+        TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
 
-        TransactionActivated transaction = new TransactionActivated(
-                transactionId,
-                List.of(
-                        new PaymentNotice(
-                                paymentToken,
-                                rptId,
-                                amount,
-                                description,
-                                nullPaymentContextCode
-                        )
-                ),
-                email,
-                faultCode,
-                faultCodeString,
-                Transaction.ClientId.CHECKOUT
-        );
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
 
-        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
-                new TransactionActivatedData(
-                        email,
-                        List.of(
-                                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
-                                        paymentToken.value(),
-                                        rptId.value(),
-                                        description.value(),
-                                        amount.value(),
-                                        nullPaymentContextCode.value()
-                                )
-                        ),
-                        faultCode,
-                        faultCodeString,
-                        Transaction.ClientId.CHECKOUT
-                )
-        );
-
-        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
-                new TransactionAuthorizationRequestData(
-                        amount.value(),
-                        10,
-                        "paymentInstrumentId",
-                        "pspId",
-                        "paymentTypeCode",
-                        "brokerName",
-                        "pspChannelCode",
-                        "paymentMethodName",
-                        "pspBusinessName",
-                        "authorizationRequestId"
-                )
-        );
-
-        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
-                new TransactionAuthorizationCompletedData(
-                        "authorizationCode",
-                        AuthorizationResultDto.OK
-                )
+        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
+                AuthorizationResultDto.OK
         );
 
         TransactionClosedEvent closureSentEvent = TransactionTestUtils
@@ -293,6 +172,8 @@ class TransactionAddUserReceiptHandlerTest {
                                 .officeName("officeName")
                 );
 
+        TransactionActivated transaction = transactionActivated(ZonedDateTime.now().toString());
+
         AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
                 transaction,
                 addUserReceiptRequest
@@ -303,9 +184,8 @@ class TransactionAddUserReceiptHandlerTest {
                 addUserReceiptData
         );
 
-        TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
-                transactionId.toString()
-        );
+        TransactionUserReceiptAddedEvent event = TransactionTestUtils
+                .transactionUserReceiptAddedEvent(TransactionUserReceiptData.Outcome.OK);
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(
                 transactionActivatedEvent,
@@ -315,8 +195,8 @@ class TransactionAddUserReceiptHandlerTest {
         ));
 
         /* preconditions */
-        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(eventStoreRepository.findByTransactionId(TRANSACTION_ID)).thenReturn(events);
         Mockito.when(notificationsServiceClient.sendSuccessEmail(successTemplateMailCaptor.capture()))
                 .thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
 
@@ -325,7 +205,7 @@ class TransactionAddUserReceiptHandlerTest {
                 .expectNext(event)
                 .verifyComplete();
 
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
                 argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_ADDED_EVENT
                                 .equals(eventArg.getEventCode())
@@ -334,80 +214,19 @@ class TransactionAddUserReceiptHandlerTest {
         NotificationsServiceClient.SuccessTemplateRequest successTemplateRequest = successTemplateMailCaptor
                 .getAllValues().get(0);
 
-        String decryptedMail = TransactionTestUtils.confidentialDataManager.decrypt(email);
+        String decryptedMail = TransactionTestUtils.confidentialDataManager.decrypt(EMAIL);
         assertEquals(successTemplateRequest.to(), decryptedMail);
         assertEquals(successTemplateRequest.templateParameters().getUser().getEmail(), decryptedMail);
     }
 
     @Test
     void shouldSaveKoUpdate() throws Exception {
-        PaymentToken paymentToken = new PaymentToken("paymentToken");
-        RptId rptId = new RptId("77777777777111111111111111111");
-        TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
-        Confidential<Email> email = TransactionTestUtils.EMAIL;
-        String faultCode = "faultCode";
-        String faultCodeString = "faultCodeString";
-        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
+        TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
 
-        TransactionActivated transaction = new TransactionActivated(
-                transactionId,
-                List.of(
-                        new PaymentNotice(
-                                paymentToken,
-                                rptId,
-                                amount,
-                                description,
-                                nullPaymentContextCode
-                        )
-                ),
-                email,
-                faultCode,
-                faultCodeString,
-                Transaction.ClientId.CHECKOUT
-        );
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
 
-        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
-                new TransactionActivatedData(
-                        email,
-                        List.of(
-                                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
-                                        paymentToken.value(),
-                                        rptId.value(),
-                                        description.value(),
-                                        amount.value(),
-                                        nullPaymentContextCode.value()
-                                )
-                        ),
-                        faultCode,
-                        faultCodeString,
-                        Transaction.ClientId.CHECKOUT
-                )
-        );
-
-        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
-                new TransactionAuthorizationRequestData(
-                        amount.value(),
-                        10,
-                        "paymentInstrumentId",
-                        "pspId",
-                        "paymentTypeCode",
-                        "brokerName",
-                        "pspChannelCode",
-                        "paymentMethodName",
-                        "pspBusinessName",
-                        "authorizationRequestId"
-                )
-        );
-
-        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
-                new TransactionAuthorizationCompletedData(
-                        "authorizationCode",
-                        AuthorizationResultDto.OK
-                )
+        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
+                AuthorizationResultDto.OK
         );
 
         TransactionClosedEvent closureSentEvent = TransactionTestUtils
@@ -427,6 +246,8 @@ class TransactionAddUserReceiptHandlerTest {
                                 .officeName("officeName")
                 );
 
+        TransactionActivated transaction = transactionActivated(ZonedDateTime.now().toString());
+
         AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
                 transaction,
                 addUserReceiptRequest
@@ -437,8 +258,8 @@ class TransactionAddUserReceiptHandlerTest {
                 addUserReceiptData
         );
 
-        TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
-                transactionId.toString()
+        TransactionUserReceiptAddedEvent event = transactionUserReceiptAddedEvent(
+                TransactionUserReceiptData.Outcome.OK
         );
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(
@@ -449,8 +270,8 @@ class TransactionAddUserReceiptHandlerTest {
         ));
 
         /* preconditions */
-        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(eventStoreRepository.findByTransactionId(TRANSACTION_ID)).thenReturn(events);
         Mockito.when(notificationsServiceClient.sendKoEmail(koTemplateMailCaptor.capture()))
                 .thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
 
@@ -459,85 +280,24 @@ class TransactionAddUserReceiptHandlerTest {
                 .expectNext(event)
                 .verifyComplete();
 
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
                 argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_ADDED_EVENT
                                 .equals(eventArg.getEventCode())
                 )
         );
         NotificationsServiceClient.KoTemplateRequest koTemplateRequest = koTemplateMailCaptor.getAllValues().get(0);
-        assertEquals(koTemplateRequest.to(), TransactionTestUtils.confidentialDataManager.decrypt(email));
+        assertEquals(koTemplateRequest.to(), TransactionTestUtils.confidentialDataManager.decrypt(EMAIL));
     }
 
     @Test
     void shouldRejectTransactionInInvalidState() {
-        PaymentToken paymentToken = new PaymentToken("paymentToken");
-        RptId rptId = new RptId("77777777777111111111111111111");
-        TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
-        Confidential<Email> email = TransactionTestUtils.EMAIL;
-        String faultCode = "faultCode";
-        String faultCodeString = "faultCodeString";
-        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
+        TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
 
-        TransactionActivated transaction = new TransactionActivated(
-                transactionId,
-                List.of(
-                        new PaymentNotice(
-                                paymentToken,
-                                rptId,
-                                amount,
-                                description,
-                                nullPaymentContextCode
-                        )
-                ),
-                email,
-                faultCode,
-                faultCodeString,
-                Transaction.ClientId.CHECKOUT
-        );
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
 
-        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
-                new TransactionActivatedData(
-                        email,
-                        List.of(
-                                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
-                                        paymentToken.value(),
-                                        rptId.value(),
-                                        description.value(),
-                                        amount.value(),
-                                        nullPaymentContextCode.value()
-                                )
-                        ),
-                        faultCode,
-                        faultCodeString,
-                        Transaction.ClientId.CHECKOUT
-                )
-        );
-
-        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
-                new TransactionAuthorizationRequestData(
-                        amount.value(),
-                        10,
-                        "paymentInstrumentId",
-                        "pspId",
-                        "paymentTypeCode",
-                        "brokerName",
-                        "pspChannelCode",
-                        "paymentMethodName",
-                        "pspBusinessName",
-                        "authorizationRequestId"
-                )
-        );
-
-        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
-                new TransactionAuthorizationCompletedData(
-                        "authorizationCode",
-                        AuthorizationResultDto.OK
-                )
+        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
+                AuthorizationResultDto.OK
         );
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
@@ -554,6 +314,8 @@ class TransactionAddUserReceiptHandlerTest {
                                 .officeName("officeName")
                 );
 
+        TransactionActivated transaction = transactionActivated(ZonedDateTime.now().toString());
+
         AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
                 transaction,
                 addUserReceiptRequest
@@ -568,86 +330,26 @@ class TransactionAddUserReceiptHandlerTest {
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
         /* preconditions */
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(TRANSACTION_ID)).thenReturn(events);
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(requestStatusCommand))
                 .expectErrorMatches(error -> error instanceof AlreadyProcessedException)
                 .verify();
 
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(any());
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(any());
     }
 
     @Test
     void shouldRejectTransactionWithClosureOutcomeKO() {
-        PaymentToken paymentToken = new PaymentToken("paymentToken");
-        RptId rptId = new RptId("77777777777111111111111111111");
-        TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
-        Confidential<Email> email = TransactionTestUtils.EMAIL;
-        String faultCode = "faultCode";
-        String faultCodeString = "faultCodeString";
-        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
+        TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
 
-        TransactionActivated transaction = new TransactionActivated(
-                transactionId,
-                List.of(
-                        new PaymentNotice(
-                                paymentToken,
-                                rptId,
-                                amount,
-                                description,
-                                nullPaymentContextCode
-                        )
-                ),
-                email,
-                faultCode,
-                faultCodeString,
-                Transaction.ClientId.CHECKOUT
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
+
+        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
+                AuthorizationResultDto.OK
         );
 
-        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
-                new TransactionActivatedData(
-                        email,
-                        List.of(
-                                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
-                                        paymentToken.value(),
-                                        rptId.value(),
-                                        description.value(),
-                                        amount.value(),
-                                        nullPaymentContextCode.value()
-                                )
-                        ),
-                        faultCode,
-                        faultCodeString,
-                        Transaction.ClientId.CHECKOUT
-                )
-        );
-
-        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
-                new TransactionAuthorizationRequestData(
-                        amount.value(),
-                        10,
-                        "paymentInstrumentId",
-                        "pspId",
-                        "paymentTypeCode",
-                        "brokerName",
-                        "pspChannelCode",
-                        "paymentMethodName",
-                        "pspBusinessName",
-                        "authorizationRequestId"
-                )
-        );
-
-        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
-                new TransactionAuthorizationCompletedData(
-                        "authorizationCode",
-                        AuthorizationResultDto.OK
-                )
-        );
         TransactionClosedEvent closureSentEvent = TransactionTestUtils
                 .transactionClosedEvent(TransactionClosureData.Outcome.KO);
 
@@ -664,6 +366,8 @@ class TransactionAddUserReceiptHandlerTest {
                                 .fiscalCode("fiscalCode")
                                 .officeName("officeName")
                 );
+
+        TransactionActivated transaction = transactionActivated(ZonedDateTime.now().toString());
 
         AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
                 transaction,
@@ -684,13 +388,13 @@ class TransactionAddUserReceiptHandlerTest {
                 ));
 
         /* preconditions */
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(TRANSACTION_ID)).thenReturn(events);
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(requestStatusCommand))
                 .expectErrorMatches(error -> error instanceof AlreadyProcessedException)
                 .verify();
 
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(any());
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(any());
     }
 }

@@ -407,7 +407,8 @@ public class TransactionServiceTests {
         );
 
         TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
-                transactionDocument.getTransactionId()
+                transactionDocument.getTransactionId(),
+                new TransactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
         );
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
