@@ -11,17 +11,6 @@ services:
       - pagopa-ecommerce-net
     env_file: .env
 
-  pagopa-ecommerce-sessions-service:
-    container_name: pagopa-ecommerce-sessions-service
-    build:
-      context: .
-      dockerfile: Dockerfile.sessions-service
-    ports:
-        - "8082:8080"
-    networks:
-      - pagopa-ecommerce-net
-    env_file: .env
-
   pagopa-ecommerce-payment-instruments-service:
     container_name: pagopa-ecommerce-payment-instruments-service
     build:
