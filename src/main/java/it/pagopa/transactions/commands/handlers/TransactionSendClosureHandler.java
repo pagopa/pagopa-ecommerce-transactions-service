@@ -162,10 +162,10 @@ public class TransactionSendClosureHandler extends
                                     )
                             )
                             .flatMap(
-                                    event -> sendClosureEvent(
+                                    event -> sendRefundRequestEvent(
                                             event,
                                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
-                                    )
+                                    ).thenReturn(event)
                             )
                             .map(Either::<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>right)
                             .onErrorResume(exception -> {
@@ -257,17 +257,18 @@ public class TransactionSendClosureHandler extends
                                 }
                                 // Unrecoverable error calling Nodo for perform close payment.
                                 // Generate closure event setting closure outcome to KO
+                                // and enqueue refund request event
                                 return buildAndSaveClosureEvent(
                                         command,
                                         transactionAuthorizationCompletedData.getAuthorizationResultDto(),
                                         ClosePaymentResponseDto.OutcomeEnum.KO
                                 )
                                         .flatMap(
-                                                event -> sendClosureEvent(
+                                                event -> sendRefundRequestEvent(
                                                         event,
                                                         transactionAuthorizationCompletedData
                                                                 .getAuthorizationResultDto()
-                                                )
+                                                ).thenReturn(event)
                                         )
                                         .map(Either::right);
                             })
@@ -297,7 +298,7 @@ public class TransactionSendClosureHandler extends
         }
     }
 
-    private Mono<TransactionEvent<TransactionClosureData>> sendClosureEvent(
+    private Mono<TransactionRefundRequestedEvent> sendRefundRequestEvent(
                                                                             TransactionEvent<TransactionClosureData> closureEvent,
                                                                             AuthorizationResultDto authorizationResult
     ) {
@@ -309,14 +310,19 @@ public class TransactionSendClosureHandler extends
                         && AuthorizationResultDto.OK.equals(authorizationResult)
                 )
                 .flatMap(e -> {
-                    log.info("Enqueue transaction closed event: {}", e);
+                    log.info("Requesting refund for transaction {} as it was previously authorized but we either received KO response from Nodo or bad response", e.getTransactionId());
+                    TransactionRefundRequestedEvent refundRequestedEvent = new TransactionRefundRequestedEvent(
+                            e.getTransactionId(),
+                            new TransactionRefundedData(TransactionStatusDto.CLOSED)
+                    );
                     return transactionActivatedQueueAsyncClient
                             .sendMessageWithResponse(
-                                    BinaryData.fromObject(e),
-                                    null,
+                                    BinaryData.fromObject(refundRequestedEvent),
+                                    Duration.ZERO,
                                     null
-                            );
-                }).thenReturn(closureEvent);
+                            )
+                            .thenReturn(refundRequestedEvent);
+                });
     }
 
     private Mono<TransactionEvent<TransactionClosureData>> buildAndSaveClosureEvent(
