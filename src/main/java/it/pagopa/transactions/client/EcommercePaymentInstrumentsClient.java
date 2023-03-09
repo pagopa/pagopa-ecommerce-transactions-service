@@ -17,11 +17,12 @@ public class EcommercePaymentInstrumentsClient {
     private DefaultApi ecommercePaymentInstrumentsWebClient;
 
     public Mono<BundleOptionDto> calculateFee(
+                                              String paymentMethodId,
                                               PaymentOptionDto paymentOptionDto,
                                               Integer maxOccurrences
 
     ) {
-        return ecommercePaymentInstrumentsWebClient.calculateFees(paymentOptionDto, maxOccurrences);
+        return ecommercePaymentInstrumentsWebClient.calculateFees(paymentMethodId, paymentOptionDto, maxOccurrences);
     }
 
     public Mono<PaymentMethodResponseDto> getPaymentMethod(String paymentMethodId) {

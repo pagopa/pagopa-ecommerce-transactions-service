@@ -183,12 +183,10 @@ public class TransactionsService {
                                     .mapToInt(
                                             it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount
                                     ).sum();
-                            return ecommercePaymentInstrumentsClient // TODO gestione del carrello
+                            return ecommercePaymentInstrumentsClient
                                     .calculateFee(
+                                            requestAuthorizationRequestDto.getPaymentInstrumentId(),
                                             new PaymentOptionDto()
-                                                    .paymentMethod(
-                                                            requestAuthorizationRequestDto.getPaymentInstrumentId()
-                                                    )
                                                     .touchpoint(transaction.getClientId().toString())
                                                     .bin(
                                                             extractBinFromPan(requestAuthorizationRequestDto)

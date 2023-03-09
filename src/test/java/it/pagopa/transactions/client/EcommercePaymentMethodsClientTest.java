@@ -27,9 +27,10 @@ class EcommercePaymentMethodsClientTest {
 
     @Test
     void shouldReturnBundleList() {
+        String paymentMethodId = UUID.randomUUID().toString();
         Integer TEST_MAX_OCCURRERNCES = 10;
         PaymentOptionDto paymentOptionDto = new PaymentOptionDto()
-                .paymentMethod("paymentMethodId").paymentAmount(BigInteger.TEN.longValue()).bin("57497554")
+                .paymentAmount(BigInteger.TEN.longValue()).bin("57497554")
                 .touchpoint("CHECKOUT").primaryCreditorInstitution("7777777777").idPspList(List.of("pspId"));
 
         BundleOptionDto bundleOptionDto = new BundleOptionDto().belowThreshold(true).bundleOptions(
@@ -53,14 +54,17 @@ class EcommercePaymentMethodsClientTest {
         /**
          * preconditions
          */
-        when(ecommercePaymentInstrumentsWebClient.calculateFees(paymentOptionDto, TEST_MAX_OCCURRERNCES))
+        when(
+                ecommercePaymentInstrumentsWebClient
+                        .calculateFees(paymentMethodId, paymentOptionDto, TEST_MAX_OCCURRERNCES)
+        )
                 .thenReturn(Mono.just(bundleOptionDto));
 
         /**
          * test
          */
         BundleOptionDto bundleOptionDtoResponse = ecommercePaymentInstrumentsClient
-                .calculateFee(paymentOptionDto, TEST_MAX_OCCURRERNCES)
+                .calculateFee(paymentMethodId, paymentOptionDto, TEST_MAX_OCCURRERNCES)
                 .block();
 
         /**
@@ -78,7 +82,7 @@ class EcommercePaymentMethodsClientTest {
                 .description("")
                 .addRangesItem(new RangeDto().max(100L).min(0L))
                 .paymentTypeCode("PO")
-                .status(PaymentMethodResponseDto.StatusEnum.ENABLED)
+                .status(PaymentMethodStatusDto.ENABLED)
                 .id(TEST_ID)
                 .name("test");
 
