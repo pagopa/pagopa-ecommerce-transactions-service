@@ -173,55 +173,36 @@ public class TransactionsService {
                                     : Mono.just(transaction);
                         }
                 )
-                .flatMap(transaction -> {
-                    log.info(
-                            "Requesting payment instrument data for id {}",
-                            requestAuthorizationRequestDto.getPaymentInstrumentId()
-                    );
-                    return ecommercePaymentInstrumentsClient
-                            .getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId())
-                            .map(
-                                    paymentMethod -> Tuples
-                                            .of(
-                                                    transaction,
-                                                    paymentMethod
-                                            )
-                            );
-                })
                 .flatMap(
-                        transactionAndPaymentMethod -> {
+                        transaction -> {
                             log.info(
                                     "Authorization psp validation for transactionId: {}",
                                     transactionId
                             );
-                            Integer amountTotal = transactionAndPaymentMethod.getT1().getPaymentNotices().stream()
+                            Integer amountTotal = transaction.getPaymentNotices().stream()
                                     .mapToInt(
                                             it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount
                                     ).sum();
-                            return ecommercePaymentInstrumentsClient
+                            return ecommercePaymentInstrumentsClient // TODO gestione del carrello
                                     .calculateFee(
                                             new PaymentOptionDto()
                                                     .paymentMethod(
-                                                            transactionAndPaymentMethod.getT2().getPaymentTypeCode()
+                                                            requestAuthorizationRequestDto.getPaymentInstrumentId()
                                                     )
-                                                    .touchpoint(
-                                                            transactionAndPaymentMethod.getT1().getClientId().toString()
-                                                    )
+                                                    .touchpoint(transaction.getClientId().toString())
                                                     .bin(
                                                             extractBinFromPan(requestAuthorizationRequestDto)
                                                     )
                                                     .idPspList(List.of(requestAuthorizationRequestDto.getPspId()))
                                                     .paymentAmount(amountTotal.longValue())
                                                     .primaryCreditorInstitution(
-                                                            transactionAndPaymentMethod.getT1().getPaymentNotices()
-                                                                    .get(0).getRptId()
+                                                            transaction.getPaymentNotices().get(0).getRptId()
                                                                     .substring(0, 11)
                                                     )
                                                     .transferList(
                                                             List.of(
                                                                     new TransferListItemDto().creditorInstitution(
-                                                                            transactionAndPaymentMethod.getT1()
-                                                                                    .getPaymentNotices().get(0)
+                                                                            transaction.getPaymentNotices().get(0)
                                                                                     .getRptId().substring(0, 11)
                                                                     ).digitalStamp(false)
                                                             )
@@ -248,15 +229,25 @@ public class TransactionsService {
                                                     .findFirst()
                                                     .orElse(null)
                                     )
-                                    .map(
-                                            bundle -> Tuples.of(
-                                                    transactionAndPaymentMethod.getT1(),
-                                                    transactionAndPaymentMethod.getT2(),
-                                                    bundle
-                                            )
-                                    );
+                                    .map(bundle -> Tuples.of(transaction, bundle));
                         }
                 )
+                .flatMap(transactionAndPsp -> {
+                    log.info(
+                            "Requesting payment instrument data for id {}",
+                            requestAuthorizationRequestDto.getPaymentInstrumentId()
+                    );
+                    return ecommercePaymentInstrumentsClient
+                            .getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId())
+                            .map(
+                                    paymentMethod -> Tuples
+                                            .of(
+                                                    transactionAndPsp.getT1(),
+                                                    transactionAndPsp.getT2(),
+                                                    paymentMethod
+                                            )
+                            );
+                })
                 .switchIfEmpty(
                         Mono.error(
                                 new UnsatisfiablePspRequestException(
@@ -270,8 +261,8 @@ public class TransactionsService {
                         args -> {
                             it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument = args
                                     .getT1();
-                            TransferDto bundle = args.getT3();
-                            PaymentMethodResponseDto paymentMethod = args.getT2();
+                            TransferDto bundle = args.getT2();
+                            PaymentMethodResponseDto paymentMethod = args.getT3();
 
                             log.info(
                                     "Requesting authorization for transactionId: {}",
