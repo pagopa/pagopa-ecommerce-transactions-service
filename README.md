@@ -15,9 +15,6 @@ These are all environment variables needed by the application:
 | MONGO_PASSWORD                                                     | Password used for connecting to MongoDB instance                                       | string |         |
 | REDIS_HOST                                                         | Host where the redis instance used to persist idempotency keys can be found            | string |         |
 | REDIS_PASSWORD                                                     | Password used for connecting to Redis instance                                         | string |         |
-| ECOMMERCE_SESSIONS_URI                                             | eCommerce Sessions service connection URI                                              | string |         |
-| ECOMMERCE_SESSIONS_READ_TIMEOUT                                    | Timeout for requests towards eCommerce Sessions service                                | number |         |
-| ECOMMERCE_SESSIONS_CONNECTION_TIMEOUT                              | Timeout for establishing connections towards eCommerce Sessions service                | number |         |
 | PAYMENT_TRANSACTION_GATEWAY_URI                                    | Payment transactions gateway service connection URI                                    | string |         |
 | PAYMENT_TRANSACTION_GATEWAY_READ_TIMEOUT                           | Timeout for requests towards Payment transactions gateway service                      | number |         |
 | PAYMENT_TRANSACTION_GATEWAY_CONNECTION_TIMEOUT                     | Timeout for establishing connections towards Payment transactions gateway service      | number |         |
