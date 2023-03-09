@@ -65,7 +65,7 @@ class TransactionAddUserReceiptHandlerTest {
     );
 
     @Mock
-    private QueueAsyncClient transactionActivationsQueueClient;
+    private QueueAsyncClient transactionRefundQueueClient;
 
     @BeforeEach
     private void initTest() {
@@ -75,7 +75,7 @@ class TransactionAddUserReceiptHandlerTest {
                 refundedRequestedEventStoreRepository,
                 notificationsServiceClient,
                 confidentialMailUtils,
-                transactionActivationsQueueClient
+                transactionRefundQueueClient
         );
     }
 
@@ -283,7 +283,7 @@ class TransactionAddUserReceiptHandlerTest {
         Mockito.when(notificationsServiceClient.sendKoEmail(koTemplateMailCaptor.capture()))
                 .thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
         Mockito.when(refundedRequestedEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
-        Mockito.when(transactionActivationsQueueClient.sendMessage(any(BinaryData.class)))
+        Mockito.when(transactionRefundQueueClient.sendMessage(any(BinaryData.class)))
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESULT);
 
         /* test */

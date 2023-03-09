@@ -38,7 +38,7 @@ public class TransactionAddUserReceiptHandler
 
     private final ConfidentialMailUtils confidentialMailUtils;
 
-    private final QueueAsyncClient transactionActivationsQueueClient;
+    private final QueueAsyncClient transactionRefundQueueClient;
 
     @Autowired
     public TransactionAddUserReceiptHandler(
@@ -47,14 +47,14 @@ public class TransactionAddUserReceiptHandler
             TransactionsEventStoreRepository<TransactionRefundedData> refundedRequestedEventStoreRepository,
             NotificationsServiceClient notificationsServiceClient,
             ConfidentialMailUtils confidentialMailUtils,
-            @Qualifier("transactionActivatedQueueAsyncClient") QueueAsyncClient transactionActivationsQueueClient
+            @Qualifier("transactionRefundQueueAsyncClient") QueueAsyncClient transactionRefundQueueClient
     ) {
         super(eventStoreRepository);
         this.userReceiptAddedEventRepository = userReceiptAddedEventRepository;
         this.refundedDataTransactionsEventStoreRepository = refundedRequestedEventStoreRepository;
         this.notificationsServiceClient = notificationsServiceClient;
         this.confidentialMailUtils = confidentialMailUtils;
-        this.transactionActivationsQueueClient = transactionActivationsQueueClient;
+        this.transactionRefundQueueClient = transactionRefundQueueClient;
     }
 
     @Override
@@ -134,7 +134,7 @@ public class TransactionAddUserReceiptHandler
 
                                     return refundedDataTransactionsEventStoreRepository.save(refundRequestedEvent)
                                             .then(
-                                                    transactionActivationsQueueClient
+                                                    transactionRefundQueueClient
                                                             .sendMessage(BinaryData.fromObject(refundRequestedEvent))
                                             )
                                             .thenReturn(e);

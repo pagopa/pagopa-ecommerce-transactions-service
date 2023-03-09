@@ -42,6 +42,24 @@ public class AzureStorageConfig {
         return queueAsyncClient;
     }
 
+    @Bean("transactionRefundQueueAsyncClient")
+    @Qualifier
+    public QueueAsyncClient transactionRefundQueueAsyncClient(
+                                                              @Value(
+                                                                  "${azurestorage.connectionstring}"
+                                                              ) String storageConnectionString,
+                                                              @Value(
+                                                                  "${azurestorage.queues.transactionrefund.name}"
+                                                              ) String queueName
+    ) {
+        QueueAsyncClient queueAsyncClient = new QueueClientBuilder()
+                .connectionString(storageConnectionString)
+                .queueName(queueName)
+                .buildAsyncClient();
+        queueAsyncClient.createIfNotExists().block();
+        return queueAsyncClient;
+    }
+
     @Bean("transactionClosureSentEventQueueAsyncClient")
     public QueueAsyncClient transactionClosureSentEventQueueAsyncClient(
                                                                         @Value(
