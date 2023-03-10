@@ -207,60 +207,52 @@ public class TransactionsService {
                                                     ),
                                             null
                                     )
-                                    .mapNotNull(el -> el.getBundleOptions() != null ? (el.getBundleOptions()) : null)
-                                    .mapNotNull(
-                                            fee -> fee.stream()
-                                                    .filter(
-                                                            psp -> psp.getIdPsp()
-                                                                    .equals(
-                                                                            requestAuthorizationRequestDto
-                                                                                    .getPspId()
-                                                                    )
-                                                                    && psp.getTaxPayerFee()
+                                    .map(
+                                            calculateFeeResponse -> Tuples.of(
+                                                    calculateFeeResponse.getPaymentMethodName(),
+                                                    calculateFeeResponse.getBundleOptions().stream()
+                                                            .filter(
+                                                                    psp -> psp.getIdPsp()
                                                                             .equals(
-                                                                                    Long.valueOf(
-                                                                                            requestAuthorizationRequestDto
-                                                                                                    .getFee()
-                                                                                    )
+                                                                                    requestAuthorizationRequestDto
+                                                                                            .getPspId()
                                                                             )
-                                                    )
-                                                    .findFirst()
-                                                    .orElse(null)
+                                                                            && psp.getTaxPayerFee()
+                                                                                    .equals(
+                                                                                            Long.valueOf(
+                                                                                                    requestAuthorizationRequestDto
+                                                                                                            .getFee()
+                                                                                            )
+                                                                                    )
+                                                            ).findFirst()
+                                            )
                                     )
-                                    .map(bundle -> Tuples.of(transaction, bundle));
+                                    .map(
+                                            t -> Tuples.of(
+                                                    transaction,
+                                                    t.getT1(),
+                                                    t.getT2().isPresent() ? t.getT2().get() : Mono.empty()
+                                            )
+
+                                    )
+                                    .switchIfEmpty(
+                                            Mono.error(
+                                                    new UnsatisfiablePspRequestException(
+                                                            new PaymentToken(transactionId),
+                                                            requestAuthorizationRequestDto.getLanguage(),
+                                                            requestAuthorizationRequestDto.getFee()
+                                                    )
+                                            )
+                                    );
                         }
                 )
-                .flatMap(transactionAndPsp -> {
-                    log.info(
-                            "Requesting payment instrument data for id {}",
-                            requestAuthorizationRequestDto.getPaymentInstrumentId()
-                    );
-                    return ecommercePaymentInstrumentsClient
-                            .getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId())
-                            .map(
-                                    paymentMethod -> Tuples
-                                            .of(
-                                                    transactionAndPsp.getT1(),
-                                                    transactionAndPsp.getT2(),
-                                                    paymentMethod
-                                            )
-                            );
-                })
-                .switchIfEmpty(
-                        Mono.error(
-                                new UnsatisfiablePspRequestException(
-                                        new PaymentToken(transactionId),
-                                        requestAuthorizationRequestDto.getLanguage(),
-                                        requestAuthorizationRequestDto.getFee()
-                                )
-                        )
-                )
+
                 .flatMap(
                         args -> {
                             it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument = args
                                     .getT1();
-                            TransferDto bundle = args.getT2();
-                            PaymentMethodResponseDto paymentMethod = args.getT3();
+                            TransferDto bundle = (TransferDto) args.getT3();
+                            String paymentMethodName = args.getT2();
 
                             log.info(
                                     "Requesting authorization for transactionId: {}",
@@ -304,7 +296,7 @@ public class TransactionsService {
                                     bundle.getPaymentMethod(),
                                     bundle.getIdBrokerPsp(),
                                     bundle.getIdChannel(),
-                                    paymentMethod.getName(),
+                                    paymentMethodName,
                                     bundle.getBundleName(),
                                     paymentGatewayId,
                                     requestAuthorizationRequestDto.getDetails()
