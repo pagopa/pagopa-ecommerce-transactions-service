@@ -227,14 +227,7 @@ public class TransactionsService {
                                                             ).findFirst()
                                             )
                                     )
-                                    .map(
-                                            t -> Tuples.of(
-                                                    transaction,
-                                                    t.getT1(),
-                                                    t.getT2().isPresent() ? t.getT2().get() : Mono.empty()
-                                            )
-
-                                    )
+                                    .filter(t -> t.getT2().isPresent())
                                     .switchIfEmpty(
                                             Mono.error(
                                                     new UnsatisfiablePspRequestException(
@@ -243,15 +236,22 @@ public class TransactionsService {
                                                             requestAuthorizationRequestDto.getFee()
                                                     )
                                             )
+                                    )
+                                    .map(
+                                            t -> Tuples.of(
+                                                    transaction,
+                                                    t.getT1(),
+                                                    t.getT2().get()
+                                            )
+
                                     );
                         }
                 )
-
                 .flatMap(
                         args -> {
                             it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument = args
                                     .getT1();
-                            TransferDto bundle = (TransferDto) args.getT3();
+                            TransferDto bundle = args.getT3();
                             String paymentMethodName = args.getT2();
 
                             log.info(
