@@ -1,10 +1,10 @@
 package it.pagopa.transactions.commands.handlers;
 
+import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
-import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.notifications.v1.dto.NotificationEmailResponseDto;
@@ -16,6 +16,7 @@ import it.pagopa.transactions.commands.data.AddUserReceiptData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
+import it.pagopa.transactions.utils.Queues;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,7 +31,6 @@ import reactor.test.StepVerifier;
 
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
-import java.util.UUID;
 
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -44,6 +44,9 @@ class TransactionAddUserReceiptHandlerTest {
 
     @Mock
     private TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptDataEventRepository;
+
+    @Mock
+    TransactionsEventStoreRepository<TransactionRefundedData> refundedRequestedEventStoreRepository;
 
     @Mock
     private TransactionsEventStoreRepository<Object> eventStoreRepository;
@@ -61,13 +64,18 @@ class TransactionAddUserReceiptHandlerTest {
             TransactionTestUtils.confidentialDataManager
     );
 
+    @Mock
+    private QueueAsyncClient transactionRefundQueueClient;
+
     @BeforeEach
     private void initTest() {
         updateStatusHandler = new TransactionAddUserReceiptHandler(
                 eventStoreRepository,
                 userReceiptDataEventRepository,
+                refundedRequestedEventStoreRepository,
                 notificationsServiceClient,
-                confidentialMailUtils
+                confidentialMailUtils,
+                transactionRefundQueueClient
         );
     }
 
@@ -274,6 +282,9 @@ class TransactionAddUserReceiptHandlerTest {
         Mockito.when(eventStoreRepository.findByTransactionId(TRANSACTION_ID)).thenReturn(events);
         Mockito.when(notificationsServiceClient.sendKoEmail(koTemplateMailCaptor.capture()))
                 .thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
+        Mockito.when(refundedRequestedEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
+        Mockito.when(transactionRefundQueueClient.sendMessage(any(BinaryData.class)))
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESULT);
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(transactionAddUserReceiptCommand))

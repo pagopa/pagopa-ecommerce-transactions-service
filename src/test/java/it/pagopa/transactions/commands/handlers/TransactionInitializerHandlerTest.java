@@ -1,11 +1,7 @@
 package it.pagopa.transactions.commands.handlers;
 
-import com.azure.core.http.HttpHeaders;
-import com.azure.core.http.HttpRequest;
-import com.azure.core.http.rest.Response;
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
-import com.azure.storage.queue.models.SendMessageResult;
 import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
@@ -28,6 +24,7 @@ import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.JwtTokenUtils;
 import it.pagopa.transactions.utils.NodoOperations;
+import it.pagopa.transactions.utils.Queues;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -43,7 +40,6 @@ import javax.crypto.NoSuchPaddingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -150,7 +146,7 @@ class TransactionInitializerHandlerTest {
                         any()
                 )
         )
-                .thenReturn(queueSuccessfulResponse());
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
         Mockito.when(jwtTokenUtils.generateToken(any()))
                 .thenReturn(Mono.just("authToken"));
         ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
@@ -228,7 +224,7 @@ class TransactionInitializerHandlerTest {
                         any()
                 )
         )
-                .thenReturn(queueSuccessfulResponse());
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
         Mockito.when(jwtTokenUtils.generateToken(any()))
                 .thenReturn(Mono.error(new JWTTokenGenerationException()));
         ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
@@ -326,32 +322,6 @@ class TransactionInitializerHandlerTest {
 
     }
 
-    private Mono<Response<SendMessageResult>> queueSuccessfulResponse() {
-        return Mono.just(
-                new Response<>() {
-                    @Override
-                    public int getStatusCode() {
-                        return 200;
-                    }
-
-                    @Override
-                    public HttpHeaders getHeaders() {
-                        return new HttpHeaders();
-                    }
-
-                    @Override
-                    public HttpRequest getRequest() {
-                        return null;
-                    }
-
-                    @Override
-                    public SendMessageResult getValue() {
-                        return new SendMessageResult();
-                    }
-                }
-        );
-    }
-
     @Test
     void shouldHandleCommandForOnlyIdempotencyKeyCachedPaymentRequest()
             throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException,
@@ -423,7 +393,7 @@ class TransactionInitializerHandlerTest {
                         any()
                 )
         )
-                .thenReturn(queueSuccessfulResponse());
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
 
         ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
         /* run test */
@@ -507,7 +477,7 @@ class TransactionInitializerHandlerTest {
                         any()
                 )
         )
-                .thenReturn(queueSuccessfulResponse());
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
 
         ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
         /* run test */
