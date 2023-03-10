@@ -305,7 +305,7 @@ public class TransactionSendClosureHandler extends
                 .filter(
                         e -> e.fold(
                                 closureErrorEvent -> true,
-                                // Closed event sent on the queue only if the transaction was previously
+                                // Refund requested event sent on the queue only if the transaction was previously
                                 // authorized and the Nodo response outcome is KO
                                 closureEvent -> TransactionClosureData.Outcome.KO
                                         .equals(closureEvent.getData().getResponseOutcome())
