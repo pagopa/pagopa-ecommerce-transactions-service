@@ -207,6 +207,13 @@ public class TransactionsService {
                                                     ),
                                             null
                                     )
+                                    .onErrorMap(
+                                            err -> new UnsatisfiablePspRequestException(
+                                                    new PaymentToken(transactionId),
+                                                    requestAuthorizationRequestDto.getLanguage(),
+                                                    requestAuthorizationRequestDto.getFee()
+                                            )
+                                    )
                                     .map(
                                             calculateFeeResponse -> Tuples.of(
                                                     calculateFeeResponse.getPaymentMethodName(),
