@@ -38,8 +38,6 @@ microservice-chart:
       NOTIFICATIONS_SERVICE_URI: https://api.uat.platform.pagopa.it/ecommerce/notifications-service/v1
       NOTIFICATIONS_SERVICE_READ_TIMEOUT: "10000"
       NOTIFICATIONS_SERVICE_CONNECTION_TIMEOUT: "10000"
-      TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_NAME: transaction-events
-      TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_VISIBILITY_TIMEOUT: "600"
       TRANSACTION_EXPIRATION_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-expiration-queue
       TRANSACTION_CLOSEPAYMENT_RETRY_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-close-payment-retry-queue
       TRANSACTION_REFUND_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-refund-queue
@@ -142,8 +140,6 @@ microservice-chart:
     NOTIFICATIONS_SERVICE_URI: https://api.uat.platform.pagopa.it/ecommerce/notifications-service/v1
     NOTIFICATIONS_SERVICE_READ_TIMEOUT: "10000"
     NOTIFICATIONS_SERVICE_CONNECTION_TIMEOUT: "10000"
-    TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_NAME: transaction-events
-    TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_VISIBILITY_TIMEOUT: "600"
     TRANSACTION_EXPIRATION_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-expiration-queue
     TRANSACTION_CLOSEPAYMENT_RETRY_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-close-payment-retry-queue
     TRANSACTION_REFUND_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-refund-queue

@@ -45,7 +45,7 @@ public class TransactionSendClosureHandler extends
 
     private final NodeForPspClient nodeForPspClient;
 
-    private final QueueAsyncClient transactionClosureSentEventQueueClient;
+    private final QueueAsyncClient closureRetryQueueAsyncClient;
 
     private final Integer paymentTokenValidity;
 
@@ -63,8 +63,8 @@ public class TransactionSendClosureHandler extends
             TransactionsEventStoreRepository<Object> eventStoreRepository,
             NodeForPspClient nodeForPspClient,
             @Qualifier(
-                "transactionClosureSentEventQueueAsyncClient"
-            ) QueueAsyncClient transactionClosureSentEventQueueClient,
+                "transactionClosureRetryQueueAsyncClient"
+            ) QueueAsyncClient closureRetryQueueAsyncClient,
             @Value("${payment.token.validity}") Integer paymentTokenValidity,
             @Value("${transactions.ecommerce.retry.offset}") Integer softTimeoutOffset,
             @Value("${transactions.closure_handler.retry_interval}") Integer retryTimeoutInterval,
@@ -75,7 +75,7 @@ public class TransactionSendClosureHandler extends
         this.transactionClosureErrorEventStoreRepository = transactionClosureErrorEventStoreRepository;
         this.paymentRequestsInfoRepository = paymentRequestsInfoRepository;
         this.nodeForPspClient = nodeForPspClient;
-        this.transactionClosureSentEventQueueClient = transactionClosureSentEventQueueClient;
+        this.closureRetryQueueAsyncClient = closureRetryQueueAsyncClient;
         this.paymentTokenValidity = paymentTokenValidity;
         this.softTimeoutOffset = softTimeoutOffset;
         this.retryTimeoutInterval = retryTimeoutInterval;
@@ -239,7 +239,7 @@ public class TransactionSendClosureHandler extends
 
                                         eventSaved = eventSaved
                                                 .flatMap(
-                                                        e -> transactionClosureSentEventQueueClient
+                                                        e -> closureRetryQueueAsyncClient
                                                                 .sendMessageWithResponse(
                                                                         BinaryData.fromObject(e),
                                                                         visibilityTimeout,
