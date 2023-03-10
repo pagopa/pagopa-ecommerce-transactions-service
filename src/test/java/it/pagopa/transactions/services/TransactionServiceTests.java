@@ -188,6 +188,8 @@ public class TransactionServiceTests {
         /* preconditions */
         BundleOptionDto bundleOptionDto = new BundleOptionDto()
                 .belowThreshold(true)
+                .paymentMethodName("PaymentMethodName")
+                .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
                 .bundleOptions(
                         List.of(
                                 new TransferDto()
@@ -513,6 +515,8 @@ public class TransactionServiceTests {
         /* preconditions */
         BundleOptionDto bundleOptionDto = new BundleOptionDto()
                 .belowThreshold(true)
+                .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
+                .paymentMethodName("paymentMethodName")
                 .bundleOptions(
                         List.of(
                                 new TransferDto()
