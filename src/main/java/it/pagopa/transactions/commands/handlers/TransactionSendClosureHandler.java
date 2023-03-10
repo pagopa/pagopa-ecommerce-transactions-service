@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuples;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -305,7 +306,8 @@ public class TransactionSendClosureHandler extends
                 .filter(
                         e -> e.fold(
                                 closureErrorEvent -> true,
-                                // Refund requested event sent on the queue only if the transaction was previously
+                                // Refund requested event sent on the queue only if the transaction was
+                                // previously
                                 // authorized and the Nodo response outcome is KO
                                 closureEvent -> TransactionClosureData.Outcome.KO
                                         .equals(closureEvent.getData().getResponseOutcome())
@@ -319,7 +321,10 @@ public class TransactionSendClosureHandler extends
                                             "Requesting refund for transaction {} because of bad or no response from Nodo",
                                             closureErrorEvent.getTransactionId()
                                     );
-                                    return closureErrorEvent.getTransactionId();
+                                    return Tuples.of(
+                                            closureErrorEvent.getTransactionId(),
+                                            TransactionStatusDto.CLOSURE_ERROR
+                                    );
                                 },
 
                                 closureEvent -> {
@@ -327,14 +332,16 @@ public class TransactionSendClosureHandler extends
                                             "Requesting refund for transaction {} as it was previously authorized but we either received KO response from Nodo",
                                             closureEvent.getTransactionId()
                                     );
-                                    return closureEvent.getTransactionId();
+                                    return Tuples.of(closureEvent.getTransactionId(), TransactionStatusDto.CLOSED);
                                 }
                         )
                 )
-                .flatMap(transactionId -> {
+                .flatMap(data -> {
+                    String transactionId = data.getT1();
+                    TransactionStatusDto previousStatus = data.getT2();
                     TransactionRefundRequestedEvent refundRequestedEvent = new TransactionRefundRequestedEvent(
                             transactionId,
-                            new TransactionRefundedData(TransactionStatusDto.CLOSED)
+                            new TransactionRefundedData(previousStatus)
                     );
                     return refundQueueAsyncClient
                             .sendMessageWithResponse(
