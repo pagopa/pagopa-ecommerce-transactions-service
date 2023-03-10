@@ -29,13 +29,13 @@ class EcommercePaymentMethodsClientTest {
     void shouldReturnBundleList() {
         String paymentMethodId = UUID.randomUUID().toString();
         Integer TEST_MAX_OCCURRERNCES = 10;
-        PaymentOptionDto paymentOptionDto = new PaymentOptionDto()
+        CalculateFeeRequestDto calculateFeeRequestDto = new CalculateFeeRequestDto()
                 .paymentAmount(BigInteger.TEN.longValue()).bin("57497554")
                 .touchpoint("CHECKOUT").primaryCreditorInstitution("7777777777").idPspList(List.of("pspId"));
 
-        BundleOptionDto bundleOptionDto = new BundleOptionDto().belowThreshold(true).bundleOptions(
+        CalculateFeeResponseDto bundleOptionDto = new CalculateFeeResponseDto().belowThreshold(true).bundles(
                 List.of(
-                        new TransferDto().abi("abiTest")
+                        new BundleDto().abi("abiTest")
                                 .bundleDescription("descriptionTest")
                                 .bundleName("bundleNameTest")
                                 .idBrokerPsp("idBrokerPspTest")
@@ -56,21 +56,21 @@ class EcommercePaymentMethodsClientTest {
          */
         when(
                 ecommercePaymentInstrumentsWebClient
-                        .calculateFees(paymentMethodId, paymentOptionDto, TEST_MAX_OCCURRERNCES)
+                        .calculateFees(paymentMethodId, calculateFeeRequestDto, TEST_MAX_OCCURRERNCES)
         )
                 .thenReturn(Mono.just(bundleOptionDto));
 
         /**
          * test
          */
-        BundleOptionDto bundleOptionDtoResponse = ecommercePaymentInstrumentsClient
-                .calculateFee(paymentMethodId, paymentOptionDto, TEST_MAX_OCCURRERNCES)
+        CalculateFeeResponseDto calculateFeeResponseDto = ecommercePaymentInstrumentsClient
+                .calculateFee(paymentMethodId, calculateFeeRequestDto, TEST_MAX_OCCURRERNCES)
                 .block();
 
         /**
          * asserts
          */
-        assertThat(bundleOptionDtoResponse).isEqualTo(bundleOptionDto);
+        assertThat(calculateFeeResponseDto).isEqualTo(bundleOptionDto);
     }
 
     @Test

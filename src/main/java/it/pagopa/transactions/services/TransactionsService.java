@@ -5,10 +5,7 @@ import io.github.resilience4j.retry.annotation.Retry;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.v1.*;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PaymentMethodResponseDto;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PaymentOptionDto;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.TransferDto;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.TransferListItemDto;
+import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.*;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.commands.*;
@@ -186,7 +183,7 @@ public class TransactionsService {
                             return ecommercePaymentInstrumentsClient
                                     .calculateFee(
                                             requestAuthorizationRequestDto.getPaymentInstrumentId(),
-                                            new PaymentOptionDto()
+                                            new CalculateFeeRequestDto()
                                                     .touchpoint(transaction.getClientId().toString())
                                                     .bin(
                                                             extractBinFromPan(requestAuthorizationRequestDto)
@@ -210,7 +207,7 @@ public class TransactionsService {
                                     .map(
                                             calculateFeeResponse -> Tuples.of(
                                                     calculateFeeResponse.getPaymentMethodName(),
-                                                    calculateFeeResponse.getBundleOptions().stream()
+                                                    calculateFeeResponse.getBundles().stream()
                                                             .filter(
                                                                     psp -> psp.getIdPsp()
                                                                             .equals(
@@ -251,7 +248,7 @@ public class TransactionsService {
                         args -> {
                             it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument = args
                                     .getT1();
-                            TransferDto bundle = args.getT3();
+                            BundleDto bundle = args.getT3();
                             String paymentMethodName = args.getT2();
 
                             log.info(

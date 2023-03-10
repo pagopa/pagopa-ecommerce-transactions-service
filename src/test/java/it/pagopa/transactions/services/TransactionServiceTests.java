@@ -186,13 +186,13 @@ public class TransactionServiceTests {
         );
 
         /* preconditions */
-        BundleOptionDto bundleOptionDto = new BundleOptionDto()
+        CalculateFeeResponseDto calculateFeeResponseDto = new CalculateFeeResponseDto()
                 .belowThreshold(true)
                 .paymentMethodName("PaymentMethodName")
                 .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
-                .bundleOptions(
+                .bundles(
                         List.of(
-                                new TransferDto()
+                                new BundleDto()
                                         .idPsp("PSP_CODE")
                                         .taxPayerFee(200l)
                         )
@@ -215,7 +215,7 @@ public class TransactionServiceTests {
                 .authorizationUrl(postePayAuthResponseEntityDto.getUrlRedirect());
 
         Mockito.when(ecommercePaymentInstrumentsClient.calculateFee(any(), any(), any())).thenReturn(
-                Mono.just(bundleOptionDto)
+                Mono.just(calculateFeeResponseDto)
         );
 
         Mockito.when(ecommercePaymentInstrumentsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
@@ -513,13 +513,13 @@ public class TransactionServiceTests {
         );
 
         /* preconditions */
-        BundleOptionDto bundleOptionDto = new BundleOptionDto()
+        CalculateFeeResponseDto calculateFeeResponseDto = new CalculateFeeResponseDto()
                 .belowThreshold(true)
                 .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
                 .paymentMethodName("paymentMethodName")
-                .bundleOptions(
+                .bundles(
                         List.of(
-                                new TransferDto()
+                                new BundleDto()
                                         .idPsp("PSP_CODE")
                                         .taxPayerFee(200l)
                         )
@@ -542,7 +542,7 @@ public class TransactionServiceTests {
                 .authorizationUrl(gatewayResponse.getUrlRedirect());
 
         Mockito.when(ecommercePaymentInstrumentsClient.calculateFee(any(), any(), any())).thenReturn(
-                Mono.just(bundleOptionDto)
+                Mono.just(calculateFeeResponseDto)
         );
 
         Mockito.when(ecommercePaymentInstrumentsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
@@ -591,11 +591,11 @@ public class TransactionServiceTests {
                 ZonedDateTime.now()
         );
 
-        BundleOptionDto bundleOptionDto = new BundleOptionDto()
+        CalculateFeeResponseDto calculateFeeResponseDto = new CalculateFeeResponseDto()
                 .belowThreshold(true)
-                .bundleOptions(
+                .bundles(
                         List.of(
-                                new TransferDto()
+                                new BundleDto()
                                         .idPsp("PSP_CODE")
                                         .taxPayerFee(200l)
                         )
@@ -618,7 +618,7 @@ public class TransactionServiceTests {
                 .authorizationUrl(gatewayResponse.getUrlRedirect());
 
         Mockito.when(ecommercePaymentInstrumentsClient.calculateFee(any(), any(), any())).thenReturn(
-                Mono.just(bundleOptionDto)
+                Mono.just(calculateFeeResponseDto)
         );
 
         Mockito.when(ecommercePaymentInstrumentsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));

@@ -1,9 +1,7 @@
 package it.pagopa.transactions.client;
 
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.api.DefaultApi;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.BundleOptionDto;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PaymentMethodResponseDto;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PaymentOptionDto;
+import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.*;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,13 +18,14 @@ public class EcommercePaymentInstrumentsClient {
     @Qualifier("ecommercePaymentInstrumentsWebClient")
     private DefaultApi ecommercePaymentInstrumentsWebClient;
 
-    public Mono<BundleOptionDto> calculateFee(
-                                              String paymentMethodId,
-                                              PaymentOptionDto paymentOptionDto,
-                                              Integer maxOccurrences
+    public Mono<CalculateFeeResponseDto> calculateFee(
+                                                      String paymentMethodId,
+                                                      CalculateFeeRequestDto calculateFeeRequestDto,
+                                                      Integer maxOccurrences
 
     ) {
-        return ecommercePaymentInstrumentsWebClient.calculateFees(paymentMethodId, paymentOptionDto, maxOccurrences)
+        return ecommercePaymentInstrumentsWebClient
+                .calculateFees(paymentMethodId, calculateFeeRequestDto, maxOccurrences)
                 .doOnError(
                         WebClientResponseException.class,
                         e -> log.info(
