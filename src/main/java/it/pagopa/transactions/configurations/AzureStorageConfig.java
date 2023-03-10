@@ -31,7 +31,7 @@ public class AzureStorageConfig {
                                                                      "${azurestorage.connectionstring}"
                                                                  ) String storageConnectionString,
                                                                  @Value(
-                                                                     "${azurestorage.queues.transactionactivatedevents.name}"
+                                                                     "${azurestorage.queues.transactionexpiration.name}"
                                                                  ) String queueName
     ) {
         QueueAsyncClient queueAsyncClient = new QueueClientBuilder()
