@@ -27,6 +27,17 @@ public class AzureStorageConfig {
         return queueAsyncClient;
     }
 
+    /*
+     * @formatter:off
+     *
+     * Warning java:S4144 - Methods should not have identical implementations
+     * Implementation identical to the other queue initialization methods.
+     * Suppressed because the method takes a different injected `@Value` parameter, so it's not identical
+     * even though SonarCloud flags it as so.
+     *
+     * @formatter:on
+     */
+    @SuppressWarnings("java:S4144")
     @Bean("transactionRefundQueueAsyncClient")
     @Qualifier
     public QueueAsyncClient transactionRefundQueueAsyncClient(
@@ -45,6 +56,17 @@ public class AzureStorageConfig {
         return queueAsyncClient;
     }
 
+    /*
+     * @formatter:off
+     *
+     * Warning java:S4144 - Methods should not have identical implementations
+     * Implementation identical to the other queue initialization methods.
+     * Suppressed because the method takes a different injected `@Value` parameter, so it's not identical
+     * even though SonarCloud flags it as so.
+     *
+     * @formatter:on
+     */
+    @SuppressWarnings("java:S4144")
     @Bean("transactionClosureRetryQueueAsyncClient")
     public QueueAsyncClient transactionClosureRetryQueueAsyncClient(
                                                                     @Value(
