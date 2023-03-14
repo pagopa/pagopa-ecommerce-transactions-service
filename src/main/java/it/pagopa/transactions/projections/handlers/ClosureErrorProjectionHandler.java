@@ -24,7 +24,7 @@ public class ClosureErrorProjectionHandler
                         Mono.error(new TransactionNotFoundException(event.getTransactionId()))
                 )
                 .flatMap(transactionDocument -> {
-                    transactionDocument.setStatus(TransactionStatusDto.CLOSURE_ERROR);
+                    transactionDocument.setStatus(TransactionStatusDto.REFUND_REQUESTED);
                     return transactionsViewRepository.save(transactionDocument);
                 });
     }
