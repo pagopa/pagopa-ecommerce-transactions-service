@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
@@ -20,8 +21,8 @@ public class UUIDUtilsTest {
         UUID uuid = UUID.randomUUID();
 
         String uuidAsBase64 = uuidUtils.uuidToBase64(uuid);
-        UUID uuidFromBase64 = uuidUtils.uuidFromBase64(uuidAsBase64);
+        Mono<UUID> uuidFromBase64 = uuidUtils.uuidFromBase64(uuidAsBase64);
 
-        assertEquals(uuid, uuidFromBase64);
+        assertEquals(uuid, uuidFromBase64.block());
     }
 }
