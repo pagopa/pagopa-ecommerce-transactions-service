@@ -1,8 +1,6 @@
 package it.pagopa.transactions.commands.handlers;
 
-import com.azure.core.util.BinaryData;
 import com.azure.cosmos.implementation.BadRequestException;
-import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestedEvent;
 import it.pagopa.ecommerce.commons.domain.v1.Transaction;
@@ -16,13 +14,11 @@ import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import java.time.Duration;
 import java.util.List;
 
 @Component
@@ -34,25 +30,15 @@ public class TransactionRequestAuthorizationHandler
 
     private final TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository;
 
-    private final QueueAsyncClient queueAsyncClient;
-
-    private final String queueVisibilityTimeout;
-
     @Autowired
     public TransactionRequestAuthorizationHandler(
             TransactionsEventStoreRepository<Object> eventStoreRepository,
             PaymentGatewayClient paymentGatewayClient,
-            TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository,
-            QueueAsyncClient queueAsyncClient,
-            @Value(
-                "${azurestorage.queues.transactionauthrequestedtevents.visibilityTimeout}"
-            ) String queueVisibilityTimeout
+            TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository
     ) {
         super(eventStoreRepository);
         this.paymentGatewayClient = paymentGatewayClient;
         this.transactionEventStoreRepository = transactionEventStoreRepository;
-        this.queueAsyncClient = queueAsyncClient;
-        this.queueVisibilityTimeout = queueVisibilityTimeout;
     }
 
     @Override
@@ -152,23 +138,6 @@ public class TransactionRequestAuthorizationHandler
                                     );
 
                                     return transactionEventStoreRepository.save(authorizationEvent)
-                                            .doOnNext(
-                                                    event -> queueAsyncClient.sendMessageWithResponse(
-                                                            BinaryData.fromObject(event),
-                                                            Duration.ofSeconds(
-                                                                    Integer.parseInt(queueVisibilityTimeout)
-                                                            ),
-                                                            null
-                                                    ).subscribe(
-                                                            response -> log.debug(
-                                                                    "Message {} expires at {}",
-                                                                    response.getValue().getMessageId(),
-                                                                    response.getValue().getExpirationTime()
-                                                            ),
-                                                            error -> log.error(error.toString()),
-                                                            () -> log.debug("Complete enqueuing the message!")
-                                                    )
-                                            )
                                             .thenReturn(tuple2)
                                             .map(
                                                     auth -> new RequestAuthorizationResponseDto()

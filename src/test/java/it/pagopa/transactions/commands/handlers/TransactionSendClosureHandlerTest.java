@@ -50,6 +50,9 @@ class TransactionSendClosureHandlerTest {
     private final TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
 
+    private TransactionsEventStoreRepository<TransactionRefundedData> transactionRefundedEventStoreRepository = Mockito
+            .mock(TransactionsEventStoreRepository.class);
+
     private final TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
 
@@ -72,6 +75,7 @@ class TransactionSendClosureHandlerTest {
     private final TransactionSendClosureHandler transactionSendClosureHandler = new TransactionSendClosureHandler(
             transactionEventStoreRepository,
             transactionClosureErrorEventStoreRepository,
+            transactionRefundedEventStoreRepository,
             paymentRequestsInfoRepositoryRepository,
             eventStoreRepository,
             nodeForPspClient,
@@ -1030,6 +1034,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());
+        Mockito.when(transactionRefundedEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
         Mockito.when(
                 refundQueueAsyncClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
 
@@ -1190,6 +1195,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.error(closePaymentError));
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
+        Mockito.when(transactionRefundedEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
         Mockito.when(
                 refundQueueAsyncClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());
@@ -1777,6 +1783,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());
+        Mockito.when(transactionRefundedEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
         Mockito.when(
                 refundQueueAsyncClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
 
@@ -1892,6 +1899,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(
                 refundQueueAsyncClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());
+        Mockito.when(transactionRefundedEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any()))
                 .thenAnswer(a -> Mono.just(a.getArgument(0)));
 
@@ -2117,6 +2125,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(
                 refundQueueAsyncClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());
+        Mockito.when(transactionRefundedEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any()))
                 .thenAnswer(a -> Mono.just(a.getArgument(0)));
 

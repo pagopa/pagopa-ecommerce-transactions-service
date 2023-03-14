@@ -39,13 +39,15 @@ public class TransactionSendClosureHandler extends
 
     private final TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository;
 
+    private final TransactionsEventStoreRepository<TransactionRefundedData> transactionRefundedEventStoreRepository;
+
     private final TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository;
 
     private final PaymentRequestsInfoRepository paymentRequestsInfoRepository;
 
     private final NodeForPspClient nodeForPspClient;
 
-    private final QueueAsyncClient transactionClosureSentEventQueueClient;
+    private final QueueAsyncClient closureRetryQueueAsyncClient;
 
     private final Integer paymentTokenValidity;
 
@@ -59,12 +61,13 @@ public class TransactionSendClosureHandler extends
     public TransactionSendClosureHandler(
             TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository,
             TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository,
+            TransactionsEventStoreRepository<TransactionRefundedData> transactionRefundedEventStoreRepository,
             PaymentRequestsInfoRepository paymentRequestsInfoRepository,
             TransactionsEventStoreRepository<Object> eventStoreRepository,
             NodeForPspClient nodeForPspClient,
             @Qualifier(
-                "transactionClosureSentEventQueueAsyncClient"
-            ) QueueAsyncClient transactionClosureSentEventQueueClient,
+                "transactionClosureRetryQueueAsyncClient"
+            ) QueueAsyncClient closureRetryQueueAsyncClient,
             @Value("${payment.token.validity}") Integer paymentTokenValidity,
             @Value("${transactions.ecommerce.retry.offset}") Integer softTimeoutOffset,
             @Value("${transactions.closure_handler.retry_interval}") Integer retryTimeoutInterval,
@@ -73,9 +76,10 @@ public class TransactionSendClosureHandler extends
         super(eventStoreRepository);
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionClosureErrorEventStoreRepository = transactionClosureErrorEventStoreRepository;
+        this.transactionRefundedEventStoreRepository = transactionRefundedEventStoreRepository;
         this.paymentRequestsInfoRepository = paymentRequestsInfoRepository;
         this.nodeForPspClient = nodeForPspClient;
-        this.transactionClosureSentEventQueueClient = transactionClosureSentEventQueueClient;
+        this.closureRetryQueueAsyncClient = closureRetryQueueAsyncClient;
         this.paymentTokenValidity = paymentTokenValidity;
         this.softTimeoutOffset = softTimeoutOffset;
         this.retryTimeoutInterval = retryTimeoutInterval;
@@ -239,7 +243,7 @@ public class TransactionSendClosureHandler extends
 
                                         eventSaved = eventSaved
                                                 .flatMap(
-                                                        e -> transactionClosureSentEventQueueClient
+                                                        e -> closureRetryQueueAsyncClient
                                                                 .sendMessageWithResponse(
                                                                         BinaryData.fromObject(e),
                                                                         visibilityTimeout,
@@ -338,16 +342,21 @@ public class TransactionSendClosureHandler extends
                 )
                 .flatMap(data -> {
                     String transactionId = data.getT1();
+
                     TransactionStatusDto previousStatus = data.getT2();
                     TransactionRefundRequestedEvent refundRequestedEvent = new TransactionRefundRequestedEvent(
                             transactionId,
                             new TransactionRefundedData(previousStatus)
                     );
-                    return refundQueueAsyncClient
-                            .sendMessageWithResponse(
-                                    BinaryData.fromObject(refundRequestedEvent),
-                                    Duration.ZERO,
-                                    null
+
+                    return transactionRefundedEventStoreRepository.save(refundRequestedEvent)
+                            .then(
+                                    refundQueueAsyncClient
+                                            .sendMessageWithResponse(
+                                                    BinaryData.fromObject(refundRequestedEvent),
+                                                    Duration.ZERO,
+                                                    null
+                                            )
                             )
                             .thenReturn(refundRequestedEvent);
                 });

@@ -59,7 +59,7 @@ public class TransactionUserReceiptProjectionHandler
     ) {
         return switch (userReceiptAddResponseOutcome) {
             case OK -> TransactionStatusDto.NOTIFIED_OK;
-            case KO -> TransactionStatusDto.NOTIFIED_KO;
+            case KO -> TransactionStatusDto.REFUND_REQUESTED;
         };
     }
 }

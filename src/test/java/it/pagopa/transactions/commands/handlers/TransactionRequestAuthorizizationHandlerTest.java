@@ -1,8 +1,6 @@
 package it.pagopa.transactions.commands.handlers;
 
-import com.azure.core.util.BinaryData;
 import com.azure.cosmos.implementation.BadRequestException;
-import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v1.*;
@@ -45,9 +43,6 @@ class TransactionRequestAuthorizizationHandlerTest {
     @Mock
     private TransactionsEventStoreRepository<Object> eventStoreRepository;
 
-    @Mock
-    private QueueAsyncClient queueAsyncClient;
-
     private final UUID transactionIdUUID = UUID.randomUUID();
 
     TransactionId transactionId = new TransactionId(UUID.fromString(TransactionTestUtils.TRANSACTION_ID));
@@ -57,9 +52,7 @@ class TransactionRequestAuthorizizationHandlerTest {
         requestAuthorizationHandler = new TransactionRequestAuthorizationHandler(
                 eventStoreRepository,
                 paymentGatewayClient,
-                transactionEventStoreRepository,
-                queueAsyncClient,
-                "300"
+                transactionEventStoreRepository
         );
     }
 
@@ -119,8 +112,6 @@ class TransactionRequestAuthorizizationHandlerTest {
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(args -> Mono.just(args.getArguments()[0]));
-        Mockito.when(queueAsyncClient.sendMessageWithResponse(BinaryData.fromObject(any()), any(), any()))
-                .thenReturn(Mono.empty());
 
         /* test */
         requestAuthorizationHandler.handle(requestAuthorizationCommand).block();
@@ -186,8 +177,6 @@ class TransactionRequestAuthorizizationHandlerTest {
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(args -> Mono.just(args.getArguments()[0]));
-        Mockito.when(queueAsyncClient.sendMessageWithResponse(BinaryData.fromObject(any()), any(), any()))
-                .thenReturn(Mono.empty());
 
         /* test */
         requestAuthorizationHandler.handle(requestAuthorizationCommand).block();

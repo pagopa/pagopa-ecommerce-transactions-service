@@ -323,6 +323,7 @@ public class TransactionsService {
     ) {
 
         String transactionIdDecoded = uuidUtils.uuidFromBase64(transactionId).toString();
+        log.info("decoded transaction id: {}", transactionIdDecoded);
         return transactionsViewRepository
                 .findById(transactionIdDecoded)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionIdDecoded)))

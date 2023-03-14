@@ -9,21 +9,6 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class AzureStorageConfig {
-    @Bean
-    public QueueAsyncClient queueAsyncClient(
-                                             @Value("${azurestorage.connectionstring}") String storageConnectionString,
-                                             @Value(
-                                                 "${azurestorage.queues.transactionauthrequestedtevents.name}"
-                                             ) String queueEventInitName
-    ) {
-        QueueAsyncClient queueAsyncClient = new QueueClientBuilder()
-                .connectionString(storageConnectionString)
-                .queueName(queueEventInitName)
-                .buildAsyncClient();
-        queueAsyncClient.createIfNotExists().block();
-        return queueAsyncClient;
-    }
-
     @Bean("transactionActivatedQueueAsyncClient")
     @Qualifier
     public QueueAsyncClient transactionActivatedQueueAsyncClient(
@@ -31,7 +16,7 @@ public class AzureStorageConfig {
                                                                      "${azurestorage.connectionstring}"
                                                                  ) String storageConnectionString,
                                                                  @Value(
-                                                                     "${azurestorage.queues.transactionactivatedevents.name}"
+                                                                     "${azurestorage.queues.transactionexpiration.name}"
                                                                  ) String queueName
     ) {
         QueueAsyncClient queueAsyncClient = new QueueClientBuilder()
@@ -42,6 +27,17 @@ public class AzureStorageConfig {
         return queueAsyncClient;
     }
 
+    /*
+     * @formatter:off
+     *
+     * Warning java:S4144 - Methods should not have identical implementations
+     * Implementation identical to the other queue initialization methods.
+     * Suppressed because the method takes a different injected `@Value` parameter, so it's not identical
+     * even though SonarCloud flags it as so.
+     *
+     * @formatter:on
+     */
+    @SuppressWarnings("java:S4144")
     @Bean("transactionRefundQueueAsyncClient")
     @Qualifier
     public QueueAsyncClient transactionRefundQueueAsyncClient(
@@ -60,14 +56,25 @@ public class AzureStorageConfig {
         return queueAsyncClient;
     }
 
-    @Bean("transactionClosureSentEventQueueAsyncClient")
-    public QueueAsyncClient transactionClosureSentEventQueueAsyncClient(
-                                                                        @Value(
-                                                                            "${azurestorage.connectionstring}"
-                                                                        ) String storageConnectionString,
-                                                                        @Value(
-                                                                            "${azurestorage.queues.transactionclosuresentevents.name}"
-                                                                        ) String queueName
+    /*
+     * @formatter:off
+     *
+     * Warning java:S4144 - Methods should not have identical implementations
+     * Implementation identical to the other queue initialization methods.
+     * Suppressed because the method takes a different injected `@Value` parameter, so it's not identical
+     * even though SonarCloud flags it as so.
+     *
+     * @formatter:on
+     */
+    @SuppressWarnings("java:S4144")
+    @Bean("transactionClosureRetryQueueAsyncClient")
+    public QueueAsyncClient transactionClosureRetryQueueAsyncClient(
+                                                                    @Value(
+                                                                        "${azurestorage.connectionstring}"
+                                                                    ) String storageConnectionString,
+                                                                    @Value(
+                                                                        "${azurestorage.queues.transactionclosepaymentretry.name}"
+                                                                    ) String queueName
     ) {
         QueueAsyncClient queueAsyncClient = new QueueClientBuilder()
                 .connectionString(storageConnectionString)
