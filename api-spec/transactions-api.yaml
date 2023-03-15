@@ -68,12 +68,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PartyConfigurationFaultPaymentProblemJson'
-        '504':
-          description: Timeout from PagoPA services
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PartyTimeoutFaultPaymentProblemJson'
   /transactions/{transactionId}:
     get:
       tags:
@@ -161,12 +155,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
-        '504':
-          description: Gateway timeout
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProblemJson"
     patch:
       tags:
         - transactions
@@ -209,12 +197,6 @@ paths:
                 $ref: "#/components/schemas/ProblemJson"
         '502':
           description: Bad gateway
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProblemJson"
-        '504':
-          description: Gateway timeout
           content:
             application/json:
               schema:
