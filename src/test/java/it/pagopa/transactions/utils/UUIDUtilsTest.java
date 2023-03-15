@@ -4,13 +4,14 @@ import io.vavr.control.Either;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.function.Executable;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 public class UUIDUtilsTest {
@@ -26,5 +27,13 @@ public class UUIDUtilsTest {
         Either<InvalidRequestException, UUID> uuidFromBase64 = uuidUtils.uuidFromBase64(uuidAsBase64);
 
         assertEquals(uuid, uuidFromBase64.get());
+    }
+
+    @Test
+    void shouldDecodeBase64OfUUIDError() {
+        String wrongUuid = "xxxx";
+        Either<InvalidRequestException, UUID> uuidFromBase64 = uuidUtils.uuidFromBase64(wrongUuid);
+        assertEquals(InvalidRequestException.class, uuidFromBase64.getLeft().getClass());
+        assertEquals(uuidFromBase64.getLeft().getMessage(), "Error while decode transactionId");
     }
 }
