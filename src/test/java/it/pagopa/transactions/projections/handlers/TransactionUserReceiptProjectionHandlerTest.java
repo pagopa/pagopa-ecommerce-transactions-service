@@ -103,7 +103,7 @@ class TransactionUserReceiptProjectionHandlerTest {
                 transaction.getTransactionActivatedData().getPaymentNotices(),
                 null,
                 transaction.getEmail(),
-                TransactionStatusDto.NOTIFIED_KO,
+                TransactionStatusDto.REFUND_REQUESTED,
                 transaction.getClientId(),
                 transaction.getCreationDate().toString()
         );
@@ -141,7 +141,7 @@ class TransactionUserReceiptProjectionHandlerTest {
          * Test
          */
         StepVerifier.create(transactionUserReceiptProjectionHandler.handle(event))
-                .expectNextMatches(v -> v.equals(expected))
+                .expectNext(expected)
                 .verifyComplete();
 
         /*
@@ -151,7 +151,7 @@ class TransactionUserReceiptProjectionHandlerTest {
                 .save(
                         argThat(
                                 savedTransaction -> savedTransaction.getStatus()
-                                        .equals(TransactionStatusDto.NOTIFIED_KO)
+                                        .equals(TransactionStatusDto.REFUND_REQUESTED)
                         )
                 );
     }

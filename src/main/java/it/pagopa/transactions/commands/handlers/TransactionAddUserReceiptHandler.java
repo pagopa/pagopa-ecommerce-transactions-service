@@ -1,5 +1,7 @@
 package it.pagopa.transactions.commands.handlers;
 
+import com.azure.core.util.BinaryData;
+import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.Transaction;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionClosed;
@@ -16,6 +18,7 @@ import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -28,23 +31,30 @@ import java.util.Locale;
 public class TransactionAddUserReceiptHandler
         extends BaseHandler<TransactionAddUserReceiptCommand, Mono<TransactionUserReceiptAddedEvent>> {
 
-    private final TransactionsEventStoreRepository<TransactionUserReceiptData> transactionEventStoreRepository;
+    private final TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptAddedEventRepository;
 
+    private final TransactionsEventStoreRepository<TransactionRefundedData> refundedDataTransactionsEventStoreRepository;
     private final NotificationsServiceClient notificationsServiceClient;
 
     private final ConfidentialMailUtils confidentialMailUtils;
+
+    private final QueueAsyncClient transactionRefundQueueClient;
 
     @Autowired
     public TransactionAddUserReceiptHandler(
             TransactionsEventStoreRepository<Object> eventStoreRepository,
             TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptAddedEventRepository,
+            TransactionsEventStoreRepository<TransactionRefundedData> refundedRequestedEventStoreRepository,
             NotificationsServiceClient notificationsServiceClient,
-            ConfidentialMailUtils confidentialMailUtils
+            ConfidentialMailUtils confidentialMailUtils,
+            @Qualifier("transactionRefundQueueAsyncClient") QueueAsyncClient transactionRefundQueueClient
     ) {
         super(eventStoreRepository);
-        this.transactionEventStoreRepository = userReceiptAddedEventRepository;
+        this.userReceiptAddedEventRepository = userReceiptAddedEventRepository;
+        this.refundedDataTransactionsEventStoreRepository = refundedRequestedEventStoreRepository;
         this.notificationsServiceClient = notificationsServiceClient;
         this.confidentialMailUtils = confidentialMailUtils;
+        this.transactionRefundQueueClient = transactionRefundQueueClient;
     }
 
     @Override
@@ -112,7 +122,26 @@ public class TransactionAddUserReceiptHandler
                                 }
                             });
 
-                    return emailResponse.flatMap(v -> transactionEventStoreRepository.save(event));
+                    return emailResponse
+                            .flatMap(v -> userReceiptAddedEventRepository.save(event))
+                            .flatMap(e -> {
+                                if (command.getData().addUserReceiptRequest()
+                                        .getOutcome() == AddUserReceiptRequestDto.OutcomeEnum.KO) {
+                                    TransactionRefundRequestedEvent refundRequestedEvent = new TransactionRefundRequestedEvent(
+                                            transactionId,
+                                            new TransactionRefundedData(TransactionStatusDto.NOTIFIED_KO)
+                                    );
+
+                                    return refundedDataTransactionsEventStoreRepository.save(refundRequestedEvent)
+                                            .then(
+                                                    transactionRefundQueueClient
+                                                            .sendMessage(BinaryData.fromObject(refundRequestedEvent))
+                                            )
+                                            .thenReturn(e);
+                                } else {
+                                    return Mono.just(e);
+                                }
+                            });
                 });
     }
 

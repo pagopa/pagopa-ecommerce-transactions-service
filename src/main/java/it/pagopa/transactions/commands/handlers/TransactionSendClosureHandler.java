@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuples;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -38,13 +39,15 @@ public class TransactionSendClosureHandler extends
 
     private final TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository;
 
+    private final TransactionsEventStoreRepository<TransactionRefundedData> transactionRefundedEventStoreRepository;
+
     private final TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository;
 
     private final PaymentRequestsInfoRepository paymentRequestsInfoRepository;
 
     private final NodeForPspClient nodeForPspClient;
 
-    private final QueueAsyncClient transactionClosureSentEventQueueClient;
+    private final QueueAsyncClient closureRetryQueueAsyncClient;
 
     private final Integer paymentTokenValidity;
 
@@ -52,33 +55,35 @@ public class TransactionSendClosureHandler extends
 
     private final Integer softTimeoutOffset;
 
-    private final QueueAsyncClient transactionActivatedQueueAsyncClient;
+    private final QueueAsyncClient refundQueueAsyncClient;
 
     @Autowired
     public TransactionSendClosureHandler(
             TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository,
             TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository,
+            TransactionsEventStoreRepository<TransactionRefundedData> transactionRefundedEventStoreRepository,
             PaymentRequestsInfoRepository paymentRequestsInfoRepository,
             TransactionsEventStoreRepository<Object> eventStoreRepository,
             NodeForPspClient nodeForPspClient,
             @Qualifier(
-                "transactionClosureSentEventQueueAsyncClient"
-            ) QueueAsyncClient transactionClosureSentEventQueueClient,
+                "transactionClosureRetryQueueAsyncClient"
+            ) QueueAsyncClient closureRetryQueueAsyncClient,
             @Value("${payment.token.validity}") Integer paymentTokenValidity,
             @Value("${transactions.ecommerce.retry.offset}") Integer softTimeoutOffset,
             @Value("${transactions.closure_handler.retry_interval}") Integer retryTimeoutInterval,
-            QueueAsyncClient transactionActivatedQueueAsyncClient
+            @Qualifier("transactionRefundQueueAsyncClient") QueueAsyncClient refundQueueAsyncClient
     ) {
         super(eventStoreRepository);
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionClosureErrorEventStoreRepository = transactionClosureErrorEventStoreRepository;
+        this.transactionRefundedEventStoreRepository = transactionRefundedEventStoreRepository;
         this.paymentRequestsInfoRepository = paymentRequestsInfoRepository;
         this.nodeForPspClient = nodeForPspClient;
-        this.transactionClosureSentEventQueueClient = transactionClosureSentEventQueueClient;
+        this.closureRetryQueueAsyncClient = closureRetryQueueAsyncClient;
         this.paymentTokenValidity = paymentTokenValidity;
         this.softTimeoutOffset = softTimeoutOffset;
         this.retryTimeoutInterval = retryTimeoutInterval;
-        this.transactionActivatedQueueAsyncClient = transactionActivatedQueueAsyncClient;
+        this.refundQueueAsyncClient = refundQueueAsyncClient;
     }
 
     @Override
@@ -162,10 +167,10 @@ public class TransactionSendClosureHandler extends
                                     )
                             )
                             .flatMap(
-                                    event -> sendClosureEvent(
-                                            event,
+                                    closureEvent -> sendRefundRequestEvent(
+                                            Either.right(closureEvent),
                                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
-                                    )
+                                    ).thenReturn(closureEvent)
                             )
                             .map(Either::<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>right)
                             .onErrorResume(exception -> {
@@ -184,11 +189,14 @@ public class TransactionSendClosureHandler extends
                                 // the closure error event is build and sent iff the transaction was previously
                                 // authorized
                                 // and the error received from Nodo is a recoverable ones such as http code 500
-                                if (!unrecoverableError) {
-                                    TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
-                                            tx.getTransactionId().value().toString()
-                                    );
+                                TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
+                                        tx.getTransactionId().value().toString()
+                                );
 
+                                Mono<TransactionClosureErrorEvent> eventSaved = transactionClosureErrorEventStoreRepository
+                                        .save(errorEvent);
+
+                                if (!unrecoverableError) {
                                     /* @formatter:off
                                 Conceptual view of visibility timeout computation:
 
@@ -221,8 +229,6 @@ public class TransactionSendClosureHandler extends
                                             .toInstant();
                                     Instant softValidityEnd = validityEnd.minusSeconds(softTimeoutOffset);
 
-                                    Mono<TransactionClosureErrorEvent> eventSaved = transactionClosureErrorEventStoreRepository
-                                            .save(errorEvent);
                                     if (softValidityEnd.isAfter(Instant.now())) {
                                         Duration latestAllowedVisibilityTimeout = Duration
                                                 .between(Instant.now(), softValidityEnd);
@@ -237,7 +243,7 @@ public class TransactionSendClosureHandler extends
 
                                         eventSaved = eventSaved
                                                 .flatMap(
-                                                        e -> transactionClosureSentEventQueueClient
+                                                        e -> closureRetryQueueAsyncClient
                                                                 .sendMessageWithResponse(
                                                                         BinaryData.fromObject(e),
                                                                         visibilityTimeout,
@@ -257,19 +263,18 @@ public class TransactionSendClosureHandler extends
                                 }
                                 // Unrecoverable error calling Nodo for perform close payment.
                                 // Generate closure event setting closure outcome to KO
-                                return buildAndSaveClosureEvent(
-                                        command,
-                                        transactionAuthorizationCompletedData.getAuthorizationResultDto(),
-                                        ClosePaymentResponseDto.OutcomeEnum.KO
-                                )
+                                // and enqueue refund request event
+                                return eventSaved
+                                        .<Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>>map(
+                                                Either::left
+                                        )
                                         .flatMap(
-                                                event -> sendClosureEvent(
-                                                        event,
+                                                closureErrorEvent -> sendRefundRequestEvent(
+                                                        closureErrorEvent,
                                                         transactionAuthorizationCompletedData
                                                                 .getAuthorizationResultDto()
-                                                )
-                                        )
-                                        .map(Either::right);
+                                                ).thenReturn(closureErrorEvent)
+                                        );
                             })
                             .doFinally(response -> {
                                 tx.getPaymentNotices().forEach(el -> {
@@ -297,26 +302,64 @@ public class TransactionSendClosureHandler extends
         }
     }
 
-    private Mono<TransactionEvent<TransactionClosureData>> sendClosureEvent(
-                                                                            TransactionEvent<TransactionClosureData> closureEvent,
-                                                                            AuthorizationResultDto authorizationResult
+    private Mono<TransactionRefundRequestedEvent> sendRefundRequestEvent(
+                                                                         Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>> closureOutcomeEvent,
+                                                                         AuthorizationResultDto authorizationResult
     ) {
-        return Mono.just(closureEvent)
-                .filter(e ->
-                // Closed event sent on the queue only if the transaction was previously
-                // authorized and the Nodo response outcome is KO
-                TransactionClosureData.Outcome.KO.equals(e.getData().getResponseOutcome())
-                        && AuthorizationResultDto.OK.equals(authorizationResult)
+        return Mono.just(closureOutcomeEvent)
+                .filter(
+                        e -> e.fold(
+                                closureErrorEvent -> true,
+                                // Refund requested event sent on the queue only if the transaction was
+                                // previously
+                                // authorized and the Nodo response outcome is KO
+                                closureEvent -> TransactionClosureData.Outcome.KO
+                                        .equals(closureEvent.getData().getResponseOutcome())
+                                        && AuthorizationResultDto.OK.equals(authorizationResult)
+                        )
                 )
-                .flatMap(e -> {
-                    log.info("Enqueue transaction closed event: {}", e);
-                    return transactionActivatedQueueAsyncClient
-                            .sendMessageWithResponse(
-                                    BinaryData.fromObject(e),
-                                    null,
-                                    null
-                            );
-                }).thenReturn(closureEvent);
+                .map(
+                        e -> e.fold(
+                                closureErrorEvent -> {
+                                    log.info(
+                                            "Requesting refund for transaction {} because of bad or no response from Nodo",
+                                            closureErrorEvent.getTransactionId()
+                                    );
+                                    return Tuples.of(
+                                            closureErrorEvent.getTransactionId(),
+                                            TransactionStatusDto.CLOSURE_ERROR
+                                    );
+                                },
+
+                                closureEvent -> {
+                                    log.info(
+                                            "Requesting refund for transaction {} as it was previously authorized but we either received KO response from Nodo",
+                                            closureEvent.getTransactionId()
+                                    );
+                                    return Tuples.of(closureEvent.getTransactionId(), TransactionStatusDto.CLOSED);
+                                }
+                        )
+                )
+                .flatMap(data -> {
+                    String transactionId = data.getT1();
+
+                    TransactionStatusDto previousStatus = data.getT2();
+                    TransactionRefundRequestedEvent refundRequestedEvent = new TransactionRefundRequestedEvent(
+                            transactionId,
+                            new TransactionRefundedData(previousStatus)
+                    );
+
+                    return transactionRefundedEventStoreRepository.save(refundRequestedEvent)
+                            .then(
+                                    refundQueueAsyncClient
+                                            .sendMessageWithResponse(
+                                                    BinaryData.fromObject(refundRequestedEvent),
+                                                    Duration.ZERO,
+                                                    null
+                                            )
+                            )
+                            .thenReturn(refundRequestedEvent);
+                });
     }
 
     private Mono<TransactionEvent<TransactionClosureData>> buildAndSaveClosureEvent(
