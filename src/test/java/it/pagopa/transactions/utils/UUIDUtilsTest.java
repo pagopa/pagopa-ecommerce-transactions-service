@@ -33,7 +33,7 @@ public class UUIDUtilsTest {
     void shouldDecodeBase64OfUUIDError() {
         String wrongUuid = "xxxx";
         Either<InvalidRequestException, UUID> uuidFromBase64 = uuidUtils.uuidFromBase64(wrongUuid);
-        assertEquals(InvalidRequestException.class, uuidFromBase64.getLeft().getClass());
+        assertTrue(uuidFromBase64.isLeft());
         assertEquals(uuidFromBase64.getLeft().getMessage(), "Error while decode transactionId");
     }
 }
