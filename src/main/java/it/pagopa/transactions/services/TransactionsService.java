@@ -583,7 +583,7 @@ public class TransactionsService {
     private String extractBinFromPan(RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
         return requestAuthorizationRequestDto
                 .getDetails()instanceof CardAuthRequestDetailsDto cardData
-                        ? cardData.getPan().substring(0, 8)
+                        ? cardData.getPan().substring(0, 6)
                         : null;
     }
 }
