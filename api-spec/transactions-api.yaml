@@ -89,19 +89,19 @@ paths:
           required: true
           description: Transaction ID
       responses:
-        200:
+        '200':
           description: Transaction data successfully retrieved
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/TransactionInfo"
-        400:
+        '400':
           description: Invalid transaction id
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
-        404:
+        '404':
           description: Transaction not found
           content:
             application/json:
@@ -131,37 +131,37 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/RequestAuthorizationRequest"
       responses:
-        200:
+        '200':
           description: Transaction authorization request successfully processed, redirecting client to authorization web page
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/RequestAuthorizationResponse"
-        400:
+        '400':
           description: Invalid transaction id
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
-        404:
+        '404':
           description: Transaction not found
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
-        409:
+        '409':
           description: Transaction already processed
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
-        500:
+        '500':
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
-        504:
+        '504':
           description: Gateway timeout
           content:
             application/json:
@@ -183,37 +183,37 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/UpdateAuthorizationRequest"
       responses:
-        200:
+        '200':
           description: Transaction authorization request successfully updated
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/TransactionInfo"
-        400:
+        '400':
           description: Invalid transaction id
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
-        404:
+        '404':
           description: Transaction not found
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
-        500:
+        '500':
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
-        502:
+        '502':
           description: Bad gateway
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
-        504:
+        '504':
           description: Gateway timeout
           content:
             application/json:
@@ -236,25 +236,25 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/AddUserReceiptRequest"
       responses:
-        200:
+        '200':
           description: Receipt successfully added
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/AddUserReceiptResponse"
-        400:
+        '400':
           description: Invalid transaction id
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
-        404:
+        '404':
           description: Transaction not found
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
-        422:
+        '422':
           description: Unprocessable entity (most likely the transaction is in an invalid state)
           content:
             application/json:
@@ -452,8 +452,8 @@ components:
         - threeDsData
       example:
         detailType: "card"
-        cvv: 000
-        pan: 0123456789012345
+        cvv: "000"
+        pan: "0123456789012345"
         expiryDate: "209901"
         holderName: "Name Surname"
         brand: "VISA"
@@ -495,6 +495,7 @@ components:
       example:
         authorizationResult: OK
         timestampOperation: 2022-02-11T13:00:00+01:00
+        authorizationCode: auth-code
     AddUserReceiptRequest:
       type: object
       description: Request body for adding a user receipt to a transaction
