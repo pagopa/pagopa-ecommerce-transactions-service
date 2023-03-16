@@ -57,6 +57,8 @@ import static org.mockito.Mockito.when;
             AuthorizationRequestProjectionHandler.class,
             TransactionsEventStoreRepository.class,
             TransactionsActivationProjectionHandler.class,
+            CancellationRequestProjectionHandler.class,
+            TransactionCancelHandler.class,
             UUIDUtils.class
     }
 )
@@ -79,6 +81,9 @@ public class TransactionServiceTests {
 
     @MockBean
     private TransactionActivateHandler transactionActivateHandler;
+
+    @MockBean
+    private TransactionCancelHandler transactionCancelHandler;
 
     @MockBean
     private TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandler;
@@ -106,6 +111,9 @@ public class TransactionServiceTests {
 
     @MockBean
     private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
+
+    @MockBean
+    private CancellationRequestProjectionHandler cancellationRequestProjectionHandler;
 
     @Captor
     private ArgumentCaptor<TransactionRequestAuthorizationCommand> commandArgumentCaptor;

@@ -6,6 +6,7 @@ import it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent;
 import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PaymentMethodResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
@@ -151,9 +152,8 @@ public class TransactionsService {
     @CircuitBreaker(name = "transaction-beckend")
     @Retry(name = "cancelTransaction")
     public Mono<Void> cancelTransaction(String transactionId) {
-        return transactionsViewRepository.findById(transactionId)
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
-                .cast(BaseTransactionWithPaymentToken.class)
+        return cancellationRequestProjectionHandler.handle(new TransactionUserCanceledEvent(transactionId))
+                .cast(BaseTransaction.class)
                 .flatMap(
                         transaction -> {
                             UserCancelData userCancelData = new UserCancelData(transaction);
@@ -163,13 +163,10 @@ public class TransactionsService {
                                     userCancelData
                             );
 
-                            return transactionCancelHandler.handle(transactionCancelCommand);
+                            transactionCancelHandler.handle(transactionCancelCommand);
+                            return Mono.empty();
                         }
-                )
-                .flatMap(el -> {
-                    cancellationRequestProjectionHandler.handle(new TransactionUserCanceledEvent(transactionId));
-                    return Mono.empty();
-                });
+                );
     }
 
     @CircuitBreaker(name = "transactions-backend")
