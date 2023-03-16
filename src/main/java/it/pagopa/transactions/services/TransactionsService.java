@@ -6,8 +6,6 @@ import it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent;
 import it.pagopa.ecommerce.commons.domain.v1.*;
-import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
-import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PaymentMethodResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
 import it.pagopa.generated.transactions.server.model.*;
@@ -152,21 +150,68 @@ public class TransactionsService {
     @CircuitBreaker(name = "transaction-beckend")
     @Retry(name = "cancelTransaction")
     public Mono<Void> cancelTransaction(String transactionId) {
-        return cancellationRequestProjectionHandler.handle(new TransactionUserCanceledEvent(transactionId))
-                .cast(BaseTransaction.class)
+        return transactionsViewRepository
+                .findById(transactionId)
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+                .map(
+                        transactionDocument -> new TransactionActivated(
+                                new TransactionId(
+                                        UUID.fromString(
+                                                transactionDocument
+                                                        .getTransactionId()
+                                        )
+                                ),
+                                transactionDocument.getPaymentNotices().stream()
+                                        .map(
+                                                paymentNotice -> new PaymentNotice(
+                                                        new PaymentToken(
+                                                                paymentNotice
+                                                                        .getPaymentToken()
+                                                        ),
+                                                        new RptId(
+                                                                paymentNotice
+                                                                        .getRptId()
+                                                        ),
+                                                        new TransactionAmount(
+                                                                paymentNotice
+                                                                        .getAmount()
+                                                        ),
+                                                        new TransactionDescription(
+                                                                paymentNotice
+                                                                        .getDescription()
+                                                        ),
+                                                        new PaymentContextCode(
+                                                                paymentNotice
+                                                                        .getPaymentContextCode()
+                                                        )
+                                                )
+                                        ).toList(),
+                                transactionDocument.getEmail(),
+                                null,
+                                null,
+                                transactionDocument.getClientId()
+                        )
+
+                )
+                .cast(TransactionActivated.class)
                 .flatMap(
                         transaction -> {
-                            UserCancelData userCancelData = new UserCancelData(transaction);
-
+                            //eliminare questo
+                            UserCancellationRequestData userCancelData = new UserCancellationRequestData(transaction);
+                            // inserire il transactionID
                             TransactionCancelCommand transactionCancelCommand = new TransactionCancelCommand(
                                     null,
                                     userCancelData
                             );
 
-                            transactionCancelHandler.handle(transactionCancelCommand);
-                            return Mono.empty();
+                            return transactionCancelHandler.handle(transactionCancelCommand);
                         }
-                );
+                )
+                .flatMap(
+                        event -> cancellationRequestProjectionHandler
+                                .handle(new TransactionUserCanceledEvent(transactionId))
+                )
+                .then();
     }
 
     @CircuitBreaker(name = "transactions-backend")

@@ -41,7 +41,6 @@ public class TransactionCancelHandler extends
         Mono<Transaction> transaction = replayTransactionEvents(
                 command.getData().transaction().getTransactionId().value()
         );
-
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
                 .cast(BaseTransaction.class)
                 .doOnNext(t -> log.error("Error: requesting cancel for transaction in state {}", t.getStatus()))
@@ -67,8 +66,20 @@ public class TransactionCancelHandler extends
                                                     null
                                             )
                                     )
-                                    .thenReturn(userCanceledEvent);
-
+                                    .then(Mono.just(userCanceledEvent))
+                                    .doOnError(
+                                            exception -> log.error(
+                                                    "Error to generate event TRANSACTION_USER_CANCELED_EVENT for transactionId {} - error {}",
+                                                    userCanceledEvent.getTransactionId(),
+                                                    exception.getMessage()
+                                            )
+                                    )
+                                    .doOnNext(
+                                            event -> log.info(
+                                                    "Generated event TRANSACTION_USER_CANCELED_EVENT for transactionId {}",
+                                                    event.getTransactionId()
+                                            )
+                                    );
                         }
                 );
 
