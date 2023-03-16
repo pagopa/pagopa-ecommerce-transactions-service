@@ -131,6 +131,14 @@ public class TransactionsController implements TransactionsApi {
                 .map(ResponseEntity::ok);
     }
 
+    @Override
+    public Mono<ResponseEntity<Void>> requestTransactionUserCancellation(
+                                                                         String transactionId,
+                                                                         ServerWebExchange exchange
+    ) {
+        return null;
+    }
+
     @ExceptionHandler(TransactionNotFoundException.class)
     ResponseEntity<ProblemJsonDto> transactionNotFoundHandler(TransactionNotFoundException exception) {
         return new ResponseEntity<>(

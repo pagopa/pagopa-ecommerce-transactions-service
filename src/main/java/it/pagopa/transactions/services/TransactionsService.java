@@ -574,6 +574,12 @@ public class TransactionsService {
                 );
     }
 
+    @CircuitBreaker(name = "transaction-beckend")
+    @Retry(name = "cancelTransaction")
+    public Mono<Void> cancelTransaction(String transactionId) {
+        return null;
+    }
+
     @CircuitBreaker(name = "node-backend")
     @Retry(name = "activateTransaction")
     public Mono<ActivationResultResponseDto> activateTransaction(
