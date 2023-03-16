@@ -15,7 +15,10 @@ import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.data.ClosureSendData;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
 import it.pagopa.transactions.commands.handlers.*;
-import it.pagopa.transactions.exceptions.*;
+import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.exceptions.TransactionAmountMismatchException;
+import it.pagopa.transactions.exceptions.TransactionNotFoundException;
+import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
 import it.pagopa.transactions.projections.handlers.*;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.UUIDUtils;
@@ -572,15 +575,6 @@ public class TransactionsService {
                                 transaction.getTransactionId()
                         )
                 );
-    }
-
-    @CircuitBreaker(name = "node-backend")
-    @Retry(name = "activateTransaction")
-    public Mono<ActivationResultResponseDto> activateTransaction(
-                                                                 String paymentContextCode,
-                                                                 ActivationResultRequestDto activationResultRequestDto
-    ) {
-        return Mono.error(new NotImplementedException("Activate transaction operation not implemented"));
     }
 
     private Mono<NewTransactionResponseDto> projectActivatedEvent(

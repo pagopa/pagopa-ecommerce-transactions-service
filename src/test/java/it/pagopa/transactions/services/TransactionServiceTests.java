@@ -17,7 +17,6 @@ import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.*;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
-import it.pagopa.transactions.exceptions.NotImplementedException;
 import it.pagopa.transactions.exceptions.TransactionAmountMismatchException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.*;
@@ -477,21 +476,6 @@ public class TransactionServiceTests {
         StepVerifier.create(transactionsService.addUserReceipt(TRANSACTION_ID, addUserReceiptRequest))
                 .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
                 .verify();
-    }
-
-    @Test
-    void shouldThrowTransacrionNotImplementedExceptionWhenNotInTransactionRepository() {
-
-        /** preconditions */
-
-        ActivationResultRequestDto activationResultRequestDto = new ActivationResultRequestDto()
-                .paymentToken(UUID.randomUUID().toString());
-
-        /** test */
-        StepVerifier.create(transactionsService.activateTransaction(TRANSACTION_ID, activationResultRequestDto))
-                .expectErrorMatches(error -> error instanceof NotImplementedException)
-                .verify();
-
     }
 
     @Test
