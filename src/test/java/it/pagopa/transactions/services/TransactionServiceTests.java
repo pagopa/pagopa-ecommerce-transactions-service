@@ -23,6 +23,7 @@ import it.pagopa.transactions.projections.handlers.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.JwtTokenUtils;
+import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -117,6 +118,9 @@ public class TransactionServiceTests {
 
     @MockBean
     private it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId clientId;
+
+    @MockBean
+    private TransactionsUtils transactionsUtils;
 
     final String PAYMENT_TOKEN = "aaa";
     final String TRANSACTION_ID = TransactionTestUtils.TRANSACTION_ID;
@@ -333,8 +337,6 @@ public class TransactionServiceTests {
         );
 
         /* preconditions */
-        Mockito.when(repository.findById(transactionId.value().toString()))
-                .thenReturn(Mono.just(transactionDocument));
 
         Mockito.when(transactionUpdateAuthorizationHandler.handle(any()))
                 .thenReturn(Mono.just(event));
@@ -346,7 +348,14 @@ public class TransactionServiceTests {
 
         Mockito.when(closureSendProjectionHandler.handle(any()))
                 .thenReturn(Mono.just(closedTransactionDocument));
-
+        Mockito.when(transactionsUtils.reduceEvents(transactionId)).thenReturn(
+                Mono.just(
+                        TransactionTestUtils.transactionWithRequestedAuthorization(
+                                TransactionTestUtils.transactionAuthorizationRequestedEvent(),
+                                TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString())
+                        )
+                )
+        );
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
                 .updateTransactionAuthorization(transactionIdEncoded, updateAuthorizationRequest).block();
@@ -365,9 +374,8 @@ public class TransactionServiceTests {
                 .timestampOperation(OffsetDateTime.now());
 
         /* preconditions */
-        Mockito.when(repository.findById(TRANSACTION_ID))
-                .thenReturn(Mono.empty());
-
+        Mockito.when(transactionsUtils.reduceEvents(new TransactionId(UUID.fromString(TRANSACTION_ID))))
+                .thenReturn(Mono.error(new TransactionNotFoundException("")));
         /* test */
         StepVerifier
                 .create(

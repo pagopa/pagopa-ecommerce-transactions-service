@@ -3,7 +3,6 @@ package it.pagopa.transactions.commands.handlers;
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.*;
-import it.pagopa.ecommerce.commons.domain.v1.Transaction;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionClosed;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
@@ -16,6 +15,7 @@ import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
+import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -29,7 +29,7 @@ import java.util.Locale;
 @Component
 @Slf4j
 public class TransactionAddUserReceiptHandler
-        extends BaseHandler<TransactionAddUserReceiptCommand, Mono<TransactionUserReceiptAddedEvent>> {
+        implements CommandHandler<TransactionAddUserReceiptCommand, Mono<TransactionUserReceiptAddedEvent>> {
 
     private final TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptAddedEventRepository;
 
@@ -40,27 +40,29 @@ public class TransactionAddUserReceiptHandler
 
     private final QueueAsyncClient transactionRefundQueueClient;
 
+    private final TransactionsUtils transactionsUtils;
+
     @Autowired
     public TransactionAddUserReceiptHandler(
-            TransactionsEventStoreRepository<Object> eventStoreRepository,
             TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptAddedEventRepository,
             TransactionsEventStoreRepository<TransactionRefundedData> refundedRequestedEventStoreRepository,
             NotificationsServiceClient notificationsServiceClient,
             ConfidentialMailUtils confidentialMailUtils,
-            @Qualifier("transactionRefundQueueAsyncClient") QueueAsyncClient transactionRefundQueueClient
+            @Qualifier("transactionRefundQueueAsyncClient") QueueAsyncClient transactionRefundQueueClient,
+            TransactionsUtils transactionsUtils
     ) {
-        super(eventStoreRepository);
         this.userReceiptAddedEventRepository = userReceiptAddedEventRepository;
         this.refundedDataTransactionsEventStoreRepository = refundedRequestedEventStoreRepository;
         this.notificationsServiceClient = notificationsServiceClient;
         this.confidentialMailUtils = confidentialMailUtils;
         this.transactionRefundQueueClient = transactionRefundQueueClient;
+        this.transactionsUtils = transactionsUtils;
     }
 
     @Override
     public Mono<TransactionUserReceiptAddedEvent> handle(TransactionAddUserReceiptCommand command) {
-        Mono<Transaction> transaction = replayTransactionEvents(
-                command.getData().transaction().getTransactionId().value()
+        Mono<BaseTransaction> transaction = transactionsUtils.reduceEvents(
+                command.getData().transaction().getTransactionId()
         );
 
         Mono<TransactionClosed> alreadyProcessedError = transaction
@@ -77,7 +79,6 @@ public class TransactionAddUserReceiptHandler
                 .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
 
         return transaction
-                .cast(BaseTransaction.class)
                 .filter(
                         t -> t.getStatus() == TransactionStatusDto.CLOSED &&
                                 t instanceof TransactionClosed transactionClosed &&

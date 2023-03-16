@@ -3,7 +3,6 @@ package it.pagopa.transactions.commands.handlers;
 import com.azure.cosmos.implementation.BadRequestException;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestedEvent;
-import it.pagopa.ecommerce.commons.domain.v1.Transaction;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
@@ -12,6 +11,7 @@ import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -24,28 +24,29 @@ import java.util.List;
 @Component
 @Slf4j
 public class TransactionRequestAuthorizationHandler
-        extends BaseHandler<TransactionRequestAuthorizationCommand, Mono<RequestAuthorizationResponseDto>> {
+        implements CommandHandler<TransactionRequestAuthorizationCommand, Mono<RequestAuthorizationResponseDto>> {
 
     private final PaymentGatewayClient paymentGatewayClient;
 
     private final TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository;
+    private final TransactionsUtils transactionsUtils;
 
     @Autowired
     public TransactionRequestAuthorizationHandler(
-            TransactionsEventStoreRepository<Object> eventStoreRepository,
             PaymentGatewayClient paymentGatewayClient,
-            TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository
+            TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository,
+            TransactionsUtils transactionsUtils
     ) {
-        super(eventStoreRepository);
         this.paymentGatewayClient = paymentGatewayClient;
         this.transactionEventStoreRepository = transactionEventStoreRepository;
+        this.transactionsUtils = transactionsUtils;
     }
 
     @Override
     public Mono<RequestAuthorizationResponseDto> handle(TransactionRequestAuthorizationCommand command) {
 
-        Mono<Transaction> transaction = replayTransactionEvents(
-                command.getData().transaction().getTransactionId().value()
+        Mono<BaseTransaction> transaction = transactionsUtils.reduceEvents(
+                command.getData().transaction().getTransactionId()
         );
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
                 .cast(BaseTransaction.class)
@@ -57,7 +58,6 @@ public class TransactionRequestAuthorizationHandler
                         )
                 ).flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
         Mono<TransactionActivated> transactionActivated = transaction
-                .cast(BaseTransaction.class)
                 .filter(t -> t.getStatus() == TransactionStatusDto.ACTIVATED)
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(TransactionActivated.class);
