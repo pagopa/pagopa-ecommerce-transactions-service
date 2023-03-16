@@ -155,55 +155,11 @@ public class TransactionsService {
         return transactionsViewRepository
                 .findById(transactionId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
-                .map(
-                        transactionDocument -> new TransactionActivated(
-                                new TransactionId(
-                                        UUID.fromString(
-                                                transactionDocument
-                                                        .getTransactionId()
-                                        )
-                                ),
-                                transactionDocument.getPaymentNotices().stream()
-                                        .map(
-                                                paymentNotice -> new PaymentNotice(
-                                                        new PaymentToken(
-                                                                paymentNotice
-                                                                        .getPaymentToken()
-                                                        ),
-                                                        new RptId(
-                                                                paymentNotice
-                                                                        .getRptId()
-                                                        ),
-                                                        new TransactionAmount(
-                                                                paymentNotice
-                                                                        .getAmount()
-                                                        ),
-                                                        new TransactionDescription(
-                                                                paymentNotice
-                                                                        .getDescription()
-                                                        ),
-                                                        new PaymentContextCode(
-                                                                paymentNotice
-                                                                        .getPaymentContextCode()
-                                                        )
-                                                )
-                                        ).toList(),
-                                transactionDocument.getEmail(),
-                                null,
-                                null,
-                                transactionDocument.getClientId()
-                        )
-
-                )
-                .cast(TransactionActivated.class)
                 .flatMap(
                         transaction -> {
-                            //eliminare questo
-                            UserCancellationRequestData userCancelData = new UserCancellationRequestData(transaction);
-                            // inserire il transactionID
                             TransactionCancelCommand transactionCancelCommand = new TransactionCancelCommand(
                                     null,
-                                    userCancelData
+                                    new TransactionId(UUID.fromString(transactionId))
                             );
 
                             return transactionCancelHandler.handle(transactionCancelCommand);

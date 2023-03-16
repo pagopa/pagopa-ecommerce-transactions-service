@@ -39,7 +39,7 @@ public class TransactionCancelHandler extends
     @Override
     public Mono<TransactionUserCanceledEvent> handle(TransactionCancelCommand command) {
         Mono<Transaction> transaction = replayTransactionEvents(
-                command.getData().transaction().getTransactionId().value()
+                command.getData().value()
         );
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
                 .cast(BaseTransaction.class)
