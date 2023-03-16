@@ -6,18 +6,14 @@ import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PSPsResponseDto;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PaymentMethodResponseDto;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.RangeDto;
+import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.*;
 import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
+import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.*;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
-import it.pagopa.transactions.exceptions.NotImplementedException;
 import it.pagopa.transactions.exceptions.TransactionAmountMismatchException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.*;
@@ -40,7 +36,6 @@ import reactor.test.StepVerifier;
 
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -74,7 +69,7 @@ public class TransactionServiceTests {
     private UUIDUtils uuidUtils;
 
     @MockBean
-    private EcommercePaymentInstrumentsClient ecommercePaymentInstrumentsClient;
+    private EcommercePaymentMethodsClient ecommercePaymentMethodsClient;
 
     @MockBean
     private PaymentGatewayClient paymentGatewayClient;
@@ -197,19 +192,22 @@ public class TransactionServiceTests {
         );
 
         /* preconditions */
-        List<PspDto> pspDtoList = new ArrayList<>();
-        pspDtoList.add(
-                new PspDto()
-                        .code("PSP_CODE")
-                        .fixedCost(200l)
-        );
-        PSPsResponseDto pspResponseDto = new PSPsResponseDto();
-        pspResponseDto.psp(pspDtoList);
+        CalculateFeeResponseDto calculateFeeResponseDto = new CalculateFeeResponseDto()
+                .belowThreshold(true)
+                .paymentMethodName("PaymentMethodName")
+                .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
+                .bundles(
+                        List.of(
+                                new BundleDto()
+                                        .idPsp("PSP_CODE")
+                                        .taxPayerFee(200l)
+                        )
+                );
 
         PaymentMethodResponseDto paymentMethod = new PaymentMethodResponseDto()
                 .name("paymentMethodName")
                 .description("desc")
-                .status(PaymentMethodResponseDto.StatusEnum.ENABLED)
+                .status(PaymentMethodStatusDto.ENABLED)
                 .id("id")
                 .paymentTypeCode("PO")
                 .addRangesItem(new RangeDto().min(0L).max(100L));
@@ -222,11 +220,11 @@ public class TransactionServiceTests {
         RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
                 .authorizationUrl(postePayAuthResponseEntityDto.getUrlRedirect());
 
-        Mockito.when(ecommercePaymentInstrumentsClient.getPSPs(any(), any(), any())).thenReturn(
-                Mono.just(pspResponseDto)
+        Mockito.when(ecommercePaymentMethodsClient.calculateFee(any(), any(), any())).thenReturn(
+                Mono.just(calculateFeeResponseDto)
         );
 
-        Mockito.when(ecommercePaymentInstrumentsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
+        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
 
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
@@ -488,21 +486,6 @@ public class TransactionServiceTests {
     }
 
     @Test
-    void shouldThrowTransacrionNotImplementedExceptionWhenNotInTransactionRepository() {
-
-        /** preconditions */
-
-        ActivationResultRequestDto activationResultRequestDto = new ActivationResultRequestDto()
-                .paymentToken(UUID.randomUUID().toString());
-
-        /** test */
-        StepVerifier.create(transactionsService.activateTransaction(TRANSACTION_ID, activationResultRequestDto))
-                .expectErrorMatches(error -> error instanceof NotImplementedException)
-                .verify();
-
-    }
-
-    @Test
     void shouldRedirectToAuthorizationURIForValidRequestWithCardData() {
         CardAuthRequestDetailsDto cardAuthRequestDetailsDto = new CardAuthRequestDetailsDto()
                 .expiryDate("203012")
@@ -521,19 +504,22 @@ public class TransactionServiceTests {
         );
 
         /* preconditions */
-        List<PspDto> pspDtoList = new ArrayList<>();
-        pspDtoList.add(
-                new PspDto()
-                        .code("PSP_CODE")
-                        .fixedCost(200l)
-        );
-        PSPsResponseDto pspResponseDto = new PSPsResponseDto();
-        pspResponseDto.psp(pspDtoList);
+        CalculateFeeResponseDto calculateFeeResponseDto = new CalculateFeeResponseDto()
+                .belowThreshold(true)
+                .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
+                .paymentMethodName("paymentMethodName")
+                .bundles(
+                        List.of(
+                                new BundleDto()
+                                        .idPsp("PSP_CODE")
+                                        .taxPayerFee(200l)
+                        )
+                );
 
         PaymentMethodResponseDto paymentMethod = new PaymentMethodResponseDto()
                 .name("paymentMethodName")
                 .description("desc")
-                .status(PaymentMethodResponseDto.StatusEnum.ENABLED)
+                .status(PaymentMethodStatusDto.ENABLED)
                 .id("id")
                 .paymentTypeCode("PO")
                 .addRangesItem(new RangeDto().min(0L).max(100L));
@@ -546,11 +532,11 @@ public class TransactionServiceTests {
         RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
                 .authorizationUrl(gatewayResponse.getUrlRedirect());
 
-        Mockito.when(ecommercePaymentInstrumentsClient.getPSPs(any(), any(), any())).thenReturn(
-                Mono.just(pspResponseDto)
+        Mockito.when(ecommercePaymentMethodsClient.calculateFee(any(), any(), any())).thenReturn(
+                Mono.just(calculateFeeResponseDto)
         );
 
-        Mockito.when(ecommercePaymentInstrumentsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
+        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
 
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
@@ -596,20 +582,20 @@ public class TransactionServiceTests {
                 ZonedDateTime.now()
         );
 
-        /* preconditions */
-        List<PspDto> pspDtoList = new ArrayList<>();
-        pspDtoList.add(
-                new PspDto()
-                        .code("PSP_CODE")
-                        .fixedCost(200l)
-        );
-        PSPsResponseDto pspResponseDto = new PSPsResponseDto();
-        pspResponseDto.psp(pspDtoList);
+        CalculateFeeResponseDto calculateFeeResponseDto = new CalculateFeeResponseDto()
+                .belowThreshold(true)
+                .bundles(
+                        List.of(
+                                new BundleDto()
+                                        .idPsp("PSP_CODE")
+                                        .taxPayerFee(200l)
+                        )
+                );
 
         PaymentMethodResponseDto paymentMethod = new PaymentMethodResponseDto()
                 .name("paymentMethodName")
                 .description("desc")
-                .status(PaymentMethodResponseDto.StatusEnum.ENABLED)
+                .status(PaymentMethodStatusDto.ENABLED)
                 .id("id")
                 .paymentTypeCode("PO")
                 .addRangesItem(new RangeDto().min(0L).max(100L));
@@ -622,11 +608,11 @@ public class TransactionServiceTests {
         RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
                 .authorizationUrl(gatewayResponse.getUrlRedirect());
 
-        Mockito.when(ecommercePaymentInstrumentsClient.getPSPs(any(), any(), any())).thenReturn(
-                Mono.just(pspResponseDto)
+        Mockito.when(ecommercePaymentMethodsClient.calculateFee(any(), any(), any())).thenReturn(
+                Mono.just(calculateFeeResponseDto)
         );
 
-        Mockito.when(ecommercePaymentInstrumentsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
+        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
 
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
