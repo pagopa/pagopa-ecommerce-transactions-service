@@ -1,4 +1,5 @@
 package it.pagopa.transactions.commands;
+
 import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.transactions.commands.data.UserCancelData;
 

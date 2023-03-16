@@ -1,4 +1,5 @@
 package it.pagopa.transactions.projections.handlers;
+
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;

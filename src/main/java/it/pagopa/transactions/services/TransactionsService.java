@@ -44,7 +44,6 @@ public class TransactionsService {
     @Autowired
     private TransactionAddUserReceiptHandler transactionAddUserReceiptHandler;
 
-
     @Autowired
     private TransactionCancelHandler transactionCancelHandler;
 
@@ -603,7 +602,6 @@ public class TransactionsService {
                         )
                 );
     }
-
 
     @CircuitBreaker(name = "node-backend")
     @Retry(name = "activateTransaction")

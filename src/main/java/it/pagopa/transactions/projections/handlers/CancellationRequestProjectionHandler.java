@@ -12,7 +12,8 @@ import reactor.core.publisher.Mono;
 
 @Component
 @Slf4j
-public class CancellationRequestProjectionHandler implements ProjectionHandler<TransactionUserCanceledEvent, Mono<Transaction>> {
+public class CancellationRequestProjectionHandler
+        implements ProjectionHandler<TransactionUserCanceledEvent, Mono<Transaction>> {
 
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;

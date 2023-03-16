@@ -1,4 +1,5 @@
 package it.pagopa.transactions.commands.handlers;
+
 import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
@@ -13,7 +14,7 @@ import reactor.core.publisher.Mono;
 @Component
 @Slf4j
 public class TransactionCancelHandler extends
-        BaseHandler<TransactionCancelCommand, Mono<TransactionUserCanceledEvent>>{
+        BaseHandler<TransactionCancelCommand, Mono<TransactionUserCanceledEvent>> {
 
     private final PaymentRequestsInfoRepository paymentRequestsInfoRepository;
     private final TransactionsEventStoreRepository<Void> transactionEventUserCancelledStoreRepository;
@@ -30,12 +31,12 @@ public class TransactionCancelHandler extends
         this.paymentRequestsInfoRepository = paymentRequestsInfoRepository;
         this.transactionEventUserCancelledStoreRepository = transactionEventUserCancelledStoreRepository;
         this.transactionActivatedQueueAsyncClient = transactionActivatedQueueAsyncClient;
-        }
+    }
 
     @Override
     public Mono<TransactionUserCanceledEvent> handle(TransactionCancelCommand command) {
         // Aggiornare event Store
-        //scrive sulla coda
+        // scrive sulla coda
         // restituisce l evento scritto
         return null;
     }
