@@ -4,16 +4,15 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent;
 import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PaymentMethodResponseDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
 import it.pagopa.transactions.commands.*;
-import it.pagopa.transactions.commands.data.AddUserReceiptData;
-import it.pagopa.transactions.commands.data.AuthorizationRequestData;
-import it.pagopa.transactions.commands.data.ClosureSendData;
-import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
+import it.pagopa.transactions.commands.data.*;
 import it.pagopa.transactions.commands.handlers.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.projections.handlers.*;
@@ -45,6 +44,10 @@ public class TransactionsService {
     @Autowired
     private TransactionAddUserReceiptHandler transactionAddUserReceiptHandler;
 
+
+    @Autowired
+    private TransactionCancelHandler transactionCancelHandler;
+
     @Autowired
     private TransactionSendClosureHandler transactionSendClosureHandler;
 
@@ -71,6 +74,9 @@ public class TransactionsService {
 
     @Autowired
     private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
+
+    @Autowired
+    private CancellationRequestProjectionHandler cancellationRequestProjectionHandler;
     @Autowired
     private UUIDUtils uuidUtils;
 
@@ -141,6 +147,30 @@ public class TransactionsService {
                                 )
                                 .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
                 );
+    }
+
+    @CircuitBreaker(name = "transaction-beckend")
+    @Retry(name = "cancelTransaction")
+    public Mono<Void> cancelTransaction(String transactionId) {
+        return transactionsViewRepository.findById(transactionId)
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+                .cast(BaseTransactionWithPaymentToken.class)
+                .flatMap(
+                        transaction -> {
+                            UserCancelData userCancelData = new UserCancelData(transaction);
+
+                            TransactionCancelCommand transactionCancelCommand = new TransactionCancelCommand(
+                                    null,
+                                    userCancelData
+                            );
+
+                            return transactionCancelHandler.handle(transactionCancelCommand);
+                        }
+                )
+                .flatMap(el -> {
+                    cancellationRequestProjectionHandler.handle(new TransactionUserCanceledEvent(transactionId));
+                    return Mono.empty();
+                });
     }
 
     @CircuitBreaker(name = "transactions-backend")
@@ -574,11 +604,6 @@ public class TransactionsService {
                 );
     }
 
-    @CircuitBreaker(name = "transaction-beckend")
-    @Retry(name = "cancelTransaction")
-    public Mono<Void> cancelTransaction(String transactionId) {
-        return null;
-    }
 
     @CircuitBreaker(name = "node-backend")
     @Retry(name = "activateTransaction")

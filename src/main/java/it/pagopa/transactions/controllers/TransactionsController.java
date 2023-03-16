@@ -136,7 +136,8 @@ public class TransactionsController implements TransactionsApi {
                                                                          String transactionId,
                                                                          ServerWebExchange exchange
     ) {
-        return null;
+        return transactionsService.cancelTransaction(transactionId)
+                .thenReturn(ResponseEntity.accepted().build());
     }
 
     @ExceptionHandler(TransactionNotFoundException.class)
