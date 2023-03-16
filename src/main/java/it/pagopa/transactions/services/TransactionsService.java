@@ -5,10 +5,11 @@ import io.github.resilience4j.retry.annotation.Retry;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.v1.*;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PaymentMethodResponseDto;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
+import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.BundleDto;
+import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.CalculateFeeRequestDto;
+import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.TransferListItemDto;
 import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
+import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.commands.*;
 import it.pagopa.transactions.commands.data.AddUserReceiptData;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
@@ -28,9 +29,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -70,7 +69,7 @@ public class TransactionsService {
     private TransactionsViewRepository transactionsViewRepository;
 
     @Autowired
-    private EcommercePaymentInstrumentsClient ecommercePaymentInstrumentsClient;
+    private EcommercePaymentMethodsClient ecommercePaymentMethodsClient;
 
     @Autowired
     private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
@@ -186,65 +185,76 @@ public class TransactionsService {
                                     .mapToInt(
                                             it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount
                                     ).sum();
-                            return ecommercePaymentInstrumentsClient
-                                    .getPSPs(
-                                            amountTotal,
-                                            requestAuthorizationRequestDto.getLanguage().getValue(),
-                                            requestAuthorizationRequestDto.getPaymentInstrumentId()
-                                    )
-                                    .mapNotNull(
-                                            pspResponse -> pspResponse.getPsp().stream()
-                                                    .filter(
-                                                            psp -> psp.getCode()
-                                                                    .equals(
-                                                                            requestAuthorizationRequestDto
-                                                                                    .getPspId()
-                                                                    )
-                                                                    && psp.getFixedCost()
-                                                                            .equals(
-                                                                                    Long.valueOf(
-                                                                                            requestAuthorizationRequestDto
-                                                                                                    .getFee()
-                                                                                    )
-                                                                            )
+                            return ecommercePaymentMethodsClient
+                                    .calculateFee(
+                                            requestAuthorizationRequestDto.getPaymentInstrumentId(),
+                                            new CalculateFeeRequestDto()
+                                                    .touchpoint(transaction.getClientId().toString())
+                                                    .bin(
+                                                            extractBinFromPan(requestAuthorizationRequestDto)
                                                     )
-                                                    .findFirst()
-                                                    .orElse(null)
+                                                    .idPspList(List.of(requestAuthorizationRequestDto.getPspId()))
+                                                    .paymentAmount(amountTotal.longValue())
+                                                    .primaryCreditorInstitution(
+                                                            transaction.getPaymentNotices().get(0).getRptId()
+                                                                    .substring(0, 11)
+                                                    )
+                                                    .transferList(
+                                                            List.of(
+                                                                    new TransferListItemDto().creditorInstitution(
+                                                                            transaction.getPaymentNotices().get(0)
+                                                                                    .getRptId().substring(0, 11)
+                                                                    ).digitalStamp(false)
+                                                            )
+                                                    ),
+                                            null
                                     )
-                                    .map(psp -> Tuples.of(transaction, psp));
-                        }
-                )
-                .flatMap(transactionAndPsp -> {
-                    log.info(
-                            "Requesting payment instrument data for id {}",
-                            requestAuthorizationRequestDto.getPaymentInstrumentId()
-                    );
-                    return ecommercePaymentInstrumentsClient
-                            .getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId())
-                            .map(
-                                    paymentMethod -> Tuples
-                                            .of(
-                                                    transactionAndPsp.getT1(),
-                                                    transactionAndPsp.getT2(),
-                                                    paymentMethod
+                                    .map(
+                                            calculateFeeResponse -> Tuples.of(
+                                                    calculateFeeResponse.getPaymentMethodName(),
+                                                    calculateFeeResponse.getBundles().stream()
+                                                            .filter(
+                                                                    psp -> psp.getIdPsp()
+                                                                            .equals(
+                                                                                    requestAuthorizationRequestDto
+                                                                                            .getPspId()
+                                                                            )
+                                                                            && psp.getTaxPayerFee()
+                                                                                    .equals(
+                                                                                            Long.valueOf(
+                                                                                                    requestAuthorizationRequestDto
+                                                                                                            .getFee()
+                                                                                            )
+                                                                                    )
+                                                            ).findFirst()
                                             )
-                            );
-                })
-                .switchIfEmpty(
-                        Mono.error(
-                                new UnsatisfiablePspRequestException(
-                                        new PaymentToken(transactionId),
-                                        requestAuthorizationRequestDto.getLanguage(),
-                                        requestAuthorizationRequestDto.getFee()
-                                )
-                        )
+                                    )
+                                    .filter(t -> t.getT2().isPresent())
+                                    .switchIfEmpty(
+                                            Mono.error(
+                                                    new UnsatisfiablePspRequestException(
+                                                            new PaymentToken(transactionId),
+                                                            requestAuthorizationRequestDto.getLanguage(),
+                                                            requestAuthorizationRequestDto.getFee()
+                                                    )
+                                            )
+                                    )
+                                    .map(
+                                            t -> Tuples.of(
+                                                    transaction,
+                                                    t.getT1(),
+                                                    t.getT2().get()
+                                            )
+
+                                    );
+                        }
                 )
                 .flatMap(
                         args -> {
                             it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument = args
                                     .getT1();
-                            PspDto psp = args.getT2();
-                            PaymentMethodResponseDto paymentMethod = args.getT3();
+                            BundleDto bundle = args.getT3();
+                            String paymentMethodName = args.getT2();
 
                             log.info(
                                     "Requesting authorization for transactionId: {}",
@@ -285,11 +295,11 @@ public class TransactionsService {
                                     requestAuthorizationRequestDto.getFee(),
                                     requestAuthorizationRequestDto.getPaymentInstrumentId(),
                                     requestAuthorizationRequestDto.getPspId(),
-                                    psp.getPaymentTypeCode(),
-                                    psp.getBrokerName(),
-                                    psp.getChannelCode(),
-                                    paymentMethod.getName(),
-                                    psp.getBusinessName(),
+                                    bundle.getPaymentMethod(),
+                                    bundle.getIdBrokerPsp(),
+                                    bundle.getIdChannel(),
+                                    paymentMethodName,
+                                    bundle.getBundleName(),
                                     paymentGatewayId,
                                     requestAuthorizationRequestDto.getDetails()
                             );
@@ -616,5 +626,12 @@ public class TransactionsService {
                             }
                         }
                 ).orElseThrow(() -> new InvalidRequestException("Null value as input origin"));
+    }
+
+    private String extractBinFromPan(RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
+        return requestAuthorizationRequestDto
+                .getDetails()instanceof CardAuthRequestDetailsDto cardData
+                        ? cardData.getPan().substring(0, 6)
+                        : null;
     }
 }

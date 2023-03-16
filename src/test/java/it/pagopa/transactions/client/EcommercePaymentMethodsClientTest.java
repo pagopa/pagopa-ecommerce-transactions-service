@@ -1,10 +1,7 @@
 package it.pagopa.transactions.client;
 
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.api.DefaultApi;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PSPsResponseDto;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PaymentMethodResponseDto;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.PspDto;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.RangeDto;
+import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,50 +20,57 @@ import static org.mockito.Mockito.when;
 class EcommercePaymentMethodsClientTest {
 
     @InjectMocks
-    private EcommercePaymentInstrumentsClient ecommercePaymentInstrumentsClient;
+    private EcommercePaymentMethodsClient ecommercePaymentMethodsClient;
 
     @Mock
     private DefaultApi ecommercePaymentInstrumentsWebClient;
 
     @Test
-    void shouldReturnPspList() {
-        Integer TEST_AMOUNT = 100;
-        String TEST_LANG = "IT";
-        String TEST_ID = UUID.randomUUID().toString();
+    void shouldReturnBundleList() {
+        String paymentMethodId = UUID.randomUUID().toString();
+        Integer TEST_MAX_OCCURRERNCES = 10;
+        CalculateFeeRequestDto calculateFeeRequestDto = new CalculateFeeRequestDto()
+                .paymentAmount(BigInteger.TEN.longValue()).bin("57497554")
+                .touchpoint("CHECKOUT").primaryCreditorInstitution("7777777777").idPspList(List.of("pspId"));
 
-        PSPsResponseDto testResponseDto = new PSPsResponseDto();
-        testResponseDto.setPsp(
+        CalculateFeeResponseDto bundleOptionDto = new CalculateFeeResponseDto().belowThreshold(true).bundles(
                 List.of(
-                        new PspDto()
-                                .code("AA")
-                                .language(PspDto.LanguageEnum.IT)
-                                .paymentTypeCode("PO")
-                                .fixedCost(100l)
-                                .brokerName("brokerName")
-                                .description("")
-                                .maxAmount(0l)
-                                .maxAmount(1000l)
-                                .channelCode("CH1")
-                                .status(PspDto.StatusEnum.ENABLED)
+                        new BundleDto().abi("abiTest")
+                                .bundleDescription("descriptionTest")
+                                .bundleName("bundleNameTest")
+                                .idBrokerPsp("idBrokerPspTest")
+                                .idBundle("idBundleTest")
+                                .idChannel("idChannelTest")
+                                .idCiBundle("idCiBundleTest")
+                                .idPsp("idPspTest")
+                                .onUs(true)
+                                .paymentMethod("idPaymentMethodTest")
+                                .primaryCiIncurredFee(BigInteger.ZERO.longValue())
+                                .taxPayerFee(BigInteger.ZERO.longValue())
+                                .touchpoint("CHECKOUT")
                 )
         );
 
         /**
          * preconditions
          */
-        when(ecommercePaymentInstrumentsWebClient.getPaymentMethodsPSPs(TEST_ID, TEST_AMOUNT, TEST_LANG))
-                .thenReturn(Mono.just(testResponseDto));
+        when(
+                ecommercePaymentInstrumentsWebClient
+                        .calculateFees(paymentMethodId, calculateFeeRequestDto, TEST_MAX_OCCURRERNCES)
+        )
+                .thenReturn(Mono.just(bundleOptionDto));
 
         /**
          * test
          */
-        PSPsResponseDto pspResponseDto = ecommercePaymentInstrumentsClient.getPSPs(TEST_AMOUNT, TEST_LANG, TEST_ID)
+        CalculateFeeResponseDto calculateFeeResponseDto = ecommercePaymentMethodsClient
+                .calculateFee(paymentMethodId, calculateFeeRequestDto, TEST_MAX_OCCURRERNCES)
                 .block();
 
         /**
          * asserts
          */
-        assertThat(testResponseDto.getPsp()).isEqualTo(pspResponseDto.getPsp());
+        assertThat(calculateFeeResponseDto).isEqualTo(bundleOptionDto);
     }
 
     @Test
@@ -77,7 +82,7 @@ class EcommercePaymentMethodsClientTest {
                 .description("")
                 .addRangesItem(new RangeDto().max(100L).min(0L))
                 .paymentTypeCode("PO")
-                .status(PaymentMethodResponseDto.StatusEnum.ENABLED)
+                .status(PaymentMethodStatusDto.ENABLED)
                 .id(TEST_ID)
                 .name("test");
 
@@ -90,7 +95,7 @@ class EcommercePaymentMethodsClientTest {
         /**
          * test
          */
-        PaymentMethodResponseDto paymentMethodResponseDto = ecommercePaymentInstrumentsClient.getPaymentMethod(TEST_ID)
+        PaymentMethodResponseDto paymentMethodResponseDto = ecommercePaymentMethodsClient.getPaymentMethod(TEST_ID)
                 .block();
 
         /**
