@@ -97,12 +97,12 @@ public class AzureStorageConfig {
     @SuppressWarnings("java:S4144")
     @Bean("transactionClosureQueueAsyncClient")
     public QueueAsyncClient transactionClosureQueueAsyncClient(
-            @Value(
-                    "${azurestorage.connectionstring}"
-            ) String storageConnectionString,
-            @Value(
-                    "${azurestorage.queues.transactionclosepayment.name}"
-            ) String queueName
+                                                               @Value(
+                                                                   "${azurestorage.connectionstring}"
+                                                               ) String storageConnectionString,
+                                                               @Value(
+                                                                   "${azurestorage.queues.transactionclosepayment.name}"
+                                                               ) String queueName
     ) {
         QueueAsyncClient queueAsyncClient = new QueueClientBuilder()
                 .connectionString(storageConnectionString)
