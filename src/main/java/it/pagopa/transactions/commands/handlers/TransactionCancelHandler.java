@@ -56,7 +56,7 @@ public class TransactionCancelHandler extends
 
                         t -> {
                             TransactionUserCanceledEvent userCanceledEvent = new TransactionUserCanceledEvent(
-                                    t.getTransactionId().toString()
+                                    t.getTransactionId().value().toString()
                             );
                             return transactionEventUserCancelStoreRepository.save(userCanceledEvent)
                                     .then(
