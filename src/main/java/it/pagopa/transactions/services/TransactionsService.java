@@ -5,9 +5,8 @@ import io.github.resilience4j.retry.annotation.Retry;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.v1.*;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.*;
 import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
+import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.commands.*;
 import it.pagopa.transactions.commands.data.AddUserReceiptData;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
@@ -67,7 +66,7 @@ public class TransactionsService {
     private TransactionsViewRepository transactionsViewRepository;
 
     @Autowired
-    private EcommercePaymentInstrumentsClient ecommercePaymentInstrumentsClient;
+    private EcommercePaymentMethodsClient ecommercePaymentMethodsClient;
 
     @Autowired
     private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
@@ -183,7 +182,7 @@ public class TransactionsService {
                                     .mapToInt(
                                             it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount
                                     ).sum();
-                            return ecommercePaymentInstrumentsClient
+                            return ecommercePaymentMethodsClient
                                     .calculateFee(
                                             requestAuthorizationRequestDto.getPaymentInstrumentId(),
                                             new CalculateFeeRequestDto()

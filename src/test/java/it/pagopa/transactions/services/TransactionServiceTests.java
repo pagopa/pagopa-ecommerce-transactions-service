@@ -8,7 +8,7 @@ import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.*;
 import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.transactions.client.EcommercePaymentInstrumentsClient;
+import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
@@ -36,7 +36,6 @@ import reactor.test.StepVerifier;
 
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -68,7 +67,7 @@ public class TransactionServiceTests {
     private UUIDUtils uuidUtils;
 
     @MockBean
-    private EcommercePaymentInstrumentsClient ecommercePaymentInstrumentsClient;
+    private EcommercePaymentMethodsClient ecommercePaymentMethodsClient;
 
     @MockBean
     private PaymentGatewayClient paymentGatewayClient;
@@ -213,11 +212,11 @@ public class TransactionServiceTests {
         RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
                 .authorizationUrl(postePayAuthResponseEntityDto.getUrlRedirect());
 
-        Mockito.when(ecommercePaymentInstrumentsClient.calculateFee(any(), any(), any())).thenReturn(
+        Mockito.when(ecommercePaymentMethodsClient.calculateFee(any(), any(), any())).thenReturn(
                 Mono.just(calculateFeeResponseDto)
         );
 
-        Mockito.when(ecommercePaymentInstrumentsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
+        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
 
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
@@ -525,11 +524,11 @@ public class TransactionServiceTests {
         RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
                 .authorizationUrl(gatewayResponse.getUrlRedirect());
 
-        Mockito.when(ecommercePaymentInstrumentsClient.calculateFee(any(), any(), any())).thenReturn(
+        Mockito.when(ecommercePaymentMethodsClient.calculateFee(any(), any(), any())).thenReturn(
                 Mono.just(calculateFeeResponseDto)
         );
 
-        Mockito.when(ecommercePaymentInstrumentsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
+        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
 
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
@@ -601,11 +600,11 @@ public class TransactionServiceTests {
         RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
                 .authorizationUrl(gatewayResponse.getUrlRedirect());
 
-        Mockito.when(ecommercePaymentInstrumentsClient.calculateFee(any(), any(), any())).thenReturn(
+        Mockito.when(ecommercePaymentMethodsClient.calculateFee(any(), any(), any())).thenReturn(
                 Mono.just(calculateFeeResponseDto)
         );
 
-        Mockito.when(ecommercePaymentInstrumentsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
+        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
 
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));

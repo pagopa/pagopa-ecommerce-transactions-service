@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 class EcommercePaymentMethodsClientTest {
 
     @InjectMocks
-    private EcommercePaymentInstrumentsClient ecommercePaymentInstrumentsClient;
+    private EcommercePaymentMethodsClient ecommercePaymentMethodsClient;
 
     @Mock
     private DefaultApi ecommercePaymentInstrumentsWebClient;
@@ -63,7 +63,7 @@ class EcommercePaymentMethodsClientTest {
         /**
          * test
          */
-        CalculateFeeResponseDto calculateFeeResponseDto = ecommercePaymentInstrumentsClient
+        CalculateFeeResponseDto calculateFeeResponseDto = ecommercePaymentMethodsClient
                 .calculateFee(paymentMethodId, calculateFeeRequestDto, TEST_MAX_OCCURRERNCES)
                 .block();
 
@@ -95,7 +95,7 @@ class EcommercePaymentMethodsClientTest {
         /**
          * test
          */
-        PaymentMethodResponseDto paymentMethodResponseDto = ecommercePaymentInstrumentsClient.getPaymentMethod(TEST_ID)
+        PaymentMethodResponseDto paymentMethodResponseDto = ecommercePaymentMethodsClient.getPaymentMethod(TEST_ID)
                 .block();
 
         /**

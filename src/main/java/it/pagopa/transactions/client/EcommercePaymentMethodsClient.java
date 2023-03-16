@@ -12,7 +12,7 @@ import reactor.core.publisher.Mono;
 
 @Component
 @Slf4j
-public class EcommercePaymentInstrumentsClient {
+public class EcommercePaymentMethodsClient {
 
     @Autowired
     @Qualifier("ecommercePaymentInstrumentsWebClient")
