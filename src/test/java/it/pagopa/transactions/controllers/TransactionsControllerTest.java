@@ -139,6 +139,22 @@ class TransactionsControllerTest {
     }
 
     @Test
+    void shouldCancelTransactionInfo() {
+
+        String transactionId = UUID.randomUUID().toString();
+        Mockito.lenient().when(transactionsService.cancelTransaction(transactionId)).thenReturn(Mono.empty());
+
+        ResponseEntity<Void> responseEntity = transactionsController
+                .requestTransactionUserCancellation(transactionId, null).block();
+
+        // Verify mock
+        Mockito.verify(transactionsService, Mockito.times(1)).cancelTransaction(transactionId);
+
+        // Verify status code and response
+        assertEquals(HttpStatus.ACCEPTED, responseEntity.getStatusCode());
+    }
+
+    @Test
     void shouldRedirectToAuthorizationURIForValidRequest() throws URISyntaxException {
         String paymentToken = "paymentToken";
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
