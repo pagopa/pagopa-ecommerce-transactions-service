@@ -149,7 +149,7 @@ public class TransactionsService {
                 );
     }
 
-    @CircuitBreaker(name = "transaction-beckend")
+    @CircuitBreaker(name = "transactions-backend")
     @Retry(name = "cancelTransaction")
     public Mono<Void> cancelTransaction(String transactionId) {
         return transactionsViewRepository
