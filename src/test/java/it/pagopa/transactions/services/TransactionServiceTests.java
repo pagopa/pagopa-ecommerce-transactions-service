@@ -412,22 +412,7 @@ public class TransactionServiceTests {
                 ZonedDateTime.now()
         );
 
-        TransactionActivated transaction = new TransactionActivated(
-                new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
-                transactionDocument.getPaymentNotices().stream().map(
-                        paymentNotice -> new it.pagopa.ecommerce.commons.domain.v1.PaymentNotice(
-                                new PaymentToken(paymentNotice.getPaymentToken()),
-                                new RptId(paymentNotice.getRptId()),
-                                new TransactionAmount(paymentNotice.getAmount()),
-                                new TransactionDescription(paymentNotice.getDescription()),
-                                new PaymentContextCode(paymentNotice.getPaymentContextCode())
-                        )
-                ).toList(),
-                transactionDocument.getEmail(),
-                null,
-                null,
-                Transaction.ClientId.CHECKOUT
-        );
+
 
         TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                 transactionDocument.getTransactionId(),
@@ -468,8 +453,8 @@ public class TransactionServiceTests {
         Mockito.when(transactionUpdateStatusHandler.handle(any()))
                 .thenReturn(Mono.just(event));
 
-        Mockito.when(transactionUserReceiptProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
-
+        Mockito.when(transactionUserReceiptProjectionHandler.handle(any())).thenReturn(Mono.just(transactionDocument));
+        Mockito.when(transactionsUtils.convertEnumeration(any())).thenReturn(TransactionStatusDto.NOTIFIED_OK);
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
                 .addUserReceipt(transactionId.value().toString(), addUserReceiptRequest).block();

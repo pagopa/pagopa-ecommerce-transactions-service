@@ -36,7 +36,7 @@ public class TransactionsUtils {
              * commons and transactions-service TransactionStatusDto enumerations 2 in case
              * one enumeration from commons is not present into transactions-service's ones
              * then an IllegalArgumentException is raised, preventing the module from being
-             * run and avoiding,so, runtime errors correlated to specs updated into commons
+             * run and avoiding, runtime errors correlated to specs updated into commons
              * that are not reflected into transactions specs (such as a transaction status
              * added only into commons)
              */
