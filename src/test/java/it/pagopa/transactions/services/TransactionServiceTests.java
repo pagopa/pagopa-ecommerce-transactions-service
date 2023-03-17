@@ -459,7 +459,7 @@ public class TransactionServiceTests {
                                         .rptId(paymentNotice.getRptId())
                         ).toList()
                 )
-                .status(TransactionStatusDto.NOTIFIED);
+                .status(TransactionStatusDto.NOTIFIED_OK);
 
         /* preconditions */
         Mockito.when(repository.findById(transactionId.value().toString()))

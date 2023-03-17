@@ -366,7 +366,7 @@ class TransactionsControllerTest {
                                 .amount(100)
                                 .paymentToken(paymentToken)
                 )
-                .status(TransactionStatusDto.NOTIFIED);
+                .status(TransactionStatusDto.NOTIFIED_OK);
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
                 .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)

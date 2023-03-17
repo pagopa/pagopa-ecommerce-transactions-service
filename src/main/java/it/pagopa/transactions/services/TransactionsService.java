@@ -626,32 +626,19 @@ public class TransactionsService {
                         transactionUserReceiptAddedEvent -> transactionUserReceiptProjectionHandler
                                 .handle(transactionUserReceiptAddedEvent)
                 )
-                .cast(TransactionActivated.class)
                 .map(
                         transaction -> new TransactionInfoDto()
-                                .transactionId(transaction.getTransactionId().value().toString())
+                                .transactionId(transaction.getTransactionId())
                                 .payments(
                                         transaction.getPaymentNotices().stream().map(
                                                 paymentNotice -> new PaymentInfoDto()
-                                                        .amount(
-                                                                transaction.getTransactionActivatedData()
-                                                                        .getPaymentNotices().stream()
-                                                                        .filter(
-                                                                                paymentNoticeData -> paymentNoticeData
-                                                                                        .getRptId().equals(
-                                                                                                paymentNotice.rptId()
-                                                                                                        .value()
-                                                                                        )
-                                                                        )
-                                                                        .findFirst().get()
-                                                                        .getAmount()
-                                                        )
-                                                        .reason(paymentNotice.transactionDescription().value())
-                                                        .paymentToken(paymentNotice.paymentToken().value())
-                                                        .rptId(paymentNotice.rptId().value())
+                                                        .amount(paymentNotice.getAmount())
+                                                        .reason(paymentNotice.getDescription())
+                                                        .paymentToken(paymentNotice.getPaymentToken())
+                                                        .rptId(paymentNotice.getRptId())
                                         ).toList()
                                 )
-                                .status(TransactionStatusDto.NOTIFIED)
+                                .status(transactionsUtils.convertEnumeration(transaction.getStatus()))
                 )
                 .doOnNext(
                         transaction -> log.info(

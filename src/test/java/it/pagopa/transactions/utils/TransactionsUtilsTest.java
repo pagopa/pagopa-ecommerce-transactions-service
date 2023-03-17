@@ -15,6 +15,7 @@ import reactor.test.StepVerifier;
 
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.BDDMockito.given;
 
 class TransactionsUtilsTest {
@@ -51,6 +52,13 @@ class TransactionsUtilsTest {
                                         .equals(transactionId.value().toString())
                 )
                 .verify();
+    }
+
+    @Test
+    void shouldConvertAllCommonsStatusCorrectly() {
+        for (TransactionStatusDto status : TransactionStatusDto.values()) {
+            assertEquals(status.toString(), transactionsUtils.convertEnumeration(status).toString());
+        }
     }
 
 }
