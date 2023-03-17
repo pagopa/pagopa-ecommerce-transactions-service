@@ -11,6 +11,7 @@ import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
+import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.*;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
@@ -644,6 +645,37 @@ public class TransactionServiceTests {
     void shouldThrowsInvalidRequestExceptionForInvalidClientID() {
         Mockito.when(clientId.toString()).thenReturn("InvalidClientID");
         assertThrows(InvalidRequestException.class, () -> transactionsService.convertClientId(clientId));
+    }
+
+    @Test
+    void shouldExecuteTransactionUserCancelOk() {
+        String transactionId = UUID.randomUUID().toString();
+        final Transaction transaction = TransactionTestUtils.transactionDocument(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
+                ZonedDateTime.now()
+        );
+        TransactionUserCanceledEvent userCanceledEvent = new TransactionUserCanceledEvent(
+                transactionId
+        );
+        TransactionUserCancelCommand transactionCancelCommand = new TransactionUserCancelCommand(
+                null,
+                new TransactionId(UUID.fromString(transactionId))
+        );
+
+        when(repository.findById(transactionId)).thenReturn(Mono.just(transaction));
+        when(transactionCancelHandler.handle(transactionCancelCommand)).thenReturn(Mono.just(userCanceledEvent));
+        when(cancellationRequestProjectionHandler.handle(userCanceledEvent)).thenReturn(any());
+        assertDoesNotThrow(() -> transactionsService.cancelTransaction(transactionId));
+    }
+
+    @Test
+    void shouldExecuteTransactionUserCancelKONotFound() {
+        String transactionId = UUID.randomUUID().toString();
+        when(repository.findById(transactionId)).thenThrow(new TransactionNotFoundException(transactionId));
+        assertThrows(
+                TransactionNotFoundException.class,
+                () -> transactionsService.cancelTransaction(transactionId)
+        );
     }
 
 }
