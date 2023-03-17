@@ -32,6 +32,7 @@ import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
+import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -649,7 +650,7 @@ public class TransactionServiceTests {
 
     @Test
     void shouldExecuteTransactionUserCancelOk() {
-        String transactionId = UUID.randomUUID().toString();
+        String transactionId = TransactionTestUtils.TRANSACTION_ID;
         final Transaction transaction = TransactionTestUtils.transactionDocument(
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
                 ZonedDateTime.now()
@@ -661,21 +662,20 @@ public class TransactionServiceTests {
                 null,
                 new TransactionId(UUID.fromString(transactionId))
         );
-
         when(repository.findById(transactionId)).thenReturn(Mono.just(transaction));
         when(transactionCancelHandler.handle(transactionCancelCommand)).thenReturn(Mono.just(userCanceledEvent));
-        when(cancellationRequestProjectionHandler.handle(userCanceledEvent)).thenReturn(any());
-        assertDoesNotThrow(() -> transactionsService.cancelTransaction(transactionId));
+        when(cancellationRequestProjectionHandler.handle(any())).thenReturn(Mono.empty());
+        StepVerifier.create(transactionsService.cancelTransaction(transactionId)).expectNext().verifyComplete();
+
     }
 
     @Test
     void shouldExecuteTransactionUserCancelKONotFound() {
         String transactionId = UUID.randomUUID().toString();
-        when(repository.findById(transactionId)).thenThrow(new TransactionNotFoundException(transactionId));
-        assertThrows(
-                TransactionNotFoundException.class,
-                () -> transactionsService.cancelTransaction(transactionId)
-        );
+        when(repository.findById(transactionId)).thenReturn(Mono.empty());
+        StepVerifier.create(transactionsService.cancelTransaction(transactionId))
+                .expectError(TransactionNotFoundException.class).verify();
+
     }
 
 }

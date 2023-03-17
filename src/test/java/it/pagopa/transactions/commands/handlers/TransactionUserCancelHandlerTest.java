@@ -24,12 +24,15 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -58,11 +61,7 @@ public class TransactionUserCancelHandlerTest {
 
     @Test
     void shouldSaveAuthorizationEvent() {
-        String transactionId = UUID.randomUUID().toString();
-        TransactionUserCanceledEvent userCanceledEvent = new TransactionUserCanceledEvent(
-                transactionId
-        );
-
+        String transactionId = TransactionTestUtils.TRANSACTION_ID;
         TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
                 null,
                 new TransactionId(UUID.fromString(transactionId))
@@ -73,24 +72,18 @@ public class TransactionUserCancelHandlerTest {
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
 
         Mockito.when(transactionEventUserCancelStoreRepository.save(any()))
-                .thenAnswer(el -> Mono.just(el.getArguments()[0]));
+                .thenAnswer(a -> Mono.just(a.getArgument(0)));
 
         Mockito.when(transactionUserCancelQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any()))
                 .thenReturn(queueSuccessfulResponse());
-
         /* EXECUTION TEST */
-        transactionUserCancelHandler.handle(transactionUserCancelCommand).block();
-
-        Mockito.verify(transactionEventUserCancelStoreRepository, Mockito.times(1)).save(any());
-        Mockito.verify(transactionUserCancelQueueClient, Mockito.times(0))
-                .sendMessageWithResponse(
-                        argThat(
-                                (BinaryData b) -> b.toByteBuffer()
-                                        .equals(BinaryData.fromObject(userCanceledEvent).toByteBuffer())
-                        ),
-                        argThat(d -> d.compareTo(Duration.ofSeconds(RETRY_TIMEOUT_INTERVAL)) <= 0),
-                        isNull()
-                );
+        StepVerifier.create(transactionUserCancelHandler.handle(transactionUserCancelCommand))
+                .consumeNextWith(
+                        next -> {
+                            assertEquals(TransactionEventCode.TRANSACTION_USER_CANCELED_EVENT, next.getEventCode());
+                        }
+                )
+                .verifyComplete();
     }
 
     private static Mono<Response<SendMessageResult>> queueSuccessfulResponse() {
