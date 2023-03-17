@@ -6,7 +6,7 @@ import it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent;
 import it.pagopa.ecommerce.commons.domain.v1.Transaction;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
-import it.pagopa.transactions.commands.TransactionCancelCommand;
+import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -19,14 +19,14 @@ import java.time.Duration;
 
 @Component
 @Slf4j
-public class TransactionCancelHandler extends
-        BaseHandler<TransactionCancelCommand, Mono<TransactionUserCanceledEvent>> {
+public class TransactionUserCancelHandler extends
+        BaseHandler<TransactionUserCancelCommand, Mono<TransactionUserCanceledEvent>> {
 
     private final TransactionsEventStoreRepository<Void> transactionEventUserCancelStoreRepository;
     private final QueueAsyncClient transactionClosureQueueAsyncClient;
 
     @Autowired
-    public TransactionCancelHandler(
+    public TransactionUserCancelHandler(
             TransactionsEventStoreRepository<Object> eventStoreRepository,
             TransactionsEventStoreRepository<Void> transactionEventUserCancelStoreRepository,
             @Qualifier("transactionClosureQueueAsyncClient") QueueAsyncClient transactionClosureQueueAsyncClient
@@ -37,7 +37,7 @@ public class TransactionCancelHandler extends
     }
 
     @Override
-    public Mono<TransactionUserCanceledEvent> handle(TransactionCancelCommand command) {
+    public Mono<TransactionUserCanceledEvent> handle(TransactionUserCancelCommand command) {
         Mono<Transaction> transaction = replayTransactionEvents(
                 command.getData().value()
         );

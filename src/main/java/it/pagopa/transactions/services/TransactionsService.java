@@ -46,7 +46,7 @@ public class TransactionsService {
     private TransactionAddUserReceiptHandler transactionAddUserReceiptHandler;
 
     @Autowired
-    private TransactionCancelHandler transactionCancelHandler;
+    private TransactionUserCancelHandler transactionCancelHandler;
 
     @Autowired
     private TransactionSendClosureHandler transactionSendClosureHandler;
@@ -157,7 +157,7 @@ public class TransactionsService {
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .flatMap(
                         transaction -> {
-                            TransactionCancelCommand transactionCancelCommand = new TransactionCancelCommand(
+                            TransactionUserCancelCommand transactionCancelCommand = new TransactionUserCancelCommand(
                                     null,
                                     new TransactionId(UUID.fromString(transactionId))
                             );
