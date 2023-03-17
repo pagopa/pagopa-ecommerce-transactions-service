@@ -5,9 +5,9 @@ import io.github.resilience4j.retry.annotation.Retry;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
-import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithCompletedAuthorization;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.BundleDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.CalculateFeeRequestDto;
@@ -25,6 +25,7 @@ import it.pagopa.transactions.exceptions.TransactionAmountMismatchException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
 import it.pagopa.transactions.projections.handlers.*;
+import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
@@ -86,6 +87,8 @@ public class TransactionsService {
 
     @Autowired
     private TransactionsUtils transactionsUtils;
+    @Autowired
+    private TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> eventStoreRepository;
 
     @CircuitBreaker(name = "node-backend")
     @Retry(name = "newTransaction")
@@ -349,174 +352,215 @@ public class TransactionsService {
                         Mono::error,
                         transactionIdDecoded -> {
                             log.info("decoded transaction id: {}", transactionIdDecoded);
-                            Mono<Either<TransactionInfoDto, Mono<BaseTransaction>>> taskEither = transactionsUtils
-                                    .reduceEvents(new TransactionId(transactionIdDecoded))
-                                    .map(tx -> {
-                                        if (tx instanceof BaseTransactionWithCompletedAuthorization transactionWithCompletedAuthorization) {
-                                            return Either.left(
-                                                    new TransactionInfoDto()
-                                                            .transactionId(
-                                                                    transactionWithCompletedAuthorization
-                                                                            .getTransactionId().value().toString()
-                                                            )
-                                                            .payments(
-                                                                    transactionWithCompletedAuthorization
-                                                                            .getPaymentNotices()
-                                                                            .stream().map(
-                                                                                    paymentNotice -> new PaymentInfoDto()
-                                                                                            .amount(
-                                                                                                    paymentNotice
-                                                                                                            .transactionAmount()
-                                                                                                            .value()
-                                                                                            )
-                                                                                            .reason(
-                                                                                                    paymentNotice
-                                                                                                            .transactionDescription()
-                                                                                                            .value()
-                                                                                            )
-                                                                                            .paymentToken(
-                                                                                                    paymentNotice
-                                                                                                            .paymentToken()
-                                                                                                            .value()
-                                                                                            )
-                                                                                            .rptId(
-                                                                                                    paymentNotice
-                                                                                                            .rptId()
-                                                                                                            .value()
-                                                                                            )
-                                                                            ).toList()
-                                                            )
-                                                            .status(
-                                                                    TransactionStatusDto
-                                                                            .fromValue(
-                                                                                    transactionWithCompletedAuthorization
-                                                                                            .getStatus()
-                                                                                            .toString()
-                                                                            )
-                                                            )
-                                            );
-                                        } else {
-                                            return Either.right(Mono.just(tx));
-                                        }
-                                    });
-                            return taskEither.flatMap(
-                                    either -> either.fold(
-                                            Mono::just,
-                                            baseTransaction -> baseTransaction
-                                                    .flatMap(
-                                                            transaction -> {
-                                                                UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
-                                                                        transaction,
-                                                                        updateAuthorizationRequestDto
-                                                                );
-
-                                                                // FIXME Handle multiple rtpId
-                                                                TransactionUpdateAuthorizationCommand transactionUpdateAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
-                                                                        transaction.getPaymentNotices().get(0).rptId(),
-                                                                        updateAuthorizationStatusData
-                                                                );
-
-                                                                return transactionUpdateAuthorizationHandler
-                                                                        .handle(transactionUpdateAuthorizationCommand)
-                                                                        .doOnNext(
-                                                                                authorizationStatusUpdatedEvent -> log
-                                                                                        .info(
-                                                                                                "Requested authorization update for rptId: {}",
-                                                                                                // FIXME Handle multiple
-                                                                                                // rtpId
-                                                                                                transaction
-                                                                                                        .getPaymentNotices()
-                                                                                                        .get(0).rptId()
-                                                                                        )
-                                                                        )
-                                                                        .flatMap(
-                                                                                authorizationStatusUpdatedEvent -> authorizationUpdateProjectionHandler
-                                                                                        .handle(
-                                                                                                authorizationStatusUpdatedEvent
-                                                                                        )
+                            return analyzeTransactionStatus(new TransactionId(transactionIdDecoded))
+                                    .flatMap(
+                                            either -> either.fold(
+                                                    Mono::just,
+                                                    baseTransaction -> baseTransaction
+                                                            .flatMap(
+                                                                    transaction -> {
+                                                                        UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
+                                                                                transaction,
+                                                                                updateAuthorizationRequestDto
                                                                         );
-                                                            }
-                                                    )
-                                                    .cast(BaseTransactionWithPaymentToken.class)
-                                                    .flatMap(
-                                                            transaction -> {
-                                                                ClosureSendData closureSendData = new ClosureSendData(
-                                                                        transaction,
-                                                                        updateAuthorizationRequestDto
-                                                                );
 
-                                                                TransactionClosureSendCommand transactionClosureSendCommand = new TransactionClosureSendCommand(
-                                                                        transaction.getPaymentNotices().get(0).rptId(),
-                                                                        closureSendData
-                                                                );
+                                                                        // FIXME Handle multiple rtpId
+                                                                        TransactionUpdateAuthorizationCommand transactionUpdateAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
+                                                                                transaction.getPaymentNotices().get(0)
+                                                                                        .rptId(),
+                                                                                updateAuthorizationStatusData
+                                                                        );
 
-                                                                return transactionSendClosureHandler
-                                                                        .handle(transactionClosureSendCommand)
-                                                                        .doOnNext(
-                                                                                closureSentEvent ->
-                                                                // FIXME Handle multiple rtpId
-                                                                log.info(
-                                                                        "Requested transaction closure for rptId: {}",
-                                                                        transaction.getPaymentNotices().get(0).rptId()
-                                                                                .value()
-                                                                )
-                                                                        )
-                                                                        .flatMap(
-                                                                                result -> result.fold(
-                                                                                        errorEvent -> closureErrorProjectionHandler
-                                                                                                .handle(errorEvent),
-                                                                                        closureSentEvent -> closureSendProjectionHandler
-                                                                                                .handle(
-                                                                                                        closureSentEvent
+                                                                        return transactionUpdateAuthorizationHandler
+                                                                                .handle(
+                                                                                        transactionUpdateAuthorizationCommand
+                                                                                )
+                                                                                .doOnNext(
+                                                                                        authorizationStatusUpdatedEvent -> log
+                                                                                                .info(
+                                                                                                        "Requested authorization update for rptId: {}",
+                                                                                                        // FIXME Handle
+                                                                                                        // multiple
+                                                                                                        // rtpId
+                                                                                                        transaction
+                                                                                                                .getPaymentNotices()
+                                                                                                                .get(0)
+                                                                                                                .rptId()
                                                                                                 )
                                                                                 )
+                                                                                .flatMap(
+                                                                                        authorizationStatusUpdatedEvent -> authorizationUpdateProjectionHandler
+                                                                                                .handle(
+                                                                                                        authorizationStatusUpdatedEvent
+                                                                                                )
+                                                                                );
+                                                                    }
+                                                            )
+                                                            .cast(BaseTransactionWithPaymentToken.class)
+                                                            .flatMap(
+                                                                    transaction -> {
+                                                                        ClosureSendData closureSendData = new ClosureSendData(
+                                                                                transaction,
+                                                                                updateAuthorizationRequestDto
+                                                                        );
+
+                                                                        TransactionClosureSendCommand transactionClosureSendCommand = new TransactionClosureSendCommand(
+                                                                                transaction.getPaymentNotices().get(0)
+                                                                                        .rptId(),
+                                                                                closureSendData
+                                                                        );
+
+                                                                        return transactionSendClosureHandler
+                                                                                .handle(transactionClosureSendCommand)
+                                                                                .doOnNext(
+                                                                                        closureSentEvent ->
+                                                                        // FIXME Handle multiple rtpId
+                                                                        log.info(
+                                                                                "Requested transaction closure for rptId: {}",
+                                                                                transaction.getPaymentNotices().get(0)
+                                                                                        .rptId()
+                                                                                        .value()
                                                                         )
-                                                                        .map(
-                                                                                transactionDocument -> new TransactionInfoDto()
-                                                                                        .transactionId(
-                                                                                                transactionDocument
-                                                                                                        .getTransactionId()
-                                                                                        )
-                                                                                        .payments(
-                                                                                                transactionDocument
-                                                                                                        .getPaymentNotices()
-                                                                                                        .stream().map(
-                                                                                                                paymentNotice -> new PaymentInfoDto()
-                                                                                                                        .amount(
-                                                                                                                                paymentNotice
-                                                                                                                                        .getAmount()
-                                                                                                                        )
-                                                                                                                        .reason(
-                                                                                                                                paymentNotice
-                                                                                                                                        .getDescription()
-                                                                                                                        )
-                                                                                                                        .paymentToken(
-                                                                                                                                paymentNotice
-                                                                                                                                        .getPaymentToken()
-                                                                                                                        )
-                                                                                                                        .rptId(
-                                                                                                                                paymentNotice
-                                                                                                                                        .getRptId()
-                                                                                                                        )
-                                                                                                        ).toList()
-                                                                                        )
-                                                                                        .status(
-                                                                                                TransactionStatusDto
-                                                                                                        .fromValue(
-                                                                                                                transactionDocument
-                                                                                                                        .getStatus()
-                                                                                                                        .toString()
+                                                                                )
+                                                                                .flatMap(
+                                                                                        result -> result.fold(
+                                                                                                errorEvent -> closureErrorProjectionHandler
+                                                                                                        .handle(
+                                                                                                                errorEvent
+                                                                                                        ),
+                                                                                                closureSentEvent -> closureSendProjectionHandler
+                                                                                                        .handle(
+                                                                                                                closureSentEvent
                                                                                                         )
                                                                                         )
-                                                                        );
-                                                            }
-                                                    )
+                                                                                )
+                                                                                .map(
+                                                                                        transactionDocument -> new TransactionInfoDto()
+                                                                                                .transactionId(
+                                                                                                        transactionDocument
+                                                                                                                .getTransactionId()
+                                                                                                )
+                                                                                                .payments(
+                                                                                                        transactionDocument
+                                                                                                                .getPaymentNotices()
+                                                                                                                .stream()
+                                                                                                                .map(
+                                                                                                                        paymentNotice -> new PaymentInfoDto()
+                                                                                                                                .amount(
+                                                                                                                                        paymentNotice
+                                                                                                                                                .getAmount()
+                                                                                                                                )
+                                                                                                                                .reason(
+                                                                                                                                        paymentNotice
+                                                                                                                                                .getDescription()
+                                                                                                                                )
+                                                                                                                                .paymentToken(
+                                                                                                                                        paymentNotice
+                                                                                                                                                .getPaymentToken()
+                                                                                                                                )
+                                                                                                                                .rptId(
+                                                                                                                                        paymentNotice
+                                                                                                                                                .getRptId()
+                                                                                                                                )
+                                                                                                                )
+                                                                                                                .toList()
+                                                                                                )
+                                                                                                .status(
+                                                                                                        TransactionStatusDto
+                                                                                                                .fromValue(
+                                                                                                                        transactionDocument
+                                                                                                                                .getStatus()
+                                                                                                                                .toString()
+                                                                                                                )
+                                                                                                )
+                                                                                );
+                                                                    }
+                                                            )
 
-                                    )
-                            );
+                                            )
+                                    );
                         }
                 );
 
+    }
+
+    private Mono<Either<TransactionInfoDto, Mono<BaseTransaction>>> analyzeTransactionStatus(
+                                                                                             TransactionId transactionId
+    ) {
+        Mono<BaseTransaction> baseTransaction = transactionsUtils.reduceEvents(transactionId);
+        /*
+         * Searching the transaction with authorization completed event. If none is
+         * found then returning Either.right for processing continuation, otherwise
+         * return the completed OK response taking information from the current reduced
+         * transaction status. The check is performed directly on the authorization
+         * completed event and not on the fact that the reduced transaction is instance
+         * of BaseTransactionWithCompletedAuthorization because the transaction can go
+         * in REFUND or EXPIRED statuses and their aggregates does not directly extend
+         * the BaseTransactionWithCompletedAuthorization just because transaction can
+         * EXPIRE in any state and can be REFUND also if the authorization was only
+         * requested so those aggregates. So a check is performed against the
+         * TRANSACTION_AUTHORIZATION_COMPLETED_EVENT event
+         */
+        return eventStoreRepository
+                .findByTransactionIdAndEventCode(
+                        transactionId.value().toString(),
+                        TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT
+                )
+                .map(Optional::of)
+                .switchIfEmpty(Mono.just(Optional.empty()))
+                .flatMap(event -> {
+                    if (event.isEmpty()) {
+                        return Mono.just(Either.right(baseTransaction));
+                    } else {
+                        return baseTransaction.flatMap(
+                                trx -> Mono.just(
+                                        Either.left(
+                                                new TransactionInfoDto()
+                                                        .transactionId(
+                                                                trx
+                                                                        .getTransactionId().value().toString()
+                                                        )
+                                                        .payments(
+                                                                trx
+                                                                        .getPaymentNotices()
+                                                                        .stream().map(
+                                                                                paymentNotice -> new PaymentInfoDto()
+                                                                                        .amount(
+                                                                                                paymentNotice
+                                                                                                        .transactionAmount()
+                                                                                                        .value()
+                                                                                        )
+                                                                                        .reason(
+                                                                                                paymentNotice
+                                                                                                        .transactionDescription()
+                                                                                                        .value()
+                                                                                        )
+                                                                                        .paymentToken(
+                                                                                                paymentNotice
+                                                                                                        .paymentToken()
+                                                                                                        .value()
+                                                                                        )
+                                                                                        .rptId(
+                                                                                                paymentNotice
+                                                                                                        .rptId()
+                                                                                                        .value()
+                                                                                        )
+                                                                        ).toList()
+                                                        )
+                                                        .status(
+                                                                TransactionStatusDto
+                                                                        .fromValue(
+                                                                                trx
+                                                                                        .getStatus()
+                                                                                        .toString()
+                                                                        )
+                                                        )
+                                        )
+                                )
+                        );
+
+                    }
+                });
     }
 
     @CircuitBreaker(name = "transactions-backend")
@@ -659,4 +703,5 @@ public class TransactionsService {
                         ? cardData.getPan().substring(0, 6)
                         : null;
     }
+
 }

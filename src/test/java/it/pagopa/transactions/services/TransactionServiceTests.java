@@ -102,6 +102,9 @@ public class TransactionServiceTests {
     private TransactionsEventStoreRepository transactionsEventStoreRepository;
 
     @MockBean
+    private TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> eventStoreRepositoryAuthCompletedData;
+
+    @MockBean
     private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
 
     @Captor
@@ -348,6 +351,13 @@ public class TransactionServiceTests {
 
         Mockito.when(closureSendProjectionHandler.handle(any()))
                 .thenReturn(Mono.just(closedTransactionDocument));
+        Mockito.when(
+                eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
+                        transactionId.value().toString(),
+                        TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT
+                )
+        )
+                .thenReturn(Mono.empty());
         Mockito.when(transactionsUtils.reduceEvents(transactionId)).thenReturn(
                 Mono.just(
                         TransactionTestUtils.transactionWithRequestedAuthorization(
@@ -376,6 +386,13 @@ public class TransactionServiceTests {
         /* preconditions */
         Mockito.when(transactionsUtils.reduceEvents(new TransactionId(UUID.fromString(TRANSACTION_ID))))
                 .thenReturn(Mono.error(new TransactionNotFoundException("")));
+        Mockito.when(
+                eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
+                        TRANSACTION_ID,
+                        TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT
+                )
+        )
+                .thenReturn(Mono.empty());
         /* test */
         StepVerifier
                 .create(
@@ -692,7 +709,13 @@ public class TransactionServiceTests {
                 transactionClosedEvent
         );
         /* preconditions */
-
+        Mockito.when(
+                eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
+                        transactionId.value().toString(),
+                        TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT
+                )
+        )
+                .thenReturn(Mono.just(transactionAuthorizationCompletedEvent));
         Mockito.when(transactionsUtils.reduceEvents(transactionId)).thenReturn(
                 Mono.just(
                         baseTransaction
@@ -755,7 +778,13 @@ public class TransactionServiceTests {
                 transactionClosureFailedEvent
         );
         /* preconditions */
-
+        Mockito.when(
+                eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
+                        transactionId.value().toString(),
+                        TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT
+                )
+        )
+                .thenReturn(Mono.just(transactionAuthorizationCompletedEvent));
         Mockito.when(transactionsUtils.reduceEvents(transactionId)).thenReturn(
                 Mono.just(
                         baseTransaction
@@ -815,7 +844,13 @@ public class TransactionServiceTests {
                 transactionAuthorizationCompletedEvent
         );
         /* preconditions */
-
+        Mockito.when(
+                eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
+                        transactionId.value().toString(),
+                        TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT
+                )
+        )
+                .thenReturn(Mono.just(transactionAuthorizationCompletedEvent));
         Mockito.when(transactionsUtils.reduceEvents(transactionId)).thenReturn(
                 Mono.just(
                         baseTransaction
