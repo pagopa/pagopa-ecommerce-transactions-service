@@ -6,16 +6,9 @@ import com.azure.core.http.rest.Response;
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
 import com.azure.storage.queue.models.SendMessageResult;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent;
-import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
-import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
-import it.pagopa.transactions.client.PaymentGatewayClient;
-import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
-import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,12 +17,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-
-import java.time.Duration;
-import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -47,8 +36,6 @@ public class TransactionUserCancelHandlerTest {
 
     @Mock
     private QueueAsyncClient transactionUserCancelQueueClient;
-
-    private static final int RETRY_TIMEOUT_INTERVAL = 5;
 
     @BeforeEach
     private void init() {
@@ -84,6 +71,51 @@ public class TransactionUserCancelHandlerTest {
                         }
                 )
                 .verifyComplete();
+    }
+
+    @Test
+    void shouldSaveAuthorizationEventWithError() {
+        String transactionId = TransactionTestUtils.TRANSACTION_ID;
+        TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
+                null,
+                new TransactionId(UUID.fromString(transactionId))
+        );
+
+        /* PRECONDITION */
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId))
+                .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
+
+        Mockito.when(transactionEventUserCancelStoreRepository.save(any()))
+                .thenReturn(Mono.error(new RuntimeException()));
+
+        /* EXECUTION TEST */
+        StepVerifier.create(transactionUserCancelHandler.handle(transactionUserCancelCommand))
+                .expectError(RuntimeException.class)
+                .verify();
+    }
+
+    @Test
+    void shouldSaveAuthorizationEventWithErrorQueue() {
+        String transactionId = TransactionTestUtils.TRANSACTION_ID;
+        TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
+                null,
+                new TransactionId(UUID.fromString(transactionId))
+        );
+
+        /* PRECONDITION */
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId))
+                .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
+
+        Mockito.when(transactionEventUserCancelStoreRepository.save(any()))
+                .thenAnswer(a -> Mono.just(a.getArgument(0)));
+
+        Mockito.when(transactionUserCancelQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any()))
+                .thenReturn(Mono.error(new RuntimeException()));
+
+        /* EXECUTION TEST */
+        StepVerifier.create(transactionUserCancelHandler.handle(transactionUserCancelCommand))
+                .expectError(RuntimeException.class)
+                .verify();
     }
 
     private static Mono<Response<SendMessageResult>> queueSuccessfulResponse() {
