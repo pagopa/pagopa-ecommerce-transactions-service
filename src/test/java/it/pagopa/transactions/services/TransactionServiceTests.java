@@ -4,6 +4,7 @@ import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.*;
@@ -42,7 +43,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @WebFluxTest
 @TestPropertySource(locations = "classpath:application-tests.properties")
@@ -644,6 +645,192 @@ public class TransactionServiceTests {
     void shouldThrowsInvalidRequestExceptionForInvalidClientID() {
         Mockito.when(clientId.toString()).thenReturn("InvalidClientID");
         assertThrows(InvalidRequestException.class, () -> transactionsService.convertClientId(clientId));
+    }
+
+    @Test
+    void shouldUpdateTransactionAuthOutcomeBeIdempotentForAlreadyAuthorizedTransactionClosed() {
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+
+        String transactionIdEncoded = uuidUtils.uuidToBase64(transactionId.value());
+
+        Transaction transactionDocument = TransactionTestUtils.transactionDocument(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                ZonedDateTime.now()
+        );
+
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .authorizationResult(AuthorizationResultDto.OK)
+                .authorizationCode("authorizationCode")
+                .timestampOperation(OffsetDateTime.now());
+
+        TransactionInfoDto expectedResponse = new TransactionInfoDto()
+                .transactionId(transactionDocument.getTransactionId())
+                .payments(
+                        transactionDocument.getPaymentNotices().stream().map(
+                                paymentNotice -> new PaymentInfoDto()
+                                        .amount(paymentNotice.getAmount())
+                                        .reason(paymentNotice.getDescription())
+                                        .paymentToken(paymentNotice.getPaymentToken())
+                                        .rptId(paymentNotice.getRptId())
+                        ).toList()
+                )
+                .status(TransactionStatusDto.CLOSED);
+
+        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
+        TransactionAuthorizationRequestedEvent transactionAuthorizationRequestedEvent = TransactionTestUtils
+                .transactionAuthorizationRequestedEvent();
+        TransactionAuthorizationCompletedEvent transactionAuthorizationCompletedEvent = TransactionTestUtils
+                .transactionAuthorizationCompletedEvent(
+                        it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto.OK
+                );
+        TransactionClosedEvent transactionClosedEvent = TransactionTestUtils
+                .transactionClosedEvent(TransactionClosureData.Outcome.OK);
+        BaseTransaction baseTransaction = TransactionTestUtils.reduceEvents(
+                transactionActivatedEvent,
+                transactionAuthorizationRequestedEvent,
+                transactionAuthorizationCompletedEvent,
+                transactionClosedEvent
+        );
+        /* preconditions */
+
+        Mockito.when(transactionsUtils.reduceEvents(transactionId)).thenReturn(
+                Mono.just(
+                        baseTransaction
+                )
+        );
+        /* test */
+        TransactionInfoDto transactionInfoResponse = transactionsService
+                .updateTransactionAuthorization(transactionIdEncoded, updateAuthorizationRequest).block();
+
+        assertEquals(expectedResponse, transactionInfoResponse);
+        verify(transactionUpdateAuthorizationHandler, times(0)).handle(any());
+        verify(authorizationUpdateProjectionHandler, times(0)).handle(any());
+        verify(transactionSendClosureHandler, times(0)).handle(any());
+        verify(closureSendProjectionHandler, times(0)).handle(any());
+
+    }
+
+    @Test
+    void shouldUpdateTransactionAuthOutcomeBeIdempotentForAlreadyAuthorizedTransactionClosureFailed() {
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+
+        String transactionIdEncoded = uuidUtils.uuidToBase64(transactionId.value());
+
+        Transaction transactionDocument = TransactionTestUtils.transactionDocument(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                ZonedDateTime.now()
+        );
+
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .authorizationResult(AuthorizationResultDto.OK)
+                .authorizationCode("authorizationCode")
+                .timestampOperation(OffsetDateTime.now());
+
+        TransactionInfoDto expectedResponse = new TransactionInfoDto()
+                .transactionId(transactionDocument.getTransactionId())
+                .payments(
+                        transactionDocument.getPaymentNotices().stream().map(
+                                paymentNotice -> new PaymentInfoDto()
+                                        .amount(paymentNotice.getAmount())
+                                        .reason(paymentNotice.getDescription())
+                                        .paymentToken(paymentNotice.getPaymentToken())
+                                        .rptId(paymentNotice.getRptId())
+                        ).toList()
+                )
+                .status(TransactionStatusDto.UNAUTHORIZED);
+
+        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
+        TransactionAuthorizationRequestedEvent transactionAuthorizationRequestedEvent = TransactionTestUtils
+                .transactionAuthorizationRequestedEvent();
+        TransactionAuthorizationCompletedEvent transactionAuthorizationCompletedEvent = TransactionTestUtils
+                .transactionAuthorizationCompletedEvent(
+                        it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto.OK
+                );
+        TransactionClosureFailedEvent transactionClosureFailedEvent = TransactionTestUtils
+                .transactionClosureFailedEvent(TransactionClosureData.Outcome.KO);
+        BaseTransaction baseTransaction = TransactionTestUtils.reduceEvents(
+                transactionActivatedEvent,
+                transactionAuthorizationRequestedEvent,
+                transactionAuthorizationCompletedEvent,
+                transactionClosureFailedEvent
+        );
+        /* preconditions */
+
+        Mockito.when(transactionsUtils.reduceEvents(transactionId)).thenReturn(
+                Mono.just(
+                        baseTransaction
+                )
+        );
+        /* test */
+        TransactionInfoDto transactionInfoResponse = transactionsService
+                .updateTransactionAuthorization(transactionIdEncoded, updateAuthorizationRequest).block();
+
+        assertEquals(expectedResponse, transactionInfoResponse);
+        verify(transactionUpdateAuthorizationHandler, times(0)).handle(any());
+        verify(authorizationUpdateProjectionHandler, times(0)).handle(any());
+        verify(transactionSendClosureHandler, times(0)).handle(any());
+        verify(closureSendProjectionHandler, times(0)).handle(any());
+
+    }
+
+    @Test
+    void shouldUpdateTransactionAuthOutcomeBeIdempotentForAlreadyAuthorizedTransactionAuthorizationCompleted() {
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+
+        String transactionIdEncoded = uuidUtils.uuidToBase64(transactionId.value());
+
+        Transaction transactionDocument = TransactionTestUtils.transactionDocument(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                ZonedDateTime.now()
+        );
+
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .authorizationResult(AuthorizationResultDto.OK)
+                .authorizationCode("authorizationCode")
+                .timestampOperation(OffsetDateTime.now());
+
+        TransactionInfoDto expectedResponse = new TransactionInfoDto()
+                .transactionId(transactionDocument.getTransactionId())
+                .payments(
+                        transactionDocument.getPaymentNotices().stream().map(
+                                paymentNotice -> new PaymentInfoDto()
+                                        .amount(paymentNotice.getAmount())
+                                        .reason(paymentNotice.getDescription())
+                                        .paymentToken(paymentNotice.getPaymentToken())
+                                        .rptId(paymentNotice.getRptId())
+                        ).toList()
+                )
+                .status(TransactionStatusDto.AUTHORIZATION_COMPLETED);
+
+        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
+        TransactionAuthorizationRequestedEvent transactionAuthorizationRequestedEvent = TransactionTestUtils
+                .transactionAuthorizationRequestedEvent();
+        TransactionAuthorizationCompletedEvent transactionAuthorizationCompletedEvent = TransactionTestUtils
+                .transactionAuthorizationCompletedEvent(
+                        it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto.OK
+                );
+        BaseTransaction baseTransaction = TransactionTestUtils.reduceEvents(
+                transactionActivatedEvent,
+                transactionAuthorizationRequestedEvent,
+                transactionAuthorizationCompletedEvent
+        );
+        /* preconditions */
+
+        Mockito.when(transactionsUtils.reduceEvents(transactionId)).thenReturn(
+                Mono.just(
+                        baseTransaction
+                )
+        );
+        /* test */
+        TransactionInfoDto transactionInfoResponse = transactionsService
+                .updateTransactionAuthorization(transactionIdEncoded, updateAuthorizationRequest).block();
+
+        assertEquals(expectedResponse, transactionInfoResponse);
+        verify(transactionUpdateAuthorizationHandler, times(0)).handle(any());
+        verify(authorizationUpdateProjectionHandler, times(0)).handle(any());
+        verify(transactionSendClosureHandler, times(0)).handle(any());
+        verify(closureSendProjectionHandler, times(0)).handle(any());
+
     }
 
 }
