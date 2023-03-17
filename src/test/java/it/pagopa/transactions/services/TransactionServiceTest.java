@@ -8,13 +8,11 @@ import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
-import it.pagopa.generated.transactions.server.model.ClientIdDto;
-import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
-import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
-import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
+import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
 import it.pagopa.transactions.projections.handlers.TransactionsActivationProjectionHandler;
+import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,6 +28,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionServiceTest {
@@ -42,6 +41,9 @@ class TransactionServiceTest {
 
     @Mock
     private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
+
+    @Mock
+    private TransactionsUtils transactionsUtils;
 
     private ConfidentialDataManager confidentialDataManager = TransactionTestUtils.confidentialDataManager;
 
@@ -99,10 +101,10 @@ class TransactionServiceTest {
          */
         Mockito.when(transactionActivateHandler.handle(Mockito.any(TransactionActivateCommand.class)))
                 .thenReturn(Mono.just(response));
-//        Mockito.when(transactionsProjectionHandler.handle(transactionActivationRequestedEvent)).thenReturn(Mono.just(transactionActivationRequested));
         Mockito.when(transactionsActivationProjectionHandler.handle(transactionActivatedEvent))
                 .thenReturn(Mono.just(transactionActivated));
-
+        Mockito.when(transactionsUtils.convertEnumeration(any()))
+                .thenAnswer(args -> TransactionStatusDto.fromValue(args.getArgument(0).toString()));
         /**
          * Test
          */

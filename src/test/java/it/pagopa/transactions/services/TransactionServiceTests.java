@@ -149,7 +149,8 @@ public class TransactionServiceTests {
                 .status(TransactionStatusDto.ACTIVATED);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
-
+        when(transactionsUtils.convertEnumeration(any()))
+                .thenAnswer(args -> TransactionStatusDto.fromValue(args.getArgument(0).toString()));
         assertEquals(
                 transactionsService.getTransactionInfo(TRANSACTION_ID).block(),
                 expected
@@ -366,6 +367,8 @@ public class TransactionServiceTests {
                         )
                 )
         );
+        when(transactionsUtils.convertEnumeration(any()))
+                .thenAnswer(args -> TransactionStatusDto.fromValue(args.getArgument(0).toString()));
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
                 .updateTransactionAuthorization(transactionIdEncoded, updateAuthorizationRequest).block();
@@ -404,15 +407,13 @@ public class TransactionServiceTests {
     }
 
     @Test
-    void shouldReturnTransactionInfoForSuccessfulNotified() {
+    void shouldReturnTransactionInfoForSuccessfulNotifiedOk() {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
         Transaction transactionDocument = TransactionTestUtils.transactionDocument(
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSED,
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED_OK,
                 ZonedDateTime.now()
         );
-
-
 
         TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
                 transactionDocument.getTransactionId(),
@@ -454,7 +455,66 @@ public class TransactionServiceTests {
                 .thenReturn(Mono.just(event));
 
         Mockito.when(transactionUserReceiptProjectionHandler.handle(any())).thenReturn(Mono.just(transactionDocument));
-        Mockito.when(transactionsUtils.convertEnumeration(any())).thenReturn(TransactionStatusDto.NOTIFIED_OK);
+        when(transactionsUtils.convertEnumeration(any()))
+                .thenAnswer(args -> TransactionStatusDto.fromValue(args.getArgument(0).toString()));
+        /* test */
+        TransactionInfoDto transactionInfoResponse = transactionsService
+                .addUserReceipt(transactionId.value().toString(), addUserReceiptRequest).block();
+
+        assertEquals(expectedResponse, transactionInfoResponse);
+    }
+
+    @Test
+    void shouldReturnTransactionInfoForSuccessfulNotifiedKo() {
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+
+        Transaction transactionDocument = TransactionTestUtils.transactionDocument(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED_KO,
+                ZonedDateTime.now()
+        );
+
+        TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
+                transactionDocument.getTransactionId(),
+                new TransactionUserReceiptData(TransactionUserReceiptData.Outcome.KO)
+        );
+
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(AddUserReceiptRequestDto.OutcomeEnum.KO)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(
+                        new AddUserReceiptRequestPaymentsInnerDto()
+                                .paymentToken("paymentToken")
+                                .companyName("companyName")
+                                .creditorReferenceId("creditorReferenceId")
+                                .description("description")
+                                .debtor("debtor")
+                                .fiscalCode("fiscalCode")
+                                .officeName("officeName")
+                );
+
+        TransactionInfoDto expectedResponse = new TransactionInfoDto()
+                .transactionId(transactionDocument.getTransactionId())
+                .payments(
+                        transactionDocument.getPaymentNotices().stream().map(
+                                paymentNotice -> new PaymentInfoDto()
+                                        .amount(paymentNotice.getAmount())
+                                        .reason(paymentNotice.getDescription())
+                                        .paymentToken(paymentNotice.getPaymentToken())
+                                        .rptId(paymentNotice.getRptId())
+                        ).toList()
+                )
+                .status(TransactionStatusDto.NOTIFIED_KO);
+
+        /* preconditions */
+        Mockito.when(repository.findById(transactionId.value().toString()))
+                .thenReturn(Mono.just(transactionDocument));
+
+        Mockito.when(transactionUpdateStatusHandler.handle(any()))
+                .thenReturn(Mono.just(event));
+
+        Mockito.when(transactionUserReceiptProjectionHandler.handle(any())).thenReturn(Mono.just(transactionDocument));
+        when(transactionsUtils.convertEnumeration(any()))
+                .thenAnswer(args -> TransactionStatusDto.fromValue(args.getArgument(0).toString()));
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
                 .addUserReceipt(transactionId.value().toString(), addUserReceiptRequest).block();
@@ -706,6 +766,8 @@ public class TransactionServiceTests {
                         baseTransaction
                 )
         );
+        when(transactionsUtils.convertEnumeration(any()))
+                .thenAnswer(args -> TransactionStatusDto.fromValue(args.getArgument(0).toString()));
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
                 .updateTransactionAuthorization(transactionIdEncoded, updateAuthorizationRequest).block();
@@ -775,6 +837,8 @@ public class TransactionServiceTests {
                         baseTransaction
                 )
         );
+        when(transactionsUtils.convertEnumeration(any()))
+                .thenAnswer(args -> TransactionStatusDto.fromValue(args.getArgument(0).toString()));
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
                 .updateTransactionAuthorization(transactionIdEncoded, updateAuthorizationRequest).block();
@@ -841,6 +905,8 @@ public class TransactionServiceTests {
                         baseTransaction
                 )
         );
+        when(transactionsUtils.convertEnumeration(any()))
+                .thenAnswer(args -> TransactionStatusDto.fromValue(args.getArgument(0).toString()));
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
                 .updateTransactionAuthorization(transactionIdEncoded, updateAuthorizationRequest).block();
@@ -950,6 +1016,8 @@ public class TransactionServiceTests {
                         )
                 )
         );
+        when(transactionsUtils.convertEnumeration(any()))
+                .thenAnswer(args -> TransactionStatusDto.fromValue(args.getArgument(0).toString()));
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
                 .updateTransactionAuthorization(transactionIdEncoded, updateAuthorizationRequest).block();
