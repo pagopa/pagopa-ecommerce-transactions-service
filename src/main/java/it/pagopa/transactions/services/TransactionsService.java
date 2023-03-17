@@ -513,50 +513,56 @@ public class TransactionsService {
                         return Mono.just(Either.right(baseTransaction));
                     } else {
                         return baseTransaction.flatMap(
-                                trx -> Mono.just(
-                                        Either.left(
-                                                new TransactionInfoDto()
-                                                        .transactionId(
-                                                                trx
-                                                                        .getTransactionId().value().toString()
-                                                        )
-                                                        .payments(
-                                                                trx
-                                                                        .getPaymentNotices()
-                                                                        .stream().map(
-                                                                                paymentNotice -> new PaymentInfoDto()
-                                                                                        .amount(
-                                                                                                paymentNotice
-                                                                                                        .transactionAmount()
-                                                                                                        .value()
-                                                                                        )
-                                                                                        .reason(
-                                                                                                paymentNotice
-                                                                                                        .transactionDescription()
-                                                                                                        .value()
-                                                                                        )
-                                                                                        .paymentToken(
-                                                                                                paymentNotice
-                                                                                                        .paymentToken()
-                                                                                                        .value()
-                                                                                        )
-                                                                                        .rptId(
-                                                                                                paymentNotice
-                                                                                                        .rptId()
-                                                                                                        .value()
-                                                                                        )
-                                                                        ).toList()
-                                                        )
-                                                        .status(
-                                                                TransactionStatusDto
-                                                                        .fromValue(
-                                                                                trx
-                                                                                        .getStatus()
-                                                                                        .toString()
-                                                                        )
-                                                        )
-                                        )
-                                )
+                                trx -> {
+                                    log.info(
+                                            "Transaction authorization outcome already received. Transaction status: {}",
+                                            trx.getStatus()
+                                    );
+                                    return Mono.just(
+                                            Either.left(
+                                                    new TransactionInfoDto()
+                                                            .transactionId(
+                                                                    trx
+                                                                            .getTransactionId().value().toString()
+                                                            )
+                                                            .payments(
+                                                                    trx
+                                                                            .getPaymentNotices()
+                                                                            .stream().map(
+                                                                                    paymentNotice -> new PaymentInfoDto()
+                                                                                            .amount(
+                                                                                                    paymentNotice
+                                                                                                            .transactionAmount()
+                                                                                                            .value()
+                                                                                            )
+                                                                                            .reason(
+                                                                                                    paymentNotice
+                                                                                                            .transactionDescription()
+                                                                                                            .value()
+                                                                                            )
+                                                                                            .paymentToken(
+                                                                                                    paymentNotice
+                                                                                                            .paymentToken()
+                                                                                                            .value()
+                                                                                            )
+                                                                                            .rptId(
+                                                                                                    paymentNotice
+                                                                                                            .rptId()
+                                                                                                            .value()
+                                                                                            )
+                                                                            ).toList()
+                                                            )
+                                                            .status(
+                                                                    TransactionStatusDto
+                                                                            .fromValue(
+                                                                                    trx
+                                                                                            .getStatus()
+                                                                                            .toString()
+                                                                            )
+                                                            )
+                                            )
+                                    );
+                                }
                         );
 
                     }
