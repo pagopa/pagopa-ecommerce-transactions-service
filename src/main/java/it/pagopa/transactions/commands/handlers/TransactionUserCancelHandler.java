@@ -5,6 +5,8 @@ import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent;
 import it.pagopa.ecommerce.commons.domain.v1.Transaction;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
+import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionExpired;
+import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
@@ -47,11 +49,8 @@ public class TransactionUserCancelHandler extends
                 .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
 
         return transaction
-                .cast(BaseTransaction.class)
-                .filter(
-                        t -> t.getStatus() == TransactionStatusDto.ACTIVATED
-                )
-                .switchIfEmpty(alreadyProcessedError)
+                .cast(BaseTransactionWithPaymentToken.class)
+                .onErrorMap(err -> new AlreadyProcessedException(command.getData()))
                 .flatMap(
 
                         t -> {

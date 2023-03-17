@@ -9,6 +9,7 @@ import com.azure.storage.queue.models.SendMessageResult;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
+import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -115,6 +116,24 @@ public class TransactionUserCancelHandlerTest {
         /* EXECUTION TEST */
         StepVerifier.create(transactionUserCancelHandler.handle(transactionUserCancelCommand))
                 .expectError(RuntimeException.class)
+                .verify();
+    }
+
+    @Test
+    void shouldSaveAuthorizationEventWithErrorTransactionStatus() {
+        String transactionId = TransactionTestUtils.TRANSACTION_ID;
+        TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
+                null,
+                new TransactionId(UUID.fromString(transactionId))
+        );
+
+        /* PRECONDITION */
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId))
+                .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionAuthorizationCompletedEvent()));
+
+        /* EXECUTION TEST */
+        StepVerifier.create(transactionUserCancelHandler.handle(transactionUserCancelCommand))
+                .expectError(AlreadyProcessedException.class)
                 .verify();
     }
 
