@@ -37,7 +37,7 @@ import java.util.UUID;
 @Slf4j
 @Component
 public class TransactionActivateHandler
-        extends BaseHandler<TransactionActivateCommand, Mono<Tuple2<Mono<TransactionActivatedEvent>, String>>> {
+        implements CommandHandler<TransactionActivateCommand, Mono<Tuple2<Mono<TransactionActivatedEvent>, String>>> {
 
     private final PaymentRequestsInfoRepository paymentRequestsInfoRepository;
 
@@ -59,7 +59,6 @@ public class TransactionActivateHandler
     @Autowired
     public TransactionActivateHandler(
             PaymentRequestsInfoRepository paymentRequestsInfoRepository,
-            TransactionsEventStoreRepository<Object> eventStoreRepository,
             TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository,
             NodoOperations nodoOperations,
             JwtTokenUtils jwtTokenUtils,
@@ -67,7 +66,6 @@ public class TransactionActivateHandler
             @Value("${payment.token.validity}") Integer paymentTokenTimeout,
             ConfidentialMailUtils confidentialMailUtils
     ) {
-        super(eventStoreRepository);
         this.paymentRequestsInfoRepository = paymentRequestsInfoRepository;
         this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
         this.nodoOperations = nodoOperations;

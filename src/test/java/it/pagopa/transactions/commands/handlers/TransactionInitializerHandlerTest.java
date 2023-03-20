@@ -57,9 +57,6 @@ class TransactionInitializerHandlerTest {
     private final TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
 
-    private final TransactionsEventStoreRepository<Object> eventStoreRepository = Mockito
-            .mock(TransactionsEventStoreRepository.class);
-
     private final NodoOperations nodoOperations = Mockito.mock(NodoOperations.class);
 
     private final QueueAsyncClient transactionClosureSentEventQueueClient = Mockito.mock(QueueAsyncClient.class);
@@ -72,7 +69,6 @@ class TransactionInitializerHandlerTest {
 
     private final TransactionActivateHandler handler = new TransactionActivateHandler(
             paymentRequestInfoRepository,
-            eventStoreRepository,
             transactionEventActivatedStoreRepository,
             nodoOperations,
             jwtTokenUtils,

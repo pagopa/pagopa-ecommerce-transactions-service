@@ -14,6 +14,7 @@ import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,8 +41,10 @@ class TransactionRequestAuthorizizationHandlerTest {
     @Mock
     private TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository;
 
-    @Mock
-    private TransactionsEventStoreRepository<Object> eventStoreRepository;
+    private TransactionsEventStoreRepository<Object> eventStoreRepository = Mockito
+            .mock(TransactionsEventStoreRepository.class);
+
+    private final TransactionsUtils transactionsUtils = new TransactionsUtils(eventStoreRepository);
 
     private final UUID transactionIdUUID = UUID.randomUUID();
 
@@ -50,9 +53,9 @@ class TransactionRequestAuthorizizationHandlerTest {
     @BeforeEach
     private void init() {
         requestAuthorizationHandler = new TransactionRequestAuthorizationHandler(
-                eventStoreRepository,
                 paymentGatewayClient,
-                transactionEventStoreRepository
+                transactionEventStoreRepository,
+                transactionsUtils
         );
     }
 

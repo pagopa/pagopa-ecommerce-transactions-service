@@ -26,6 +26,7 @@ import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.EuroUtils;
+import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -62,6 +63,7 @@ class TransactionSendClosureHandlerTest {
     private final TransactionsEventStoreRepository<Object> eventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
 
+    private final TransactionsUtils transactionsUtils = new TransactionsUtils(eventStoreRepository);
     private final NodeForPspClient nodeForPspClient = Mockito.mock(NodeForPspClient.class);
 
     private final QueueAsyncClient transactionClosureSentEventQueueClient = Mockito.mock(QueueAsyncClient.class);
@@ -77,13 +79,13 @@ class TransactionSendClosureHandlerTest {
             transactionClosureErrorEventStoreRepository,
             transactionRefundedEventStoreRepository,
             paymentRequestsInfoRepositoryRepository,
-            eventStoreRepository,
             nodeForPspClient,
             transactionClosureSentEventQueueClient,
             PAYMENT_TOKEN_VALIDITY,
             SOFT_TIMEOUT_OFFSET,
             RETRY_TIMEOUT_INTERVAL,
-            refundQueueAsyncClient
+            refundQueueAsyncClient,
+            transactionsUtils
     );
 
     private final TransactionId transactionId = new TransactionId(UUID.fromString(TransactionTestUtils.TRANSACTION_ID));
