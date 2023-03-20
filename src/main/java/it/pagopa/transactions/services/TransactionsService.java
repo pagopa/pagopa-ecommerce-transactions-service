@@ -344,39 +344,30 @@ public class TransactionsService {
     @CircuitBreaker(name = "node-backend")
     @Retry(name = "updateTransactionAuthorization")
     public Mono<TransactionInfoDto> updateTransactionAuthorization(
-                                                                   String transactionId,
+                                                                   String encodedTransactionId,
                                                                    UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
-        return uuidUtils.uuidFromBase64(transactionId)
+        return uuidUtils.uuidFromBase64(encodedTransactionId)
                 .fold(
                         Mono::error,
                         transactionIdDecoded -> {
-                            TransactionId trnId = new TransactionId(transactionIdDecoded);
+                            TransactionId transactionId = new TransactionId(transactionIdDecoded);
                             log.info("decoded transaction id: {}", transactionIdDecoded);
-                            Mono<BaseTransaction> baseTransaction = transactionsUtils.reduceEvents(trnId);
-                            return wasTransactionAuthorized(trnId)
-                                    .flatMap(alreadyAuthorized -> {
-                                        if (Boolean.FALSE.equals(alreadyAuthorized)) {
-                                            return Mono.just(
-                                                    Either.<TransactionInfoDto, Mono<BaseTransaction>>right(
-                                                            baseTransaction
-                                                    )
-                                            );
+                            Mono<BaseTransaction> baseTransaction = transactionsUtils.reduceEvents(transactionId);
+                            return wasTransactionAuthorized(transactionId)
+                                    .<Either<TransactionInfoDto, Mono<BaseTransaction>>>flatMap(alreadyAuthorized -> {
+                                        if (!alreadyAuthorized) {
+                                            return Mono.just(baseTransaction).map(Either::right);
                                         } else {
-                                            return baseTransaction.flatMap(
+                                            return baseTransaction.map(
                                                     trx -> {
                                                         log.info(
                                                                 "Transaction authorization outcome already received. Transaction status: {}",
                                                                 trx.getStatus()
                                                         );
-                                                        return Mono.just(
-                                                                Either.<TransactionInfoDto, Mono<BaseTransaction>>left(
-                                                                        buildTransactionInfoDto(trx)
-                                                                )
-                                                        );
+                                                        return Either.left(buildTransactionInfoDto(trx));
                                                     }
                                             );
-
                                         }
                                     })
                                     .flatMap(
@@ -384,88 +375,84 @@ public class TransactionsService {
                                                     Mono::just,
                                                     tx -> baseTransaction
                                                             .flatMap(
-                                                                    transaction -> {
-                                                                        UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
-                                                                                transaction,
-                                                                                updateAuthorizationRequestDto
-                                                                        );
-
-                                                                        // FIXME Handle multiple rtpId
-                                                                        TransactionUpdateAuthorizationCommand transactionUpdateAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
-                                                                                transaction.getPaymentNotices().get(0)
-                                                                                        .rptId(),
-                                                                                updateAuthorizationStatusData
-                                                                        );
-
-                                                                        return transactionUpdateAuthorizationHandler
-                                                                                .handle(
-                                                                                        transactionUpdateAuthorizationCommand
-                                                                                )
-                                                                                .doOnNext(
-                                                                                        authorizationStatusUpdatedEvent -> log
-                                                                                                .info(
-                                                                                                        "Requested authorization update for rptId: {}",
-                                                                                                        transaction
-                                                                                                                .getPaymentNotices()
-                                                                                                                .get(0)
-                                                                                                                .rptId()
-                                                                                                )
-                                                                                )
-                                                                                .flatMap(
-                                                                                        authorizationStatusUpdatedEvent -> authorizationUpdateProjectionHandler
-                                                                                                .handle(
-                                                                                                        authorizationStatusUpdatedEvent
-                                                                                                )
-                                                                                );
-                                                                    }
+                                                                    transaction -> updateTransactionAuthorizationStatus(
+                                                                            transaction,
+                                                                            updateAuthorizationRequestDto
+                                                                    )
                                                             )
                                                             .cast(BaseTransactionWithPaymentToken.class)
                                                             .flatMap(
-                                                                    transaction -> {
-                                                                        ClosureSendData closureSendData = new ClosureSendData(
-                                                                                transaction,
-                                                                                updateAuthorizationRequestDto
-                                                                        );
-
-                                                                        TransactionClosureSendCommand transactionClosureSendCommand = new TransactionClosureSendCommand(
-                                                                                transaction.getPaymentNotices().get(0)
-                                                                                        .rptId(),
-                                                                                closureSendData
-                                                                        );
-
-                                                                        return transactionSendClosureHandler
-                                                                                .handle(transactionClosureSendCommand)
-                                                                                .doOnNext(
-                                                                                        closureSentEvent ->
-                                                                        // FIXME Handle multiple rtpId
-                                                                        log.info(
-                                                                                "Requested transaction closure for rptId: {}",
-                                                                                transaction.getPaymentNotices().get(0)
-                                                                                        .rptId()
-                                                                                        .value()
-                                                                        )
-                                                                                )
-                                                                                .flatMap(
-                                                                                        result -> result.fold(
-                                                                                                errorEvent -> closureErrorProjectionHandler
-                                                                                                        .handle(
-                                                                                                                errorEvent
-                                                                                                        ),
-                                                                                                closureSentEvent -> closureSendProjectionHandler
-                                                                                                        .handle(
-                                                                                                                closureSentEvent
-                                                                                                        )
-                                                                                        )
-                                                                                )
-                                                                                .map(this::buildTransactionInfoDto);
-                                                                    }
+                                                                    transaction -> handleClosePayment(
+                                                                            transaction,
+                                                                            updateAuthorizationRequestDto
+                                                                    )
                                                             )
-
+                                                            .map(this::buildTransactionInfoDto)
                                             )
                                     );
                         }
                 );
 
+    }
+
+    private Mono<TransactionActivated> updateTransactionAuthorizationStatus(
+                                                                            BaseTransaction transaction,
+                                                                            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+    ) {
+        UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
+                transaction,
+                updateAuthorizationRequestDto
+        );
+
+        // FIXME Handle multiple rtpId
+        TransactionUpdateAuthorizationCommand transactionUpdateAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
+                transaction.getPaymentNotices().get(0).rptId(),
+                updateAuthorizationStatusData
+        );
+
+        return transactionUpdateAuthorizationHandler
+                .handle(transactionUpdateAuthorizationCommand)
+                .doOnNext(
+                        authorizationStatusUpdatedEvent -> log.info(
+                                "Requested authorization update for rptId: {}",
+                                transaction.getPaymentNotices().get(0).rptId()
+                        )
+                )
+                .flatMap(
+                        authorizationStatusUpdatedEvent -> authorizationUpdateProjectionHandler
+                                .handle(authorizationStatusUpdatedEvent)
+                );
+    }
+
+    private Mono<it.pagopa.ecommerce.commons.documents.v1.Transaction> handleClosePayment(
+                                                                                          BaseTransactionWithPaymentToken transaction,
+                                                                                          UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+    ) {
+        ClosureSendData closureSendData = new ClosureSendData(
+                transaction,
+                updateAuthorizationRequestDto
+        );
+
+        TransactionClosureSendCommand transactionClosureSendCommand = new TransactionClosureSendCommand(
+                transaction.getPaymentNotices().get(0).rptId(),
+                closureSendData
+        );
+
+        return transactionSendClosureHandler
+                .handle(transactionClosureSendCommand)
+                .doOnNext(closureSentEvent ->
+                // FIXME Handle multiple rtpId
+                log.info(
+                        "Requested transaction closure for rptId: {}",
+                        transaction.getPaymentNotices().get(0).rptId().value()
+                )
+                )
+                .flatMap(
+                        result -> result.fold(
+                                errorEvent -> closureErrorProjectionHandler.handle(errorEvent),
+                                closureSentEvent -> closureSendProjectionHandler.handle(closureSentEvent)
+                        )
+                );
     }
 
     private TransactionInfoDto buildTransactionInfoDto(
@@ -515,10 +502,9 @@ public class TransactionsService {
     ) {
         /*
          * @formatter:off
-         * Searching the transaction with authorization completed event. If none is
-         * found then returning Either.right for processing continuation, otherwise
-         * return the completed OK response taking information from the current reduced
-         * transaction status. The check is performed directly on the authorization
+         * Searching the transaction with authorization completed event returning a Mono<Boolean>
+         * reflecting the fact that transaction have been previously authorized or not.
+         * The check is performed directly on the authorization
          * completed event and not on the fact that the reduced transaction is instance
          * of BaseTransactionWithCompletedAuthorization because the transaction can go
          * in REFUND or EXPIRED statuses and their aggregates does not directly extend
@@ -533,9 +519,8 @@ public class TransactionsService {
                         transactionId.value().toString(),
                         TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT
                 )
-                .map(Optional::of)
-                .switchIfEmpty(Mono.just(Optional.empty()))
-                .flatMap(event -> Mono.just(event.isPresent()));
+                .map(v -> true)
+                .switchIfEmpty(Mono.just(false));
 
     }
 
