@@ -29,17 +29,16 @@ public class TransactionsUtils {
     }
 
     private void init() {
-        for (it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto enumValue : it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.class
-                .getEnumConstants()) {
+        for (it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto enumValue : it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto
+                .values()) {
             /*
              * @formatter:off
-             * This lookup map serve two purpose: 1 handle enumerations conversion from
-             * commons and transactions-service TransactionStatusDto enumerations 2 in case
-             * one enumeration from commons is not present into transactions-service's ones
+             * This lookup map serve two purpose:
+             * 1) handle enumerations conversion from commons and transactions-service TransactionStatusDto enumerations
+             * 2) in case one enumeration from commons is not present into transactions-service's ones
              * then an IllegalArgumentException is raised, preventing the module from being
              * run and avoiding runtime errors correlated to specs updated into commons
-             * that are not reflected into transactions specs (such as a transaction status
-             * added only into commons)
+             * that are not reflected into transactions specs (such as a transaction status added only into commons)
              * @formatter:on
              */
             transactionStatusLookupMap.put(
