@@ -365,9 +365,9 @@ public class TransactionsService {
                                                                 "Transaction authorization outcome already received. Transaction status: {}",
                                                                 trx.getStatus()
                                                         );
-                                                        return Either.left(buildTransactionInfoDto(trx));
+                                                        return buildTransactionInfoDto(trx);
                                                     }
-                                            );
+                                            ).map(Either::left);
                                         }
                                     })
                                     .flatMap(
@@ -382,7 +382,7 @@ public class TransactionsService {
                                                             )
                                                             .cast(BaseTransactionWithPaymentToken.class)
                                                             .flatMap(
-                                                                    transaction -> handleClosePayment(
+                                                                    transaction -> closePayment(
                                                                             transaction,
                                                                             updateAuthorizationRequestDto
                                                                     )
@@ -424,9 +424,9 @@ public class TransactionsService {
                 );
     }
 
-    private Mono<it.pagopa.ecommerce.commons.documents.v1.Transaction> handleClosePayment(
-                                                                                          BaseTransactionWithPaymentToken transaction,
-                                                                                          UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+    private Mono<it.pagopa.ecommerce.commons.documents.v1.Transaction> closePayment(
+                                                                                    BaseTransactionWithPaymentToken transaction,
+                                                                                    UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
         ClosureSendData closureSendData = new ClosureSendData(
                 transaction,
@@ -502,16 +502,17 @@ public class TransactionsService {
     ) {
         /*
          * @formatter:off
-         * Searching the transaction with authorization completed event returning a Mono<Boolean>
-         * reflecting the fact that transaction have been previously authorized or not.
-         * The check is performed directly on the authorization
-         * completed event and not on the fact that the reduced transaction is instance
-         * of BaseTransactionWithCompletedAuthorization because the transaction can go
-         * in REFUND or EXPIRED statuses and their aggregates does not directly extend
-         * the BaseTransactionWithCompletedAuthorization just because transaction can
-         * EXPIRE in any state and can be REFUND also if the authorization was only
-         * requested so those aggregates. So a check is performed against the
-         * TRANSACTION_AUTHORIZATION_COMPLETED_EVENT event
+         *
+         * This method determines whether transaction has been previously authorized or not 
+         * by searching for an authorization completed event.
+         * The check is performed directly on the presence of an authorization completed event
+         * and not on the fact that the transaction aggregate is an instance of `BaseTransactionWithCompletedAuthorization`
+         * because a generic transaction can go in the REFUNDED or EXPIRED states without undergoing authorization
+         * (the corresponding aggregates do not extend, in fact, `BaseTransactionWithCompletedAuthorization`).
+         * 
+         * This can happen, for example, when a transaction expires before getting a payment gateway response
+         * (for the EXPIRED state; if in REFUNDED that means the transaction was already refunded).
+         *
          * @formatter:on
          */
         return eventStoreRepository
