@@ -43,13 +43,9 @@ public class TransactionUserCancelHandler extends
         Mono<Transaction> transaction = replayTransactionEvents(
                 command.getData().value()
         );
-        Mono<? extends BaseTransaction> alreadyProcessedError = transaction
-                .cast(BaseTransaction.class)
-                .doOnNext(t -> log.error("Error: requesting cancel for transaction in state {}", t.getStatus()))
-                .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
 
         return transaction
-                .cast(BaseTransactionWithPaymentToken.class)
+                .cast(BaseTransaction.class)
                 .onErrorMap(err -> new AlreadyProcessedException(command.getData()))
                 .flatMap(
 
