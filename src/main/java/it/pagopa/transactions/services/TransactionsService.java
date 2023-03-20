@@ -365,9 +365,9 @@ public class TransactionsService {
                                                                 "Transaction authorization outcome already received. Transaction status: {}",
                                                                 trx.getStatus()
                                                         );
-                                                        return Either.left(buildTransactionInfoDto(trx));
+                                                        return buildTransactionInfoDto(trx);
                                                     }
-                                            );
+                                            ).map(Either::left);
                                         }
                                     })
                                     .flatMap(
@@ -382,7 +382,7 @@ public class TransactionsService {
                                                             )
                                                             .cast(BaseTransactionWithPaymentToken.class)
                                                             .flatMap(
-                                                                    transaction -> handleClosePayment(
+                                                                    transaction -> closePayment(
                                                                             transaction,
                                                                             updateAuthorizationRequestDto
                                                                     )
@@ -424,9 +424,9 @@ public class TransactionsService {
                 );
     }
 
-    private Mono<it.pagopa.ecommerce.commons.documents.v1.Transaction> handleClosePayment(
-                                                                                          BaseTransactionWithPaymentToken transaction,
-                                                                                          UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+    private Mono<it.pagopa.ecommerce.commons.documents.v1.Transaction> closePayment(
+                                                                                    BaseTransactionWithPaymentToken transaction,
+                                                                                    UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
         ClosureSendData closureSendData = new ClosureSendData(
                 transaction,
