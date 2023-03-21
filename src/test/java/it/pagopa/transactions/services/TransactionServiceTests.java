@@ -149,7 +149,7 @@ public class TransactionServiceTests {
                 .status(TransactionStatusDto.ACTIVATED);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
-
+        when(transactionsUtils.convertEnumeration(any())).thenCallRealMethod();
         assertEquals(
                 transactionsService.getTransactionInfo(TRANSACTION_ID).block(),
                 expected
@@ -366,6 +366,7 @@ public class TransactionServiceTests {
                         )
                 )
         );
+        when(transactionsUtils.convertEnumeration(any())).thenCallRealMethod();
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
                 .updateTransactionAuthorization(transactionIdEncoded, updateAuthorizationRequest).block();
@@ -404,29 +405,12 @@ public class TransactionServiceTests {
     }
 
     @Test
-    void shouldReturnTransactionInfoForSuccessfulNotified() {
+    void shouldReturnTransactionInfoForSuccessfulNotifiedOk() {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
         Transaction transactionDocument = TransactionTestUtils.transactionDocument(
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSED,
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED_OK,
                 ZonedDateTime.now()
-        );
-
-        TransactionActivated transaction = new TransactionActivated(
-                new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
-                transactionDocument.getPaymentNotices().stream().map(
-                        paymentNotice -> new it.pagopa.ecommerce.commons.domain.v1.PaymentNotice(
-                                new PaymentToken(paymentNotice.getPaymentToken()),
-                                new RptId(paymentNotice.getRptId()),
-                                new TransactionAmount(paymentNotice.getAmount()),
-                                new TransactionDescription(paymentNotice.getDescription()),
-                                new PaymentContextCode(paymentNotice.getPaymentContextCode())
-                        )
-                ).toList(),
-                transactionDocument.getEmail(),
-                null,
-                null,
-                Transaction.ClientId.CHECKOUT
         );
 
         TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
@@ -459,7 +443,7 @@ public class TransactionServiceTests {
                                         .rptId(paymentNotice.getRptId())
                         ).toList()
                 )
-                .status(TransactionStatusDto.NOTIFIED);
+                .status(TransactionStatusDto.NOTIFIED_OK);
 
         /* preconditions */
         Mockito.when(repository.findById(transactionId.value().toString()))
@@ -468,8 +452,66 @@ public class TransactionServiceTests {
         Mockito.when(transactionUpdateStatusHandler.handle(any()))
                 .thenReturn(Mono.just(event));
 
-        Mockito.when(transactionUserReceiptProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
+        Mockito.when(transactionUserReceiptProjectionHandler.handle(any())).thenReturn(Mono.just(transactionDocument));
+        when(transactionsUtils.convertEnumeration(any())).thenCallRealMethod();
+        /* test */
+        TransactionInfoDto transactionInfoResponse = transactionsService
+                .addUserReceipt(transactionId.value().toString(), addUserReceiptRequest).block();
 
+        assertEquals(expectedResponse, transactionInfoResponse);
+    }
+
+    @Test
+    void shouldReturnTransactionInfoForSuccessfulNotifiedKo() {
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+
+        Transaction transactionDocument = TransactionTestUtils.transactionDocument(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED_KO,
+                ZonedDateTime.now()
+        );
+
+        TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
+                transactionDocument.getTransactionId(),
+                new TransactionUserReceiptData(TransactionUserReceiptData.Outcome.KO)
+        );
+
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(AddUserReceiptRequestDto.OutcomeEnum.KO)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(
+                        new AddUserReceiptRequestPaymentsInnerDto()
+                                .paymentToken("paymentToken")
+                                .companyName("companyName")
+                                .creditorReferenceId("creditorReferenceId")
+                                .description("description")
+                                .debtor("debtor")
+                                .fiscalCode("fiscalCode")
+                                .officeName("officeName")
+                );
+
+        TransactionInfoDto expectedResponse = new TransactionInfoDto()
+                .transactionId(transactionDocument.getTransactionId())
+                .payments(
+                        transactionDocument.getPaymentNotices().stream().map(
+                                paymentNotice -> new PaymentInfoDto()
+                                        .amount(paymentNotice.getAmount())
+                                        .reason(paymentNotice.getDescription())
+                                        .paymentToken(paymentNotice.getPaymentToken())
+                                        .rptId(paymentNotice.getRptId())
+                        ).toList()
+                )
+                .status(TransactionStatusDto.NOTIFIED_KO);
+
+        /* preconditions */
+        Mockito.when(repository.findById(transactionId.value().toString()))
+                .thenReturn(Mono.just(transactionDocument));
+
+        Mockito.when(transactionUpdateStatusHandler.handle(any()))
+                .thenReturn(Mono.just(event));
+
+        Mockito.when(transactionUserReceiptProjectionHandler.handle(any())).thenReturn(Mono.just(transactionDocument));
+        when(transactionsUtils.convertEnumeration(any()))
+                .thenCallRealMethod();
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
                 .addUserReceipt(transactionId.value().toString(), addUserReceiptRequest).block();
@@ -721,6 +763,8 @@ public class TransactionServiceTests {
                         baseTransaction
                 )
         );
+        when(transactionsUtils.convertEnumeration(any()))
+                .thenCallRealMethod();
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
                 .updateTransactionAuthorization(transactionIdEncoded, updateAuthorizationRequest).block();
@@ -790,6 +834,8 @@ public class TransactionServiceTests {
                         baseTransaction
                 )
         );
+        when(transactionsUtils.convertEnumeration(any()))
+                .thenCallRealMethod();
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
                 .updateTransactionAuthorization(transactionIdEncoded, updateAuthorizationRequest).block();
@@ -856,6 +902,8 @@ public class TransactionServiceTests {
                         baseTransaction
                 )
         );
+        when(transactionsUtils.convertEnumeration(any()))
+                .thenCallRealMethod();
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
                 .updateTransactionAuthorization(transactionIdEncoded, updateAuthorizationRequest).block();
@@ -965,6 +1013,8 @@ public class TransactionServiceTests {
                         )
                 )
         );
+        when(transactionsUtils.convertEnumeration(any()))
+                .thenCallRealMethod();
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
                 .updateTransactionAuthorization(transactionIdEncoded, updateAuthorizationRequest).block();

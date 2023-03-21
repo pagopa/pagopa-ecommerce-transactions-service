@@ -2,6 +2,7 @@ package it.pagopa.transactions.controllers;
 
 import it.pagopa.ecommerce.commons.domain.v1.PaymentToken;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
+import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
@@ -33,6 +34,7 @@ import reactor.test.StepVerifier;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.OffsetDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -366,7 +368,7 @@ class TransactionsControllerTest {
                                 .amount(100)
                                 .paymentToken(paymentToken)
                 )
-                .status(TransactionStatusDto.NOTIFIED);
+                .status(TransactionStatusDto.NOTIFIED_OK);
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
                 .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
@@ -570,6 +572,34 @@ class TransactionsControllerTest {
                 "Invalid payment token received",
                 responseEntity.getBody().getDetail()
         );
+    }
+
+    @Test
+    void shouldGetTransactionInfoInAllStatuses() {
+
+        TransactionInfoDto response = new TransactionInfoDto()
+                .addPaymentsItem(
+                        new PaymentInfoDto()
+                                .amount(10)
+                                .reason("Reason")
+                                .paymentToken("payment_token")
+                ).authToken("token");
+
+        String transactionId = TransactionTestUtils.TRANSACTION_ID;
+        Mockito.when(jwtTokenUtils.generateToken(any())).thenReturn(Mono.just(""));
+
+        for (it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status : it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto
+                .values()) {
+            response.setStatus(TransactionStatusDto.fromValue(status.toString()));
+            Mockito.when(transactionsService.getTransactionInfo(transactionId)).thenReturn(Mono.just(response));
+            webTestClient.get()
+                    .uri("/transactions/{trnId}", Map.of("trnId", transactionId))
+                    .exchange()
+                    .expectStatus()
+                    .isOk()
+                    .expectBody(TransactionInfoDto.class)
+                    .value(p -> assertEquals(status.toString(), p.getStatus().toString()));
+        }
     }
 
     private static CtFaultBean faultBeanWithCode(String faultCode) {

@@ -155,7 +155,7 @@ public class TransactionsService {
                                                 transaction.getClientId().toString()
                                         )
                                 )
-                                .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
+                                .status(transactionsUtils.convertEnumeration(transaction.getStatus()))
                 );
     }
 
@@ -476,7 +476,7 @@ public class TransactionsService {
                                 )
                                 .toList()
                 )
-                .status(TransactionStatusDto.fromValue(transactionDocument.getStatus().toString()));
+                .status(transactionsUtils.convertEnumeration(transactionDocument.getStatus()));
 
     }
 
@@ -493,7 +493,7 @@ public class TransactionsService {
                                                 .rptId(paymentNotice.rptId().value())
                                 ).toList()
                 )
-                .status(TransactionStatusDto.fromValue(baseTransaction.getStatus().toString()));
+                .status(transactionsUtils.convertEnumeration(baseTransaction.getStatus()));
 
     }
 
@@ -582,32 +582,19 @@ public class TransactionsService {
                         transactionUserReceiptAddedEvent -> transactionUserReceiptProjectionHandler
                                 .handle(transactionUserReceiptAddedEvent)
                 )
-                .cast(TransactionActivated.class)
                 .map(
                         transaction -> new TransactionInfoDto()
-                                .transactionId(transaction.getTransactionId().value().toString())
+                                .transactionId(transaction.getTransactionId())
                                 .payments(
                                         transaction.getPaymentNotices().stream().map(
                                                 paymentNotice -> new PaymentInfoDto()
-                                                        .amount(
-                                                                transaction.getTransactionActivatedData()
-                                                                        .getPaymentNotices().stream()
-                                                                        .filter(
-                                                                                paymentNoticeData -> paymentNoticeData
-                                                                                        .getRptId().equals(
-                                                                                                paymentNotice.rptId()
-                                                                                                        .value()
-                                                                                        )
-                                                                        )
-                                                                        .findFirst().get()
-                                                                        .getAmount()
-                                                        )
-                                                        .reason(paymentNotice.transactionDescription().value())
-                                                        .paymentToken(paymentNotice.paymentToken().value())
-                                                        .rptId(paymentNotice.rptId().value())
+                                                        .amount(paymentNotice.getAmount())
+                                                        .reason(paymentNotice.getDescription())
+                                                        .paymentToken(paymentNotice.getPaymentToken())
+                                                        .rptId(paymentNotice.getRptId())
                                         ).toList()
                                 )
-                                .status(TransactionStatusDto.NOTIFIED)
+                                .status(transactionsUtils.convertEnumeration(transaction.getStatus()))
                 )
                 .doOnNext(
                         transaction -> log.info(
@@ -637,7 +624,7 @@ public class TransactionsService {
                                         ).toList()
                                 )
                                 .authToken(authToken)
-                                .status(TransactionStatusDto.fromValue(transaction.getStatus().toString()))
+                                .status(transactionsUtils.convertEnumeration(transaction.getStatus()))
                                 // .feeTotal()//TODO da dove prendere le fees?
                                 .clientId(convertClientId(transaction.getClientId()))
                 );
