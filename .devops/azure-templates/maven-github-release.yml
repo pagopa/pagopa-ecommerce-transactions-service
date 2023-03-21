@@ -51,32 +51,53 @@ steps:
     displayName: 'Checkout release branch'
 
   # bump version
-  - task: Maven@3
-    condition: or(succeeded(), ne('${{parameters.semver}}', 'none') )
-    displayName: 'Bump version'
-    name: dump_version
-    inputs:
-      mavenPomFile: "pom.xml"
-      goals: 'build-helper:parse-version versions:set'
-      ${{ if eq(parameters.semver, 'patch') }}:
-        options: '-DnewVersion=${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.nextIncrementalVersion}'
-      ${{ if eq(parameters.semver, 'minor') }}:
-        options: '-DnewVersion=${parsedVersion.majorVersion}.${parsedVersion.nextMinorVersion}.0'
-      ${{ if eq(parameters.semver, 'major') }}:
-        options: '-DnewVersion=${parsedVersion.nextMajorVersion}.0.0'
-      ${{ if eq(parameters.semver, 'buildNumber') }}:
-        options: '-DnewVersion=${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion}-${parsedVersion.nextBuildNumber}'
-
-
-  - task: Bash@3
-    name: next_version
-    displayName: 'Set release variables'
-    inputs:
-      targetType: "inline"
-      script: |
-        version=$(mvn -f pom.xml help:evaluate -Dexpression=project.version -q -DforceStdout)
-        echo "##vso[task.setvariable variable=value;isOutput=true]$version"
-      failOnStderr: true
+  - ${{ if ne(parameters['semver'], 'none') }}:
+      - task: Maven@3
+        displayName: 'Bump version'
+        name: dump_version
+        inputs:
+          mavenPomFile: "pom.xml"
+          goals: 'build-helper:parse-version versions:set'
+          ${{ if eq(parameters.semver, 'patch') }}:
+            options: '-DnewVersion=${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.nextIncrementalVersion}'
+          ${{ if eq(parameters.semver, 'minor') }}:
+            options: '-DnewVersion=${parsedVersion.majorVersion}.${parsedVersion.nextMinorVersion}.0'
+          ${{ if eq(parameters.semver, 'major') }}:
+            options: '-DnewVersion=${parsedVersion.nextMajorVersion}.0.0'
+          ${{ if eq(parameters.semver, 'buildNumber') }}:
+            options: '-DnewVersion=${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion}-${parsedVersion.nextBuildNumber}'
+      - task: Bash@3
+        name: next_version_app
+        displayName: 'Set release variables'
+        inputs:
+          targetType: "inline"
+          script: |
+            version=$(mvn -f pom.xml help:evaluate -Dexpression=project.version -q -DforceStdout)
+            echo "##vso[task.setvariable variable=value;isOutput=true]$version"
+            git add pom.xml
+          failOnStderr: true
+      - task: Bash@3
+        displayName: Update Version Values Helm
+        name: update_version_helm
+        inputs:
+          targetType: 'inline'
+          script: |
+            for i in helm/values-*.yaml; do
+              [ -f "$i" ] || break
+              yq -i ".microservice-chart.image.tag = \"$(next_version_app.value)\"" "$i"
+              git add "$i"
+            done
+      - task: Bash@3
+        name: update_app_version
+        displayName: 'Setup helm microservice chart'
+        inputs:
+          targetType: "inline"
+          script: |
+            CHART_FILE="helm/Chart.yaml"
+            if [[ -f "$CHART_FILE" ]]; then
+              yq -i ".appVersion = \"$(next_version_app.value)\"" "$CHART_FILE"
+              git add "$CHART_FILE"
+            fi   
 
   - task: Bash@3
     name: setup_semver_utility
@@ -97,67 +118,33 @@ steps:
         if [[ -f "$CHART_FILE" ]]; then
           yq -i ".version = \"$(semver $CURRENT_CHART_VERSION -i $RELEASE_CHART_SEMVER )\"" "$CHART_FILE"
           git add "$CHART_FILE"
-        fi      
-
-  - task: Bash@3
-    displayName: Update Version Helm
-    condition: or(succeeded(), ne('${{parameters.semver_chart}}', 'none') )
-    name: update_version_helm
-    inputs:
-      targetType: 'inline'
-      script: |
-        for i in helm/values-*.yaml; do
-          [ -f "$i" ] || break
-          yq -i ".microservice-chart.image.tag = \"$(next_version.value)\"" "$i"
-          git add "$i"
-        done
-        CHART_FILE="helm/Chart.yaml"
-        if [[ -f "$CHART_FILE" ]]; then
-          yq -i ".version = \"$(next_version.value)\"" "$CHART_FILE"
-          yq -i ".appVersion = \"$(next_version.value)\"" "$CHART_FILE"
-          git add "$CHART_FILE"
         fi
-
-
   - task: Bash@3
-    displayName: Update Openapi/Swagger Version
-    name: update_version_openapi
+    name: next_version_chart
+    displayName: 'Set release chart variables'
     inputs:
-      targetType: 'inline'
+      targetType: "inline"
       script: |
-        for i in openapi/*.json; do
-          [ -f "$i" ] || break
-          cat <<< "$(jq ".info.version = \"$(next_version.value)\"" "$i")" > "$i"
-          git add $i
-        done
-        for i in openapi/*.yaml; do
-          [ -f "$i" ] || break
-          yq -i ".info.version = \"$(next_version.value)\"" "$i"
-          git add "$i"
-        done
-        for i in openapi/*.yml; do
-          [ -f "$i" ] || break
-          yq -i ".info.version = \"$(next_version.value)\"" "$i"
-          git add "$i"
-        done
-
+        CHART_FILE="helm/Chart.yaml"
+        version=$(yq -r '.version' $CHART_FILE)
+        echo "##vso[task.setvariable variable=value;isOutput=true]$version"
+      failOnStderr: true
   # push new version
   - script: |
-      git add pom.xml
       git commit -m "Bump version [skip ci]"
       git push origin ${{ parameters.release_branch }}
     displayName: 'Push to the release branch'
 
   - script: |
       HEAD_SHA=$(git rev-parse HEAD)
-      TAG="$(next_version.value)"
-      TITLE="Release $(next_version.value)"
+      TAG="$(next_version_chart.value)"
+      TITLE="Release $(next_version_chart.value)"
       echo "##vso[task.setvariable variable=title]$TITLE"
       echo "##vso[task.setvariable variable=sha]$HEAD_SHA"
       echo "##vso[task.setvariable variable=tag]$TAG"
     displayName: 'Set release variables'
 
-  # create new releae
+  # create new release
   - task: GitHubRelease@0
     inputs:
       gitHubConnection: ${{ parameters.gitHubConnection }}
