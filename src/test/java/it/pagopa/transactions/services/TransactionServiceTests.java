@@ -149,8 +149,7 @@ public class TransactionServiceTests {
                 .status(TransactionStatusDto.ACTIVATED);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
-        when(transactionsUtils.convertEnumeration(any()))
-                .thenAnswer(args -> TransactionStatusDto.fromValue(args.getArgument(0).toString()));
+        when(transactionsUtils.convertEnumeration(any())).thenCallRealMethod();
         assertEquals(
                 transactionsService.getTransactionInfo(TRANSACTION_ID).block(),
                 expected
@@ -367,8 +366,7 @@ public class TransactionServiceTests {
                         )
                 )
         );
-        when(transactionsUtils.convertEnumeration(any()))
-                .thenAnswer(args -> TransactionStatusDto.fromValue(args.getArgument(0).toString()));
+        when(transactionsUtils.convertEnumeration(any())).thenCallRealMethod();
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
                 .updateTransactionAuthorization(transactionIdEncoded, updateAuthorizationRequest).block();
@@ -455,8 +453,7 @@ public class TransactionServiceTests {
                 .thenReturn(Mono.just(event));
 
         Mockito.when(transactionUserReceiptProjectionHandler.handle(any())).thenReturn(Mono.just(transactionDocument));
-        when(transactionsUtils.convertEnumeration(any()))
-                .thenAnswer(args -> TransactionStatusDto.fromValue(args.getArgument(0).toString()));
+        when(transactionsUtils.convertEnumeration(any())).thenCallRealMethod();
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
                 .addUserReceipt(transactionId.value().toString(), addUserReceiptRequest).block();
@@ -514,7 +511,7 @@ public class TransactionServiceTests {
 
         Mockito.when(transactionUserReceiptProjectionHandler.handle(any())).thenReturn(Mono.just(transactionDocument));
         when(transactionsUtils.convertEnumeration(any()))
-                .thenAnswer(args -> TransactionStatusDto.fromValue(args.getArgument(0).toString()));
+                .thenCallRealMethod();
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
                 .addUserReceipt(transactionId.value().toString(), addUserReceiptRequest).block();
@@ -767,7 +764,7 @@ public class TransactionServiceTests {
                 )
         );
         when(transactionsUtils.convertEnumeration(any()))
-                .thenAnswer(args -> TransactionStatusDto.fromValue(args.getArgument(0).toString()));
+                .thenCallRealMethod();
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
                 .updateTransactionAuthorization(transactionIdEncoded, updateAuthorizationRequest).block();
@@ -838,7 +835,7 @@ public class TransactionServiceTests {
                 )
         );
         when(transactionsUtils.convertEnumeration(any()))
-                .thenAnswer(args -> TransactionStatusDto.fromValue(args.getArgument(0).toString()));
+                .thenCallRealMethod();
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
                 .updateTransactionAuthorization(transactionIdEncoded, updateAuthorizationRequest).block();
@@ -906,7 +903,7 @@ public class TransactionServiceTests {
                 )
         );
         when(transactionsUtils.convertEnumeration(any()))
-                .thenAnswer(args -> TransactionStatusDto.fromValue(args.getArgument(0).toString()));
+                .thenCallRealMethod();
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
                 .updateTransactionAuthorization(transactionIdEncoded, updateAuthorizationRequest).block();
@@ -1017,7 +1014,7 @@ public class TransactionServiceTests {
                 )
         );
         when(transactionsUtils.convertEnumeration(any()))
-                .thenAnswer(args -> TransactionStatusDto.fromValue(args.getArgument(0).toString()));
+                .thenCallRealMethod();
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
                 .updateTransactionAuthorization(transactionIdEncoded, updateAuthorizationRequest).block();

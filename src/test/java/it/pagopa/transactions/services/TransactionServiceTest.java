@@ -8,7 +8,10 @@ import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
-import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.generated.transactions.server.model.ClientIdDto;
+import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
+import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
+import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
 import it.pagopa.transactions.projections.handlers.TransactionsActivationProjectionHandler;
@@ -104,7 +107,7 @@ class TransactionServiceTest {
         Mockito.when(transactionsActivationProjectionHandler.handle(transactionActivatedEvent))
                 .thenReturn(Mono.just(transactionActivated));
         Mockito.when(transactionsUtils.convertEnumeration(any()))
-                .thenAnswer(args -> TransactionStatusDto.fromValue(args.getArgument(0).toString()));
+                .thenCallRealMethod();
         /**
          * Test
          */
