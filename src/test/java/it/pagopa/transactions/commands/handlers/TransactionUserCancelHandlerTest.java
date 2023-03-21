@@ -11,6 +11,7 @@ import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,21 +30,22 @@ import static org.mockito.ArgumentMatchers.*;
 public class TransactionUserCancelHandlerTest {
 
     private TransactionUserCancelHandler transactionUserCancelHandler;
-
-    @Mock
-    private TransactionsEventStoreRepository<Object> eventStoreRepository;
     @Mock
     private TransactionsEventStoreRepository<Void> transactionEventUserCancelStoreRepository;
 
     @Mock
     private QueueAsyncClient transactionUserCancelQueueClient;
 
+    private TransactionsEventStoreRepository<Object> eventStoreRepository = Mockito
+            .mock(TransactionsEventStoreRepository.class);
+    private final TransactionsUtils transactionsUtils = new TransactionsUtils(eventStoreRepository);
+
     @BeforeEach
     private void init() {
         transactionUserCancelHandler = new TransactionUserCancelHandler(
-                eventStoreRepository,
                 transactionEventUserCancelStoreRepository,
-                transactionUserCancelQueueClient
+                transactionUserCancelQueueClient,
+                transactionsUtils
         );
     }
 
