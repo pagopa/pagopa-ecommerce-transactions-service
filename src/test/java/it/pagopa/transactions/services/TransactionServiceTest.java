@@ -54,7 +54,7 @@ class TransactionServiceTest {
     void shouldHandleNewTransactionTransactionActivated() throws Exception {
         String TEST_EMAIL_STRING = "j.doe@mail.com";
         Confidential<Email> TEST_EMAIL = confidentialDataManager
-                .encrypt(ConfidentialDataManager.Mode.AES_GCM_NOPAD, new Email(TEST_EMAIL_STRING));
+                .encrypt(ConfidentialDataManager.Mode.AES_GCM_NOPAD, new Email(TEST_EMAIL_STRING)).block();
         String TEST_RPTID = "77777777777302016723749670035";
         String TEST_TOKEN = "token";
         ClientIdDto clientIdDto = ClientIdDto.CHECKOUT;

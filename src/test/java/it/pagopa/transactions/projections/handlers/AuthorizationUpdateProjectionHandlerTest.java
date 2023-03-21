@@ -21,6 +21,7 @@ import reactor.test.StepVerifier;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.argThat;
@@ -37,7 +38,7 @@ class AuthorizationUpdateProjectionHandlerTest {
     private ConfidentialDataManager confidentialDataManager = TransactionTestUtils.confidentialDataManager;
 
     @Test
-    void shouldHandleTransaction() throws Exception {
+    void shouldHandleTransaction() {
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .authorizationResult(AuthorizationResultDto.OK)
                 .authorizationCode("OK")
@@ -45,7 +46,7 @@ class AuthorizationUpdateProjectionHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(UUID.randomUUID()),
-                Arrays.asList(
+                List.of(
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
@@ -55,7 +56,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                         )
                 ),
                 confidentialDataManager
-                        .encrypt(ConfidentialDataManager.Mode.AES_GCM_NOPAD, new Email("email@example.com")),
+                        .encrypt(ConfidentialDataManager.Mode.AES_GCM_NOPAD, new Email("email@example.com")).block(),
                 "faultCode",
                 "faultCodeString",
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT

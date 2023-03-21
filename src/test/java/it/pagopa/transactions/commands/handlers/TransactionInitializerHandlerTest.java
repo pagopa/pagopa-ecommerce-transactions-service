@@ -319,9 +319,7 @@ class TransactionInitializerHandlerTest {
     }
 
     @Test
-    void shouldHandleCommandForOnlyIdempotencyKeyCachedPaymentRequest()
-            throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException,
-            NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
+    void shouldHandleCommandForOnlyIdempotencyKeyCachedPaymentRequest() {
         TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
         PaymentNotice paymentNotice = transactionActivatedEvent.getData().getPaymentNotices().get(0);
 
@@ -338,7 +336,7 @@ class TransactionInitializerHandlerTest {
                 .addPaymentNoticesItem(paymentNoticeInfoDto)
                 .email(
                         TransactionTestUtils.confidentialDataManager
-                                .decrypt(transactionActivatedEvent.getData().getEmail())
+                                .decrypt(transactionActivatedEvent.getData().getEmail()).block()
                 );
 
         TransactionActivateCommand command = new TransactionActivateCommand(
@@ -406,9 +404,7 @@ class TransactionInitializerHandlerTest {
     }
 
     @Test
-    void shouldHandleCommandWithoutCachedPaymentRequest()
-            throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException,
-            NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
+    void shouldHandleCommandWithoutCachedPaymentRequest() {
         TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
         PaymentNotice paymentNotice = transactionActivatedEvent.getData().getPaymentNotices().get(0);
 
@@ -425,7 +421,7 @@ class TransactionInitializerHandlerTest {
                 .addPaymentNoticesItem(paymentNoticeInfoDto)
                 .email(
                         TransactionTestUtils.confidentialDataManager
-                                .decrypt(transactionActivatedEvent.getData().getEmail())
+                                .decrypt(transactionActivatedEvent.getData().getEmail()).block()
                 );
 
         TransactionActivateCommand command = new TransactionActivateCommand(

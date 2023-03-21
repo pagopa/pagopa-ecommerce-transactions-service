@@ -151,7 +151,7 @@ class TransactionAddUserReceiptHandlerTest {
         );
         NotificationsServiceClient.SuccessTemplateRequest successTemplateRequest = successTemplateMailCaptor
                 .getAllValues().get(0);
-        String decryptedMail = TransactionTestUtils.confidentialDataManager.decrypt(TransactionTestUtils.EMAIL);
+        String decryptedMail = TransactionTestUtils.confidentialDataManager.decrypt(TransactionTestUtils.EMAIL).block();
         assertEquals(successTemplateRequest.to(), decryptedMail);
         assertEquals(successTemplateRequest.templateParameters().getUser().getEmail(), decryptedMail);
     }
@@ -225,7 +225,7 @@ class TransactionAddUserReceiptHandlerTest {
         NotificationsServiceClient.SuccessTemplateRequest successTemplateRequest = successTemplateMailCaptor
                 .getAllValues().get(0);
 
-        String decryptedMail = TransactionTestUtils.confidentialDataManager.decrypt(EMAIL);
+        String decryptedMail = TransactionTestUtils.confidentialDataManager.decrypt(EMAIL).block();
         assertEquals(successTemplateRequest.to(), decryptedMail);
         assertEquals(successTemplateRequest.templateParameters().getUser().getEmail(), decryptedMail);
     }
@@ -301,7 +301,7 @@ class TransactionAddUserReceiptHandlerTest {
                 )
         );
         NotificationsServiceClient.KoTemplateRequest koTemplateRequest = koTemplateMailCaptor.getAllValues().get(0);
-        assertEquals(koTemplateRequest.to(), TransactionTestUtils.confidentialDataManager.decrypt(EMAIL));
+        assertEquals(koTemplateRequest.to(), TransactionTestUtils.confidentialDataManager.decrypt(EMAIL).block());
     }
 
     @Test

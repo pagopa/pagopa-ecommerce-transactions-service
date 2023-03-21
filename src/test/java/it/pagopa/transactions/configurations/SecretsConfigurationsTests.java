@@ -1,5 +1,6 @@
 package it.pagopa.transactions.configurations;
 
+import it.pagopa.generated.pdv.v1.api.TokenApi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -13,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @ExtendWith(MockitoExtension.class)
 class SecretsConfigurationsTests {
 
-    private SecretsConfigurations secretsConfigurations = new SecretsConfigurations();
+    private final SecretsConfigurations secretsConfigurations = new SecretsConfigurations();
 
     private static final String STRONG_KEY = "ODMzNUZBNTZENDg3NTYyREUyNDhGNDdCRUZDNzI3NDMzMzQwNTFEREZGQ0MyQzA5Mjc1RjY2NTQ1NDk5MDMxNzU5NDc0NUVFMTdDMDhGNzk4Q0Q3RENFMEJBODE1NURDREExNEY2Mzk4QzFEMTU0NTExNjUyMEExMzMwMTdDMDk";
 
@@ -22,6 +23,8 @@ class SecretsConfigurationsTests {
     private static final String INVALID_KEY = ".";
 
     private static final String EMAIL_ENCRYPTION_KEY;
+
+    private static final TokenApi pdvApi = new TokenApi();
 
     static {
         byte[] randomKey = new byte[16];
@@ -48,7 +51,7 @@ class SecretsConfigurationsTests {
     void shouldBuildConfidentialDataManager() {
         assertDoesNotThrow(
                 () -> secretsConfigurations
-                        .emailConfidentialDataManager(EMAIL_ENCRYPTION_KEY)
+                        .emailConfidentialDataManager(EMAIL_ENCRYPTION_KEY, pdvApi)
         );
     }
 
@@ -56,7 +59,7 @@ class SecretsConfigurationsTests {
     void shouldThrowIllegalStateExceptionForInvalidKeyBuildingConfidentialDataManager() {
         assertThrows(
                 IllegalStateException.class,
-                () -> secretsConfigurations.emailConfidentialDataManager(INVALID_KEY)
+                () -> secretsConfigurations.emailConfidentialDataManager(INVALID_KEY, pdvApi)
         );
     }
 }

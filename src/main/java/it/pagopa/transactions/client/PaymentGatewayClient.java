@@ -165,7 +165,11 @@ public class PaymentGatewayClient {
                                 && "VPOS".equals(authorizationRequestData.paymentGatewayId())
                 )
                 .switchIfEmpty(Mono.empty())
-                .flatMap(authorizationRequestData -> {
+                .flatMap(
+                        authorizationRequestData -> confidentialMailUtils
+                                .toEmail(authorizationRequestData.transaction().getEmail())
+                )
+                .flatMap(email -> {
                     final Mono<VposAuthRequestDto> creditCardAuthRequest;
                     if (authorizationData.authDetails()instanceof CardAuthRequestDetailsDto cardData) {
                         BigDecimal grandTotal = BigDecimal.valueOf(
@@ -183,10 +187,7 @@ public class PaymentGatewayClient {
                                                 )
                                         )
                                         .amount(grandTotal)
-                                        .emailCH(
-                                                confidentialMailUtils
-                                                        .toEmail(authorizationData.transaction().getEmail()).value()
-                                        )
+                                        .emailCH(email.value())
                                         .holder(cardData.getHolderName())
                                         .securityCode(cardData.getCvv())
                                         .isFirstPayment(true) // TODO TO BE CHECKED

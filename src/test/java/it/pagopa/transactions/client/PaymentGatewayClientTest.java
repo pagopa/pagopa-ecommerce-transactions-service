@@ -343,7 +343,8 @@ class PaymentGatewayClientTest {
                         )
                 )
                 .emailCH(
-                        TransactionTestUtils.confidentialDataManager.decrypt(transaction.getEmail(), Email::new).value()
+                        TransactionTestUtils.confidentialDataManager.decrypt(transaction.getEmail(), Email::new).block()
+                                .value()
                 )
                 .circuit(cardDetails.getBrand())
                 .holder(cardDetails.getHolderName())
@@ -856,7 +857,8 @@ class PaymentGatewayClientTest {
                         )
                 )
                 .emailCH(
-                        TransactionTestUtils.confidentialDataManager.decrypt(transaction.getEmail(), Email::new).value()
+                        TransactionTestUtils.confidentialDataManager.decrypt(transaction.getEmail(), Email::new).block()
+                                .value()
                 )
                 .circuit(cardDetails.getBrand())
                 .holder(cardDetails.getHolderName())
@@ -1112,7 +1114,8 @@ class PaymentGatewayClientTest {
                         )
                 )
                 .emailCH(
-                        TransactionTestUtils.confidentialDataManager.decrypt(transaction.getEmail(), Email::new).value()
+                        TransactionTestUtils.confidentialDataManager.decrypt(transaction.getEmail(), Email::new).block()
+                                .value()
                 )
                 .circuit(cardDetails.getBrand())
                 .holder(cardDetails.getHolderName())
