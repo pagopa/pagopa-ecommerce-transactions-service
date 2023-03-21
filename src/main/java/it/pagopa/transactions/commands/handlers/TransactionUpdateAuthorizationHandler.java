@@ -2,7 +2,6 @@ package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedEvent;
-import it.pagopa.ecommerce.commons.domain.v1.Transaction;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionWithRequestedAuthorization;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
@@ -19,27 +18,23 @@ import reactor.util.function.Tuples;
 
 @Component
 @Slf4j
-public class TransactionUpdateAuthorizationHandler extends
-        BaseHandler<TransactionUpdateAuthorizationCommand, Mono<TransactionAuthorizationCompletedEvent>> {
+public class TransactionUpdateAuthorizationHandler
+        implements CommandHandler<TransactionUpdateAuthorizationCommand, Mono<TransactionAuthorizationCompletedEvent>> {
 
     private final TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> transactionEventStoreRepository;
 
     @Autowired
     protected TransactionUpdateAuthorizationHandler(
-            TransactionsEventStoreRepository<Object> eventStoreRepository,
             TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> transactionEventStoreRepository
     ) {
-        super(eventStoreRepository);
         this.transactionEventStoreRepository = transactionEventStoreRepository;
     }
 
     @Override
     public Mono<TransactionAuthorizationCompletedEvent> handle(TransactionUpdateAuthorizationCommand command) {
-        Mono<Transaction> transaction = replayTransactionEvents(
-                command.getData().transaction().getTransactionId().value()
-        );
+
+        Mono<BaseTransaction> transaction = Mono.just(command.getData().transaction());
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
-                .cast(BaseTransaction.class)
                 .doOnNext(
                         t -> log.error(
                                 "Error: requesting authorization update for transaction in state {}",
@@ -49,7 +44,6 @@ public class TransactionUpdateAuthorizationHandler extends
                 .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
         UpdateAuthorizationRequestDto updateAuthorizationRequest = command.getData().updateAuthorizationRequest();
         return transaction
-                .cast(BaseTransaction.class)
                 .filter(
                         t -> t.getStatus() == TransactionStatusDto.AUTHORIZATION_REQUESTED
                 )

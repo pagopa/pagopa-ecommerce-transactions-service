@@ -17,6 +17,7 @@ import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.Queues;
+import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,8 +49,10 @@ class TransactionAddUserReceiptHandlerTest {
     @Mock
     TransactionsEventStoreRepository<TransactionRefundedData> refundedRequestedEventStoreRepository;
 
-    @Mock
-    private TransactionsEventStoreRepository<Object> eventStoreRepository;
+    private TransactionsEventStoreRepository<Object> eventStoreRepository = Mockito
+            .mock(TransactionsEventStoreRepository.class);
+
+    private final TransactionsUtils transactionsUtils = new TransactionsUtils(eventStoreRepository);
 
     @Mock
     NotificationsServiceClient notificationsServiceClient;
@@ -70,12 +73,12 @@ class TransactionAddUserReceiptHandlerTest {
     @BeforeEach
     private void initTest() {
         updateStatusHandler = new TransactionAddUserReceiptHandler(
-                eventStoreRepository,
                 userReceiptDataEventRepository,
                 refundedRequestedEventStoreRepository,
                 notificationsServiceClient,
                 confidentialMailUtils,
-                transactionRefundQueueClient
+                transactionRefundQueueClient,
+                transactionsUtils
         );
     }
 
