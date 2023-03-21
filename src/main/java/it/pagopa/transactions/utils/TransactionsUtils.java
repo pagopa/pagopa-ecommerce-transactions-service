@@ -43,10 +43,12 @@ public class TransactionsUtils {
                 .collect(Collectors.toSet());
         /*
          * @formatter:off
+         *
          * In case of statuses enumeration mismatch an `IllegalArgumentException` is thrown, preventing the module from being
          * run and avoiding runtime errors correlated to specs updated into commons
          * that are not reflected into this service specs (such as a transaction status added only into commons).
          * The above exception message reports the detected statuses enumeration mismatch between commons and transactions values.
+         *
          * @formatter:on
          */
         if (!commonsStatuses.equals(transactionsStatuses)) {
