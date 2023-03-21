@@ -33,12 +33,14 @@ public class TransactionsUtils {
                 .values()) {
             /*
              * @formatter:off
-             * This lookup map serve two purpose:
-             * 1) handle enumerations conversion from commons and transactions-service TransactionStatusDto enumerations
-             * 2) in case one enumeration from commons is not present into transactions-service's ones
-             * then an IllegalArgumentException is raised, preventing the module from being
+             *
+             * This lookup map serves two purposes:
+             * 1) handle enumeration conversion from commons and transactions-service for the `TransactionStatusDto` enumeration
+             * 2) in case an enumeration value from commons is not present into transactions-service's one
+             * then an `IllegalArgumentException` is thrown, preventing the module from being
              * run and avoiding runtime errors correlated to specs updated into commons
-             * that are not reflected into transactions specs (such as a transaction status added only into commons)
+             * that are not reflected into this service specs (such as a transaction status added only into commons)
+             *
              * @formatter:on
              */
             transactionStatusLookupMap.put(
