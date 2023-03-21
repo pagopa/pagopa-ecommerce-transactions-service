@@ -157,6 +157,21 @@ class TransactionsControllerTest {
     }
 
     @Test
+    void shouldReturnTransactionNotFoundForCancelTransactionInfo() {
+
+        String transactionId = UUID.randomUUID().toString();
+        /* test */
+        Mockito.when(transactionsService.cancelTransaction(transactionId))
+                .thenReturn(Mono.error(new TransactionNotFoundException(transactionId)));
+        StepVerifier.create(
+                transactionsController
+                        .requestTransactionUserCancellation(transactionId, null)
+        )
+                .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
+                .verify();
+    }
+
+    @Test
     void shouldRedirectToAuthorizationURIForValidRequest() throws URISyntaxException {
         String paymentToken = "paymentToken";
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()

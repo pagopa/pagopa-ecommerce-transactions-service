@@ -49,10 +49,7 @@ public class TransactionUserCancelHandler implements
         );
 
         return transaction
-                .cast(BaseTransaction.class)
-                .onErrorMap(err -> new AlreadyProcessedException(command.getData()))
                 .flatMap(
-
                         t -> {
                             TransactionUserCanceledEvent userCanceledEvent = new TransactionUserCanceledEvent(
                                     t.getTransactionId().value().toString()
@@ -65,7 +62,7 @@ public class TransactionUserCancelHandler implements
                                                     null
                                             )
                                     )
-                                    .then(Mono.just(userCanceledEvent))
+                                    .thenReturn(userCanceledEvent)
                                     .doOnError(
                                             exception -> log.error(
                                                     "Error to generate event TRANSACTION_USER_CANCELED_EVENT for transactionId {} - error {}",
