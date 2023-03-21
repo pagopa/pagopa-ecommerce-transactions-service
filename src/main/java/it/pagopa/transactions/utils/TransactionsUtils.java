@@ -65,7 +65,9 @@ public class TransactionsUtils {
                 .values()) {
             /*
              * @formatter:off
-             * This lookup map handle enumeration conversion from commons and transactions-service for the `TransactionStatusDto` enumeration
+             *
+             * This lookup map handles enumeration conversion from commons and transactions-service for the `TransactionStatusDto` enumeration
+             *
              * @formatter:on
              */
             transactionStatusLookupMap.put(
