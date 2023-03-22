@@ -9,7 +9,6 @@ import com.azure.storage.queue.models.SendMessageResult;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
-import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +24,8 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 public class TransactionUserCancelHandlerTest {
@@ -74,6 +75,9 @@ public class TransactionUserCancelHandlerTest {
                         }
                 )
                 .verifyComplete();
+
+        verify(transactionEventUserCancelStoreRepository, times(1)).save(any());
+        verify(transactionUserCancelQueueClient, times(1)).sendMessageWithResponse(any(BinaryData.class), any(), any());
     }
 
     @Test
@@ -95,6 +99,9 @@ public class TransactionUserCancelHandlerTest {
         StepVerifier.create(transactionUserCancelHandler.handle(transactionUserCancelCommand))
                 .expectError(RuntimeException.class)
                 .verify();
+
+        verify(transactionEventUserCancelStoreRepository, times(1)).save(any());
+        verify(transactionUserCancelQueueClient, times(0)).sendMessageWithResponse(any(BinaryData.class), any(), any());
     }
 
     @Test
@@ -119,6 +126,9 @@ public class TransactionUserCancelHandlerTest {
         StepVerifier.create(transactionUserCancelHandler.handle(transactionUserCancelCommand))
                 .expectError(RuntimeException.class)
                 .verify();
+
+        verify(transactionEventUserCancelStoreRepository, times(1)).save(any());
+        verify(transactionUserCancelQueueClient, times(1)).sendMessageWithResponse(any(BinaryData.class), any(), any());
     }
 
     @Test
@@ -137,6 +147,9 @@ public class TransactionUserCancelHandlerTest {
         StepVerifier.create(transactionUserCancelHandler.handle(transactionUserCancelCommand))
                 .expectError(ClassCastException.class)
                 .verify();
+
+        verify(transactionEventUserCancelStoreRepository, times(0)).save(any());
+        verify(transactionUserCancelQueueClient, times(0)).sendMessageWithResponse(any(BinaryData.class), any(), any());
     }
 
     private static Mono<Response<SendMessageResult>> queueSuccessfulResponse() {

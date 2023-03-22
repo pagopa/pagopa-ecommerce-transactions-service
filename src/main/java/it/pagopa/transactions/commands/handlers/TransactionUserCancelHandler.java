@@ -10,6 +10,7 @@ import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentTok
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -55,8 +56,8 @@ public class TransactionUserCancelHandler implements
                                     t.getTransactionId().value().toString()
                             );
                             return transactionEventUserCancelStoreRepository.save(userCanceledEvent)
-                                    .then(
-                                            transactionClosureQueueAsyncClient.sendMessageWithResponse(
+                                    .flatMap(
+                                            event -> transactionClosureQueueAsyncClient.sendMessageWithResponse(
                                                     BinaryData.fromObject(userCanceledEvent),
                                                     Duration.ZERO,
                                                     null
