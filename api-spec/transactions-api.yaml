@@ -102,6 +102,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
     delete:
+      tags:
+        - transactions
       operationId: requestTransactionUserCancellation
       parameters:
         - in: path
@@ -112,15 +114,21 @@ paths:
           description: Transaction ID
       summary: Performs the cancellation of the transaction
       responses:
-        202:
+        '202':
           description: Transaction cancellation request successfully accepted
-        404:
+        '404':
           description: Transaction not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemJson'
-        500:
+        '409':
+          description: Conflict on payment status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemJson'
+        '500':
           description: Internal server error
           content:
             application/json:

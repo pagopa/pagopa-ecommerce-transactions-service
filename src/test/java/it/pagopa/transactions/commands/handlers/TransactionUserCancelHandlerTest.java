@@ -9,6 +9,8 @@ import com.azure.storage.queue.models.SendMessageResult;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
+import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,7 +53,7 @@ public class TransactionUserCancelHandlerTest {
     }
 
     @Test
-    void shouldSaveAuthorizationEvent() {
+    void shouldSaveCancelEvent() {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
         TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
                 null,
@@ -67,7 +69,11 @@ public class TransactionUserCancelHandlerTest {
 
         Mockito.when(transactionUserCancelQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any()))
                 .thenReturn(queueSuccessfulResponse());
-        /* EXECUTION TEST */
+        /*
+         * EXECUTION TEST verify(transactionUserCancelQueueClient,
+         * times(0)).sendMessageWithResponse(any(BinaryData.class), any(), any());
+         * verify(transactionEventUserCancelStoreRepository, times(0)).save(any());
+         */
         StepVerifier.create(transactionUserCancelHandler.handle(transactionUserCancelCommand))
                 .consumeNextWith(
                         next -> {
@@ -81,7 +87,7 @@ public class TransactionUserCancelHandlerTest {
     }
 
     @Test
-    void shouldSaveAuthorizationEventWithError() {
+    void shouldSaveCancelEventWithError() {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
         TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
                 null,
@@ -105,7 +111,7 @@ public class TransactionUserCancelHandlerTest {
     }
 
     @Test
-    void shouldSaveAuthorizationEventWithErrorQueue() {
+    void shouldSaveCancelEventWithErrorQueue() {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
         TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
                 null,
@@ -132,7 +138,7 @@ public class TransactionUserCancelHandlerTest {
     }
 
     @Test
-    void shouldSaveAuthorizationEventWithErrorTransactionStatus() {
+    void shouldSaveCancelEventWithErrorTransactionNotFound() {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
         TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
                 null,
@@ -141,11 +147,37 @@ public class TransactionUserCancelHandlerTest {
 
         /* PRECONDITION */
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId))
-                .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionAuthorizationCompletedEvent()));
+                .thenReturn(Flux.empty());
 
         /* EXECUTION TEST */
         StepVerifier.create(transactionUserCancelHandler.handle(transactionUserCancelCommand))
-                .expectError(ClassCastException.class)
+                .expectError(TransactionNotFoundException.class)
+                .verify();
+
+        verify(transactionEventUserCancelStoreRepository, times(0)).save(any());
+        verify(transactionUserCancelQueueClient, times(0)).sendMessageWithResponse(any(BinaryData.class), any(), any());
+    }
+
+    @Test
+    void shouldSaveCancelEventWithErrorAlreadyProcessedException() {
+        String transactionId = TransactionTestUtils.TRANSACTION_ID;
+        TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
+                null,
+                new TransactionId(UUID.fromString(transactionId))
+        );
+
+        /* PRECONDITION */
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId))
+                .thenReturn(
+                        (Flux) Flux.just(
+                                TransactionTestUtils.transactionActivateEvent(),
+                                TransactionTestUtils.transactionUserCanceledEvent()
+                        )
+                );
+
+        /* EXECUTION TEST */
+        StepVerifier.create(transactionUserCancelHandler.handle(transactionUserCancelCommand))
+                .expectError(AlreadyProcessedException.class)
                 .verify();
 
         verify(transactionEventUserCancelStoreRepository, times(0)).save(any());

@@ -50,6 +50,8 @@ public class TransactionUserCancelHandler implements
         );
 
         return transaction
+                .filter(tx -> tx.getStatus().equals(TransactionStatusDto.ACTIVATED))
+                .switchIfEmpty(Mono.error(new AlreadyProcessedException(command.getData())))
                 .flatMap(
                         t -> {
                             TransactionUserCanceledEvent userCanceledEvent = new TransactionUserCanceledEvent(
