@@ -99,7 +99,7 @@ public class TransactionUserCancelHandlerTest {
         Mockito.when(transactionEventUserCancelStoreRepository.save(any()))
                 .thenReturn(Mono.error(new RuntimeException()));
 
-        /* EXECUTION TEST */
+        /* TEST EXECUTION */
         StepVerifier.create(transactionUserCancelHandler.handle(transactionUserCancelCommand))
                 .expectError(RuntimeException.class)
                 .verify();
