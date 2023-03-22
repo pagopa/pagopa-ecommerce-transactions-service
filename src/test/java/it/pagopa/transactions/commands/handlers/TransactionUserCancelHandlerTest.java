@@ -147,7 +147,7 @@ public class TransactionUserCancelHandlerTest {
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId))
                 .thenReturn(Flux.empty());
 
-        /* EXECUTION TEST */
+         /* TEST EXECUTION */
         StepVerifier.create(transactionUserCancelHandler.handle(transactionUserCancelCommand))
                 .expectError(TransactionNotFoundException.class)
                 .verify();
