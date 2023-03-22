@@ -173,7 +173,7 @@ public class TransactionUserCancelHandlerTest {
                         )
                 );
 
-        /* EXECUTION TEST */
+         /* TEST EXECUTION */
         StepVerifier.create(transactionUserCancelHandler.handle(transactionUserCancelCommand))
                 .expectError(AlreadyProcessedException.class)
                 .verify();
