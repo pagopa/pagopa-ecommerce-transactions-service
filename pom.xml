@@ -258,12 +258,12 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>payment-instruments-api</id>
+                        <id>payment-methods-api</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-ecommerce-payment-instruments-service/main/api-spec/api.yaml</inputSpec>
+                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-infra/main/src/domains/ecommerce-app/api/ecommerce-payment-methods-service/v1/_openapi.json.tpl</inputSpec>
                             <generatorName>java</generatorName>
                             <library>webclient</library>
                             <generateApiDocumentation>false</generateApiDocumentation>
@@ -274,8 +274,8 @@
                                 <swaggerAnnotations>false</swaggerAnnotations>
                                 <openApiNullable>false</openApiNullable>
                             </configOptions>
-                            <modelPackage>it.pagopa.generated.ecommerce.paymentinstruments.v1.dto</modelPackage>
-                            <apiPackage>it.pagopa.generated.ecommerce.paymentinstruments.v1.api</apiPackage>
+                            <modelPackage>it.pagopa.generated.ecommerce.paymentmethods.v1.dto</modelPackage>
+                            <apiPackage>it.pagopa.generated.ecommerce.paymentmethods.v1.api</apiPackage>
                             <modelNameSuffix>dto</modelNameSuffix>
                         </configuration>
                     </execution>
