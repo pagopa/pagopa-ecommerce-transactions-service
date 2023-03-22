@@ -70,9 +70,7 @@ public class TransactionUserCancelHandlerTest {
         Mockito.when(transactionUserCancelQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any()))
                 .thenReturn(queueSuccessfulResponse());
         /*
-         * EXECUTION TEST verify(transactionUserCancelQueueClient,
-         * times(0)).sendMessageWithResponse(any(BinaryData.class), any(), any());
-         * verify(transactionEventUserCancelStoreRepository, times(0)).save(any());
+         * TEST EXECUTION
          */
         StepVerifier.create(transactionUserCancelHandler.handle(transactionUserCancelCommand))
                 .consumeNextWith(
