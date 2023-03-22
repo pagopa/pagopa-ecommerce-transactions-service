@@ -81,7 +81,7 @@ public class NodeForPspClient {
 
     public Mono<ClosePaymentResponseDto> closePaymentV2(ClosePaymentRequestV2Dto request) {
         log.info(
-                "Requested closePaymentV2 for paymentTokens {} - status: {}",
+                "Requested closePaymentV2 for paymentTokens {} - outcome: {}",
                 request.getPaymentTokens(),
                 request.getOutcome().getValue()
         );
