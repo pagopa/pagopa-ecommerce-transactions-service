@@ -126,7 +126,7 @@ public class TransactionUserCancelHandlerTest {
         Mockito.when(transactionUserCancelQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any()))
                 .thenReturn(Mono.error(new RuntimeException()));
 
-         /* TEST EXECUTION */
+        /* TEST EXECUTION */
         StepVerifier.create(transactionUserCancelHandler.handle(transactionUserCancelCommand))
                 .expectError(RuntimeException.class)
                 .verify();
@@ -147,7 +147,7 @@ public class TransactionUserCancelHandlerTest {
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId))
                 .thenReturn(Flux.empty());
 
-         /* TEST EXECUTION */
+        /* TEST EXECUTION */
         StepVerifier.create(transactionUserCancelHandler.handle(transactionUserCancelCommand))
                 .expectError(TransactionNotFoundException.class)
                 .verify();
@@ -173,7 +173,7 @@ public class TransactionUserCancelHandlerTest {
                         )
                 );
 
-         /* TEST EXECUTION */
+        /* TEST EXECUTION */
         StepVerifier.create(transactionUserCancelHandler.handle(transactionUserCancelCommand))
                 .expectError(AlreadyProcessedException.class)
                 .verify();
