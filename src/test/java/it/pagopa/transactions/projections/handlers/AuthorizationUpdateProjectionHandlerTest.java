@@ -2,6 +2,8 @@ package it.pagopa.transactions.projections.handlers;
 
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedEvent;
+import it.pagopa.ecommerce.commons.domain.Confidential;
+import it.pagopa.ecommerce.commons.domain.PersonalDataVaultMetadata;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
@@ -35,7 +37,8 @@ class AuthorizationUpdateProjectionHandlerTest {
     @Mock
     private TransactionsViewRepository viewRepository;
 
-    private ConfidentialDataManager confidentialDataManager = TransactionTestUtils.confidentialDataManager;
+    @Mock
+    private ConfidentialDataManager confidentialDataManager;
 
     @Test
     void shouldHandleTransaction() {
@@ -44,23 +47,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 .authorizationCode("OK")
                 .timestampOperation(OffsetDateTime.now());
 
-        TransactionActivated transaction = new TransactionActivated(
-                new TransactionId(UUID.randomUUID()),
-                List.of(
-                        new PaymentNotice(
-                                new PaymentToken("paymentToken"),
-                                new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
-                                new TransactionDescription("description"),
-                                new PaymentContextCode(null)
-                        )
-                ),
-                confidentialDataManager
-                        .encrypt(ConfidentialDataManager.Mode.AES_GCM_NOPAD, new Email("email@example.com")).block(),
-                "faultCode",
-                "faultCodeString",
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
-        );
+        TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
 
         it.pagopa.ecommerce.commons.documents.v1.Transaction expectedDocument = new it.pagopa.ecommerce.commons.documents.v1.Transaction(
                 transaction.getTransactionId().value().toString(),

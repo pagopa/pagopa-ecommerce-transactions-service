@@ -5,6 +5,7 @@ import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.Confidential;
+import it.pagopa.ecommerce.commons.domain.PersonalDataVaultMetadata;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -30,6 +31,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL;
+import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL_STRING;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 
@@ -48,28 +51,34 @@ class TransactionServiceTest {
     @Mock
     private TransactionsUtils transactionsUtils;
 
-    private ConfidentialDataManager confidentialDataManager = TransactionTestUtils.confidentialDataManager;
+    @Mock
+    private ConfidentialDataManager confidentialDataManager;
 
     @Test
-    void shouldHandleNewTransactionTransactionActivated() throws Exception {
-        String TEST_EMAIL_STRING = "j.doe@mail.com";
-        Confidential<Email> TEST_EMAIL = confidentialDataManager
-                .encrypt(ConfidentialDataManager.Mode.AES_GCM_NOPAD, new Email(TEST_EMAIL_STRING)).block();
-        String TEST_RPTID = "77777777777302016723749670035";
-        String TEST_TOKEN = "token";
+    void shouldHandleNewTransactionTransactionActivated() {
         ClientIdDto clientIdDto = ClientIdDto.CHECKOUT;
         UUID TEST_SESSION_TOKEN = UUID.randomUUID();
         UUID TEST_CPP = UUID.randomUUID();
         UUID TRANSACTION_ID = UUID.randomUUID();
 
         NewTransactionRequestDto transactionRequestDto = new NewTransactionRequestDto()
-                .email(TEST_EMAIL_STRING)
-                .addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(TEST_RPTID));
+                .email(EMAIL_STRING)
+                .addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(TransactionTestUtils.RPT_ID));
 
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
-        transactionActivatedData.setEmail(TEST_EMAIL);
+        transactionActivatedData.setEmail(TransactionTestUtils.EMAIL);
         transactionActivatedData
-                .setPaymentNotices(List.of(new PaymentNotice(TEST_TOKEN, null, "dest", 0, TEST_CPP.toString())));
+                .setPaymentNotices(
+                        List.of(
+                                new PaymentNotice(
+                                        TransactionTestUtils.PAYMENT_TOKEN,
+                                        null,
+                                        "dest",
+                                        0,
+                                        TEST_CPP.toString()
+                                )
+                        )
+                );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
                 TRANSACTION_ID.toString(),
@@ -86,20 +95,20 @@ class TransactionServiceTest {
                 new TransactionId(TRANSACTION_ID),
                 Arrays.asList(
                         new it.pagopa.ecommerce.commons.domain.v1.PaymentNotice(
-                                new PaymentToken(TEST_TOKEN),
-                                new RptId(TEST_RPTID),
+                                new PaymentToken(TransactionTestUtils.PAYMENT_TOKEN),
+                                new RptId(TransactionTestUtils.RPT_ID),
                                 new TransactionAmount(0),
                                 new TransactionDescription("desc"),
                                 new PaymentContextCode(TEST_CPP.toString())
                         )
                 ),
-                TEST_EMAIL,
+                TransactionTestUtils.EMAIL,
                 "faultCode",
                 "faultCodeString",
                 Transaction.ClientId.CHECKOUT
         );
 
-        /**
+        /*
          * Preconditions
          */
         Mockito.when(transactionActivateHandler.handle(Mockito.any(TransactionActivateCommand.class)))
@@ -108,13 +117,14 @@ class TransactionServiceTest {
                 .thenReturn(Mono.just(transactionActivated));
         Mockito.when(transactionsUtils.convertEnumeration(any()))
                 .thenCallRealMethod();
-        /**
+
+        /*
          * Test
          */
         NewTransactionResponseDto responseDto = transactionsService
                 .newTransaction(transactionRequestDto, clientIdDto).block();
 
-        /**
+        /*
          * Assertions
          */
         assertEquals(

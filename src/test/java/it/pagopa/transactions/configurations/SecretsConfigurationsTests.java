@@ -3,6 +3,7 @@ package it.pagopa.transactions.configurations;
 import it.pagopa.generated.pdv.v1.api.TokenApi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Base64;
@@ -24,7 +25,7 @@ class SecretsConfigurationsTests {
 
     private static final String EMAIL_ENCRYPTION_KEY;
 
-    private static final TokenApi pdvApi = new TokenApi();
+    private static final TokenApi pdvApi = Mockito.mock(TokenApi.class);
 
     static {
         byte[] randomKey = new byte[16];
