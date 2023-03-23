@@ -10,9 +10,9 @@ import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationComplete
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.BundleDto;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.CalculateFeeRequestDto;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.TransferListItemDto;
+import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.BundleDto;
+import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.CalculateFeeRequestDto;
+import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.TransferListItemDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.commands.*;

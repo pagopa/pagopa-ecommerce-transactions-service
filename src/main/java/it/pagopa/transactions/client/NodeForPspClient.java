@@ -80,7 +80,11 @@ public class NodeForPspClient {
     }
 
     public Mono<ClosePaymentResponseDto> closePaymentV2(ClosePaymentRequestV2Dto request) {
-        log.info("Requested closePaymentV2 for paymentTokens {}", request.getPaymentTokens());
+        log.info(
+                "Requested closePaymentV2 for paymentTokens {} - outcome: {}",
+                request.getPaymentTokens(),
+                request.getOutcome().getValue()
+        );
         return nodoWebClient.post()
                 .uri("/nodo/nodo-per-pm/v2/closepayment")
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
