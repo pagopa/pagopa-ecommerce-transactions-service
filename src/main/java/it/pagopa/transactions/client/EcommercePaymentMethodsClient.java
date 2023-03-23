@@ -1,7 +1,7 @@
 package it.pagopa.transactions.client;
 
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.api.DefaultApi;
-import it.pagopa.generated.ecommerce.paymentinstruments.v1.dto.*;
+import it.pagopa.generated.ecommerce.paymentmethods.v1.api.DefaultApi;
+import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.*;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
