@@ -5,6 +5,7 @@ import io.github.resilience4j.retry.annotation.Retry;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
@@ -15,10 +16,7 @@ import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.TransferListItemDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.commands.*;
-import it.pagopa.transactions.commands.data.AddUserReceiptData;
-import it.pagopa.transactions.commands.data.AuthorizationRequestData;
-import it.pagopa.transactions.commands.data.ClosureSendData;
-import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
+import it.pagopa.transactions.commands.data.*;
 import it.pagopa.transactions.commands.handlers.*;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.TransactionAmountMismatchException;
@@ -57,6 +55,9 @@ public class TransactionsService {
     private TransactionAddUserReceiptHandler transactionAddUserReceiptHandler;
 
     @Autowired
+    private TransactionUserCancelHandler transactionCancelHandler;
+
+    @Autowired
     private TransactionSendClosureHandler transactionSendClosureHandler;
 
     @Autowired
@@ -82,11 +83,16 @@ public class TransactionsService {
 
     @Autowired
     private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
+
+    @Autowired
+    private CancellationRequestProjectionHandler cancellationRequestProjectionHandler;
+
     @Autowired
     private UUIDUtils uuidUtils;
 
     @Autowired
     private TransactionsUtils transactionsUtils;
+
     @Autowired
     private TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> eventStoreRepository;
 
@@ -157,6 +163,29 @@ public class TransactionsService {
                                 )
                                 .status(transactionsUtils.convertEnumeration(transaction.getStatus()))
                 );
+    }
+
+    @CircuitBreaker(name = "transactions-backend")
+    @Retry(name = "cancelTransaction")
+    public Mono<Void> cancelTransaction(String transactionId) {
+        return transactionsViewRepository
+                .findById(transactionId)
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+                .flatMap(
+                        transaction -> {
+                            TransactionUserCancelCommand transactionCancelCommand = new TransactionUserCancelCommand(
+                                    null,
+                                    new TransactionId(UUID.fromString(transactionId))
+                            );
+
+                            return transactionCancelHandler.handle(transactionCancelCommand);
+                        }
+                )
+                .flatMap(
+                        event -> cancellationRequestProjectionHandler
+                                .handle(new TransactionUserCanceledEvent(transactionId))
+                )
+                .then();
     }
 
     @CircuitBreaker(name = "transactions-backend")

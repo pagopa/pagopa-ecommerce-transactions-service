@@ -12,6 +12,7 @@ import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
+import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.*;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
@@ -54,6 +55,8 @@ import static org.mockito.Mockito.*;
             AuthorizationRequestProjectionHandler.class,
             TransactionsEventStoreRepository.class,
             TransactionsActivationProjectionHandler.class,
+            CancellationRequestProjectionHandler.class,
+            TransactionUserCancelHandler.class,
             UUIDUtils.class
     }
 )
@@ -76,6 +79,9 @@ public class TransactionServiceTests {
 
     @MockBean
     private TransactionActivateHandler transactionActivateHandler;
+
+    @MockBean
+    private TransactionUserCancelHandler transactionCancelHandler;
 
     @MockBean
     private TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandler;
@@ -106,6 +112,9 @@ public class TransactionServiceTests {
 
     @MockBean
     private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
+
+    @MockBean
+    private CancellationRequestProjectionHandler cancellationRequestProjectionHandler;
 
     @Captor
     private ArgumentCaptor<TransactionRequestAuthorizationCommand> commandArgumentCaptor;
@@ -704,6 +713,36 @@ public class TransactionServiceTests {
     void shouldThrowsInvalidRequestExceptionForInvalidClientID() {
         Mockito.when(clientId.toString()).thenReturn("InvalidClientID");
         assertThrows(InvalidRequestException.class, () -> transactionsService.convertClientId(clientId));
+    }
+
+    @Test
+    void shouldExecuteTransactionUserCancelOk() {
+        String transactionId = TransactionTestUtils.TRANSACTION_ID;
+        final Transaction transaction = TransactionTestUtils.transactionDocument(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
+                ZonedDateTime.now()
+        );
+        TransactionUserCanceledEvent userCanceledEvent = new TransactionUserCanceledEvent(
+                transactionId
+        );
+        TransactionUserCancelCommand transactionCancelCommand = new TransactionUserCancelCommand(
+                null,
+                new TransactionId(UUID.fromString(transactionId))
+        );
+        when(repository.findById(transactionId)).thenReturn(Mono.just(transaction));
+        when(transactionCancelHandler.handle(transactionCancelCommand)).thenReturn(Mono.just(userCanceledEvent));
+        when(cancellationRequestProjectionHandler.handle(any())).thenReturn(Mono.empty());
+        StepVerifier.create(transactionsService.cancelTransaction(transactionId)).expectNext().verifyComplete();
+
+    }
+
+    @Test
+    void shouldExecuteTransactionUserCancelKONotFound() {
+        String transactionId = UUID.randomUUID().toString();
+        when(repository.findById(transactionId)).thenReturn(Mono.empty());
+        StepVerifier.create(transactionsService.cancelTransaction(transactionId))
+                .expectError(TransactionNotFoundException.class).verify();
+
     }
 
     @Test
