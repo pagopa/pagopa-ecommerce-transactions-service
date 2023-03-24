@@ -32,11 +32,15 @@ public class SecretsConfigurations {
     @Bean
     public TokenApi personalDataVaultApiClient(
                                                @Value(
-                                                   "${confidentialDataManager.personalDataVaultApiKey}"
-                                               ) String personalDataVaultApiKey
+                                                   "${confidentialDataManager.personalDataVault.apiKey}"
+                                               ) String personalDataVaultApiKey,
+                                               @Value(
+                                                   "${confidentialDataManager.personalDataVault.apiBasePath}"
+                                               ) String apiBasePath
     ) {
         ApiClient pdvApiClient = new ApiClient();
         pdvApiClient.setApiKey(personalDataVaultApiKey);
+        pdvApiClient.setBasePath(apiBasePath);
 
         return new TokenApi(pdvApiClient);
     }

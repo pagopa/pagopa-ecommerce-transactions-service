@@ -39,7 +39,9 @@ These are all environment variables needed by the application:
 | TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_VISIBILITY_TIMEOUT |     | Seconds to wait after requesting an authorization before aborting it                                       | string |         |
 | TRANSACTIONS_RETRY_OFFSET                                          |     | Seconds to offset validity end to account for more retries                                                 | number |         |
 | CLOSURE_RETRY_INTERVAL                                             |     | Seconds to wait at closing the transaction before making a retry                                           | number |         |
-| PERSONAL_DATA_VAULT_API_KEY                                        |     | API Key for Personal Data Vault, used to safely encrypt PIIs (e.g. the user's email address)               | string |         |
+| PERSONAL_DATA_VAULT_API_KEY                                        |     | API Key for Personal Data Vault (PDV is used to safely encrypt PIIs, e.g. the user's email address)        | string |         |
+| PERSONAL_DATA_VAULT_API_BASE_PATH                                  |     | API base path for Personal Data Vault                                                                      | string |         |
+
 
 An example configuration of these environment variables is in the `.env.example` file.
 
