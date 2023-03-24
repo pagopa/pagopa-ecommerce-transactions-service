@@ -266,7 +266,7 @@ public class TransactionActivateHandler
         return transactionActivatedEvent.flatMap(transactionEventActivatedStoreRepository::save)
                 .flatMap(
                         e -> transactionActivatedQueueAsyncClient.sendMessageWithResponse(
-                                BinaryData.fromObject(transactionActivatedEvent),
+                                BinaryData.fromObject(e),
                                 Duration.ofSeconds(paymentTokenTimeout),
                                 null
                         ).thenReturn(e)
