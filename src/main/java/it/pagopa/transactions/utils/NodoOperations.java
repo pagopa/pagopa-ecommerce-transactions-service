@@ -2,9 +2,7 @@ package it.pagopa.transactions.utils;
 
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
-import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
-import it.pagopa.generated.transactions.model.CtQrCode;
-import it.pagopa.generated.transactions.model.StOutcome;
+import it.pagopa.generated.transactions.model.*;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.configurations.NodoConfig;
 import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
@@ -65,29 +63,31 @@ public class NodoOperations {
         CtQrCode qrCode = new CtQrCode();
         qrCode.setFiscalCode(rptId.getFiscalCode());
         qrCode.setNoticeNumber(rptId.getNoticeId());
-        ActivatePaymentNoticeReq request = nodoConfig.baseActivatePaymentNoticeReq();
+        ActivatePaymentNoticeV2Request request = nodoConfig.baseActivatePaymentNoticeV2Request();
         request.setAmount(amount);
         request.setQrCode(qrCode);
         request.setIdempotencyKey(idempotencyKey);
         // multiply paymentTokenTimeout by 1000 because on ecommerce it is represented
         // in seconds
         request.setExpirationTime(BigInteger.valueOf(paymentTokenTimeout).multiply(BigInteger.valueOf(1000)));
+        //TODO Maybe here more values (all optional) can be passed such as Touchpoint, Payment Method Type Code, Due date
+        //request.setPaymentMethod();
         return nodeForPspClient
-                .activatePaymentNotice(objectFactoryNodeForPsp.createActivatePaymentNoticeReq(request))
+                .activatePaymentNoticeV2(objectFactoryNodeForPsp.createActivatePaymentNoticeV2Request(request))
                 .flatMap(
-                        activatePaymentNoticeRes -> {
+                        activatePaymentNoticeV2Response -> {
                             log.info(
                                     "Nodo activation for NM3 payment. Transaction id: [{}] RPT id: [{}] response outcome: [{}]",
                                     transactionId,
                                     rptId,
-                                    activatePaymentNoticeRes.getOutcome()
+                                    activatePaymentNoticeV2Response.getOutcome()
                             );
-                            if (StOutcome.OK.value().equals(activatePaymentNoticeRes.getOutcome().value())) {
-                                return isOkPaymentToken(activatePaymentNoticeRes.getPaymentToken())
-                                        ? Mono.just(activatePaymentNoticeRes)
+                            if (StOutcome.OK.value().equals(activatePaymentNoticeV2Response.getOutcome().value())) {
+                                return isOkPaymentToken(activatePaymentNoticeV2Response.getPaymentToken())
+                                        ? Mono.just(activatePaymentNoticeV2Response)
                                         : Mono.error(new InvalidNodoResponseException("No payment token received"));
                             } else {
-                                return Mono.error(new NodoErrorException(activatePaymentNoticeRes.getFault()));
+                                return Mono.error(new NodoErrorException(activatePaymentNoticeV2Response.getFault()));
                             }
                         }
                 )

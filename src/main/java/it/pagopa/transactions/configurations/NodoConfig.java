@@ -3,6 +3,7 @@ package it.pagopa.transactions.configurations;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
+import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Request;
 import it.pagopa.generated.transactions.model.VerifyPaymentNoticeReq;
 import it.pagopa.transactions.utils.NodoConnectionString;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,16 @@ public class NodoConfig {
     public ActivatePaymentNoticeReq baseActivatePaymentNoticeReq() {
         NodoConnectionString nodoConnectionParams = nodoConnectionString();
         ActivatePaymentNoticeReq request = objectFactoryNodeForPsp.createActivatePaymentNoticeReq();
+        request.setIdPSP(nodoConnectionParams.getIdPSP());
+        request.setIdChannel(nodoConnectionParams.getIdChannel());
+        request.setIdBrokerPSP(nodoConnectionParams.getIdBrokerPSP());
+        request.setPassword(nodoConnectionParams.getPassword());
+        return request;
+    }
+
+    public ActivatePaymentNoticeV2Request baseActivatePaymentNoticeV2Request() {
+        NodoConnectionString nodoConnectionParams = nodoConnectionString();
+        ActivatePaymentNoticeV2Request request = objectFactoryNodeForPsp.createActivatePaymentNoticeV2Request();
         request.setIdPSP(nodoConnectionParams.getIdPSP());
         request.setIdChannel(nodoConnectionParams.getIdChannel());
         request.setIdBrokerPSP(nodoConnectionParams.getIdBrokerPSP());
