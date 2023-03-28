@@ -49,6 +49,7 @@ microservice-chart:
       WEB_LOGGING_LEVEL: "off"
       SERVICE_LOGGING_LEVEL: "info"
       JWT_TOKEN_VALIDITY_TIME_MILLIS: "1800000"
+      PERSONAL_DATA_VAULT_API_BASE_PATH: "https://api.uat.tokenizer.pdv.pagopa.it/tokenizer/v1"
     envSecret:
       MONGO_PASSWORD: mongo-ecommerce-password
       REDIS_PASSWORD: redis-ecommerce-password
@@ -57,6 +58,7 @@ microservice-chart:
       PAYMENT_TRANSACTIONS_GATEWAY_API_KEY: payment-transactions-gateway-api-key
       JWT_SECRET: sessions-jwt-secret
       EMAIL_ENCRYPTION_KEY: email-encryption-key
+      PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
     tag: "0.10.2"
@@ -153,6 +155,7 @@ microservice-chart:
     WEB_LOGGING_LEVEL: "off"
     SERVICE_LOGGING_LEVEL: "info"
     JWT_TOKEN_VALIDITY_TIME_MILLIS: "1800000"
+    PERSONAL_DATA_VAULT_API_BASE_PATH: "https://api.uat.tokenizer.pdv.pagopa.it/tokenizer/v1"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password
@@ -163,6 +166,7 @@ microservice-chart:
     PAYMENT_TRANSACTIONS_GATEWAY_API_KEY: payment-transactions-gateway-api-key
     JWT_SECRET: sessions-jwt-secret
     EMAIL_ENCRYPTION_KEY: email-encryption-key
+    PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
   keyvault:
     name: "pagopa-u-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"

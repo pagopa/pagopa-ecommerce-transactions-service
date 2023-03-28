@@ -246,40 +246,42 @@ public class TransactionActivateHandler
                                                                          Transaction.ClientId clientId
     ) {
         List<PaymentNotice> paymentNotices = toPaymentNoticeList(paymentRequestsInfo);
-        TransactionActivatedData data = new TransactionActivatedData(
-                confidentialMailUtils.toConfidential(email),
-                paymentNotices,
-                null,
-                null,
-                clientId
+        Mono<TransactionActivatedData> data = confidentialMailUtils.toConfidential(email).map(
+                e -> new TransactionActivatedData(
+                        e,
+                        paymentNotices,
+                        null,
+                        null,
+                        clientId
+                )
         );
 
-        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId,
-                data
+        Mono<TransactionActivatedEvent> transactionActivatedEvent = data.map(
+                d -> new TransactionActivatedEvent(
+                        transactionId,
+                        d
+                )
         );
 
-        return transactionEventActivatedStoreRepository
-                .save(transactionActivatedEvent)
-                .then(
-                        transactionActivatedQueueAsyncClient.sendMessageWithResponse(
-                                BinaryData.fromObject(transactionActivatedEvent),
+        return transactionActivatedEvent.flatMap(transactionEventActivatedStoreRepository::save)
+                .flatMap(
+                        e -> transactionActivatedQueueAsyncClient.sendMessageWithResponse(
+                                BinaryData.fromObject(e),
                                 Duration.ofSeconds(paymentTokenTimeout),
                                 null
-                        )
+                        ).thenReturn(e)
                 )
-                .then(Mono.just(transactionActivatedEvent))
                 .doOnError(
                         exception -> log.error(
                                 "Error to generate event TRANSACTION_ACTIVATED_EVENT for transactionId {} - error {}",
-                                transactionActivatedEvent.getTransactionId(),
+                                transactionId,
                                 exception.getMessage()
                         )
                 )
                 .doOnNext(
                         event -> log.info(
                                 "Generated event TRANSACTION_ACTIVATED_EVENT for transactionId {}",
-                                event.getTransactionId()
+                                transactionId
                         )
                 );
     }

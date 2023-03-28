@@ -27,6 +27,7 @@ import it.pagopa.transactions.utils.NodoOperations;
 import it.pagopa.transactions.utils.Queues;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -44,7 +45,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.transactionActivateEvent;
+import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 
@@ -63,9 +64,7 @@ class TransactionInitializerHandlerTest {
 
     private final JwtTokenUtils jwtTokenUtils = Mockito.mock(JwtTokenUtils.class);
 
-    private final ConfidentialMailUtils confidentialMailUtils = new ConfidentialMailUtils(
-            TransactionTestUtils.confidentialDataManager
-    );
+    private final ConfidentialMailUtils confidentialMailUtils = Mockito.mock(ConfidentialMailUtils.class);
 
     private final TransactionActivateHandler handler = new TransactionActivateHandler(
             paymentRequestInfoRepository,
@@ -79,20 +78,18 @@ class TransactionInitializerHandlerTest {
 
     @Test
     void shouldHandleCommandForNM3CachedPaymentRequest() {
-        RptId rptId = new RptId("77777777777302016723749670035");
+        RptId rptId = new RptId(RPT_ID);
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String transactionId = UUID.randomUUID().toString();
-        String paymentToken = UUID.randomUUID().toString();
+        String paymentToken = PAYMENT_TOKEN;
         String paName = "paName";
-        String paTaxcode = "77777777777";
-        String description = "Description";
-        Integer amount = 1000;
+        String paTaxcode = rptId.getFiscalCode();
 
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
         PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto();
         requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
         paymentNoticeInfoDto.setRptId(rptId.value());
-        requestDto.setEmail("jhon.doe@email.com");
+        requestDto.setEmail(EMAIL_STRING);
         paymentNoticeInfoDto.setAmount(1200);
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
@@ -104,8 +101,8 @@ class TransactionInitializerHandlerTest {
                 rptId,
                 paTaxcode,
                 paName,
-                description,
-                amount,
+                DESCRIPTION,
+                AMOUNT,
                 null,
                 paymentToken,
                 idempotencyKey
@@ -146,6 +143,8 @@ class TransactionInitializerHandlerTest {
         Mockito.when(jwtTokenUtils.generateToken(any()))
                 .thenReturn(Mono.just("authToken"));
         ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
+        Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
+
         /* run test */
         Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
                 .handle(command).block();
@@ -319,9 +318,7 @@ class TransactionInitializerHandlerTest {
     }
 
     @Test
-    void shouldHandleCommandForOnlyIdempotencyKeyCachedPaymentRequest()
-            throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException,
-            NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
+    void shouldHandleCommandForOnlyIdempotencyKeyCachedPaymentRequest() {
         TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
         PaymentNotice paymentNotice = transactionActivatedEvent.getData().getPaymentNotices().get(0);
 
@@ -336,10 +333,7 @@ class TransactionInitializerHandlerTest {
 
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto()
                 .addPaymentNoticesItem(paymentNoticeInfoDto)
-                .email(
-                        TransactionTestUtils.confidentialDataManager
-                                .decrypt(transactionActivatedEvent.getData().getEmail())
-                );
+                .email(EMAIL_STRING);
 
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
@@ -390,6 +384,7 @@ class TransactionInitializerHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
+        Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
 
         ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
         /* run test */
@@ -406,9 +401,7 @@ class TransactionInitializerHandlerTest {
     }
 
     @Test
-    void shouldHandleCommandWithoutCachedPaymentRequest()
-            throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException,
-            NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
+    void shouldHandleCommandWithoutCachedPaymentRequest() {
         TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
         PaymentNotice paymentNotice = transactionActivatedEvent.getData().getPaymentNotices().get(0);
 
@@ -423,10 +416,7 @@ class TransactionInitializerHandlerTest {
 
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto()
                 .addPaymentNoticesItem(paymentNoticeInfoDto)
-                .email(
-                        TransactionTestUtils.confidentialDataManager
-                                .decrypt(transactionActivatedEvent.getData().getEmail())
-                );
+                .email(EMAIL_STRING);
 
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
@@ -476,6 +466,8 @@ class TransactionInitializerHandlerTest {
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
 
         ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
+        Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
+
         /* run test */
         Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
                 .handle(command).block();
