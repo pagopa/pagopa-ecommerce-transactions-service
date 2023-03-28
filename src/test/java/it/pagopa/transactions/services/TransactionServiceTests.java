@@ -459,7 +459,7 @@ public class TransactionServiceTests {
                 .thenReturn(Mono.just(transactionDocument));
 
         Mockito.when(transactionUpdateStatusHandler.handle(any()))
-                .thenReturn(Mono.just(event));
+                .thenReturn(Mono.just(Either.right(Mono.just(event))));
 
         Mockito.when(transactionUserReceiptProjectionHandler.handle(any())).thenReturn(Mono.just(transactionDocument));
         when(transactionsUtils.convertEnumeration(any())).thenCallRealMethod();
@@ -516,7 +516,7 @@ public class TransactionServiceTests {
                 .thenReturn(Mono.just(transactionDocument));
 
         Mockito.when(transactionUpdateStatusHandler.handle(any()))
-                .thenReturn(Mono.just(event));
+                .thenReturn(Mono.just(Either.right(Mono.just(event))));
 
         Mockito.when(transactionUserReceiptProjectionHandler.handle(any())).thenReturn(Mono.just(transactionDocument));
         when(transactionsUtils.convertEnumeration(any()))

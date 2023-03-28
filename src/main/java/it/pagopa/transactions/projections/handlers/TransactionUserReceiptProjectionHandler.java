@@ -19,30 +19,34 @@ import javax.annotation.Nonnull;
 @Component
 @Slf4j
 public class TransactionUserReceiptProjectionHandler
-        implements ProjectionHandler<Either<Mono<TransactionUserReceiptAddErrorEvent>, Mono<TransactionUserReceiptAddedEvent>>, Mono<Transaction>> {
+        implements
+        ProjectionHandler<Either<Mono<TransactionUserReceiptAddErrorEvent>, Mono<TransactionUserReceiptAddedEvent>>, Mono<Transaction>> {
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
 
     @Override
-    public Mono<Transaction> handle(Either<Mono<TransactionUserReceiptAddErrorEvent>, Mono<TransactionUserReceiptAddedEvent>> userReceiptEither) {
+    public Mono<Transaction> handle(
+                                    Either<Mono<TransactionUserReceiptAddErrorEvent>, Mono<TransactionUserReceiptAddedEvent>> userReceiptEither
+    ) {
         return userReceiptEither.fold(
                 userReceiptErrorEvent -> userReceiptErrorEvent.map(
                         event -> Tuples.of(event.getTransactionId(), TransactionStatusDto.NOTIFICATION_ERROR)
                 ),
                 userReceiptSuccessEvent -> userReceiptSuccessEvent.map(
-                        event -> Tuples.of(event.getTransactionId(), statusFromOutcome(event.getData().getResponseOutcome()))
+                        event -> Tuples
+                                .of(event.getTransactionId(), statusFromOutcome(event.getData().getResponseOutcome()))
                 )
         ).flatMap(args -> {
-                    String transactionId = args.getT1();
-                    TransactionStatusDto newStatus = args.getT2();
-                    return transactionsViewRepository.findByTransactionId(transactionId)
-                            .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
-                            .flatMap(transactionDocument -> {
-                                log.info("Updating transaction with id: {} to status: {}", transactionId, newStatus);
-                                transactionDocument.setStatus(newStatus);
-                                return transactionsViewRepository.save(transactionDocument);
-                            });
-                }
+            String transactionId = args.getT1();
+            TransactionStatusDto newStatus = args.getT2();
+            return transactionsViewRepository.findById(transactionId)
+                    .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+                    .flatMap(transactionDocument -> {
+                        log.info("Updating transaction with id: {} to status: {}", transactionId, newStatus);
+                        transactionDocument.setStatus(newStatus);
+                        return transactionsViewRepository.save(transactionDocument);
+                    });
+        }
         );
     }
 

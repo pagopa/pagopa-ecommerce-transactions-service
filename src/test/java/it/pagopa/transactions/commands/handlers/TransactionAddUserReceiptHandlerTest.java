@@ -33,6 +33,7 @@ import reactor.test.StepVerifier;
 
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -70,6 +71,9 @@ class TransactionAddUserReceiptHandlerTest {
     @Mock
     private QueueAsyncClient transactionRefundQueueClient;
 
+    @Mock
+    private QueueAsyncClient transactionNotificationsRetryQueueClient;
+
     @BeforeEach
     private void initTest() {
         updateStatusHandler = new TransactionAddUserReceiptHandler(
@@ -78,7 +82,8 @@ class TransactionAddUserReceiptHandlerTest {
                 notificationsServiceClient,
                 confidentialMailUtils,
                 transactionRefundQueueClient,
-                transactionNotificationsRetryQueueClient, transactionsUtils
+                transactionNotificationsRetryQueueClient,
+                transactionsUtils
         );
     }
 
@@ -141,7 +146,7 @@ class TransactionAddUserReceiptHandlerTest {
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
-                .expectNext(event)
+                .expectNextMatches(next -> next.isRight() && Objects.equals(next.get().block(), event))
                 .verifyComplete();
 
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
@@ -214,7 +219,7 @@ class TransactionAddUserReceiptHandlerTest {
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
-                .expectNext(event)
+                .expectNextMatches(next -> next.isRight() && Objects.equals(next.get().block(), event))
                 .verifyComplete();
 
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
@@ -292,7 +297,7 @@ class TransactionAddUserReceiptHandlerTest {
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(transactionAddUserReceiptCommand))
-                .expectNext(event)
+                .expectNextMatches(next -> next.isRight() && Objects.equals(next.get().block(), event))
                 .verifyComplete();
 
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(

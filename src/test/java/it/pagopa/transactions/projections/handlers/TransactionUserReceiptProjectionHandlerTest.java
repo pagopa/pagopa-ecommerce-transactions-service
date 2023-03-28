@@ -1,5 +1,6 @@
 package it.pagopa.transactions.projections.handlers;
 
+import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptAddedEvent;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptData;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
@@ -12,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -54,11 +56,11 @@ class TransactionUserReceiptProjectionHandlerTest {
                 .thenReturn(Mono.just(it.pagopa.ecommerce.commons.documents.v1.Transaction.from(transaction)));
 
         Mockito.when(viewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
-
+        Hooks.onOperatorDebug();
         /*
          * Test
          */
-        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(event))
+        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(Either.right(Mono.just(event))))
                 .expectNext(expectedDocument)
                 .verifyComplete();
 
@@ -102,7 +104,7 @@ class TransactionUserReceiptProjectionHandlerTest {
         /*
          * Test
          */
-        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(event))
+        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(Either.right(Mono.just(event))))
                 .expectNext(expectedDocument)
                 .verifyComplete();
 

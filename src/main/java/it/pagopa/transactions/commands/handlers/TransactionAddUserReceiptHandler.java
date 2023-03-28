@@ -31,7 +31,8 @@ import java.util.Locale;
 @Component
 @Slf4j
 public class TransactionAddUserReceiptHandler
-        implements CommandHandler<TransactionAddUserReceiptCommand, Mono<Either<Mono<TransactionUserReceiptAddErrorEvent>, Mono<TransactionUserReceiptAddedEvent>>>> {
+        implements
+        CommandHandler<TransactionAddUserReceiptCommand, Mono<Either<Mono<TransactionUserReceiptAddErrorEvent>, Mono<TransactionUserReceiptAddedEvent>>>> {
 
     private final TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptAddedEventRepository;
 
@@ -53,7 +54,9 @@ public class TransactionAddUserReceiptHandler
             NotificationsServiceClient notificationsServiceClient,
             ConfidentialMailUtils confidentialMailUtils,
             @Qualifier("transactionRefundQueueAsyncClient") QueueAsyncClient transactionRefundQueueClient,
-            @Qualifier("transactionNotificationsRetryQueueAsyncClient") QueueAsyncClient transactionNotificationsRetryQueueClient,
+            @Qualifier(
+                "transactionNotificationsRetryQueueAsyncClient"
+            ) QueueAsyncClient transactionNotificationsRetryQueueClient,
             TransactionsUtils transactionsUtils
     ) {
         this.userReceiptAddedEventRepository = userReceiptAddedEventRepository;
@@ -66,7 +69,9 @@ public class TransactionAddUserReceiptHandler
     }
 
     @Override
-    public Mono<Either<Mono<TransactionUserReceiptAddErrorEvent>, Mono<TransactionUserReceiptAddedEvent>>> handle(TransactionAddUserReceiptCommand command) {
+    public Mono<Either<Mono<TransactionUserReceiptAddErrorEvent>, Mono<TransactionUserReceiptAddedEvent>>> handle(
+                                                                                                                  TransactionAddUserReceiptCommand command
+    ) {
         Mono<BaseTransaction> transaction = transactionsUtils.reduceEvents(
                 command.getData().transaction().getTransactionId()
         );
@@ -125,7 +130,10 @@ public class TransactionAddUserReceiptHandler
                 });
     }
 
-    private Mono<Either<Mono<TransactionUserReceiptAddErrorEvent>, Mono<TransactionUserReceiptAddedEvent>>> handleEmailResponse(Mono<NotificationEmailResponseDto> emailResponse, TransactionAddUserReceiptCommand command) {
+    private Mono<Either<Mono<TransactionUserReceiptAddErrorEvent>, Mono<TransactionUserReceiptAddedEvent>>> handleEmailResponse(
+                                                                                                                                Mono<NotificationEmailResponseDto> emailResponse,
+                                                                                                                                TransactionAddUserReceiptCommand command
+    ) {
         String transactionId = command.getData().transaction().getTransactionId().value().toString();
         TransactionUserReceiptData userReceiptData = new TransactionUserReceiptData(
                 requestOutcomeToReceiptOutcome(
@@ -142,51 +150,62 @@ public class TransactionAddUserReceiptHandler
                 userReceiptData
         );
         return emailResponse
-                .<Either<TransactionUserReceiptAddErrorEvent, TransactionUserReceiptAddedEvent>>
-                        map(response -> (Either.right(userReceiptSuccessEvent)))
+                .<Either<TransactionUserReceiptAddErrorEvent, TransactionUserReceiptAddedEvent>>map(
+                        response -> (Either.right(userReceiptSuccessEvent))
+                )
                 .onErrorResume(e -> Mono.just(Either.left(userReceiptErrorEvent)))
-                .map(either -> either.bimap(
+                .map(
+                        either -> either.bimap(
                                 errorEvent -> {
-                                    log.info("Error sending email to user, enqueuing {}", TransactionEventCode.TRANSACTION_ADD_USER_RECEIPT_ERROR_EVENT);
+                                    log.info(
+                                            "Error sending email to user, enqueuing {}",
+                                            TransactionEventCode.TRANSACTION_ADD_USER_RECEIPT_ERROR_EVENT
+                                    );
                                     return userReceiptAddedEventRepository.save(errorEvent)
                                             .then(
                                                     transactionNotificationsRetryQueueClient
                                                             .sendMessage(BinaryData.fromObject(errorEvent))
                                             )
                                             .thenReturn(errorEvent);
-                                }
-                                ,
+                                },
                                 successEvent -> userReceiptAddedEventRepository.save(successEvent)
                                         .flatMap(e -> {
-                                                    if (command.getData().addUserReceiptRequest()
-                                                            .getOutcome() == AddUserReceiptRequestDto.OutcomeEnum.KO) {
-                                                        log.info("Received sendPaymentResult with KO outcome, enqueuing {}", TransactionEventCode.TRANSACTION_REFUNDED_EVENT);
-                                                        TransactionRefundRequestedEvent refundRequestedEvent = new TransactionRefundRequestedEvent(
-                                                                transactionId,
-                                                                new TransactionRefundedData(TransactionStatusDto.NOTIFIED_KO)
-                                                        );
+                                            if (command.getData().addUserReceiptRequest()
+                                                    .getOutcome() == AddUserReceiptRequestDto.OutcomeEnum.KO) {
+                                                log.info(
+                                                        "Received sendPaymentResult with KO outcome, enqueuing {}",
+                                                        TransactionEventCode.TRANSACTION_REFUNDED_EVENT
+                                                );
+                                                TransactionRefundRequestedEvent refundRequestedEvent = new TransactionRefundRequestedEvent(
+                                                        transactionId,
+                                                        new TransactionRefundedData(TransactionStatusDto.NOTIFIED_KO)
+                                                );
 
-                                                        return refundedDataTransactionsEventStoreRepository.save(refundRequestedEvent)
-                                                                .then(
-                                                                        transactionRefundQueueClient
-                                                                                .sendMessage(BinaryData.fromObject(refundRequestedEvent))
-                                                                )
-                                                                .thenReturn(e);
-                                                    } else {
-                                                        return Mono.just(e);
-                                                    }
-                                                }
+                                                return refundedDataTransactionsEventStoreRepository
+                                                        .save(refundRequestedEvent)
+                                                        .then(
+                                                                transactionRefundQueueClient
+                                                                        .sendMessage(
+                                                                                BinaryData.fromObject(
+                                                                                        refundRequestedEvent
+                                                                                )
+                                                                        )
+                                                        )
+                                                        .thenReturn(e);
+                                            } else {
+                                                return Mono.just(e);
+                                            }
+                                        }
                                         )
                         )
                 );
 
     }
 
-
     private Mono<NotificationEmailResponseDto> sendKoEmail(
-            TransactionClosed tx,
-            AddUserReceiptRequestDto addUserReceiptRequestDto,
-            String language
+                                                           TransactionClosed tx,
+                                                           AddUserReceiptRequestDto addUserReceiptRequestDto,
+                                                           String language
     ) {
         return confidentialMailUtils.toEmail(tx.getEmail()).flatMap(
                 emailAddress -> notificationsServiceClient.sendKoEmail(
