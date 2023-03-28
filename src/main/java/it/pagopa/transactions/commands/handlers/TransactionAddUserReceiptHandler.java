@@ -151,25 +151,28 @@ public class TransactionAddUserReceiptHandler
                                                            AddUserReceiptRequestDto addUserReceiptRequestDto,
                                                            String language
     ) {
-        return notificationsServiceClient.sendKoEmail(
-                new NotificationsServiceClient.KoTemplateRequest(
-                        confidentialMailUtils.toEmail(tx.getEmail()).value(),
-                        "Il pagamento non è riuscito",
-                        language,
-                        new KoTemplate(
-                                new it.pagopa.generated.notifications.templates.ko.TransactionTemplate(
-                                        tx.getTransactionId().value().toString().toLowerCase(),
-                                        dateTimeToHumanReadableString(
-                                                addUserReceiptRequestDto.getPaymentDate(),
-                                                Locale.forLanguageTag(language)
-                                        ),
-                                        amountToHumanReadableString(
-                                                tx.getPaymentNotices().stream()
-                                                        .mapToInt(
-                                                                paymentNotice -> paymentNotice.transactionAmount()
-                                                                        .value()
-                                                        )
-                                                        .sum()
+        return confidentialMailUtils.toEmail(tx.getEmail()).flatMap(
+                emailAddress -> notificationsServiceClient.sendKoEmail(
+                        new NotificationsServiceClient.KoTemplateRequest(
+                                emailAddress.value(),
+                                "Il pagamento non è riuscito",
+                                language,
+                                new KoTemplate(
+                                        new it.pagopa.generated.notifications.templates.ko.TransactionTemplate(
+                                                tx.getTransactionId().value().toString().toLowerCase(),
+                                                dateTimeToHumanReadableString(
+                                                        addUserReceiptRequestDto.getPaymentDate(),
+                                                        Locale.forLanguageTag(language)
+                                                ),
+                                                amountToHumanReadableString(
+                                                        tx.getPaymentNotices().stream()
+                                                                .mapToInt(
+                                                                        paymentNotice -> paymentNotice
+                                                                                .transactionAmount()
+                                                                                .value()
+                                                                )
+                                                                .sum()
+                                                )
                                         )
                                 )
                         )
@@ -185,73 +188,78 @@ public class TransactionAddUserReceiptHandler
         TransactionAuthorizationRequestData transactionAuthorizationRequestData = tx
                 .getTransactionAuthorizationRequestData();
 
-        return notificationsServiceClient.sendSuccessEmail(
-                new NotificationsServiceClient.SuccessTemplateRequest(
-                        confidentialMailUtils.toEmail(tx.getEmail()).value(),
-                        "Il riepilogo del tuo pagamento",
-                        language,
-                        new SuccessTemplate(
-                                new TransactionTemplate(
-                                        tx.getTransactionId().value().toString().toLowerCase(),
-                                        dateTimeToHumanReadableString(
-                                                addUserReceiptRequestDto.getPaymentDate(),
-                                                Locale.forLanguageTag(language)
-                                        ),
-                                        amountToHumanReadableString(
-                                                tx.getPaymentNotices().stream()
-                                                        .mapToInt(
-                                                                paymentNotice -> paymentNotice.transactionAmount()
-                                                                        .value()
+        return confidentialMailUtils.toEmail(tx.getEmail()).flatMap(
+                emailAddress -> notificationsServiceClient.sendSuccessEmail(
+                        new NotificationsServiceClient.SuccessTemplateRequest(
+                                emailAddress.value(),
+                                "Il riepilogo del tuo pagamento",
+                                language,
+                                new SuccessTemplate(
+                                        new TransactionTemplate(
+                                                tx.getTransactionId().value().toString().toLowerCase(),
+                                                dateTimeToHumanReadableString(
+                                                        addUserReceiptRequestDto.getPaymentDate(),
+                                                        Locale.forLanguageTag(language)
+                                                ),
+                                                amountToHumanReadableString(
+                                                        tx.getPaymentNotices().stream()
+                                                                .mapToInt(
+                                                                        paymentNotice -> paymentNotice
+                                                                                .transactionAmount()
+                                                                                .value()
+                                                                )
+                                                                .sum() + transactionAuthorizationRequestData.getFee()
+                                                ),
+                                                new PspTemplate(
+                                                        transactionAuthorizationRequestData.getPspBusinessName(),
+                                                        new FeeTemplate(
+                                                                amountToHumanReadableString(
+                                                                        transactionAuthorizationRequestData.getFee()
+                                                                )
                                                         )
-                                                        .sum() + transactionAuthorizationRequestData.getFee()
-                                        ),
-                                        new PspTemplate(
-                                                transactionAuthorizationRequestData.getPspBusinessName(),
-                                                new FeeTemplate(
-                                                        amountToHumanReadableString(
-                                                                transactionAuthorizationRequestData.getFee()
-                                                        )
-                                                )
-                                        ),
-                                        transactionAuthorizationRequestData.getAuthorizationRequestId(),
-                                        tx.getTransactionAuthorizationCompletedData().getAuthorizationCode(),
-                                        new PaymentMethodTemplate(
-                                                transactionAuthorizationRequestData.getPaymentMethodName(),
-                                                "paymentMethodLogo", // TODO: Logos
-                                                null,
-                                                false
-                                        )
-                                ),
-                                new UserTemplate(
-                                        null,
-                                        confidentialMailUtils.toEmail(tx.getEmail()).value()
-                                ),
-                                new CartTemplate(
-                                        tx.getPaymentNotices().stream().map(
-                                                paymentNotice -> new ItemTemplate(
-                                                        new RefNumberTemplate(
-                                                                RefNumberTemplate.Type.CODICE_AVVISO,
-                                                                paymentNotice.rptId().getNoticeId()
-                                                        ),
+                                                ),
+                                                transactionAuthorizationRequestData.getAuthorizationRequestId(),
+                                                tx.getTransactionAuthorizationCompletedData().getAuthorizationCode(),
+                                                new PaymentMethodTemplate(
+                                                        transactionAuthorizationRequestData.getPaymentMethodName(),
+                                                        "paymentMethodLogo", // TODO: Logos
                                                         null,
-                                                        new PayeeTemplate(
-                                                                addUserReceiptRequestDto.getPayments().get(0)
-                                                                        .getOfficeName(),
-                                                                paymentNotice.rptId().getFiscalCode()
-                                                        ),
-                                                        addUserReceiptRequestDto.getPayments().get(0).getDescription(),
-                                                        amountToHumanReadableString(
-                                                                paymentNotice.transactionAmount().value()
-                                                        )
+                                                        false
                                                 )
-                                        ).toList(),
-                                        amountToHumanReadableString(
-                                                tx.getPaymentNotices().stream()
-                                                        .mapToInt(
-                                                                paymentNotice -> paymentNotice.transactionAmount()
-                                                                        .value()
+                                        ),
+                                        new UserTemplate(
+                                                null,
+                                                emailAddress.value()
+                                        ),
+                                        new CartTemplate(
+                                                tx.getPaymentNotices().stream().map(
+                                                        paymentNotice -> new ItemTemplate(
+                                                                new RefNumberTemplate(
+                                                                        RefNumberTemplate.Type.CODICE_AVVISO,
+                                                                        paymentNotice.rptId().getNoticeId()
+                                                                ),
+                                                                null,
+                                                                new PayeeTemplate(
+                                                                        addUserReceiptRequestDto.getPayments().get(0)
+                                                                                .getOfficeName(),
+                                                                        paymentNotice.rptId().getFiscalCode()
+                                                                ),
+                                                                addUserReceiptRequestDto.getPayments().get(0)
+                                                                        .getDescription(),
+                                                                amountToHumanReadableString(
+                                                                        paymentNotice.transactionAmount().value()
+                                                                )
                                                         )
-                                                        .sum()
+                                                ).toList(),
+                                                amountToHumanReadableString(
+                                                        tx.getPaymentNotices().stream()
+                                                                .mapToInt(
+                                                                        paymentNotice -> paymentNotice
+                                                                                .transactionAmount()
+                                                                                .value()
+                                                                )
+                                                                .sum()
+                                                )
                                         )
                                 )
                         )
