@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
-import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
+import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
 import it.pagopa.transactions.utils.soap.Jaxb2SoapDecoder;
 import it.pagopa.transactions.utils.soap.Jaxb2SoapEncoder;
@@ -173,16 +173,16 @@ public class WebClientsConfig {
     }
 
     @Bean(name = "ecommercePaymentInstrumentsWebClient")
-    public it.pagopa.generated.ecommerce.paymentmethods.v1.api.DefaultApi ecommercePaymentInstrumentsWebClient(
-                                                                                                               @Value(
-                                                                                                                   "${ecommercePaymentInstruments.uri}"
-                                                                                                               ) String ecommercePaymentInstrumentsUri,
-                                                                                                               @Value(
-                                                                                                                   "${ecommercePaymentInstruments.readTimeout}"
-                                                                                                               ) int ecommercePaymentInstrumentsReadTimeout,
-                                                                                                               @Value(
-                                                                                                                   "${ecommercePaymentInstruments.connectionTimeout}"
-                                                                                                               ) int ecommercePaymentInstrumentsConnectionTimeout
+    public it.pagopa.generated.ecommerce.paymentmethods.v1.api.PaymentMethodsApi ecommercePaymentInstrumentsWebClient(
+                                                                                                                      @Value(
+                                                                                                                          "${ecommercePaymentInstruments.uri}"
+                                                                                                                      ) String ecommercePaymentInstrumentsUri,
+                                                                                                                      @Value(
+                                                                                                                          "${ecommercePaymentInstruments.readTimeout}"
+                                                                                                                      ) int ecommercePaymentInstrumentsReadTimeout,
+                                                                                                                      @Value(
+                                                                                                                          "${ecommercePaymentInstruments.connectionTimeout}"
+                                                                                                                      ) int ecommercePaymentInstrumentsConnectionTimeout
     ) {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, ecommercePaymentInstrumentsConnectionTimeout)
@@ -204,7 +204,7 @@ public class WebClientsConfig {
                 webClient
         ).setBasePath(ecommercePaymentInstrumentsUri);
 
-        return new it.pagopa.generated.ecommerce.paymentmethods.v1.api.DefaultApi(apiClient);
+        return new it.pagopa.generated.ecommerce.paymentmethods.v1.api.PaymentMethodsApi(apiClient);
     }
 
     @Bean(name = "notificationsServiceWebClient")
