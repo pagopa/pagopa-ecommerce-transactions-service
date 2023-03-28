@@ -42,6 +42,7 @@ microservice-chart:
       TRANSACTION_CLOSEPAYMENT_RETRY_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-close-payment-retry-queue
       TRANSACTION_CLOSEPAYMENT_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-close-payment-queue
       TRANSACTION_REFUND_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-refund-queue
+      TRANSACTION_NOTIFICATIONS_RETRY_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-notifications-retry-queue
       PAYMENT_TOKEN_VALIDITY_TIME: "900"
       TRANSACTIONS_RETRY_OFFSET: "60"
       CLOSURE_RETRY_INTERVAL: "30"
@@ -145,6 +146,7 @@ microservice-chart:
     TRANSACTION_CLOSEPAYMENT_RETRY_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-close-payment-retry-queue
     TRANSACTION_CLOSEPAYMENT_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-close-payment-queue
     TRANSACTION_REFUND_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-refund-queue
+    TRANSACTION_NOTIFICATIONS_RETRY_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-notifications-retry-queue
     PAYMENT_TOKEN_VALIDITY_TIME: "1800"
     TRANSACTIONS_RETRY_OFFSET: "60"
     CLOSURE_RETRY_INTERVAL: "30"

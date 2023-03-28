@@ -78,7 +78,7 @@ class TransactionAddUserReceiptHandlerTest {
                 notificationsServiceClient,
                 confidentialMailUtils,
                 transactionRefundQueueClient,
-                transactionsUtils
+                transactionNotificationsRetryQueueClient, transactionsUtils
         );
     }
 
