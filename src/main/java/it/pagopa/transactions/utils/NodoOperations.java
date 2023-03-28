@@ -72,6 +72,7 @@ public class NodoOperations {
         request.setExpirationTime(BigInteger.valueOf(paymentTokenTimeout).multiply(BigInteger.valueOf(1000)));
         //TODO Maybe here more values (all optional) can be passed such as Touchpoint, Payment Method Type Code, Due date
         //request.setPaymentMethod();
+        //request.setTouchPoint(StTouchpointFee.CHECKOUT);
         return nodeForPspClient
                 .activatePaymentNoticeV2(objectFactoryNodeForPsp.createActivatePaymentNoticeV2Request(request))
                 .flatMap(
