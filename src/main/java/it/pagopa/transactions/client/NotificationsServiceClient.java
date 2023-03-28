@@ -24,7 +24,14 @@ public class NotificationsServiceClient {
     public Mono<NotificationEmailResponseDto> sendNotificationEmail(
                                                                     NotificationEmailRequestDto notificationEmailRequestDto
     ) {
-        return notificationsServiceApi.sendNotificationEmail(notificationsServiceApiKey, notificationEmailRequestDto)
+        Mono<NotificationEmailResponseDto> response;
+        try {
+            response = notificationsServiceApi
+                    .sendNotificationEmail(notificationsServiceApiKey, notificationEmailRequestDto);
+        } catch (Exception e) {
+            response = Mono.error(e);
+        }
+        return response
                 .doOnError(
                         WebClientResponseException.class,
                         e -> log.info(

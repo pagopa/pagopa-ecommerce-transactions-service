@@ -1,6 +1,7 @@
 package it.pagopa.transactions.projections.handlers;
 
 import io.vavr.control.Either;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptAddErrorEvent;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptAddedEvent;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptData;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
@@ -116,6 +117,94 @@ class TransactionUserReceiptProjectionHandlerTest {
                         argThat(
                                 savedTransaction -> savedTransaction.getStatus()
                                         .equals(TransactionStatusDto.REFUND_REQUESTED)
+                        )
+                );
+    }
+
+    @Test
+    void shouldHandleTransactionWithNotificationErrorOutcomeOK() {
+        TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
+
+        it.pagopa.ecommerce.commons.documents.v1.Transaction expectedDocument = new it.pagopa.ecommerce.commons.documents.v1.Transaction(
+                transaction.getTransactionId().value().toString(),
+                transaction.getTransactionActivatedData().getPaymentNotices(),
+                null,
+                transaction.getEmail(),
+                TransactionStatusDto.NOTIFICATION_ERROR,
+                transaction.getClientId(),
+                transaction.getCreationDate().toString()
+        );
+
+        TransactionUserReceiptAddErrorEvent event = TransactionTestUtils
+                .transactionUserReceiptAddErrorEvent(TransactionUserReceiptData.Outcome.OK);
+
+        /*
+         * Preconditions
+         */
+        Mockito.when(viewRepository.findById(transaction.getTransactionId().value().toString()))
+                .thenReturn(Mono.just(it.pagopa.ecommerce.commons.documents.v1.Transaction.from(transaction)));
+
+        Mockito.when(viewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
+
+        /*
+         * Test
+         */
+        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(Either.left(Mono.just(event))))
+                .expectNext(expectedDocument)
+                .verifyComplete();
+
+        /*
+         * Assertions
+         */
+        Mockito.verify(viewRepository, Mockito.times(1))
+                .save(
+                        argThat(
+                                savedTransaction -> savedTransaction.getStatus()
+                                        .equals(TransactionStatusDto.NOTIFICATION_ERROR)
+                        )
+                );
+    }
+
+    @Test
+    void shouldHandleTransactionWithNotificationErrorOutcomeKO() {
+        TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
+
+        it.pagopa.ecommerce.commons.documents.v1.Transaction expectedDocument = new it.pagopa.ecommerce.commons.documents.v1.Transaction(
+                transaction.getTransactionId().value().toString(),
+                transaction.getTransactionActivatedData().getPaymentNotices(),
+                null,
+                transaction.getEmail(),
+                TransactionStatusDto.NOTIFICATION_ERROR,
+                transaction.getClientId(),
+                transaction.getCreationDate().toString()
+        );
+
+        TransactionUserReceiptAddErrorEvent event = TransactionTestUtils
+                .transactionUserReceiptAddErrorEvent(TransactionUserReceiptData.Outcome.KO);
+
+        /*
+         * Preconditions
+         */
+        Mockito.when(viewRepository.findById(transaction.getTransactionId().value().toString()))
+                .thenReturn(Mono.just(it.pagopa.ecommerce.commons.documents.v1.Transaction.from(transaction)));
+
+        Mockito.when(viewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
+
+        /*
+         * Test
+         */
+        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(Either.left(Mono.just(event))))
+                .expectNext(expectedDocument)
+                .verifyComplete();
+
+        /*
+         * Assertions
+         */
+        Mockito.verify(viewRepository, Mockito.times(1))
+                .save(
+                        argThat(
+                                savedTransaction -> savedTransaction.getStatus()
+                                        .equals(TransactionStatusDto.NOTIFICATION_ERROR)
                         )
                 );
     }
