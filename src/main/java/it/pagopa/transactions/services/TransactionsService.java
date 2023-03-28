@@ -388,7 +388,7 @@ public class TransactionsService {
                             Mono<BaseTransaction> baseTransaction = transactionsUtils.reduceEvents(transactionId);
                             return wasTransactionAuthorized(transactionId)
                                     .<Either<TransactionInfoDto, Mono<BaseTransaction>>>flatMap(alreadyAuthorized -> {
-                                        if (!alreadyAuthorized) {
+                                        if (Boolean.FALSE.equals(alreadyAuthorized)) {
                                             return Mono.just(baseTransaction).map(Either::right);
                                         } else {
                                             return baseTransaction.map(

@@ -75,7 +75,7 @@ class TransactionAddUserReceiptHandlerTest {
     private QueueAsyncClient transactionNotificationsRetryQueueClient;
 
     @BeforeEach
-    private void initTest() {
+    void initTest() {
         updateStatusHandler = new TransactionAddUserReceiptHandler(
                 userReceiptDataEventRepository,
                 refundedRequestedEventStoreRepository,
@@ -157,8 +157,8 @@ class TransactionAddUserReceiptHandlerTest {
         );
         NotificationsServiceClient.SuccessTemplateRequest successTemplateRequest = successTemplateMailCaptor
                 .getAllValues().get(0);
-        assertEquals(successTemplateRequest.to(), EMAIL_STRING);
-        assertEquals(successTemplateRequest.templateParameters().getUser().getEmail(), EMAIL_STRING);
+        assertEquals(EMAIL_STRING, successTemplateRequest.to());
+        assertEquals(EMAIL_STRING, successTemplateRequest.templateParameters().getUser().getEmail());
     }
 
     @Test
@@ -231,8 +231,8 @@ class TransactionAddUserReceiptHandlerTest {
         NotificationsServiceClient.SuccessTemplateRequest successTemplateRequest = successTemplateMailCaptor
                 .getAllValues().get(0);
 
-        assertEquals(successTemplateRequest.to(), EMAIL_STRING);
-        assertEquals(successTemplateRequest.templateParameters().getUser().getEmail(), EMAIL_STRING);
+        assertEquals(EMAIL_STRING, successTemplateRequest.to());
+        assertEquals(EMAIL_STRING, successTemplateRequest.templateParameters().getUser().getEmail());
     }
 
     @Test
@@ -307,7 +307,7 @@ class TransactionAddUserReceiptHandlerTest {
                 )
         );
         NotificationsServiceClient.KoTemplateRequest koTemplateRequest = koTemplateMailCaptor.getAllValues().get(0);
-        assertEquals(koTemplateRequest.to(), EMAIL_STRING);
+        assertEquals(EMAIL_STRING, koTemplateRequest.to());
     }
 
     @Test
