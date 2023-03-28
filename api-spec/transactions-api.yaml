@@ -323,14 +323,14 @@ components:
         reason: "reason1"
         amount: 600
         transferList:
-          - fiscalCode: "77777777777"
+          - paFiscalCode: "77777777777"
             digitalStamp: false
             transferCategory: "transferCategory1"
-            amount: 500
-          - fiscalCode: "11111111111"
+            transferAmount: 500
+          - paFiscalCode: "11111111111"
             digitalStamp: true
             transferCategory: "transferCategory2"
-            amount: 100
+            transferAmount: 100
     NewTransactionRequest:
       description: Request body for creating a new transaction
       type: object
@@ -375,27 +375,27 @@ components:
               reason: "reason1"
               amount: 600
               transferList:
-                - fiscalCode: "77777777777"
+                - paFiscalCode: "77777777777"
                   digitalStamp: false
                   transferCategory: "transferCategory1"
-                  amount: 500
-                - fiscalCode: "11111111111"
+                  transferAmount: 500
+                - paFiscalCode: "11111111111"
                   digitalStamp: true
                   transferCategory: "transferCategory2"
-                  amount: 100
+                  transferAmount: 100
             - rptId: "77777777777302012387654312385"
               paymentToken: "paymentToken2"
               reason: "reason2"
               amount: 400
               transferList:
-                - fiscalCode: "44444444444"
+                - paFiscalCode: "44444444444"
                   digitalStamp: true
                   transferCategory: "transferCategory1"
-                  amount: 200
-                - fiscalCode: "22222222222"
+                  transferAmount: 200
+                - paFiscalCode: "22222222222"
                   digitalStamp: false
                   transferCategory: "transferCategory2"
-                  amount: 100
+                  transferAmount: 100
         clientId:
           description: transaction client id
           enum:
@@ -665,7 +665,7 @@ components:
       type: object
       description: The dto that contains information about the creditor entities
       properties:
-        fiscalCode:
+        paFiscalCode:
           type: string
           description: The creditor institution fiscal code
           pattern: '^[a-zA-Z0-9]{11}'
@@ -675,13 +675,13 @@ components:
         transferCategory:
           type: string
           description: The taxonomy of the transfer
-        amount:
+        transferAmount:
           $ref: '#/components/schemas/AmountEuroCents'
       required:
-        - fiscalCode
+        - paFiscalCode
         - digitalStamp
         - transferCategory
-        - amount
+        - transferAmount
     ProblemJson:
       description: Body definition for error responses containing failure details
       type: object
