@@ -58,7 +58,7 @@ microservice-chart:
       EMAIL_ENCRYPTION_KEY: email-encryption-key
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.10.1"
+    tag: "0.10.2"
     pullPolicy: Always
   livenessProbe:
     httpGet:
