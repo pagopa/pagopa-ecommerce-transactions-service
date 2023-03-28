@@ -1,7 +1,9 @@
 package it.pagopa.transactions.client;
 
-import it.pagopa.generated.ecommerce.paymentmethods.v1.api.DefaultApi;
-import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.*;
+import it.pagopa.generated.ecommerce.paymentmethods.v1.api.PaymentMethodsApi;
+import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.CalculateFeeRequestDto;
+import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.CalculateFeeResponseDto;
+import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.PaymentMethodResponseDto;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +18,7 @@ public class EcommercePaymentMethodsClient {
 
     @Autowired
     @Qualifier("ecommercePaymentInstrumentsWebClient")
-    private DefaultApi ecommercePaymentInstrumentsWebClient;
+    private PaymentMethodsApi ecommercePaymentInstrumentsWebClient;
 
     public Mono<CalculateFeeResponseDto> calculateFee(
                                                       String paymentMethodId,
