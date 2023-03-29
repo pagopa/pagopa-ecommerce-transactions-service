@@ -26,6 +26,7 @@ import org.mockito.Spy;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -36,6 +37,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL;
+import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL_STRING;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -56,9 +59,8 @@ class PaymentGatewayClientTest {
     @Mock
     UUIDUtils mockUuidUtils;
 
-    ConfidentialMailUtils confidentialMailUtils = new ConfidentialMailUtils(
-            TransactionTestUtils.confidentialDataManager
-    );
+    @Mock
+    ConfidentialMailUtils confidentialMailUtils;
 
     private final UUID transactionIdUUID = UUID.randomUUID();
 
@@ -75,6 +77,8 @@ class PaymentGatewayClientTest {
                 mockUuidUtils,
                 confidentialMailUtils
         );
+
+        Hooks.onOperatorDebug();
     }
 
     @Test
@@ -342,9 +346,7 @@ class PaymentGatewayClientTest {
                                         + authorizationData.fee()
                         )
                 )
-                .emailCH(
-                        TransactionTestUtils.confidentialDataManager.decrypt(transaction.getEmail(), Email::new).value()
-                )
+                .emailCH(EMAIL_STRING)
                 .circuit(cardDetails.getBrand())
                 .holder(cardDetails.getHolderName())
                 .isFirstPayment(true)
@@ -364,6 +366,8 @@ class PaymentGatewayClientTest {
 
         Mockito.when(mockUuidUtils.uuidToBase64(any()))
                 .thenReturn(vposAuthRequestDto.getIdTransaction());
+
+        Mockito.when(confidentialMailUtils.toEmail(EMAIL)).thenReturn(Mono.just(new Email(EMAIL_STRING)));
 
         /* test */
         StepVerifier.create(client.requestXPayAuthorization(authorizationData))
@@ -855,9 +859,7 @@ class PaymentGatewayClientTest {
                                         + authorizationData.fee()
                         )
                 )
-                .emailCH(
-                        TransactionTestUtils.confidentialDataManager.decrypt(transaction.getEmail(), Email::new).value()
-                )
+                .emailCH(EMAIL_STRING)
                 .circuit(cardDetails.getBrand())
                 .holder(cardDetails.getHolderName())
                 .isFirstPayment(true)
@@ -883,6 +885,9 @@ class PaymentGatewayClientTest {
                 );
         Mockito.when(mockUuidUtils.uuidToBase64(any()))
                 .thenReturn(vposAuthRequestDto.getIdTransaction());
+
+        Mockito.when(confidentialMailUtils.toEmail(EMAIL)).thenReturn(Mono.just(new Email(EMAIL_STRING)));
+
         /* test */
         StepVerifier.create(client.requestCreditCardAuthorization(authorizationData))
                 .expectErrorMatches(error -> error instanceof BadGatewayException)
@@ -1111,9 +1116,7 @@ class PaymentGatewayClientTest {
                                         + authorizationData.fee()
                         )
                 )
-                .emailCH(
-                        TransactionTestUtils.confidentialDataManager.decrypt(transaction.getEmail(), Email::new).value()
-                )
+                .emailCH(EMAIL_STRING)
                 .circuit(cardDetails.getBrand())
                 .holder(cardDetails.getHolderName())
                 .isFirstPayment(true)
@@ -1134,6 +1137,8 @@ class PaymentGatewayClientTest {
                 .thenReturn(Mono.just(creditCardAuthResponseDto));
         Mockito.when(mockUuidUtils.uuidToBase64(any()))
                 .thenReturn(vposAuthRequestDto.getIdTransaction());
+        Mockito.when(confidentialMailUtils.toEmail(EMAIL)).thenReturn(Mono.just(new Email(EMAIL_STRING)));
+
         /* test */
         StepVerifier.create(client.requestCreditCardAuthorization(authorizationData))
                 .expectNext(creditCardAuthResponseDto)
@@ -1235,6 +1240,9 @@ class PaymentGatewayClientTest {
                 "VPOS",
                 null
         );
+
+        /* preconditions */
+        Mockito.when(confidentialMailUtils.toEmail(EMAIL)).thenReturn(Mono.just(new Email(EMAIL_STRING)));
 
         /* test */
         StepVerifier.create(client.requestCreditCardAuthorization(authorizationData))

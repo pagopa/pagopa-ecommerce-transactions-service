@@ -5,6 +5,8 @@ import io.jsonwebtoken.io.DecodingException;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.WeakKeyException;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
+import it.pagopa.generated.pdv.v1.ApiClient;
+import it.pagopa.generated.pdv.v1.api.TokenApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,9 +17,6 @@ import java.util.Base64;
 
 @Configuration
 public class SecretsConfigurations {
-
-    private static final String CONFIDENTIAL_DATA_MANAGER_KEY_TYPE = "AES";
-
     @Bean
     public SecretKey jwtSigningKey(@Value("${jwt.secret}") String jwtSecret) {
         try {
@@ -28,18 +27,23 @@ public class SecretsConfigurations {
     }
 
     @Bean
-    public ConfidentialDataManager emailConfidentialDataManager(
-                                                                @Value(
-                                                                    "${confidentialDataManager.emailEncryptionKey}"
-                                                                ) String key
+    public TokenApi personalDataVaultApiClient(
+                                               @Value(
+                                                   "${confidentialDataManager.personalDataVault.apiKey}"
+                                               ) String personalDataVaultApiKey,
+                                               @Value(
+                                                   "${confidentialDataManager.personalDataVault.apiBasePath}"
+                                               ) String apiBasePath
     ) {
-        try {
-            return new ConfidentialDataManager(
-                    new SecretKeySpec(Base64.getDecoder().decode(key), CONFIDENTIAL_DATA_MANAGER_KEY_TYPE)
-            );
-        } catch (IllegalArgumentException e) {
-            throw new IllegalStateException("Invalid configured confidential data manager key", e);
-        }
+        ApiClient pdvApiClient = new ApiClient();
+        pdvApiClient.setApiKey(personalDataVaultApiKey);
+        pdvApiClient.setBasePath(apiBasePath);
+
+        return new TokenApi(pdvApiClient);
     }
 
+    @Bean
+    public ConfidentialDataManager emailConfidentialDataManager(TokenApi personalDataVaultApi) {
+        return new ConfidentialDataManager(personalDataVaultApi);
+    }
 }

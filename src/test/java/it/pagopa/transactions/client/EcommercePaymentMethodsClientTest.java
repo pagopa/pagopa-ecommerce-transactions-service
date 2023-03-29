@@ -1,6 +1,6 @@
 package it.pagopa.transactions.client;
 
-import it.pagopa.generated.ecommerce.paymentmethods.v1.api.DefaultApi;
+import it.pagopa.generated.ecommerce.paymentmethods.v1.api.PaymentMethodsApi;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,7 +23,7 @@ class EcommercePaymentMethodsClientTest {
     private EcommercePaymentMethodsClient ecommercePaymentMethodsClient;
 
     @Mock
-    private DefaultApi ecommercePaymentInstrumentsWebClient;
+    private PaymentMethodsApi ecommercePaymentInstrumentsWebClient;
 
     @Test
     void shouldReturnBundleList() {
