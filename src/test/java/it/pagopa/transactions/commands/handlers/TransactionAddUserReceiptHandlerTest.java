@@ -83,7 +83,8 @@ class TransactionAddUserReceiptHandlerTest {
                 confidentialMailUtils,
                 transactionRefundQueueClient,
                 transactionNotificationsRetryQueueClient,
-                transactionsUtils
+                transactionsUtils,
+                0
         );
     }
 
@@ -473,8 +474,10 @@ class TransactionAddUserReceiptHandlerTest {
         Mockito.when(eventStoreRepository.findByTransactionId(TRANSACTION_ID)).thenReturn(events);
         Mockito.when(notificationsServiceClient.sendSuccessEmail(successTemplateMailCaptor.capture()))
                 .thenReturn(Mono.error(new RuntimeException("Error calling Notification service")));
-        Mockito.when(transactionNotificationsRetryQueueClient.sendMessage(any(BinaryData.class)))
-                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESULT);
+        Mockito.when(
+                transactionNotificationsRetryQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
+        )
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
         Mockito.when(confidentialMailUtils.toEmail(EMAIL)).thenReturn(Mono.just(new Email(EMAIL_STRING)));
 
         /* test */
@@ -554,8 +557,10 @@ class TransactionAddUserReceiptHandlerTest {
         Mockito.when(eventStoreRepository.findByTransactionId(TRANSACTION_ID)).thenReturn(events);
         Mockito.when(notificationsServiceClient.sendKoEmail(koTemplateMailCaptor.capture()))
                 .thenReturn(Mono.error(new RuntimeException("Error calling Notification service")));
-        Mockito.when(transactionNotificationsRetryQueueClient.sendMessage(any(BinaryData.class)))
-                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESULT);
+        Mockito.when(
+                transactionNotificationsRetryQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
+        )
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
         Mockito.when(confidentialMailUtils.toEmail(EMAIL)).thenReturn(Mono.just(new Email(EMAIL_STRING)));
 
         /* test */

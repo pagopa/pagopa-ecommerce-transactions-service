@@ -21,9 +21,11 @@ import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -47,6 +49,8 @@ public class TransactionAddUserReceiptHandler
 
     private final TransactionsUtils transactionsUtils;
 
+    private final Integer notificationErrorRetryIntervalSeconds;
+
     @Autowired
     public TransactionAddUserReceiptHandler(
             TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptAddedEventRepository,
@@ -57,7 +61,8 @@ public class TransactionAddUserReceiptHandler
             @Qualifier(
                 "transactionNotificationsRetryQueueAsyncClient"
             ) QueueAsyncClient transactionNotificationsRetryQueueClient,
-            TransactionsUtils transactionsUtils
+            TransactionsUtils transactionsUtils,
+            @Value("${transactions.user_receipt_handler.retry_interval}") Integer notificationErrorRetryIntervalSeconds
     ) {
         this.userReceiptAddedEventRepository = userReceiptAddedEventRepository;
         this.refundedDataTransactionsEventStoreRepository = refundedRequestedEventStoreRepository;
@@ -66,6 +71,7 @@ public class TransactionAddUserReceiptHandler
         this.transactionRefundQueueClient = transactionRefundQueueClient;
         this.transactionNotificationsRetryQueueClient = transactionNotificationsRetryQueueClient;
         this.transactionsUtils = transactionsUtils;
+        this.notificationErrorRetryIntervalSeconds = notificationErrorRetryIntervalSeconds;
     }
 
     @Override
@@ -164,7 +170,13 @@ public class TransactionAddUserReceiptHandler
                                     return userReceiptAddedEventRepository.save(errorEvent)
                                             .flatMap(
                                                     e -> transactionNotificationsRetryQueueClient
-                                                            .sendMessage(BinaryData.fromObject(e))
+                                                            .sendMessageWithResponse(
+                                                                    BinaryData.fromObject(e),
+                                                                    Duration.ofSeconds(
+                                                                            notificationErrorRetryIntervalSeconds
+                                                                    ),
+                                                                    null
+                                                            )
                                                             .thenReturn(e)
                                             );
                                 },
