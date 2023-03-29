@@ -101,10 +101,11 @@ microservice-chart:
       cpu: "300m"
     limits:
       memory: "512Mi"
-      cpu: "300m"
+      cpu: "500m"
   autoscaling:
+    enabled: false
     minReplica: 1
-    maxReplica: 2
+    maxReplica: 5
     pollingInterval: 30 # seconds
     cooldownPeriod: 300 # seconds
     triggers:
@@ -129,7 +130,8 @@ microservice-chart:
     REDIS_PORT: "6380"
     REDIS_SSL_ENABLED: "true"
     NODO_HOSTNAME: https://api.uat.platform.pagopa.it
-    NODE_FOR_PSP_URI: /nodo/node-for-psp/v1
+    #NODE_FOR_PSP_URI: /nodo/node-for-psp/v1
+    NODE_FOR_PSP_URI: /ecommerce/mock/nodo/v1/activatePaymentNotice
     NODO_READ_TIMEOUT: "10000"
     NODO_CONNECTION_TIMEOUT: "10000"
     NODO_PARALLEL_REQUESTS: "5"
@@ -152,7 +154,8 @@ microservice-chart:
     WEB_LOGGING_LEVEL: "off"
     SERVICE_LOGGING_LEVEL: "info"
     JWT_TOKEN_VALIDITY_TIME_MILLIS: "1800000"
-    PERSONAL_DATA_VAULT_API_BASE_PATH: "https://api.uat.tokenizer.pdv.pagopa.it/tokenizer/v1"
+    #PERSONAL_DATA_VAULT_API_BASE_PATH: "https://api.uat.tokenizer.pdv.pagopa.it/tokenizer/v1"
+    PERSONAL_DATA_VAULT_API_BASE_PATH: "https://api.uat.platform.pagopa.it/ecommerce/mock/pdv/v1"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password
