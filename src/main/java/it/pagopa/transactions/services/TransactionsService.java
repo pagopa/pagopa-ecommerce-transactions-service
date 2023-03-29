@@ -240,12 +240,17 @@ public class TransactionsService {
                                                                     .substring(0, 11)
                                                     )
                                                     .transferList(
-                                                            List.of(
-                                                                    new TransferListItemDto().creditorInstitution(
-                                                                            transaction.getPaymentNotices().get(0)
-                                                                                    .getRptId().substring(0, 11)
-                                                                    ).digitalStamp(false)
-                                                            )
+                                                            transaction.getPaymentNotices().get(0).getTransferList()
+                                                                    .stream()
+                                                                    .map(
+                                                                            t -> new TransferListItemDto()
+                                                                                    .creditorInstitution(
+                                                                                            t.getPaFiscalCode()
+                                                                                    ).digitalStamp(t.getDigitalStamp())
+                                                                                    .transferCategory(
+                                                                                            t.getTransferCategory()
+                                                                                    )
+                                                                    ).toList()
                                                     ),
                                             null
                                     )
@@ -322,12 +327,15 @@ public class TransactionsService {
                                                                     paymentNotice
                                                                             .getPaymentContextCode()
                                                             ),
-                                                            paymentNotice.getTransferList().stream().map(transfer -> new PaymentTransferInfo(
-                                                                    transfer.getPaFiscalCode(),
-                                                                    transfer.getDigitalStamp(),
-                                                                    transfer.getTransferAmount(),
-                                                                    transfer.getTransferCategory()
-                                                            )).toList()
+                                                            paymentNotice.getTransferList().stream()
+                                                                    .map(
+                                                                            transfer -> new PaymentTransferInfo(
+                                                                                    transfer.getPaFiscalCode(),
+                                                                                    transfer.getDigitalStamp(),
+                                                                                    transfer.getTransferAmount(),
+                                                                                    transfer.getTransferCategory()
+                                                                            )
+                                                                    ).toList()
                                                     )
                                             ).toList(),
                                     transactionDocument.getEmail(),
@@ -580,12 +588,15 @@ public class TransactionsService {
                                                             new PaymentContextCode(
                                                                     paymentNotice.getPaymentContextCode()
                                                             ),
-                                                            paymentNotice.getTransferList().stream().map(transfer -> new PaymentTransferInfo(
-                                                                    transfer.getPaFiscalCode(),
-                                                                    transfer.getDigitalStamp(),
-                                                                    transfer.getTransferAmount(),
-                                                                    transfer.getTransferCategory()
-                                                            )).toList()
+                                                            paymentNotice.getTransferList().stream()
+                                                                    .map(
+                                                                            transfer -> new PaymentTransferInfo(
+                                                                                    transfer.getPaFiscalCode(),
+                                                                                    transfer.getDigitalStamp(),
+                                                                                    transfer.getTransferAmount(),
+                                                                                    transfer.getTransferCategory()
+                                                                            )
+                                                                    ).toList()
 
                                                     )
                                             )
