@@ -17,9 +17,6 @@ import java.util.Base64;
 
 @Configuration
 public class SecretsConfigurations {
-
-    private static final String CONFIDENTIAL_DATA_MANAGER_KEY_TYPE = "AES";
-
     @Bean
     public SecretKey jwtSigningKey(@Value("${jwt.secret}") String jwtSecret) {
         try {
@@ -46,20 +43,7 @@ public class SecretsConfigurations {
     }
 
     @Bean
-    public ConfidentialDataManager emailConfidentialDataManager(
-                                                                @Value(
-                                                                    "${confidentialDataManager.emailEncryptionKey}"
-                                                                ) String key,
-                                                                TokenApi personalDataVaultApi
-    ) {
-        try {
-            return new ConfidentialDataManager(
-                    new SecretKeySpec(Base64.getDecoder().decode(key), CONFIDENTIAL_DATA_MANAGER_KEY_TYPE),
-                    personalDataVaultApi
-            );
-        } catch (IllegalArgumentException e) {
-            throw new IllegalStateException("Invalid configured confidential data manager key", e);
-        }
+    public ConfidentialDataManager emailConfidentialDataManager(TokenApi personalDataVaultApi) {
+        return new ConfidentialDataManager(personalDataVaultApi);
     }
-
 }

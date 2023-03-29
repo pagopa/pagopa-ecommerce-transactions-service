@@ -32,7 +32,7 @@ public class ConfidentialMailUtils {
     }
 
     public Mono<Confidential<Email>> toConfidential(Email clearText) {
-        return emailConfidentialDataManager.encrypt(ConfidentialDataManager.Mode.PERSONAL_DATA_VAULT, clearText)
+        return emailConfidentialDataManager.encrypt(clearText)
                 .doOnError(e -> log.error("Exception encrypting confidential data", e));
     }
 
