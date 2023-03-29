@@ -162,11 +162,11 @@ public class TransactionAddUserReceiptHandler
                                             TransactionEventCode.TRANSACTION_ADD_USER_RECEIPT_ERROR_EVENT
                                     );
                                     return userReceiptAddedEventRepository.save(errorEvent)
-                                            .then(
+                                            .flatMap(e ->
                                                     transactionNotificationsRetryQueueClient
-                                                            .sendMessage(BinaryData.fromObject(errorEvent))
-                                            )
-                                            .thenReturn(errorEvent);
+                                                            .sendMessage(BinaryData.fromObject(e))
+                                                            .thenReturn(e)
+                                            );
                                 },
                                 successEvent -> userReceiptAddedEventRepository.save(successEvent)
                                         .flatMap(e -> {
