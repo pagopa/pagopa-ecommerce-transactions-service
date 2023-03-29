@@ -11,9 +11,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.nio.charset.Charset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -149,5 +153,71 @@ class NotificationsServiceClientTest {
         StepVerifier.create(client.sendKoEmail(koTemplateRequest))
                 .expectNext(expected)
                 .verifyComplete();
+    }
+
+    @Test
+    void shouldReturnMonoErrorForExceptionThrown() {
+        NotificationsServiceClient.KoTemplateRequest koTemplateRequest = new NotificationsServiceClient.KoTemplateRequest(
+                "foo@example.com",
+                "Ops! Il pagamento di € 12,00 tramite PagoPA non è riuscito",
+                "it-IT",
+                new KoTemplate(
+                        new it.pagopa.generated.notifications.templates.ko.TransactionTemplate(
+                                UUID.randomUUID().toString().toUpperCase(),
+                                ZonedDateTime.now().toString(),
+                                "€ 12,00"
+                        )
+                )
+        );
+
+        NotificationEmailRequestDto request = new NotificationEmailRequestDto()
+                .language(koTemplateRequest.language())
+                .subject(koTemplateRequest.subject())
+                .to(koTemplateRequest.to())
+                .templateId(NotificationsServiceClient.KoTemplateRequest.TEMPLATE_ID)
+                .parameters(koTemplateRequest.templateParameters());
+
+        Mockito.when(defaultApi.sendNotificationEmail(null, request))
+                .thenThrow(new RuntimeException("Error calling notification service"));
+
+        StepVerifier.create(client.sendKoEmail(koTemplateRequest))
+                .expectError(RuntimeException.class)
+                .verify();
+    }
+
+    @Test
+    void shouldReturnMonoErrorForWebClientExceptionThrown() {
+        NotificationsServiceClient.KoTemplateRequest koTemplateRequest = new NotificationsServiceClient.KoTemplateRequest(
+                "foo@example.com",
+                "Ops! Il pagamento di € 12,00 tramite PagoPA non è riuscito",
+                "it-IT",
+                new KoTemplate(
+                        new it.pagopa.generated.notifications.templates.ko.TransactionTemplate(
+                                UUID.randomUUID().toString().toUpperCase(),
+                                ZonedDateTime.now().toString(),
+                                "€ 12,00"
+                        )
+                )
+        );
+
+        NotificationEmailRequestDto request = new NotificationEmailRequestDto()
+                .language(koTemplateRequest.language())
+                .subject(koTemplateRequest.subject())
+                .to(koTemplateRequest.to())
+                .templateId(NotificationsServiceClient.KoTemplateRequest.TEMPLATE_ID)
+                .parameters(koTemplateRequest.templateParameters());
+        WebClientResponseException responseException = WebClientResponseException.create(
+                HttpStatus.BAD_GATEWAY.value(),
+                HttpStatus.BAD_GATEWAY.getReasonPhrase(),
+                HttpHeaders.EMPTY,
+                null,
+                Charset.defaultCharset(),
+                null
+        );
+        Mockito.when(defaultApi.sendNotificationEmail(null, request)).thenThrow(responseException);
+
+        StepVerifier.create(client.sendKoEmail(koTemplateRequest))
+                .expectError(WebClientResponseException.class)
+                .verify();
     }
 }
