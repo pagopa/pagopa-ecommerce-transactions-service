@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Optional;
 
 @Slf4j
@@ -103,7 +104,7 @@ public class NodoOperations {
                                 null,
                                 response.getPaymentToken(),
                                 new IdempotencyKey(idempotencyKey),
-                                null // TODO TRANSFER LIST
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 );
     }

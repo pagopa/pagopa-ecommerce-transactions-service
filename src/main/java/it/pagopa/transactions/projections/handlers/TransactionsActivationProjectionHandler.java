@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,7 +34,7 @@ public class TransactionsActivationProjectionHandler
                         new TransactionAmount(paymentNoticeData.getAmount()),
                         new TransactionDescription(paymentNoticeData.getDescription()),
                         new PaymentContextCode(paymentNoticeData.getPaymentContextCode()),
-                        null // TODO TRANSFER LIST
+                        new ArrayList<>() // TODO TRANSFER LIST
                 )
         ).toList();
         Confidential<Email> email = event.getData().getEmail();

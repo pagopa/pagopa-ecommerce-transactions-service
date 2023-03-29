@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.UUID;
 
 @Component
@@ -41,7 +42,15 @@ public class AuthorizationUpdateProjectionHandler
                                                         new TransactionAmount(paymentNotice.getAmount()),
                                                         new TransactionDescription(paymentNotice.getDescription()),
                                                         new PaymentContextCode(paymentNotice.getPaymentContextCode()),
-                                                        null // TODO TRANSFER LIST
+                                                        paymentNotice.getTransferList().stream()
+                                                                .map(
+                                                                        p -> new PaymentTransferInfo(
+                                                                                p.getPaFiscalCode(),
+                                                                                p.getDigitalStamp(),
+                                                                                p.getTransferAmount(),
+                                                                                p.getTransferCategory()
+                                                                        )
+                                                                ).toList()
                                                 )
                                         ).toList(),
                                 transactionDocument.getEmail(),
