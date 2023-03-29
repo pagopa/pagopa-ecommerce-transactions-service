@@ -3,6 +3,7 @@ package it.pagopa.transactions.services;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.vavr.control.Either;
+import it.pagopa.ecommerce.commons.documents.v1.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent;
@@ -666,6 +667,27 @@ public class TransactionsService {
                                                         .reason(paymentNotice.transactionDescription().value())
                                                         .rptId(paymentNotice.rptId().value())
                                                         .paymentToken(paymentNotice.paymentToken().value())
+                                                        .transferList(
+                                                                paymentNotice.transferList().stream().map(
+                                                                        paymentTransferInfo -> new TransferDto()
+                                                                                .digitalStamp(
+                                                                                        paymentTransferInfo
+                                                                                                .digitalStamp()
+                                                                                )
+                                                                                .paFiscalCode(
+                                                                                        paymentTransferInfo
+                                                                                                .paFiscalCode()
+                                                                                )
+                                                                                .transferAmount(
+                                                                                        paymentTransferInfo
+                                                                                                .transferAmount()
+                                                                                )
+                                                                                .transferCategory(
+                                                                                        paymentTransferInfo
+                                                                                                .transferCategory()
+                                                                                )
+                                                                ).toList()
+                                                        )
                                         ).toList()
                                 )
                                 .authToken(authToken)
