@@ -1,11 +1,13 @@
 package it.pagopa.transactions.projections.handlers;
 
+import it.pagopa.ecommerce.commons.documents.v1.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
+import it.pagopa.transactions.utils.EuroUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -34,7 +36,14 @@ public class TransactionsActivationProjectionHandler
                         new TransactionAmount(paymentNoticeData.getAmount()),
                         new TransactionDescription(paymentNoticeData.getDescription()),
                         new PaymentContextCode(paymentNoticeData.getPaymentContextCode()),
-                        new ArrayList<>() // TODO TRANSFER LIST
+                        paymentNoticeData.getTransferList().stream().map(
+                                transfer -> new PaymentTransferInfo(
+                                        transfer.getPaFiscalCode(),
+                                        transfer.getDigitalStamp(),
+                                        transfer.getTransferAmount(),
+                                        transfer.getTransferCategory()
+                                )
+                        ).toList()
                 )
         ).toList();
         Confidential<Email> email = event.getData().getEmail();

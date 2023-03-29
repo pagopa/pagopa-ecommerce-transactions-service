@@ -104,7 +104,15 @@ public class NodoOperations {
                                 null,
                                 response.getPaymentToken(),
                                 new IdempotencyKey(idempotencyKey),
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                response.getTransferList().getTransfer().stream()
+                                        .map(
+                                                transfer -> new PaymentTransferInfo(
+                                                        transfer.getFiscalCodePA(),
+                                                        transfer.getRichiestaMarcaDaBollo() != null,
+                                                        EuroUtils.euroToEuroCents(transfer.getTransferAmount()),
+                                                        null // TODO il valore non è reperibile sulla struttura dati
+                                                )
+                                        ).toList()
                         )
                 );
     }

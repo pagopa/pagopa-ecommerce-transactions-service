@@ -1,11 +1,9 @@
 package it.pagopa.transactions.commands.handlers;
 
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedEvent;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestedEvent;
+import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.domain.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -105,7 +103,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                                 amount,
                                 description,
                                 nullPaymentContextCode,
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, amount.value(), null))
                         )
                 ),
                 email,

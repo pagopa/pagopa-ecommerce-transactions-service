@@ -11,4 +11,8 @@ public class EuroUtils {
     public static BigDecimal euroCentsToEuro(Integer euroCents) {
         return BigDecimal.valueOf(euroCents).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
     }
+
+    public static Integer euroToEuroCents(BigDecimal euro) {
+        return euro.multiply(BigDecimal.valueOf(100)).intValue();
+    }
 }
