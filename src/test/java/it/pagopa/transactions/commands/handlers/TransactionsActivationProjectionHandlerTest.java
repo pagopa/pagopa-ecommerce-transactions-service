@@ -1,6 +1,7 @@
 package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.v1.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.Confidential;
@@ -37,7 +38,8 @@ class TransactionsActivationProjectionHandlerTest {
         /* preconditions */
 
         String transactionIdString = UUID.randomUUID().toString();
-        String rptIdString = "77777777777111111111111111111";
+        String paFiscalCode = "77777777777";
+        String rptIdString = paFiscalCode + "111111111111111111";
         String paymentTokenString = UUID.randomUUID().toString();
         String transactionDescription = "transaction description";
         int amountInt = 100;
@@ -51,7 +53,7 @@ class TransactionsActivationProjectionHandlerTest {
                                 transactionDescription,
                                 amountInt,
                                 null,
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                List.of(new PaymentTransferInformation(paFiscalCode, false, amountInt, null))
                         )
                 )
         );
@@ -83,7 +85,14 @@ class TransactionsActivationProjectionHandlerTest {
                                 amount,
                                 description,
                                 nullPaymentContextCode,
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                List.of(
+                                        new PaymentTransferInfo(
+                                                rptIdString.substring(0, 11),
+                                                false,
+                                                amount.value(),
+                                                null
+                                        )
+                                )
                         )
                 ),
                 email,

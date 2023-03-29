@@ -2,6 +2,7 @@ package it.pagopa.transactions.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.pagopa.ecommerce.commons.documents.v1.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
@@ -89,7 +90,7 @@ class PaymentGatewayClientTest {
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -140,7 +141,7 @@ class PaymentGatewayClientTest {
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -227,7 +228,7 @@ class PaymentGatewayClientTest {
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -305,7 +306,7 @@ class PaymentGatewayClientTest {
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -399,7 +400,7 @@ class PaymentGatewayClientTest {
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -496,7 +497,7 @@ class PaymentGatewayClientTest {
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -583,7 +584,7 @@ class PaymentGatewayClientTest {
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -652,7 +653,7 @@ class PaymentGatewayClientTest {
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -736,7 +737,7 @@ class PaymentGatewayClientTest {
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -826,7 +827,7 @@ class PaymentGatewayClientTest {
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -924,7 +925,7 @@ class PaymentGatewayClientTest {
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -1002,7 +1003,7 @@ class PaymentGatewayClientTest {
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -1086,7 +1087,7 @@ class PaymentGatewayClientTest {
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -1178,7 +1179,7 @@ class PaymentGatewayClientTest {
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -1230,7 +1231,7 @@ class PaymentGatewayClientTest {
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,

@@ -299,7 +299,14 @@ public class TransactionServiceTests {
                                 new TransactionAmount(paymentNotice.getAmount()),
                                 new TransactionDescription(paymentNotice.getDescription()),
                                 new PaymentContextCode(paymentNotice.getPaymentContextCode()),
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                List.of(
+                                        new PaymentTransferInfo(
+                                                paymentNotice.getRptId().substring(0, 11),
+                                                false,
+                                                paymentNotice.getAmount(),
+                                                null
+                                        )
+                                )
                         )
                 ).toList(),
                 transactionDocument.getEmail(),
@@ -977,7 +984,14 @@ public class TransactionServiceTests {
                                 new TransactionAmount(paymentNotice.getAmount()),
                                 new TransactionDescription(paymentNotice.getDescription()),
                                 new PaymentContextCode(paymentNotice.getPaymentContextCode()),
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                List.of(
+                                        new PaymentTransferInfo(
+                                                paymentNotice.getRptId().substring(0, 11),
+                                                false,
+                                                paymentNotice.getAmount(),
+                                                null
+                                        )
+                                )
                         )
                 ).toList(),
                 transactionDocument.getEmail(),

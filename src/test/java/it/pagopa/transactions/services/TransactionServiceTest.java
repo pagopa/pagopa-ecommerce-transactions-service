@@ -1,9 +1,8 @@
 package it.pagopa.transactions.services;
 
+import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -74,7 +73,7 @@ class TransactionServiceTest {
                                         "dest",
                                         0,
                                         TEST_CPP.toString(),
-                                        new ArrayList<>() // TODO TRANSFER LIST
+                                        List.of(new PaymentTransferInformation("77777777777", false, 0, null))
                                 )
                         )
                 );
@@ -99,7 +98,7 @@ class TransactionServiceTest {
                                 new TransactionAmount(0),
                                 new TransactionDescription("desc"),
                                 new PaymentContextCode(TEST_CPP.toString()),
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,

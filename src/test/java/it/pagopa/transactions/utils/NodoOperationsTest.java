@@ -16,6 +16,7 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -66,7 +67,7 @@ class NodoOperationsTest {
         activatePaymentRes.setTotalAmount(amountBigDec);
         activatePaymentRes.setPaymentDescription(description);
         activatePaymentRes.setOutcome(StOutcome.OK);
-
+        activatePaymentRes.setTransferList(objectFactoryUtil.createCtTransferListPSPV2());
         /* preconditions */
         Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
                 .thenReturn(Mono.just(activatePaymentRes));
@@ -239,6 +240,7 @@ class NodoOperationsTest {
         activatePaymentRes.setTotalAmount(amountBigDec);
         activatePaymentRes.setPaymentDescription(description);
         activatePaymentRes.setOutcome(StOutcome.OK);
+        activatePaymentRes.setTransferList(objectFactoryUtil.createCtTransferListPSPV2());
 
         /* preconditions */
         Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))

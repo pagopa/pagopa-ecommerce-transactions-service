@@ -2,11 +2,9 @@ package it.pagopa.transactions.commands.handlers;
 
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
-import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
-import it.pagopa.ecommerce.commons.documents.v1.Transaction;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
+import it.pagopa.ecommerce.commons.domain.v1.PaymentTransferInfo;
 import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
@@ -107,7 +105,7 @@ class TransactionInitializerHandlerTest {
                 null,
                 paymentToken,
                 idempotencyKey,
-                new ArrayList<>() // TODO TRANSFER LIST
+                List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, AMOUNT, null))
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
@@ -122,7 +120,7 @@ class TransactionInitializerHandlerTest {
                                 null,
                                 null,
                                 null,
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, null, null))
                         )
                 )
         );
@@ -189,7 +187,7 @@ class TransactionInitializerHandlerTest {
                 null,
                 paymentToken,
                 idempotencyKey,
-                new ArrayList<>() // TODO TRANSFER LIST
+                List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, amount, null))
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
@@ -204,7 +202,7 @@ class TransactionInitializerHandlerTest {
                                 null,
                                 null,
                                 null,
-                                new ArrayList<>() // TODO TRANSFER LIST
+                                List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount, null))
                         )
                 )
         );
@@ -305,7 +303,8 @@ class TransactionInitializerHandlerTest {
                 null,
                 null,
                 idempotencyKey,
-                new ArrayList<>() // TODO TRANSFER LIST
+                List.of(new PaymentTransferInfo(rptId.value().substring(0, 11), false, amount, null))
+
         );
 
         /* preconditions */
@@ -356,7 +355,7 @@ class TransactionInitializerHandlerTest {
                 null,
                 null,
                 idempotencyKey,
-                new ArrayList<>() // TODO TRANSFER LIST
+                List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, null, null))
         );
 
         PaymentRequestInfo paymentRequestInfoAfterActivation = new PaymentRequestInfo(
@@ -368,7 +367,7 @@ class TransactionInitializerHandlerTest {
                 null,
                 paymentNotice.getPaymentToken(),
                 idempotencyKey,
-                new ArrayList<>() // TODO TRANSFER LIST
+                List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, paymentNotice.getAmount(), null))
         );
 
         /* preconditions */
@@ -441,7 +440,7 @@ class TransactionInitializerHandlerTest {
                 null,
                 paymentNotice.getPaymentToken(),
                 idempotencyKey,
-                new ArrayList<>() // TODO TRANSFER LIST
+                List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, paymentNotice.getAmount(), null))
         );
 
         /* preconditions */

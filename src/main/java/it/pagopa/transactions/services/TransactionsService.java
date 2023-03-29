@@ -322,12 +322,15 @@ public class TransactionsService {
                                                                     paymentNotice
                                                                             .getPaymentContextCode()
                                                             ),
-                                                            paymentNotice.getTransferList().stream().map(transfer -> new PaymentTransferInfo(
-                                                                    transfer.getPaFiscalCode(),
-                                                                    transfer.getDigitalStamp(),
-                                                                    transfer.getTransferAmount(),
-                                                                    transfer.getTransferCategory()
-                                                            )).toList()
+                                                            paymentNotice.getTransferList().stream()
+                                                                    .map(
+                                                                            transfer -> new PaymentTransferInfo(
+                                                                                    transfer.getPaFiscalCode(),
+                                                                                    transfer.getDigitalStamp(),
+                                                                                    transfer.getTransferAmount(),
+                                                                                    transfer.getTransferCategory()
+                                                                            )
+                                                                    ).toList()
                                                     )
                                             ).toList(),
                                     transactionDocument.getEmail(),
@@ -580,12 +583,15 @@ public class TransactionsService {
                                                             new PaymentContextCode(
                                                                     paymentNotice.getPaymentContextCode()
                                                             ),
-                                                            paymentNotice.getTransferList().stream().map(transfer -> new PaymentTransferInfo(
-                                                                    transfer.getPaFiscalCode(),
-                                                                    transfer.getDigitalStamp(),
-                                                                    transfer.getTransferAmount(),
-                                                                    transfer.getTransferCategory()
-                                                            )).toList()
+                                                            paymentNotice.getTransferList().stream()
+                                                                    .map(
+                                                                            transfer -> new PaymentTransferInfo(
+                                                                                    transfer.getPaFiscalCode(),
+                                                                                    transfer.getDigitalStamp(),
+                                                                                    transfer.getTransferAmount(),
+                                                                                    transfer.getTransferCategory()
+                                                                            )
+                                                                    ).toList()
 
                                                     )
                                             )

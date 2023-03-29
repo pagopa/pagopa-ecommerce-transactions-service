@@ -106,7 +106,7 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        new ArrayList<>() // TODO TRANSFER LIST
+                        List.of(new PaymentTransferInformation("77777777777", false, 100, null))
                 )
         );
 
@@ -115,13 +115,20 @@ class TransactionSendClosureHandlerTest {
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 PaymentNotices.stream().map(
-                        PaymentNotice -> new PaymentNotice(
-                                new PaymentToken(PaymentNotice.getPaymentToken()),
-                                new RptId(PaymentNotice.getRptId()),
-                                new TransactionAmount(PaymentNotice.getAmount()),
-                                new TransactionDescription(PaymentNotice.getDescription()),
-                                new PaymentContextCode(PaymentNotice.getPaymentContextCode()),
-                                new ArrayList<>() // TODO TRANSFER LIST
+                        paymentNotice -> new PaymentNotice(
+                                new PaymentToken(paymentNotice.getPaymentToken()),
+                                new RptId(paymentNotice.getRptId()),
+                                new TransactionAmount(paymentNotice.getAmount()),
+                                new TransactionDescription(paymentNotice.getDescription()),
+                                new PaymentContextCode(paymentNotice.getPaymentContextCode()),
+                                List.of(
+                                        new PaymentTransferInfo(
+                                                paymentNotice.getRptId().substring(0, 11),
+                                                false,
+                                                100,
+                                                null
+                                        )
+                                )
                         )
                 )
                         .toList(),
@@ -217,7 +224,7 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        new ArrayList<>() // TODO TRANSFER LIST
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
                 )
         );
 
@@ -356,7 +363,7 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        new ArrayList<>() // TODO TRANSFER LIST
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
                 )
         );
 
@@ -495,7 +502,7 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        new ArrayList<>() // TODO TRANSFER LIST
+                        List.of(new PaymentTransferInformation("77777777777", false, 100, null))
                 )
         );
 
@@ -634,7 +641,7 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        new ArrayList<>() // TODO TRANSFER LIST
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
                 )
         );
 
@@ -785,7 +792,7 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        new ArrayList<>() // TODO TRANSFER LIST
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
                 )
         );
 
@@ -940,7 +947,7 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        new ArrayList<>() // TODO TRANSFER LIST
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
                 )
         );
 
@@ -1105,7 +1112,7 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        new ArrayList<>() // TODO TRANSFER LIST
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
                 )
         );
 
@@ -1267,7 +1274,7 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        new ArrayList<>() // TODO TRANSFER LIST
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
                 )
         );
 
@@ -1429,7 +1436,7 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        new ArrayList<>() // TODO TRANSFER LIST
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
                 )
         );
 
@@ -1575,14 +1582,14 @@ class TransactionSendClosureHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
-        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
+        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> paymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
                         rptId.value(),
                         description.value(),
                         amount.value(),
                         null,
-                        new ArrayList<>() // TODO TRANSFER LIST
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
                 )
         );
 
@@ -1590,7 +1597,7 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value().toString(),
                 new TransactionActivatedData(
                         email,
-                        PaymentNotices,
+                        paymentNotices,
                         faultCode,
                         faultCodeString,
                         Transaction.ClientId.CHECKOUT

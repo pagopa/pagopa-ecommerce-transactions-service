@@ -2,11 +2,9 @@ package it.pagopa.transactions.commands.handlers;
 
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
-import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
-import it.pagopa.ecommerce.commons.documents.v1.Transaction;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
+import it.pagopa.ecommerce.commons.domain.v1.PaymentTransferInfo;
 import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
@@ -30,6 +28,7 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -131,7 +130,7 @@ public class TransactionActivateHandler
                                                                                         nodoOperations
                                                                                                 .generateRandomStringToIdempotencyKey()
                                                                                 ),
-                                                                                null // TODO TRANSFER LIST
+                                                                                new ArrayList<>(5)
                                                                         );
                                                                         return paymentRequestsInfoRepository
                                                                                 .save(
@@ -295,7 +294,14 @@ public class TransactionActivateHandler
                         paymentRequestInfo.description(),
                         paymentRequestInfo.amount(),
                         null,
-                        null // TODO TRANSFER LIST
+                        paymentRequestInfo.transferList().stream().map(
+                                transfer -> new PaymentTransferInformation(
+                                        transfer.paFiscalCode(),
+                                        transfer.digitalStamp(),
+                                        transfer.transferAmount(),
+                                        transfer.transferCategory()
+                                )
+                        ).toList()
                 )
         ).toList();
     }
