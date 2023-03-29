@@ -24,6 +24,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -103,7 +104,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                                 rptId,
                                 amount,
                                 description,
-                                nullPaymentContextCode
+                                nullPaymentContextCode,
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 ),
                 email,

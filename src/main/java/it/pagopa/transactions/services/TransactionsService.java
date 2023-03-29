@@ -33,10 +33,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -324,7 +321,8 @@ public class TransactionsService {
                                                             new PaymentContextCode(
                                                                     paymentNotice
                                                                             .getPaymentContextCode()
-                                                            )
+                                                            ),
+                                                            new ArrayList<>() //// TODO TRANSFER LIST
                                                     )
                                             ).toList(),
                                     transactionDocument.getEmail(),
@@ -576,7 +574,9 @@ public class TransactionsService {
                                                             new TransactionDescription(paymentNotice.getDescription()),
                                                             new PaymentContextCode(
                                                                     paymentNotice.getPaymentContextCode()
-                                                            )
+                                                            ),
+                                                            new ArrayList<>()// TODO TRANSFER LIST
+
                                                     )
                                             )
                                             .toList(),

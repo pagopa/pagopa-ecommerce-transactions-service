@@ -39,6 +39,7 @@ import reactor.test.StepVerifier;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -104,7 +105,8 @@ class TransactionSendClosureHandlerTest {
                         rptId.value(),
                         description.value(),
                         amount.value(),
-                        null
+                        null,
+                        new ArrayList<>() // TODO TRANSFER LIST
                 )
         );
 
@@ -118,7 +120,8 @@ class TransactionSendClosureHandlerTest {
                                 new RptId(PaymentNotice.getRptId()),
                                 new TransactionAmount(PaymentNotice.getAmount()),
                                 new TransactionDescription(PaymentNotice.getDescription()),
-                                new PaymentContextCode(PaymentNotice.getPaymentContextCode())
+                                new PaymentContextCode(PaymentNotice.getPaymentContextCode()),
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 )
                         .toList(),
@@ -213,7 +216,8 @@ class TransactionSendClosureHandlerTest {
                         rptId.value(),
                         description.value(),
                         amount.value(),
-                        null
+                        null,
+                        new ArrayList<>() // TODO TRANSFER LIST
                 )
         );
 
@@ -351,7 +355,8 @@ class TransactionSendClosureHandlerTest {
                         rptId.value(),
                         description.value(),
                         amount.value(),
-                        null
+                        null,
+                        new ArrayList<>() // TODO TRANSFER LIST
                 )
         );
 
@@ -489,7 +494,8 @@ class TransactionSendClosureHandlerTest {
                         rptId.value(),
                         description.value(),
                         amount.value(),
-                        null
+                        null,
+                        new ArrayList<>() // TODO TRANSFER LIST
                 )
         );
 
@@ -627,7 +633,8 @@ class TransactionSendClosureHandlerTest {
                         rptId.value(),
                         description.value(),
                         amount.value(),
-                        null
+                        null,
+                        new ArrayList<>() // TODO TRANSFER LIST
                 )
         );
 
@@ -777,7 +784,8 @@ class TransactionSendClosureHandlerTest {
                         rptId.value(),
                         description.value(),
                         amount.value(),
-                        null
+                        null,
+                        new ArrayList<>() // TODO TRANSFER LIST
                 )
         );
 
@@ -931,7 +939,8 @@ class TransactionSendClosureHandlerTest {
                         rptId.value(),
                         description.value(),
                         amount.value(),
-                        null
+                        null,
+                        new ArrayList<>() // TODO TRANSFER LIST
                 )
         );
 
@@ -1095,7 +1104,8 @@ class TransactionSendClosureHandlerTest {
                         rptId.value(),
                         description.value(),
                         amount.value(),
-                        null
+                        null,
+                        new ArrayList<>() // TODO TRANSFER LIST
                 )
         );
 
@@ -1256,7 +1266,8 @@ class TransactionSendClosureHandlerTest {
                         rptId.value(),
                         description.value(),
                         amount.value(),
-                        null
+                        null,
+                        new ArrayList<>() // TODO TRANSFER LIST
                 )
         );
 
@@ -1417,7 +1428,8 @@ class TransactionSendClosureHandlerTest {
                         rptId.value(),
                         description.value(),
                         amount.value(),
-                        null
+                        null,
+                        new ArrayList<>() // TODO TRANSFER LIST
                 )
         );
 
@@ -1569,7 +1581,8 @@ class TransactionSendClosureHandlerTest {
                         rptId.value(),
                         description.value(),
                         amount.value(),
-                        null
+                        null,
+                        new ArrayList<>() // TODO TRANSFER LIST
                 )
         );
 

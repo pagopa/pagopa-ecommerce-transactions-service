@@ -81,7 +81,9 @@ public class NodeForPspClient {
                 );
     }
 
-    public Mono<ActivatePaymentNoticeV2Response> activatePaymentNoticeV2(JAXBElement<ActivatePaymentNoticeV2Request> request) {
+    public Mono<ActivatePaymentNoticeV2Response> activatePaymentNoticeV2(
+                                                                         JAXBElement<ActivatePaymentNoticeV2Request> request
+    ) {
         log.info("activatePaymentNotice idPSP: {} ", request.getValue().getIdPSP());
         log.info("activatePaymentNotice IdemPK: {} ", request.getValue().getIdempotencyKey());
         return nodoWebClient.post()

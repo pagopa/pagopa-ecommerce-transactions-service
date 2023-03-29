@@ -130,7 +130,8 @@ public class TransactionActivateHandler
                                                                                                 .getEcommerceFiscalCode(),
                                                                                         nodoOperations
                                                                                                 .generateRandomStringToIdempotencyKey()
-                                                                                )
+                                                                                ),
+                                                                                null // TODO TRANSFER LIST
                                                                         );
                                                                         return paymentRequestsInfoRepository
                                                                                 .save(
@@ -293,7 +294,8 @@ public class TransactionActivateHandler
                         paymentRequestInfo.id().value(),
                         paymentRequestInfo.description(),
                         paymentRequestInfo.amount(),
-                        null
+                        null,
+                        null // TODO TRANSFER LIST
                 )
         ).toList();
     }

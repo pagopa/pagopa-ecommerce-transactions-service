@@ -41,6 +41,7 @@ import javax.crypto.NoSuchPaddingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -105,7 +106,8 @@ class TransactionInitializerHandlerTest {
                 AMOUNT,
                 null,
                 paymentToken,
-                idempotencyKey
+                idempotencyKey,
+                new ArrayList<>() // TODO TRANSFER LIST
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
@@ -119,7 +121,8 @@ class TransactionInitializerHandlerTest {
                                 rptId.value(),
                                 null,
                                 null,
-                                null
+                                null,
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 )
         );
@@ -185,7 +188,8 @@ class TransactionInitializerHandlerTest {
                 amount,
                 null,
                 paymentToken,
-                idempotencyKey
+                idempotencyKey,
+                new ArrayList<>() // TODO TRANSFER LIST
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
@@ -199,7 +203,8 @@ class TransactionInitializerHandlerTest {
                                 rptId.value(),
                                 null,
                                 null,
-                                null
+                                null,
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 )
         );
@@ -299,7 +304,8 @@ class TransactionInitializerHandlerTest {
                 amount,
                 null,
                 null,
-                idempotencyKey
+                idempotencyKey,
+                new ArrayList<>() // TODO TRANSFER LIST
         );
 
         /* preconditions */
@@ -349,7 +355,8 @@ class TransactionInitializerHandlerTest {
                 null,
                 null,
                 null,
-                idempotencyKey
+                idempotencyKey,
+                new ArrayList<>() // TODO TRANSFER LIST
         );
 
         PaymentRequestInfo paymentRequestInfoAfterActivation = new PaymentRequestInfo(
@@ -360,7 +367,8 @@ class TransactionInitializerHandlerTest {
                 paymentNotice.getAmount(),
                 null,
                 paymentNotice.getPaymentToken(),
-                idempotencyKey
+                idempotencyKey,
+                new ArrayList<>() // TODO TRANSFER LIST
         );
 
         /* preconditions */
@@ -432,7 +440,8 @@ class TransactionInitializerHandlerTest {
                 paymentNotice.getAmount(),
                 null,
                 paymentNotice.getPaymentToken(),
-                idempotencyKey
+                idempotencyKey,
+                new ArrayList<>() // TODO TRANSFER LIST
         );
 
         /* preconditions */

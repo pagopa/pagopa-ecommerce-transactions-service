@@ -32,7 +32,8 @@ public class TransactionsActivationProjectionHandler
                         new RptId(paymentNoticeData.getRptId()),
                         new TransactionAmount(paymentNoticeData.getAmount()),
                         new TransactionDescription(paymentNoticeData.getDescription()),
-                        new PaymentContextCode(paymentNoticeData.getPaymentContextCode())
+                        new PaymentContextCode(paymentNoticeData.getPaymentContextCode()),
+                        null // TODO TRANSFER LIST
                 )
         ).toList();
         Confidential<Email> email = event.getData().getEmail();

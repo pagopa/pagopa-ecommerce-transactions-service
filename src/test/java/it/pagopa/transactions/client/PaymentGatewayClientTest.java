@@ -32,10 +32,7 @@ import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL;
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL_STRING;
@@ -91,7 +88,8 @@ class PaymentGatewayClientTest {
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -141,7 +139,8 @@ class PaymentGatewayClientTest {
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -227,7 +226,8 @@ class PaymentGatewayClientTest {
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -304,7 +304,8 @@ class PaymentGatewayClientTest {
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -397,7 +398,8 @@ class PaymentGatewayClientTest {
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -493,7 +495,8 @@ class PaymentGatewayClientTest {
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -579,7 +582,8 @@ class PaymentGatewayClientTest {
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -647,7 +651,8 @@ class PaymentGatewayClientTest {
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -730,7 +735,8 @@ class PaymentGatewayClientTest {
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -819,7 +825,8 @@ class PaymentGatewayClientTest {
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -916,7 +923,8 @@ class PaymentGatewayClientTest {
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -993,7 +1001,8 @@ class PaymentGatewayClientTest {
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -1076,7 +1085,8 @@ class PaymentGatewayClientTest {
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -1167,7 +1177,8 @@ class PaymentGatewayClientTest {
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -1218,7 +1229,8 @@ class PaymentGatewayClientTest {
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 ),
                 TransactionTestUtils.EMAIL,

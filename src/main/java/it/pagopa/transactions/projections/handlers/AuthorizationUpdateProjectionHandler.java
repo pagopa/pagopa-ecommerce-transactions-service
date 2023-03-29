@@ -40,7 +40,8 @@ public class AuthorizationUpdateProjectionHandler
                                                         new RptId(paymentNotice.getRptId()),
                                                         new TransactionAmount(paymentNotice.getAmount()),
                                                         new TransactionDescription(paymentNotice.getDescription()),
-                                                        new PaymentContextCode(paymentNotice.getPaymentContextCode())
+                                                        new PaymentContextCode(paymentNotice.getPaymentContextCode()),
+                                                        null // TODO TRANSFER LIST
                                                 )
                                         ).toList(),
                                 transactionDocument.getEmail(),

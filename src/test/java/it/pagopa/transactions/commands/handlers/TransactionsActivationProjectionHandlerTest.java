@@ -16,6 +16,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -49,7 +50,8 @@ class TransactionsActivationProjectionHandlerTest {
                                 rptIdString,
                                 transactionDescription,
                                 amountInt,
-                                null
+                                null,
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 )
         );
@@ -80,7 +82,8 @@ class TransactionsActivationProjectionHandlerTest {
                                 rptId,
                                 amount,
                                 description,
-                                nullPaymentContextCode
+                                nullPaymentContextCode,
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 ),
                 email,

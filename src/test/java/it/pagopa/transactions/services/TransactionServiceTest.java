@@ -25,6 +25,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -72,7 +73,8 @@ class TransactionServiceTest {
                                         null,
                                         "dest",
                                         0,
-                                        TEST_CPP.toString()
+                                        TEST_CPP.toString(),
+                                        new ArrayList<>() // TODO TRANSFER LIST
                                 )
                         )
                 );
@@ -96,7 +98,8 @@ class TransactionServiceTest {
                                 new RptId(TransactionTestUtils.RPT_ID),
                                 new TransactionAmount(0),
                                 new TransactionDescription("desc"),
-                                new PaymentContextCode(TEST_CPP.toString())
+                                new PaymentContextCode(TEST_CPP.toString()),
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 ),
                 TransactionTestUtils.EMAIL,

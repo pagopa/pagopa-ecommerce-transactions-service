@@ -70,9 +70,10 @@ public class NodoOperations {
         // multiply paymentTokenTimeout by 1000 because on ecommerce it is represented
         // in seconds
         request.setExpirationTime(BigInteger.valueOf(paymentTokenTimeout).multiply(BigInteger.valueOf(1000)));
-        //TODO Maybe here more values (all optional) can be passed such as Touchpoint, Payment Method Type Code, Due date
-        //request.setPaymentMethod();
-        //request.setTouchPoint(StTouchpointFee.CHECKOUT);
+        // TODO Maybe here more values (all optional) can be passed such as Touchpoint,
+        // Payment Method Type Code, Due date
+        // request.setPaymentMethod();
+        // request.setTouchPoint(StTouchpointFee.CHECKOUT);
         return nodeForPspClient
                 .activatePaymentNoticeV2(objectFactoryNodeForPsp.createActivatePaymentNoticeV2Request(request))
                 .flatMap(
@@ -101,7 +102,8 @@ public class NodoOperations {
                                 amount.multiply(BigDecimal.valueOf(100)).intValue(),
                                 null,
                                 response.getPaymentToken(),
-                                new IdempotencyKey(idempotencyKey)
+                                new IdempotencyKey(idempotencyKey),
+                                null // TODO TRANSFER LIST
                         )
                 );
     }

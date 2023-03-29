@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -51,7 +52,8 @@ class TransactionDocumentTest {
                                 TEST_RPTID,
                                 TEST_DESC,
                                 TEST_AMOUNT,
-                                ""
+                                "",
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 ),
                 0,
@@ -69,7 +71,8 @@ class TransactionDocumentTest {
                                 TEST_RPTID,
                                 TEST_DESC,
                                 TEST_AMOUNT,
-                                ""
+                                "",
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 ),
                 0,
@@ -88,7 +91,8 @@ class TransactionDocumentTest {
                                 TEST_RPTID,
                                 TEST_DESC,
                                 TEST_AMOUNT,
-                                ""
+                                "",
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 ),
                 0,
@@ -102,7 +106,8 @@ class TransactionDocumentTest {
                 TEST_RPTID,
                 TEST_DESC,
                 TEST_AMOUNT,
-                null
+                null,
+                new ArrayList<>() // TODO TRANSFER LIST
         );
         differentTransaction.setPaymentNotices(List.of(paymentNotice));
         differentTransaction.setStatus(TEST_STATUS);
@@ -142,7 +147,8 @@ class TransactionDocumentTest {
                                 rptId,
                                 amount,
                                 description,
-                                nullPaymentContextCode
+                                nullPaymentContextCode,
+                                new ArrayList<>() // TODO TRANSFER LIST
                         )
                 ),
                 email,
