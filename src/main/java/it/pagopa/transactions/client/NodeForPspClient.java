@@ -31,56 +31,6 @@ public class NodeForPspClient {
     @Value("${nodo.nodeforpsp.uri}")
     private String nodoPerPspUri;
 
-    public Mono<ActivatePaymentNoticeRes> activatePaymentNotice(JAXBElement<ActivatePaymentNoticeReq> request) {
-        log.info("activatePaymentNotice idPSP: {} ", request.getValue().getIdPSP());
-        log.info("activatePaymentNotice IdemPK: {} ", request.getValue().getIdempotencyKey());
-        return nodoWebClient.post()
-                .uri(nodoPerPspUri)
-                .header("Content-Type", MediaType.TEXT_XML_VALUE)
-                .header("SOAPAction", "activatePaymentNotice")
-                .body(Mono.just(new SoapEnvelope("", request)), SoapEnvelope.class)
-                .retrieve()
-                .onStatus(
-                        HttpStatus::isError,
-                        clientResponse -> clientResponse.bodyToMono(String.class)
-                                .flatMap(
-                                        errorResponseBody -> Mono.error(
-                                                new ResponseStatusException(
-                                                        clientResponse.statusCode(),
-                                                        errorResponseBody
-                                                )
-                                        )
-                                )
-                )
-                .bodyToMono(ActivatePaymentNoticeRes.class)
-                .doOnSuccess(
-                        (ActivatePaymentNoticeRes paymentActivedDetail) -> log.info(
-                                "Payment activated with paymentToken {} ",
-                                new Object[] {
-                                        paymentActivedDetail.getPaymentToken()
-                                }
-                        )
-                )
-                .doOnError(
-                        ResponseStatusException.class,
-                        error -> log.error(
-                                "ResponseStatus Error : {}",
-                                new Object[] {
-                                        error
-                                }
-                        )
-                )
-                .doOnError(
-                        Exception.class,
-                        (Exception error) -> log.error(
-                                "Generic Error : {}",
-                                new Object[] {
-                                        error
-                                }
-                        )
-                );
-    }
-
     public Mono<ActivatePaymentNoticeV2Response> activatePaymentNoticeV2(
                                                                          JAXBElement<ActivatePaymentNoticeV2Request> request
     ) {
