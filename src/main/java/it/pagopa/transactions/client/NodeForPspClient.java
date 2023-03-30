@@ -56,31 +56,20 @@ public class NodeForPspClient {
                 )
                 .bodyToMono(ActivatePaymentNoticeV2Response.class)
                 .doOnSuccess(
-                        (ActivatePaymentNoticeV2Response paymentActivedDetail) -> log.info(
+                        activateResponse -> log.info(
                                 "Payment activated with paymentToken {} ",
-                                new Object[] {
-                                        paymentActivedDetail.getPaymentToken()
-                                }
+                                activateResponse.getPaymentToken()
+
                         )
                 )
-                .doOnError(
+                .onErrorMap(
                         ResponseStatusException.class,
-                        error -> log.error(
-                                "ResponseStatus Error : {}",
-                                new Object[] {
-                                        error
-                                }
-                        )
+                        error -> {
+                            log.error("ResponseStatus Error:", error);
+                            return new BadGatewayException(error.getReason(), error.getStatus());
+                        }
                 )
-                .doOnError(
-                        Exception.class,
-                        (Exception error) -> log.error(
-                                "Generic Error : {}",
-                                new Object[] {
-                                        error
-                                }
-                        )
-                );
+                .doOnError(Exception.class, error -> log.error("Generic Error:", error));
     }
 
     public Mono<ClosePaymentResponseDto> closePaymentV2(ClosePaymentRequestV2Dto request) {

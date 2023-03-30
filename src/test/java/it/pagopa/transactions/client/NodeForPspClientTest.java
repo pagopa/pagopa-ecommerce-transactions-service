@@ -145,7 +145,7 @@ class NodeForPspClientTest {
          * test
          */
         ActivatePaymentNoticeV2Response testResponse = client
-                .activatePaymentNoticeV2(objectFactory.createActivatePaymentNoticeV2Request(request)).block();
+                .activatePaymentNoticeV2(jaxbElementRequest).block();
 
         /**
          * asserts
