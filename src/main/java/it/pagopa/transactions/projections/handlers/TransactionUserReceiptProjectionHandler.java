@@ -20,21 +20,24 @@ import javax.annotation.Nonnull;
 @Slf4j
 public class TransactionUserReceiptProjectionHandler
         implements
-        ProjectionHandler<Either<Mono<TransactionUserReceiptAddErrorEvent>, Mono<TransactionUserReceiptAddedEvent>>, Mono<Transaction>> {
+        ProjectionHandler<Either<TransactionUserReceiptAddErrorEvent, TransactionUserReceiptAddedEvent>, Mono<Transaction>> {
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
 
     @Override
     public Mono<Transaction> handle(
-                                    Either<Mono<TransactionUserReceiptAddErrorEvent>, Mono<TransactionUserReceiptAddedEvent>> userReceiptEither
+                                    Either<TransactionUserReceiptAddErrorEvent, TransactionUserReceiptAddedEvent> userReceiptEither
     ) {
-        return userReceiptEither.fold(
-                userReceiptErrorEvent -> userReceiptErrorEvent.map(
-                        event -> Tuples.of(event.getTransactionId(), TransactionStatusDto.NOTIFICATION_ERROR)
-                ),
-                userReceiptSuccessEvent -> userReceiptSuccessEvent.map(
-                        event -> Tuples
-                                .of(event.getTransactionId(), statusFromOutcome(event.getData().getResponseOutcome()))
+        return Mono.just(
+                userReceiptEither.fold(
+                        userReceiptErrorEvent -> Tuples
+                                .of(userReceiptErrorEvent.getTransactionId(), TransactionStatusDto.NOTIFICATION_ERROR),
+                        userReceiptSuccessEvent -> Tuples
+                                .of(
+                                        userReceiptSuccessEvent.getTransactionId(),
+                                        statusFromOutcome(userReceiptSuccessEvent.getData().getResponseOutcome())
+                                )
+
                 )
         ).flatMap(args -> {
             String transactionId = args.getT1();

@@ -147,7 +147,7 @@ class TransactionAddUserReceiptHandlerTest {
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
-                .expectNextMatches(next -> next.isRight() && Objects.equals(next.get().block(), event))
+                .expectNextMatches(next -> next.isRight() && Objects.equals(next.get(), event))
                 .verifyComplete();
 
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
@@ -220,7 +220,7 @@ class TransactionAddUserReceiptHandlerTest {
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
-                .expectNextMatches(next -> next.isRight() && Objects.equals(next.get().block(), event))
+                .expectNextMatches(next -> next.isRight() && Objects.equals(next.get(), event))
                 .verifyComplete();
 
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
@@ -298,7 +298,7 @@ class TransactionAddUserReceiptHandlerTest {
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(transactionAddUserReceiptCommand))
-                .expectNextMatches(next -> next.isRight() && Objects.equals(next.get().block(), event))
+                .expectNextMatches(next -> next.isRight() && Objects.equals(next.get(), event))
                 .verifyComplete();
 
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
@@ -483,7 +483,7 @@ class TransactionAddUserReceiptHandlerTest {
         /* test */
         StepVerifier.create(updateStatusHandler.handle(transactionAddUserReceiptCommand))
                 .expectNextMatches(next -> {
-                    TransactionUserReceiptAddErrorEvent errorEvent = next.getLeft().block();
+                    TransactionUserReceiptAddErrorEvent errorEvent = next.getLeft();
                     return next.isLeft() && Objects.equals(errorEvent, event);
                 })
                 .verifyComplete();
@@ -566,7 +566,7 @@ class TransactionAddUserReceiptHandlerTest {
         /* test */
         StepVerifier.create(updateStatusHandler.handle(transactionAddUserReceiptCommand))
                 .expectNextMatches(next -> {
-                    TransactionUserReceiptAddErrorEvent errorEvent = next.getLeft().block();
+                    TransactionUserReceiptAddErrorEvent errorEvent = next.getLeft();
                     return next.isLeft() && Objects.equals(errorEvent, event);
                 })
                 .verifyComplete();

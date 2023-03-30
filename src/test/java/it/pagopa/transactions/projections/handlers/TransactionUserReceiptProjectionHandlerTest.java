@@ -61,7 +61,7 @@ class TransactionUserReceiptProjectionHandlerTest {
         /*
          * Test
          */
-        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(Either.right(Mono.just(event))))
+        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(Either.right(event)))
                 .expectNext(expectedDocument)
                 .verifyComplete();
 
@@ -105,7 +105,7 @@ class TransactionUserReceiptProjectionHandlerTest {
         /*
          * Test
          */
-        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(Either.right(Mono.just(event))))
+        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(Either.right(event)))
                 .expectNext(expectedDocument)
                 .verifyComplete();
 
@@ -149,7 +149,7 @@ class TransactionUserReceiptProjectionHandlerTest {
         /*
          * Test
          */
-        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(Either.left(Mono.just(event))))
+        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(Either.left(event)))
                 .expectNext(expectedDocument)
                 .verifyComplete();
 
@@ -193,7 +193,7 @@ class TransactionUserReceiptProjectionHandlerTest {
         /*
          * Test
          */
-        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(Either.left(Mono.just(event))))
+        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(Either.left(event)))
                 .expectNext(expectedDocument)
                 .verifyComplete();
 
