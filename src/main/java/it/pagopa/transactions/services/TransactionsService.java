@@ -396,7 +396,7 @@ public class TransactionsService {
                             Mono<BaseTransaction> baseTransaction = transactionsUtils.reduceEvents(transactionId);
                             return wasTransactionAuthorized(transactionId)
                                     .<Either<TransactionInfoDto, Mono<BaseTransaction>>>flatMap(alreadyAuthorized -> {
-                                        if (!alreadyAuthorized) {
+                                        if (Boolean.FALSE.equals(alreadyAuthorized)) {
                                             return Mono.just(baseTransaction).map(Either::right);
                                         } else {
                                             return baseTransaction.map(
@@ -671,6 +671,27 @@ public class TransactionsService {
                                                         .reason(paymentNotice.transactionDescription().value())
                                                         .rptId(paymentNotice.rptId().value())
                                                         .paymentToken(paymentNotice.paymentToken().value())
+                                                        .transferList(
+                                                                paymentNotice.transferList().stream().map(
+                                                                        paymentTransferInfo -> new TransferDto()
+                                                                                .digitalStamp(
+                                                                                        paymentTransferInfo
+                                                                                                .digitalStamp()
+                                                                                )
+                                                                                .paFiscalCode(
+                                                                                        paymentTransferInfo
+                                                                                                .paFiscalCode()
+                                                                                )
+                                                                                .transferAmount(
+                                                                                        paymentTransferInfo
+                                                                                                .transferAmount()
+                                                                                )
+                                                                                .transferCategory(
+                                                                                        paymentTransferInfo
+                                                                                                .transferCategory()
+                                                                                )
+                                                                ).toList()
+                                                        )
                                         ).toList()
                                 )
                                 .authToken(authToken)
