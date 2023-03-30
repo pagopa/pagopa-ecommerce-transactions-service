@@ -69,7 +69,8 @@ public class NodoOperations {
         // multiply paymentTokenTimeout by 1000 because on ecommerce it is represented
         // in seconds
         request.setExpirationTime(BigInteger.valueOf(paymentTokenTimeout).multiply(BigInteger.valueOf(1000)));
-        // TODO Maybe here more values (all optional) can be passed such as Touchpoint and PaymentMethod
+        // TODO Maybe here more values (all optional) can be passed such as Touchpoint
+        // and PaymentMethod
         return nodeForPspClient
                 .activatePaymentNoticeV2(objectFactoryNodeForPsp.createActivatePaymentNoticeV2Request(request))
                 .flatMap(
