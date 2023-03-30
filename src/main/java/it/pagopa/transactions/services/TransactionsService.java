@@ -3,7 +3,6 @@ package it.pagopa.transactions.services;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.vavr.control.Either;
-import it.pagopa.ecommerce.commons.documents.v1.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent;
@@ -397,7 +396,7 @@ public class TransactionsService {
                             Mono<BaseTransaction> baseTransaction = transactionsUtils.reduceEvents(transactionId);
                             return wasTransactionAuthorized(transactionId)
                                     .<Either<TransactionInfoDto, Mono<BaseTransaction>>>flatMap(alreadyAuthorized -> {
-                                        if (!alreadyAuthorized) {
+                                        if (Boolean.FALSE.equals(alreadyAuthorized)) {
                                             return Mono.just(baseTransaction).map(Either::right);
                                         } else {
                                             return baseTransaction.map(

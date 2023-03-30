@@ -59,18 +59,20 @@ class NodeForPspClientTest {
         String fiscalCode = "77777777777";
         String paymentNotice = "302000100000009424";
         String paymentToken = UUID.randomUUID().toString();
+        CtTransferListPSPV2 ctTransferListPSPV2 = objectFactory.createCtTransferListPSPV2();
 
-        ActivatePaymentNoticeReq request = objectFactory.createActivatePaymentNoticeReq();
+        ActivatePaymentNoticeV2Request request = objectFactory.createActivatePaymentNoticeV2Request();
         CtQrCode qrCode = new CtQrCode();
         qrCode.setFiscalCode(fiscalCode);
         qrCode.setNoticeNumber(paymentNotice);
         request.setAmount(amount);
         request.setQrCode(qrCode);
 
-        ActivatePaymentNoticeRes activatePaymentRes = objectFactory.createActivatePaymentNoticeRes();
+        ActivatePaymentNoticeV2Response activatePaymentRes = objectFactory.createActivatePaymentNoticeV2Response();
         activatePaymentRes.setPaymentToken(paymentToken);
         activatePaymentRes.setFiscalCodePA(fiscalCode);
         activatePaymentRes.setTotalAmount(amount);
+        activatePaymentRes.setTransferList(ctTransferListPSPV2);
 
         /**
          * preconditions
@@ -81,13 +83,13 @@ class NodeForPspClientTest {
         when(requestBodyUriSpec.body(any(), eq(SoapEnvelope.class))).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.onStatus(any(Predicate.class), any(Function.class))).thenReturn(responseSpec);
-        when(responseSpec.bodyToMono(ActivatePaymentNoticeRes.class)).thenReturn(Mono.just(activatePaymentRes));
+        when(responseSpec.bodyToMono(ActivatePaymentNoticeV2Response.class)).thenReturn(Mono.just(activatePaymentRes));
 
         /**
          * test
          */
-        ActivatePaymentNoticeRes testResponse = client
-                .activatePaymentNotice(objectFactory.createActivatePaymentNoticeReq(request)).block();
+        ActivatePaymentNoticeV2Response testResponse = client
+                .activatePaymentNoticeV2(objectFactory.createActivatePaymentNoticeV2Request(request)).block();
 
         /**
          * asserts
@@ -95,6 +97,7 @@ class NodeForPspClientTest {
         assertThat(testResponse.getPaymentToken()).isEqualTo(paymentToken);
         assertThat(testResponse.getFiscalCodePA()).isEqualTo(fiscalCode);
         assertThat(testResponse.getTotalAmount()).isEqualTo(amount);
+        assertThat(testResponse.getTransferList()).isEqualTo(ctTransferListPSPV2);
     }
 
     @Test
@@ -109,16 +112,16 @@ class NodeForPspClientTest {
         String paymentNotice = "30200010000000999";
         String faultError = "PAA_PAGAMENTO_DUPLICATO";
 
-        ActivatePaymentNoticeReq request = objectFactory.createActivatePaymentNoticeReq();
+        ActivatePaymentNoticeV2Request request = objectFactory.createActivatePaymentNoticeV2Request();
         CtQrCode qrCode = new CtQrCode();
         qrCode.setFiscalCode(fiscalCode);
         qrCode.setNoticeNumber(paymentNotice);
         request.setAmount(amount);
         request.setQrCode(qrCode);
-        JAXBElement<ActivatePaymentNoticeReq> jaxbElementRequest = objectFactory
-                .createActivatePaymentNoticeReq(request);
+        JAXBElement<ActivatePaymentNoticeV2Request> jaxbElementRequest = objectFactory
+                .createActivatePaymentNoticeV2Request(request);
 
-        ActivatePaymentNoticeRes activatePaymentRes = objectFactory.createActivatePaymentNoticeRes();
+        ActivatePaymentNoticeV2Response activatePaymentRes = objectFactory.createActivatePaymentNoticeV2Response();
         CtFaultBean fault = objectFactory.createCtFaultBean();
         fault.setFaultCode(faultError);
         fault.setFaultString(faultError);
@@ -134,13 +137,13 @@ class NodeForPspClientTest {
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
 
         when(responseSpec.onStatus(any(Predicate.class), any(Function.class))).thenReturn(responseSpec);
-        when(responseSpec.bodyToMono(ActivatePaymentNoticeRes.class)).thenReturn(Mono.just(activatePaymentRes));
+        when(responseSpec.bodyToMono(ActivatePaymentNoticeV2Response.class)).thenReturn(Mono.just(activatePaymentRes));
 
         /**
          * test
          */
-        ActivatePaymentNoticeRes testResponse = client
-                .activatePaymentNotice(objectFactory.createActivatePaymentNoticeReq(request)).block();
+        ActivatePaymentNoticeV2Response testResponse = client
+                .activatePaymentNoticeV2(objectFactory.createActivatePaymentNoticeV2Request(request)).block();
 
         /**
          * asserts

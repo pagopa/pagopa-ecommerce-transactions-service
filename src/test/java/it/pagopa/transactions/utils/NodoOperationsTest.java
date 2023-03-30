@@ -16,7 +16,6 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -53,7 +52,31 @@ class NodoOperationsTest {
         BigDecimal amountBigDec = BigDecimal.valueOf(amount);
         String fiscalCode = "77777777777";
         String paymentNotice = "302000100000009424";
-
+        CtTransferListPSPV2 ctTransferListPSPV2 = objectFactoryUtil.createCtTransferListPSPV2();
+        CtTransferPSPV2 ctTransferPSPV2 = objectFactoryUtil.createCtTransferPSPV2();
+        ctTransferPSPV2.setIdTransfer(1);
+        ctTransferPSPV2.setFiscalCodePA(fiscalCode);
+        ctTransferPSPV2.setTransferAmount(BigDecimal.valueOf(amount));
+        ctTransferPSPV2.setIBAN("It41B0000000000000000899876543234567");
+        ctTransferPSPV2.setRemittanceInformation("test1");
+        byte[] testByte = new byte[] {
+                0,
+                1,
+                2,
+                3
+        };
+        CtRichiestaMarcaDaBollo ctRichiestaMarcaDaBollo = objectFactoryUtil.createCtRichiestaMarcaDaBollo();
+        ctRichiestaMarcaDaBollo.setTipoBollo("Tipo Bollo");
+        ctRichiestaMarcaDaBollo.setProvinciaResidenza("RM");
+        ctRichiestaMarcaDaBollo.setHashDocumento(testByte);
+        CtTransferPSPV2 ctTransferPSPV2_1 = objectFactoryUtil.createCtTransferPSPV2();
+        ctTransferPSPV2_1.setIdTransfer(1);
+        ctTransferPSPV2_1.setFiscalCodePA(fiscalCode);
+        ctTransferPSPV2_1.setTransferAmount(BigDecimal.valueOf(amount));
+        ctTransferPSPV2_1.setRichiestaMarcaDaBollo(ctRichiestaMarcaDaBollo);
+        ctTransferPSPV2_1.setRemittanceInformation("test1");
+        ctTransferListPSPV2.getTransfer().add(ctTransferPSPV2);
+        ctTransferListPSPV2.getTransfer().add(ctTransferPSPV2_1);
         ActivatePaymentNoticeV2Request activatePaymentReq = objectFactoryUtil.createActivatePaymentNoticeV2Request();
         CtQrCode qrCode = new CtQrCode();
         qrCode.setFiscalCode(fiscalCode);
@@ -67,7 +90,7 @@ class NodoOperationsTest {
         activatePaymentRes.setTotalAmount(amountBigDec);
         activatePaymentRes.setPaymentDescription(description);
         activatePaymentRes.setOutcome(StOutcome.OK);
-        activatePaymentRes.setTransferList(objectFactoryUtil.createCtTransferListPSPV2());
+        activatePaymentRes.setTransferList(ctTransferListPSPV2);
         /* preconditions */
         Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
                 .thenReturn(Mono.just(activatePaymentRes));
