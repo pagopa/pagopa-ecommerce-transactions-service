@@ -155,7 +155,7 @@ class NodeForPspClientTest {
     }
 
     @Test
-    void shouldReturnResponseStatusException() {
+    void shouldReturnResponseStatusExceptionOnActivatev2() {
 
         ObjectFactory objectFactory = new ObjectFactory();
         BigDecimal amount = BigDecimal.valueOf(1200);

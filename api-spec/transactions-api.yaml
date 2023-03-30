@@ -681,7 +681,6 @@ components:
       required:
         - paFiscalCode
         - digitalStamp
-        - transferCategory
         - transferAmount
     ProblemJson:
       description: Body definition for error responses containing failure details

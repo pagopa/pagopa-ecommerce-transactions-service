@@ -16,8 +16,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Optional;
 
 @Slf4j
 @Component
@@ -71,10 +69,7 @@ public class NodoOperations {
         // multiply paymentTokenTimeout by 1000 because on ecommerce it is represented
         // in seconds
         request.setExpirationTime(BigInteger.valueOf(paymentTokenTimeout).multiply(BigInteger.valueOf(1000)));
-        // TODO Maybe here more values (all optional) can be passed such as Touchpoint,
-        // Payment Method Type Code, Due date
-        // request.setPaymentMethod();
-        // request.setTouchPoint(StTouchpointFee.CHECKOUT);
+        // TODO Maybe here more values (all optional) can be passed such as Touchpoint and PaymentMethod
         return nodeForPspClient
                 .activatePaymentNoticeV2(objectFactoryNodeForPsp.createActivatePaymentNoticeV2Request(request))
                 .flatMap(
