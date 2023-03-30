@@ -59,7 +59,12 @@ class NodoOperationsTest {
         ctTransferPSPV2.setTransferAmount(BigDecimal.valueOf(amount));
         ctTransferPSPV2.setIBAN("It41B0000000000000000899876543234567");
         ctTransferPSPV2.setRemittanceInformation("test1");
-        byte[] testByte = new byte[]{0,1,2,3};
+        byte[] testByte = new byte[] {
+                0,
+                1,
+                2,
+                3
+        };
         CtRichiestaMarcaDaBollo ctRichiestaMarcaDaBollo = objectFactoryUtil.createCtRichiestaMarcaDaBollo();
         ctRichiestaMarcaDaBollo.setTipoBollo("Tipo Bollo");
         ctRichiestaMarcaDaBollo.setProvinciaResidenza("RM");
