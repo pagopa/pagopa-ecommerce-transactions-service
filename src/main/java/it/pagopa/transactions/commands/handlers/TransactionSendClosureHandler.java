@@ -28,6 +28,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
@@ -38,7 +39,7 @@ public class TransactionSendClosureHandler implements
         CommandHandler<TransactionClosureSendCommand, Mono<Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>>> {
 
     public static final String TIPO_VERSAMENTO_CP = "CP";
-    public static final String ECOMMERCE_RRN = "ecommerceRRN";
+    public static final String ECOMMERCE_RRN = "1234567890";
     private final TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository;
 
     private final TransactionsEventStoreRepository<TransactionRefundedData> transactionRefundedEventStoreRepository;
@@ -114,7 +115,14 @@ public class TransactionSendClosureHandler implements
                             .getTransactionAuthorizationRequestData();
                     TransactionAuthorizationCompletedData transactionAuthorizationCompletedData = tx
                             .getTransactionAuthorizationCompletedData();
-
+                    BigDecimal totalAmountValue = EuroUtils.euroCentsToEuro(
+                            tx.getPaymentNotices().stream()
+                                    .mapToInt(
+                                            paymentNotice -> paymentNotice.transactionAmount().value()
+                                    )
+                                    .sum() + transactionAuthorizationRequestData.getFee()
+                    );
+                    BigDecimal feeValue = EuroUtils.euroCentsToEuro(transactionAuthorizationRequestData.getFee());
                     ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                             .paymentTokens(
                                     tx.getTransactionActivatedData().getPaymentNotices().stream()
@@ -129,16 +137,8 @@ public class TransactionSendClosureHandler implements
                             .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())
                             .idChannel(transactionAuthorizationRequestData.getPspChannelCode())
                             .transactionId(tx.getTransactionId().value().toString())
-                            .totalAmount(
-                                    EuroUtils.euroCentsToEuro(
-                                            tx.getPaymentNotices().stream()
-                                                    .mapToInt(
-                                                            paymentNotice -> paymentNotice.transactionAmount().value()
-                                                    )
-                                                    .sum() + transactionAuthorizationRequestData.getFee()
-                                    )
-                            )
-                            .fee(EuroUtils.euroCentsToEuro(transactionAuthorizationRequestData.getFee()))
+                            .totalAmount(totalAmountValue)
+                            .fee(feeValue)
                             .timestampOperation(updateAuthorizationRequestDto.getTimestampOperation())
                             .paymentMethod(transactionAuthorizationRequestData.getPaymentTypeCode())
                             .additionalPaymentInformations(
@@ -153,9 +153,11 @@ public class TransactionSendClosureHandler implements
                                             "rrn",
                                             ECOMMERCE_RRN,
                                             "fee",
-                                            String.valueOf(transactionAuthorizationRequestData.getFee()),
+                                            feeValue.toString(),
                                             "timestampOperation",
-                                            updateAuthorizationRequestDto.getTimestampOperation().toString()
+                                            updateAuthorizationRequestDto.getTimestampOperation().toString(), //2023-04-03T15:42:22.826Z
+                                            "totalAmount",
+                                            totalAmountValue.toString()
                                     )
                             );
 
