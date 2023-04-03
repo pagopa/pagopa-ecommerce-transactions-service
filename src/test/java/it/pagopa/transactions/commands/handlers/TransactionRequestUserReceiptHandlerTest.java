@@ -26,7 +26,6 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.*;
@@ -132,16 +131,7 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionUserReceiptRequestedEvent queueEvent = queueArgumentCaptor.getValue()
                 .toObject(TransactionUserReceiptRequestedEvent.class);
         assertEquals(TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT, queueEvent.getEventCode());
-        assertEquals(event.getData().getResponseOutcome(), queueEvent.getData().getResponseOutcome());
-        assertEquals(event.getData().getLanguage(), queueEvent.getData().getLanguage());
-        assertEquals(event.getData().getPaymentMethodLogoUri(), queueEvent.getData().getPaymentMethodLogoUri());
-        assertEquals(event.getData().getReceivingOfficeName(), queueEvent.getData().getReceivingOfficeName());
-        assertEquals(event.getData().getPaymentDescription(), queueEvent.getData().getPaymentDescription());
-        // made payment date comparison comparing dates at same zone id
-        assertEquals(
-                event.getData().getPaymentDate().atZoneSameInstant(ZoneOffset.UTC),
-                queueEvent.getData().getPaymentDate().atZoneSameInstant(ZoneOffset.UTC)
-        );
+        assertEquals(event.getData(), queueEvent.getData());
     }
 
     @Test
@@ -215,16 +205,7 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionUserReceiptRequestedEvent queueEvent = queueArgumentCaptor.getValue()
                 .toObject(TransactionUserReceiptRequestedEvent.class);
         assertEquals(TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT, queueEvent.getEventCode());
-        assertEquals(event.getData().getResponseOutcome(), queueEvent.getData().getResponseOutcome());
-        assertEquals(event.getData().getLanguage(), queueEvent.getData().getLanguage());
-        assertEquals(event.getData().getPaymentMethodLogoUri(), queueEvent.getData().getPaymentMethodLogoUri());
-        assertEquals(event.getData().getReceivingOfficeName(), queueEvent.getData().getReceivingOfficeName());
-        assertEquals(event.getData().getPaymentDescription(), queueEvent.getData().getPaymentDescription());
-        // made payment date comparison comparing dates at same zone id
-        assertEquals(
-                event.getData().getPaymentDate().atZoneSameInstant(ZoneOffset.UTC),
-                queueEvent.getData().getPaymentDate().atZoneSameInstant(ZoneOffset.UTC)
-        );
+        assertEquals(event.getData(), queueEvent.getData());
 
     }
 
@@ -298,16 +279,7 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionUserReceiptRequestedEvent queueEvent = queueArgumentCaptor.getValue()
                 .toObject(TransactionUserReceiptRequestedEvent.class);
         assertEquals(TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT, queueEvent.getEventCode());
-        assertEquals(event.getData().getResponseOutcome(), queueEvent.getData().getResponseOutcome());
-        assertEquals(event.getData().getLanguage(), queueEvent.getData().getLanguage());
-        assertEquals(event.getData().getPaymentMethodLogoUri(), queueEvent.getData().getPaymentMethodLogoUri());
-        assertEquals(event.getData().getReceivingOfficeName(), queueEvent.getData().getReceivingOfficeName());
-        assertEquals(event.getData().getPaymentDescription(), queueEvent.getData().getPaymentDescription());
-        // made payment date comparison comparing dates at same zone id
-        assertEquals(
-                event.getData().getPaymentDate().atZoneSameInstant(ZoneOffset.UTC),
-                queueEvent.getData().getPaymentDate().atZoneSameInstant(ZoneOffset.UTC)
-        );
+        assertEquals(event.getData(), queueEvent.getData());
     }
 
     @Test

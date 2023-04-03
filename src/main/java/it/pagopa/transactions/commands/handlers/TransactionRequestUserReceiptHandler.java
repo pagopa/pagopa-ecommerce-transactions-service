@@ -96,7 +96,7 @@ public class TransactionRequestUserReceiptHandler
                                     ),
                                     language,
                                     paymentMethodUri,
-                                    addUserReceiptRequestDto.getPaymentDate(),
+                                    addUserReceiptRequestDto.getPaymentDate().toZonedDateTime().toString(),
                                     addUserReceiptRequestDto.getPayments().get(0)
                                             .getOfficeName(),
                                     addUserReceiptRequestDto.getPayments().get(0)
