@@ -1,6 +1,7 @@
 package it.pagopa.transactions.configurations;
 
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
+import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Request;
 import it.pagopa.generated.transactions.model.VerifyPaymentNoticeReq;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,6 +40,19 @@ class NodoConfigTest {
         );
         ActivatePaymentNoticeReq request = nodoConfig
                 .baseActivatePaymentNoticeReq();
+        assertEquals(Boolean.TRUE, request != null);
+    }
+
+    @Test
+    void shouldReturnValidActivatePaymentNoticeRequestV2RPTRequest() {
+        ReflectionTestUtils.setField(nodoConfig, "nodoConnectionParamsAsString", "{}");
+        ReflectionTestUtils.setField(
+                nodoConfig,
+                "objectFactoryNodeForPsp",
+                new it.pagopa.generated.transactions.model.ObjectFactory()
+        );
+        ActivatePaymentNoticeV2Request request = nodoConfig
+                .baseActivatePaymentNoticeV2Request();
         assertEquals(Boolean.TRUE, request != null);
     }
 }

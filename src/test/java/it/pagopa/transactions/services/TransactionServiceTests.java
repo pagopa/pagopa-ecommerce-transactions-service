@@ -39,6 +39,7 @@ import reactor.test.StepVerifier;
 
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -297,7 +298,15 @@ public class TransactionServiceTests {
                                 new RptId(paymentNotice.getRptId()),
                                 new TransactionAmount(paymentNotice.getAmount()),
                                 new TransactionDescription(paymentNotice.getDescription()),
-                                new PaymentContextCode(paymentNotice.getPaymentContextCode())
+                                new PaymentContextCode(paymentNotice.getPaymentContextCode()),
+                                List.of(
+                                        new PaymentTransferInfo(
+                                                paymentNotice.getRptId().substring(0, 11),
+                                                false,
+                                                paymentNotice.getAmount(),
+                                                null
+                                        )
+                                )
                         )
                 ).toList(),
                 transactionDocument.getEmail(),
@@ -974,7 +983,15 @@ public class TransactionServiceTests {
                                 new RptId(paymentNotice.getRptId()),
                                 new TransactionAmount(paymentNotice.getAmount()),
                                 new TransactionDescription(paymentNotice.getDescription()),
-                                new PaymentContextCode(paymentNotice.getPaymentContextCode())
+                                new PaymentContextCode(paymentNotice.getPaymentContextCode()),
+                                List.of(
+                                        new PaymentTransferInfo(
+                                                paymentNotice.getRptId().substring(0, 11),
+                                                false,
+                                                paymentNotice.getAmount(),
+                                                null
+                                        )
+                                )
                         )
                 ).toList(),
                 transactionDocument.getEmail(),

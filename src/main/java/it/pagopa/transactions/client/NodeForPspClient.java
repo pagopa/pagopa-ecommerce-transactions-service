@@ -4,6 +4,8 @@ import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeRes;
+import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Request;
+import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Response;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.utils.soap.SoapEnvelope;
 import lombok.extern.slf4j.Slf4j;
@@ -29,13 +31,15 @@ public class NodeForPspClient {
     @Value("${nodo.nodeforpsp.uri}")
     private String nodoPerPspUri;
 
-    public Mono<ActivatePaymentNoticeRes> activatePaymentNotice(JAXBElement<ActivatePaymentNoticeReq> request) {
+    public Mono<ActivatePaymentNoticeV2Response> activatePaymentNoticeV2(
+                                                                         JAXBElement<ActivatePaymentNoticeV2Request> request
+    ) {
         log.info("activatePaymentNotice idPSP: {} ", request.getValue().getIdPSP());
         log.info("activatePaymentNotice IdemPK: {} ", request.getValue().getIdempotencyKey());
         return nodoWebClient.post()
                 .uri(nodoPerPspUri)
                 .header("Content-Type", MediaType.TEXT_XML_VALUE)
-                .header("SOAPAction", "activatePaymentNotice")
+                .header("SOAPAction", "activatePaymentNoticeV2")
                 .body(Mono.just(new SoapEnvelope("", request)), SoapEnvelope.class)
                 .retrieve()
                 .onStatus(
@@ -50,33 +54,22 @@ public class NodeForPspClient {
                                         )
                                 )
                 )
-                .bodyToMono(ActivatePaymentNoticeRes.class)
+                .bodyToMono(ActivatePaymentNoticeV2Response.class)
                 .doOnSuccess(
-                        (ActivatePaymentNoticeRes paymentActivedDetail) -> log.info(
+                        activateResponse -> log.info(
                                 "Payment activated with paymentToken {} ",
-                                new Object[] {
-                                        paymentActivedDetail.getPaymentToken()
-                                }
+                                activateResponse.getPaymentToken()
+
                         )
                 )
-                .doOnError(
+                .onErrorMap(
                         ResponseStatusException.class,
-                        error -> log.error(
-                                "ResponseStatus Error : {}",
-                                new Object[] {
-                                        error
-                                }
-                        )
+                        error -> {
+                            log.error("ResponseStatus Error:", error);
+                            return new BadGatewayException(error.getReason(), error.getStatus());
+                        }
                 )
-                .doOnError(
-                        Exception.class,
-                        (Exception error) -> log.error(
-                                "Generic Error : {}",
-                                new Object[] {
-                                        error
-                                }
-                        )
-                );
+                .doOnError(Exception.class, error -> log.error("Generic Error:", error));
     }
 
     public Mono<ClosePaymentResponseDto> closePaymentV2(ClosePaymentRequestV2Dto request) {

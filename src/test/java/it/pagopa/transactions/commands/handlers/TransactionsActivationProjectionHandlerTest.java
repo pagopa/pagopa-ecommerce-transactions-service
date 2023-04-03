@@ -1,6 +1,7 @@
 package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.v1.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.Confidential;
@@ -16,6 +17,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,7 +38,8 @@ class TransactionsActivationProjectionHandlerTest {
         /* preconditions */
 
         String transactionIdString = UUID.randomUUID().toString();
-        String rptIdString = "77777777777111111111111111111";
+        String paFiscalCode = "77777777777";
+        String rptIdString = paFiscalCode + "111111111111111111";
         String paymentTokenString = UUID.randomUUID().toString();
         String transactionDescription = "transaction description";
         int amountInt = 100;
@@ -49,7 +52,8 @@ class TransactionsActivationProjectionHandlerTest {
                                 rptIdString,
                                 transactionDescription,
                                 amountInt,
-                                null
+                                null,
+                                List.of(new PaymentTransferInformation(paFiscalCode, false, amountInt, null))
                         )
                 )
         );
@@ -80,7 +84,15 @@ class TransactionsActivationProjectionHandlerTest {
                                 rptId,
                                 amount,
                                 description,
-                                nullPaymentContextCode
+                                nullPaymentContextCode,
+                                List.of(
+                                        new PaymentTransferInfo(
+                                                rptIdString.substring(0, 11),
+                                                false,
+                                                amount.value(),
+                                                null
+                                        )
+                                )
                         )
                 ),
                 email,
