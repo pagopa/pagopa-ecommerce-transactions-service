@@ -43,6 +43,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static it.pagopa.transactions.commands.handlers.TransactionSendClosureHandler.ECOMMERCE_RRN;
+import static it.pagopa.transactions.commands.handlers.TransactionSendClosureHandler.TIPO_VERSAMENTO_CP;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 
@@ -305,7 +307,21 @@ class TransactionSendClosureHandlerTest {
                                 "outcome_payment_gateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
                                 "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
+                                updateAuthorizationRequest.getAuthorizationCode(),
+                                "tipoVersamento",
+                                TIPO_VERSAMENTO_CP,
+                                "rrn",
+                                ECOMMERCE_RRN,
+                                "fee",
+                                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
+                                "timestampOperation",
+                                updateAuthorizationRequest.getTimestampOperation().toString(), // 2023-04-03T15:42:22.826Z
+                                "totalAmount",
+                                EuroUtils.euroCentsToEuro(
+                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                + authorizationRequestData.getFee()
+                                ).toString()
                         )
                 );
 
@@ -443,7 +459,21 @@ class TransactionSendClosureHandlerTest {
                                 "outcome_payment_gateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
                                 "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
+                                updateAuthorizationRequest.getAuthorizationCode(),
+                                "tipoVersamento",
+                                TIPO_VERSAMENTO_CP,
+                                "rrn",
+                                ECOMMERCE_RRN,
+                                "fee",
+                                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
+                                "timestampOperation",
+                                updateAuthorizationRequest.getTimestampOperation().toString(), // 2023-04-03T15:42:22.826Z
+                                "totalAmount",
+                                EuroUtils.euroCentsToEuro(
+                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                + authorizationRequestData.getFee()
+                                ).toString()
                         )
                 );
 
@@ -581,7 +611,21 @@ class TransactionSendClosureHandlerTest {
                                 "outcome_payment_gateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
                                 "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
+                                updateAuthorizationRequest.getAuthorizationCode(),
+                                "tipoVersamento",
+                                TIPO_VERSAMENTO_CP,
+                                "rrn",
+                                ECOMMERCE_RRN,
+                                "fee",
+                                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
+                                "timestampOperation",
+                                updateAuthorizationRequest.getTimestampOperation().toString(), // 2023-04-03T15:42:22.826Z
+                                "totalAmount",
+                                EuroUtils.euroCentsToEuro(
+                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                + authorizationRequestData.getFee()
+                                ).toString()
                         )
                 );
 
@@ -718,7 +762,21 @@ class TransactionSendClosureHandlerTest {
                                 "outcome_payment_gateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
                                 "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
+                                updateAuthorizationRequest.getAuthorizationCode(),
+                                "tipoVersamento",
+                                TIPO_VERSAMENTO_CP,
+                                "rrn",
+                                ECOMMERCE_RRN,
+                                "fee",
+                                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
+                                "timestampOperation",
+                                updateAuthorizationRequest.getTimestampOperation().toString(), // 2023-04-03T15:42:22.826Z
+                                "totalAmount",
+                                EuroUtils.euroCentsToEuro(
+                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                + authorizationRequestData.getFee()
+                                ).toString()
                         )
                 );
 
@@ -865,7 +923,21 @@ class TransactionSendClosureHandlerTest {
                                 "outcome_payment_gateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
                                 "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
+                                updateAuthorizationRequest.getAuthorizationCode(),
+                                "tipoVersamento",
+                                TIPO_VERSAMENTO_CP,
+                                "rrn",
+                                ECOMMERCE_RRN,
+                                "fee",
+                                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
+                                "timestampOperation",
+                                updateAuthorizationRequest.getTimestampOperation().toString(), // 2023-04-03T15:42:22.826Z
+                                "totalAmount",
+                                EuroUtils.euroCentsToEuro(
+                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                + authorizationRequestData.getFee()
+                                ).toString()
                         )
                 );
 
@@ -1019,7 +1091,21 @@ class TransactionSendClosureHandlerTest {
                                 "outcome_payment_gateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
                                 "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
+                                updateAuthorizationRequest.getAuthorizationCode(),
+                                "tipoVersamento",
+                                TIPO_VERSAMENTO_CP,
+                                "rrn",
+                                ECOMMERCE_RRN,
+                                "fee",
+                                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
+                                "timestampOperation",
+                                updateAuthorizationRequest.getTimestampOperation().toString(), // 2023-04-03T15:42:22.826Z
+                                "totalAmount",
+                                EuroUtils.euroCentsToEuro(
+                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                + authorizationRequestData.getFee()
+                                ).toString()
                         )
                 );
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
@@ -1183,7 +1269,21 @@ class TransactionSendClosureHandlerTest {
                                 "outcome_payment_gateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
                                 "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
+                                updateAuthorizationRequest.getAuthorizationCode(),
+                                "tipoVersamento",
+                                TIPO_VERSAMENTO_CP,
+                                "rrn",
+                                ECOMMERCE_RRN,
+                                "fee",
+                                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
+                                "timestampOperation",
+                                updateAuthorizationRequest.getTimestampOperation().toString(), // 2023-04-03T15:42:22.826Z
+                                "totalAmount",
+                                EuroUtils.euroCentsToEuro(
+                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                + authorizationRequestData.getFee()
+                                ).toString()
                         )
                 );
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
@@ -1347,7 +1447,21 @@ class TransactionSendClosureHandlerTest {
                                 "outcome_payment_gateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
                                 "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
+                                updateAuthorizationRequest.getAuthorizationCode(),
+                                "tipoVersamento",
+                                TIPO_VERSAMENTO_CP,
+                                "rrn",
+                                ECOMMERCE_RRN,
+                                "fee",
+                                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
+                                "timestampOperation",
+                                updateAuthorizationRequest.getTimestampOperation().toString(), // 2023-04-03T15:42:22.826Z
+                                "totalAmount",
+                                EuroUtils.euroCentsToEuro(
+                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                + authorizationRequestData.getFee()
+                                ).toString()
                         )
                 );
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
@@ -1508,7 +1622,21 @@ class TransactionSendClosureHandlerTest {
                                 "outcome_payment_gateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
                                 "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
+                                updateAuthorizationRequest.getAuthorizationCode(),
+                                "tipoVersamento",
+                                TIPO_VERSAMENTO_CP,
+                                "rrn",
+                                ECOMMERCE_RRN,
+                                "fee",
+                                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
+                                "timestampOperation",
+                                updateAuthorizationRequest.getTimestampOperation().toString(), // 2023-04-03T15:42:22.826Z
+                                "totalAmount",
+                                EuroUtils.euroCentsToEuro(
+                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                + authorizationRequestData.getFee()
+                                ).toString()
                         )
                 );
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
@@ -1660,7 +1788,21 @@ class TransactionSendClosureHandlerTest {
                                 "outcome_payment_gateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
                                 "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
+                                updateAuthorizationRequest.getAuthorizationCode(),
+                                "tipoVersamento",
+                                TIPO_VERSAMENTO_CP,
+                                "rrn",
+                                ECOMMERCE_RRN,
+                                "fee",
+                                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
+                                "timestampOperation",
+                                updateAuthorizationRequest.getTimestampOperation().toString(), // 2023-04-03T15:42:22.826Z
+                                "totalAmount",
+                                EuroUtils.euroCentsToEuro(
+                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                + authorizationRequestData.getFee()
+                                ).toString()
                         )
                 );
 
@@ -1771,7 +1913,21 @@ class TransactionSendClosureHandlerTest {
                                 "outcome_payment_gateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
                                 "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
+                                updateAuthorizationRequest.getAuthorizationCode(),
+                                "tipoVersamento",
+                                TIPO_VERSAMENTO_CP,
+                                "rrn",
+                                ECOMMERCE_RRN,
+                                "fee",
+                                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
+                                "timestampOperation",
+                                updateAuthorizationRequest.getTimestampOperation().toString(), // 2023-04-03T15:42:22.826Z
+                                "totalAmount",
+                                EuroUtils.euroCentsToEuro(
+                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                + authorizationRequestData.getFee()
+                                ).toString()
                         )
                 );
 
@@ -1884,7 +2040,21 @@ class TransactionSendClosureHandlerTest {
                                 "outcome_payment_gateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
                                 "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
+                                updateAuthorizationRequest.getAuthorizationCode(),
+                                "tipoVersamento",
+                                TIPO_VERSAMENTO_CP,
+                                "rrn",
+                                ECOMMERCE_RRN,
+                                "fee",
+                                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
+                                "timestampOperation",
+                                updateAuthorizationRequest.getTimestampOperation().toString(), // 2023-04-03T15:42:22.826Z
+                                "totalAmount",
+                                EuroUtils.euroCentsToEuro(
+                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                + authorizationRequestData.getFee()
+                                ).toString()
                         )
                 );
 
@@ -2007,7 +2177,21 @@ class TransactionSendClosureHandlerTest {
                                 "outcome_payment_gateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
                                 "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
+                                updateAuthorizationRequest.getAuthorizationCode(),
+                                "tipoVersamento",
+                                TIPO_VERSAMENTO_CP,
+                                "rrn",
+                                ECOMMERCE_RRN,
+                                "fee",
+                                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
+                                "timestampOperation",
+                                updateAuthorizationRequest.getTimestampOperation().toString(), // 2023-04-03T15:42:22.826Z
+                                "totalAmount",
+                                EuroUtils.euroCentsToEuro(
+                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                + authorizationRequestData.getFee()
+                                ).toString()
                         )
                 );
 
@@ -2110,7 +2294,21 @@ class TransactionSendClosureHandlerTest {
                                 "outcome_payment_gateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
                                 "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
+                                updateAuthorizationRequest.getAuthorizationCode(),
+                                "tipoVersamento",
+                                TIPO_VERSAMENTO_CP,
+                                "rrn",
+                                ECOMMERCE_RRN,
+                                "fee",
+                                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
+                                "timestampOperation",
+                                updateAuthorizationRequest.getTimestampOperation().toString(), // 2023-04-03T15:42:22.826Z
+                                "totalAmount",
+                                EuroUtils.euroCentsToEuro(
+                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                + authorizationRequestData.getFee()
+                                ).toString()
                         )
                 );
 
