@@ -35,8 +35,6 @@ These are all environment variables needed by the application:
 | TRANSACTION_EXPIRATION_QUEUE_NAME                                  |     | Name of the queue for transaction expiration for activated transactions                                    | string |         |
 | TRANSACTION_CLOSEPAYMENT_RETRY_QUEUE_NAME                          |     | Name of the retry queue for closure error events                                                           | string |         |
 | TRANSACTION_REFUND_QUEUE_NAME                                      |     | Name of the refund queue for transactions that receive a closePayment with OK authorization and KO outcome | string |         |
-| TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_NAME               |     | Name of the retry queue for transaction expiration when stuck in auth requested status                     | string |         |
-| TRANSACTION_AUTHORIZATION_REQUESTED_EVENT_QUEUE_VISIBILITY_TIMEOUT |     | Seconds to wait after requesting an authorization before aborting it                                       | string |         |
 | TRANSACTIONS_RETRY_OFFSET                                          |     | Seconds to offset validity end to account for more retries                                                 | number |         |
 | CLOSURE_RETRY_INTERVAL                                             |     | Seconds to wait at closing the transaction before making a retry                                           | number |         |
 | PERSONAL_DATA_VAULT_API_KEY                                        |     | API Key for Personal Data Vault (PDV is used to safely encrypt PIIs, e.g. the user's email address)        | string |         |
