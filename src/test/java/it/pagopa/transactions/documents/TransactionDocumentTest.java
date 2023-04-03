@@ -1,6 +1,7 @@
 package it.pagopa.transactions.documents;
 
 import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.v1.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v1.*;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,7 +26,8 @@ class TransactionDocumentTest {
     void shouldGetAndSetTransaction() {
         String TEST_TRANSACTIONID = "d56ab1e6-f845-11ec-b939-0242ac120002";
         String TEST_TOKEN = "token1";
-        String TEST_RPTID = "77777777777302016723749670035";
+        String TEST_PAFISCALCODE = "77777777777";
+        String TEST_RPTID = TEST_PAFISCALCODE + "302016723749670035";
         String TEST_DESC = "";
         ZonedDateTime TEST_TIME = ZonedDateTime.now();
         Confidential<Email> CONFIDENTIAL_TEST_EMAIL = TransactionTestUtils.EMAIL;
@@ -51,7 +54,8 @@ class TransactionDocumentTest {
                                 TEST_RPTID,
                                 TEST_DESC,
                                 TEST_AMOUNT,
-                                ""
+                                "",
+                                List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null))
                         )
                 ),
                 0,
@@ -69,7 +73,8 @@ class TransactionDocumentTest {
                                 TEST_RPTID,
                                 TEST_DESC,
                                 TEST_AMOUNT,
-                                ""
+                                "",
+                                List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null))
                         )
                 ),
                 0,
@@ -88,7 +93,8 @@ class TransactionDocumentTest {
                                 TEST_RPTID,
                                 TEST_DESC,
                                 TEST_AMOUNT,
-                                ""
+                                "",
+                                List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null))
                         )
                 ),
                 0,
@@ -102,7 +108,8 @@ class TransactionDocumentTest {
                 TEST_RPTID,
                 TEST_DESC,
                 TEST_AMOUNT,
-                null
+                null,
+                List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null))
         );
         differentTransaction.setPaymentNotices(List.of(paymentNotice));
         differentTransaction.setStatus(TEST_STATUS);
@@ -142,7 +149,8 @@ class TransactionDocumentTest {
                                 rptId,
                                 amount,
                                 description,
-                                nullPaymentContextCode
+                                nullPaymentContextCode,
+                                List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, amount.value(), null))
                         )
                 ),
                 email,
