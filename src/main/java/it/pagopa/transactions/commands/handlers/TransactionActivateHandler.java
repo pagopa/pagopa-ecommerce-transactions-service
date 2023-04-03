@@ -38,6 +38,7 @@ import java.util.UUID;
 public class TransactionActivateHandler
         implements CommandHandler<TransactionActivateCommand, Mono<Tuple2<Mono<TransactionActivatedEvent>, String>>> {
 
+    public static final int TRANSFER_LIST_MAX_SIZE = 5;
     private final PaymentRequestsInfoRepository paymentRequestsInfoRepository;
 
     private final TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository;
@@ -130,7 +131,7 @@ public class TransactionActivateHandler
                                                                                         nodoOperations
                                                                                                 .generateRandomStringToIdempotencyKey()
                                                                                 ),
-                                                                                new ArrayList<>(5)
+                                                                                new ArrayList<>(TRANSFER_LIST_MAX_SIZE)
                                                                         );
                                                                         return paymentRequestsInfoRepository
                                                                                 .save(
