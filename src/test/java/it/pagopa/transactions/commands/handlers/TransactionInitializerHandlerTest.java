@@ -2,11 +2,9 @@ package it.pagopa.transactions.commands.handlers;
 
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
-import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
-import it.pagopa.ecommerce.commons.documents.v1.Transaction;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
+import it.pagopa.ecommerce.commons.domain.v1.PaymentTransferInfo;
 import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
@@ -41,6 +39,7 @@ import javax.crypto.NoSuchPaddingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -105,7 +104,8 @@ class TransactionInitializerHandlerTest {
                 AMOUNT,
                 null,
                 paymentToken,
-                idempotencyKey
+                idempotencyKey,
+                List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, AMOUNT, null))
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
@@ -119,7 +119,8 @@ class TransactionInitializerHandlerTest {
                                 rptId.value(),
                                 null,
                                 null,
-                                null
+                                null,
+                                List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, null, null))
                         )
                 )
         );
@@ -185,7 +186,8 @@ class TransactionInitializerHandlerTest {
                 amount,
                 null,
                 paymentToken,
-                idempotencyKey
+                idempotencyKey,
+                List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, amount, null))
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
@@ -199,7 +201,8 @@ class TransactionInitializerHandlerTest {
                                 rptId.value(),
                                 null,
                                 null,
-                                null
+                                null,
+                                List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount, null))
                         )
                 )
         );
@@ -299,7 +302,9 @@ class TransactionInitializerHandlerTest {
                 amount,
                 null,
                 null,
-                idempotencyKey
+                idempotencyKey,
+                List.of(new PaymentTransferInfo(rptId.value().substring(0, 11), false, amount, null))
+
         );
 
         /* preconditions */
@@ -349,7 +354,8 @@ class TransactionInitializerHandlerTest {
                 null,
                 null,
                 null,
-                idempotencyKey
+                idempotencyKey,
+                List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, null, null))
         );
 
         PaymentRequestInfo paymentRequestInfoAfterActivation = new PaymentRequestInfo(
@@ -360,7 +366,8 @@ class TransactionInitializerHandlerTest {
                 paymentNotice.getAmount(),
                 null,
                 paymentNotice.getPaymentToken(),
-                idempotencyKey
+                idempotencyKey,
+                List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, paymentNotice.getAmount(), null))
         );
 
         /* preconditions */
@@ -432,7 +439,8 @@ class TransactionInitializerHandlerTest {
                 paymentNotice.getAmount(),
                 null,
                 paymentNotice.getPaymentToken(),
-                idempotencyKey
+                idempotencyKey,
+                List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, paymentNotice.getAmount(), null))
         );
 
         /* preconditions */

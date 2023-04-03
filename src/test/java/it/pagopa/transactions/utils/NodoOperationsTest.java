@@ -36,7 +36,7 @@ class NodoOperationsTest {
     it.pagopa.generated.transactions.model.ObjectFactory objectFactoryNodeForPsp;
 
     @Captor
-    ArgumentCaptor<ActivatePaymentNoticeReq> activatePaymentNoticeReqArgumentCaptor;
+    ArgumentCaptor<ActivatePaymentNoticeV2Request> activatePaymentNoticeReqArgumentCaptor;
 
     @Test
     void shouldActiveNM3PaymentRequest() {
@@ -52,27 +52,51 @@ class NodoOperationsTest {
         BigDecimal amountBigDec = BigDecimal.valueOf(amount);
         String fiscalCode = "77777777777";
         String paymentNotice = "302000100000009424";
-
-        ActivatePaymentNoticeReq activatePaymentReq = objectFactoryUtil.createActivatePaymentNoticeReq();
+        CtTransferListPSPV2 ctTransferListPSPV2 = objectFactoryUtil.createCtTransferListPSPV2();
+        CtTransferPSPV2 ctTransferPSPV2 = objectFactoryUtil.createCtTransferPSPV2();
+        ctTransferPSPV2.setIdTransfer(1);
+        ctTransferPSPV2.setFiscalCodePA(fiscalCode);
+        ctTransferPSPV2.setTransferAmount(BigDecimal.valueOf(amount));
+        ctTransferPSPV2.setIBAN("It41B0000000000000000899876543234567");
+        ctTransferPSPV2.setRemittanceInformation("test1");
+        byte[] testByte = new byte[] {
+                0,
+                1,
+                2,
+                3
+        };
+        CtRichiestaMarcaDaBollo ctRichiestaMarcaDaBollo = objectFactoryUtil.createCtRichiestaMarcaDaBollo();
+        ctRichiestaMarcaDaBollo.setTipoBollo("Tipo Bollo");
+        ctRichiestaMarcaDaBollo.setProvinciaResidenza("RM");
+        ctRichiestaMarcaDaBollo.setHashDocumento(testByte);
+        CtTransferPSPV2 ctTransferPSPV2_1 = objectFactoryUtil.createCtTransferPSPV2();
+        ctTransferPSPV2_1.setIdTransfer(1);
+        ctTransferPSPV2_1.setFiscalCodePA(fiscalCode);
+        ctTransferPSPV2_1.setTransferAmount(BigDecimal.valueOf(amount));
+        ctTransferPSPV2_1.setRichiestaMarcaDaBollo(ctRichiestaMarcaDaBollo);
+        ctTransferPSPV2_1.setRemittanceInformation("test1");
+        ctTransferListPSPV2.getTransfer().add(ctTransferPSPV2);
+        ctTransferListPSPV2.getTransfer().add(ctTransferPSPV2_1);
+        ActivatePaymentNoticeV2Request activatePaymentReq = objectFactoryUtil.createActivatePaymentNoticeV2Request();
         CtQrCode qrCode = new CtQrCode();
         qrCode.setFiscalCode(fiscalCode);
         qrCode.setNoticeNumber(paymentNotice);
         activatePaymentReq.setAmount(amountBigDec);
         activatePaymentReq.setQrCode(qrCode);
 
-        ActivatePaymentNoticeRes activatePaymentRes = objectFactoryUtil.createActivatePaymentNoticeRes();
+        ActivatePaymentNoticeV2Response activatePaymentRes = objectFactoryUtil.createActivatePaymentNoticeV2Response();
         activatePaymentRes.setPaymentToken(paymentToken);
         activatePaymentRes.setFiscalCodePA(fiscalCode);
         activatePaymentRes.setTotalAmount(amountBigDec);
         activatePaymentRes.setPaymentDescription(description);
         activatePaymentRes.setOutcome(StOutcome.OK);
-
+        activatePaymentRes.setTransferList(ctTransferListPSPV2);
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNotice(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
                 .thenReturn(Mono.just(activatePaymentRes));
-        Mockito.when(objectFactoryNodeForPsp.createActivatePaymentNoticeReq(Mockito.any()))
-                .thenReturn(objectFactoryUtil.createActivatePaymentNoticeReq(activatePaymentReq));
-        Mockito.when(nodoConfig.baseActivatePaymentNoticeReq()).thenReturn(new ActivatePaymentNoticeReq());
+        Mockito.when(objectFactoryNodeForPsp.createActivatePaymentNoticeV2Request(Mockito.any()))
+                .thenReturn(objectFactoryUtil.createActivatePaymentNoticeV2Request(activatePaymentReq));
+        Mockito.when(nodoConfig.baseActivatePaymentNoticeV2Request()).thenReturn(new ActivatePaymentNoticeV2Request());
 
         /* test */
         PaymentRequestInfo response = nodoOperations
@@ -86,7 +110,7 @@ class NodoOperationsTest {
                 .block();
 
         /* asserts */
-        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNotice(Mockito.any());
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
 
         assertEquals(rptId, response.id());
         assertEquals(paymentToken, response.paymentToken());
@@ -107,25 +131,25 @@ class NodoOperationsTest {
         String fiscalCode = "77777777777";
         String paymentNotice = "302000100000009424";
 
-        ActivatePaymentNoticeReq activatePaymentReq = objectFactoryUtil.createActivatePaymentNoticeReq();
+        ActivatePaymentNoticeV2Request activatePaymentReq = objectFactoryUtil.createActivatePaymentNoticeV2Request();
         CtQrCode qrCode = new CtQrCode();
         qrCode.setFiscalCode(fiscalCode);
         qrCode.setNoticeNumber(paymentNotice);
         activatePaymentReq.setAmount(amountBigDec);
         activatePaymentReq.setQrCode(qrCode);
 
-        ActivatePaymentNoticeRes activatePaymentRes = objectFactoryUtil.createActivatePaymentNoticeRes();
+        ActivatePaymentNoticeV2Response activatePaymentRes = objectFactoryUtil.createActivatePaymentNoticeV2Response();
         CtFaultBean ctFault = objectFactoryUtil.createCtFaultBean();
         ctFault.setFaultCode("PPT_PAGAMENTO_IN_CORSO");
         activatePaymentRes.setFault(ctFault);
         activatePaymentRes.setOutcome(StOutcome.KO);
 
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNotice(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
                 .thenReturn(Mono.just(activatePaymentRes));
-        Mockito.when(objectFactoryNodeForPsp.createActivatePaymentNoticeReq(Mockito.any()))
-                .thenReturn(objectFactoryUtil.createActivatePaymentNoticeReq(activatePaymentReq));
-        Mockito.when(nodoConfig.baseActivatePaymentNoticeReq()).thenReturn(new ActivatePaymentNoticeReq());
+        Mockito.when(objectFactoryNodeForPsp.createActivatePaymentNoticeV2Request(Mockito.any()))
+                .thenReturn(objectFactoryUtil.createActivatePaymentNoticeV2Request(activatePaymentReq));
+        Mockito.when(nodoConfig.baseActivatePaymentNoticeV2Request()).thenReturn(new ActivatePaymentNoticeV2Request());
 
         /* Test / asserts */
         Mono<PaymentRequestInfo> paymentRequestInfoMono = nodoOperations
@@ -156,14 +180,14 @@ class NodoOperationsTest {
         String fiscalCode = "77777777777";
         String paymentNotice = "302000100000009424";
 
-        ActivatePaymentNoticeReq activatePaymentReq = objectFactoryUtil.createActivatePaymentNoticeReq();
+        ActivatePaymentNoticeV2Request activatePaymentReq = objectFactoryUtil.createActivatePaymentNoticeV2Request();
         CtQrCode qrCode = new CtQrCode();
         qrCode.setFiscalCode(fiscalCode);
         qrCode.setNoticeNumber(paymentNotice);
         activatePaymentReq.setAmount(amountBigDec);
         activatePaymentReq.setQrCode(qrCode);
 
-        ActivatePaymentNoticeRes activatePaymentRes = objectFactoryUtil.createActivatePaymentNoticeRes();
+        ActivatePaymentNoticeV2Response activatePaymentRes = objectFactoryUtil.createActivatePaymentNoticeV2Response();
         activatePaymentRes.setPaymentToken(null);
         activatePaymentRes.setFiscalCodePA(fiscalCode);
         activatePaymentRes.setTotalAmount(amountBigDec);
@@ -171,11 +195,11 @@ class NodoOperationsTest {
         activatePaymentRes.setOutcome(StOutcome.OK);
 
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNotice(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
                 .thenReturn(Mono.just(activatePaymentRes));
-        Mockito.when(objectFactoryNodeForPsp.createActivatePaymentNoticeReq(Mockito.any()))
-                .thenReturn(objectFactoryUtil.createActivatePaymentNoticeReq(activatePaymentReq));
-        Mockito.when(nodoConfig.baseActivatePaymentNoticeReq()).thenReturn(new ActivatePaymentNoticeReq());
+        Mockito.when(objectFactoryNodeForPsp.createActivatePaymentNoticeV2Request(Mockito.any()))
+                .thenReturn(objectFactoryUtil.createActivatePaymentNoticeV2Request(activatePaymentReq));
+        Mockito.when(nodoConfig.baseActivatePaymentNoticeV2Request()).thenReturn(new ActivatePaymentNoticeV2Request());
 
         /* Test / asserts */
         Mono<PaymentRequestInfo> paymentRequestInfoMono = nodoOperations
@@ -226,29 +250,31 @@ class NodoOperationsTest {
         BigDecimal amountBigDec = BigDecimal.valueOf(amount.doubleValue() / 100)
                 .setScale(2, RoundingMode.CEILING);
 
-        ActivatePaymentNoticeReq activatePaymentReq = objectFactoryUtil.createActivatePaymentNoticeReq();
+        ActivatePaymentNoticeV2Request activatePaymentReq = objectFactoryUtil.createActivatePaymentNoticeV2Request();
         CtQrCode qrCode = new CtQrCode();
         qrCode.setFiscalCode(paTaxCode);
         qrCode.setNoticeNumber(paymentNotice);
         activatePaymentReq.setAmount(amountBigDec);
         activatePaymentReq.setQrCode(qrCode);
 
-        ActivatePaymentNoticeRes activatePaymentRes = objectFactoryUtil.createActivatePaymentNoticeRes();
+        ActivatePaymentNoticeV2Response activatePaymentRes = objectFactoryUtil.createActivatePaymentNoticeV2Response();
         activatePaymentRes.setPaymentToken(paymentToken);
         activatePaymentRes.setFiscalCodePA(paTaxCode);
         activatePaymentRes.setTotalAmount(amountBigDec);
         activatePaymentRes.setPaymentDescription(description);
         activatePaymentRes.setOutcome(StOutcome.OK);
+        activatePaymentRes.setTransferList(objectFactoryUtil.createCtTransferListPSPV2());
 
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNotice(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(
-                objectFactoryNodeForPsp.createActivatePaymentNoticeReq(activatePaymentNoticeReqArgumentCaptor.capture())
+                objectFactoryNodeForPsp
+                        .createActivatePaymentNoticeV2Request(activatePaymentNoticeReqArgumentCaptor.capture())
         )
-                .thenReturn(objectFactoryUtil.createActivatePaymentNoticeReq(activatePaymentReq));
+                .thenReturn(objectFactoryUtil.createActivatePaymentNoticeV2Request(activatePaymentReq));
 
-        Mockito.when(nodoConfig.baseActivatePaymentNoticeReq()).thenReturn(new ActivatePaymentNoticeReq());
+        Mockito.when(nodoConfig.baseActivatePaymentNoticeV2Request()).thenReturn(new ActivatePaymentNoticeV2Request());
 
         /* test */
         PaymentRequestInfo response = nodoOperations
@@ -262,7 +288,7 @@ class NodoOperationsTest {
                 .block();
 
         /* asserts */
-        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNotice(Mockito.any());
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
 
         assertEquals(rptId, response.id());
         assertEquals(paymentToken, response.paymentToken());

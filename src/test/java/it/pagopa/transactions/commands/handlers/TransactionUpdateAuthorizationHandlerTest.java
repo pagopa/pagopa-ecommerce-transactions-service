@@ -1,11 +1,9 @@
 package it.pagopa.transactions.commands.handlers;
 
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedEvent;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestedEvent;
+import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.domain.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -24,6 +22,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -103,7 +102,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                                 rptId,
                                 amount,
                                 description,
-                                nullPaymentContextCode
+                                nullPaymentContextCode,
+                                List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, amount.value(), null))
                         )
                 ),
                 email,

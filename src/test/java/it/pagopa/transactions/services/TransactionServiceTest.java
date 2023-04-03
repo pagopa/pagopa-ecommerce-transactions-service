@@ -1,9 +1,8 @@
 package it.pagopa.transactions.services;
 
+import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -25,6 +24,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -72,7 +72,8 @@ class TransactionServiceTest {
                                         null,
                                         "dest",
                                         0,
-                                        TEST_CPP.toString()
+                                        TEST_CPP.toString(),
+                                        List.of(new PaymentTransferInformation("77777777777", false, 0, null))
                                 )
                         )
                 );
@@ -96,7 +97,8 @@ class TransactionServiceTest {
                                 new RptId(TransactionTestUtils.RPT_ID),
                                 new TransactionAmount(0),
                                 new TransactionDescription("desc"),
-                                new PaymentContextCode(TEST_CPP.toString())
+                                new PaymentContextCode(TEST_CPP.toString()),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,

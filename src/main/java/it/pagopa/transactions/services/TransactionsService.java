@@ -33,10 +33,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -243,12 +240,17 @@ public class TransactionsService {
                                                                     .substring(0, 11)
                                                     )
                                                     .transferList(
-                                                            List.of(
-                                                                    new TransferListItemDto().creditorInstitution(
-                                                                            transaction.getPaymentNotices().get(0)
-                                                                                    .getRptId().substring(0, 11)
-                                                                    ).digitalStamp(false)
-                                                            )
+                                                            transaction.getPaymentNotices().get(0).getTransferList()
+                                                                    .stream()
+                                                                    .map(
+                                                                            t -> new TransferListItemDto()
+                                                                                    .creditorInstitution(
+                                                                                            t.getPaFiscalCode()
+                                                                                    ).digitalStamp(t.getDigitalStamp())
+                                                                                    .transferCategory(
+                                                                                            t.getTransferCategory()
+                                                                                    )
+                                                                    ).toList()
                                                     ),
                                             null
                                     )
@@ -324,7 +326,16 @@ public class TransactionsService {
                                                             new PaymentContextCode(
                                                                     paymentNotice
                                                                             .getPaymentContextCode()
-                                                            )
+                                                            ),
+                                                            paymentNotice.getTransferList().stream()
+                                                                    .map(
+                                                                            transfer -> new PaymentTransferInfo(
+                                                                                    transfer.getPaFiscalCode(),
+                                                                                    transfer.getDigitalStamp(),
+                                                                                    transfer.getTransferAmount(),
+                                                                                    transfer.getTransferCategory()
+                                                                            )
+                                                                    ).toList()
                                                     )
                                             ).toList(),
                                     transactionDocument.getEmail(),
@@ -385,7 +396,7 @@ public class TransactionsService {
                             Mono<BaseTransaction> baseTransaction = transactionsUtils.reduceEvents(transactionId);
                             return wasTransactionAuthorized(transactionId)
                                     .<Either<TransactionInfoDto, Mono<BaseTransaction>>>flatMap(alreadyAuthorized -> {
-                                        if (!alreadyAuthorized) {
+                                        if (Boolean.FALSE.equals(alreadyAuthorized)) {
                                             return Mono.just(baseTransaction).map(Either::right);
                                         } else {
                                             return baseTransaction.map(
@@ -576,7 +587,17 @@ public class TransactionsService {
                                                             new TransactionDescription(paymentNotice.getDescription()),
                                                             new PaymentContextCode(
                                                                     paymentNotice.getPaymentContextCode()
-                                                            )
+                                                            ),
+                                                            paymentNotice.getTransferList().stream()
+                                                                    .map(
+                                                                            transfer -> new PaymentTransferInfo(
+                                                                                    transfer.getPaFiscalCode(),
+                                                                                    transfer.getDigitalStamp(),
+                                                                                    transfer.getTransferAmount(),
+                                                                                    transfer.getTransferCategory()
+                                                                            )
+                                                                    ).toList()
+
                                                     )
                                             )
                                             .toList(),
@@ -650,6 +671,27 @@ public class TransactionsService {
                                                         .reason(paymentNotice.transactionDescription().value())
                                                         .rptId(paymentNotice.rptId().value())
                                                         .paymentToken(paymentNotice.paymentToken().value())
+                                                        .transferList(
+                                                                paymentNotice.transferList().stream().map(
+                                                                        paymentTransferInfo -> new TransferDto()
+                                                                                .digitalStamp(
+                                                                                        paymentTransferInfo
+                                                                                                .digitalStamp()
+                                                                                )
+                                                                                .paFiscalCode(
+                                                                                        paymentTransferInfo
+                                                                                                .paFiscalCode()
+                                                                                )
+                                                                                .transferAmount(
+                                                                                        paymentTransferInfo
+                                                                                                .transferAmount()
+                                                                                )
+                                                                                .transferCategory(
+                                                                                        paymentTransferInfo
+                                                                                                .transferCategory()
+                                                                                )
+                                                                ).toList()
+                                                        )
                                         ).toList()
                                 )
                                 .authToken(authToken)

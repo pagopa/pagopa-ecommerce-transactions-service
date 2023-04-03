@@ -25,6 +25,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -71,7 +72,18 @@ class TransactionRequestAuthorizizationHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                List.of(new PaymentNotice(paymentToken, rptId, amount, description, nullPaymentContextCode)),
+                List.of(
+                        new PaymentNotice(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description,
+                                nullPaymentContextCode,
+                                new ArrayList<>()
+                        )
+                ), // TODO
+                   // TRANSFER
+                   // LIST
                 email,
                 null,
                 null,
@@ -134,7 +146,18 @@ class TransactionRequestAuthorizizationHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                List.of(new PaymentNotice(paymentToken, rptId, amount, description, nullPaymentContextCode)),
+                List.of(
+                        new PaymentNotice(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description,
+                                nullPaymentContextCode,
+                                new ArrayList<>()
+                        )
+                ), // TODO
+                   // TRANSFER
+                   // LIST
                 email,
                 null,
                 null,
@@ -200,7 +223,18 @@ class TransactionRequestAuthorizizationHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                List.of(new PaymentNotice(paymentToken, rptId, amount, description, nullPaymentContextCode)),
+                List.of(
+                        new PaymentNotice(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description,
+                                nullPaymentContextCode,
+                                new ArrayList<>()
+                        )
+                ), // TODO
+                   // TRANSFER
+                   // LIST
                 email,
                 faultCode,
                 faultCodeString,
@@ -260,7 +294,18 @@ class TransactionRequestAuthorizizationHandlerTest {
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                List.of(new PaymentNotice(paymentToken, rptId, amount, description, nullPaymentContextCode)),
+                List.of(
+                        new PaymentNotice(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description,
+                                nullPaymentContextCode,
+                                new ArrayList<>()
+                        )
+                ), // TODO
+                   // TRANSFER
+                   // LIST
                 email,
                 faultCode,
                 faultCodeString,
