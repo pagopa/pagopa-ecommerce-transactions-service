@@ -2,11 +2,9 @@ package it.pagopa.transactions.commands.handlers;
 
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
-import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
-import it.pagopa.ecommerce.commons.documents.v1.Transaction;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
+import it.pagopa.ecommerce.commons.domain.v1.PaymentTransferInfo;
 import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
@@ -30,6 +28,7 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -39,6 +38,7 @@ import java.util.UUID;
 public class TransactionActivateHandler
         implements CommandHandler<TransactionActivateCommand, Mono<Tuple2<Mono<TransactionActivatedEvent>, String>>> {
 
+    public static final int TRANSFER_LIST_MAX_SIZE = 5;
     private final PaymentRequestsInfoRepository paymentRequestsInfoRepository;
 
     private final TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository;
@@ -130,7 +130,8 @@ public class TransactionActivateHandler
                                                                                                 .getEcommerceFiscalCode(),
                                                                                         nodoOperations
                                                                                                 .generateRandomStringToIdempotencyKey()
-                                                                                )
+                                                                                ),
+                                                                                new ArrayList<>(TRANSFER_LIST_MAX_SIZE)
                                                                         );
                                                                         return paymentRequestsInfoRepository
                                                                                 .save(
@@ -293,7 +294,15 @@ public class TransactionActivateHandler
                         paymentRequestInfo.id().value(),
                         paymentRequestInfo.description(),
                         paymentRequestInfo.amount(),
-                        null
+                        null,
+                        paymentRequestInfo.transferList().stream().map(
+                                transfer -> new PaymentTransferInformation(
+                                        transfer.paFiscalCode(),
+                                        transfer.digitalStamp(),
+                                        transfer.transferAmount(),
+                                        transfer.transferCategory()
+                                )
+                        ).toList()
                 )
         ).toList();
     }
