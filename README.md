@@ -28,17 +28,12 @@ These are all environment variables needed by the application:
 | NOTIFICATIONS_SERVICE_READ_TIMEOUT                                 |     | Timeout for requests towards Notifications service                                                         | number |         |
 | NOTIFICATIONS_SERVICE_CONNECTION_TIMEOUT                           |     | Timeout for establishing connections towards Notifications service                                         | number |         |
 | NOTIFICATIONS_SERVICE_API_KEY                                      |     | Notifications service API Key                                                                              | string |         |
-| NODOPERPM_URI                                                      |     | NodoPerPM connection URI                                                                                   | string |         |
-| NODOPERPM_READ_TIMEOUT                                             |     | NodoPerPM read timeout                                                                                     | number |         |
-| NODOPERPM_CONNECTION_TIMEOUT                                       |     | NodoPerPM connection timeout                                                                               | number |         |
 | PAYMENT_TOKEN_VALIDITY_TIME                                        |     | Validity time in seconds of a payment token                                                                | number |         |
 | TRANSACTION_EXPIRATION_QUEUE_NAME                                  |     | Name of the queue for transaction expiration for activated transactions                                    | string |         |
 | TRANSACTION_CLOSEPAYMENT_RETRY_QUEUE_NAME                          |     | Name of the retry queue for closure error events                                                           | string |         |
 | TRANSACTION_REFUND_QUEUE_NAME                                      |     | Name of the refund queue for transactions that receive a closePayment with OK authorization and KO outcome | string |         |
 | TRANSACTIONS_RETRY_OFFSET                                          |     | Seconds to offset validity end to account for more retries                                                 | number |         |
 | CLOSURE_RETRY_INTERVAL                                             |     | Seconds to wait at closing the transaction before making a retry                                           | number |         |
-| PERSONAL_DATA_VAULT_API_KEY                                        |     | API Key for Personal Data Vault (PDV is used to safely encrypt PIIs, e.g. the user's email address)        | string |         |
-| PERSONAL_DATA_VAULT_API_BASE_PATH                                  |     | API base path for Personal Data Vault                                                                      | string |         |
 
 
 An example configuration of these environment variables is in the `.env.example` file.
