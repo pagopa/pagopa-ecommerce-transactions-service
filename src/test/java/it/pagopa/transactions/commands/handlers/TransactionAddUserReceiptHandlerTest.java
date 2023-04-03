@@ -1,29 +1,20 @@
 package it.pagopa.transactions.commands.handlers;
 
-import com.azure.core.util.BinaryData;
-import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.*;
-import it.pagopa.ecommerce.commons.domain.v1.Email;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
-import it.pagopa.generated.notifications.v1.dto.NotificationEmailResponseDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestPaymentsInnerDto;
-import it.pagopa.transactions.client.NotificationsServiceClient;
 import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.data.AddUserReceiptData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
-import it.pagopa.transactions.utils.ConfidentialMailUtils;
-import it.pagopa.transactions.utils.Queues;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -35,7 +26,6 @@ import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 
@@ -47,37 +37,15 @@ class TransactionAddUserReceiptHandlerTest {
     @Mock
     private TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptDataEventRepository;
 
-    @Mock
-    TransactionsEventStoreRepository<TransactionRefundedData> refundedRequestedEventStoreRepository;
-
     private TransactionsEventStoreRepository<Object> eventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
 
     private final TransactionsUtils transactionsUtils = new TransactionsUtils(eventStoreRepository);
 
-    @Mock
-    NotificationsServiceClient notificationsServiceClient;
-
-    @Captor
-    ArgumentCaptor<NotificationsServiceClient.SuccessTemplateRequest> successTemplateMailCaptor;
-
-    @Captor
-    ArgumentCaptor<NotificationsServiceClient.KoTemplateRequest> koTemplateMailCaptor;
-
-    @Mock
-    private ConfidentialMailUtils confidentialMailUtils;
-
-    @Mock
-    private QueueAsyncClient transactionRefundQueueClient;
-
     @BeforeEach
     private void initTest() {
         updateStatusHandler = new TransactionAddUserReceiptHandler(
                 userReceiptDataEventRepository,
-                refundedRequestedEventStoreRepository,
-                notificationsServiceClient,
-                confidentialMailUtils,
-                transactionRefundQueueClient,
                 transactionsUtils
         );
     }
@@ -121,8 +89,8 @@ class TransactionAddUserReceiptHandlerTest {
                 addUserReceiptData
         );
 
-        TransactionUserReceiptAddedEvent event = transactionUserReceiptAddedEvent(
-                TransactionUserReceiptData.Outcome.OK
+        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
+                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
         );
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(
@@ -135,9 +103,6 @@ class TransactionAddUserReceiptHandlerTest {
         /* preconditions */
         Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionId(TRANSACTION_ID)).thenReturn(events);
-        Mockito.when(notificationsServiceClient.sendSuccessEmail(successTemplateMailCaptor.capture()))
-                .thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
-        Mockito.when(confidentialMailUtils.toEmail(EMAIL)).thenReturn(Mono.just(new Email(EMAIL_STRING)));
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
@@ -150,14 +115,11 @@ class TransactionAddUserReceiptHandlerTest {
                                 .equals(eventArg.getEventCode())
                 )
         );
-        NotificationsServiceClient.SuccessTemplateRequest successTemplateRequest = successTemplateMailCaptor
-                .getAllValues().get(0);
-        assertEquals(successTemplateRequest.to(), EMAIL_STRING);
-        assertEquals(successTemplateRequest.templateParameters().getUser().getEmail(), EMAIL_STRING);
+
     }
 
     @Test
-    void shouldSaveSuccessfulUpdateWithStatusClosureFailed() throws Exception {
+    void shouldSaveSuccessfulUpdateWithStatusClosureFailed() {
         TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
@@ -195,8 +157,10 @@ class TransactionAddUserReceiptHandlerTest {
                 addUserReceiptData
         );
 
-        TransactionUserReceiptAddedEvent event = TransactionTestUtils
-                .transactionUserReceiptAddedEvent(TransactionUserReceiptData.Outcome.OK);
+        TransactionUserReceiptRequestedEvent event = TransactionTestUtils
+                .transactionUserReceiptRequestedEvent(
+                        TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
+                );
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(
                 transactionActivatedEvent,
@@ -208,9 +172,6 @@ class TransactionAddUserReceiptHandlerTest {
         /* preconditions */
         Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionId(TRANSACTION_ID)).thenReturn(events);
-        Mockito.when(notificationsServiceClient.sendSuccessEmail(successTemplateMailCaptor.capture()))
-                .thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
-        Mockito.when(confidentialMailUtils.toEmail(EMAIL)).thenReturn(Mono.just(new Email(EMAIL_STRING)));
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
@@ -223,11 +184,7 @@ class TransactionAddUserReceiptHandlerTest {
                                 .equals(eventArg.getEventCode())
                 )
         );
-        NotificationsServiceClient.SuccessTemplateRequest successTemplateRequest = successTemplateMailCaptor
-                .getAllValues().get(0);
 
-        assertEquals(successTemplateRequest.to(), EMAIL_STRING);
-        assertEquals(successTemplateRequest.templateParameters().getUser().getEmail(), EMAIL_STRING);
     }
 
     @Test
@@ -269,8 +226,8 @@ class TransactionAddUserReceiptHandlerTest {
                 addUserReceiptData
         );
 
-        TransactionUserReceiptAddedEvent event = transactionUserReceiptAddedEvent(
-                TransactionUserReceiptData.Outcome.OK
+        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
+                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
         );
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(
@@ -283,12 +240,6 @@ class TransactionAddUserReceiptHandlerTest {
         /* preconditions */
         Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionId(TRANSACTION_ID)).thenReturn(events);
-        Mockito.when(notificationsServiceClient.sendKoEmail(koTemplateMailCaptor.capture()))
-                .thenReturn(Mono.just(new NotificationEmailResponseDto().outcome("OK")));
-        Mockito.when(refundedRequestedEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
-        Mockito.when(transactionRefundQueueClient.sendMessage(any(BinaryData.class)))
-                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESULT);
-        Mockito.when(confidentialMailUtils.toEmail(EMAIL)).thenReturn(Mono.just(new Email(EMAIL_STRING)));
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(transactionAddUserReceiptCommand))
@@ -301,8 +252,7 @@ class TransactionAddUserReceiptHandlerTest {
                                 .equals(eventArg.getEventCode())
                 )
         );
-        NotificationsServiceClient.KoTemplateRequest koTemplateRequest = koTemplateMailCaptor.getAllValues().get(0);
-        assertEquals(koTemplateRequest.to(), EMAIL_STRING);
+
     }
 
     @Test

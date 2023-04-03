@@ -1,66 +1,45 @@
 package it.pagopa.transactions.commands.handlers;
 
-import com.azure.core.util.BinaryData;
-import com.azure.storage.queue.QueueAsyncClient;
-import it.pagopa.ecommerce.commons.documents.v1.*;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionClosureData;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptData;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptRequestedEvent;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionClosed;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
-import it.pagopa.generated.notifications.templates.ko.KoTemplate;
-import it.pagopa.generated.notifications.templates.success.*;
-import it.pagopa.generated.notifications.v1.dto.NotificationEmailResponseDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
-import it.pagopa.transactions.client.NotificationsServiceClient;
 import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
-import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Locale;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 @Component
 @Slf4j
 public class TransactionAddUserReceiptHandler
-        implements CommandHandler<TransactionAddUserReceiptCommand, Mono<TransactionUserReceiptAddedEvent>> {
+        implements CommandHandler<TransactionAddUserReceiptCommand, Mono<TransactionUserReceiptRequestedEvent>> {
 
     private final TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptAddedEventRepository;
-
-    private final TransactionsEventStoreRepository<TransactionRefundedData> refundedDataTransactionsEventStoreRepository;
-    private final NotificationsServiceClient notificationsServiceClient;
-
-    private final ConfidentialMailUtils confidentialMailUtils;
-
-    private final QueueAsyncClient transactionRefundQueueClient;
 
     private final TransactionsUtils transactionsUtils;
 
     @Autowired
     public TransactionAddUserReceiptHandler(
             TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptAddedEventRepository,
-            TransactionsEventStoreRepository<TransactionRefundedData> refundedRequestedEventStoreRepository,
-            NotificationsServiceClient notificationsServiceClient,
-            ConfidentialMailUtils confidentialMailUtils,
-            @Qualifier("transactionRefundQueueAsyncClient") QueueAsyncClient transactionRefundQueueClient,
             TransactionsUtils transactionsUtils
     ) {
         this.userReceiptAddedEventRepository = userReceiptAddedEventRepository;
-        this.refundedDataTransactionsEventStoreRepository = refundedRequestedEventStoreRepository;
-        this.notificationsServiceClient = notificationsServiceClient;
-        this.confidentialMailUtils = confidentialMailUtils;
-        this.transactionRefundQueueClient = transactionRefundQueueClient;
         this.transactionsUtils = transactionsUtils;
     }
 
     @Override
-    public Mono<TransactionUserReceiptAddedEvent> handle(TransactionAddUserReceiptCommand command) {
+    public Mono<TransactionUserReceiptRequestedEvent> handle(TransactionAddUserReceiptCommand command) {
         Mono<BaseTransaction> transaction = transactionsUtils.reduceEvents(
                 command.getData().transaction().getTransactionId()
         );
@@ -77,7 +56,12 @@ public class TransactionAddUserReceiptHandler
                         )
                 )
                 .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
-
+        URI paymentMethodUri;
+        try {
+            paymentMethodUri = new URI("http://paymentMethodUri.it");// TODO where to take it?
+        } catch (URISyntaxException e) {
+            throw new InvalidRequestException("Payment method is not a valid URI", e);
+        }
         return transaction
                 .filter(
                         t -> t.getStatus() == TransactionStatusDto.CLOSED &&
@@ -92,205 +76,28 @@ public class TransactionAddUserReceiptHandler
                 .flatMap(tx -> {
                     AddUserReceiptRequestDto addUserReceiptRequestDto = command.getData().addUserReceiptRequest();
                     String transactionId = command.getData().transaction().getTransactionId().value().toString();
-                    TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
+                    String language = "it-IT"; // FIXME: Add language to AuthorizationRequestData
+                    TransactionUserReceiptRequestedEvent event = new TransactionUserReceiptRequestedEvent(
                             transactionId,
                             new TransactionUserReceiptData(
                                     requestOutcomeToReceiptOutcome(
                                             command.getData().addUserReceiptRequest().getOutcome()
-                                    )
+                                    ),
+                                    language,
+                                    paymentMethodUri,
+                                    addUserReceiptRequestDto.getPaymentDate(),
+                                    addUserReceiptRequestDto.getPayments().get(0)
+                                            .getOfficeName(),
+                                    addUserReceiptRequestDto.getPayments().get(0)
+                                            .getDescription()
+
                             )
                     );
 
-                    String language = "it-IT"; // FIXME: Add language to AuthorizationRequestData
-                    Mono<NotificationEmailResponseDto> emailResponse = Mono
-                            .just(event.getData().getResponseOutcome())
-                            .flatMap(status -> {
-                                switch (status) {
-                                    case OK -> {
-                                        return sendSuccessEmail(tx, addUserReceiptRequestDto, language);
-                                    }
-                                    case KO -> {
-                                        return sendKoEmail(tx, addUserReceiptRequestDto, language);
-                                    }
-                                    default -> {
-                                        return Mono.error(
-                                                new IllegalStateException(
-                                                        "Invalid new status for user receipt handler: %s"
-                                                                .formatted(status)
-                                                )
-                                        );
-                                    }
-                                }
-                            });
+                    return Mono.just(event)
+                            .flatMap(v -> userReceiptAddedEventRepository.save(event));
 
-                    return emailResponse
-                            .flatMap(v -> userReceiptAddedEventRepository.save(event))
-                            .flatMap(e -> {
-                                if (command.getData().addUserReceiptRequest()
-                                        .getOutcome() == AddUserReceiptRequestDto.OutcomeEnum.KO) {
-                                    TransactionRefundRequestedEvent refundRequestedEvent = new TransactionRefundRequestedEvent(
-                                            transactionId,
-                                            new TransactionRefundedData(TransactionStatusDto.NOTIFIED_KO)
-                                    );
-
-                                    return refundedDataTransactionsEventStoreRepository.save(refundRequestedEvent)
-                                            .then(
-                                                    transactionRefundQueueClient
-                                                            .sendMessage(BinaryData.fromObject(refundRequestedEvent))
-                                            )
-                                            .thenReturn(e);
-                                } else {
-                                    return Mono.just(e);
-                                }
-                            });
                 });
-    }
-
-    private Mono<NotificationEmailResponseDto> sendKoEmail(
-                                                           TransactionClosed tx,
-                                                           AddUserReceiptRequestDto addUserReceiptRequestDto,
-                                                           String language
-    ) {
-        return confidentialMailUtils.toEmail(tx.getEmail()).flatMap(
-                emailAddress -> notificationsServiceClient.sendKoEmail(
-                        new NotificationsServiceClient.KoTemplateRequest(
-                                emailAddress.value(),
-                                "Il pagamento non è riuscito",
-                                language,
-                                new KoTemplate(
-                                        new it.pagopa.generated.notifications.templates.ko.TransactionTemplate(
-                                                tx.getTransactionId().value().toString().toLowerCase(),
-                                                dateTimeToHumanReadableString(
-                                                        addUserReceiptRequestDto.getPaymentDate(),
-                                                        Locale.forLanguageTag(language)
-                                                ),
-                                                amountToHumanReadableString(
-                                                        tx.getPaymentNotices().stream()
-                                                                .mapToInt(
-                                                                        paymentNotice -> paymentNotice
-                                                                                .transactionAmount()
-                                                                                .value()
-                                                                )
-                                                                .sum()
-                                                )
-                                        )
-                                )
-                        )
-                )
-        );
-    }
-
-    private Mono<NotificationEmailResponseDto> sendSuccessEmail(
-                                                                TransactionClosed tx,
-                                                                AddUserReceiptRequestDto addUserReceiptRequestDto,
-                                                                String language
-    ) {
-        TransactionAuthorizationRequestData transactionAuthorizationRequestData = tx
-                .getTransactionAuthorizationRequestData();
-
-        return confidentialMailUtils.toEmail(tx.getEmail()).flatMap(
-                emailAddress -> notificationsServiceClient.sendSuccessEmail(
-                        new NotificationsServiceClient.SuccessTemplateRequest(
-                                emailAddress.value(),
-                                "Il riepilogo del tuo pagamento",
-                                language,
-                                new SuccessTemplate(
-                                        new TransactionTemplate(
-                                                tx.getTransactionId().value().toString().toLowerCase(),
-                                                dateTimeToHumanReadableString(
-                                                        addUserReceiptRequestDto.getPaymentDate(),
-                                                        Locale.forLanguageTag(language)
-                                                ),
-                                                amountToHumanReadableString(
-                                                        tx.getPaymentNotices().stream()
-                                                                .mapToInt(
-                                                                        paymentNotice -> paymentNotice
-                                                                                .transactionAmount()
-                                                                                .value()
-                                                                )
-                                                                .sum() + transactionAuthorizationRequestData.getFee()
-                                                ),
-                                                new PspTemplate(
-                                                        transactionAuthorizationRequestData.getPspBusinessName(),
-                                                        new FeeTemplate(
-                                                                amountToHumanReadableString(
-                                                                        transactionAuthorizationRequestData.getFee()
-                                                                )
-                                                        )
-                                                ),
-                                                transactionAuthorizationRequestData.getAuthorizationRequestId(),
-                                                tx.getTransactionAuthorizationCompletedData().getAuthorizationCode(),
-                                                new PaymentMethodTemplate(
-                                                        transactionAuthorizationRequestData.getPaymentMethodName(),
-                                                        "paymentMethodLogo", // TODO: Logos
-                                                        null,
-                                                        false
-                                                )
-                                        ),
-                                        new UserTemplate(
-                                                null,
-                                                emailAddress.value()
-                                        ),
-                                        new CartTemplate(
-                                                tx.getPaymentNotices().stream().map(
-                                                        paymentNotice -> new ItemTemplate(
-                                                                new RefNumberTemplate(
-                                                                        RefNumberTemplate.Type.CODICE_AVVISO,
-                                                                        paymentNotice.rptId().getNoticeId()
-                                                                ),
-                                                                null,
-                                                                new PayeeTemplate(
-                                                                        addUserReceiptRequestDto.getPayments().get(0)
-                                                                                .getOfficeName(),
-                                                                        paymentNotice.rptId().getFiscalCode()
-                                                                ),
-                                                                addUserReceiptRequestDto.getPayments().get(0)
-                                                                        .getDescription(),
-                                                                amountToHumanReadableString(
-                                                                        paymentNotice.transactionAmount().value()
-                                                                )
-                                                        )
-                                                ).toList(),
-                                                amountToHumanReadableString(
-                                                        tx.getPaymentNotices().stream()
-                                                                .mapToInt(
-                                                                        paymentNotice -> paymentNotice
-                                                                                .transactionAmount()
-                                                                                .value()
-                                                                )
-                                                                .sum()
-                                                )
-                                        )
-                                )
-                        )
-                )
-        );
-    }
-
-    private String amountToHumanReadableString(int amount) {
-        String repr = String.valueOf(amount);
-        int centsSeparationIndex = Math.max(0, repr.length() - 2);
-
-        String cents = repr.substring(centsSeparationIndex);
-        String euros = repr.substring(0, centsSeparationIndex);
-
-        if (euros.isEmpty()) {
-            euros = "0";
-        }
-
-        if (cents.length() == 1) {
-            cents = "0" + cents;
-        }
-
-        return "%s,%s".formatted(euros, cents);
-    }
-
-    private String dateTimeToHumanReadableString(
-                                                 OffsetDateTime dateTime,
-                                                 Locale locale
-    ) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd LLLL yyyy, kk:mm:ss").withLocale(locale);
-        return dateTime.format(formatter);
     }
 
     private static TransactionUserReceiptData.Outcome requestOutcomeToReceiptOutcome(
