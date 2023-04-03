@@ -1,7 +1,7 @@
 package it.pagopa.transactions.projections.handlers;
 
-import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptAddedEvent;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptData;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptRequestedEvent;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -42,10 +42,9 @@ class TransactionUserReceiptProjectionHandlerTest {
                 transaction.getCreationDate().toString()
         );
 
-        TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
-                transaction.getTransactionId().value().toString(),
-                new TransactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
-        );
+        TransactionUserReceiptRequestedEvent event = TransactionTestUtils
+                .transactionUserReceiptRequestedEvent(TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
+                );
 
         /*
          * Preconditions
@@ -88,8 +87,8 @@ class TransactionUserReceiptProjectionHandlerTest {
                 transaction.getCreationDate().toString()
         );
 
-        TransactionUserReceiptAddedEvent event = TransactionTestUtils
-                .transactionUserReceiptAddedEvent(TransactionUserReceiptData.Outcome.KO);
+        TransactionUserReceiptRequestedEvent event = TransactionTestUtils
+                .transactionUserReceiptRequestedEvent(TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.KO));
 
         /*
          * Preconditions

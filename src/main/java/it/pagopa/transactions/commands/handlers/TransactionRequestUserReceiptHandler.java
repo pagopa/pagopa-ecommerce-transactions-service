@@ -22,7 +22,7 @@ import java.net.URISyntaxException;
 
 @Component
 @Slf4j
-public class TransactionAddUserReceiptHandler
+public class TransactionRequestUserReceiptHandler
         implements CommandHandler<TransactionAddUserReceiptCommand, Mono<TransactionUserReceiptRequestedEvent>> {
 
     private final TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptAddedEventRepository;
@@ -30,7 +30,7 @@ public class TransactionAddUserReceiptHandler
     private final TransactionsUtils transactionsUtils;
 
     @Autowired
-    public TransactionAddUserReceiptHandler(
+    public TransactionRequestUserReceiptHandler(
             TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptAddedEventRepository,
             TransactionsUtils transactionsUtils
     ) {

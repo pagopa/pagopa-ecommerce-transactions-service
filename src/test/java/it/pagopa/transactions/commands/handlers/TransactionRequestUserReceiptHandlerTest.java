@@ -30,9 +30,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 
 @ExtendWith(MockitoExtension.class)
-class TransactionAddUserReceiptHandlerTest {
+class TransactionRequestUserReceiptHandlerTest {
 
-    private TransactionAddUserReceiptHandler updateStatusHandler;
+    private TransactionRequestUserReceiptHandler updateStatusHandler;
 
     @Mock
     private TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptDataEventRepository;
@@ -44,7 +44,7 @@ class TransactionAddUserReceiptHandlerTest {
 
     @BeforeEach
     private void initTest() {
-        updateStatusHandler = new TransactionAddUserReceiptHandler(
+        updateStatusHandler = new TransactionRequestUserReceiptHandler(
                 userReceiptDataEventRepository,
                 transactionsUtils
         );

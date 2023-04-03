@@ -55,7 +55,7 @@ public class TransactionsService {
     private TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandler;
 
     @Autowired
-    private TransactionAddUserReceiptHandler transactionAddUserReceiptHandler;
+    private TransactionRequestUserReceiptHandler transactionRequestUserReceiptHandler;
 
     @Autowired
     private TransactionUserCancelHandler transactionCancelHandler;
@@ -619,7 +619,7 @@ public class TransactionsService {
                         }
                 )
                 .flatMap(
-                        transactionAddUserReceiptCommand -> transactionAddUserReceiptHandler
+                        transactionAddUserReceiptCommand -> transactionRequestUserReceiptHandler
                                 .handle(transactionAddUserReceiptCommand)
                 )
                 .doOnNext(
