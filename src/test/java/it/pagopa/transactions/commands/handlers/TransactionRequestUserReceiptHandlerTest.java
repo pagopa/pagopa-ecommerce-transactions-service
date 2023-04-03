@@ -1,5 +1,7 @@
 package it.pagopa.transactions.commands.handlers;
 
+import com.azure.core.util.BinaryData;
+import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
@@ -15,7 +17,8 @@ import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
@@ -23,9 +26,12 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.*;
+import static it.pagopa.transactions.utils.Queues.QUEUE_SUCCESSFUL_RESPONSE;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 
@@ -34,8 +40,13 @@ class TransactionRequestUserReceiptHandlerTest {
 
     private TransactionRequestUserReceiptHandler updateStatusHandler;
 
-    @Mock
-    private TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptDataEventRepository;
+    private TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptDataEventRepository = Mockito
+            .mock(TransactionsEventStoreRepository.class);
+
+    private QueueAsyncClient queueAsyncClient = Mockito.mock(QueueAsyncClient.class);
+
+    @Captor
+    private ArgumentCaptor<BinaryData> queueArgumentCaptor;
 
     private TransactionsEventStoreRepository<Object> eventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
@@ -43,10 +54,11 @@ class TransactionRequestUserReceiptHandlerTest {
     private final TransactionsUtils transactionsUtils = new TransactionsUtils(eventStoreRepository);
 
     @BeforeEach
-    private void initTest() {
+    public void initTest() {
         updateStatusHandler = new TransactionRequestUserReceiptHandler(
                 userReceiptDataEventRepository,
-                transactionsUtils
+                transactionsUtils,
+                queueAsyncClient
         );
     }
 
@@ -103,7 +115,8 @@ class TransactionRequestUserReceiptHandlerTest {
         /* preconditions */
         Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionId(TRANSACTION_ID)).thenReturn(events);
-
+        Mockito.when(queueAsyncClient.sendMessageWithResponse(queueArgumentCaptor.capture(), any(), any()))
+                .thenReturn(QUEUE_SUCCESSFUL_RESPONSE);
         /* test */
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
                 .expectNext(event)
@@ -111,11 +124,24 @@ class TransactionRequestUserReceiptHandlerTest {
 
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
                 argThat(
-                        eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_ADDED_EVENT
+                        eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT
                                 .equals(eventArg.getEventCode())
                 )
         );
-
+        Mockito.verify(queueAsyncClient, Mockito.times(1)).sendMessageWithResponse(any(BinaryData.class), any(), any());
+        TransactionUserReceiptRequestedEvent queueEvent = queueArgumentCaptor.getValue()
+                .toObject(TransactionUserReceiptRequestedEvent.class);
+        assertEquals(TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT, queueEvent.getEventCode());
+        assertEquals(event.getData().getResponseOutcome(), queueEvent.getData().getResponseOutcome());
+        assertEquals(event.getData().getLanguage(), queueEvent.getData().getLanguage());
+        assertEquals(event.getData().getPaymentMethodLogoUri(), queueEvent.getData().getPaymentMethodLogoUri());
+        assertEquals(event.getData().getReceivingOfficeName(), queueEvent.getData().getReceivingOfficeName());
+        assertEquals(event.getData().getPaymentDescription(), queueEvent.getData().getPaymentDescription());
+        // made payment date comparison comparing dates at same zone id
+        assertEquals(
+                event.getData().getPaymentDate().atZoneSameInstant(ZoneOffset.UTC),
+                queueEvent.getData().getPaymentDate().atZoneSameInstant(ZoneOffset.UTC)
+        );
     }
 
     @Test
@@ -172,7 +198,8 @@ class TransactionRequestUserReceiptHandlerTest {
         /* preconditions */
         Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionId(TRANSACTION_ID)).thenReturn(events);
-
+        Mockito.when(queueAsyncClient.sendMessageWithResponse(queueArgumentCaptor.capture(), any(), any()))
+                .thenReturn(QUEUE_SUCCESSFUL_RESPONSE);
         /* test */
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
                 .expectNext(event)
@@ -180,9 +207,23 @@ class TransactionRequestUserReceiptHandlerTest {
 
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
                 argThat(
-                        eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_ADDED_EVENT
+                        eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT
                                 .equals(eventArg.getEventCode())
                 )
+        );
+        Mockito.verify(queueAsyncClient, Mockito.times(1)).sendMessageWithResponse(any(BinaryData.class), any(), any());
+        TransactionUserReceiptRequestedEvent queueEvent = queueArgumentCaptor.getValue()
+                .toObject(TransactionUserReceiptRequestedEvent.class);
+        assertEquals(TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT, queueEvent.getEventCode());
+        assertEquals(event.getData().getResponseOutcome(), queueEvent.getData().getResponseOutcome());
+        assertEquals(event.getData().getLanguage(), queueEvent.getData().getLanguage());
+        assertEquals(event.getData().getPaymentMethodLogoUri(), queueEvent.getData().getPaymentMethodLogoUri());
+        assertEquals(event.getData().getReceivingOfficeName(), queueEvent.getData().getReceivingOfficeName());
+        assertEquals(event.getData().getPaymentDescription(), queueEvent.getData().getPaymentDescription());
+        // made payment date comparison comparing dates at same zone id
+        assertEquals(
+                event.getData().getPaymentDate().atZoneSameInstant(ZoneOffset.UTC),
+                queueEvent.getData().getPaymentDate().atZoneSameInstant(ZoneOffset.UTC)
         );
 
     }
@@ -240,7 +281,8 @@ class TransactionRequestUserReceiptHandlerTest {
         /* preconditions */
         Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionId(TRANSACTION_ID)).thenReturn(events);
-
+        Mockito.when(queueAsyncClient.sendMessageWithResponse(queueArgumentCaptor.capture(), any(), any()))
+                .thenReturn(QUEUE_SUCCESSFUL_RESPONSE);
         /* test */
         StepVerifier.create(updateStatusHandler.handle(transactionAddUserReceiptCommand))
                 .expectNext(event)
@@ -248,11 +290,24 @@ class TransactionRequestUserReceiptHandlerTest {
 
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
                 argThat(
-                        eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_ADDED_EVENT
+                        eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT
                                 .equals(eventArg.getEventCode())
                 )
         );
-
+        Mockito.verify(queueAsyncClient, Mockito.times(1)).sendMessageWithResponse(any(BinaryData.class), any(), any());
+        TransactionUserReceiptRequestedEvent queueEvent = queueArgumentCaptor.getValue()
+                .toObject(TransactionUserReceiptRequestedEvent.class);
+        assertEquals(TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT, queueEvent.getEventCode());
+        assertEquals(event.getData().getResponseOutcome(), queueEvent.getData().getResponseOutcome());
+        assertEquals(event.getData().getLanguage(), queueEvent.getData().getLanguage());
+        assertEquals(event.getData().getPaymentMethodLogoUri(), queueEvent.getData().getPaymentMethodLogoUri());
+        assertEquals(event.getData().getReceivingOfficeName(), queueEvent.getData().getReceivingOfficeName());
+        assertEquals(event.getData().getPaymentDescription(), queueEvent.getData().getPaymentDescription());
+        // made payment date comparison comparing dates at same zone id
+        assertEquals(
+                event.getData().getPaymentDate().atZoneSameInstant(ZoneOffset.UTC),
+                queueEvent.getData().getPaymentDate().atZoneSameInstant(ZoneOffset.UTC)
+        );
     }
 
     @Test

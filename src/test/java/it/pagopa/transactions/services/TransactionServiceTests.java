@@ -489,8 +489,10 @@ public class TransactionServiceTests {
 
         TransactionUserReceiptRequestedEvent event = new TransactionUserReceiptRequestedEvent(
                 transactionDocument.getTransactionId(),
-                TransactionTestUtils.transactionUserReceiptData((TransactionUserReceiptData.Outcome.KO)
-                ));
+                TransactionTestUtils.transactionUserReceiptData(
+                        (TransactionUserReceiptData.Outcome.KO)
+                )
+        );
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
                 .outcome(AddUserReceiptRequestDto.OutcomeEnum.KO)
@@ -836,7 +838,7 @@ public class TransactionServiceTests {
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(AuthorizationResultDto.OK)
+                .authorizationResult(AuthorizationResultDto.KO)
                 .authorizationCode("authorizationCode")
                 .timestampOperation(OffsetDateTime.now());
 
@@ -858,7 +860,7 @@ public class TransactionServiceTests {
                 .transactionAuthorizationRequestedEvent();
         TransactionAuthorizationCompletedEvent transactionAuthorizationCompletedEvent = TransactionTestUtils
                 .transactionAuthorizationCompletedEvent(
-                        it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto.OK
+                        it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto.KO
                 );
         TransactionClosureFailedEvent transactionClosureFailedEvent = TransactionTestUtils
                 .transactionClosureFailedEvent(TransactionClosureData.Outcome.KO);

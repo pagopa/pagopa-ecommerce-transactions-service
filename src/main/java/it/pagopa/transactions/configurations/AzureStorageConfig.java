@@ -22,7 +22,6 @@ public class AzureStorageConfig {
         return buildQueueAsyncClient(storageConnectionString, queueName);
     }
 
-
     @Bean("transactionRefundQueueAsyncClient")
     @Qualifier
     public QueueAsyncClient transactionRefundQueueAsyncClient(
@@ -48,32 +47,34 @@ public class AzureStorageConfig {
         return buildQueueAsyncClient(storageConnectionString, queueName);
     }
 
-
     @Bean("transactionClosureQueueAsyncClient")
     public QueueAsyncClient transactionClosureQueueAsyncClient(
-            @Value(
-                    "${azurestorage.connectionstring}"
-            ) String storageConnectionString,
-            @Value(
-                    "${azurestorage.queues.transactionclosepayment.name}"
-            ) String queueName
+                                                               @Value(
+                                                                   "${azurestorage.connectionstring}"
+                                                               ) String storageConnectionString,
+                                                               @Value(
+                                                                   "${azurestorage.queues.transactionclosepayment.name}"
+                                                               ) String queueName
     ) {
         return buildQueueAsyncClient(storageConnectionString, queueName);
     }
 
     @Bean("transactionNotificationRequestedQueueAsyncClient")
     public QueueAsyncClient transactionNotificationRequestedQueueAsyncClient(
-            @Value(
-                    "${azurestorage.connectionstring}"
-            ) String storageConnectionString,
-            @Value(
-                    "${azurestorage.queues.transactionnotificationrequested.name}"
-            ) String queueName
+                                                                             @Value(
+                                                                                 "${azurestorage.connectionstring}"
+                                                                             ) String storageConnectionString,
+                                                                             @Value(
+                                                                                 "${azurestorage.queues.transactionnotificationrequested.name}"
+                                                                             ) String queueName
     ) {
         return buildQueueAsyncClient(storageConnectionString, queueName);
     }
 
-    private QueueAsyncClient buildQueueAsyncClient(String storageConnectionString, String queueName) {
+    private QueueAsyncClient buildQueueAsyncClient(
+                                                   String storageConnectionString,
+                                                   String queueName
+    ) {
         QueueAsyncClient queueAsyncClient = new QueueClientBuilder()
                 .connectionString(storageConnectionString)
                 .queueName(queueName)

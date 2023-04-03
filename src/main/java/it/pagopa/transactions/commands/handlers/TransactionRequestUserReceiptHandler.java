@@ -1,5 +1,7 @@
 package it.pagopa.transactions.commands.handlers;
 
+import com.azure.core.util.BinaryData;
+import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionClosureData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptRequestedEvent;
@@ -14,11 +16,13 @@ import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Duration;
 
 @Component
 @Slf4j
@@ -29,13 +33,20 @@ public class TransactionRequestUserReceiptHandler
 
     private final TransactionsUtils transactionsUtils;
 
+    @Qualifier("transactionNotificationRequestedQueueAsyncClient")
+    private final QueueAsyncClient transactionNotificationRequestedQueueAsyncClient;
+
     @Autowired
     public TransactionRequestUserReceiptHandler(
             TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptAddedEventRepository,
-            TransactionsUtils transactionsUtils
+            TransactionsUtils transactionsUtils,
+            @Qualifier(
+                "transactionNotificationRequestedQueueAsyncClient"
+            ) QueueAsyncClient transactionNotificationRequestedQueueAsyncClient
     ) {
         this.userReceiptAddedEventRepository = userReceiptAddedEventRepository;
         this.transactionsUtils = transactionsUtils;
+        this.transactionNotificationRequestedQueueAsyncClient = transactionNotificationRequestedQueueAsyncClient;
     }
 
     @Override
@@ -58,7 +69,7 @@ public class TransactionRequestUserReceiptHandler
                 .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
         URI paymentMethodUri;
         try {
-            paymentMethodUri = new URI("http://paymentMethodUri.it");// TODO where to take it?
+            paymentMethodUri = new URI("http://paymentMethodLogo.it");// TODO where to take it?
         } catch (URISyntaxException e) {
             throw new InvalidRequestException("Payment method is not a valid URI", e);
         }
@@ -94,9 +105,29 @@ public class TransactionRequestUserReceiptHandler
                             )
                     );
 
-                    return Mono.just(event)
-                            .flatMap(v -> userReceiptAddedEventRepository.save(event));
-
+                    return userReceiptAddedEventRepository.save(event)
+                            .flatMap(
+                                    userReceiptEvent -> transactionNotificationRequestedQueueAsyncClient
+                                            .sendMessageWithResponse(
+                                                    BinaryData.fromObject(userReceiptEvent),
+                                                    Duration.ZERO,
+                                                    null
+                                            ).doOnError(
+                                                    exception -> log.error(
+                                                            "Error to generate event TRANSACTION_ACTIVATED_EVENT for transactionId {} - error {}",
+                                                            event.getTransactionId(),
+                                                            exception.getMessage()
+                                                    )
+                                            )
+                                            .doOnNext(
+                                                    queueResponse -> log.info(
+                                                            "Generated event {} for transactionId {}",
+                                                            event.getEventCode(),
+                                                            event.getTransactionId()
+                                                    )
+                                            )
+                                            .thenReturn(userReceiptEvent)
+                            );
                 });
     }
 

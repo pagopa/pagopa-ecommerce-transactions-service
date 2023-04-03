@@ -37,13 +37,14 @@ class TransactionUserReceiptProjectionHandlerTest {
                 transaction.getTransactionActivatedData().getPaymentNotices(),
                 null,
                 transaction.getEmail(),
-                TransactionStatusDto.NOTIFIED_OK,
+                TransactionStatusDto.NOTIFICATION_REQUESTED,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
                 transaction.getCreationDate().toString()
         );
 
         TransactionUserReceiptRequestedEvent event = TransactionTestUtils
-                .transactionUserReceiptRequestedEvent(TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
+                .transactionUserReceiptRequestedEvent(
+                        TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
                 );
 
         /*
@@ -68,7 +69,7 @@ class TransactionUserReceiptProjectionHandlerTest {
                 .save(
                         argThat(
                                 savedTransaction -> savedTransaction.getStatus()
-                                        .equals(TransactionStatusDto.NOTIFIED_OK)
+                                        .equals(TransactionStatusDto.NOTIFICATION_REQUESTED)
                         )
                 );
     }
@@ -82,13 +83,15 @@ class TransactionUserReceiptProjectionHandlerTest {
                 transaction.getTransactionActivatedData().getPaymentNotices(),
                 null,
                 transaction.getEmail(),
-                TransactionStatusDto.REFUND_REQUESTED,
+                TransactionStatusDto.NOTIFICATION_REQUESTED,
                 transaction.getClientId(),
                 transaction.getCreationDate().toString()
         );
 
         TransactionUserReceiptRequestedEvent event = TransactionTestUtils
-                .transactionUserReceiptRequestedEvent(TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.KO));
+                .transactionUserReceiptRequestedEvent(
+                        TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.KO)
+                );
 
         /*
          * Preconditions
@@ -112,7 +115,7 @@ class TransactionUserReceiptProjectionHandlerTest {
                 .save(
                         argThat(
                                 savedTransaction -> savedTransaction.getStatus()
-                                        .equals(TransactionStatusDto.REFUND_REQUESTED)
+                                        .equals(TransactionStatusDto.NOTIFICATION_REQUESTED)
                         )
                 );
     }
