@@ -155,7 +155,7 @@ public class TransactionSendClosureHandler implements
                                             "fee",
                                             feeValue.toString(),
                                             "timestampOperation",
-                                            updateAuthorizationRequestDto.getTimestampOperation().toString(), //2023-04-03T15:42:22.826Z
+                                            updateAuthorizationRequestDto.getTimestampOperation().toString(), // 2023-04-03T15:42:22.826Z
                                             "totalAmount",
                                             totalAmountValue.toString()
                                     )
