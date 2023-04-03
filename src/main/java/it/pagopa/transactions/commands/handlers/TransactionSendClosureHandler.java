@@ -37,6 +37,8 @@ import java.util.Map;
 public class TransactionSendClosureHandler implements
         CommandHandler<TransactionClosureSendCommand, Mono<Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>>> {
 
+    public static final String TIPO_VERSAMENTO_CP = "CP";
+    public static final String ECOMMERCE_RRN = "ecommerceRRN";
     private final TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository;
 
     private final TransactionsEventStoreRepository<TransactionRefundedData> transactionRefundedEventStoreRepository;
@@ -145,7 +147,15 @@ public class TransactionSendClosureHandler implements
                                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
                                                     .toString(),
                                             "authorization_code",
-                                            updateAuthorizationRequestDto.getAuthorizationCode()
+                                            updateAuthorizationRequestDto.getAuthorizationCode(),
+                                            "tipoVersamento",
+                                            TIPO_VERSAMENTO_CP,
+                                            "rrn",
+                                            ECOMMERCE_RRN,
+                                            "fee",
+                                            String.valueOf(transactionAuthorizationRequestData.getFee()),
+                                            "timestampOperation",
+                                            updateAuthorizationRequestDto.getTimestampOperation().toString()
                                     )
                             );
 
