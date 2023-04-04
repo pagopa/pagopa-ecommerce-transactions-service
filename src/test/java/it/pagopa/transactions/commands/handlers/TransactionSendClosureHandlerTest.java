@@ -330,7 +330,8 @@ class TransactionSendClosureHandlerTest {
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
+                                                .sum()
                                                 + authorizationRequestData.getFee()
                                 ).toString()
                         )
@@ -483,7 +484,8 @@ class TransactionSendClosureHandlerTest {
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
+                                                .sum()
                                                 + authorizationRequestData.getFee()
                                 ).toString()
                         )
@@ -636,7 +638,8 @@ class TransactionSendClosureHandlerTest {
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
+                                                .sum()
                                                 + authorizationRequestData.getFee()
                                 ).toString()
                         )
@@ -788,7 +791,8 @@ class TransactionSendClosureHandlerTest {
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
+                                                .sum()
                                                 + authorizationRequestData.getFee()
                                 ).toString()
                         )
@@ -950,7 +954,8 @@ class TransactionSendClosureHandlerTest {
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
+                                                .sum()
                                                 + authorizationRequestData.getFee()
                                 ).toString()
                         )
@@ -1119,7 +1124,8 @@ class TransactionSendClosureHandlerTest {
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
+                                                .sum()
                                                 + authorizationRequestData.getFee()
                                 ).toString()
                         )
@@ -1298,7 +1304,8 @@ class TransactionSendClosureHandlerTest {
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
+                                                .sum()
                                                 + authorizationRequestData.getFee()
                                 ).toString()
                         )
@@ -1477,7 +1484,8 @@ class TransactionSendClosureHandlerTest {
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
+                                                .sum()
                                                 + authorizationRequestData.getFee()
                                 ).toString()
                         )
@@ -1653,7 +1661,8 @@ class TransactionSendClosureHandlerTest {
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
+                                                .sum()
                                                 + authorizationRequestData.getFee()
                                 ).toString()
                         )
@@ -1820,7 +1829,8 @@ class TransactionSendClosureHandlerTest {
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
+                                                .sum()
                                                 + authorizationRequestData.getFee()
                                 ).toString()
                         )
@@ -1945,7 +1955,8 @@ class TransactionSendClosureHandlerTest {
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
+                                                .sum()
                                                 + authorizationRequestData.getFee()
                                 ).toString()
                         )
@@ -2072,7 +2083,8 @@ class TransactionSendClosureHandlerTest {
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
+                                                .sum()
                                                 + authorizationRequestData.getFee()
                                 ).toString()
                         )
@@ -2209,7 +2221,8 @@ class TransactionSendClosureHandlerTest {
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
+                                                .sum()
                                                 + authorizationRequestData.getFee()
                                 ).toString()
                         )
@@ -2326,7 +2339,8 @@ class TransactionSendClosureHandlerTest {
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
+                                                .sum()
                                                 + authorizationRequestData.getFee()
                                 ).toString()
                         )
