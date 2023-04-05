@@ -116,14 +116,14 @@ public class TransactionSendClosureHandler implements
                             .getTransactionAuthorizationRequestData();
                     TransactionAuthorizationCompletedData transactionAuthorizationCompletedData = tx
                             .getTransactionAuthorizationCompletedData();
-                    BigDecimal totalAmountValue = EuroUtils.euroCentsToEuro(
+                    BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
                             tx.getPaymentNotices().stream()
                                     .mapToInt(
                                             paymentNotice -> paymentNotice.transactionAmount().value()
                                     )
                                     .sum() + transactionAuthorizationRequestData.getFee()
                     );
-                    BigDecimal feeValue = EuroUtils.euroCentsToEuro(transactionAuthorizationRequestData.getFee());
+                    BigDecimal fee = EuroUtils.euroCentsToEuro(transactionAuthorizationRequestData.getFee());
                     ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                             .paymentTokens(
                                     tx.getTransactionActivatedData().getPaymentNotices().stream()
@@ -138,8 +138,8 @@ public class TransactionSendClosureHandler implements
                             .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())
                             .idChannel(transactionAuthorizationRequestData.getPspChannelCode())
                             .transactionId(tx.getTransactionId().value().toString())
-                            .totalAmount(totalAmountValue)
-                            .fee(feeValue)
+                            .totalAmount(totalAmount)
+                            .fee(fee)
                             .timestampOperation(updateAuthorizationRequestDto.getTimestampOperation())
                             .paymentMethod(transactionAuthorizationRequestData.getPaymentTypeCode())
                             .additionalPaymentInformations(
@@ -154,13 +154,13 @@ public class TransactionSendClosureHandler implements
                                             "rrn",
                                             ECOMMERCE_RRN,
                                             "fee",
-                                            feeValue.toString(),
+                                            fee.toString(),
                                             "timestampOperation",
                                             OffsetDateTime.now().toString(), // 2023-04-03T15:42:22.826Z //FIXME Pass
                                                                              // the timestamp of the authorization
                                                                              // result
                                             "totalAmount",
-                                            totalAmountValue.toString()
+                                            totalAmount.toString()
                                     )
                             );
 
