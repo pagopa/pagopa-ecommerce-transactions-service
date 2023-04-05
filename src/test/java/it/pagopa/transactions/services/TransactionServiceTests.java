@@ -39,7 +39,6 @@ import reactor.test.StepVerifier;
 
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -100,7 +99,7 @@ public class TransactionServiceTests {
     private ClosureSendProjectionHandler closureSendProjectionHandler;
 
     @MockBean
-    private TransactionAddUserReceiptHandler transactionUpdateStatusHandler;
+    private TransactionRequestUserReceiptHandler transactionUpdateStatusHandler;
 
     @MockBean
     private TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandler;
@@ -431,9 +430,9 @@ public class TransactionServiceTests {
                 ZonedDateTime.now()
         );
 
-        TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
+        TransactionUserReceiptRequestedEvent event = new TransactionUserReceiptRequestedEvent(
                 transactionDocument.getTransactionId(),
-                new TransactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
+                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
         );
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
@@ -488,9 +487,11 @@ public class TransactionServiceTests {
                 ZonedDateTime.now()
         );
 
-        TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
+        TransactionUserReceiptRequestedEvent event = new TransactionUserReceiptRequestedEvent(
                 transactionDocument.getTransactionId(),
-                new TransactionUserReceiptData(TransactionUserReceiptData.Outcome.KO)
+                TransactionTestUtils.transactionUserReceiptData(
+                        (TransactionUserReceiptData.Outcome.KO)
+                )
         );
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
@@ -837,7 +838,7 @@ public class TransactionServiceTests {
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(AuthorizationResultDto.OK)
+                .authorizationResult(AuthorizationResultDto.KO)
                 .authorizationCode("authorizationCode")
                 .timestampOperation(OffsetDateTime.now());
 
@@ -859,7 +860,7 @@ public class TransactionServiceTests {
                 .transactionAuthorizationRequestedEvent();
         TransactionAuthorizationCompletedEvent transactionAuthorizationCompletedEvent = TransactionTestUtils
                 .transactionAuthorizationCompletedEvent(
-                        it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto.OK
+                        it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto.KO
                 );
         TransactionClosureFailedEvent transactionClosureFailedEvent = TransactionTestUtils
                 .transactionClosureFailedEvent(TransactionClosureData.Outcome.KO);
