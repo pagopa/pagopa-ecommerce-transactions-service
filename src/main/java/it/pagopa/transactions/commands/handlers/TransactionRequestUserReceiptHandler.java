@@ -114,7 +114,8 @@ public class TransactionRequestUserReceiptHandler
                                                     null
                                             ).doOnError(
                                                     exception -> log.error(
-                                                            "Error to generate event TRANSACTION_ACTIVATED_EVENT for transactionId {} - error {}",
+                                                            "Error to generate event {} for transactionId {} - error {}",
+                                                            event.getEventCode(),
                                                             event.getTransactionId(),
                                                             exception.getMessage()
                                                     )
