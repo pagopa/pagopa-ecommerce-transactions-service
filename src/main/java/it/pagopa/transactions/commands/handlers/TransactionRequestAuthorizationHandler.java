@@ -2,6 +2,7 @@ package it.pagopa.transactions.commands.handlers;
 
 import com.azure.cosmos.implementation.BadRequestException;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData.PaymentGateway;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestedEvent;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
@@ -11,7 +12,6 @@ import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
-import it.pagopa.transactions.utils.PaymentGateway;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -138,7 +138,7 @@ public class TransactionRequestAuthorizationHandler
                                                     command.getData().paymentMethodName(),
                                                     command.getData().pspBusinessName(),
                                                     tuple3.getT1(),
-                                                    tuple3.getT3().value
+                                                    tuple3.getT3()
                                             )
                                     );
 
@@ -152,20 +152,5 @@ public class TransactionRequestAuthorizationHandler
                                 })
                                 .doOnError(BadRequestException.class, error -> log.error(error.getMessage()))
                 );
-    }
-
-    /**
-     * Convenient function that maps authorizationUrl to payment gateway
-     */
-    private PaymentGateway authorizationUrlToGw(String authorizationUrl) {
-        if (authorizationUrl.contains("xpay")) {
-            return PaymentGateway.XPAY;
-        } else if (authorizationUrl.contains("vpos")) {
-            return PaymentGateway.VPOS;
-        } else if (authorizationUrl.contains("postepay")) {
-            return PaymentGateway.POSTEPAY;
-        } else {
-            return null;
-        }
     }
 }
