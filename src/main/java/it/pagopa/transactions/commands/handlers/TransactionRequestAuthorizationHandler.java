@@ -154,12 +154,12 @@ public class TransactionRequestAuthorizationHandler
     /**
      * Convenient function that maps authorizationUrl to payment gateway
      */
-    private String authorizationUrlToGw(String authorizationUrl){
-        if(authorizationUrl.contains("xpay")){
+    private String authorizationUrlToGw(String authorizationUrl) {
+        if (authorizationUrl.contains("xpay")) {
             return "XPAY";
-        } else if(authorizationUrl.contains("vpos")){
+        } else if (authorizationUrl.contains("vpos")) {
             return "VPOS";
-        } else if(authorizationUrl.contains("postepay")){
+        } else if (authorizationUrl.contains("postepay")) {
             return "POSTEPAY";
         } else {
             return "";
