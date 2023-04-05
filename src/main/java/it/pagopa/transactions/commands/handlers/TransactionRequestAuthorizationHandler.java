@@ -133,7 +133,9 @@ public class TransactionRequestAuthorizationHandler
                                                     command.getData().pspChannelCode(),
                                                     command.getData().paymentMethodName(),
                                                     command.getData().pspBusinessName(),
-                                                    tuple2.getT1()
+                                                    tuple2.getT1(),
+                                                    authorizationUrlToGw(tuple2.getT2())
+
                                             )
                                     );
 
@@ -147,5 +149,20 @@ public class TransactionRequestAuthorizationHandler
                                 })
                                 .doOnError(BadRequestException.class, error -> log.error(error.getMessage()))
                 );
+    }
+
+    /**
+     * Convenient function that maps authorizationUrl to payment gateway
+     */
+    private String authorizationUrlToGw(String authorizationUrl){
+        if(authorizationUrl.contains("xpay")){
+            return "XPAY";
+        } else if(authorizationUrl.contains("vpos")){
+            return "VPOS";
+        } else if(authorizationUrl.contains("postepay")){
+            return "POSTEPAY";
+        } else {
+            return "";
+        }
     }
 }
