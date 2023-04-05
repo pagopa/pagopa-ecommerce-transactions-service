@@ -156,7 +156,9 @@ public class TransactionSendClosureHandler implements
                                             "fee",
                                             feeValue.toString(),
                                             "timestampOperation",
-                                            OffsetDateTime.now().toString(), // 2023-04-03T15:42:22.826Z //FIXME Pass the timestamp of the authorization result
+                                            OffsetDateTime.now().toString(), // 2023-04-03T15:42:22.826Z //FIXME Pass
+                                                                             // the timestamp of the authorization
+                                                                             // result
                                             "totalAmount",
                                             totalAmountValue.toString()
                                     )
