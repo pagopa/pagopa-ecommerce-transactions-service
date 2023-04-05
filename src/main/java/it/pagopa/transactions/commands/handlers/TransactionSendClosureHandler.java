@@ -31,6 +31,7 @@ import reactor.util.function.Tuples;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.Map;
 
 @Component
@@ -155,7 +156,7 @@ public class TransactionSendClosureHandler implements
                                             "fee",
                                             feeValue.toString(),
                                             "timestampOperation",
-                                            updateAuthorizationRequestDto.getTimestampOperation().toString(), // 2023-04-03T15:42:22.826Z
+                                            OffsetDateTime.now().toString(), // 2023-04-03T15:42:22.826Z //FIXME Pass the timestamp of the authorization result
                                             "totalAmount",
                                             totalAmountValue.toString()
                                     )
