@@ -19,25 +19,9 @@ public class AzureStorageConfig {
                                                                      "${azurestorage.queues.transactionexpiration.name}"
                                                                  ) String queueName
     ) {
-        QueueAsyncClient queueAsyncClient = new QueueClientBuilder()
-                .connectionString(storageConnectionString)
-                .queueName(queueName)
-                .buildAsyncClient();
-        queueAsyncClient.createIfNotExists().block();
-        return queueAsyncClient;
+        return buildQueueAsyncClient(storageConnectionString, queueName);
     }
 
-    /*
-     * @formatter:off
-     *
-     * Warning java:S4144 - Methods should not have identical implementations
-     * Implementation identical to the other queue initialization methods.
-     * Suppressed because the method takes a different injected `@Value` parameter, so it's not identical
-     * even though SonarCloud flags it as so.
-     *
-     * @formatter:on
-     */
-    @SuppressWarnings("java:S4144")
     @Bean("transactionRefundQueueAsyncClient")
     @Qualifier
     public QueueAsyncClient transactionRefundQueueAsyncClient(
@@ -48,25 +32,9 @@ public class AzureStorageConfig {
                                                                   "${azurestorage.queues.transactionrefund.name}"
                                                               ) String queueName
     ) {
-        QueueAsyncClient queueAsyncClient = new QueueClientBuilder()
-                .connectionString(storageConnectionString)
-                .queueName(queueName)
-                .buildAsyncClient();
-        queueAsyncClient.createIfNotExists().block();
-        return queueAsyncClient;
+        return buildQueueAsyncClient(storageConnectionString, queueName);
     }
 
-    /*
-     * @formatter:off
-     *
-     * Warning java:S4144 - Methods should not have identical implementations
-     * Implementation identical to the other queue initialization methods.
-     * Suppressed because the method takes a different injected `@Value` parameter, so it's not identical
-     * even though SonarCloud flags it as so.
-     *
-     * @formatter:on
-     */
-    @SuppressWarnings("java:S4144")
     @Bean("transactionClosureRetryQueueAsyncClient")
     public QueueAsyncClient transactionClosureRetryQueueAsyncClient(
                                                                     @Value(
@@ -76,25 +44,9 @@ public class AzureStorageConfig {
                                                                         "${azurestorage.queues.transactionclosepaymentretry.name}"
                                                                     ) String queueName
     ) {
-        QueueAsyncClient queueAsyncClient = new QueueClientBuilder()
-                .connectionString(storageConnectionString)
-                .queueName(queueName)
-                .buildAsyncClient();
-        queueAsyncClient.createIfNotExists().block();
-        return queueAsyncClient;
+        return buildQueueAsyncClient(storageConnectionString, queueName);
     }
 
-    /*
-     * @formatter:off
-     *
-     * Warning java:S4144 - Methods should not have identical implementations
-     * Implementation identical to the other queue initialization methods.
-     * Suppressed because the method takes a different injected `@Value` parameter, so it's not identical
-     * even though SonarCloud flags it as so.
-     *
-     * @formatter:on
-     */
-    @SuppressWarnings("java:S4144")
     @Bean("transactionClosureQueueAsyncClient")
     public QueueAsyncClient transactionClosureQueueAsyncClient(
                                                                @Value(
@@ -103,6 +55,25 @@ public class AzureStorageConfig {
                                                                @Value(
                                                                    "${azurestorage.queues.transactionclosepayment.name}"
                                                                ) String queueName
+    ) {
+        return buildQueueAsyncClient(storageConnectionString, queueName);
+    }
+
+    @Bean("transactionNotificationRequestedQueueAsyncClient")
+    public QueueAsyncClient transactionNotificationRequestedQueueAsyncClient(
+                                                                             @Value(
+                                                                                 "${azurestorage.connectionstring}"
+                                                                             ) String storageConnectionString,
+                                                                             @Value(
+                                                                                 "${azurestorage.queues.transactionnotificationrequested.name}"
+                                                                             ) String queueName
+    ) {
+        return buildQueueAsyncClient(storageConnectionString, queueName);
+    }
+
+    private QueueAsyncClient buildQueueAsyncClient(
+                                                   String storageConnectionString,
+                                                   String queueName
     ) {
         QueueAsyncClient queueAsyncClient = new QueueClientBuilder()
                 .connectionString(storageConnectionString)
