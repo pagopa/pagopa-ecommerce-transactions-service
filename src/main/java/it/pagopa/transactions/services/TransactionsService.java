@@ -5,8 +5,8 @@ import io.github.resilience4j.retry.annotation.Retry;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken;
@@ -16,7 +16,10 @@ import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.TransferListItemDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.commands.*;
-import it.pagopa.transactions.commands.data.*;
+import it.pagopa.transactions.commands.data.AddUserReceiptData;
+import it.pagopa.transactions.commands.data.AuthorizationRequestData;
+import it.pagopa.transactions.commands.data.ClosureSendData;
+import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
 import it.pagopa.transactions.commands.handlers.*;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.TransactionAmountMismatchException;
@@ -33,7 +36,10 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -49,7 +55,7 @@ public class TransactionsService {
     private TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandler;
 
     @Autowired
-    private TransactionAddUserReceiptHandler transactionAddUserReceiptHandler;
+    private TransactionRequestUserReceiptHandler transactionRequestUserReceiptHandler;
 
     @Autowired
     private TransactionUserCancelHandler transactionCancelHandler;
@@ -630,19 +636,19 @@ public class TransactionsService {
                         }
                 )
                 .flatMap(
-                        transactionAddUserReceiptCommand -> transactionAddUserReceiptHandler
+                        transactionAddUserReceiptCommand -> transactionRequestUserReceiptHandler
                                 .handle(transactionAddUserReceiptCommand)
                 )
                 .doOnNext(
-                        transactionUserReceiptAddedEvent -> log.info(
+                        transactionUserReceiptRequestedEvent -> log.info(
                                 "{} for transactionId: {}",
-                                TransactionEventCode.TRANSACTION_USER_RECEIPT_ADDED_EVENT,
-                                transactionUserReceiptAddedEvent.getTransactionId()
+                                TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT,
+                                transactionUserReceiptRequestedEvent.getTransactionId()
                         )
                 )
                 .flatMap(
-                        transactionUserReceiptAddedEvent -> transactionUserReceiptProjectionHandler
-                                .handle(transactionUserReceiptAddedEvent)
+                        transactionUserReceiptRequestedEvent -> transactionUserReceiptProjectionHandler
+                                .handle(transactionUserReceiptRequestedEvent)
                 )
                 .map(
                         transaction -> new TransactionInfoDto()
