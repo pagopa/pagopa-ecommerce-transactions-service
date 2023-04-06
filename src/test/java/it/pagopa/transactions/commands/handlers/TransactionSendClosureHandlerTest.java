@@ -6,11 +6,35 @@ import com.azure.core.http.rest.Response;
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
 import com.azure.storage.queue.models.SendMessageResult;
+import it.pagopa.ecommerce.commons.documents.v1.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
-import it.pagopa.ecommerce.commons.documents.v1.*;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedEvent;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData.PaymentGateway;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestedEvent;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionClosedEvent;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionClosureData;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionClosureErrorEvent;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionClosureFailedEvent;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionEvent;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionRefundRequestedEvent;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionRefundedData;
 import it.pagopa.ecommerce.commons.domain.Confidential;
+import it.pagopa.ecommerce.commons.domain.v1.Email;
+import it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction;
+import it.pagopa.ecommerce.commons.domain.v1.PaymentContextCode;
 import it.pagopa.ecommerce.commons.domain.v1.PaymentNotice;
-import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.domain.v1.PaymentToken;
+import it.pagopa.ecommerce.commons.domain.v1.PaymentTransferInfo;
+import it.pagopa.ecommerce.commons.domain.v1.RptId;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionAmount;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionDescription;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
@@ -40,16 +64,25 @@ import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.time.*;
+
 import java.util.ArrayList;
+import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import static it.pagopa.transactions.commands.handlers.TransactionSendClosureHandler.ECOMMERCE_RRN;
 import static it.pagopa.transactions.commands.handlers.TransactionSendClosureHandler.TIPO_VERSAMENTO_CP;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+
 
 @ExtendWith(MockitoExtension.class)
 class TransactionSendClosureHandlerTest {
@@ -193,7 +226,8 @@ class TransactionSendClosureHandlerTest {
                         "pspChannelCode",
                         "paymentMethodName",
                         "pspBusinessName",
-                        "authorizationRequestId"
+                        "authorizationRequestId",
+                        PaymentGateway.VPOS
                 )
         );
 
@@ -268,7 +302,8 @@ class TransactionSendClosureHandlerTest {
                         "pspChannelCode",
                         "paymentMethodName",
                         "pspBusinessName",
-                        "authorizationRequestId"
+                        "authorizationRequestId",
+                        PaymentGateway.XPAY
                 )
         );
 
@@ -422,7 +457,8 @@ class TransactionSendClosureHandlerTest {
                         "pspChannelCode",
                         "paymentMethodName",
                         "pspBusinessName",
-                        "authorizationRequestId"
+                        "authorizationRequestId",
+                        PaymentGateway.XPAY
                 )
         );
 
@@ -576,7 +612,8 @@ class TransactionSendClosureHandlerTest {
                         "pspChannelCode",
                         "paymentMethodName",
                         "pspBusinessName",
-                        "authorizationRequestId"
+                        "authorizationRequestId",
+                        PaymentGateway.VPOS
                 )
         );
 
@@ -730,7 +767,8 @@ class TransactionSendClosureHandlerTest {
                         "pspChannelCode",
                         "paymentMethodName",
                         "pspBusinessName",
-                        "authorizationRequestId"
+                        "authorizationRequestId",
+                        PaymentGateway.XPAY
                 )
         );
 
@@ -896,7 +934,8 @@ class TransactionSendClosureHandlerTest {
                         "pspChannelCode",
                         "paymentMethodName",
                         "pspBusinessName",
-                        "authorizationRequestId"
+                        "authorizationRequestId",
+                        PaymentGateway.VPOS
                 )
         );
 
@@ -1066,7 +1105,8 @@ class TransactionSendClosureHandlerTest {
                         "pspChannelCode",
                         "paymentMethodName",
                         "pspBusinessName",
-                        "authorizationRequestId"
+                        "authorizationRequestId",
+                        PaymentGateway.XPAY
                 )
         );
 
@@ -1246,7 +1286,8 @@ class TransactionSendClosureHandlerTest {
                         "pspChannelCode",
                         "paymentMethodName",
                         "pspBusinessName",
-                        "authorizationRequestId"
+                        "authorizationRequestId",
+                        PaymentGateway.VPOS
                 )
         );
 
@@ -1423,7 +1464,8 @@ class TransactionSendClosureHandlerTest {
                         "pspChannelCode",
                         "paymentMethodName",
                         "pspBusinessName",
-                        "authorizationRequestId"
+                        "authorizationRequestId",
+                        PaymentGateway.XPAY
                 )
         );
 
@@ -1600,7 +1642,8 @@ class TransactionSendClosureHandlerTest {
                         "pspChannelCode",
                         "paymentMethodName",
                         "pspBusinessName",
-                        "authorizationRequestId"
+                        "authorizationRequestId",
+                        PaymentGateway.VPOS
                 )
         );
 
@@ -1768,7 +1811,8 @@ class TransactionSendClosureHandlerTest {
                         "pspChannelCode",
                         "paymentMethodName",
                         "pspBusinessName",
-                        "authorizationRequestId"
+                        "authorizationRequestId",
+                        PaymentGateway.XPAY
                 )
         );
 
