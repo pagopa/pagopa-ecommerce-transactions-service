@@ -156,6 +156,18 @@ public class TransactionsService {
                                                         .reason(paymentNotice.getDescription())
                                                         .paymentToken(paymentNotice.getPaymentToken())
                                                         .rptId(paymentNotice.getRptId())
+                                                        .transferList(
+                                                                paymentNotice.getTransferList().stream().map(
+                                                                        notice -> new TransferDto()
+                                                                                .transferCategory(
+                                                                                        notice.getTransferCategory()
+                                                                                )
+                                                                                .transferAmount(
+                                                                                        notice.getTransferAmount()
+                                                                                ).digitalStamp(notice.getDigitalStamp())
+                                                                                .paFiscalCode(notice.getPaFiscalCode())
+                                                                ).toList()
+                                                        )
                                         ).toList()
                                 )
                                 .feeTotal(transaction.getFeeTotal())
