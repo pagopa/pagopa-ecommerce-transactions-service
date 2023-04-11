@@ -28,8 +28,10 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.Map;
 
 @Component
@@ -37,6 +39,8 @@ import java.util.Map;
 public class TransactionSendClosureHandler implements
         CommandHandler<TransactionClosureSendCommand, Mono<Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>>> {
 
+    public static final String TIPO_VERSAMENTO_CP = "CP";
+    public static final String ECOMMERCE_RRN = "1234567890";
     private final TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository;
 
     private final TransactionsEventStoreRepository<TransactionRefundedData> transactionRefundedEventStoreRepository;
@@ -112,7 +116,14 @@ public class TransactionSendClosureHandler implements
                             .getTransactionAuthorizationRequestData();
                     TransactionAuthorizationCompletedData transactionAuthorizationCompletedData = tx
                             .getTransactionAuthorizationCompletedData();
-
+                    BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
+                            tx.getPaymentNotices().stream()
+                                    .mapToInt(
+                                            paymentNotice -> paymentNotice.transactionAmount().value()
+                                    )
+                                    .sum() + transactionAuthorizationRequestData.getFee()
+                    );
+                    BigDecimal fee = EuroUtils.euroCentsToEuro(transactionAuthorizationRequestData.getFee());
                     ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                             .paymentTokens(
                                     tx.getTransactionActivatedData().getPaymentNotices().stream()
@@ -127,16 +138,8 @@ public class TransactionSendClosureHandler implements
                             .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())
                             .idChannel(transactionAuthorizationRequestData.getPspChannelCode())
                             .transactionId(tx.getTransactionId().value().toString())
-                            .totalAmount(
-                                    EuroUtils.euroCentsToEuro(
-                                            tx.getPaymentNotices().stream()
-                                                    .mapToInt(
-                                                            paymentNotice -> paymentNotice.transactionAmount().value()
-                                                    )
-                                                    .sum() + transactionAuthorizationRequestData.getFee()
-                                    )
-                            )
-                            .fee(EuroUtils.euroCentsToEuro(transactionAuthorizationRequestData.getFee()))
+                            .totalAmount(totalAmount)
+                            .fee(fee)
                             .timestampOperation(updateAuthorizationRequestDto.getTimestampOperation())
                             .paymentMethod(transactionAuthorizationRequestData.getPaymentTypeCode())
                             .additionalPaymentInformations(
@@ -145,7 +148,19 @@ public class TransactionSendClosureHandler implements
                                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
                                                     .toString(),
                                             "authorization_code",
-                                            updateAuthorizationRequestDto.getAuthorizationCode()
+                                            updateAuthorizationRequestDto.getAuthorizationCode(),
+                                            "tipoVersamento",
+                                            TIPO_VERSAMENTO_CP,
+                                            "rrn",
+                                            ECOMMERCE_RRN,
+                                            "fee",
+                                            fee.toString(),
+                                            "timestampOperation",
+                                            OffsetDateTime.now().toString(), // FIXME Pass
+                                                                             // the timestamp of the authorization
+                                                                             // result
+                                            "totalAmount",
+                                            totalAmount.toString()
                                     )
                             );
 
