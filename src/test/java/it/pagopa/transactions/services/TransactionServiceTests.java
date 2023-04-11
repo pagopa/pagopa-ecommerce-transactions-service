@@ -151,6 +151,15 @@ public class TransactionServiceTests {
                                         .rptId(p.getRptId())
                                         .reason(p.getDescription())
                                         .amount(p.getAmount())
+                                        .transferList(
+                                                p.getTransferList().stream().map(
+                                                        notice -> new TransferDto()
+                                                                .paFiscalCode(notice.getPaFiscalCode())
+                                                                .digitalStamp(notice.getDigitalStamp())
+                                                                .transferAmount(notice.getTransferAmount())
+                                                                .transferCategory(notice.getTransferCategory())
+                                                ).toList()
+                                        )
                         ).toList()
                 )
                 .clientId(TransactionInfoDto.ClientIdEnum.CHECKOUT)
