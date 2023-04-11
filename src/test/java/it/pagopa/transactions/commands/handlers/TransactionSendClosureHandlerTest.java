@@ -529,7 +529,7 @@ class TransactionSendClosureHandlerTest {
                                 "fee",
                                 EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
                                 "timestampOperation",
-                                OffsetDateTime.now().toString(), // 2023-04-03T15:42:22.826Z
+                                OffsetDateTime.now().toString(),
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -838,7 +838,7 @@ class TransactionSendClosureHandlerTest {
                                 "fee",
                                 EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
                                 "timestampOperation",
-                                OffsetDateTime.now().toString(), // 2023-04-03T15:42:22.826Z
+                                OffsetDateTime.now().toString(),
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -1002,7 +1002,7 @@ class TransactionSendClosureHandlerTest {
                                 "fee",
                                 EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
                                 "timestampOperation",
-                                OffsetDateTime.now().toString(), // 2023-04-03T15:42:22.826Z
+                                OffsetDateTime.now().toString(),
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -2392,7 +2392,7 @@ class TransactionSendClosureHandlerTest {
                                 "fee",
                                 EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
                                 "timestampOperation",
-                                OffsetDateTime.now().toString(), // 2023-04-03T15:42:22.826Z
+                                OffsetDateTime.now().toString(),
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
