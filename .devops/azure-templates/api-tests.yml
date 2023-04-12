@@ -9,8 +9,8 @@ steps:
       yarn global add newman
     displayName: 'Newman installation'
   - script: |
-      newman run api-tests/checkout-tests/checkout-for-ecommerce-api.tests.json -e $(ENV_FILE) --ignore-redirects --reporters cli,junit --reporter-junit-export Results/api-TEST.xml
-    displayName: 'Run api test app - env file: ${ENV_FILE}'
+      newman run api-tests/checkout-tests/checkout-for-ecommerce-api.tests.json -e ${{ parameters.ENV_FILE }} --ignore-redirects --reporters cli,junit --reporter-junit-export Results/api-TEST.xml
+    displayName: 'Run api test app - env file: ${{ parameters.ENV_FILE }}'
     continueOnError: true
   - task: PublishTestResults@2
     inputs:
