@@ -1,7 +1,12 @@
 parameters:
   # Required
-  - name: "ENV" # UAT/DEV
+  - name: "ENV" # UAT_BLUE/UAT_GREEN/DEV
     type: string
+    default: DEV
+      values:
+        - UAT_BLUE
+        - UAT_GREEN
+        - DEV
 
 steps:
   - script: |
@@ -9,9 +14,13 @@ steps:
     displayName: 'Newman installation'
   - script: |
       if ["$(UAT_CONTAINER_NAMESPACE)" = "DEV"]; then
-        newman run api-tests/checkout-tests/checkout-api-dev.tests.json -e api-tests/dev.envs.json --ignore-redirects --reporters cli,junit --reporter-junit-export Results/api-TEST.xml
+        newman run api-tests/checkout-tests/checkout-for-ecommerce-api.tests.json -e api-tests/dev.envs.json --ignore-redirects --reporters cli,junit --reporter-junit-export Results/api-TEST.xml
       else
-        newman run api-tests/checkout-tests/checkout-api-uat.tests.json -e api-tests/uat.envs.json --ignore-redirects --reporters cli,junit --reporter-junit-export Results/api-TEST.xml
+        if ["$(UAT_CONTAINER_NAMESPACE)" = "UAT_BLUE"]; then
+          newman run api-tests/checkout-tests/checkout-for-ecommerce-api.tests.json -e api-tests/uat.blue.envs.json --ignore-redirects --reporters cli,junit --reporter-junit-export Results/api-TEST.xml
+        else
+          newman run api-tests/checkout-tests/checkout-for-ecommerce-api.tests.json -e api-tests/uat.envs.json --ignore-redirects --reporters cli,junit --reporter-junit-export Results/api-TEST.xml
+        fi
       fi
     displayName: 'Run api test on blue app'
     continueOnError: true
