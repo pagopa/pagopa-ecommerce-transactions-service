@@ -1,7 +1,5 @@
 package it.pagopa.transactions.controllers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.ecommerce.commons.annotations.WarmupMethod;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
@@ -352,7 +350,7 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @WarmupMethod
-    public void postNewTransactionWarmupMethod() throws JsonProcessingException {
+    public void postNewTransactionWarmupMethod() {
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
                 .email("test@test.it")
                 .paymentNotices(
@@ -362,7 +360,6 @@ public class TransactionsController implements TransactionsApi {
                                         .amount(100)
                         )
                 );
-        System.out.println(new ObjectMapper().writeValueAsString(newTransactionRequestDto));
         WebClient
                 .create()
                 .post()
