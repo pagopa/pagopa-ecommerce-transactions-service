@@ -1,51 +1,19 @@
 parameters:
   # Required
-  - name: "ENV" # UAT_BLUE/UAT_GREEN/DEV
+  - name: "ENV_FILE"
     type: string
-    default: DEV
-    values:
-      - UAT_BLUE
-      - UAT_GREEN
-      - DEV
-${{ if eq(parameters['ENV'], DEV) }}:
-  steps:
-    - script: |
-        yarn global add newman
-      displayName: 'Newman installation'
-    - script: |
-        newman run api-tests/checkout -tests/checkout-for-ecommerce-api.tests.json -e api-tests/dev.envs.json --ignore-redirects --reporters cli,junit --reporter-junit-export Results/api-TEST.xml
-        displayName: 'Run api test on dev app'
-        continueOnError: true
-    - task: PublishTestResults@2
-        inputs:
-          testResultsFormat: 'JUnit'
-          testResultsFiles: '**/*-TEST.xml'
-          searchFolder: '$(System.DefaultWorkingDirectory)'
-${{ if eq(parameters['ENV'], UAT_BLUE) }}:
-  steps:
-    - script: |
-        yarn global add newman
-      displayName: 'Newman installation'
-    - script: |
-        newman run api-tests/checkout-tests/checkout-for-ecommerce-api.tests.json -e api-tests/uat.envs.json --ignore-redirects --reporters cli,junit --reporter-junit-export Results/api-TEST.xml
-        displayName: 'Run api test on green uat app'
-        continueOnError: true
-    - task: PublishTestResults@2
-        inputs:
-          testResultsFormat: 'JUnit'
-          testResultsFiles: '**/*-TEST.xml'
-          searchFolder: '$(System.DefaultWorkingDirectory)'
-${{ if eq(parameters['ENV'], UAT_GREEN) }}:
-  steps:
-    - script: |
-        yarn global add newman
-      displayName: 'Newman installation'
-    - script: |
-        newman run api-tests/checkout-tests/checkout-for-ecommerce-api.tests.json -e api-tests/uat.envs.json --ignore-redirects --reporters cli,junit --reporter-junit-export Results/api-TEST.xml
-        displayName: 'Run api test on green uat app'
-        continueOnError: true
-    - task: PublishTestResults@2
-        inputs:
-          testResultsFormat: 'JUnit'
-          testResultsFiles: '**/*-TEST.xml'
-          searchFolder: '$(System.DefaultWorkingDirectory)'
+
+
+steps:
+  - script: |
+      yarn global add newman
+    displayName: 'Newman installation'
+  - script: |
+      newman run api-tests/checkout-tests/checkout-for-ecommerce-api.tests.json -e $(ENV_FILE) --ignore-redirects --reporters cli,junit --reporter-junit-export Results/api-TEST.xml
+    displayName: 'Run api test uat app'
+    continueOnError: true
+  - task: PublishTestResults@2
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '**/*-TEST.xml'
+        searchFolder: '$(System.DefaultWorkingDirectory)'

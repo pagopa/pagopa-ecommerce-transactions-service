@@ -136,7 +136,7 @@ stages:
           - checkout: pagopaCheckoutTests
           - template: azure-templates/api-tests.yml
             parameters:
-              ENV: "DEV"
+              ENV_FILE: "api-tests/dev.envs.json"
 
   - stage: "Build_release_candidate"
     displayName: 'Build release candidate'
@@ -217,7 +217,7 @@ stages:
           - checkout: pagopaCheckoutTests
           - template: azure-templates/api-tests.yml
             parameters:
-              ENV: "UAT_BLUE"
+              ENV_FILE: "api-tests/uat.blue.envs.json"
 
   - stage: "Bluegreen_WaitForApproval"
     displayName: 'UAT green approval deployment'
@@ -333,4 +333,4 @@ stages:
           - checkout: pagopaCheckoutTests
           - template: azure-templates/api-tests.yml
             parameters:
-              ENV: "UAT_GREEN"
+              ENV_FILE: "api-tests/uat.envs.json"
