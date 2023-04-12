@@ -13,7 +13,7 @@ steps:
     displayName: 'Run api test app - env file: ${ENV_FILE}'
     continueOnError: true
   - task: PublishTestResults@2
-      inputs:
-        testResultsFormat: 'JUnit'
-        testResultsFiles: '**/*-TEST.xml'
-        searchFolder: '$(System.DefaultWorkingDirectory)'
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/*-TEST.xml'
+      searchFolder: '$(System.DefaultWorkingDirectory)'
