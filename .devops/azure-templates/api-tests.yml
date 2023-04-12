@@ -6,7 +6,7 @@ parameters:
     values:
       - UAT_BLUE
       - UAT_GREEN
-      - DEV>
+      - DEV
 
 steps:
   - script: |
