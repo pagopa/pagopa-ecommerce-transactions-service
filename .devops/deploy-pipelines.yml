@@ -125,10 +125,12 @@ stages:
   - stage: "API_DEV_test"
     displayName: 'Running API test on blue app'
     dependsOn: Deploy_for_DEV
-    steps:
-      - template: azure-templates/api-tests.yml
-        parameters:
-          ENV: "DEV"
+    jobs:
+      - job: "run API integration tests"
+        steps:
+          - template: azure-templates/api-tests.yml
+            parameters:
+              ENV: "DEV"
 
   - stage: "Build_release_candidate"
     displayName: 'Build release candidate'
@@ -203,10 +205,12 @@ stages:
   - stage: "Blue_API_UAT_test"
     displayName: 'Running API test on blue app'
     dependsOn: Deploy_UAT_Blue
-    steps:
-      - template: azure-templates/api-tests.yml
-        parameters:
-          ENV: "UAT"
+    jobs:
+      - job: "run API integration tests"
+        steps:
+          - template: azure-templates/api-tests.yml
+            parameters:
+              ENV: "UAT"
 
   - stage: "Bluegreen_WaitForApproval"
     displayName: 'UAT green approval deployment'
