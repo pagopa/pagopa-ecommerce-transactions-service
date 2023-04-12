@@ -3,10 +3,10 @@ parameters:
   - name: "ENV" # UAT_BLUE/UAT_GREEN/DEV
     type: string
     default: DEV
-      values:
-        - UAT_BLUE
-        - UAT_GREEN
-        - DEV
+    values:
+      - UAT_BLUE
+      - UAT_GREEN
+      - DEV>
 
 steps:
   - script: |
