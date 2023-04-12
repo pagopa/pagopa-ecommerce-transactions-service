@@ -3,16 +3,7 @@ parameters:
   - name: "ENV" # UAT/DEV
     type: string
 
-resources:
-  repositories:
-    - repository: pagopaCheckoutTests
-      type: github
-      name: pagopa/pagopa-checkout-tests
-      ref: main
-      endpoint: 'io-azure-devops-github-ro'
-
 steps:
-  - checkout: pagopaCheckoutTests
   - script: |
       yarn global add newman
     displayName: 'Newman installation'
