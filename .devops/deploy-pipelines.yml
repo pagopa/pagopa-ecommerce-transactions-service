@@ -146,7 +146,7 @@ stages:
       succeeded(),
       eq(${{parameters.UAT_PROD_DEPLOY}}, true),
       or(
-      eq(variables['Build.SourceBranch'], 'refs/heads/main'),
+      eq(variables['Build.SourceBranch'], 'refs/heads/CHK-1384-test-automation'),
       and(
       startsWith(variables['Build.SourceBranch'], 'refs/tags'),
       endsWith(variables['Build.SourceBranch'], '-RELEASE')
