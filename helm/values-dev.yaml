@@ -101,6 +101,7 @@ microservice-chart:
     SERVICE_LOGGING_LEVEL: "info"
     JWT_TOKEN_VALIDITY_TIME_MILLIS: "1800000"
     PERSONAL_DATA_VAULT_API_BASE_PATH: "https://api.uat.tokenizer.pdv.pagopa.it/tokenizer/v1"
+    WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: 3111
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password

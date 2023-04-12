@@ -1,24 +1,30 @@
 package it.pagopa.transactions.controllers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import it.pagopa.ecommerce.commons.annotations.WarmupMethod;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
-import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.TransactionsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.support.WebExchangeBindException;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import javax.validation.ConstraintViolationException;
+import java.time.Duration;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 @RestController
@@ -26,6 +32,9 @@ import java.util.stream.Collectors;
 public class TransactionsController implements TransactionsApi {
     @Autowired
     private TransactionsService transactionsService;
+
+    @Value("${warmup.request.newTransaction.noticeCodePrefix}")
+    private String warmUpNoticeCodePrefix;
 
     @ExceptionHandler(
         {
@@ -340,5 +349,29 @@ public class TransactionsController implements TransactionsApi {
                         .detail(exception.getErrorDescription()),
                 httpStatus
         );
+    }
+
+    @WarmupMethod
+    public void postNewTransactionWarmupMethod() throws JsonProcessingException {
+        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
+                .email("test@test.it")
+                .paymentNotices(
+                        Collections.singletonList(
+                                new PaymentNoticeInfoDto()
+                                        .rptId("77777777777%s13191830179260".formatted(warmUpNoticeCodePrefix))
+                                        .amount(100)
+                        )
+                );
+        System.out.println(new ObjectMapper().writeValueAsString(newTransactionRequestDto));
+        WebClient
+                .create()
+                .post()
+                .uri("http://localhost:8080/transactions")
+                .header("X-Client-Id", TransactionInfoDto.ClientIdEnum.CHECKOUT.toString())
+                .bodyValue(newTransactionRequestDto)
+                .retrieve()
+                .toBodilessEntity()
+                .block(Duration.ofSeconds(10));
+
     }
 }
