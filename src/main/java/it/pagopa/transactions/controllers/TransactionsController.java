@@ -368,7 +368,7 @@ public class TransactionsController implements TransactionsApi {
                 .bodyValue(newTransactionRequestDto)
                 .retrieve()
                 .toBodilessEntity()
-                .block(Duration.ofSeconds(10));
+                .block(Duration.ofSeconds(30));
 
     }
 }
