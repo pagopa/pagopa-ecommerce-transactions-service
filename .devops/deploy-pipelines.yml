@@ -325,12 +325,12 @@ stages:
                     GREEN_VERSION: $(green_version)
 
   - stage: "Green_API_UAT_test"
-      displayName: 'Running API test on green app'
-      dependsOn: Deploy_UAT_Green
-      jobs:
-        - job: newman_api_test
-          steps:
-            - checkout: pagopaCheckoutTests
-            - template: azure-templates/api-tests.yml
-              parameters:
-                ENV: "UAT_GREEN"
+    displayName: 'Running API test on green app'
+    dependsOn: Deploy_UAT_Green
+    jobs:
+      - job: newman_api_test
+        steps:
+          - checkout: pagopaCheckoutTests
+          - template: azure-templates/api-tests.yml
+            parameters:
+              ENV: "UAT_GREEN"
