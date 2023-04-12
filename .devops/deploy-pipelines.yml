@@ -221,7 +221,7 @@ stages:
 
   - stage: "Bluegreen_WaitForApproval"
     displayName: 'UAT green approval deployment'
-    dependsOn: Deploy_UAT_Blue
+    dependsOn: Blue_API_UAT_test
     jobs:
       - job: Bluegreen_WaitForApproval
         displayName: Manual blue deploy approval
