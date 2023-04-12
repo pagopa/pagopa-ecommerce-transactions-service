@@ -131,7 +131,7 @@ stages:
     displayName: 'Running API test on blue app'
     dependsOn: Deploy_for_DEV
     jobs:
-      - job: "run API integration tests"
+      - job: newman_api_test
         steps:
           - checkout: pagopaCheckoutTests
           - template: azure-templates/api-tests.yml
@@ -212,7 +212,7 @@ stages:
     displayName: 'Running API test on blue app'
     dependsOn: Deploy_UAT_Blue
     jobs:
-      - job: "run API integration tests"
+      - job: newman_api_test
         steps:
           - checkout: pagopaCheckoutTests
           - template: azure-templates/api-tests.yml
