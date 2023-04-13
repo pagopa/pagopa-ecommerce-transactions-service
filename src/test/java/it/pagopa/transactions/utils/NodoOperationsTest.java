@@ -129,7 +129,6 @@ class NodoOperationsTest {
         String paTaxCode = "77777777777";
         String description = "Description";
         int amount = 1000;
-        String idCart = null;
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
         BigDecimal amountBigDec = BigDecimal.valueOf(amount);
         String fiscalCode = "77777777777";
@@ -188,7 +187,7 @@ class NodoOperationsTest {
                         amount,
                         transactionId,
                         900,
-                        idCart
+                        null
                 )
                 .block();
 
