@@ -233,7 +233,7 @@ stages:
             timeoutInMinutes: 4320 # 3 days
             inputs:
               onTimeout: 'skip'
-            condition: and(succeededOrFailed(), eq(${{parameters.UAT_SKIP_MANUAL_APPROVAL}}, False))
+            condition: and(succeeded(), eq(${{parameters.UAT_SKIP_MANUAL_APPROVAL}}, False))
 
   - stage: Release
     ${{ if eq(parameters['UAT_SKIP_BLUE_DEPLOYMENT'], True) }}:

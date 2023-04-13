@@ -12,6 +12,7 @@ steps:
       newman run api-tests/checkout-tests/checkout-for-ecommerce-api.tests.json -e ${{ parameters.ENV_FILE }} --ignore-redirects --reporters cli,junit --reporter-junit-export Results/api-TEST.xml
     displayName: 'Run api test app - env file: ${{ parameters.ENV_FILE }}'
   - task: PublishTestResults@2
+    condition: succeededOrFailed()
     inputs:
       testResultsFormat: 'JUnit'
       testResultsFiles: '**/*-TEST.xml'
