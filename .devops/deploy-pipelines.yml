@@ -143,7 +143,7 @@ stages:
     dependsOn: [ ]
     condition:
       and(
-      succeeded(),
+      succeededOrFailed(),
       eq(${{parameters.UAT_PROD_DEPLOY}}, true),
       or(
       eq(variables['Build.SourceBranch'], 'refs/heads/CHK-1384-test-automation'),
@@ -222,6 +222,7 @@ stages:
   - stage: "Bluegreen_WaitForApproval"
     displayName: 'UAT green approval deployment'
     dependsOn: Blue_API_UAT_test
+    condition: succeededOrFailed()
     jobs:
       - job: Bluegreen_WaitForApproval
         displayName: Manual blue deploy approval
