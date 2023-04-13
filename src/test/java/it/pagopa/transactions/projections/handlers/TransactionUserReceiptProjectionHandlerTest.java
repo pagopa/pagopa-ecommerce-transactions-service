@@ -39,7 +39,8 @@ class TransactionUserReceiptProjectionHandlerTest {
                 transaction.getEmail(),
                 TransactionStatusDto.NOTIFICATION_REQUESTED,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                transaction.getCreationDate().toString()
+                transaction.getCreationDate().toString(),
+                transaction.getTransactionActivatedData().getIdCart()
         );
 
         TransactionUserReceiptRequestedEvent event = TransactionTestUtils
@@ -85,7 +86,8 @@ class TransactionUserReceiptProjectionHandlerTest {
                 transaction.getEmail(),
                 TransactionStatusDto.NOTIFICATION_REQUESTED,
                 transaction.getClientId(),
-                transaction.getCreationDate().toString()
+                transaction.getCreationDate().toString(),
+                transaction.getTransactionActivatedData().getIdCart()
         );
 
         TransactionUserReceiptRequestedEvent event = TransactionTestUtils

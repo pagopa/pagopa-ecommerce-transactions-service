@@ -51,7 +51,8 @@ class AuthorizationUpdateProjectionHandlerTest {
                 transaction.getEmail(),
                 TransactionStatusDto.AUTHORIZATION_COMPLETED,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                transaction.getCreationDate().toString()
+                transaction.getCreationDate().toString(),
+                transaction.getTransactionActivatedData().getIdCart()
         );
 
         TransactionAuthorizationCompletedData statusAuthCompleted = new TransactionAuthorizationCompletedData(
@@ -72,7 +73,8 @@ class AuthorizationUpdateProjectionHandlerTest {
                 null,
                 null,
                 ZonedDateTime.parse(expectedDocument.getCreationDate()),
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                transaction.getTransactionActivatedData().getIdCart()
         );
 
         /*

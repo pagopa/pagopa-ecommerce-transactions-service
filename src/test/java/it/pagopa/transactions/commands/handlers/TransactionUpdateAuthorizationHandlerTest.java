@@ -93,6 +93,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
+        String idCart = "idCart";
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -109,7 +110,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                idCart
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()

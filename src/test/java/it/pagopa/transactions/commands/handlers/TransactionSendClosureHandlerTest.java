@@ -160,6 +160,7 @@ class TransactionSendClosureHandlerTest {
 
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 PaymentNotices.stream().map(
@@ -183,7 +184,8 @@ class TransactionSendClosureHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                Transaction.ClientId.CHECKOUT
+                Transaction.ClientId.CHECKOUT,
+                idCart
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -208,7 +210,8 @@ class TransactionSendClosureHandlerTest {
                         transaction.getTransactionActivatedData().getPaymentNotices(),
                         faultCode,
                         faultCodeString,
-                        it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                        it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                        idCart
                 )
         );
 
@@ -266,6 +269,7 @@ class TransactionSendClosureHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
@@ -284,7 +288,8 @@ class TransactionSendClosureHandlerTest {
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT,
+                        idCart
                 )
         );
 
@@ -421,6 +426,7 @@ class TransactionSendClosureHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
@@ -439,7 +445,8 @@ class TransactionSendClosureHandlerTest {
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT,
+                        idCart
                 )
         );
 
@@ -576,6 +583,7 @@ class TransactionSendClosureHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
@@ -594,7 +602,8 @@ class TransactionSendClosureHandlerTest {
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT,
+                        idCart
                 )
         );
 
@@ -731,6 +740,7 @@ class TransactionSendClosureHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
@@ -749,7 +759,8 @@ class TransactionSendClosureHandlerTest {
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT,
+                        idCart
                 )
         );
 
@@ -898,6 +909,7 @@ class TransactionSendClosureHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
@@ -916,7 +928,8 @@ class TransactionSendClosureHandlerTest {
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT,
+                        idCart
                 )
         );
 
@@ -1069,6 +1082,7 @@ class TransactionSendClosureHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
@@ -1087,7 +1101,8 @@ class TransactionSendClosureHandlerTest {
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT,
+                        idCart
                 )
         );
 
@@ -1250,6 +1265,7 @@ class TransactionSendClosureHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
@@ -1268,7 +1284,8 @@ class TransactionSendClosureHandlerTest {
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT,
+                        idCart
                 )
         );
 
@@ -1428,6 +1445,7 @@ class TransactionSendClosureHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
@@ -1446,7 +1464,8 @@ class TransactionSendClosureHandlerTest {
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT,
+                        idCart
                 )
         );
 
@@ -1606,6 +1625,7 @@ class TransactionSendClosureHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
@@ -1624,7 +1644,8 @@ class TransactionSendClosureHandlerTest {
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT,
+                        idCart
                 )
         );
 
@@ -1775,6 +1796,7 @@ class TransactionSendClosureHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> paymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
@@ -1793,7 +1815,8 @@ class TransactionSendClosureHandlerTest {
                         paymentNotices,
                         faultCode,
                         faultCodeString,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT,
+                        idCart
                 )
         );
 
