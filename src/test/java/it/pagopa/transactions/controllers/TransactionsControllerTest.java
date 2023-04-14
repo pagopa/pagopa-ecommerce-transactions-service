@@ -72,7 +72,6 @@ class TransactionsControllerTest {
     @Mock
     HttpHeaders mockHeaders;
 
-
     @Test
     void shouldGetOk() {
         UUID transactionId = UUID.fromString("95b278e6-a3ae-4c7b-9ac9-788fec1ceede");

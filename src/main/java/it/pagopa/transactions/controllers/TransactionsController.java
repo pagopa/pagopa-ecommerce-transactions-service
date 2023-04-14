@@ -1,7 +1,7 @@
 package it.pagopa.transactions.controllers;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
-import it.pagopa.ecommerce.commons.annotations.WarmupMethod;
+import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
@@ -348,7 +348,7 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
-    @WarmupMethod
+    @Warmup
     public void postNewTransactionWarmupMethod() {
         WebClient
                 .create()

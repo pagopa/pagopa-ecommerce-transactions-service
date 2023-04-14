@@ -385,6 +385,7 @@
                     <source>17</source>
                     <target>17</target>
                     <compilerArgs>--enable-preview</compilerArgs>
+                    <forceJavacCompilerUse>true</forceJavacCompilerUse>
                 </configuration>
             </plugin>
             <plugin>
@@ -392,6 +393,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <argLine>${argLine} --enable-preview</argLine>
+
                 </configuration>
             </plugin>
             <plugin>
@@ -402,7 +404,7 @@
                     <skipCheckoutIfExists>false</skipCheckoutIfExists>
                     <connectionUrl>scm:git:https://github.com/pagopa/pagopa-ecommerce-commons.git</connectionUrl>
                     <scmVersionType>branch</scmVersionType>
-                    <scmVersion>controller-warmup</scmVersion>
+                    <scmVersion>controller-warmup-annotation-processor</scmVersion>
                     <goals>install -DskipTests</goals>
                 </configuration>
                 <executions>
