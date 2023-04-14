@@ -23,7 +23,7 @@ class TransactionsUtilsTest {
     private TransactionsEventStoreRepository<Object> eventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
 
-    private TransactionsUtils transactionsUtils = new TransactionsUtils(eventStoreRepository);
+    private TransactionsUtils transactionsUtils = new TransactionsUtils(eventStoreRepository, "3020");
 
     @Test
     void shouldReduceTransactionCorrectly() {

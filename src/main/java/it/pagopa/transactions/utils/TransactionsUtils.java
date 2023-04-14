@@ -4,12 +4,16 @@ import it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction;
 import it.pagopa.ecommerce.commons.domain.v1.Transaction;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
+import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
+import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Set;
@@ -21,13 +25,19 @@ public class TransactionsUtils {
 
     private final TransactionsEventStoreRepository<Object> eventStoreRepository;
 
+    private final String warmUpNoticeCodePrefix;
+
     private static final Map<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto, it.pagopa.generated.transactions.server.model.TransactionStatusDto> transactionStatusLookupMap = new EnumMap<>(
             it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.class
     );
 
     @Autowired
-    public TransactionsUtils(TransactionsEventStoreRepository<Object> eventStoreRepository) {
+    public TransactionsUtils(
+            TransactionsEventStoreRepository<Object> eventStoreRepository,
+            @Value("${warmup.request.newTransaction.noticeCodePrefix}") String warmUpNoticeCodePrefix
+    ) {
         this.eventStoreRepository = eventStoreRepository;
+        this.warmUpNoticeCodePrefix = warmUpNoticeCodePrefix;
     }
 
     static {
@@ -89,4 +99,30 @@ public class TransactionsUtils {
     ) {
         return transactionStatusLookupMap.get(status);
     }
+
+    public NewTransactionRequestDto buildWarmupRequest() {
+        String pad = String.valueOf(System.currentTimeMillis());
+        int neededPadLength = 18 - warmUpNoticeCodePrefix.length();
+        int padLength = pad.length();
+        int lengthDiff = padLength - neededPadLength;
+        if (lengthDiff > 0) {
+            pad = pad.substring(lengthDiff, pad.length() - 1);
+        } else {
+            StringBuilder padBuilder = new StringBuilder();
+            pad = padBuilder
+                    .append("0".repeat(Math.max(0, -lengthDiff)))
+                    .append(pad)
+                    .toString();
+        }
+        return new NewTransactionRequestDto()
+                .email("test@test.it")
+                .paymentNotices(
+                        Collections.singletonList(
+                                new PaymentNoticeInfoDto()
+                                        .rptId("77777777777%s%s".formatted(warmUpNoticeCodePrefix, pad))
+                                        .amount(100)
+                        )
+                );
+    }
+
 }

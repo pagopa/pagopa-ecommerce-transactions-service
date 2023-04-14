@@ -6,9 +6,9 @@ import it.pagopa.generated.transactions.server.api.TransactionsApi;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.TransactionsService;
+import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.ObjectError;
@@ -22,7 +22,6 @@ import reactor.core.publisher.Mono;
 import javax.validation.ConstraintViolationException;
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.stream.Collectors;
 
 @RestController
@@ -31,8 +30,8 @@ public class TransactionsController implements TransactionsApi {
     @Autowired
     private TransactionsService transactionsService;
 
-    @Value("${warmup.request.newTransaction.noticeCodePrefix}")
-    private String warmUpNoticeCodePrefix;
+    @Autowired
+    private TransactionsUtils transactionsUtils;
 
     @ExceptionHandler(
         {
@@ -351,24 +350,16 @@ public class TransactionsController implements TransactionsApi {
 
     @WarmupMethod
     public void postNewTransactionWarmupMethod() {
-        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
-                .email("test@test.it")
-                .paymentNotices(
-                        Collections.singletonList(
-                                new PaymentNoticeInfoDto()
-                                        .rptId("77777777777%s13191830179260".formatted(warmUpNoticeCodePrefix))
-                                        .amount(100)
-                        )
-                );
         WebClient
                 .create()
                 .post()
                 .uri("http://localhost:8080/transactions")
                 .header("X-Client-Id", TransactionInfoDto.ClientIdEnum.CHECKOUT.toString())
-                .bodyValue(newTransactionRequestDto)
+                .bodyValue(transactionsUtils.buildWarmupRequest())
                 .retrieve()
                 .toBodilessEntity()
                 .block(Duration.ofSeconds(30));
 
     }
+
 }
