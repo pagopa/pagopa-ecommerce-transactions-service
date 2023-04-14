@@ -270,7 +270,7 @@ public class TransactionsService {
                                                                                     )
                                                                     ).toList()
                                                     ),
-                                            null
+                                            Integer.MAX_VALUE
                                     )
                                     .map(
                                             calculateFeeResponse -> Tuples.of(
