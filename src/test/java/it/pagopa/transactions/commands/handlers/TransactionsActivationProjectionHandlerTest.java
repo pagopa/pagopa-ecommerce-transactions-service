@@ -74,6 +74,7 @@ class TransactionsActivationProjectionHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
 
         TransactionActivated transaction = new TransactionActivated(
@@ -98,7 +99,8 @@ class TransactionsActivationProjectionHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                idCart
         );
 
         it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.v1.Transaction

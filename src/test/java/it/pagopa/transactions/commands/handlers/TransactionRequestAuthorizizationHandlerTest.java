@@ -69,7 +69,7 @@ class TransactionRequestAuthorizizationHandlerTest {
         TransactionAmount amount = new TransactionAmount(100);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
-
+        String idCart = "idCart";
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -87,7 +87,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                 email,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                idCart
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -143,7 +144,7 @@ class TransactionRequestAuthorizizationHandlerTest {
         TransactionAmount amount = new TransactionAmount(100);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
-
+        String idCart = "idCart";
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -161,7 +162,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                 email,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                idCart
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -219,6 +221,7 @@ class TransactionRequestAuthorizizationHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
 
         TransactionActivated transaction = new TransactionActivated(
@@ -238,7 +241,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                idCart
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -290,6 +294,7 @@ class TransactionRequestAuthorizizationHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
 
         TransactionActivated transaction = new TransactionActivated(
@@ -309,7 +314,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                idCart
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()

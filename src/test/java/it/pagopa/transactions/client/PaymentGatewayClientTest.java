@@ -96,7 +96,8 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -147,7 +148,8 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
@@ -234,7 +236,8 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -312,7 +315,8 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
@@ -406,7 +410,8 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .detailType("card")
@@ -503,7 +508,8 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -590,7 +596,8 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 "faultCode",
                 "faultCodeString",
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -659,7 +666,8 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -743,7 +751,8 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
@@ -833,7 +842,8 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
@@ -931,7 +941,8 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -1009,7 +1020,8 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
@@ -1093,7 +1105,8 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
@@ -1185,7 +1198,8 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -1237,7 +1251,8 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(

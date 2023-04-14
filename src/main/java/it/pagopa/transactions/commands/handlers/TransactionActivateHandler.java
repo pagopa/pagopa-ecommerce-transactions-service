@@ -84,9 +84,10 @@ public class TransactionActivateHandler
         final boolean multiplePaymentNotices = paymentNotices.size() > 1;
 
         log.info(
-                "Nodo parallel processed requests : [{}]. Multiple payment notices: [{}]",
+                "Nodo parallel processed requests : [{}]. Multiple payment notices: [{}]. Id cart: [{}]",
                 nodoParallelRequests,
-                multiplePaymentNotices
+                multiplePaymentNotices,
+                Optional.ofNullable(newTransactionRequestDto.getIdCart()).orElse("id cart not found")
         );
         return Mono.defer(
                 () -> Flux.fromIterable(paymentNotices)
@@ -178,7 +179,8 @@ public class TransactionActivateHandler
                                                                     idempotencyKey,
                                                                     paymentNotice.getAmount(),
                                                                     transactionId,
-                                                                    paymentTokenTimeout
+                                                                    paymentTokenTimeout,
+                                                                    newTransactionRequestDto.getIdCart()
                                                             )
                                                             .doOnSuccess(
                                                                     p -> log.info(
@@ -216,7 +218,8 @@ public class TransactionActivateHandler
                                                             paymentRequestsInfo,
                                                             transactionId,
                                                             newTransactionRequestDto.getEmail(),
-                                                            command.getClientId()
+                                                            command.getClientId(),
+                                                            newTransactionRequestDto.getIdCart()
                                                     ),
                                                     authToken
                                             )
@@ -244,7 +247,8 @@ public class TransactionActivateHandler
                                                                          List<PaymentRequestInfo> paymentRequestsInfo,
                                                                          String transactionId,
                                                                          String email,
-                                                                         Transaction.ClientId clientId
+                                                                         Transaction.ClientId clientId,
+                                                                         String idCart
     ) {
         List<PaymentNotice> paymentNotices = toPaymentNoticeList(paymentRequestsInfo);
         Mono<TransactionActivatedData> data = confidentialMailUtils.toConfidential(email).map(
@@ -253,7 +257,8 @@ public class TransactionActivateHandler
                         paymentNotices,
                         null,
                         null,
-                        clientId
+                        clientId,
+                        idCart
                 )
         );
 
