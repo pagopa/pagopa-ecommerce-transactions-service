@@ -60,7 +60,7 @@ microservice-chart:
       PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.12.1"
+    tag: "0.12.2"
     pullPolicy: Always
   livenessProbe:
     httpGet:
