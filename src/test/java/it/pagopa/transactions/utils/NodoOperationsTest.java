@@ -96,9 +96,9 @@ class NodoOperationsTest {
         Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(
-                        objectFactoryNodeForPsp
-                                .createActivatePaymentNoticeV2Request(argThat(req -> req.getPaymentNote().equals(idCart)))
-                )
+                objectFactoryNodeForPsp
+                        .createActivatePaymentNoticeV2Request(argThat(req -> req.getPaymentNote().equals(idCart)))
+        )
                 .thenAnswer(args -> objectFactoryUtil.createActivatePaymentNoticeV2Request(args.getArgument(0)));
         Mockito.when(nodoConfig.baseActivatePaymentNoticeV2Request()).thenReturn(new ActivatePaymentNoticeV2Request());
 
@@ -180,9 +180,9 @@ class NodoOperationsTest {
         Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(
-                        objectFactoryNodeForPsp
-                                .createActivatePaymentNoticeV2Request(argThat(req -> req.getPaymentNote() == null))
-                )
+                objectFactoryNodeForPsp
+                        .createActivatePaymentNoticeV2Request(argThat(req -> req.getPaymentNote() == null))
+        )
                 .thenAnswer(args -> objectFactoryUtil.createActivatePaymentNoticeV2Request(args.getArgument(0)));
         Mockito.when(nodoConfig.baseActivatePaymentNoticeV2Request()).thenReturn(new ActivatePaymentNoticeV2Request());
 
