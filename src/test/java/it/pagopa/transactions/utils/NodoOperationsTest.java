@@ -19,6 +19,7 @@ import java.math.RoundingMode;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.argThat;
 
 @ExtendWith(MockitoExtension.class)
 class NodoOperationsTest {
@@ -94,8 +95,11 @@ class NodoOperationsTest {
         /* preconditions */
         Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
                 .thenReturn(Mono.just(activatePaymentRes));
-        Mockito.when(objectFactoryNodeForPsp.createActivatePaymentNoticeV2Request(Mockito.any()))
-                .thenReturn(objectFactoryUtil.createActivatePaymentNoticeV2Request(activatePaymentReq));
+        Mockito.when(
+                        objectFactoryNodeForPsp
+                                .createActivatePaymentNoticeV2Request(argThat(req -> req.getPaymentNote().equals(idCart)))
+                )
+                .thenAnswer(args -> objectFactoryUtil.createActivatePaymentNoticeV2Request(args.getArgument(0)));
         Mockito.when(nodoConfig.baseActivatePaymentNoticeV2Request()).thenReturn(new ActivatePaymentNoticeV2Request());
 
         /* test */
@@ -175,8 +179,11 @@ class NodoOperationsTest {
         /* preconditions */
         Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
                 .thenReturn(Mono.just(activatePaymentRes));
-        Mockito.when(objectFactoryNodeForPsp.createActivatePaymentNoticeV2Request(Mockito.any()))
-                .thenReturn(objectFactoryUtil.createActivatePaymentNoticeV2Request(activatePaymentReq));
+        Mockito.when(
+                        objectFactoryNodeForPsp
+                                .createActivatePaymentNoticeV2Request(argThat(req -> req.getPaymentNote() == null))
+                )
+                .thenAnswer(args -> objectFactoryUtil.createActivatePaymentNoticeV2Request(args.getArgument(0)));
         Mockito.when(nodoConfig.baseActivatePaymentNoticeV2Request()).thenReturn(new ActivatePaymentNoticeV2Request());
 
         /* test */
