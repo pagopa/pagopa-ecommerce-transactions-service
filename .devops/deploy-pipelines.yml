@@ -217,7 +217,7 @@ stages:
           - checkout: pagopaCheckoutTests
           - template: azure-templates/api-tests.yml
             parameters:
-              ENV_FILE: "api-tests/uat.blue.envs.json"
+              ENV_FILE: "api-tests/uat.transactions.blue.envs.json"
 
   - stage: "Bluegreen_WaitForApproval"
     displayName: 'UAT green approval deployment'
