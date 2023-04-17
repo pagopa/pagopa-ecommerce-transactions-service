@@ -122,14 +122,6 @@ public class TransactionsUtils {
                         )
                 );
     }
-
-    public static void main(String[] args) {
-        TransactionsUtils transactionsUtils = new TransactionsUtils(null, "");
-        System.out.println(transactionsUtils.buildWarmupRequest().getPaymentNotices().get(0).getRptId());
-        transactionsUtils = new TransactionsUtils(null, "3020");
-        System.out.println(transactionsUtils.buildWarmupRequest().getPaymentNotices().get(0).getRptId());
-        transactionsUtils = new TransactionsUtils(null, "AAAAAAAAAAAAAAAAAABB");
-        System.out.println(transactionsUtils.buildWarmupRequest().getPaymentNotices().get(0).getRptId());
-    }
+    
 
 }
