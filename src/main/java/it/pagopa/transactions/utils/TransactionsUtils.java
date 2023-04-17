@@ -101,17 +101,15 @@ public class TransactionsUtils {
     }
 
     public NewTransactionRequestDto buildWarmupRequest() {
-        String pad = String.valueOf(System.currentTimeMillis());
-        int neededPadLength = 18 - warmUpNoticeCodePrefix.length();
-        int padLength = pad.length();
-        int lengthDiff = padLength - neededPadLength;
-        if (lengthDiff > 0) {
-            pad = pad.substring(lengthDiff, pad.length() - 1);
+        String noticeCode = warmUpNoticeCodePrefix.concat(String.valueOf(System.currentTimeMillis()));
+        int neededPadLength = 18 - noticeCode.length();
+        if (neededPadLength < 0) {
+            noticeCode = noticeCode.substring(0, noticeCode.length() + neededPadLength);
         } else {
             StringBuilder padBuilder = new StringBuilder();
-            pad = padBuilder
-                    .append("0".repeat(Math.max(0, -lengthDiff)))
-                    .append(pad)
+            noticeCode = padBuilder
+                    .append(noticeCode)
+                    .append("0".repeat(neededPadLength))
                     .toString();
         }
         return new NewTransactionRequestDto()
@@ -119,10 +117,19 @@ public class TransactionsUtils {
                 .paymentNotices(
                         Collections.singletonList(
                                 new PaymentNoticeInfoDto()
-                                        .rptId("77777777777%s%s".formatted(warmUpNoticeCodePrefix, pad))
+                                        .rptId("77777777777%s".formatted(noticeCode))
                                         .amount(100)
                         )
                 );
+    }
+
+    public static void main(String[] args) {
+        TransactionsUtils transactionsUtils = new TransactionsUtils(null, "");
+        System.out.println(transactionsUtils.buildWarmupRequest().getPaymentNotices().get(0).getRptId());
+        transactionsUtils = new TransactionsUtils(null, "3020");
+        System.out.println(transactionsUtils.buildWarmupRequest().getPaymentNotices().get(0).getRptId());
+        transactionsUtils = new TransactionsUtils(null, "AAAAAAAAAAAAAAAAAABB");
+        System.out.println(transactionsUtils.buildWarmupRequest().getPaymentNotices().get(0).getRptId());
     }
 
 }
