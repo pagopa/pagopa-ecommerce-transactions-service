@@ -149,8 +149,6 @@ public class TransactionSendClosureHandler implements
                                                     .toString(),
                                             "authorizationCode",
                                             updateAuthorizationRequestDto.getAuthorizationCode(),
-                                            "tipoVersamento",
-                                            TIPO_VERSAMENTO_CP,
                                             "rrn",
                                             ECOMMERCE_RRN,
                                             "fee",
