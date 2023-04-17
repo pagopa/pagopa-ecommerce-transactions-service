@@ -50,7 +50,7 @@ class TransactionRequestUserReceiptHandlerTest {
     private TransactionsEventStoreRepository<Object> eventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
 
-    private final TransactionsUtils transactionsUtils = new TransactionsUtils(eventStoreRepository);
+    private final TransactionsUtils transactionsUtils = new TransactionsUtils(eventStoreRepository, "3020");
 
     @BeforeEach
     public void initTest() {
