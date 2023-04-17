@@ -29,6 +29,7 @@ class TransactionDocumentTest {
         String TEST_PAFISCALCODE = "77777777777";
         String TEST_RPTID = TEST_PAFISCALCODE + "302016723749670035";
         String TEST_DESC = "";
+        String TEST_CART = "TEST_CART";
         ZonedDateTime TEST_TIME = ZonedDateTime.now();
         Confidential<Email> CONFIDENTIAL_TEST_EMAIL = TransactionTestUtils.EMAIL;
         int TEST_AMOUNT = 1;
@@ -62,7 +63,8 @@ class TransactionDocumentTest {
                 CONFIDENTIAL_TEST_EMAIL,
                 TEST_STATUS,
                 Transaction.ClientId.CHECKOUT,
-                TEST_TIME.toString()
+                TEST_TIME.toString(),
+                TEST_CART
         );
 
         Transaction sameTransaction = new Transaction(
@@ -81,7 +83,8 @@ class TransactionDocumentTest {
                 CONFIDENTIAL_TEST_EMAIL,
                 TEST_STATUS,
                 Transaction.ClientId.CHECKOUT,
-                TEST_TIME.toString()
+                TEST_TIME.toString(),
+                TEST_CART
         );
 
         // Different transaction (creation date)
@@ -101,7 +104,8 @@ class TransactionDocumentTest {
                 CONFIDENTIAL_TEST_EMAIL,
                 TEST_STATUS,
                 Transaction.ClientId.CHECKOUT,
-                ZonedDateTime.now().toString()
+                ZonedDateTime.now().toString(),
+                TEST_CART
         );
         it.pagopa.ecommerce.commons.documents.v1.PaymentNotice paymentNotice = new PaymentNotice(
                 TEST_TOKEN,
@@ -140,6 +144,7 @@ class TransactionDocumentTest {
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
+        String idCart = "idCart";
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -156,7 +161,8 @@ class TransactionDocumentTest {
                 email,
                 faultCode,
                 faultCodeString,
-                Transaction.ClientId.CHECKOUT
+                Transaction.ClientId.CHECKOUT,
+                idCart
         );
 
         Transaction transactionDocument = Transaction.from(transaction);

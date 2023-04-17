@@ -270,7 +270,7 @@ public class TransactionsService {
                                                                                     )
                                                                     ).toList()
                                                     ),
-                                            null
+                                            Integer.MAX_VALUE
                                     )
                                     .map(
                                             calculateFeeResponse -> Tuples.of(
@@ -359,7 +359,8 @@ public class TransactionsService {
                                     transactionDocument.getEmail(),
                                     null,
                                     null,
-                                    transactionDocument.getClientId()
+                                    transactionDocument.getClientId(),
+                                    transactionDocument.getIdCart()
                             );
 
                             AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -622,7 +623,8 @@ public class TransactionsService {
                                     transactionDocument.getEmail(),
                                     null,
                                     null,
-                                    transactionDocument.getClientId()
+                                    transactionDocument.getClientId(),
+                                    transactionDocument.getIdCart()
                             );
                             AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
                                     transaction,

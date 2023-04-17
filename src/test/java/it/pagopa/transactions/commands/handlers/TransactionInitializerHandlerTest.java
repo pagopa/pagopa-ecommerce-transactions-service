@@ -310,7 +310,7 @@ class TransactionInitializerHandlerTest {
         /* preconditions */
         Mockito.when(paymentRequestInfoRepository.findById(rptId))
                 .thenReturn(Optional.of(paymentRequestInfoCached));
-        Mockito.when(nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any()))
+        Mockito.when(nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any()))
                 .thenReturn(Mono.error(new InvalidNodoResponseException("Invalid payment token received")));
         ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
         /* run test */
@@ -378,7 +378,7 @@ class TransactionInitializerHandlerTest {
         Mockito.when(paymentRequestInfoRepository.save(any(PaymentRequestInfo.class)))
                 .thenReturn(paymentRequestInfoBeforeActivation);
         Mockito.when(
-                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any())
+                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any())
         )
                 .thenReturn(Mono.just(paymentRequestInfoAfterActivation));
         Mockito.when(jwtTokenUtils.generateToken(any()))
@@ -451,7 +451,7 @@ class TransactionInitializerHandlerTest {
         Mockito.when(paymentRequestInfoRepository.save(any(PaymentRequestInfo.class)))
                 .thenReturn(paymentRequestInfoActivation);
         Mockito.when(
-                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any())
+                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any())
         )
                 .thenReturn(Mono.just(paymentRequestInfoActivation));
         Mockito.when(

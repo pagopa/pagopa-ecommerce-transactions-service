@@ -320,7 +320,8 @@ public class TransactionServiceTests {
                 transactionDocument.getEmail(),
                 "faultCode",
                 "faultCodeString",
-                Transaction.ClientId.CHECKOUT
+                Transaction.ClientId.CHECKOUT,
+                transactionDocument.getIdCart()
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -362,7 +363,8 @@ public class TransactionServiceTests {
                 transactionDocument.getEmail(),
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSED,
                 Transaction.ClientId.CHECKOUT,
-                ZonedDateTime.now().toString()
+                ZonedDateTime.now().toString(),
+                transactionDocument.getIdCart()
         );
 
         /* preconditions */
@@ -1007,7 +1009,8 @@ public class TransactionServiceTests {
                 transactionDocument.getEmail(),
                 "faultCode",
                 "faultCodeString",
-                Transaction.ClientId.CHECKOUT
+                Transaction.ClientId.CHECKOUT,
+                transactionDocument.getIdCart()
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -1049,7 +1052,8 @@ public class TransactionServiceTests {
                 transactionDocument.getEmail(),
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
                 Transaction.ClientId.CHECKOUT,
-                ZonedDateTime.now().toString()
+                ZonedDateTime.now().toString(),
+                transactionDocument.getIdCart()
         );
 
         /* preconditions */

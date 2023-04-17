@@ -50,6 +50,7 @@ public class TransactionsActivationProjectionHandler
         String faultCode = event.getData().getFaultCode();
         String faultCodeString = event.getData().getFaultCodeString();
         ClientId clientId = event.getData().getClientId();
+        String idCart = event.getData().getIdCart();
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -57,7 +58,8 @@ public class TransactionsActivationProjectionHandler
                 email,
                 faultCode,
                 faultCodeString,
-                clientId
+                clientId,
+                idCart
         );
 
         it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.v1.Transaction

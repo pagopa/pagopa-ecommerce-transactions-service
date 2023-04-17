@@ -44,7 +44,8 @@ class ClosureSendProjectionHandlerTests {
                 transaction.getEmail(),
                 TransactionStatusDto.CLOSED,
                 Transaction.ClientId.CHECKOUT,
-                transaction.getCreationDate()
+                transaction.getCreationDate(),
+                transaction.getIdCart()
         );
 
         Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId()))
@@ -72,7 +73,8 @@ class ClosureSendProjectionHandlerTests {
                 transaction.getEmail(),
                 TransactionStatusDto.UNAUTHORIZED,
                 Transaction.ClientId.CHECKOUT,
-                transaction.getCreationDate()
+                transaction.getCreationDate(),
+                transaction.getIdCart()
         );
 
         Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId()))
