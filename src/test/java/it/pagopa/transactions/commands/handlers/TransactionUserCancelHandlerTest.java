@@ -32,7 +32,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-public class TransactionUserCancelHandlerTest {
+class TransactionUserCancelHandlerTest {
 
     private TransactionUserCancelHandler transactionUserCancelHandler;
     @Mock
