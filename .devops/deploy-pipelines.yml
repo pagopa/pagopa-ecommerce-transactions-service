@@ -143,7 +143,7 @@ stages:
     dependsOn: [ ]
     condition:
       and(
-      succeededOrFailed(),
+      succeeded(),
       eq(${{parameters.UAT_PROD_DEPLOY}}, true),
       or(
       eq(variables['Build.SourceBranch'], 'refs/heads/CHK-1384-test-automation'),
@@ -222,7 +222,7 @@ stages:
   - stage: "Bluegreen_WaitForApproval"
     displayName: 'UAT green approval deployment'
     dependsOn: Blue_API_UAT_test
-    condition: succeededOrFailed()
+    condition: succeeded()
     jobs:
       - job: Bluegreen_WaitForApproval
         displayName: Manual blue deploy approval
@@ -233,14 +233,16 @@ stages:
             timeoutInMinutes: 4320 # 3 days
             inputs:
               onTimeout: 'skip'
-            condition: and(succeededOrFailed(), eq(${{parameters.UAT_SKIP_MANUAL_APPROVAL}}, False))
+            condition: and(succeeded(), eq(${{parameters.UAT_SKIP_MANUAL_APPROVAL}}, False))
 
   - stage: Release
-    condition: succeededOrFailed()
     ${{ if eq(parameters['UAT_SKIP_BLUE_DEPLOYMENT'], True) }}:
       dependsOn: Build_release_candidate
+
+
     ${{ if eq(parameters['UAT_SKIP_BLUE_DEPLOYMENT'], False) }}:
       dependsOn: Bluegreen_WaitForApproval
+      condition: succeeded()
     jobs:
       - job: make_release
         displayName: Make github release
