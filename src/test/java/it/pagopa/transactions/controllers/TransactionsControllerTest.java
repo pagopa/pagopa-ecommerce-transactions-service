@@ -8,6 +8,7 @@ import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.TransactionsService;
 import it.pagopa.transactions.utils.JwtTokenUtils;
+import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -58,6 +59,9 @@ class TransactionsControllerTest {
 
     @Autowired
     private WebTestClient webTestClient;
+
+    @MockBean
+    private TransactionsUtils transactionsUtils;
 
     @Mock
     ServerWebExchange mockExchange;

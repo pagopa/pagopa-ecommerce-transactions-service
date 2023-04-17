@@ -1,11 +1,12 @@
 package it.pagopa.transactions.controllers;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
-import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.TransactionsService;
+import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,10 +15,12 @@ import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.support.WebExchangeBindException;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import javax.validation.ConstraintViolationException;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -26,6 +29,9 @@ import java.util.stream.Collectors;
 public class TransactionsController implements TransactionsApi {
     @Autowired
     private TransactionsService transactionsService;
+
+    @Autowired
+    private TransactionsUtils transactionsUtils;
 
     @ExceptionHandler(
         {
@@ -341,4 +347,19 @@ public class TransactionsController implements TransactionsApi {
                 httpStatus
         );
     }
+
+    @Warmup
+    public void postNewTransactionWarmupMethod() {
+        WebClient
+                .create()
+                .post()
+                .uri("http://localhost:8080/transactions")
+                .header("X-Client-Id", TransactionInfoDto.ClientIdEnum.CHECKOUT.toString())
+                .bodyValue(transactionsUtils.buildWarmupRequest())
+                .retrieve()
+                .toBodilessEntity()
+                .block(Duration.ofSeconds(30));
+
+    }
+
 }
