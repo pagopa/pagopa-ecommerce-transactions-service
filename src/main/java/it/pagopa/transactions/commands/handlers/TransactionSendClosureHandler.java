@@ -144,10 +144,10 @@ public class TransactionSendClosureHandler implements
                             .paymentMethod(transactionAuthorizationRequestData.getPaymentTypeCode())
                             .additionalPaymentInformations(
                                     Map.of(
-                                            "outcome_payment_gateway",
+                                            "outcomePaymentGateway",
                                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
                                                     .toString(),
-                                            "authorization_code",
+                                            "authorizationCode",
                                             updateAuthorizationRequestDto.getAuthorizationCode(),
                                             "tipoVersamento",
                                             TIPO_VERSAMENTO_CP,
