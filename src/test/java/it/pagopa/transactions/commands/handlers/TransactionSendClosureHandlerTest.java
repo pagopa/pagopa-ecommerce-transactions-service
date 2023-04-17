@@ -338,12 +338,10 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         Map.of(
-                                "outcome_payment_gateway",
+                                "outcomePaymentGateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
+                                "authorizationCode",
                                 updateAuthorizationRequest.getAuthorizationCode(),
-                                "tipoVersamento",
-                                TIPO_VERSAMENTO_CP,
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -495,12 +493,10 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         Map.of(
-                                "outcome_payment_gateway",
+                                "outcomePaymentGateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
+                                "authorizationCode",
                                 updateAuthorizationRequest.getAuthorizationCode(),
-                                "tipoVersamento",
-                                TIPO_VERSAMENTO_CP,
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -652,12 +648,10 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         Map.of(
-                                "outcome_payment_gateway",
+                                "outcomePaymentGateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
+                                "authorizationCode",
                                 updateAuthorizationRequest.getAuthorizationCode(),
-                                "tipoVersamento",
-                                TIPO_VERSAMENTO_CP,
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -808,12 +802,10 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         Map.of(
-                                "outcome_payment_gateway",
+                                "outcomePaymentGateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
+                                "authorizationCode",
                                 updateAuthorizationRequest.getAuthorizationCode(),
-                                "tipoVersamento",
-                                TIPO_VERSAMENTO_CP,
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -974,12 +966,10 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         Map.of(
-                                "outcome_payment_gateway",
+                                "outcomePaymentGateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
+                                "authorizationCode",
                                 updateAuthorizationRequest.getAuthorizationCode(),
-                                "tipoVersamento",
-                                TIPO_VERSAMENTO_CP,
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -1147,12 +1137,10 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         Map.of(
-                                "outcome_payment_gateway",
+                                "outcomePaymentGateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
+                                "authorizationCode",
                                 updateAuthorizationRequest.getAuthorizationCode(),
-                                "tipoVersamento",
-                                TIPO_VERSAMENTO_CP,
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -1330,12 +1318,10 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         Map.of(
-                                "outcome_payment_gateway",
+                                "outcomePaymentGateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
+                                "authorizationCode",
                                 updateAuthorizationRequest.getAuthorizationCode(),
-                                "tipoVersamento",
-                                TIPO_VERSAMENTO_CP,
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -1513,12 +1499,10 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         Map.of(
-                                "outcome_payment_gateway",
+                                "outcomePaymentGateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
+                                "authorizationCode",
                                 updateAuthorizationRequest.getAuthorizationCode(),
-                                "tipoVersamento",
-                                TIPO_VERSAMENTO_CP,
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -1693,12 +1677,10 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         Map.of(
-                                "outcome_payment_gateway",
+                                "outcomePaymentGateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
+                                "authorizationCode",
                                 updateAuthorizationRequest.getAuthorizationCode(),
-                                "tipoVersamento",
-                                TIPO_VERSAMENTO_CP,
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -1864,12 +1846,10 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         Map.of(
-                                "outcome_payment_gateway",
+                                "outcomePaymentGateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
+                                "authorizationCode",
                                 updateAuthorizationRequest.getAuthorizationCode(),
-                                "tipoVersamento",
-                                TIPO_VERSAMENTO_CP,
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -1990,12 +1970,10 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         Map.of(
-                                "outcome_payment_gateway",
+                                "outcomePaymentGateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
+                                "authorizationCode",
                                 updateAuthorizationRequest.getAuthorizationCode(),
-                                "tipoVersamento",
-                                TIPO_VERSAMENTO_CP,
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -2118,12 +2096,10 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         Map.of(
-                                "outcome_payment_gateway",
+                                "outcomePaymentGateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
+                                "authorizationCode",
                                 updateAuthorizationRequest.getAuthorizationCode(),
-                                "tipoVersamento",
-                                TIPO_VERSAMENTO_CP,
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -2256,12 +2232,10 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         Map.of(
-                                "outcome_payment_gateway",
+                                "outcomePaymentGateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
+                                "authorizationCode",
                                 updateAuthorizationRequest.getAuthorizationCode(),
-                                "tipoVersamento",
-                                TIPO_VERSAMENTO_CP,
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -2374,12 +2348,10 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         Map.of(
-                                "outcome_payment_gateway",
+                                "outcomePaymentGateway",
                                 updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
+                                "authorizationCode",
                                 updateAuthorizationRequest.getAuthorizationCode(),
-                                "tipoVersamento",
-                                TIPO_VERSAMENTO_CP,
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
