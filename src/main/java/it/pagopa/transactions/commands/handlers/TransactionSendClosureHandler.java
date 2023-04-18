@@ -32,6 +32,8 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 @Component
@@ -154,9 +156,12 @@ public class TransactionSendClosureHandler implements
                                             "fee",
                                             fee.toString(),
                                             "timestampOperation",
-                                            OffsetDateTime.now().toString(), // FIXME Pass
-                                                                             // the timestamp of the authorization
-                                                                             // result
+                                            // FIXME Pass the timestamp of the authorization result
+                                            // bug CHK-1410: date formatted to yyyy-MM-ddTHH:mm:ss truncating millis
+                                            OffsetDateTime.now()
+                                                    .toLocalDateTime()
+                                                    .truncatedTo(ChronoUnit.SECONDS)
+                                                    .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                                             "totalAmount",
                                             totalAmount.toString()
                                     )
@@ -410,4 +415,5 @@ public class TransactionSendClosureHandler implements
             );
         }
     }
+
 }
