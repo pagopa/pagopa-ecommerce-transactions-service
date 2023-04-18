@@ -3,7 +3,7 @@ parameters:
   - name: "ENV_FILE"
     type: string
   - name: "TEST_FILE_PREFIX"
-      type: string
+    type: string
 
 steps:
   - script: |
