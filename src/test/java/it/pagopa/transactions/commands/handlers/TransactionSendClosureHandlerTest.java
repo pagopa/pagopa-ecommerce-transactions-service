@@ -48,7 +48,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import static it.pagopa.transactions.commands.handlers.TransactionSendClosureHandler.ECOMMERCE_RRN;
-import static it.pagopa.transactions.commands.handlers.TransactionSendClosureHandler.TIPO_VERSAMENTO_CP;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 
@@ -98,10 +97,14 @@ class TransactionSendClosureHandlerTest {
 
     private static MockedStatic<OffsetDateTime> offsetDateTimeMockedStatic;
 
+    private static final String expectedOperationTimestamp = "2023-01-01T01:02:03";
+    private static final OffsetDateTime operationTimestamp = OffsetDateTime.parse(expectedOperationTimestamp.concat("+01:00"));
+
+
     @BeforeAll
     static void init() {
         offsetDateTimeMockedStatic = Mockito.mockStatic(OffsetDateTime.class);
-        offsetDateTimeMockedStatic.when(OffsetDateTime::now).thenReturn(OffsetDateTime.MIN);
+        offsetDateTimeMockedStatic.when(OffsetDateTime::now).thenReturn(operationTimestamp);
     }
 
     @AfterAll
@@ -347,7 +350,7 @@ class TransactionSendClosureHandlerTest {
                                 "fee",
                                 EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
                                 "timestampOperation",
-                                OffsetDateTime.now().toString(), // 2023-04-03T15:42:22.826Z
+                                expectedOperationTimestamp,// 2023-04-03T15:42:22
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -502,7 +505,7 @@ class TransactionSendClosureHandlerTest {
                                 "fee",
                                 EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
                                 "timestampOperation",
-                                OffsetDateTime.now().toString(),
+                                expectedOperationTimestamp,// yyyy-MM-ddThh:mm:ss
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -657,7 +660,7 @@ class TransactionSendClosureHandlerTest {
                                 "fee",
                                 EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
                                 "timestampOperation",
-                                OffsetDateTime.now().toString(), // 2023-04-03T15:42:22.826Z
+                                expectedOperationTimestamp,// yyyy-MM-ddThh:mm:ss
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -811,7 +814,7 @@ class TransactionSendClosureHandlerTest {
                                 "fee",
                                 EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
                                 "timestampOperation",
-                                OffsetDateTime.now().toString(),
+                                expectedOperationTimestamp,// yyyy-MM-ddThh:mm:ss
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -975,7 +978,7 @@ class TransactionSendClosureHandlerTest {
                                 "fee",
                                 EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
                                 "timestampOperation",
-                                OffsetDateTime.now().toString(),
+                                expectedOperationTimestamp,// yyyy-MM-ddThh:mm:ss
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -1146,7 +1149,7 @@ class TransactionSendClosureHandlerTest {
                                 "fee",
                                 EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
                                 "timestampOperation",
-                                OffsetDateTime.now().toString(), // 2023-04-03T15:42:22.826Z
+                                expectedOperationTimestamp,// yyyy-MM-ddThh:mm:ss
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -1327,7 +1330,7 @@ class TransactionSendClosureHandlerTest {
                                 "fee",
                                 EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
                                 "timestampOperation",
-                                OffsetDateTime.now().toString(), // 2023-04-03T15:42:22.826Z
+                                expectedOperationTimestamp,// yyyy-MM-ddThh:mm:ss
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -1508,7 +1511,7 @@ class TransactionSendClosureHandlerTest {
                                 "fee",
                                 EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
                                 "timestampOperation",
-                                OffsetDateTime.now().toString(), // 2023-04-03T15:42:22.826Z
+                                expectedOperationTimestamp,// yyyy-MM-ddThh:mm:ss
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -1686,7 +1689,7 @@ class TransactionSendClosureHandlerTest {
                                 "fee",
                                 EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
                                 "timestampOperation",
-                                OffsetDateTime.now().toString(), // 2023-04-03T15:42:22.826Z
+                                expectedOperationTimestamp,// yyyy-MM-ddThh:mm:ss
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -1855,7 +1858,7 @@ class TransactionSendClosureHandlerTest {
                                 "fee",
                                 EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
                                 "timestampOperation",
-                                OffsetDateTime.now().toString(), // 2023-04-03T15:42:22.826Z
+                                expectedOperationTimestamp,// yyyy-MM-ddThh:mm:ss
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -1979,7 +1982,7 @@ class TransactionSendClosureHandlerTest {
                                 "fee",
                                 EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
                                 "timestampOperation",
-                                OffsetDateTime.now().toString(), // 2023-04-03T15:42:22.826Z
+                                expectedOperationTimestamp,// yyyy-MM-ddThh:mm:ss
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -2105,7 +2108,7 @@ class TransactionSendClosureHandlerTest {
                                 "fee",
                                 EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
                                 "timestampOperation",
-                                OffsetDateTime.now().toString(), // 2023-04-03T15:42:22.826Z
+                                expectedOperationTimestamp,// yyyy-MM-ddThh:mm:ss
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -2241,7 +2244,7 @@ class TransactionSendClosureHandlerTest {
                                 "fee",
                                 EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
                                 "timestampOperation",
-                                OffsetDateTime.now().toString(), // 2023-04-03T15:42:22.826Z
+                                expectedOperationTimestamp,// yyyy-MM-ddThh:mm:ss
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -2357,7 +2360,7 @@ class TransactionSendClosureHandlerTest {
                                 "fee",
                                 EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
                                 "timestampOperation",
-                                OffsetDateTime.now().toString(),
+                                expectedOperationTimestamp,// yyyy-MM-ddThh:mm:ss
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
