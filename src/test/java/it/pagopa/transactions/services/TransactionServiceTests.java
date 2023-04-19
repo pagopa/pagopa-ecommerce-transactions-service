@@ -61,7 +61,7 @@ import static org.mockito.Mockito.*;
     }
 )
 @AutoConfigureDataRedis
-public class TransactionServiceTests {
+class TransactionServiceTests {
     @MockBean
     private TransactionsViewRepository repository;
 

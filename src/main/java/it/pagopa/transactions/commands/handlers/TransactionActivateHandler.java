@@ -77,7 +77,7 @@ public class TransactionActivateHandler
     public Mono<Tuple2<Mono<TransactionActivatedEvent>, String>> handle(
                                                                         TransactionActivateCommand command
     ) {
-        final String transactionId = UUID.randomUUID().toString().replace("-", "");
+        final TransactionId transactionId = new TransactionId(UUID.randomUUID());
         final NewTransactionRequestDto newTransactionRequestDto = command.getData();
         final List<PaymentNoticeInfoDto> paymentNotices = newTransactionRequestDto.getPaymentNotices();
         final boolean multiplePaymentNotices = paymentNotices.size() > 1;
@@ -177,7 +177,7 @@ public class TransactionActivateHandler
                                                                     rptId,
                                                                     idempotencyKey,
                                                                     paymentNotice.getAmount(),
-                                                                    transactionId,
+                                                                    transactionId.value(),
                                                                     paymentTokenTimeout,
                                                                     newTransactionRequestDto.getIdCart()
                                                             )
@@ -205,7 +205,7 @@ public class TransactionActivateHandler
                         .collectList()
                         .flatMap(
                                 paymentRequestInfos -> jwtTokenUtils
-                                        .generateToken(new TransactionId(transactionId))
+                                        .generateToken(transactionId)
                                         .map(generatedToken -> Tuples.of(generatedToken, paymentRequestInfos))
                         ).flatMap(
                                 args -> {
@@ -215,7 +215,7 @@ public class TransactionActivateHandler
                                             Tuples.of(
                                                     newTransactionActivatedEvent(
                                                             paymentRequestsInfo,
-                                                            transactionId,
+                                                            transactionId.value(),
                                                             newTransactionRequestDto.getEmail(),
                                                             command.getClientId(),
                                                             newTransactionRequestDto.getIdCart()

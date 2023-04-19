@@ -540,7 +540,7 @@ public class TransactionsService {
 
     private TransactionInfoDto buildTransactionInfoDto(BaseTransaction baseTransaction) {
         return new TransactionInfoDto()
-                .transactionId(baseTransaction.getTransactionId().value().toString())
+                .transactionId(baseTransaction.getTransactionId().value())
                 .payments(
                         baseTransaction.getPaymentNotices()
                                 .stream().map(
@@ -575,7 +575,7 @@ public class TransactionsService {
          */
         return eventStoreRepository
                 .findByTransactionIdAndEventCode(
-                        transactionId.value().toString(),
+                        transactionId.value(),
                         TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT
                 )
                 .map(v -> true)
@@ -682,7 +682,7 @@ public class TransactionsService {
                 .handle(transactionActivatedEvent)
                 .map(
                         transaction -> new NewTransactionResponseDto()
-                                .transactionId(transaction.getTransactionId().value().toString())
+                                .transactionId(transaction.getTransactionId().value())
                                 .payments(
                                         transaction.getPaymentNotices().stream().map(
                                                 paymentNotice -> new PaymentInfoDto()
