@@ -39,7 +39,6 @@ import reactor.util.function.Tuples;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @Slf4j
@@ -190,7 +189,7 @@ public class TransactionsService {
                         transaction -> {
                             TransactionUserCancelCommand transactionCancelCommand = new TransactionUserCancelCommand(
                                     null,
-                                    new TransactionId(UUID.fromString(transactionId))
+                                    new TransactionId(transactionId)
                             );
 
                             return transactionCancelHandler.handle(transactionCancelCommand);
@@ -326,7 +325,7 @@ public class TransactionsService {
 
                             TransactionActivated transaction = new TransactionActivated(
                                     new TransactionId(
-                                            UUID.fromString(transactionDocument.getTransactionId())
+                                            transactionDocument.getTransactionId()
                                     ),
                                     transactionDocument.getPaymentNotices().stream()
                                             .map(
@@ -596,7 +595,7 @@ public class TransactionsService {
                 .map(
                         transactionDocument -> {
                             TransactionActivated transaction = new TransactionActivated(
-                                    new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
+                                    new TransactionId(transactionDocument.getTransactionId()),
                                     transactionDocument.getPaymentNotices().stream()
                                             .map(
                                                     paymentNotice -> new PaymentNotice(

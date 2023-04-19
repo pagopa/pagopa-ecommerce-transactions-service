@@ -49,7 +49,7 @@ class TransactionRequestAuthorizizationHandlerTest {
 
     private final UUID transactionIdUUID = UUID.randomUUID();
 
-    TransactionId transactionId = new TransactionId(UUID.fromString(TransactionTestUtils.TRANSACTION_ID));
+    TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
 
     @BeforeEach
     private void init() {

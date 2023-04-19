@@ -24,8 +24,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.util.UUID;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
@@ -59,7 +57,7 @@ class TransactionUserCancelHandlerTest {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
         TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
                 null,
-                new TransactionId(UUID.fromString(transactionId))
+                new TransactionId(transactionId)
         );
 
         /* PRECONDITION */
@@ -91,7 +89,7 @@ class TransactionUserCancelHandlerTest {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
         TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
                 null,
-                new TransactionId(UUID.fromString(transactionId))
+                new TransactionId(transactionId)
         );
 
         /* PRECONDITION */
@@ -115,7 +113,7 @@ class TransactionUserCancelHandlerTest {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
         TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
                 null,
-                new TransactionId(UUID.fromString(transactionId))
+                new TransactionId(transactionId)
         );
 
         /* PRECONDITION */
@@ -142,7 +140,7 @@ class TransactionUserCancelHandlerTest {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
         TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
                 null,
-                new TransactionId(UUID.fromString(transactionId))
+                new TransactionId(transactionId)
         );
 
         /* PRECONDITION */
@@ -163,7 +161,7 @@ class TransactionUserCancelHandlerTest {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
         TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
                 null,
-                new TransactionId(UUID.fromString(transactionId))
+                new TransactionId(transactionId)
         );
 
         /* PRECONDITION */
