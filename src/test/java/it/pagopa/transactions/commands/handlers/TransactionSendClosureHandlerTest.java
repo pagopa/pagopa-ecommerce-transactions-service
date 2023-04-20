@@ -45,7 +45,6 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import static it.pagopa.transactions.commands.handlers.TransactionSendClosureHandler.ECOMMERCE_RRN;
 import static org.junit.jupiter.api.Assertions.*;
@@ -93,7 +92,7 @@ class TransactionSendClosureHandlerTest {
             transactionsUtils
     );
 
-    private final TransactionId transactionId = new TransactionId(UUID.fromString(TransactionTestUtils.TRANSACTION_ID));
+    private final TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
 
     private static MockedStatic<OffsetDateTime> offsetDateTimeMockedStatic;
 
@@ -177,7 +176,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionActivatedData(
                         email,
                         transaction.getTransactionActivatedData().getPaymentNotices(),
@@ -189,7 +188,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -206,7 +205,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         AuthorizationResultDto.OK
@@ -255,7 +254,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionActivatedData(
                         email,
                         PaymentNotices,
@@ -267,7 +266,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -284,7 +283,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         AuthorizationResultDto.KO
@@ -328,7 +327,7 @@ class TransactionSendClosureHandlerTest {
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
                         EuroUtils.euroCentsToEuro(
                                 ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -367,7 +366,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
@@ -410,7 +409,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionActivatedData(
                         email,
                         PaymentNotices,
@@ -422,7 +421,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -439,7 +438,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         AuthorizationResultDto.KO
@@ -483,7 +482,7 @@ class TransactionSendClosureHandlerTest {
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
                         EuroUtils.euroCentsToEuro(
                                 ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -522,7 +521,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
@@ -565,7 +564,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionActivatedData(
                         email,
                         PaymentNotices,
@@ -577,7 +576,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -594,7 +593,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         AuthorizationResultDto.OK
@@ -638,7 +637,7 @@ class TransactionSendClosureHandlerTest {
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
                         EuroUtils.euroCentsToEuro(
                                 ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -677,7 +676,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
@@ -720,7 +719,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionActivatedData(
                         email,
                         PaymentNotices,
@@ -732,7 +731,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -749,7 +748,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         AuthorizationResultDto.OK
@@ -791,7 +790,7 @@ class TransactionSendClosureHandlerTest {
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
                         EuroUtils.euroCentsToEuro(
                                 (transactionActivatedEvent.getData().getPaymentNotices().stream()
@@ -826,7 +825,7 @@ class TransactionSendClosureHandlerTest {
                 );
 
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
-                transactionId.value().toString()
+                transactionId.value()
         );
 
         RuntimeException closePaymentError = new RuntimeException("Network error");
@@ -834,7 +833,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.error(closePaymentError));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
@@ -887,7 +886,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionActivatedData(
                         email,
                         PaymentNotices,
@@ -899,7 +898,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -916,7 +915,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationCompletedEvent authorizationStatusUpdatedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         AuthorizationResultDto.OK
@@ -957,7 +956,7 @@ class TransactionSendClosureHandlerTest {
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
                         EuroUtils.euroCentsToEuro(
                                 ((BaseTransactionWithPaymentToken) transaction).getTransactionActivatedData()
@@ -993,14 +992,14 @@ class TransactionSendClosureHandlerTest {
                 .outcome(ClosePaymentResponseDto.OutcomeEnum.KO);
 
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
-                transactionId.value().toString()
+                transactionId.value()
         );
 
         RuntimeException redisError = new RuntimeException("Network error");
 
         /* preconditions */
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
         // first call to redis is ko, second one is ok
         Mockito.when(transactionEventStoreRepository.save(any()))
                 .thenReturn(Mono.error(redisError));
@@ -1058,7 +1057,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionActivatedData(
                         email,
                         PaymentNotices,
@@ -1070,7 +1069,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -1087,7 +1086,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         AuthorizationResultDto.OK
@@ -1126,7 +1125,7 @@ class TransactionSendClosureHandlerTest {
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
                         EuroUtils.euroCentsToEuro(
                                 (transactionActivatedEvent.getData().getPaymentNotices().stream()
@@ -1160,7 +1159,7 @@ class TransactionSendClosureHandlerTest {
                         )
                 );
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
-                transactionId.value().toString()
+                transactionId.value()
         );
 
         RuntimeException closePaymentError = new BadGatewayException("Bad request error", HttpStatus.BAD_REQUEST);
@@ -1168,7 +1167,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.error(closePaymentError));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
@@ -1239,7 +1238,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionActivatedData(
                         email,
                         PaymentNotices,
@@ -1251,7 +1250,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -1268,7 +1267,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         AuthorizationResultDto.KO
@@ -1307,7 +1306,7 @@ class TransactionSendClosureHandlerTest {
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
                         EuroUtils.euroCentsToEuro(
                                 (transactionActivatedEvent.getData().getPaymentNotices().stream()
@@ -1341,7 +1340,7 @@ class TransactionSendClosureHandlerTest {
                         )
                 );
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
-                transactionId.value().toString()
+                transactionId.value()
         );
 
         RuntimeException closePaymentError = new BadGatewayException("Bad request error", HttpStatus.BAD_REQUEST);
@@ -1349,7 +1348,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.error(closePaymentError));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(transactionRefundedEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
         Mockito.when(
@@ -1417,7 +1416,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionActivatedData(
                         email,
                         PaymentNotices,
@@ -1429,7 +1428,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -1446,7 +1445,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         AuthorizationResultDto.KO
@@ -1488,7 +1487,7 @@ class TransactionSendClosureHandlerTest {
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
                         EuroUtils.euroCentsToEuro(
                                 (transactionActivatedEvent.getData().getPaymentNotices().stream()
@@ -1522,7 +1521,7 @@ class TransactionSendClosureHandlerTest {
                         )
                 );
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
-                transactionId.value().toString()
+                transactionId.value()
         );
 
         RuntimeException closePaymentError = new BadGatewayException(
@@ -1533,7 +1532,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.error(closePaymentError));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
@@ -1595,7 +1594,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionActivatedData(
                         email,
                         PaymentNotices,
@@ -1607,7 +1606,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -1624,7 +1623,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         AuthorizationResultDto.OK
@@ -1666,7 +1665,7 @@ class TransactionSendClosureHandlerTest {
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
                         EuroUtils.euroCentsToEuro(
                                 (transactionActivatedEvent.getData().getPaymentNotices().stream()
@@ -1700,7 +1699,7 @@ class TransactionSendClosureHandlerTest {
                         )
                 );
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
-                transactionId.value().toString()
+                transactionId.value()
         );
 
         RuntimeException closePaymentError = new BadGatewayException(
@@ -1711,7 +1710,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.error(closePaymentError));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
@@ -1764,7 +1763,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionActivatedData(
                         email,
                         paymentNotices,
@@ -1776,7 +1775,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -1793,7 +1792,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         AuthorizationResultDto.OK
@@ -1835,7 +1834,7 @@ class TransactionSendClosureHandlerTest {
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
                         EuroUtils.euroCentsToEuro(
                                 (transactionActivatedEvent.getData().getPaymentNotices().stream()
@@ -1870,7 +1869,7 @@ class TransactionSendClosureHandlerTest {
                 );
 
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
-                transactionId.value().toString()
+                transactionId.value()
         );
 
         RuntimeException closePaymentError = new BadGatewayException(
@@ -1881,7 +1880,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.error(closePaymentError));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
@@ -1960,7 +1959,7 @@ class TransactionSendClosureHandlerTest {
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
                         EuroUtils.euroCentsToEuro(
                                 ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -1999,7 +1998,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());
@@ -2032,7 +2031,7 @@ class TransactionSendClosureHandlerTest {
                                 (BinaryData b) -> {
                                     TransactionRefundRequestedEvent e = b
                                             .toObject(TransactionRefundRequestedEvent.class);
-                                    return e.getTransactionId().equals(transactionId.value().toString()) && e.getData()
+                                    return e.getTransactionId().equals(transactionId.value()) && e.getData()
                                             .getStatusBeforeRefunded().equals(TransactionStatusDto.CLOSED);
                                 }
 
@@ -2086,7 +2085,7 @@ class TransactionSendClosureHandlerTest {
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
                         EuroUtils.euroCentsToEuro(
                                 ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -2122,13 +2121,13 @@ class TransactionSendClosureHandlerTest {
         RuntimeException closePaymentError = new BadGatewayException("Bad request error", HttpStatus.BAD_REQUEST);
 
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
-                transactionId.value().toString()
+                transactionId.value()
         );
 
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.error(closePaymentError));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
         Mockito.when(
                 refundQueueAsyncClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());
@@ -2156,7 +2155,7 @@ class TransactionSendClosureHandlerTest {
                                 (BinaryData b) -> {
                                     TransactionRefundRequestedEvent e = b
                                             .toObject(TransactionRefundRequestedEvent.class);
-                                    return e.getTransactionId().equals(transactionId.value().toString()) && e.getData()
+                                    return e.getTransactionId().equals(transactionId.value()) && e.getData()
                                             .getStatusBeforeRefunded().equals(TransactionStatusDto.CLOSURE_ERROR);
                                 }
                         ),
@@ -2222,7 +2221,7 @@ class TransactionSendClosureHandlerTest {
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
                         EuroUtils.euroCentsToEuro(
                                 ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -2261,7 +2260,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());
@@ -2338,7 +2337,7 @@ class TransactionSendClosureHandlerTest {
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
                         EuroUtils.euroCentsToEuro(
                                 ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -2372,7 +2371,7 @@ class TransactionSendClosureHandlerTest {
                 );
 
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
-                transactionId.value().toString()
+                transactionId.value()
         );
 
         RuntimeException closePaymentError = new BadGatewayException("Bad request error", HttpStatus.BAD_REQUEST);
@@ -2380,7 +2379,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.error(closePaymentError));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
         Mockito.when(
                 refundQueueAsyncClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());

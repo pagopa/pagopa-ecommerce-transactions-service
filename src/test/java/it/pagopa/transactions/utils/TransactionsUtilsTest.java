@@ -16,8 +16,6 @@ import org.mockito.Mockito;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
-import java.util.UUID;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
 
@@ -30,7 +28,7 @@ class TransactionsUtilsTest {
 
     @Test
     void shouldReduceTransactionCorrectly() {
-        TransactionId transactionId = new TransactionId(UUID.fromString(TransactionTestUtils.TRANSACTION_ID));
+        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
         TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
         TransactionAuthorizationRequestedEvent transactionAuthorizationRequestedEvent = TransactionTestUtils
                 .transactionAuthorizationRequestedEvent();
@@ -46,7 +44,7 @@ class TransactionsUtilsTest {
 
     @Test
     void shouldThrowTransactionNotFoundForNoEventsFoundForTransactionId() {
-        TransactionId transactionId = new TransactionId(UUID.fromString(TransactionTestUtils.TRANSACTION_ID));
+        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
         given(eventStoreRepository.findByTransactionId(transactionId.value().toString())).willReturn(Flux.empty());
         StepVerifier.create(transactionsUtils.reduceEvents(transactionId))
                 .expectErrorMatches(

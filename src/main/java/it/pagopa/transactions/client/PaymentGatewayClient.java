@@ -79,7 +79,7 @@ public class PaymentGatewayClient {
                             )
                             .paymentChannel(authorizationData.pspChannelCode())
                             .idTransaction(
-                                    uuidUtils.uuidToBase64(authorizationData.transaction().getTransactionId().value())
+                                    uuidUtils.uuidToBase64(authorizationData.transaction().getTransactionId().uuid())
                             );
                 })
                 .flatMap(
@@ -125,7 +125,7 @@ public class PaymentGatewayClient {
                                         .expiryDate(cardData.getExpiryDate())
                                         .idTransaction(
                                                 uuidUtils.uuidToBase64(
-                                                        authorizationData.transaction().getTransactionId().value()
+                                                        authorizationData.transaction().getTransactionId().uuid()
                                                 )
                                         )
                                         .grandTotal(grandTotal)
@@ -183,7 +183,7 @@ public class PaymentGatewayClient {
                                         .expireDate(cardData.getExpiryDate())
                                         .idTransaction(
                                                 uuidUtils.uuidToBase64(
-                                                        authorizationData.transaction().getTransactionId().value()
+                                                        authorizationData.transaction().getTransactionId().uuid()
                                                 )
                                         )
                                         .amount(grandTotal)

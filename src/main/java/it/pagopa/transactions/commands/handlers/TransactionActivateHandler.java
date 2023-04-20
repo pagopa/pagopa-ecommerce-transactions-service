@@ -4,7 +4,6 @@ import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
-import it.pagopa.ecommerce.commons.domain.v1.PaymentTransferInfo;
 import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
@@ -78,7 +77,7 @@ public class TransactionActivateHandler
     public Mono<Tuple2<Mono<TransactionActivatedEvent>, String>> handle(
                                                                         TransactionActivateCommand command
     ) {
-        final String transactionId = UUID.randomUUID().toString();
+        final TransactionId transactionId = new TransactionId(UUID.randomUUID());
         final NewTransactionRequestDto newTransactionRequestDto = command.getData();
         final List<PaymentNoticeInfoDto> paymentNotices = newTransactionRequestDto.getPaymentNotices();
         final boolean multiplePaymentNotices = paymentNotices.size() > 1;
@@ -178,7 +177,7 @@ public class TransactionActivateHandler
                                                                     rptId,
                                                                     idempotencyKey,
                                                                     paymentNotice.getAmount(),
-                                                                    transactionId,
+                                                                    transactionId.value(),
                                                                     paymentTokenTimeout,
                                                                     newTransactionRequestDto.getIdCart()
                                                             )
@@ -206,7 +205,7 @@ public class TransactionActivateHandler
                         .collectList()
                         .flatMap(
                                 paymentRequestInfos -> jwtTokenUtils
-                                        .generateToken(new TransactionId(UUID.fromString(transactionId)))
+                                        .generateToken(transactionId)
                                         .map(generatedToken -> Tuples.of(generatedToken, paymentRequestInfos))
                         ).flatMap(
                                 args -> {
@@ -216,7 +215,7 @@ public class TransactionActivateHandler
                                             Tuples.of(
                                                     newTransactionActivatedEvent(
                                                             paymentRequestsInfo,
-                                                            transactionId,
+                                                            transactionId.value(),
                                                             newTransactionRequestDto.getEmail(),
                                                             command.getClientId(),
                                                             newTransactionRequestDto.getIdCart()
