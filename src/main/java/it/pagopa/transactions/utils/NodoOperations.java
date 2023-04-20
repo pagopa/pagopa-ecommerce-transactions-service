@@ -112,7 +112,7 @@ public class NodoOperations {
                                                         transfer.getFiscalCodePA(),
                                                         transfer.getRichiestaMarcaDaBollo() != null,
                                                         EuroUtils.euroToEuroCents(transfer.getTransferAmount()),
-                                                        null // TODO il valore non è reperibile sulla struttura dati
+                                                        transfer.getTransferCategory()
                                                 )
                                         ).toList()
                         )

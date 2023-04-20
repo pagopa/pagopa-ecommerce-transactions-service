@@ -341,7 +341,7 @@
                             <schemas>
                                 <schema>
                                     <url>
-                                        https://raw.githubusercontent.com/pagopa/pagopa-infra/main/src/core/api/nodopagamenti_api/nodeForPsp/v1/nodeForPsp.wsdl
+                                        https://raw.githubusercontent.com/pagopa/pagopa-infra/add-transfer-category/src/core/api/nodopagamenti_api/nodeForPsp/v1/nodeForPsp.wsdl
                                     </url>
                                 </schema>
                             </schemas>
