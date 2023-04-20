@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.time.ZonedDateTime;
-import java.util.UUID;
 
 @Component
 @Slf4j
@@ -32,7 +31,7 @@ public class AuthorizationUpdateProjectionHandler
                 })
                 .map(
                         transactionDocument -> new TransactionActivated(
-                                new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
+                                new TransactionId(transactionDocument.getTransactionId()),
                                 transactionDocument.getPaymentNotices().stream()
                                         .map(
                                                 paymentNotice -> new PaymentNotice(
@@ -61,4 +60,5 @@ public class AuthorizationUpdateProjectionHandler
                         )
                 );
     }
+
 }

@@ -1,8 +1,8 @@
 package it.pagopa.transactions.services;
 
-import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
+import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -24,7 +24,6 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -79,7 +78,7 @@ class TransactionServiceTest {
                 );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                TRANSACTION_ID.toString(),
+                new TransactionId(TRANSACTION_ID).value(),
                 transactionActivatedData
         );
 
