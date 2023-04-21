@@ -176,6 +176,7 @@ public class TransactionsService {
                                         )
                                 )
                                 .status(transactionsUtils.convertEnumeration(transaction.getStatus()))
+                                .idCart(transaction.getIdCart())
                 );
     }
 
@@ -717,6 +718,7 @@ public class TransactionsService {
                                 .status(transactionsUtils.convertEnumeration(transaction.getStatus()))
                                 // .feeTotal()//TODO da dove prendere le fees?
                                 .clientId(convertClientId(transaction.getClientId()))
+                                .idCart(transaction.getTransactionActivatedData().getIdCart())
                 );
     }
 
