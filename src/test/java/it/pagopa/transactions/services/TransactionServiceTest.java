@@ -116,15 +116,16 @@ class TransactionServiceTest {
         Mockito.when(transactionsUtils.convertEnumeration(any()))
                 .thenCallRealMethod();
 
-
         StepVerifier.create(transactionsService.newTransaction(transactionRequestDto, clientIdDto))
-                .expectNextMatches(res ->
-                    res.getPayments().get(0).getRptId().equals(transactionRequestDto.getPaymentNotices().get(0).getRptId())
-                        && res.getIdCart().equals("idCart")
-                        && res.getStatus().equals(TransactionStatusDto.ACTIVATED)
-                        && res.getClientId().equals(NewTransactionResponseDto.ClientIdEnum.valueOf(clientIdDto.getValue()))
-                        && !res.getTransactionId().isEmpty()
-                        && !res.getAuthToken().isEmpty()
+                .expectNextMatches(
+                        res -> res.getPayments().get(0).getRptId()
+                                .equals(transactionRequestDto.getPaymentNotices().get(0).getRptId())
+                                && res.getIdCart().equals("idCart")
+                                && res.getStatus().equals(TransactionStatusDto.ACTIVATED)
+                                && res.getClientId()
+                                        .equals(NewTransactionResponseDto.ClientIdEnum.valueOf(clientIdDto.getValue()))
+                                && !res.getTransactionId().isEmpty()
+                                && !res.getAuthToken().isEmpty()
                 )
                 .verifyComplete();
 
