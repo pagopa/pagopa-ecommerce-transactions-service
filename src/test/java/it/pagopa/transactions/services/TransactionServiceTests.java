@@ -130,8 +130,6 @@ class TransactionServiceTests {
 
     @MockBean
     private TransactionsUtils transactionsUtils;
-
-    final String PAYMENT_TOKEN = "aaa";
     final String TRANSACTION_ID = TransactionTestUtils.TRANSACTION_ID;
 
     @Test
@@ -164,7 +162,8 @@ class TransactionServiceTests {
                 )
                 .clientId(TransactionInfoDto.ClientIdEnum.CHECKOUT)
                 .feeTotal(null)
-                .status(TransactionStatusDto.ACTIVATED);
+                .status(TransactionStatusDto.ACTIVATED)
+                .idCart("ecIdCart");
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
         when(transactionsUtils.convertEnumeration(any())).thenCallRealMethod();
@@ -172,6 +171,10 @@ class TransactionServiceTests {
                 transactionsService.getTransactionInfo(TRANSACTION_ID).block(),
                 expected
         );
+
+        StepVerifier.create(transactionsService.getTransactionInfo(TRANSACTION_ID))
+                .expectNext(expected)
+                .verifyComplete();
     }
 
     @Test
