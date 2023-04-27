@@ -240,11 +240,10 @@ class TransactionsControllerTest {
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new UpdateAuthorizationRequestOutcomeGatewayDto()
-                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                        new OutcomeXpayGatewayDto()
+                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
                                 .authorizationCode("authorizationCode")
-                )
-                .timestampOperation(OffsetDateTime.now());
+                ).timestampOperation(OffsetDateTime.now());
 
         /* preconditions */
         Mockito.when(transactionsService.updateTransactionAuthorization(paymentToken, updateAuthorizationRequest))
@@ -264,11 +263,10 @@ class TransactionsControllerTest {
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new UpdateAuthorizationRequestOutcomeGatewayDto()
-                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                        new OutcomeXpayGatewayDto()
+                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
                                 .authorizationCode("authorizationCode")
-                )
-                .timestampOperation(OffsetDateTime.now());
+                ).timestampOperation(OffsetDateTime.now());
 
         /* preconditions */
         Mockito.when(transactionsService.updateTransactionAuthorization(paymentToken, updateAuthorizationRequest))
@@ -289,11 +287,10 @@ class TransactionsControllerTest {
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new UpdateAuthorizationRequestOutcomeGatewayDto()
-                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                        new OutcomeXpayGatewayDto()
+                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
                                 .authorizationCode("authorizationCode")
-                )
-                .timestampOperation(OffsetDateTime.now());
+                ).timestampOperation(OffsetDateTime.now());
 
         /* preconditions */
         Mockito.when(transactionsService.updateTransactionAuthorization(paymentToken, updateAuthorizationRequest))

@@ -19,6 +19,8 @@ import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
+import it.pagopa.generated.transactions.server.model.OutcomeVposGatewayDto;
+import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestOutcomeGatewayDto;
 import it.pagopa.transactions.client.NodeForPspClient;
@@ -163,8 +165,8 @@ class TransactionSendClosureHandlerTest {
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new UpdateAuthorizationRequestOutcomeGatewayDto()
-                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                        new OutcomeVposGatewayDto()
+                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
                                 .authorizationCode("authorizationCode")
                 )
                 .timestampOperation(OffsetDateTime.now());
@@ -291,15 +293,15 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
-                        "rrn",
+                        null,
                         AuthorizationResultDto.KO
                 )
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new UpdateAuthorizationRequestOutcomeGatewayDto()
-                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.KO)
+                        new OutcomeXpayGatewayDto()
+                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.KO)
                                 .authorizationCode("authorizationCode")
                 )
                 .timestampOperation(OffsetDateTime.now());
@@ -350,9 +352,11 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
+                                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
+                                        .toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
+                                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                        .getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -457,8 +461,8 @@ class TransactionSendClosureHandlerTest {
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new UpdateAuthorizationRequestOutcomeGatewayDto()
-                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.KO)
+                        new OutcomeXpayGatewayDto()
+                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.KO)
                                 .authorizationCode("authorizationCode")
                 )
                 .timestampOperation(OffsetDateTime.now());
@@ -509,9 +513,11 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
+                                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
+                                        .toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
+                                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                        .getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -616,8 +622,8 @@ class TransactionSendClosureHandlerTest {
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new UpdateAuthorizationRequestOutcomeGatewayDto()
-                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                        new OutcomeVposGatewayDto()
+                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
                                 .authorizationCode("authorizationCode")
                 )
                 .timestampOperation(OffsetDateTime.now());
@@ -668,9 +674,11 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
+                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
+                                        .toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
+                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                        .getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -768,15 +776,15 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
-                        "rrn",
+                        null,
                         AuthorizationResultDto.OK
                 )
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new UpdateAuthorizationRequestOutcomeGatewayDto()
-                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                        new OutcomeXpayGatewayDto()
+                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
                                 .authorizationCode("authorizationCode")
                 )
                 .timestampOperation(OffsetDateTime.now());
@@ -826,9 +834,11 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
+                                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
+                                        .toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
+                                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                        .getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -946,8 +956,8 @@ class TransactionSendClosureHandlerTest {
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new UpdateAuthorizationRequestOutcomeGatewayDto()
-                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                        new OutcomeVposGatewayDto()
+                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
                                 .authorizationCode("authorizationCode")
                 )
                 .timestampOperation(OffsetDateTime.now());
@@ -994,9 +1004,11 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
+                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
+                                        .toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
+                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                        .getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -1114,15 +1126,15 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
-                        "rrn",
+                        null,
                         AuthorizationResultDto.OK
                 )
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new UpdateAuthorizationRequestOutcomeGatewayDto()
-                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                        new OutcomeXpayGatewayDto()
+                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
                                 .authorizationCode("authorizationCode")
                 )
                 .timestampOperation(OffsetDateTime.now());
@@ -1169,9 +1181,11 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
+                                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
+                                        .toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
+                                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                        .getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -1299,15 +1313,15 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
-                        null,
+                        "rrn",
                         AuthorizationResultDto.KO
                 )
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new UpdateAuthorizationRequestOutcomeGatewayDto()
-                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.KO)
+                        new OutcomeVposGatewayDto()
+                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.KO)
                                 .authorizationCode("authorizationCode")
                 )
                 .timestampOperation(OffsetDateTime.now());
@@ -1354,9 +1368,11 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
+                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
+                                        .toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
+                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                        .getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -1488,8 +1504,8 @@ class TransactionSendClosureHandlerTest {
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new UpdateAuthorizationRequestOutcomeGatewayDto()
-                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.KO)
+                        new OutcomeXpayGatewayDto()
+                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.KO)
                                 .authorizationCode("authorizationCode")
                 )
                 .timestampOperation(OffsetDateTime.now());
@@ -1539,9 +1555,11 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
+                                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
+                                        .toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
+                                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                        .getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -1670,8 +1688,8 @@ class TransactionSendClosureHandlerTest {
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new UpdateAuthorizationRequestOutcomeGatewayDto()
-                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                        new OutcomeVposGatewayDto()
+                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
                                 .authorizationCode("authorizationCode")
                 )
                 .timestampOperation(OffsetDateTime.now());
@@ -1721,9 +1739,11 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
+                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
+                                        .toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
+                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                        .getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -1836,15 +1856,15 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
-                        "rrn",
+                        null,
                         AuthorizationResultDto.OK
                 )
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new UpdateAuthorizationRequestOutcomeGatewayDto()
-                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                        new OutcomeXpayGatewayDto()
+                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
                                 .authorizationCode("authorizationCode")
                 )
                 .timestampOperation(OffsetDateTime.now());
@@ -1894,9 +1914,11 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
+                                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
+                                        .toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
+                                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                        .getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -1969,8 +1991,8 @@ class TransactionSendClosureHandlerTest {
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new UpdateAuthorizationRequestOutcomeGatewayDto()
-                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                        new OutcomeVposGatewayDto()
+                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
                                 .authorizationCode("authorizationCode")
                 )
                 .timestampOperation(OffsetDateTime.now());
@@ -2021,9 +2043,11 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
+                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
+                                        .toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
+                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                        .getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -2101,8 +2125,8 @@ class TransactionSendClosureHandlerTest {
                 .transactionAuthorizationCompletedEvent(AuthorizationResultDto.OK);
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new UpdateAuthorizationRequestOutcomeGatewayDto()
-                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                        new OutcomeVposGatewayDto()
+                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
                                 .authorizationCode("authorizationCode")
                 )
                 .timestampOperation(OffsetDateTime.now());
@@ -2150,9 +2174,11 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
+                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
+                                        .toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
+                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                        .getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -2237,8 +2263,8 @@ class TransactionSendClosureHandlerTest {
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new UpdateAuthorizationRequestOutcomeGatewayDto()
-                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.KO)
+                        new OutcomeVposGatewayDto()
+                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.KO)
                                 .authorizationCode("authorizationCode")
                 )
                 .timestampOperation(OffsetDateTime.now());
@@ -2289,9 +2315,11 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
+                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
+                                        .toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
+                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                        .getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -2359,8 +2387,8 @@ class TransactionSendClosureHandlerTest {
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new UpdateAuthorizationRequestOutcomeGatewayDto()
-                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.KO)
+                        new OutcomeVposGatewayDto()
+                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.KO)
                                 .authorizationCode("authorizationCode")
                 )
                 .timestampOperation(OffsetDateTime.now());
@@ -2408,9 +2436,11 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
+                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
+                                        .toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
+                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                        .getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
