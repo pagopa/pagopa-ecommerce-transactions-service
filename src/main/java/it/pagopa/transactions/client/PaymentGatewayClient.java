@@ -206,7 +206,7 @@ public class PaymentGatewayClient {
                 })
                 .flatMap(
                         creditCardAuthRequestDto -> creditCardInternalApiClient
-                                .step0VposAuthAuth(
+                                .step0VposAuth(
                                         creditCardAuthRequestDto,
                                         encodeMdcFields(authorizationData)
                                 )
