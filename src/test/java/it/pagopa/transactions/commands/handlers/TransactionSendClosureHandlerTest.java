@@ -20,6 +20,7 @@ import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
+import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestOutcomeGatewayDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
 import it.pagopa.transactions.commands.data.ClosureSendData;
@@ -161,8 +162,11 @@ class TransactionSendClosureHandlerTest {
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new UpdateAuthorizationRequestOutcomeGatewayDto()
+                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         ClosureSendData closureSendData = new ClosureSendData(
@@ -291,8 +295,11 @@ class TransactionSendClosureHandlerTest {
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.KO)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new UpdateAuthorizationRequestOutcomeGatewayDto()
+                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.KO)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -341,9 +348,9 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
+                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getAuthorizationCode(),
+                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -446,8 +453,11 @@ class TransactionSendClosureHandlerTest {
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.KO)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new UpdateAuthorizationRequestOutcomeGatewayDto()
+                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.KO)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -496,9 +506,9 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
+                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getAuthorizationCode(),
+                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -601,8 +611,11 @@ class TransactionSendClosureHandlerTest {
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new UpdateAuthorizationRequestOutcomeGatewayDto()
+                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -651,9 +664,9 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
+                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getAuthorizationCode(),
+                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -756,8 +769,11 @@ class TransactionSendClosureHandlerTest {
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new UpdateAuthorizationRequestOutcomeGatewayDto()
+                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -805,9 +821,9 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
+                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getAuthorizationCode(),
+                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -923,8 +939,11 @@ class TransactionSendClosureHandlerTest {
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new UpdateAuthorizationRequestOutcomeGatewayDto()
+                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -969,9 +988,9 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
+                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getAuthorizationCode(),
+                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -1094,8 +1113,11 @@ class TransactionSendClosureHandlerTest {
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new UpdateAuthorizationRequestOutcomeGatewayDto()
+                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -1140,9 +1162,9 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
+                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getAuthorizationCode(),
+                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -1275,8 +1297,11 @@ class TransactionSendClosureHandlerTest {
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.KO)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new UpdateAuthorizationRequestOutcomeGatewayDto()
+                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.KO)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -1321,9 +1346,9 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
+                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getAuthorizationCode(),
+                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -1453,8 +1478,11 @@ class TransactionSendClosureHandlerTest {
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.KO)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new UpdateAuthorizationRequestOutcomeGatewayDto()
+                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.KO)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -1502,9 +1530,9 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
+                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getAuthorizationCode(),
+                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -1631,8 +1659,11 @@ class TransactionSendClosureHandlerTest {
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new UpdateAuthorizationRequestOutcomeGatewayDto()
+                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -1680,9 +1711,9 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
+                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getAuthorizationCode(),
+                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -1800,8 +1831,11 @@ class TransactionSendClosureHandlerTest {
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new UpdateAuthorizationRequestOutcomeGatewayDto()
+                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -1849,9 +1883,9 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
+                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getAuthorizationCode(),
+                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -1923,8 +1957,11 @@ class TransactionSendClosureHandlerTest {
                 .transactionAuthorizationCompletedEvent(AuthorizationResultDto.OK);
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new UpdateAuthorizationRequestOutcomeGatewayDto()
+                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -1973,9 +2010,9 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
+                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getAuthorizationCode(),
+                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -2052,8 +2089,11 @@ class TransactionSendClosureHandlerTest {
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = TransactionTestUtils
                 .transactionAuthorizationCompletedEvent(AuthorizationResultDto.OK);
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new UpdateAuthorizationRequestOutcomeGatewayDto()
+                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -2099,9 +2139,9 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
+                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getAuthorizationCode(),
+                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -2185,8 +2225,11 @@ class TransactionSendClosureHandlerTest {
                 .transactionAuthorizationCompletedEvent(AuthorizationResultDto.KO);
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.KO)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new UpdateAuthorizationRequestOutcomeGatewayDto()
+                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.KO)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -2235,9 +2278,9 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
+                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getAuthorizationCode(),
+                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",
@@ -2304,8 +2347,11 @@ class TransactionSendClosureHandlerTest {
                 );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.KO)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new UpdateAuthorizationRequestOutcomeGatewayDto()
+                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.KO)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -2351,9 +2397,9 @@ class TransactionSendClosureHandlerTest {
                 .additionalPaymentInformations(
                         Map.of(
                                 "outcomePaymentGateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
+                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString(),
                                 "authorizationCode",
-                                updateAuthorizationRequest.getAuthorizationCode(),
+                                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
                                 "rrn",
                                 ECOMMERCE_RRN,
                                 "fee",

@@ -150,7 +150,7 @@ public class TransactionSendClosureHandler implements
                                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
                                                     .toString(),
                                             "authorizationCode",
-                                            updateAuthorizationRequestDto.getAuthorizationCode(),
+                                            updateAuthorizationRequestDto.getOutcomeGateway().getAuthorizationCode(),
                                             "rrn",
                                             ECOMMERCE_RRN,
                                             "fee",

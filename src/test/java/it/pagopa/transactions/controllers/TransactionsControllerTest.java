@@ -239,8 +239,11 @@ class TransactionsControllerTest {
                 .status(TransactionStatusDto.AUTHORIZATION_COMPLETED);
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new UpdateAuthorizationRequestOutcomeGatewayDto()
+                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         /* preconditions */
@@ -260,8 +263,11 @@ class TransactionsControllerTest {
         String paymentToken = "paymentToken";
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new UpdateAuthorizationRequestOutcomeGatewayDto()
+                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         /* preconditions */
@@ -282,8 +288,11 @@ class TransactionsControllerTest {
         String paymentToken = "paymentToken";
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new UpdateAuthorizationRequestOutcomeGatewayDto()
+                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         /* preconditions */

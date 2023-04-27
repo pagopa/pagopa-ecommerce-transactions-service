@@ -53,7 +53,9 @@ public class TransactionUpdateAuthorizationHandler
                         transactionWithRequestedAuthorization -> Tuples.of(
                                 transactionWithRequestedAuthorization,
                                 AuthorizationResultDto
-                                        .fromValue(updateAuthorizationRequest.getAuthorizationResult().toString())
+                                        .fromValue(
+                                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString()
+                                        )
                         )
                 )
                 .flatMap(args -> {
@@ -63,7 +65,7 @@ public class TransactionUpdateAuthorizationHandler
                             new TransactionAuthorizationCompletedEvent(
                                     transactionWithRequestedAuthorization.getTransactionId().value().toString(),
                                     new TransactionAuthorizationCompletedData(
-                                            updateAuthorizationRequest.getAuthorizationCode(),
+                                            updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
                                             authorizationResultDto
                                     )
                             )

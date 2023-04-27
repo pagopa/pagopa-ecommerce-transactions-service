@@ -10,6 +10,7 @@ import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
+import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestOutcomeGatewayDto;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
@@ -50,8 +51,11 @@ class TransactionUpdateAuthorizationHandlerTest {
         BaseTransaction transaction = TransactionTestUtils.reduceEvents(activatedEvent, authorizationRequestedEvent);
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new UpdateAuthorizationRequestOutcomeGatewayDto()
+                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
@@ -115,8 +119,11 @@ class TransactionUpdateAuthorizationHandlerTest {
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new UpdateAuthorizationRequestOutcomeGatewayDto()
+                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
@@ -148,8 +155,11 @@ class TransactionUpdateAuthorizationHandlerTest {
         BaseTransaction transaction = TransactionTestUtils.reduceEvents(activatedEvent, authorizationRequestedEvent);
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.KO)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new UpdateAuthorizationRequestOutcomeGatewayDto()
+                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.KO)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(

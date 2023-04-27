@@ -6,8 +6,8 @@ import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
-import it.pagopa.generated.transactions.server.model.AuthorizationResultDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
+import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestOutcomeGatewayDto;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,8 +38,11 @@ class AuthorizationUpdateProjectionHandlerTest {
     @Test
     void shouldHandleTransaction() {
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(AuthorizationResultDto.OK)
-                .authorizationCode("OK")
+                .outcomeGateway(
+                        new UpdateAuthorizationRequestOutcomeGatewayDto()
+                                .outcome(UpdateAuthorizationRequestOutcomeGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
@@ -56,9 +59,9 @@ class AuthorizationUpdateProjectionHandlerTest {
         );
 
         TransactionAuthorizationCompletedData statusAuthCompleted = new TransactionAuthorizationCompletedData(
-                updateAuthorizationRequest.getAuthorizationCode(),
+                updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
                 it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto
-                        .fromValue(updateAuthorizationRequest.getAuthorizationResult().toString())
+                        .fromValue(updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString())
         );
 
         TransactionAuthorizationCompletedEvent event = new TransactionAuthorizationCompletedEvent(
