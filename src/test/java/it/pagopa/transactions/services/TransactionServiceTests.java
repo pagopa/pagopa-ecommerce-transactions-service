@@ -337,6 +337,7 @@ class TransactionServiceTests {
 
         TransactionAuthorizationCompletedData statusUpdateData = new TransactionAuthorizationCompletedData(
                 "authorizationCode",
+                "rrn",
                 it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto
                         .fromValue(updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString())
         );
@@ -370,7 +371,8 @@ class TransactionServiceTests {
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSED,
                 Transaction.ClientId.CHECKOUT,
                 ZonedDateTime.now().toString(),
-                transactionDocument.getIdCart()
+                transactionDocument.getIdCart(),
+                transactionDocument.getRrn()
         );
 
         /* preconditions */
@@ -1041,6 +1043,7 @@ class TransactionServiceTests {
 
         TransactionAuthorizationCompletedData statusUpdateData = new TransactionAuthorizationCompletedData(
                 "authorizationCode",
+                "rrn",
                 it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto
                         .fromValue(updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString())
         );
@@ -1074,7 +1077,8 @@ class TransactionServiceTests {
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
                 Transaction.ClientId.CHECKOUT,
                 ZonedDateTime.now().toString(),
-                transactionDocument.getIdCart()
+                transactionDocument.getIdCart(),
+                transactionDocument.getRrn()
         );
 
         /* preconditions */

@@ -55,11 +55,13 @@ class AuthorizationUpdateProjectionHandlerTest {
                 TransactionStatusDto.AUTHORIZATION_COMPLETED,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
                 transaction.getCreationDate().toString(),
-                transaction.getTransactionActivatedData().getIdCart()
+                transaction.getTransactionActivatedData().getIdCart(),
+                "rrn"
         );
 
         TransactionAuthorizationCompletedData statusAuthCompleted = new TransactionAuthorizationCompletedData(
                 updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
+                "rrn",
                 it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto
                         .fromValue(updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString())
         );

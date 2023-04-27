@@ -212,6 +212,7 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
+                        "rrn",
                         AuthorizationResultDto.OK
                 )
         );
@@ -290,6 +291,7 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
+                        "rrn",
                         AuthorizationResultDto.KO
                 )
         );
@@ -448,6 +450,7 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
+                        null,
                         AuthorizationResultDto.KO
                 )
         );
@@ -606,6 +609,7 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
+                        "rrn",
                         AuthorizationResultDto.OK
                 )
         );
@@ -764,6 +768,7 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
+                        "rrn",
                         AuthorizationResultDto.OK
                 )
         );
@@ -934,6 +939,7 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
+                        "rrn",
                         AuthorizationResultDto.OK
                 )
         );
@@ -1108,6 +1114,7 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
+                        "rrn",
                         AuthorizationResultDto.OK
                 )
         );
@@ -1292,6 +1299,7 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
+                        null,
                         AuthorizationResultDto.KO
                 )
         );
@@ -1473,6 +1481,7 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
+                        null,
                         AuthorizationResultDto.KO
                 )
         );
@@ -1654,6 +1663,7 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
+                        "rrn",
                         AuthorizationResultDto.OK
                 )
         );
@@ -1826,6 +1836,7 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
+                        "rrn",
                         AuthorizationResultDto.OK
                 )
         );

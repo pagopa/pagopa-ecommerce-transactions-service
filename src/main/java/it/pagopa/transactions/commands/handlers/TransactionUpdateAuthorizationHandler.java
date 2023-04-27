@@ -66,6 +66,7 @@ public class TransactionUpdateAuthorizationHandler
                                     transactionWithRequestedAuthorization.getTransactionId().value().toString(),
                                     new TransactionAuthorizationCompletedData(
                                             updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
+                                            updateAuthorizationRequest.getOutcomeGateway().getRrn(),
                                             authorizationResultDto
                                     )
                             )
