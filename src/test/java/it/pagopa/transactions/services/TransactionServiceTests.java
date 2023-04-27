@@ -61,7 +61,7 @@ import static org.mockito.Mockito.*;
     }
 )
 @AutoConfigureDataRedis
-public class TransactionServiceTests {
+class TransactionServiceTests {
     @MockBean
     private TransactionsViewRepository repository;
 
@@ -130,8 +130,6 @@ public class TransactionServiceTests {
 
     @MockBean
     private TransactionsUtils transactionsUtils;
-
-    final String PAYMENT_TOKEN = "aaa";
     final String TRANSACTION_ID = TransactionTestUtils.TRANSACTION_ID;
 
     @Test
@@ -164,7 +162,8 @@ public class TransactionServiceTests {
                 )
                 .clientId(TransactionInfoDto.ClientIdEnum.CHECKOUT)
                 .feeTotal(null)
-                .status(TransactionStatusDto.ACTIVATED);
+                .status(TransactionStatusDto.ACTIVATED)
+                .idCart("ecIdCart");
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
         when(transactionsUtils.convertEnumeration(any())).thenCallRealMethod();
@@ -172,6 +171,10 @@ public class TransactionServiceTests {
                 transactionsService.getTransactionInfo(TRANSACTION_ID).block(),
                 expected
         );
+
+        StepVerifier.create(transactionsService.getTransactionInfo(TRANSACTION_ID))
+                .expectNext(expected)
+                .verifyComplete();
     }
 
     @Test
@@ -291,7 +294,7 @@ public class TransactionServiceTests {
     void shouldReturnTransactionInfoForSuccessfulAuthAndClosure() {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
-        String transactionIdEncoded = uuidUtils.uuidToBase64(transactionId.value());
+        String transactionIdEncoded = uuidUtils.uuidToBase64(transactionId.uuid());
 
         Transaction transactionDocument = TransactionTestUtils.transactionDocument(
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
@@ -299,7 +302,7 @@ public class TransactionServiceTests {
         );
 
         TransactionActivated transaction = new TransactionActivated(
-                new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
+                new TransactionId(transactionDocument.getTransactionId()),
                 transactionDocument.getPaymentNotices().stream().map(
                         paymentNotice -> new it.pagopa.ecommerce.commons.domain.v1.PaymentNotice(
                                 new PaymentToken(paymentNotice.getPaymentToken()),
@@ -405,7 +408,7 @@ public class TransactionServiceTests {
     @Test
     void shouldReturnNotFoundExceptionForNonExistingTransactionForTransactionUpdate() {
 
-        String transactionIdEncoded = uuidUtils.uuidToBase64(UUID.fromString(TRANSACTION_ID));
+        String transactionIdEncoded = uuidUtils.uuidToBase64(new TransactionId(TRANSACTION_ID).uuid());
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .authorizationResult(AuthorizationResultDto.OK)
@@ -413,7 +416,7 @@ public class TransactionServiceTests {
                 .timestampOperation(OffsetDateTime.now());
 
         /* preconditions */
-        Mockito.when(transactionsUtils.reduceEvents(new TransactionId(UUID.fromString(TRANSACTION_ID))))
+        Mockito.when(transactionsUtils.reduceEvents(new TransactionId(TRANSACTION_ID)))
                 .thenReturn(Mono.error(new TransactionNotFoundException("")));
         Mockito.when(
                 eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
@@ -544,7 +547,7 @@ public class TransactionServiceTests {
                 .thenCallRealMethod();
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
-                .addUserReceipt(transactionId.value().toString(), addUserReceiptRequest).block();
+                .addUserReceipt(transactionId.value(), addUserReceiptRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
     }
@@ -748,7 +751,7 @@ public class TransactionServiceTests {
         );
         TransactionUserCancelCommand transactionCancelCommand = new TransactionUserCancelCommand(
                 null,
-                new TransactionId(UUID.fromString(transactionId))
+                new TransactionId(transactionId)
         );
         when(repository.findById(transactionId)).thenReturn(Mono.just(transaction));
         when(transactionCancelHandler.handle(transactionCancelCommand)).thenReturn(Mono.just(userCanceledEvent));
@@ -770,7 +773,7 @@ public class TransactionServiceTests {
     void shouldUpdateTransactionAuthOutcomeBeIdempotentForAlreadyAuthorizedTransactionClosed() {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
-        String transactionIdEncoded = uuidUtils.uuidToBase64(transactionId.value());
+        String transactionIdEncoded = uuidUtils.uuidToBase64(transactionId.uuid());
 
         Transaction transactionDocument = TransactionTestUtils.transactionDocument(
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
@@ -841,7 +844,7 @@ public class TransactionServiceTests {
     void shouldUpdateTransactionAuthOutcomeBeIdempotentForAlreadyAuthorizedTransactionClosureFailed() {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
-        String transactionIdEncoded = uuidUtils.uuidToBase64(transactionId.value());
+        String transactionIdEncoded = uuidUtils.uuidToBase64(transactionId.uuid());
 
         Transaction transactionDocument = TransactionTestUtils.transactionDocument(
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
@@ -912,7 +915,7 @@ public class TransactionServiceTests {
     void shouldUpdateTransactionAuthOutcomeBeIdempotentForAlreadyAuthorizedTransactionAuthorizationCompleted() {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
-        String transactionIdEncoded = uuidUtils.uuidToBase64(transactionId.value());
+        String transactionIdEncoded = uuidUtils.uuidToBase64(transactionId.uuid());
 
         Transaction transactionDocument = TransactionTestUtils.transactionDocument(
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
@@ -980,7 +983,7 @@ public class TransactionServiceTests {
     void shouldReturnTransactionInfoForSuccessfulAuthAndClosureKO() {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
-        String transactionIdEncoded = uuidUtils.uuidToBase64(transactionId.value());
+        String transactionIdEncoded = uuidUtils.uuidToBase64(transactionId.uuid());
 
         Transaction transactionDocument = TransactionTestUtils.transactionDocument(
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
@@ -988,7 +991,7 @@ public class TransactionServiceTests {
         );
 
         TransactionActivated transaction = new TransactionActivated(
-                new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
+                new TransactionId(transactionDocument.getTransactionId()),
                 transactionDocument.getPaymentNotices().stream().map(
                         paymentNotice -> new it.pagopa.ecommerce.commons.domain.v1.PaymentNotice(
                                 new PaymentToken(paymentNotice.getPaymentToken()),

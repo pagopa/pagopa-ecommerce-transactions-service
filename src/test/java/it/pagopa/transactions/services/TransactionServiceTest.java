@@ -1,15 +1,12 @@
 package it.pagopa.transactions.services;
 
-import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
+import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
-import it.pagopa.generated.transactions.server.model.ClientIdDto;
-import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
-import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
-import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
+import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
 import it.pagopa.transactions.projections.handlers.TransactionsActivationProjectionHandler;
@@ -21,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
@@ -79,7 +77,7 @@ class TransactionServiceTest {
                 );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                TRANSACTION_ID.toString(),
+                new TransactionId(TRANSACTION_ID).value(),
                 transactionActivatedData
         );
 
@@ -118,19 +116,19 @@ class TransactionServiceTest {
         Mockito.when(transactionsUtils.convertEnumeration(any()))
                 .thenCallRealMethod();
 
-        /*
-         * Test
-         */
-        NewTransactionResponseDto responseDto = transactionsService
-                .newTransaction(transactionRequestDto, clientIdDto).block();
+        StepVerifier.create(transactionsService.newTransaction(transactionRequestDto, clientIdDto))
+                .expectNextMatches(
+                        res -> res.getPayments().get(0).getRptId()
+                                .equals(transactionRequestDto.getPaymentNotices().get(0).getRptId())
+                                && res.getIdCart().equals("idCart")
+                                && res.getStatus().equals(TransactionStatusDto.ACTIVATED)
+                                && res.getClientId()
+                                        .equals(NewTransactionResponseDto.ClientIdEnum.valueOf(clientIdDto.getValue()))
+                                && !res.getTransactionId().isEmpty()
+                                && !res.getAuthToken().isEmpty()
+                )
+                .verifyComplete();
 
-        /*
-         * Assertions
-         */
-        assertEquals(
-                transactionRequestDto.getPaymentNotices().get(0).getRptId(),
-                responseDto.getPayments().get(0).getRptId()
-        );
     }
 
 }

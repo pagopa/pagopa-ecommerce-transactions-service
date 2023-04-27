@@ -45,7 +45,7 @@ class AuthorizationUpdateProjectionHandlerTest {
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
 
         it.pagopa.ecommerce.commons.documents.v1.Transaction expectedDocument = new it.pagopa.ecommerce.commons.documents.v1.Transaction(
-                transaction.getTransactionId().value().toString(),
+                transaction.getTransactionId().value(),
                 transaction.getTransactionActivatedData().getPaymentNotices(),
                 null,
                 transaction.getEmail(),
@@ -62,7 +62,7 @@ class AuthorizationUpdateProjectionHandlerTest {
         );
 
         TransactionAuthorizationCompletedEvent event = new TransactionAuthorizationCompletedEvent(
-                transaction.getTransactionId().value().toString(),
+                transaction.getTransactionId().value(),
                 statusAuthCompleted
         );
 
@@ -80,7 +80,7 @@ class AuthorizationUpdateProjectionHandlerTest {
         /*
          * Preconditions
          */
-        Mockito.when(viewRepository.findById(transaction.getTransactionId().value().toString()))
+        Mockito.when(viewRepository.findById(transaction.getTransactionId().value()))
                 .thenReturn(Mono.just(it.pagopa.ecommerce.commons.documents.v1.Transaction.from(transaction)));
 
         Mockito.when(viewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
