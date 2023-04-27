@@ -538,9 +538,14 @@ components:
       properties:
         outcomeGateway:
           type: object
-          anyOf:
+          oneOf:
             - $ref: '#/components/schemas/OutcomeVposGateway'
             - $ref: '#/components/schemas/OutcomeXpayGateway'
+          discriminator:
+            propertyName: paymentGatewayType
+            mapping:
+              xpay: "#/components/schemas/OutcomeXpayGateway"
+              vpos: "#/components/schemas/OutcomeVposGateway"
         timestampOperation:
           type: string
           format: date-time
@@ -969,6 +974,8 @@ components:
     OutcomeVposGateway:
       type: object
       properties:
+        paymentGatewayType:
+          type: string
         outcome:
           type: string
           enum:
@@ -1012,10 +1019,13 @@ components:
             - '98'
             - '99'
       required:
+        - paymentGatewayType
         - outcome
     OutcomeXpayGateway:
       type: object
       properties:
+        paymentGatewayType:
+          type: string
         outcome:
           type: string
           enum:
@@ -1053,6 +1063,7 @@ components:
             - 99
             - 100
       required:
+        - paymentGatewayType
         - outcome
   requestBodies:
     NewTransactionRequest:
