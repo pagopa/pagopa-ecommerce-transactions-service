@@ -11,6 +11,8 @@ import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
+import it.pagopa.generated.transactions.server.model.OutcomeVposGatewayDto;
+import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
@@ -104,7 +106,6 @@ public class TransactionSendClosureHandler implements
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
                 .doOnNext(t -> log.error("Error: requesting closure for transaction in state {}", t.getStatus()))
                 .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
-
         return transaction
                 .filter(
                         t -> t.getStatus() == TransactionStatusDto.AUTHORIZATION_COMPLETED
@@ -114,6 +115,19 @@ public class TransactionSendClosureHandler implements
                 .flatMap(tx -> {
                     UpdateAuthorizationRequestDto updateAuthorizationRequestDto = command.getData()
                             .updateAuthorizationRequest();
+
+                    String authorizationCode;
+                    switch (updateAuthorizationRequestDto.getOutcomeGateway()){
+                        case OutcomeVposGatewayDto t -> {
+                            authorizationCode = t.getAuthorizationCode();
+                        }
+                        case OutcomeXpayGatewayDto t -> {
+                            authorizationCode = t.getAuthorizationCode();
+                        }
+                        default ->
+                                throw new IllegalStateException("Unexpected value: " + updateAuthorizationRequestDto.getOutcomeGateway());
+                    }
+
                     TransactionAuthorizationRequestData transactionAuthorizationRequestData = tx
                             .getTransactionAuthorizationRequestData();
                     TransactionAuthorizationCompletedData transactionAuthorizationCompletedData = tx
@@ -150,7 +164,7 @@ public class TransactionSendClosureHandler implements
                                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
                                                     .toString(),
                                             "authorizationCode",
-                                            updateAuthorizationRequestDto.getOutcomeGateway().getAuthorizationCode(),
+                                            authorizationCode,
                                             "rrn",
                                             ECOMMERCE_RRN,
                                             "fee",

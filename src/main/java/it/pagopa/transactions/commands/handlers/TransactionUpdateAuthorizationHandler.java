@@ -6,6 +6,8 @@ import it.pagopa.ecommerce.commons.domain.v1.TransactionWithRequestedAuthorizati
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.generated.transactions.server.model.OutcomeVposGatewayDto;
+import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
@@ -43,6 +45,23 @@ public class TransactionUpdateAuthorizationHandler
                 )
                 .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
         UpdateAuthorizationRequestDto updateAuthorizationRequest = command.getData().updateAuthorizationRequest();
+        String outcome;
+        String authorizationCode;
+        String rrn;
+        switch (updateAuthorizationRequest.getOutcomeGateway()){
+            case OutcomeVposGatewayDto t -> {
+                outcome = t.getOutcome().toString();
+                authorizationCode = t.getAuthorizationCode();
+                rrn = t.getRrn();
+            }
+            case OutcomeXpayGatewayDto t -> {
+                outcome = t.getOutcome().toString();
+                authorizationCode = t.getAuthorizationCode();
+                rrn = null;
+            }
+            default ->
+                    throw new IllegalStateException("Unexpected value: " + updateAuthorizationRequest.getOutcomeGateway());
+        }
         return transaction
                 .filter(
                         t -> t.getStatus() == TransactionStatusDto.AUTHORIZATION_REQUESTED
@@ -54,7 +73,7 @@ public class TransactionUpdateAuthorizationHandler
                                 transactionWithRequestedAuthorization,
                                 AuthorizationResultDto
                                         .fromValue(
-                                                updateAuthorizationRequest.getOutcomeGateway().getOutcome().toString()
+                                                outcome
                                         )
                         )
                 )
@@ -65,8 +84,8 @@ public class TransactionUpdateAuthorizationHandler
                             new TransactionAuthorizationCompletedEvent(
                                     transactionWithRequestedAuthorization.getTransactionId().value().toString(),
                                     new TransactionAuthorizationCompletedData(
-                                            updateAuthorizationRequest.getOutcomeGateway().getAuthorizationCode(),
-                                            updateAuthorizationRequest.getOutcomeGateway().getRrn(),
+                                            authorizationCode,
+                                            rrn,
                                             authorizationResultDto
                                     )
                             )
