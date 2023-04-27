@@ -141,7 +141,7 @@ public class PaymentGatewayClient {
                 })
                 .flatMap(
                         xPayAuthRequestDto -> paymentTransactionGatewayXPayWebClient
-                                .authRequestXpay(xPayAuthRequestDto, encodeMdcFields(authorizationData))
+                                .authXpay(xPayAuthRequestDto, encodeMdcFields(authorizationData))
                                 .onErrorMap(
                                         WebClientResponseException.class,
                                         exception -> switch (exception.getStatusCode()) {
@@ -206,7 +206,7 @@ public class PaymentGatewayClient {
                 })
                 .flatMap(
                         creditCardAuthRequestDto -> creditCardInternalApiClient
-                                .step0Vpos(
+                                .step0VposAuth(
                                         creditCardAuthRequestDto,
                                         encodeMdcFields(authorizationData)
                                 )
