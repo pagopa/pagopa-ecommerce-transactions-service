@@ -46,7 +46,7 @@ public class TransactionUpdateAuthorizationHandler
                 )
                 .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
         AuthRequestDataUtils.AuthRequestData authRequestDataExtracted = extractAuthRequestData
-                .extract(command.getData().updateAuthorizationRequest());
+                .from(command.getData().updateAuthorizationRequest());
         return transaction
                 .filter(
                         t -> t.getStatus() == TransactionStatusDto.AUTHORIZATION_REQUESTED

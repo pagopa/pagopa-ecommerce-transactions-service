@@ -3,7 +3,6 @@ package it.pagopa.transactions.utils;
 import it.pagopa.generated.transactions.server.model.OutcomeVposGatewayDto;
 import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
-import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestOutcomeGatewayDto;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,7 +30,7 @@ public class AuthRequestDataUtilsTest {
                                 .rrn("rrn")
                 )
                 .timestampOperation(OffsetDateTime.now());
-        AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils.extract(updateAuthorizationRequest);
+        AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils.from(updateAuthorizationRequest);
 
         assertEquals(
                 data.authorizationCode(),
@@ -53,7 +52,7 @@ public class AuthRequestDataUtilsTest {
                                 .authorizationCode("authorizationCode")
                 )
                 .timestampOperation(OffsetDateTime.now());
-        AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils.extract(updateAuthorizationRequest);
+        AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils.from(updateAuthorizationRequest);
 
         assertEquals(
                 data.authorizationCode(),

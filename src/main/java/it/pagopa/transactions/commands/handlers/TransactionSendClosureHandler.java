@@ -117,8 +117,8 @@ public class TransactionSendClosureHandler implements
                 .flatMap(tx -> {
                     UpdateAuthorizationRequestDto updateAuthorizationRequestDto = command.getData()
                             .updateAuthorizationRequest();
-                    AuthRequestDataUtils.AuthRequestData authRequestDataExtracted = authRequestDataUtils
-                            .extract(updateAuthorizationRequestDto);
+                    AuthRequestDataUtils.AuthRequestData authRequestData = authRequestDataUtils
+                            .from(updateAuthorizationRequestDto);
                     TransactionAuthorizationRequestData transactionAuthorizationRequestData = tx
                             .getTransactionAuthorizationRequestData();
                     TransactionAuthorizationCompletedData transactionAuthorizationCompletedData = tx
@@ -155,7 +155,7 @@ public class TransactionSendClosureHandler implements
                                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
                                                     .toString(),
                                             "authorizationCode",
-                                            authRequestDataExtracted.authorizationCode(),
+                                            authRequestData.authorizationCode(),
                                             "rrn",
                                             ECOMMERCE_RRN,
                                             "fee",
