@@ -6,12 +6,10 @@ import it.pagopa.ecommerce.commons.domain.v1.TransactionWithRequestedAuthorizati
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
-import it.pagopa.generated.transactions.server.model.OutcomeVposGatewayDto;
-import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
-import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import it.pagopa.transactions.utils.AuthRequestDataUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -24,12 +22,15 @@ public class TransactionUpdateAuthorizationHandler
         implements CommandHandler<TransactionUpdateAuthorizationCommand, Mono<TransactionAuthorizationCompletedEvent>> {
 
     private final TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> transactionEventStoreRepository;
+    private final AuthRequestDataUtils extractAuthRequestData;
 
     @Autowired
     protected TransactionUpdateAuthorizationHandler(
-            TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> transactionEventStoreRepository
+            TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> transactionEventStoreRepository,
+            AuthRequestDataUtils extractAuthRequestData
     ) {
         this.transactionEventStoreRepository = transactionEventStoreRepository;
+        this.extractAuthRequestData = extractAuthRequestData;
     }
 
     @Override
@@ -44,24 +45,8 @@ public class TransactionUpdateAuthorizationHandler
                         )
                 )
                 .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
-        UpdateAuthorizationRequestDto updateAuthorizationRequest = command.getData().updateAuthorizationRequest();
-        String outcome;
-        String authorizationCode;
-        String rrn;
-        switch (updateAuthorizationRequest.getOutcomeGateway()){
-            case OutcomeVposGatewayDto t -> {
-                outcome = t.getOutcome().toString();
-                authorizationCode = t.getAuthorizationCode();
-                rrn = t.getRrn();
-            }
-            case OutcomeXpayGatewayDto t -> {
-                outcome = t.getOutcome().toString();
-                authorizationCode = t.getAuthorizationCode();
-                rrn = null;
-            }
-            default ->
-                    throw new IllegalStateException("Unexpected value: " + updateAuthorizationRequest.getOutcomeGateway());
-        }
+        AuthRequestDataUtils.DataAuthRequest authRequestDataExtracted = extractAuthRequestData
+                .extract(command.getData().updateAuthorizationRequest());
         return transaction
                 .filter(
                         t -> t.getStatus() == TransactionStatusDto.AUTHORIZATION_REQUESTED
@@ -73,7 +58,7 @@ public class TransactionUpdateAuthorizationHandler
                                 transactionWithRequestedAuthorization,
                                 AuthorizationResultDto
                                         .fromValue(
-                                                outcome
+                                                authRequestDataExtracted.outcome
                                         )
                         )
                 )
@@ -84,8 +69,8 @@ public class TransactionUpdateAuthorizationHandler
                             new TransactionAuthorizationCompletedEvent(
                                     transactionWithRequestedAuthorization.getTransactionId().value().toString(),
                                     new TransactionAuthorizationCompletedData(
-                                            authorizationCode,
-                                            rrn,
+                                            authRequestDataExtracted.authorizationCode,
+                                            authRequestDataExtracted.rrn,
                                             authorizationResultDto
                                     )
                             )
