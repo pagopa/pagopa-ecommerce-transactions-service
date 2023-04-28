@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class AuthRequestDataUtils {
 
-    @ValueObject
     public record AuthRequestData(
             String authorizationCode,
             String outcome,
