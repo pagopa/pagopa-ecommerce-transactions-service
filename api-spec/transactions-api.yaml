@@ -544,8 +544,8 @@ components:
           discriminator:
             propertyName: paymentGatewayType
             mapping:
-              xpay: "#/components/schemas/OutcomeXpayGateway"
-              vpos: "#/components/schemas/OutcomeVposGateway"
+              XPAY: "#/components/schemas/OutcomeXpayGateway"
+              VPOS: "#/components/schemas/OutcomeVposGateway"
         timestampOperation:
           type: string
           format: date-time
@@ -976,6 +976,7 @@ components:
       properties:
         paymentGatewayType:
           type: string
+          example: 'VPOS'
         outcome:
           type: string
           enum:
@@ -1021,11 +1022,13 @@ components:
       required:
         - paymentGatewayType
         - outcome
+        - rrn
     OutcomeXpayGateway:
       type: object
       properties:
         paymentGatewayType:
           type: string
+          example: 'XPAY'
         outcome:
           type: string
           enum:
