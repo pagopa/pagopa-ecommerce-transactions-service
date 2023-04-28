@@ -1,20 +1,19 @@
 package it.pagopa.transactions.utils;
 
-import io.vavr.control.Either;
 import it.pagopa.generated.transactions.server.model.OutcomeVposGatewayDto;
 import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
-import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestOutcomeGatewayDto;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.OffsetDateTime;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
 public class AuthRequestDataUtilsTest {
@@ -32,15 +31,15 @@ public class AuthRequestDataUtilsTest {
                                 .rrn("rrn")
                 )
                 .timestampOperation(OffsetDateTime.now());
-        AuthRequestDataUtils.DataAuthRequest data = authRequestDataUtils.extract(updateAuthorizationRequest);
+        AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils.extract(updateAuthorizationRequest);
 
         assertEquals(
-                data.authorizationCode,
+                data.authorizationCode(),
                 ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode()
         );
-        assertEquals(data.rrn, ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getRrn());
+        assertEquals(data.rrn(), ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getRrn());
         assertEquals(
-                data.outcome,
+                data.outcome(),
                 ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome().toString()
         );
     }
@@ -54,14 +53,14 @@ public class AuthRequestDataUtilsTest {
                                 .authorizationCode("authorizationCode")
                 )
                 .timestampOperation(OffsetDateTime.now());
-        AuthRequestDataUtils.DataAuthRequest data = authRequestDataUtils.extract(updateAuthorizationRequest);
+        AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils.extract(updateAuthorizationRequest);
 
         assertEquals(
-                data.authorizationCode,
+                data.authorizationCode(),
                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode()
         );
         assertEquals(
-                data.outcome,
+                data.outcome(),
                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome().toString()
         );
     }

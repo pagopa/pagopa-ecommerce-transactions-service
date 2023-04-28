@@ -11,8 +11,6 @@ import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
-import it.pagopa.generated.transactions.server.model.OutcomeVposGatewayDto;
-import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
@@ -119,7 +117,7 @@ public class TransactionSendClosureHandler implements
                 .flatMap(tx -> {
                     UpdateAuthorizationRequestDto updateAuthorizationRequestDto = command.getData()
                             .updateAuthorizationRequest();
-                    AuthRequestDataUtils.DataAuthRequest authRequestDataExtracted = authRequestDataUtils
+                    AuthRequestDataUtils.AuthRequestData authRequestDataExtracted = authRequestDataUtils
                             .extract(updateAuthorizationRequestDto);
                     TransactionAuthorizationRequestData transactionAuthorizationRequestData = tx
                             .getTransactionAuthorizationRequestData();
@@ -157,7 +155,7 @@ public class TransactionSendClosureHandler implements
                                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
                                                     .toString(),
                                             "authorizationCode",
-                                            authRequestDataExtracted.authorizationCode,
+                                            authRequestDataExtracted.authorizationCode(),
                                             "rrn",
                                             ECOMMERCE_RRN,
                                             "fee",

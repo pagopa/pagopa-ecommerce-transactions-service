@@ -45,7 +45,7 @@ public class TransactionUpdateAuthorizationHandler
                         )
                 )
                 .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
-        AuthRequestDataUtils.DataAuthRequest authRequestDataExtracted = extractAuthRequestData
+        AuthRequestDataUtils.AuthRequestData authRequestDataExtracted = extractAuthRequestData
                 .extract(command.getData().updateAuthorizationRequest());
         return transaction
                 .filter(
@@ -58,7 +58,7 @@ public class TransactionUpdateAuthorizationHandler
                                 transactionWithRequestedAuthorization,
                                 AuthorizationResultDto
                                         .fromValue(
-                                                authRequestDataExtracted.outcome
+                                                authRequestDataExtracted.outcome()
                                         )
                         )
                 )
@@ -69,8 +69,8 @@ public class TransactionUpdateAuthorizationHandler
                             new TransactionAuthorizationCompletedEvent(
                                     transactionWithRequestedAuthorization.getTransactionId().value().toString(),
                                     new TransactionAuthorizationCompletedData(
-                                            authRequestDataExtracted.authorizationCode,
-                                            authRequestDataExtracted.rrn,
+                                            authRequestDataExtracted.authorizationCode(),
+                                            authRequestDataExtracted.rrn(),
                                             authorizationResultDto
                                     )
                             )
