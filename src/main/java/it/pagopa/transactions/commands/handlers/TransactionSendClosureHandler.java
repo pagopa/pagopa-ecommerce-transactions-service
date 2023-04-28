@@ -17,6 +17,7 @@ import it.pagopa.transactions.commands.TransactionClosureSendCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import it.pagopa.transactions.utils.AuthRequestDataUtils;
 import it.pagopa.transactions.utils.EuroUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -63,6 +64,7 @@ public class TransactionSendClosureHandler implements
 
     private final QueueAsyncClient refundQueueAsyncClient;
     private final TransactionsUtils transactionsUtils;
+    private final AuthRequestDataUtils authRequestDataUtils;
 
     @Autowired
     public TransactionSendClosureHandler(
@@ -78,7 +80,8 @@ public class TransactionSendClosureHandler implements
             @Value("${transactions.ecommerce.retry.offset}") Integer softTimeoutOffset,
             @Value("${transactions.closure_handler.retry_interval}") Integer retryTimeoutInterval,
             @Qualifier("transactionRefundQueueAsyncClient") QueueAsyncClient refundQueueAsyncClient,
-            TransactionsUtils transactionsUtils
+            TransactionsUtils transactionsUtils,
+            AuthRequestDataUtils authRequestDataUtils
     ) {
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionClosureErrorEventStoreRepository = transactionClosureErrorEventStoreRepository;
@@ -91,6 +94,7 @@ public class TransactionSendClosureHandler implements
         this.retryTimeoutInterval = retryTimeoutInterval;
         this.refundQueueAsyncClient = refundQueueAsyncClient;
         this.transactionsUtils = transactionsUtils;
+        this.authRequestDataUtils = authRequestDataUtils;
     }
 
     @Override
@@ -104,7 +108,6 @@ public class TransactionSendClosureHandler implements
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
                 .doOnNext(t -> log.error("Error: requesting closure for transaction in state {}", t.getStatus()))
                 .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
-
         return transaction
                 .filter(
                         t -> t.getStatus() == TransactionStatusDto.AUTHORIZATION_COMPLETED
@@ -114,6 +117,8 @@ public class TransactionSendClosureHandler implements
                 .flatMap(tx -> {
                     UpdateAuthorizationRequestDto updateAuthorizationRequestDto = command.getData()
                             .updateAuthorizationRequest();
+                    AuthRequestDataUtils.AuthRequestData authRequestData = authRequestDataUtils
+                            .from(updateAuthorizationRequestDto);
                     TransactionAuthorizationRequestData transactionAuthorizationRequestData = tx
                             .getTransactionAuthorizationRequestData();
                     TransactionAuthorizationCompletedData transactionAuthorizationCompletedData = tx
@@ -150,7 +155,7 @@ public class TransactionSendClosureHandler implements
                                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
                                                     .toString(),
                                             "authorizationCode",
-                                            updateAuthorizationRequestDto.getAuthorizationCode(),
+                                            authRequestData.authorizationCode(),
                                             "rrn",
                                             ECOMMERCE_RRN,
                                             "fee",
