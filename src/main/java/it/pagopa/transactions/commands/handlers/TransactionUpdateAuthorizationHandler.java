@@ -67,7 +67,7 @@ public class TransactionUpdateAuthorizationHandler
                     AuthorizationResultDto authorizationResultDto = args.getT2();
                     return Mono.just(
                             new TransactionAuthorizationCompletedEvent(
-                                    transactionWithRequestedAuthorization.getTransactionId().value().toString(),
+                                    transactionWithRequestedAuthorization.getTransactionId().value(),
                                     new TransactionAuthorizationCompletedData(
                                             authRequestDataExtracted.authorizationCode(),
                                             authRequestDataExtracted.rrn(),

@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
-public class AuthRequestDataUtilsTest {
+class AuthRequestDataUtilsTest {
 
     @InjectMocks
     AuthRequestDataUtils authRequestDataUtils;

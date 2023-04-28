@@ -87,8 +87,8 @@ public class TransactionsUtils {
     }
 
     public Mono<BaseTransaction> reduceEvents(TransactionId transactionId) {
-        return eventStoreRepository.findByTransactionId(transactionId.value().toString())
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value().toString())))
+        return eventStoreRepository.findByTransactionId(transactionId.value())
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())))
                 .reduce(new EmptyTransaction(), Transaction::applyEvent)
                 .cast(BaseTransaction.class);
     }
