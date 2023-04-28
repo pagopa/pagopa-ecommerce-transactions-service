@@ -34,9 +34,15 @@ public class AuthRequestDataUtilsTest {
                 .timestampOperation(OffsetDateTime.now());
         AuthRequestDataUtils.DataAuthRequest data = authRequestDataUtils.extract(updateAuthorizationRequest);
 
-        assertEquals(data.authorizationCode, ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode());
+        assertEquals(
+                data.authorizationCode,
+                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode()
+        );
         assertEquals(data.rrn, ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getRrn());
-        assertEquals(data.outcome, ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome().toString());
+        assertEquals(
+                data.outcome,
+                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome().toString()
+        );
     }
 
     @Test
@@ -50,8 +56,14 @@ public class AuthRequestDataUtilsTest {
                 .timestampOperation(OffsetDateTime.now());
         AuthRequestDataUtils.DataAuthRequest data = authRequestDataUtils.extract(updateAuthorizationRequest);
 
-        assertEquals(data.authorizationCode, ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode());
-        assertEquals(data.outcome, ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome().toString());
+        assertEquals(
+                data.authorizationCode,
+                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode()
+        );
+        assertEquals(
+                data.outcome,
+                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome().toString()
+        );
     }
 
 }
