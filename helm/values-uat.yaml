@@ -51,6 +51,15 @@ microservice-chart:
       JWT_TOKEN_VALIDITY_TIME_MILLIS: "1800000"
       PERSONAL_DATA_VAULT_API_BASE_PATH: "https://api.uat.tokenizer.pdv.pagopa.it/tokenizer/v1"
       WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3020"
+      LOGO_CARD_BRANDING_MAPPING: >
+        {
+        VISA:'https://visa.cdn.url', 
+        MASTERCARD:'https://mastercard.cdn.url',
+        DINERS:'https://diners.cdn.url',
+        MAESTRO:'https://maestro.cdn.url',
+        AMEX:'https://american-express.cdn.url',
+        UNKNOWN:'https://unknown.cdn.url'
+        }
     envSecret:
       MONGO_PASSWORD: mongo-ecommerce-password
       REDIS_PASSWORD: redis-ecommerce-password
@@ -157,6 +166,15 @@ microservice-chart:
     JWT_TOKEN_VALIDITY_TIME_MILLIS: "1800000"
     PERSONAL_DATA_VAULT_API_BASE_PATH: "https://api.uat.tokenizer.pdv.pagopa.it/tokenizer/v1"
     WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3020"
+    LOGO_CARD_BRANDING_MAPPING: >
+      {
+      VISA:'https://visa.cdn.url', 
+      MASTERCARD:'https://mastercard.cdn.url',
+      DINERS:'https://diners.cdn.url',
+      MAESTRO:'https://maestro.cdn.url',
+      AMEX:'https://american-express.cdn.url',
+      UNKNOWN:'https://unknown.cdn.url'
+      }
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password
