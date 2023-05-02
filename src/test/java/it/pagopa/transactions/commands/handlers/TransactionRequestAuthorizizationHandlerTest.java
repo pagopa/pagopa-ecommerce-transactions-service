@@ -7,6 +7,7 @@ import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
+import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.PostePayAuthRequestDetailsDto;
@@ -82,6 +83,11 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .stream(CardAuthRequestDetailsDto.BrandEnum.values())
                 .filter(Predicate.not(testedCardBrands::contains)).collect(Collectors.toSet());
         assertTrue(untestedBrands.isEmpty(), "There are untested brand to logo cases: %s".formatted(untestedBrands));
+        Set<String> ecommerceBrandEnums = Arrays.stream(CardAuthRequestDetailsDto.BrandEnum.values())
+                .map(CardAuthRequestDetailsDto.BrandEnum::toString).collect(Collectors.toSet());
+        Set<String> vposCardCircuit = Arrays.stream(VposAuthRequestDto.CircuitEnum.values())
+                .map(VposAuthRequestDto.CircuitEnum::toString).collect(Collectors.toSet());
+        assertEquals(ecommerceBrandEnums, vposCardCircuit, "Ecommerce card brands and PGS Vpos circuit enum differs!");
     }
 
     @BeforeEach
