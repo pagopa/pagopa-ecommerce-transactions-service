@@ -87,7 +87,11 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .map(CardAuthRequestDetailsDto.BrandEnum::toString).collect(Collectors.toSet());
         Set<String> vposCardCircuit = Arrays.stream(VposAuthRequestDto.CircuitEnum.values())
                 .map(VposAuthRequestDto.CircuitEnum::toString).collect(Collectors.toSet());
-        assertEquals(ecommerceBrandEnums, vposCardCircuit, "Ecommerce card brands and PGS Vpos circuit enum differs!");
+        assertTrue(
+                ecommerceBrandEnums.equals(vposCardCircuit),
+                "Ecommerce card brands and PGS Vpos circuit enum differs!%nEcommerce:\t%s%nPGS VPOS:\t%s"
+                        .formatted(ecommerceBrandEnums, vposCardCircuit)
+        );
     }
 
     @BeforeEach
