@@ -240,4 +240,5 @@ public class PaymentGatewayClient {
 
         return Base64.getEncoder().encodeToString(mdcData.getBytes(StandardCharsets.UTF_8));
     }
+
 }

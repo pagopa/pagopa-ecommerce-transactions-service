@@ -16,6 +16,7 @@ import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.AfterAll;
@@ -38,8 +39,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
@@ -495,5 +495,177 @@ class TransactionRequestAuthorizizationHandlerTest {
         TransactionEvent<TransactionAuthorizationRequestData> capturedEvent = eventStoreCaptor.getValue();
         assertEquals(URI.create(brandLogoMapping.get(brand)), capturedEvent.getData().getLogo());
         testedCardBrands.add(CardAuthRequestDetailsDto.BrandEnum.fromValue(brand));
+    }
+
+    @Test
+    void shouldThrowInvalidRequestExceptionForInvalidLogoUriConfiguration() {
+        TransactionRequestAuthorizationHandler misconfiguredHandler = new TransactionRequestAuthorizationHandler(
+                paymentGatewayClient,
+                transactionEventStoreRepository,
+                transactionsUtils,
+                Map.of("VISA", "http:\\invalidURI")
+        );
+        TransactionId transactionId = new TransactionId(transactionIdUUID);
+        PaymentToken paymentToken = new PaymentToken("paymentToken");
+        RptId rptId = new RptId("77777777777111111111111111111");
+        TransactionDescription description = new TransactionDescription("description");
+        TransactionAmount amount = new TransactionAmount(100);
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
+        String idCart = "idCart";
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                List.of(
+                        new PaymentNotice(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description,
+                                nullPaymentContextCode,
+                                new ArrayList<>()
+                        )
+                ), // TODO
+                   // TRANSFER
+                   // LIST
+                email,
+                null,
+                null,
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                idCart
+        );
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .fee(200)
+                .paymentInstrumentId("paymentInstrumentId")
+                .pspId("PSP_CODE")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction,
+                authorizationRequest.getFee(),
+                authorizationRequest.getPaymentInstrumentId(),
+                authorizationRequest.getPspId(),
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName",
+                "VPOS",
+                new CardAuthRequestDetailsDto()
+                        .cvv("000")
+                        .pan("123")
+                        .threeDsData("threeDsData")
+                        .expiryDate("209912")
+                        .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
+                        .holderName("holder name")
+                        .detailType("CARD")
+        );
+
+        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
+                transaction.getPaymentNotices().get(0).rptId(),
+                authorizationData
+        );
+
+        XPayAuthResponseEntityDto xPayAuthResponseEntityDto = new XPayAuthResponseEntityDto()
+                .requestId("requestId")
+                .status("status")
+                .urlRedirect("http://example.com");
+
+        /* preconditions */
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString()))
+                .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
+
+        /* test */
+        assertThrows(
+                InvalidRequestException.class,
+                () -> misconfiguredHandler.handle(requestAuthorizationCommand).block()
+        );
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(any());
+    }
+
+    @Test
+    void shouldThrowInvalidRequestExceptionForNotConfiguredURI() {
+        TransactionRequestAuthorizationHandler misconfiguredHandler = new TransactionRequestAuthorizationHandler(
+                paymentGatewayClient,
+                transactionEventStoreRepository,
+                transactionsUtils,
+                Map.of()
+        );
+        TransactionId transactionId = new TransactionId(transactionIdUUID);
+        PaymentToken paymentToken = new PaymentToken("paymentToken");
+        RptId rptId = new RptId("77777777777111111111111111111");
+        TransactionDescription description = new TransactionDescription("description");
+        TransactionAmount amount = new TransactionAmount(100);
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
+        String idCart = "idCart";
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                List.of(
+                        new PaymentNotice(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description,
+                                nullPaymentContextCode,
+                                new ArrayList<>()
+                        )
+                ), // TODO
+                   // TRANSFER
+                   // LIST
+                email,
+                null,
+                null,
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                idCart
+        );
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .fee(200)
+                .paymentInstrumentId("paymentInstrumentId")
+                .pspId("PSP_CODE")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction,
+                authorizationRequest.getFee(),
+                authorizationRequest.getPaymentInstrumentId(),
+                authorizationRequest.getPspId(),
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "paymentMethodName",
+                "pspBusinessName",
+                "VPOS",
+                new CardAuthRequestDetailsDto()
+                        .cvv("000")
+                        .pan("123")
+                        .threeDsData("threeDsData")
+                        .expiryDate("209912")
+                        .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
+                        .holderName("holder name")
+                        .detailType("CARD")
+        );
+
+        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
+                transaction.getPaymentNotices().get(0).rptId(),
+                authorizationData
+        );
+
+        XPayAuthResponseEntityDto xPayAuthResponseEntityDto = new XPayAuthResponseEntityDto()
+                .requestId("requestId")
+                .status("status")
+                .urlRedirect("http://example.com");
+
+        /* preconditions */
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString()))
+                .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
+
+        /* test */
+        assertThrows(
+                InvalidRequestException.class,
+                () -> misconfiguredHandler.handle(requestAuthorizationCommand).block()
+        );
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(any());
     }
 }
