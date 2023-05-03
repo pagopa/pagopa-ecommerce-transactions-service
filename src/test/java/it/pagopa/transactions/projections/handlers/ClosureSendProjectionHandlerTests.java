@@ -45,7 +45,8 @@ class ClosureSendProjectionHandlerTests {
                 TransactionStatusDto.CLOSED,
                 Transaction.ClientId.CHECKOUT,
                 transaction.getCreationDate(),
-                transaction.getIdCart()
+                transaction.getIdCart(),
+                transaction.getRrn()
         );
 
         Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId()))
@@ -74,7 +75,8 @@ class ClosureSendProjectionHandlerTests {
                 TransactionStatusDto.UNAUTHORIZED,
                 Transaction.ClientId.CHECKOUT,
                 transaction.getCreationDate(),
-                transaction.getIdCart()
+                transaction.getIdCart(),
+                transaction.getRrn()
         );
 
         Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId()))

@@ -26,6 +26,7 @@ public class AuthorizationUpdateProjectionHandler
                         Mono.error(new TransactionNotFoundException(data.getTransactionId()))
                 )
                 .flatMap(transactionDocument -> {
+                    transactionDocument.setRrn(data.getData().getRrn());
                     transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_COMPLETED);
                     return transactionsViewRepository.save(transactionDocument);
                 })

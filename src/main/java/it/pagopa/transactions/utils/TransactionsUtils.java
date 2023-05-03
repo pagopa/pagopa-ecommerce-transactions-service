@@ -4,8 +4,7 @@ import it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction;
 import it.pagopa.ecommerce.commons.domain.v1.Transaction;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
-import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
-import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
+import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,8 +87,8 @@ public class TransactionsUtils {
     }
 
     public Mono<BaseTransaction> reduceEvents(TransactionId transactionId) {
-        return eventStoreRepository.findByTransactionId(transactionId.value().toString())
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value().toString())))
+        return eventStoreRepository.findByTransactionId(transactionId.value())
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())))
                 .reduce(new EmptyTransaction(), Transaction::applyEvent)
                 .cast(BaseTransaction.class);
     }

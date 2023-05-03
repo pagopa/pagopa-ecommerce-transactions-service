@@ -6,10 +6,10 @@ import it.pagopa.ecommerce.commons.domain.v1.TransactionWithRequestedAuthorizati
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
-import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import it.pagopa.transactions.utils.AuthRequestDataUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -22,12 +22,15 @@ public class TransactionUpdateAuthorizationHandler
         implements CommandHandler<TransactionUpdateAuthorizationCommand, Mono<TransactionAuthorizationCompletedEvent>> {
 
     private final TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> transactionEventStoreRepository;
+    private final AuthRequestDataUtils extractAuthRequestData;
 
     @Autowired
     protected TransactionUpdateAuthorizationHandler(
-            TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> transactionEventStoreRepository
+            TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> transactionEventStoreRepository,
+            AuthRequestDataUtils extractAuthRequestData
     ) {
         this.transactionEventStoreRepository = transactionEventStoreRepository;
+        this.extractAuthRequestData = extractAuthRequestData;
     }
 
     @Override
@@ -42,7 +45,8 @@ public class TransactionUpdateAuthorizationHandler
                         )
                 )
                 .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
-        UpdateAuthorizationRequestDto updateAuthorizationRequest = command.getData().updateAuthorizationRequest();
+        AuthRequestDataUtils.AuthRequestData authRequestDataExtracted = extractAuthRequestData
+                .from(command.getData().updateAuthorizationRequest());
         return transaction
                 .filter(
                         t -> t.getStatus() == TransactionStatusDto.AUTHORIZATION_REQUESTED
@@ -53,7 +57,9 @@ public class TransactionUpdateAuthorizationHandler
                         transactionWithRequestedAuthorization -> Tuples.of(
                                 transactionWithRequestedAuthorization,
                                 AuthorizationResultDto
-                                        .fromValue(updateAuthorizationRequest.getAuthorizationResult().toString())
+                                        .fromValue(
+                                                authRequestDataExtracted.outcome()
+                                        )
                         )
                 )
                 .flatMap(args -> {
@@ -61,9 +67,10 @@ public class TransactionUpdateAuthorizationHandler
                     AuthorizationResultDto authorizationResultDto = args.getT2();
                     return Mono.just(
                             new TransactionAuthorizationCompletedEvent(
-                                    transactionWithRequestedAuthorization.getTransactionId().value().toString(),
+                                    transactionWithRequestedAuthorization.getTransactionId().value(),
                                     new TransactionAuthorizationCompletedData(
-                                            updateAuthorizationRequest.getAuthorizationCode(),
+                                            authRequestDataExtracted.authorizationCode(),
+                                            authRequestDataExtracted.rrn(),
                                             authorizationResultDto
                                     )
                             )
