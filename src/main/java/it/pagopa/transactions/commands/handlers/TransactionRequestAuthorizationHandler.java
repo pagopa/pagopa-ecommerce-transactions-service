@@ -13,12 +13,11 @@ import it.pagopa.generated.transactions.server.model.RequestAuthorizationRespons
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
-import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple3;
@@ -27,7 +26,6 @@ import reactor.util.function.Tuples;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Component
 @Slf4j
@@ -39,14 +37,14 @@ public class TransactionRequestAuthorizationHandler
     private final TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository;
     private final TransactionsUtils transactionsUtils;
 
-    private final Map<String, String> cardBrandLogoMapping;
+    private final Map<CardAuthRequestDetailsDto.BrandEnum, URI> cardBrandLogoMapping;
 
     @Autowired
     public TransactionRequestAuthorizationHandler(
             PaymentGatewayClient paymentGatewayClient,
             TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository,
             TransactionsUtils transactionsUtils,
-            @Value("#{${logo.cardBrandMapping}}") Map<String, String> cardBrandLogoMapping
+            @Qualifier("brandConfMap") Map<CardAuthRequestDetailsDto.BrandEnum, URI> cardBrandLogoMapping
     ) {
         this.paymentGatewayClient = paymentGatewayClient;
         this.transactionEventStoreRepository = transactionEventStoreRepository;
@@ -170,24 +168,7 @@ public class TransactionRequestAuthorizationHandler
         URI logoURI = null;
         if (authRequestDetails instanceof CardAuthRequestDetailsDto cardDetail) {
             CardAuthRequestDetailsDto.BrandEnum cardBrand = cardDetail.getBrand();
-            logoURI = Optional
-                    .ofNullable(cardBrandLogoMapping.get(cardBrand.toString()))
-                    .map(uriMapping -> {
-                        try {
-                            return URI.create(uriMapping);
-                        } catch (IllegalArgumentException e) {
-                            throw new InvalidRequestException(
-                                    "Misconfigured URI for card brand %s".formatted(cardBrand),
-                                    e
-                            );
-                        }
-                    })
-                    .orElseThrow(
-                            () -> new InvalidRequestException(
-                                    "Logo URI not configured for brand %s".formatted(cardBrand)
-                            )
-                    );
-
+            logoURI = cardBrandLogoMapping.get(cardBrand);
         }
         // TODO handle different methods than cards
         return logoURI;
