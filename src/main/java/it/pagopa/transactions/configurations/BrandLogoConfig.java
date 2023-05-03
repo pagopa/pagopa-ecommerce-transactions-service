@@ -1,7 +1,6 @@
 package it.pagopa.transactions.configurations;
 
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -16,7 +15,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Configuration
-@Slf4j
 public class BrandLogoConfig {
 
     @Bean
@@ -30,8 +28,9 @@ public class BrandLogoConfig {
                 CardAuthRequestDetailsDto.BrandEnum.class
         );
         for (Map.Entry<String, String> entry : cardBrandLogoMapping.entrySet()) {
-            // below conversion methods both throw IllegalArgumentException in case of
-            // misconfigured brand/uri, preventing the module startup
+            // both below conversion methods thrown IllegalArgumentException in case of
+            // misconfigured brand/uri, preventing the module startup in case of missing or
+            // invalid configuration parameters
             logoMap.put(CardAuthRequestDetailsDto.BrandEnum.fromValue(entry.getKey()), URI.create(entry.getValue()));
         }
         Set<CardAuthRequestDetailsDto.BrandEnum> missingConfKey = Stream
