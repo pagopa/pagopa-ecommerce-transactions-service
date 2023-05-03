@@ -26,9 +26,6 @@ public class BrandLogoConfig {
                                                                           "#{${logo.cardBrandMapping}}"
                                                                       ) Map<String, String> cardBrandLogoMapping
     ) {
-        if (cardBrandLogoMapping.isEmpty()) {
-            throw new IllegalStateException("logo.cardBrandMapping not configured");
-        }
         Map<CardAuthRequestDetailsDto.BrandEnum, URI> logoMap = new EnumMap<>(
                 CardAuthRequestDetailsDto.BrandEnum.class
         );
