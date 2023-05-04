@@ -192,9 +192,7 @@ public class PaymentGatewayClient {
                                         .securityCode(cardData.getCvv())
                                         .isFirstPayment(true) // TODO TO BE CHECKED
                                         .threeDsData(cardData.getThreeDsData())
-                                        .circuit(
-                                                VposAuthRequestDto.CircuitEnum.fromValue(cardData.getBrand().toString())
-                                        )
+                                        .circuit(VposAuthRequestDto.CircuitEnum.valueOf(cardData.getBrand()))
                                         .idPsp(authorizationData.pspId())
                         );
                     } else {
@@ -240,5 +238,4 @@ public class PaymentGatewayClient {
 
         return Base64.getEncoder().encodeToString(mdcData.getBytes(StandardCharsets.UTF_8));
     }
-
 }
