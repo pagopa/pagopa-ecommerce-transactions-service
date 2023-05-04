@@ -104,12 +104,12 @@ microservice-chart:
     WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3111"
     LOGO_CARD_BRANDING_MAPPING: > 
       {
-      VISA:'https://wisp2.pagopa.gov.it/wallet/assets/img/creditcard/carta_visa.png', 
-      MASTERCARD:'https://wisp2.pagopa.gov.it/wallet/assets/img/creditcard/carta_mc.png',
-      DINERS:'https://wisp2.pagopa.gov.it/wallet/assets/img/creditcard/carta_diners.png',
-      MAESTRO:'https://wisp2.pagopa.gov.it/wallet/assets/img/creditcard/carta_maestro.png',
-      AMEX:'https://wisp2.pagopa.gov.it/wallet/assets/img/creditcard/carta_amex.png',
-      UNKNOWN:'https://wisp2.pagopa.gov.it/wallet/assets/img/creditcard/generic.png'
+      VISA:'https://dev.checkout.pagopa.it/assets/creditcard/carta_visa.png', 
+      MASTERCARD:'https://dev.checkout.pagopa.it/assets/creditcard/carta_mc.png',
+      DINERS:'https://dev.checkout.pagopa.it/assets/creditcard/carta_diners.png',
+      MAESTRO:'https://dev.checkout.pagopa.it/assets/creditcard/carta_maestro.png',
+      AMEX:'https://dev.checkout.pagopa.it/assets/creditcard/carta_amex.png',
+      UNKNOWN:'https://dev.checkout.pagopa.it/assets/creditcard/generic.png'
       }
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
