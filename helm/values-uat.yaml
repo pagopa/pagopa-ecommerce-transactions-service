@@ -53,12 +53,12 @@ microservice-chart:
       WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3020"
       LOGO_CARD_BRANDING_MAPPING: >
         {
-        VISA:'https://uat.checkout.pagopa.it/assets/creditcard/carta_visa.png', 
-        MASTERCARD:'https://uat.checkout.pagopa.it/assets/creditcard/carta_mc.png',
-        DINERS:'https://uat.checkout.pagopa.it/assets/creditcard/carta_diners.png',
-        MAESTRO:'https://uat.checkout.pagopa.it/assets/creditcard/carta_maestro.png',
-        AMEX:'https://uat.checkout.pagopa.it/assets/creditcard/carta_amex.png',
-        UNKNOWN:'https://uat.checkout.pagopa.it/assets/creditcard/generic.png'
+        VISA:'https://dev.checkout.pagopa.it/assets/creditcard/carta_visa.png', 
+        MASTERCARD:'https://dev.checkout.pagopa.it/assets/creditcard/carta_mc.png',
+        DINERS:'https://dev.checkout.pagopa.it/assets/creditcard/carta_diners.png',
+        MAESTRO:'https://dev.checkout.pagopa.it/assets/creditcard/carta_maestro.png',
+        AMEX:'https://dev.checkout.pagopa.it/assets/creditcard/carta_amex.png',
+        UNKNOWN:'https://dev.checkout.pagopa.it/assets/creditcard/generic.png'
         }
     envSecret:
       MONGO_PASSWORD: mongo-ecommerce-password
@@ -168,12 +168,12 @@ microservice-chart:
     WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3020"
     LOGO_CARD_BRANDING_MAPPING: >
       {
-      VISA:'https://uat.checkout.pagopa.it/assets/creditcard/carta_visa.png', 
-      MASTERCARD:'https://uat.checkout.pagopa.it/assets/creditcard/carta_mc.png',
-      DINERS:'https://uat.checkout.pagopa.it/assets/creditcard/carta_diners.png',
-      MAESTRO:'https://uat.checkout.pagopa.it/assets/creditcard/carta_maestro.png',
-      AMEX:'https://uat.checkout.pagopa.it/assets/creditcard/carta_amex.png',
-      UNKNOWN:'https://uat.checkout.pagopa.it/assets/creditcard/generic.png'
+      VISA:'https://dev.checkout.pagopa.it/assets/creditcard/carta_visa.png', 
+      MASTERCARD:'https://dev.checkout.pagopa.it/assets/creditcard/carta_mc.png',
+      DINERS:'https://dev.checkout.pagopa.it/assets/creditcard/carta_diners.png',
+      MAESTRO:'https://dev.checkout.pagopa.it/assets/creditcard/carta_maestro.png',
+      AMEX:'https://dev.checkout.pagopa.it/assets/creditcard/carta_amex.png',
+      UNKNOWN:'https://dev.checkout.pagopa.it/assets/creditcard/generic.png'
       }
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
