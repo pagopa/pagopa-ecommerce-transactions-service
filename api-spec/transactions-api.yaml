@@ -1029,7 +1029,6 @@ components:
       required:
         - paymentGatewayType
         - outcome
-        - rrn
     OutcomeXpayGateway:
       type: object
       properties:
