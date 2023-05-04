@@ -36,13 +36,14 @@ These are all environment variables needed by the application:
 | CLOSURE_RETRY_INTERVAL                         |     | Seconds to wait at closing the transaction before making a retry                                           | number |         |
 | PERSONAL_DATA_VAULT_API_KEY                    |     | API Key for Personal Data Vault (PDV is used to safely encrypt PIIs, e.g. the user's email address)        | string |         |
 | PERSONAL_DATA_VAULT_API_BASE_PATH              |     | API base path for Personal Data Vault                                                                      | string |         |
-
+| LOGO_CARD_BRANDING_MAPPING                     |     | Key-value string map that maps card brand to logo to be used into success mail                             | string |         |
 
 An example configuration of these environment variables is in the `.env.example` file.
 
 ## Run the application with `Docker`
 
 Create your environment typing :
+
 ```sh
 cp .env.example .env
 ```

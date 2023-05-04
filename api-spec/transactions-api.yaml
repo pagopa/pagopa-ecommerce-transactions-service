@@ -496,6 +496,13 @@ components:
         brand:
           type: string
           description: The card brand name
+          enum:
+            - VISA
+            - MASTERCARD
+            - UNKNOWN
+            - DINERS
+            - MAESTRO
+            - AMEX
         threeDsData:
           type: string
           description: The 3ds data evaluated by the client

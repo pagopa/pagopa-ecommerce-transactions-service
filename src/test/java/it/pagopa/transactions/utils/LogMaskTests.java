@@ -75,7 +75,7 @@ class LogMaskTests {
                 .expiryDate("203012")
                 .detailType("card")
                 .holderName("John Doe")
-                .brand("VISA")
+                .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData(
                         "{\"acctID\":\"ACCT_eac3c21b-78fa-4ae7-a553-84ba9e1945ca\",\"deliveryEmailAddress\":\""
                                 + email3ds + "\",\"mobilePhone\":null}"

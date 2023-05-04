@@ -22,7 +22,6 @@ import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.transactions.server.model.OutcomeVposGatewayDto;
 import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
-import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestOutcomeGatewayDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
 import it.pagopa.transactions.commands.data.ClosureSendData;
@@ -209,7 +208,8 @@ class TransactionSendClosureHandlerTest {
                         "paymentMethodName",
                         "pspBusinessName",
                         "authorizationRequestId",
-                        PaymentGateway.VPOS
+                        PaymentGateway.VPOS,
+                        null
                 )
         );
 
@@ -288,7 +288,8 @@ class TransactionSendClosureHandlerTest {
                         "paymentMethodName",
                         "pspBusinessName",
                         "authorizationRequestId",
-                        PaymentGateway.XPAY
+                        PaymentGateway.XPAY,
+                        null
                 )
         );
 
@@ -449,7 +450,8 @@ class TransactionSendClosureHandlerTest {
                         "paymentMethodName",
                         "pspBusinessName",
                         "authorizationRequestId",
-                        PaymentGateway.XPAY
+                        PaymentGateway.XPAY,
+                        null
                 )
         );
 
@@ -610,7 +612,8 @@ class TransactionSendClosureHandlerTest {
                         "paymentMethodName",
                         "pspBusinessName",
                         "authorizationRequestId",
-                        PaymentGateway.VPOS
+                        PaymentGateway.VPOS,
+                        null
                 )
         );
 
@@ -771,7 +774,8 @@ class TransactionSendClosureHandlerTest {
                         "paymentMethodName",
                         "pspBusinessName",
                         "authorizationRequestId",
-                        PaymentGateway.XPAY
+                        PaymentGateway.XPAY,
+                        null
                 )
         );
 
@@ -944,7 +948,8 @@ class TransactionSendClosureHandlerTest {
                         "paymentMethodName",
                         "pspBusinessName",
                         "authorizationRequestId",
-                        PaymentGateway.VPOS
+                        PaymentGateway.VPOS,
+                        null
                 )
         );
 
@@ -1121,7 +1126,8 @@ class TransactionSendClosureHandlerTest {
                         "paymentMethodName",
                         "pspBusinessName",
                         "authorizationRequestId",
-                        PaymentGateway.XPAY
+                        PaymentGateway.XPAY,
+                        null
                 )
         );
 
@@ -1308,7 +1314,8 @@ class TransactionSendClosureHandlerTest {
                         "paymentMethodName",
                         "pspBusinessName",
                         "authorizationRequestId",
-                        PaymentGateway.VPOS
+                        PaymentGateway.VPOS,
+                        null
                 )
         );
 
@@ -1492,7 +1499,8 @@ class TransactionSendClosureHandlerTest {
                         "paymentMethodName",
                         "pspBusinessName",
                         "authorizationRequestId",
-                        PaymentGateway.XPAY
+                        PaymentGateway.XPAY,
+                        null
                 )
         );
 
@@ -1676,7 +1684,8 @@ class TransactionSendClosureHandlerTest {
                         "paymentMethodName",
                         "pspBusinessName",
                         "authorizationRequestId",
-                        PaymentGateway.VPOS
+                        PaymentGateway.VPOS,
+                        null
                 )
         );
 
@@ -1851,7 +1860,8 @@ class TransactionSendClosureHandlerTest {
                         "paymentMethodName",
                         "pspBusinessName",
                         "authorizationRequestId",
-                        PaymentGateway.XPAY
+                        PaymentGateway.XPAY,
+                        null
                 )
         );
 

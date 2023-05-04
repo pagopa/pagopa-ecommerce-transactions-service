@@ -159,7 +159,7 @@ class PaymentGatewayClientTest {
                 .expiryDate("203012")
                 .detailType("card")
                 .holderName("John Doe")
-                .brand("VISA")
+                .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -325,7 +325,7 @@ class PaymentGatewayClientTest {
                 .expiryDate("203012")
                 .detailType("card")
                 .holderName("John Doe")
-                .brand("VISA")
+                .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
@@ -354,7 +354,7 @@ class PaymentGatewayClientTest {
                         )
                 )
                 .emailCH(EMAIL_STRING)
-                .circuit(VposAuthRequestDto.CircuitEnum.valueOf(cardDetails.getBrand()))
+                .circuit(VposAuthRequestDto.CircuitEnum.fromValue(cardDetails.getBrand().toString()))
                 .holder(cardDetails.getHolderName())
                 .isFirstPayment(true)
                 .threeDsData("threeDsData")
@@ -419,7 +419,7 @@ class PaymentGatewayClientTest {
                 .cvv("345")
                 .pan("16589654852")
                 .expiryDate("203012")
-                .brand("VISA")
+                .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
@@ -759,7 +759,7 @@ class PaymentGatewayClientTest {
                 .cvv("345")
                 .pan("16589654852")
                 .expiryDate("203012")
-                .brand("VISA")
+                .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
@@ -850,7 +850,7 @@ class PaymentGatewayClientTest {
                 .cvv("345")
                 .pan("16589654852")
                 .expiryDate("203012")
-                .brand("VISA")
+                .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
@@ -879,7 +879,7 @@ class PaymentGatewayClientTest {
                         )
                 )
                 .emailCH(EMAIL_STRING)
-                .circuit(VposAuthRequestDto.CircuitEnum.valueOf(cardDetails.getBrand()))
+                .circuit(VposAuthRequestDto.CircuitEnum.fromValue(cardDetails.getBrand().toString()))
                 .holder(cardDetails.getHolderName())
                 .isFirstPayment(true)
                 .threeDsData("threeDsData")
@@ -1028,7 +1028,7 @@ class PaymentGatewayClientTest {
                 .cvv("345")
                 .pan("16589654852")
                 .expiryDate("203012")
-                .brand("VISA")
+                .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
@@ -1113,7 +1113,7 @@ class PaymentGatewayClientTest {
                 .cvv("345")
                 .pan("16589654852")
                 .expiryDate("203012")
-                .brand("VISA")
+                .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
@@ -1142,7 +1142,7 @@ class PaymentGatewayClientTest {
                         )
                 )
                 .emailCH(EMAIL_STRING)
-                .circuit(VposAuthRequestDto.CircuitEnum.valueOf(cardDetails.getBrand()))
+                .circuit(VposAuthRequestDto.CircuitEnum.fromValue(cardDetails.getBrand().toString()))
                 .holder(cardDetails.getHolderName())
                 .isFirstPayment(true)
                 .threeDsData("threeDsData")

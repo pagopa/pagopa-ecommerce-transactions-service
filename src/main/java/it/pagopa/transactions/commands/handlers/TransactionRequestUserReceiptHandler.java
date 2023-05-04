@@ -11,7 +11,6 @@ import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
 import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
-import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -20,8 +19,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.Duration;
 
 @Component
@@ -67,12 +64,6 @@ public class TransactionRequestUserReceiptHandler
                         )
                 )
                 .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
-        URI paymentMethodUri;
-        try {
-            paymentMethodUri = new URI("http://paymentMethodLogo.it");// TODO where to take it?
-        } catch (URISyntaxException e) {
-            throw new InvalidRequestException("Payment method is not a valid URI", e);
-        }
         return transaction
                 .filter(
                         t -> t.getStatus() == TransactionStatusDto.CLOSED &&
@@ -86,7 +77,7 @@ public class TransactionRequestUserReceiptHandler
                 .cast(TransactionClosed.class)
                 .flatMap(tx -> {
                     AddUserReceiptRequestDto addUserReceiptRequestDto = command.getData().addUserReceiptRequest();
-                    String transactionId = command.getData().transaction().getTransactionId().value().toString();
+                    String transactionId = command.getData().transaction().getTransactionId().value();
                     String language = "it-IT"; // FIXME: Add language to AuthorizationRequestData
                     TransactionUserReceiptRequestedEvent event = new TransactionUserReceiptRequestedEvent(
                             transactionId,
@@ -95,7 +86,6 @@ public class TransactionRequestUserReceiptHandler
                                             command.getData().addUserReceiptRequest().getOutcome()
                                     ),
                                     language,
-                                    paymentMethodUri,
                                     addUserReceiptRequestDto.getPaymentDate().toZonedDateTime().toString(),
                                     addUserReceiptRequestDto.getPayments().get(0)
                                             .getOfficeName(),
