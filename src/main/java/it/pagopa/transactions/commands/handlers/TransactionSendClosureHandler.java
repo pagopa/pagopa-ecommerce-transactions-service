@@ -35,6 +35,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -153,22 +154,24 @@ public class TransactionSendClosureHandler implements
                                 .timestampOperation(OffsetDateTime.now())
                                 .paymentMethod(transactionAuthorizationRequestData.getPaymentTypeCode())
                                 .additionalPaymentInformations(
-                                        Map.of(
-                                                "tipoVersamento",
-                                                TIPO_VERSAMENTO_CP,
-                                                "outcomePaymentGateway",
-                                                authRequestData.outcome(),
-                                                "authorizationCode",
-                                                authRequestData.authorizationCode(),
-                                                "fee",
-                                                fee.toString(),
-                                                "timestampOperation",
-                                                updateAuthorizationRequestDto.getTimestampOperation()
-                                                        .toLocalDateTime()
-                                                        .truncatedTo(ChronoUnit.SECONDS)
-                                                        .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                                                "totalAmount",
-                                                totalAmount.toString()
+                                        new HashMap<>(
+                                                Map.of(
+                                                        "tipoVersamento",
+                                                        TIPO_VERSAMENTO_CP,
+                                                        "outcomePaymentGateway",
+                                                        authRequestData.outcome(),
+                                                        "authorizationCode",
+                                                        authRequestData.authorizationCode(),
+                                                        "fee",
+                                                        fee.toString(),
+                                                        "timestampOperation",
+                                                        updateAuthorizationRequestDto.getTimestampOperation()
+                                                                .toLocalDateTime()
+                                                                .truncatedTo(ChronoUnit.SECONDS)
+                                                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                                                        "totalAmount",
+                                                        totalAmount.toString()
+                                                )
                                         )
                                 );
 
@@ -176,7 +179,6 @@ public class TransactionSendClosureHandler implements
                                 rrn -> closePaymentRequest.getAdditionalPaymentInformations().put("rrn", rrn)
                         );
                     }
-
                     /*
                      * ClosePayment (either OK or KO): save to event store and return event On
                      * error: save TransactionClosureErrorEvent to event store, enqueue and return

@@ -46,9 +46,12 @@ import reactor.test.StepVerifier;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 
+import static it.pagopa.transactions.commands.handlers.TransactionSendClosureHandler.TIPO_VERSAMENTO_CP;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 
@@ -298,7 +301,7 @@ class TransactionSendClosureHandlerTest {
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
-                        "authorizationCode",
+                        null,
                         null,
                         OffsetDateTime.now(),
                         AuthorizationResultDto.KO
@@ -341,44 +344,7 @@ class TransactionSendClosureHandlerTest {
                                         .getPaymentNotices().get(0).getPaymentToken()
                         )
                 )
-                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.KO)
-                .idPSP(authorizationRequestData.getPspId())
-                .idBrokerPSP(authorizationRequestData.getBrokerName())
-                .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
-                .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                        + authorizationRequestData.getFee()
-                        )
-                )
-                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
-                .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
-                .paymentMethod(authorizationRequestData.getPaymentTypeCode())
-                .additionalPaymentInformations(
-                        Map.of(
-                                "outcomePaymentGateway",
-                                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
-                                        .toString(),
-                                "authorizationCode",
-                                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
-                                        .getAuthorizationCode(),
-                                "rrn",
-                                ECOMMERCE_RRN,
-                                "fee",
-                                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
-                                "timestampOperation",
-                                expectedOperationTimestamp, // 2023-04-03T15:42:22
-                                "totalAmount",
-                                EuroUtils.euroCentsToEuro(
-                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
-                                                .sum()
-                                                + authorizationRequestData.getFee()
-                                ).toString()
-                        )
-                );
+                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.KO);
 
         ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
                 .outcome(ClosePaymentResponseDto.OutcomeEnum.KO);
@@ -461,7 +427,7 @@ class TransactionSendClosureHandlerTest {
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
-                        "authorizationCode",
+                        null,
                         null,
                         OffsetDateTime.now(),
                         AuthorizationResultDto.KO
@@ -504,44 +470,7 @@ class TransactionSendClosureHandlerTest {
                                         .getPaymentNotices().get(0).getPaymentToken()
                         )
                 )
-                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.KO)
-                .idPSP(authorizationRequestData.getPspId())
-                .idBrokerPSP(authorizationRequestData.getBrokerName())
-                .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
-                .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                        + authorizationRequestData.getFee()
-                        )
-                )
-                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
-                .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
-                .paymentMethod(authorizationRequestData.getPaymentTypeCode())
-                .additionalPaymentInformations(
-                        Map.of(
-                                "outcomePaymentGateway",
-                                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
-                                        .toString(),
-                                "authorizationCode",
-                                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
-                                        .getAuthorizationCode(),
-                                "rrn",
-                                ECOMMERCE_RRN,
-                                "fee",
-                                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
-                                "timestampOperation",
-                                expectedOperationTimestamp, // yyyy-MM-ddThh:mm:ss
-                                "totalAmount",
-                                EuroUtils.euroCentsToEuro(
-                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
-                                                .sum()
-                                                + authorizationRequestData.getFee()
-                                ).toString()
-                        )
-                );
+                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.KO);
 
         ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
                 .outcome(ClosePaymentResponseDto.OutcomeEnum.OK);
@@ -625,7 +554,7 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
-                        "rrn",
+                        ECOMMERCE_RRN,
                         OffsetDateTime.now(),
                         AuthorizationResultDto.OK
                 )
@@ -636,6 +565,7 @@ class TransactionSendClosureHandlerTest {
                         new OutcomeVposGatewayDto()
                                 .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
                                 .authorizationCode("authorizationCode")
+                                .rrn(ECOMMERCE_RRN)
                 )
                 .timestampOperation(OffsetDateTime.now());
 
@@ -684,6 +614,8 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         Map.of(
+                                "tipoVersamento",
+                                TIPO_VERSAMENTO_CP,
                                 "outcomePaymentGateway",
                                 ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
                                         .toString(),
@@ -691,11 +623,11 @@ class TransactionSendClosureHandlerTest {
                                 ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
                                         .getAuthorizationCode(),
                                 "rrn",
-                                ECOMMERCE_RRN,
+                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getRrn(),
                                 "fee",
                                 EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
                                 "timestampOperation",
-                                expectedOperationTimestamp, // yyyy-MM-ddThh:mm:ss
+                                expectedOperationTimestamp,
                                 "totalAmount",
                                 EuroUtils.euroCentsToEuro(
                                         ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
@@ -846,14 +778,14 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         Map.of(
+                                "tipoVersamento",
+                                TIPO_VERSAMENTO_CP,
                                 "outcomePaymentGateway",
                                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
                                         .toString(),
                                 "authorizationCode",
                                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
                                         .getAuthorizationCode(),
-                                "rrn",
-                                ECOMMERCE_RRN,
                                 "fee",
                                 EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
                                 "timestampOperation",
@@ -963,7 +895,7 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
-                        "rrn",
+                        ECOMMERCE_RRN,
                         OffsetDateTime.now(),
                         AuthorizationResultDto.OK
                 )
@@ -974,6 +906,7 @@ class TransactionSendClosureHandlerTest {
                         new OutcomeVposGatewayDto()
                                 .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
                                 .authorizationCode("authorizationCode")
+                                .rrn(ECOMMERCE_RRN)
                 )
                 .timestampOperation(OffsetDateTime.now());
 
@@ -1018,6 +951,8 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         Map.of(
+                                "tipoVersamento",
+                                TIPO_VERSAMENTO_CP,
                                 "outcomePaymentGateway",
                                 ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
                                         .toString(),
@@ -1197,14 +1132,14 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         Map.of(
+                                "tipoVersamento",
+                                TIPO_VERSAMENTO_CP,
                                 "outcomePaymentGateway",
                                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
                                         .toString(),
                                 "authorizationCode",
                                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
                                         .getAuthorizationCode(),
-                                "rrn",
-                                ECOMMERCE_RRN,
                                 "fee",
                                 EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
                                 "timestampOperation",
@@ -1330,8 +1265,8 @@ class TransactionSendClosureHandlerTest {
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
-                        "authorizationCode",
-                        "rrn",
+                        null,
+                        null,
                         OffsetDateTime.now(),
                         AuthorizationResultDto.KO
                 )
@@ -1341,7 +1276,6 @@ class TransactionSendClosureHandlerTest {
                 .outcomeGateway(
                         new OutcomeVposGatewayDto()
                                 .outcome(OutcomeVposGatewayDto.OutcomeEnum.KO)
-                                .authorizationCode("authorizationCode")
                 )
                 .timestampOperation(OffsetDateTime.now());
 
@@ -1361,52 +1295,12 @@ class TransactionSendClosureHandlerTest {
                 closureSendData
         );
 
-        TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
-
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         transactionActivatedEvent.getData().getPaymentNotices().stream()
                                 .map(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getPaymentToken).toList()
                 )
-                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.KO)
-                .idPSP(authorizationRequestData.getPspId())
-                .idBrokerPSP(authorizationRequestData.getBrokerName())
-                .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
-                .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                (transactionActivatedEvent.getData().getPaymentNotices().stream()
-                                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
-                                        .sum()
-                                        + authorizationRequestData.getFee())
-                        )
-                )
-                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
-                .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
-                .paymentMethod(authorizationRequestData.getPaymentTypeCode())
-                .additionalPaymentInformations(
-                        Map.of(
-                                "outcomePaymentGateway",
-                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
-                                        .toString(),
-                                "authorizationCode",
-                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
-                                        .getAuthorizationCode(),
-                                "rrn",
-                                ECOMMERCE_RRN,
-                                "fee",
-                                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
-                                "timestampOperation",
-                                expectedOperationTimestamp, // yyyy-MM-ddThh:mm:ss
-                                "totalAmount",
-                                EuroUtils.euroCentsToEuro(
-                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
-                                                .sum()
-                                                + authorizationRequestData.getFee()
-                                ).toString()
-                        )
-                );
+                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.KO);
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
                 transactionId.value()
         );
@@ -1516,7 +1410,7 @@ class TransactionSendClosureHandlerTest {
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
-                        "authorizationCode",
+                        null,
                         null,
                         OffsetDateTime.now(),
                         AuthorizationResultDto.KO
@@ -1527,7 +1421,6 @@ class TransactionSendClosureHandlerTest {
                 .outcomeGateway(
                         new OutcomeXpayGatewayDto()
                                 .outcome(OutcomeXpayGatewayDto.OutcomeEnum.KO)
-                                .authorizationCode("authorizationCode")
                 )
                 .timestampOperation(OffsetDateTime.now());
 
@@ -1550,52 +1443,12 @@ class TransactionSendClosureHandlerTest {
         TransactionClosureFailedEvent event = TransactionTestUtils
                 .transactionClosureFailedEvent(TransactionClosureData.Outcome.KO);
 
-        TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
-
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         transactionActivatedEvent.getData().getPaymentNotices().stream()
                                 .map(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getPaymentToken).toList()
                 )
-                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.KO)
-                .idPSP(authorizationRequestData.getPspId())
-                .idBrokerPSP(authorizationRequestData.getBrokerName())
-                .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
-                .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                (transactionActivatedEvent.getData().getPaymentNotices().stream()
-                                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
-                                        .sum()
-                                        + authorizationRequestData.getFee())
-                        )
-                )
-                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
-                .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
-                .paymentMethod(authorizationRequestData.getPaymentTypeCode())
-                .additionalPaymentInformations(
-                        Map.of(
-                                "outcomePaymentGateway",
-                                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
-                                        .toString(),
-                                "authorizationCode",
-                                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
-                                        .getAuthorizationCode(),
-                                "rrn",
-                                ECOMMERCE_RRN,
-                                "fee",
-                                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
-                                "timestampOperation",
-                                expectedOperationTimestamp, // yyyy-MM-ddThh:mm:ss
-                                "totalAmount",
-                                EuroUtils.euroCentsToEuro(
-                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
-                                                .sum()
-                                                + authorizationRequestData.getFee()
-                                ).toString()
-                        )
-                );
+                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.KO);
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
                 transactionId.value()
         );
@@ -1703,7 +1556,7 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
-                        "rrn",
+                        ECOMMERCE_RRN,
                         OffsetDateTime.now(),
                         AuthorizationResultDto.OK
                 )
@@ -1714,6 +1567,7 @@ class TransactionSendClosureHandlerTest {
                         new OutcomeVposGatewayDto()
                                 .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
                                 .authorizationCode("authorizationCode")
+                                .rrn(ECOMMERCE_RRN)
                 )
                 .timestampOperation(OffsetDateTime.now());
 
@@ -1761,6 +1615,8 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         Map.of(
+                                "tipoVersamento",
+                                TIPO_VERSAMENTO_CP,
                                 "outcomePaymentGateway",
                                 ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
                                         .toString(),
@@ -1938,14 +1794,14 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         Map.of(
+                                "tipoVersamento",
+                                TIPO_VERSAMENTO_CP,
                                 "outcomePaymentGateway",
                                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
                                         .toString(),
                                 "authorizationCode",
                                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
                                         .getAuthorizationCode(),
-                                "rrn",
-                                ECOMMERCE_RRN,
                                 "fee",
                                 EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
                                 "timestampOperation",
@@ -2019,6 +1875,7 @@ class TransactionSendClosureHandlerTest {
                         new OutcomeVposGatewayDto()
                                 .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
                                 .authorizationCode("authorizationCode")
+                                .rrn(ECOMMERCE_RRN)
                 )
                 .timestampOperation(OffsetDateTime.now());
 
@@ -2067,6 +1924,8 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         Map.of(
+                                "tipoVersamento",
+                                TIPO_VERSAMENTO_CP,
                                 "outcomePaymentGateway",
                                 ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
                                         .toString(),
@@ -2153,6 +2012,7 @@ class TransactionSendClosureHandlerTest {
                         new OutcomeVposGatewayDto()
                                 .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
                                 .authorizationCode("authorizationCode")
+                                .rrn(ECOMMERCE_RRN)
                 )
                 .timestampOperation(OffsetDateTime.now());
 
@@ -2198,6 +2058,8 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         Map.of(
+                                "tipoVersamento",
+                                TIPO_VERSAMENTO_CP,
                                 "outcomePaymentGateway",
                                 ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
                                         .toString(),
@@ -2290,7 +2152,6 @@ class TransactionSendClosureHandlerTest {
                 .outcomeGateway(
                         new OutcomeVposGatewayDto()
                                 .outcome(OutcomeVposGatewayDto.OutcomeEnum.KO)
-                                .authorizationCode("authorizationCode")
                 )
                 .timestampOperation(OffsetDateTime.now());
 
@@ -2322,44 +2183,7 @@ class TransactionSendClosureHandlerTest {
                                         .getPaymentNotices().get(0).getPaymentToken()
                         )
                 )
-                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.KO)
-                .idPSP(authorizationRequestData.getPspId())
-                .idBrokerPSP(authorizationRequestData.getBrokerName())
-                .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
-                .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                        + authorizationRequestData.getFee()
-                        )
-                )
-                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
-                .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
-                .paymentMethod(authorizationRequestData.getPaymentTypeCode())
-                .additionalPaymentInformations(
-                        Map.of(
-                                "outcomePaymentGateway",
-                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
-                                        .toString(),
-                                "authorizationCode",
-                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
-                                        .getAuthorizationCode(),
-                                "rrn",
-                                ECOMMERCE_RRN,
-                                "fee",
-                                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
-                                "timestampOperation",
-                                expectedOperationTimestamp, // yyyy-MM-ddThh:mm:ss
-                                "totalAmount",
-                                EuroUtils.euroCentsToEuro(
-                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
-                                                .sum()
-                                                + authorizationRequestData.getFee()
-                                ).toString()
-                        )
-                );
+                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.KO);
 
         ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
                 .outcome(ClosePaymentResponseDto.OutcomeEnum.KO);
@@ -2414,7 +2238,6 @@ class TransactionSendClosureHandlerTest {
                 .outcomeGateway(
                         new OutcomeVposGatewayDto()
                                 .outcome(OutcomeVposGatewayDto.OutcomeEnum.KO)
-                                .authorizationCode("authorizationCode")
                 )
                 .timestampOperation(OffsetDateTime.now());
 
@@ -2443,44 +2266,7 @@ class TransactionSendClosureHandlerTest {
                                         .getPaymentNotices().get(0).getPaymentToken()
                         )
                 )
-                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.KO)
-                .idPSP(authorizationRequestData.getPspId())
-                .idBrokerPSP(authorizationRequestData.getBrokerName())
-                .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
-                .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                        + authorizationRequestData.getFee()
-                        )
-                )
-                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
-                .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
-                .paymentMethod(authorizationRequestData.getPaymentTypeCode())
-                .additionalPaymentInformations(
-                        Map.of(
-                                "outcomePaymentGateway",
-                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
-                                        .toString(),
-                                "authorizationCode",
-                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
-                                        .getAuthorizationCode(),
-                                "rrn",
-                                ECOMMERCE_RRN,
-                                "fee",
-                                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
-                                "timestampOperation",
-                                expectedOperationTimestamp, // yyyy-MM-ddThh:mm:ss
-                                "totalAmount",
-                                EuroUtils.euroCentsToEuro(
-                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
-                                                .sum()
-                                                + authorizationRequestData.getFee()
-                                ).toString()
-                        )
-                );
+                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.KO);
 
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
                 transactionId.value()
