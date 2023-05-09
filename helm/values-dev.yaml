@@ -109,7 +109,6 @@ microservice-chart:
     ELASTIC_APM_SERVER_URL: http://quickstart-apm-http.elastic-system.svc:8200
     ELASTIC_APM_LOG_SENDING: 'true'
   envSecret:
-    ELASTIC_APM_SECRET_TOKEN: elastic-apm-secret-token
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password
     NODO_CONNECTION_STRING: nodo-connection-string
@@ -119,6 +118,7 @@ microservice-chart:
     PAYMENT_TRANSACTIONS_GATEWAY_API_KEY: payment-transactions-gateway-api-key
     JWT_SECRET: sessions-jwt-secret
     PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
+    ELASTIC_APM_SECRET_TOKEN: elastic-apm-secret-token
   keyvault:
     name: "pagopa-d-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
