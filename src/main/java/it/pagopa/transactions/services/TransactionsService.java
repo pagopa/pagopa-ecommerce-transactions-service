@@ -138,7 +138,7 @@ public class TransactionsService {
                 );
     }
 
-    @CircuitBreaker(name = "node-backend")
+    @CircuitBreaker(name = "ecommerce-db")
     @Retry(name = "getTransactionInfo")
     public Mono<TransactionInfoDto> getTransactionInfo(String transactionId) {
         log.info("Get Transaction Invoked with id {} ", transactionId);
