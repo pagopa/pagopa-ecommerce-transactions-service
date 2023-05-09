@@ -37,7 +37,8 @@ resilience4j.circuitbreaker:
   instances:
     transactions-backend:
       baseConfig: default
-  instance:
-      node-backend:
-        baseConfig: default
+    node-backend:
+      baseConfig: default
+    ecommerce-db:
+      baseConfig: default
 
