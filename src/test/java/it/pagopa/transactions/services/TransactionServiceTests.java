@@ -338,6 +338,7 @@ class TransactionServiceTests {
         TransactionAuthorizationCompletedData statusUpdateData = new TransactionAuthorizationCompletedData(
                 "authorizationCode",
                 null,
+                OffsetDateTime.now(),
                 it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto
                         .fromValue(
                                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
@@ -1047,6 +1048,7 @@ class TransactionServiceTests {
         TransactionAuthorizationCompletedData statusUpdateData = new TransactionAuthorizationCompletedData(
                 "authorizationCode",
                 null,
+                OffsetDateTime.now(),
                 it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto
                         .fromValue(
                                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())

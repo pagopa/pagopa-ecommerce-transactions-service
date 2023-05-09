@@ -6,6 +6,7 @@ import it.pagopa.ecommerce.commons.domain.v1.TransactionWithRequestedAuthorizati
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -45,8 +46,9 @@ public class TransactionUpdateAuthorizationHandler
                         )
                 )
                 .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = command.getData().updateAuthorizationRequest();
         AuthRequestDataUtils.AuthRequestData authRequestDataExtracted = extractAuthRequestData
-                .from(command.getData().updateAuthorizationRequest());
+                .from(updateAuthorizationRequest);
         return transaction
                 .filter(
                         t -> t.getStatus() == TransactionStatusDto.AUTHORIZATION_REQUESTED
@@ -71,6 +73,7 @@ public class TransactionUpdateAuthorizationHandler
                                     new TransactionAuthorizationCompletedData(
                                             authRequestDataExtracted.authorizationCode(),
                                             authRequestDataExtracted.rrn(),
+                                            updateAuthorizationRequest.getTimestampOperation(),
                                             authorizationResultDto
                                     )
                             )

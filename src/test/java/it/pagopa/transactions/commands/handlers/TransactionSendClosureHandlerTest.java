@@ -49,7 +49,6 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 
-import static it.pagopa.transactions.commands.handlers.TransactionSendClosureHandler.ECOMMERCE_RRN;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 
@@ -81,6 +80,8 @@ class TransactionSendClosureHandlerTest {
     private static final int PAYMENT_TOKEN_VALIDITY = 120;
     private static final int SOFT_TIMEOUT_OFFSET = 10;
     private static final int RETRY_TIMEOUT_INTERVAL = 5;
+
+    private static final String ECOMMERCE_RRN = "rrrr";
 
     private final TransactionSendClosureHandler transactionSendClosureHandler = new TransactionSendClosureHandler(
             transactionEventStoreRepository,
@@ -218,6 +219,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         "rrn",
+                        OffsetDateTime.now(),
                         AuthorizationResultDto.OK
                 )
         );
@@ -298,6 +300,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         null,
+                        OffsetDateTime.now(),
                         AuthorizationResultDto.KO
                 )
         );
@@ -460,6 +463,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         null,
+                        OffsetDateTime.now(),
                         AuthorizationResultDto.KO
                 )
         );
@@ -622,6 +626,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         "rrn",
+                        OffsetDateTime.now(),
                         AuthorizationResultDto.OK
                 )
         );
@@ -784,6 +789,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         null,
+                        OffsetDateTime.now(),
                         AuthorizationResultDto.OK
                 )
         );
@@ -958,6 +964,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         "rrn",
+                        OffsetDateTime.now(),
                         AuthorizationResultDto.OK
                 )
         );
@@ -1136,6 +1143,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         null,
+                        OffsetDateTime.now(),
                         AuthorizationResultDto.OK
                 )
         );
@@ -1324,6 +1332,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         "rrn",
+                        OffsetDateTime.now(),
                         AuthorizationResultDto.KO
                 )
         );
@@ -1509,6 +1518,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         null,
+                        OffsetDateTime.now(),
                         AuthorizationResultDto.KO
                 )
         );
@@ -1694,6 +1704,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         "rrn",
+                        OffsetDateTime.now(),
                         AuthorizationResultDto.OK
                 )
         );
@@ -1870,6 +1881,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         null,
+                        OffsetDateTime.now(),
                         AuthorizationResultDto.OK
                 )
         );
