@@ -37,49 +37,6 @@ public class TransactionsController implements TransactionsApi {
     @Autowired
     private TransactionsUtils transactionsUtils;
 
-    public TransactionsController() {
-        registerCircuitBreakerListener();
-    }
-
-    public void registerCircuitBreakerListener() {
-        log.info("Attaching listener to circuit-breakers");
-        // Create a CircuitBreakerRegistry default configuration
-        CircuitBreakerRegistry circuitBreakerRegistry = CircuitBreakerRegistry.ofDefaults();
-        log.info(String.format("Enabled circuit breakers: %s", circuitBreakerRegistry.getAllCircuitBreakers()));
-        CircuitBreaker circuitBreakerTransaction = circuitBreakerRegistry.circuitBreaker("transactions-backend");
-        CircuitBreaker circuiteBreakerNode = circuitBreakerRegistry.circuitBreaker("node-backend");
-        CircuitBreaker circuitBreakerEcommerce = circuitBreakerRegistry.circuitBreaker("ecommerce-db");
-
-        // Add logging on circuit breakers error
-        circuitBreakerTransaction.getEventPublisher()
-                .onError(e -> logCircuitBreakerError("transactions-backend", e));
-        circuiteBreakerNode.getEventPublisher()
-                .onError(e -> logCircuitBreakerError("node-backend", e));
-        circuitBreakerEcommerce.getEventPublisher()
-                .onError(e -> logCircuitBreakerError("ecommerce-db", e));
-
-        circuitBreakerTransaction.getEventPublisher()
-                .onCallNotPermitted(e -> logCircuitBreakerCallNotPermitted("transactions-backend", e));
-        circuiteBreakerNode.getEventPublisher()
-                .onCallNotPermitted(e -> logCircuitBreakerCallNotPermitted("node-backend", e));
-        circuitBreakerEcommerce.getEventPublisher()
-                .onCallNotPermitted(e -> logCircuitBreakerCallNotPermitted("ecommerce-db", e));
-    }
-
-    private void logCircuitBreakerError(
-                                        String name,
-                                        CircuitBreakerOnErrorEvent e
-    ) {
-        log.error(String.format("%s - DEBUGGING %s", name, e));
-    }
-
-    private void logCircuitBreakerCallNotPermitted(
-                                                   String name,
-                                                   CircuitBreakerOnCallNotPermittedEvent e
-    ) {
-        log.error(String.format("%s - DEBUGGING %s", name, e));
-    }
-
     @ExceptionHandler(
         {
                 CallNotPermittedException.class
