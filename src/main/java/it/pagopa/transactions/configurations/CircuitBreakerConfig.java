@@ -23,10 +23,12 @@ public class CircuitBreakerConfig {
 
             @Override
             public void onEntryRemovedEvent(EntryRemovedEvent<CircuitBreaker> entryRemoveEvent) {
+                entryRemoveEvent.getRemovedEntry().getEventPublisher().onEvent(event -> log.debug(event.toString()));
             }
 
             @Override
             public void onEntryReplacedEvent(EntryReplacedEvent<CircuitBreaker> entryReplacedEvent) {
+                entryReplacedEvent.getNewEntry().getEventPublisher().onEvent(event -> log.debug(event.toString()));
             }
         };
     }
