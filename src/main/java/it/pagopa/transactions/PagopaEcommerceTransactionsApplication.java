@@ -26,23 +26,4 @@ public class PagopaEcommerceTransactionsApplication {
     public static void main(String[] args) {
         SpringApplication.run(PagopaEcommerceTransactionsApplication.class, args);
     }
-
-    @Bean
-    public RegistryEventConsumer<CircuitBreaker> myRegistryEventConsumer() {
-
-        return new RegistryEventConsumer<CircuitBreaker>() {
-            @Override
-            public void onEntryAddedEvent(EntryAddedEvent<CircuitBreaker> entryAddedEvent) {
-                entryAddedEvent.getAddedEntry().getEventPublisher().onEvent(event -> log.info(event.toString()));
-            }
-
-            @Override
-            public void onEntryRemovedEvent(EntryRemovedEvent<CircuitBreaker> entryRemoveEvent) {
-            }
-
-            @Override
-            public void onEntryReplacedEvent(EntryReplacedEvent<CircuitBreaker> entryReplacedEvent) {
-            }
-        };
-    }
 }
