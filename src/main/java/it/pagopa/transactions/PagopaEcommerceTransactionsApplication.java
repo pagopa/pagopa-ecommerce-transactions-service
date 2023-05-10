@@ -27,6 +27,7 @@ public class PagopaEcommerceTransactionsApplication {
 
     @EventListener(ApplicationReadyEvent.class)
     public void registerCircuitBreakerListener() {
+        log.info("Attaching listener to circuit-breakers");
         // Create a CircuitBreakerRegistry default configuration
         CircuitBreakerRegistry circuitBreakerRegistry = CircuitBreakerRegistry.ofDefaults();
         CircuitBreaker circuitBreakerTransaction = circuitBreakerRegistry.circuitBreaker("transactions-backend");
