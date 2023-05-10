@@ -33,7 +33,6 @@ import reactor.util.function.Tuples;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 
 @Component
 @Slf4j
@@ -160,8 +159,6 @@ public class TransactionSendClosureHandler implements
                                                 .fee(fee)
                                                 .timestampOperation(
                                                         updateAuthorizationRequestDto.getTimestampOperation()
-                                                                .toZonedDateTime().truncatedTo(ChronoUnit.SECONDS)
-                                                                .toOffsetDateTime()
                                                 )
                                                 .rrn(authRequestData.rrn())
                                 );

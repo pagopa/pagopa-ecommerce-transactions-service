@@ -36,6 +36,8 @@ class AuthorizationUpdateProjectionHandlerTest {
     @Mock
     private ConfidentialDataManager confidentialDataManager;
 
+    private static final String expectedOperationTimestamp = "2023-01-01T01:02:03";
+
     @Test
     void shouldHandleTransactionXpay() {
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -63,7 +65,7 @@ class AuthorizationUpdateProjectionHandlerTest {
         TransactionAuthorizationCompletedData statusAuthCompleted = new TransactionAuthorizationCompletedData(
                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode(),
                 null,
-                OffsetDateTime.now(),
+                expectedOperationTimestamp,
                 it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto
                         .fromValue(
                                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
@@ -140,7 +142,7 @@ class AuthorizationUpdateProjectionHandlerTest {
         TransactionAuthorizationCompletedData statusAuthCompleted = new TransactionAuthorizationCompletedData(
                 ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode(),
                 "rrn",
-                OffsetDateTime.now(),
+                expectedOperationTimestamp,
                 it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto
                         .fromValue(
                                 ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()

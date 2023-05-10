@@ -73,7 +73,7 @@ public class TransactionUpdateAuthorizationHandler
                                     new TransactionAuthorizationCompletedData(
                                             authRequestDataExtracted.authorizationCode(),
                                             authRequestDataExtracted.rrn(),
-                                            updateAuthorizationRequest.getTimestampOperation(),
+                                            updateAuthorizationRequest.getTimestampOperation().toString(),
                                             authorizationResultDto
                                     )
                             )
@@ -82,5 +82,4 @@ public class TransactionUpdateAuthorizationHandler
                 ).flatMap(transactionEventStoreRepository::save);
 
     }
-
 }

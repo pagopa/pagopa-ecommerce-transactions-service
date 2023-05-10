@@ -47,7 +47,6 @@ import reactor.test.StepVerifier;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static it.pagopa.transactions.commands.handlers.TransactionSendClosureHandler.TIPO_VERSAMENTO_CP;
@@ -83,7 +82,7 @@ class TransactionSendClosureHandlerTest {
     private static final int SOFT_TIMEOUT_OFFSET = 10;
     private static final int RETRY_TIMEOUT_INTERVAL = 5;
 
-    private static final String ECOMMERCE_RRN = "rrrr";
+    private static final String ECOMMERCE_RRN = "rrn";
 
     private final TransactionSendClosureHandler transactionSendClosureHandler = new TransactionSendClosureHandler(
             transactionEventStoreRepository,
@@ -221,7 +220,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         "rrn",
-                        OffsetDateTime.now(),
+                        expectedOperationTimestamp,
                         AuthorizationResultDto.OK
                 )
         );
@@ -302,7 +301,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         null,
                         null,
-                        OffsetDateTime.now(),
+                        expectedOperationTimestamp,
                         AuthorizationResultDto.KO
                 )
         );
@@ -429,7 +428,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         null,
                         null,
-                        OffsetDateTime.now(),
+                        expectedOperationTimestamp,
                         AuthorizationResultDto.KO
                 )
         );
@@ -556,7 +555,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         ECOMMERCE_RRN,
-                        OffsetDateTime.now(),
+                        expectedOperationTimestamp,
                         AuthorizationResultDto.OK
                 )
         );
@@ -628,8 +627,7 @@ class TransactionSendClosureHandlerTest {
                                 )
                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                                 .timestampOperation(
-                                        OffsetDateTime.now().toZonedDateTime().truncatedTo(ChronoUnit.SECONDS)
-                                                .toOffsetDateTime()
+                                        OffsetDateTime.now()
                                 )
                                 .rrn(((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getRrn())
                 );
@@ -717,7 +715,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         null,
-                        OffsetDateTime.now(),
+                        expectedOperationTimestamp,
                         AuthorizationResultDto.OK
                 )
         );
@@ -787,8 +785,7 @@ class TransactionSendClosureHandlerTest {
                                 )
                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                                 .timestampOperation(
-                                        OffsetDateTime.now().toZonedDateTime().truncatedTo(ChronoUnit.SECONDS)
-                                                .toOffsetDateTime()
+                                        OffsetDateTime.now()
                                 )
                 );
 
@@ -888,7 +885,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         ECOMMERCE_RRN,
-                        OffsetDateTime.now(),
+                        expectedOperationTimestamp,
                         AuthorizationResultDto.OK
                 )
         );
@@ -956,8 +953,7 @@ class TransactionSendClosureHandlerTest {
                                 )
                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                                 .timestampOperation(
-                                        OffsetDateTime.now().toZonedDateTime().truncatedTo(ChronoUnit.SECONDS)
-                                                .toOffsetDateTime()
+                                        OffsetDateTime.now()
                                 )
                                 .rrn(ECOMMERCE_RRN)
                 );
@@ -1065,7 +1061,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         null,
-                        OffsetDateTime.now(),
+                        expectedOperationTimestamp,
                         AuthorizationResultDto.OK
                 )
         );
@@ -1132,8 +1128,7 @@ class TransactionSendClosureHandlerTest {
                                 )
                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                                 .timestampOperation(
-                                        OffsetDateTime.now().toZonedDateTime().truncatedTo(ChronoUnit.SECONDS)
-                                                .toOffsetDateTime()
+                                        OffsetDateTime.now()
                                 )
 
                 );
@@ -1251,7 +1246,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         null,
                         null,
-                        OffsetDateTime.now(),
+                        expectedOperationTimestamp,
                         AuthorizationResultDto.KO
                 )
         );
@@ -1397,7 +1392,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         null,
                         null,
-                        OffsetDateTime.now(),
+                        expectedOperationTimestamp,
                         AuthorizationResultDto.KO
                 )
         );
@@ -1544,7 +1539,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         ECOMMERCE_RRN,
-                        OffsetDateTime.now(),
+                        expectedOperationTimestamp,
                         AuthorizationResultDto.OK
                 )
         );
@@ -1615,8 +1610,7 @@ class TransactionSendClosureHandlerTest {
                                 )
                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                                 .timestampOperation(
-                                        OffsetDateTime.now().toZonedDateTime().truncatedTo(ChronoUnit.SECONDS)
-                                                .toOffsetDateTime()
+                                        OffsetDateTime.now()
                                 )
                                 .rrn(ECOMMERCE_RRN)
 
@@ -1721,7 +1715,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         null,
-                        OffsetDateTime.now(),
+                        expectedOperationTimestamp,
                         AuthorizationResultDto.OK
                 )
         );
@@ -1791,8 +1785,7 @@ class TransactionSendClosureHandlerTest {
                                 )
                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                                 .timestampOperation(
-                                        OffsetDateTime.now().toZonedDateTime().truncatedTo(ChronoUnit.SECONDS)
-                                                .toOffsetDateTime()
+                                        OffsetDateTime.now()
                                 )
                 );
 
@@ -1916,8 +1909,7 @@ class TransactionSendClosureHandlerTest {
                                 )
                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                                 .timestampOperation(
-                                        OffsetDateTime.now().toZonedDateTime().truncatedTo(ChronoUnit.SECONDS)
-                                                .toOffsetDateTime()
+                                        OffsetDateTime.now()
                                 )
                                 .rrn(ECOMMERCE_RRN)
                 );
@@ -2044,8 +2036,7 @@ class TransactionSendClosureHandlerTest {
                                 )
                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                                 .timestampOperation(
-                                        OffsetDateTime.now().toZonedDateTime().truncatedTo(ChronoUnit.SECONDS)
-                                                .toOffsetDateTime()
+                                        OffsetDateTime.now()
                                 )
                                 .rrn(ECOMMERCE_RRN)
                 );
