@@ -48,6 +48,7 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -1592,6 +1593,7 @@ class TransactionSendClosureHandlerTest {
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
+        Map<String, String> additionalPaymentInformation = new HashMap<>();
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         transactionActivatedEvent.getData().getPaymentNotices().stream()
@@ -1614,30 +1616,38 @@ class TransactionSendClosureHandlerTest {
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
-                        Map.of(
-                                "tipoVersamento",
-                                TIPO_VERSAMENTO_CP,
-                                "outcomePaymentGateway",
-                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
-                                        .toString(),
-                                "authorizationCode",
-                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
-                                        .getAuthorizationCode(),
-                                "rrn",
-                                ECOMMERCE_RRN,
-                                "fee",
-                                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
-                                "timestampOperation",
-                                expectedOperationTimestamp, // yyyy-MM-ddThh:mm:ss
-                                "totalAmount",
-                                EuroUtils.euroCentsToEuro(
-                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
-                                                .sum()
-                                                + authorizationRequestData.getFee()
-                                ).toString()
-                        )
+                        additionalPaymentInformation
                 );
+
+        closePaymentRequest.putAdditionalPaymentInformationsItem("tipoVersamento", TIPO_VERSAMENTO_CP);
+        closePaymentRequest.putAdditionalPaymentInformationsItem(
+                "outcomePaymentGateway",
+                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome().toString()
+        );
+        closePaymentRequest.putAdditionalPaymentInformationsItem(
+                "authorizationCode",
+                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                        .getAuthorizationCode()
+        );
+        closePaymentRequest.putAdditionalPaymentInformationsItem(
+                "fee",
+                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString()
+        );
+        closePaymentRequest.putAdditionalPaymentInformationsItem(
+                "timestampOperation",
+                expectedOperationTimestamp
+        );
+        closePaymentRequest.putAdditionalPaymentInformationsItem("rrn", ECOMMERCE_RRN);
+        closePaymentRequest.putAdditionalPaymentInformationsItem(
+                "totalAmount",
+                EuroUtils.euroCentsToEuro(
+                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
+                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
+                                .sum()
+                                + authorizationRequestData.getFee()
+                ).toString()
+        );
+
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
                 transactionId.value()
         );
@@ -1899,7 +1909,7 @@ class TransactionSendClosureHandlerTest {
                 .transactionClosedEvent(TransactionClosureData.Outcome.KO);
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
-
+        Map<String, String> additionalPaymentInformation = new HashMap<>();
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         List.of(
@@ -1923,31 +1933,37 @@ class TransactionSendClosureHandlerTest {
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
-                        Map.of(
-                                "tipoVersamento",
-                                TIPO_VERSAMENTO_CP,
-                                "outcomePaymentGateway",
-                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
-                                        .toString(),
-                                "authorizationCode",
-                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
-                                        .getAuthorizationCode(),
-                                "rrn",
-                                ECOMMERCE_RRN,
-                                "fee",
-                                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
-                                "timestampOperation",
-                                expectedOperationTimestamp, // yyyy-MM-ddThh:mm:ss
-                                "totalAmount",
-                                EuroUtils.euroCentsToEuro(
-                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
-                                                .sum()
-                                                + authorizationRequestData.getFee()
-                                ).toString()
-                        )
+                        additionalPaymentInformation
                 );
 
+        closePaymentRequest.putAdditionalPaymentInformationsItem("tipoVersamento", TIPO_VERSAMENTO_CP);
+        closePaymentRequest.putAdditionalPaymentInformationsItem(
+                "outcomePaymentGateway",
+                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome().toString()
+        );
+        closePaymentRequest.putAdditionalPaymentInformationsItem(
+                "authorizationCode",
+                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                        .getAuthorizationCode()
+        );
+        closePaymentRequest.putAdditionalPaymentInformationsItem(
+                "fee",
+                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString()
+        );
+        closePaymentRequest.putAdditionalPaymentInformationsItem(
+                "timestampOperation",
+                expectedOperationTimestamp
+        );
+        closePaymentRequest.putAdditionalPaymentInformationsItem("rrn", ECOMMERCE_RRN);
+        closePaymentRequest.putAdditionalPaymentInformationsItem(
+                "totalAmount",
+                EuroUtils.euroCentsToEuro(
+                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
+                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
+                                .sum()
+                                + authorizationRequestData.getFee()
+                ).toString()
+        );
         ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
                 .outcome(ClosePaymentResponseDto.OutcomeEnum.KO);
 
@@ -2033,7 +2049,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
-
+        Map<String, String> additionalPaymentInformation = new HashMap<>();
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         List.of(
@@ -2057,30 +2073,37 @@ class TransactionSendClosureHandlerTest {
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
-                        Map.of(
-                                "tipoVersamento",
-                                TIPO_VERSAMENTO_CP,
-                                "outcomePaymentGateway",
-                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
-                                        .toString(),
-                                "authorizationCode",
-                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
-                                        .getAuthorizationCode(),
-                                "rrn",
-                                ECOMMERCE_RRN,
-                                "fee",
-                                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString(),
-                                "timestampOperation",
-                                expectedOperationTimestamp, // yyyy-MM-ddThh:mm:ss
-                                "totalAmount",
-                                EuroUtils.euroCentsToEuro(
-                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
-                                                .sum()
-                                                + authorizationRequestData.getFee()
-                                ).toString()
-                        )
+                        additionalPaymentInformation
                 );
+
+        closePaymentRequest.putAdditionalPaymentInformationsItem("tipoVersamento", TIPO_VERSAMENTO_CP);
+        closePaymentRequest.putAdditionalPaymentInformationsItem(
+                "outcomePaymentGateway",
+                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome().toString()
+        );
+        closePaymentRequest.putAdditionalPaymentInformationsItem(
+                "authorizationCode",
+                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                        .getAuthorizationCode()
+        );
+        closePaymentRequest.putAdditionalPaymentInformationsItem(
+                "fee",
+                EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString()
+        );
+        closePaymentRequest.putAdditionalPaymentInformationsItem(
+                "timestampOperation",
+                expectedOperationTimestamp
+        );
+        closePaymentRequest.putAdditionalPaymentInformationsItem("rrn", ECOMMERCE_RRN);
+        closePaymentRequest.putAdditionalPaymentInformationsItem(
+                "totalAmount",
+                EuroUtils.euroCentsToEuro(
+                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
+                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value())
+                                .sum()
+                                + authorizationRequestData.getFee()
+                ).toString()
+        );
 
         RuntimeException closePaymentError = new BadGatewayException("Bad request error", HttpStatus.BAD_REQUEST);
 

@@ -145,38 +145,39 @@ public class TransactionSendClosureHandler implements
                             );
 
                     if (ClosePaymentRequestV2Dto.OutcomeEnum.OK.equals(closePaymentRequest.getOutcome())) {
+                        Map<String, String> additionalPaymentInformation = new HashMap<>();
                         closePaymentRequest.idPSP(transactionAuthorizationRequestData.getPspId())
                                 .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())
                                 .idChannel(transactionAuthorizationRequestData.getPspChannelCode())
                                 .transactionId(tx.getTransactionId().value())
                                 .totalAmount(totalAmount)
                                 .fee(fee)
-                                .timestampOperation(OffsetDateTime.now())
+                                .timestampOperation(updateAuthorizationRequestDto.getTimestampOperation())
                                 .paymentMethod(transactionAuthorizationRequestData.getPaymentTypeCode())
                                 .additionalPaymentInformations(
-                                        new HashMap<>(
-                                                Map.of(
-                                                        "tipoVersamento",
-                                                        TIPO_VERSAMENTO_CP,
-                                                        "outcomePaymentGateway",
-                                                        authRequestData.outcome(),
-                                                        "authorizationCode",
-                                                        authRequestData.authorizationCode(),
-                                                        "fee",
-                                                        fee.toString(),
-                                                        "timestampOperation",
-                                                        updateAuthorizationRequestDto.getTimestampOperation()
-                                                                .toLocalDateTime()
-                                                                .truncatedTo(ChronoUnit.SECONDS)
-                                                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                                                        "totalAmount",
-                                                        totalAmount.toString()
-                                                )
-                                        )
+                                        additionalPaymentInformation
                                 );
 
+                        closePaymentRequest.putAdditionalPaymentInformationsItem("tipoVersamento", TIPO_VERSAMENTO_CP);
+                        closePaymentRequest.putAdditionalPaymentInformationsItem(
+                                "outcomePaymentGateway",
+                                authRequestData.outcome()
+                        );
+                        closePaymentRequest.putAdditionalPaymentInformationsItem(
+                                "authorizationCode",
+                                authRequestData.authorizationCode()
+                        );
+                        closePaymentRequest.putAdditionalPaymentInformationsItem("fee", fee.toString());
+                        closePaymentRequest.putAdditionalPaymentInformationsItem(
+                                "timestampOperation",
+                                updateAuthorizationRequestDto.getTimestampOperation()
+                                        .toLocalDateTime()
+                                        .truncatedTo(ChronoUnit.SECONDS)
+                                        .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                        );
+                        closePaymentRequest.putAdditionalPaymentInformationsItem("totalAmount", totalAmount.toString());
                         Optional.ofNullable(authRequestData.rrn()).ifPresent(
-                                rrn -> closePaymentRequest.getAdditionalPaymentInformations().put("rrn", rrn)
+                                rrn -> closePaymentRequest.putAdditionalPaymentInformationsItem("rrn", rrn)
                         );
                     }
                     /*
