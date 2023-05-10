@@ -23,10 +23,10 @@ public class PagopaEcommerceTransactionsApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(PagopaEcommerceTransactionsApplication.class, args);
+        registerCircuitBreakerListener();
     }
 
-    @EventListener(ApplicationReadyEvent.class)
-    public void registerCircuitBreakerListener() {
+    public static void registerCircuitBreakerListener() {
         log.info("Attaching listener to circuit-breakers");
         // Create a CircuitBreakerRegistry default configuration
         CircuitBreakerRegistry circuitBreakerRegistry = CircuitBreakerRegistry.ofDefaults();
@@ -50,16 +50,16 @@ public class PagopaEcommerceTransactionsApplication {
                 .onCallNotPermitted(e -> logCircuitBreakerCallNotPermitted("ecommerce-db", e));
     }
 
-    private void logCircuitBreakerError(
-                                        String name,
-                                        CircuitBreakerOnErrorEvent e
+    private static void logCircuitBreakerError(
+                                               String name,
+                                               CircuitBreakerOnErrorEvent e
     ) {
         log.error(String.format("Circuit breaker: %s - error: %s", name, e));
     }
 
-    private void logCircuitBreakerCallNotPermitted(
-                                                   String name,
-                                                   CircuitBreakerOnCallNotPermittedEvent e
+    private static void logCircuitBreakerCallNotPermitted(
+                                                          String name,
+                                                          CircuitBreakerOnCallNotPermittedEvent e
     ) {
         log.error(String.format("Circuit breaker: %s - call not permitted: %s", name, e));
     }
