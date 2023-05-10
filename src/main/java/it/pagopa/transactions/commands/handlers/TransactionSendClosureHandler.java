@@ -9,6 +9,7 @@ import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
+import it.pagopa.generated.ecommerce.nodo.v2.dto.AdditionalPaymentInformationsDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
@@ -32,12 +33,7 @@ import reactor.util.function.Tuples;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 
 @Component
 @Slf4j
@@ -142,43 +138,33 @@ public class TransactionSendClosureHandler implements
                                     authorizationResultToOutcomeV2(
                                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
                                     )
-                            );
+                            )
+                            .transactionId(tx.getTransactionId().value());
 
                     if (ClosePaymentRequestV2Dto.OutcomeEnum.OK.equals(closePaymentRequest.getOutcome())) {
-                        Map<String, String> additionalPaymentInformation = new HashMap<>();
                         closePaymentRequest.idPSP(transactionAuthorizationRequestData.getPspId())
                                 .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())
                                 .idChannel(transactionAuthorizationRequestData.getPspChannelCode())
-                                .transactionId(tx.getTransactionId().value())
                                 .totalAmount(totalAmount)
                                 .fee(fee)
                                 .timestampOperation(updateAuthorizationRequestDto.getTimestampOperation())
                                 .paymentMethod(transactionAuthorizationRequestData.getPaymentTypeCode())
                                 .additionalPaymentInformations(
-                                        additionalPaymentInformation
+                                        new AdditionalPaymentInformationsDto()
+                                                .tipoVersamento(TIPO_VERSAMENTO_CP)
+                                                .outcomePaymentGateway(
+                                                        AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum
+                                                                .fromValue(authRequestData.outcome())
+                                                )
+                                                .authorizationCode(authRequestData.authorizationCode())
+                                                .fee(fee)
+                                                .timestampOperation(
+                                                        updateAuthorizationRequestDto.getTimestampOperation()
+                                                                .toZonedDateTime().truncatedTo(ChronoUnit.SECONDS)
+                                                                .toOffsetDateTime()
+                                                )
+                                                .rrn(authRequestData.rrn())
                                 );
-
-                        closePaymentRequest.putAdditionalPaymentInformationsItem("tipoVersamento", TIPO_VERSAMENTO_CP);
-                        closePaymentRequest.putAdditionalPaymentInformationsItem(
-                                "outcomePaymentGateway",
-                                authRequestData.outcome()
-                        );
-                        closePaymentRequest.putAdditionalPaymentInformationsItem(
-                                "authorizationCode",
-                                authRequestData.authorizationCode()
-                        );
-                        closePaymentRequest.putAdditionalPaymentInformationsItem("fee", fee.toString());
-                        closePaymentRequest.putAdditionalPaymentInformationsItem(
-                                "timestampOperation",
-                                updateAuthorizationRequestDto.getTimestampOperation()
-                                        .toLocalDateTime()
-                                        .truncatedTo(ChronoUnit.SECONDS)
-                                        .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                        );
-                        closePaymentRequest.putAdditionalPaymentInformationsItem("totalAmount", totalAmount.toString());
-                        Optional.ofNullable(authRequestData.rrn()).ifPresent(
-                                rrn -> closePaymentRequest.putAdditionalPaymentInformationsItem("rrn", rrn)
-                        );
                     }
                     /*
                      * ClosePayment (either OK or KO): save to event store and return event On
