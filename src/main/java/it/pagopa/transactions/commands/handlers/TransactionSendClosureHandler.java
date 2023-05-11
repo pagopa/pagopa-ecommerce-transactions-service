@@ -173,11 +173,14 @@ public class TransactionSendClosureHandler implements
                                             )
                                             .info(
                                                     new InfoDto()
-                                                            .type(transactionAuthorizationRequestData.getPaymentMethodName()) // FIXME Verifiy
+                                                            .type(
+                                                                    transactionAuthorizationRequestData
+                                                                            .getPaymentMethodName()
+                                                            )
                                                             .brandLogo(
                                                                     transactionAuthorizationRequestData.getLogo()
                                                                             .getPath()
-                                                            ) // FIXME Verify
+                                                            )
                                             )
                                             .user(new UserDto().type(UserDto.TypeEnum.GUEST))
 
