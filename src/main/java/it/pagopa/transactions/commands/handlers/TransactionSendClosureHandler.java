@@ -118,10 +118,12 @@ public class TransactionSendClosureHandler implements
                             .getTransactionAuthorizationRequestData();
                     TransactionAuthorizationCompletedData transactionAuthorizationCompletedData = tx
                             .getTransactionAuthorizationCompletedData();
-                    BigDecimal amount = EuroUtils.euroCentsToEuro(tx.getPaymentNotices().stream()
-                            .mapToInt(
-                                    paymentNotice -> paymentNotice.transactionAmount().value()
-                            ).sum());
+                    BigDecimal amount = EuroUtils.euroCentsToEuro(
+                            tx.getPaymentNotices().stream()
+                                    .mapToInt(
+                                            paymentNotice -> paymentNotice.transactionAmount().value()
+                                    ).sum()
+                    );
                     BigDecimal fee = EuroUtils.euroCentsToEuro(transactionAuthorizationRequestData.getFee());
                     BigDecimal totalAmount = amount.add(fee);
                     ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
@@ -134,7 +136,52 @@ public class TransactionSendClosureHandler implements
                                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
                                     )
                             )
-                            .transactionId(tx.getTransactionId().value());
+                            .transactionId(tx.getTransactionId().value())
+                            .transactionDetails(
+                                    new TransactionDetailsDto()
+                                            .transaction(
+                                                    new TransactionDto()
+                                                            .transactionId(
+                                                                    command.getData().transaction()
+                                                                            .getTransactionId().value()
+                                                            )
+                                                            .transactionStatus("Confermato")
+                                                            .fee(fee)
+                                                            .amount(amount)
+                                                            .grandTotal(totalAmount)
+                                                            .rrn(authRequestData.rrn())
+                                                            .authorizationCode(authRequestData.authorizationCode())
+                                                            .creationDate(
+                                                                    command.getData().transaction()
+                                                                            .getCreationDate().toOffsetDateTime()
+                                                            )
+                                                            .psp(
+                                                                    new PspDto()
+                                                                            .idPsp(
+                                                                                    transactionAuthorizationRequestData
+                                                                                            .getPspId()
+                                                                            )
+                                                                            .idChannel(
+                                                                                    transactionAuthorizationRequestData
+                                                                                            .getPspChannelCode()
+                                                                            )
+                                                                            .businessName(
+                                                                                    transactionAuthorizationRequestData
+                                                                                            .getPspBusinessName()
+                                                                            )
+                                                            )
+                                            )
+                                            .info(
+                                                    new InfoDto()
+                                                            .type(transactionAuthorizationRequestData.getPaymentMethodName()) // FIXME Verifiy
+                                                            .brandLogo(
+                                                                    transactionAuthorizationRequestData.getLogo()
+                                                                            .getPath()
+                                                            ) // FIXME Verify
+                                            )
+                                            .user(new UserDto().type(UserDto.TypeEnum.GUEST))
+
+                            );
 
                     if (ClosePaymentRequestV2Dto.OutcomeEnum.OK.equals(closePaymentRequest.getOutcome())) {
                         closePaymentRequest.idPSP(transactionAuthorizationRequestData.getPspId())
@@ -157,29 +204,6 @@ public class TransactionSendClosureHandler implements
                                                         updateAuthorizationRequestDto.getTimestampOperation()
                                                 )
                                                 .rrn(authRequestData.rrn())
-                                )
-                                .transactionDetails(new TransactionDetailsDto()
-                                                .transaction(new TransactionDto()
-                                                        .transactionId(command.getData().transaction().getTransactionId().value())
-                                                        .transactionStatus("Confermato")
-                                                        .fee(fee)
-                                                        .amount(amount)
-                                                        .grandTotal(totalAmount)
-                                                        .rrn(authRequestData.rrn())
-                                                        .authorizationCode(authRequestData.authorizationCode())
-                                                        .creationDate(command.getData().transaction().getCreationDate().toOffsetDateTime())
-                                                        .psp(new PspDto()
-                                                                .idPsp(transactionAuthorizationRequestData.getPspId())
-                                                                .idChannel(transactionAuthorizationRequestData.getPspChannelCode())
-                                                                .businessName(transactionAuthorizationRequestData.getPspBusinessName())
-                                                        )
-                                                )
-                                                .info(new InfoDto()
-                                                        .type("Carte") //FIXME Verifiy
-                                                        .brandLogo(transactionAuthorizationRequestData.getLogo().getPath()) //FIXME Verify
-                                                )
-                                                //.user(new UserDto().type(UserDto.TypeEnum.GUEST))
-
                                 );
                     }
                     /*
