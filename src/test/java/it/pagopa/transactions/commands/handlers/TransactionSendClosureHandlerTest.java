@@ -15,7 +15,7 @@ import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
-import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
+import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
@@ -64,8 +64,8 @@ class TransactionSendClosureHandlerTest {
     private final TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
 
-    private final PaymentRequestsInfoRepository paymentRequestsInfoRepositoryRepository = Mockito
-            .mock(PaymentRequestsInfoRepository.class);
+    private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper = Mockito
+            .mock(PaymentRequestInfoRedisTemplateWrapper.class);
 
     private final TransactionsEventStoreRepository<Object> eventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
@@ -86,7 +86,7 @@ class TransactionSendClosureHandlerTest {
             transactionEventStoreRepository,
             transactionClosureErrorEventStoreRepository,
             transactionRefundedEventStoreRepository,
-            paymentRequestsInfoRepositoryRepository,
+            paymentRequestInfoRedisTemplateWrapper,
             nodeForPspClient,
             transactionClosureSentEventQueueClient,
             PAYMENT_TOKEN_VALIDITY,

@@ -8,7 +8,7 @@ import it.pagopa.ecommerce.commons.domain.v1.TransactionAuthorizationCompleted;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
-import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
+import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
@@ -50,7 +50,7 @@ public class TransactionSendClosureHandler implements
 
     private final TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository;
 
-    private final PaymentRequestsInfoRepository paymentRequestsInfoRepository;
+    private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper;
 
     private final NodeForPspClient nodeForPspClient;
 
@@ -71,7 +71,7 @@ public class TransactionSendClosureHandler implements
             TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository,
             TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository,
             TransactionsEventStoreRepository<TransactionRefundedData> transactionRefundedEventStoreRepository,
-            PaymentRequestsInfoRepository paymentRequestsInfoRepository,
+            PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
             NodeForPspClient nodeForPspClient,
             @Qualifier(
                 "transactionClosureRetryQueueAsyncClient"
@@ -86,7 +86,7 @@ public class TransactionSendClosureHandler implements
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionClosureErrorEventStoreRepository = transactionClosureErrorEventStoreRepository;
         this.transactionRefundedEventStoreRepository = transactionRefundedEventStoreRepository;
-        this.paymentRequestsInfoRepository = paymentRequestsInfoRepository;
+        this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
         this.nodeForPspClient = nodeForPspClient;
         this.closureRetryQueueAsyncClient = closureRetryQueueAsyncClient;
         this.paymentTokenValidity = paymentTokenValidity;
@@ -301,7 +301,7 @@ public class TransactionSendClosureHandler implements
                             .doFinally(response -> {
                                 tx.getPaymentNotices().forEach(el -> {
                                     log.info("Invalidate cache for RptId : {}", el.rptId().value());
-                                    paymentRequestsInfoRepository.deleteById(el.rptId());
+                                    paymentRequestInfoRedisTemplateWrapper.deleteById(el.rptId().value());
                                 }
                                 );
                             });
