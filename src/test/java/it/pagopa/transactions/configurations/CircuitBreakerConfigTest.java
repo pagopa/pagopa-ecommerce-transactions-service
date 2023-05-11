@@ -17,7 +17,6 @@ class CircuitBreakerConfigTest {
     @InjectMocks
     CircuitBreakerConfig circuitBreakerConfig = new CircuitBreakerConfig();
 
-
     @Test
     void shouldLogRemovedEvent() {
         // preconditions
@@ -32,20 +31,20 @@ class CircuitBreakerConfigTest {
         circuitBreakerConfig.circuitBreakerEventConsumer().onEntryRemovedEvent(removedEvent);
     }
 
+    @Test
+    void shouldLogReplacedEvent() {
+        // preconditions
+        EntryReplacedEvent<CircuitBreaker> replacedEvent = mock(EntryReplacedEvent.class);
+        CircuitBreaker mockCircuitBreaker = mock(CircuitBreaker.class);
+        CircuitBreaker.EventPublisher mockEventPublisher = mock(CircuitBreaker.EventPublisher.class);
 
-      @Test void shouldLogReplacedEvent(){
-          // preconditions
-          EntryReplacedEvent<CircuitBreaker> replacedEvent = mock(EntryReplacedEvent.class);
-          CircuitBreaker mockCircuitBreaker = mock(CircuitBreaker.class);
-          CircuitBreaker.EventPublisher mockEventPublisher = mock(CircuitBreaker.EventPublisher.class);
+        Mockito.when(replacedEvent.getNewEntry()).thenReturn(mockCircuitBreaker);
+        Mockito.when(mockCircuitBreaker.getEventPublisher()).thenReturn(mockEventPublisher);
 
-          Mockito.when(replacedEvent.getNewEntry()).thenReturn(mockCircuitBreaker);
-          Mockito.when(mockCircuitBreaker.getEventPublisher()).thenReturn(mockEventPublisher);
+        // test
+        circuitBreakerConfig.circuitBreakerEventConsumer().onEntryReplacedEvent(replacedEvent);
 
-          // test
-          circuitBreakerConfig.circuitBreakerEventConsumer().onEntryReplacedEvent(replacedEvent);
-
-          // assertions
-      }
+        // assertions
+    }
 
 }
