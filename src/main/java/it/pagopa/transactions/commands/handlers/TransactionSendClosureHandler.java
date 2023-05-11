@@ -9,9 +9,7 @@ import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
-import it.pagopa.generated.ecommerce.nodo.v2.dto.AdditionalPaymentInformationsDto;
-import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
-import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
+import it.pagopa.generated.ecommerce.nodo.v2.dto.*;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
@@ -120,14 +118,12 @@ public class TransactionSendClosureHandler implements
                             .getTransactionAuthorizationRequestData();
                     TransactionAuthorizationCompletedData transactionAuthorizationCompletedData = tx
                             .getTransactionAuthorizationCompletedData();
-                    BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
-                            tx.getPaymentNotices().stream()
-                                    .mapToInt(
-                                            paymentNotice -> paymentNotice.transactionAmount().value()
-                                    )
-                                    .sum() + transactionAuthorizationRequestData.getFee()
-                    );
+                    BigDecimal amount = EuroUtils.euroCentsToEuro(tx.getPaymentNotices().stream()
+                            .mapToInt(
+                                    paymentNotice -> paymentNotice.transactionAmount().value()
+                            ).sum());
                     BigDecimal fee = EuroUtils.euroCentsToEuro(transactionAuthorizationRequestData.getFee());
+                    BigDecimal totalAmount = amount.add(fee);
                     ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                             .paymentTokens(
                                     tx.getTransactionActivatedData().getPaymentNotices().stream()
@@ -161,6 +157,29 @@ public class TransactionSendClosureHandler implements
                                                         updateAuthorizationRequestDto.getTimestampOperation()
                                                 )
                                                 .rrn(authRequestData.rrn())
+                                )
+                                .transactionDetails(new TransactionDetailsDto()
+                                                .transaction(new TransactionDto()
+                                                        .transactionId(command.getData().transaction().getTransactionId().value())
+                                                        .transactionStatus("Confermato")
+                                                        .fee(fee)
+                                                        .amount(amount)
+                                                        .grandTotal(totalAmount)
+                                                        .rrn(authRequestData.rrn())
+                                                        .authorizationCode(authRequestData.authorizationCode())
+                                                        .creationDate(command.getData().transaction().getCreationDate().toOffsetDateTime())
+                                                        .psp(new PspDto()
+                                                                .idPsp(transactionAuthorizationRequestData.getPspId())
+                                                                .idChannel(transactionAuthorizationRequestData.getPspChannelCode())
+                                                                .businessName(transactionAuthorizationRequestData.getPspBusinessName())
+                                                        )
+                                                )
+                                                .info(new InfoDto()
+                                                        .type("Carte") //FIXME Verifiy
+                                                        .brandLogo(transactionAuthorizationRequestData.getLogo().getPath()) //FIXME Verify
+                                                )
+                                                //.user(new UserDto().type(UserDto.TypeEnum.GUEST))
+
                                 );
                     }
                     /*
