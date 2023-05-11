@@ -175,7 +175,7 @@ public class TransactionSendClosureHandler implements
                                                     new InfoDto()
                                                             .type(
                                                                     transactionAuthorizationRequestData
-                                                                            .getPaymentMethodName()
+                                                                            .getPaymentTypeCode()
                                                             )
                                                             .brandLogo(
                                                                     transactionAuthorizationRequestData.getLogo()
