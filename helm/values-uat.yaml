@@ -53,6 +53,7 @@ microservice-chart:
       WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3020"
       LOGO_CARD_BRANDING_MAPPING: >
         { VISA:'https://dev.checkout.pagopa.it/assets/creditcard/carta_visa.png',  MASTERCARD:'https://dev.checkout.pagopa.it/assets/creditcard/carta_mc.png', DINERS:'https://dev.checkout.pagopa.it/assets/creditcard/carta_diners.png', MAESTRO:'https://dev.checkout.pagopa.it/assets/creditcard/carta_maestro.png', AMEX:'https://dev.checkout.pagopa.it/assets/creditcard/carta_amex.png', UNKNOWN:'https://dev.checkout.pagopa.it/assets/creditcard/generic.png' }
+
       SERVER_ERROR_INCLUDE_STACKTRACE: "never"
       ELASTIC_APM_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
       ELASTIC_APM_APPLICATION_PACKAGES: it.pagopa.ecommerce.transactions
@@ -68,7 +69,7 @@ microservice-chart:
       ELASTIC_APM_SECRET_TOKEN: elastic-apm-secret-token
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.13.6"
+    tag: "0.14.0"
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -166,6 +167,7 @@ microservice-chart:
     WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3020"
     LOGO_CARD_BRANDING_MAPPING: >
       { VISA:'https://dev.checkout.pagopa.it/assets/creditcard/carta_visa.png',  MASTERCARD:'https://dev.checkout.pagopa.it/assets/creditcard/carta_mc.png', DINERS:'https://dev.checkout.pagopa.it/assets/creditcard/carta_diners.png', MAESTRO:'https://dev.checkout.pagopa.it/assets/creditcard/carta_maestro.png', AMEX:'https://dev.checkout.pagopa.it/assets/creditcard/carta_amex.png', UNKNOWN:'https://dev.checkout.pagopa.it/assets/creditcard/generic.png' }
+
     SERVER_ERROR_INCLUDE_STACKTRACE: "never"
     ELASTIC_APM_SERVICE_NAME: pagopa-ecommerce-transactions-service
     ELASTIC_APM_APPLICATION_PACKAGES: it.pagopa.ecommerce.transactions
