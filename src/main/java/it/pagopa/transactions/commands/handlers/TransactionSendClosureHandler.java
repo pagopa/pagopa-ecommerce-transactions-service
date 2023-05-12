@@ -9,6 +9,8 @@ import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
+import it.pagopa.ecommerce.commons.utils.EuroUtils;
+import it.pagopa.generated.ecommerce.nodo.v2.dto.AdditionalPaymentInformationsDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
@@ -18,7 +20,6 @@ import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
-import it.pagopa.transactions.utils.EuroUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -32,10 +33,6 @@ import reactor.util.function.Tuples;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.Map;
 
 @Component
 @Slf4j
@@ -43,7 +40,7 @@ public class TransactionSendClosureHandler implements
         CommandHandler<TransactionClosureSendCommand, Mono<Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>>> {
 
     public static final String TIPO_VERSAMENTO_CP = "CP";
-    public static final String ECOMMERCE_RRN = "1234567890";
+
     private final TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository;
 
     private final TransactionsEventStoreRepository<TransactionRefundedData> transactionRefundedEventStoreRepository;
@@ -141,37 +138,32 @@ public class TransactionSendClosureHandler implements
                                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
                                     )
                             )
-                            .idPSP(transactionAuthorizationRequestData.getPspId())
-                            .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())
-                            .idChannel(transactionAuthorizationRequestData.getPspChannelCode())
-                            .transactionId(tx.getTransactionId().value().toString())
-                            .totalAmount(totalAmount)
-                            .fee(fee)
-                            .timestampOperation(updateAuthorizationRequestDto.getTimestampOperation())
-                            .paymentMethod(transactionAuthorizationRequestData.getPaymentTypeCode())
-                            .additionalPaymentInformations(
-                                    Map.of(
-                                            "outcomePaymentGateway",
-                                            transactionAuthorizationCompletedData.getAuthorizationResultDto()
-                                                    .toString(),
-                                            "authorizationCode",
-                                            authRequestData.authorizationCode(),
-                                            "rrn",
-                                            ECOMMERCE_RRN,
-                                            "fee",
-                                            fee.toString(),
-                                            "timestampOperation",
-                                            // FIXME Pass the timestamp of the authorization result
-                                            // bug CHK-1410: date formatted to yyyy-MM-ddTHH:mm:ss truncating millis
-                                            OffsetDateTime.now()
-                                                    .toLocalDateTime()
-                                                    .truncatedTo(ChronoUnit.SECONDS)
-                                                    .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                                            "totalAmount",
-                                            totalAmount.toString()
-                                    )
-                            );
+                            .transactionId(tx.getTransactionId().value());
 
+                    if (ClosePaymentRequestV2Dto.OutcomeEnum.OK.equals(closePaymentRequest.getOutcome())) {
+                        closePaymentRequest.idPSP(transactionAuthorizationRequestData.getPspId())
+                                .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())
+                                .idChannel(transactionAuthorizationRequestData.getPspChannelCode())
+                            .transactionId(tx.getTransactionId().value().toString())
+                                .totalAmount(totalAmount)
+                                .fee(fee)
+                                .timestampOperation(updateAuthorizationRequestDto.getTimestampOperation())
+                                .paymentMethod(transactionAuthorizationRequestData.getPaymentTypeCode())
+                                .additionalPaymentInformations(
+                                        new AdditionalPaymentInformationsDto()
+                                                .tipoVersamento(TIPO_VERSAMENTO_CP)
+                                                .outcomePaymentGateway(
+                                                        AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum
+                                                                .fromValue(authRequestData.outcome())
+                                                )
+                                                .authorizationCode(authRequestData.authorizationCode())
+                                                .fee(fee)
+                                                .timestampOperation(
+                                                        updateAuthorizationRequestDto.getTimestampOperation()
+                                                )
+                                                .rrn(authRequestData.rrn())
+                                );
+                    }
                     /*
                      * ClosePayment (either OK or KO): save to event store and return event On
                      * error: save TransactionClosureErrorEvent to event store, enqueue and return
@@ -212,7 +204,7 @@ public class TransactionSendClosureHandler implements
                                 // authorized
                                 // and the error received from Nodo is a recoverable ones such as http code 500
                                 TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
-                                        tx.getTransactionId().value().toString()
+                                        tx.getTransactionId().value()
                                 );
 
                                 Mono<TransactionClosureErrorEvent> eventSaved = transactionClosureErrorEventStoreRepository
