@@ -136,7 +136,7 @@ public class TransactionSendClosureHandler implements
                                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
                                     )
                             )
-                            .transactionId(tx.getTransactionId().value())
+                            .transactionId(tx.getTransactionId().value());
                             .transactionDetails(
                                     new TransactionDetailsDto()
                                             .transaction(
@@ -230,6 +230,7 @@ public class TransactionSendClosureHandler implements
                                                                 )
                                                 )
                                                 .user(new UserDto().type(UserDto.TypeEnum.GUEST))
+
 
                                 );
                     }
