@@ -16,6 +16,7 @@ import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentTok
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
+import it.pagopa.ecommerce.commons.utils.EuroUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.AdditionalPaymentInformationsDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
@@ -30,7 +31,6 @@ import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
-import it.pagopa.transactions.utils.EuroUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
