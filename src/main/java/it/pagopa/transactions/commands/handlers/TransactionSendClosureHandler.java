@@ -144,7 +144,7 @@ public class TransactionSendClosureHandler implements
                         closePaymentRequest.idPSP(transactionAuthorizationRequestData.getPspId())
                                 .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())
                                 .idChannel(transactionAuthorizationRequestData.getPspChannelCode())
-                            .transactionId(tx.getTransactionId().value().toString())
+                                .transactionId(tx.getTransactionId().value().toString())
                                 .totalAmount(totalAmount)
                                 .fee(fee)
                                 .timestampOperation(updateAuthorizationRequestDto.getTimestampOperation())
