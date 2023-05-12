@@ -10,9 +10,7 @@ import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.ecommerce.commons.utils.EuroUtils;
-import it.pagopa.generated.ecommerce.nodo.v2.dto.AdditionalPaymentInformationsDto;
-import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
-import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
+import it.pagopa.generated.ecommerce.nodo.v2.dto.*;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
@@ -147,30 +145,10 @@ public class TransactionSendClosureHandler implements
                                                                     command.getData().transaction()
                                                                             .getTransactionId().value()
                                                             )
-                                                            .transactionStatus("Confermato")
-                                                            .fee(fee)
-                                                            .amount(amount)
-                                                            .grandTotal(totalAmount)
-                                                            .rrn(authRequestData.rrn())
-                                                            .authorizationCode(authRequestData.authorizationCode())
+                                                            .transactionStatus("Rifiutato")
                                                             .creationDate(
                                                                     command.getData().transaction()
                                                                             .getCreationDate().toOffsetDateTime()
-                                                            )
-                                                            .psp(
-                                                                    new PspDto()
-                                                                            .idPsp(
-                                                                                    transactionAuthorizationRequestData
-                                                                                            .getPspId()
-                                                                            )
-                                                                            .idChannel(
-                                                                                    transactionAuthorizationRequestData
-                                                                                            .getPspChannelCode()
-                                                                            )
-                                                                            .businessName(
-                                                                                    transactionAuthorizationRequestData
-                                                                                            .getPspBusinessName()
-                                                                            )
                                                             )
                                             )
                                             .info(
@@ -178,10 +156,6 @@ public class TransactionSendClosureHandler implements
                                                             .type(
                                                                     transactionAuthorizationRequestData
                                                                             .getPaymentTypeCode()
-                                                            )
-                                                            .brandLogo(
-                                                                    transactionAuthorizationRequestData.getLogo()
-                                                                            .getPath()
                                                             )
                                             )
                                             .user(new UserDto().type(UserDto.TypeEnum.GUEST))
@@ -209,6 +183,54 @@ public class TransactionSendClosureHandler implements
                                                         updateAuthorizationRequestDto.getTimestampOperation()
                                                 )
                                                 .rrn(authRequestData.rrn())
+                                )
+                                .transactionDetails(
+                                        new TransactionDetailsDto()
+                                                .transaction(
+                                                        new TransactionDto()
+                                                                .transactionId(
+                                                                        command.getData().transaction()
+                                                                                .getTransactionId().value()
+                                                                )
+                                                                .transactionStatus("Autorizzato")
+                                                                .fee(fee)
+                                                                .amount(amount)
+                                                                .grandTotal(totalAmount)
+                                                                .rrn(authRequestData.rrn())
+                                                                .authorizationCode(authRequestData.authorizationCode())
+                                                                .creationDate(
+                                                                        command.getData().transaction()
+                                                                                .getCreationDate().toOffsetDateTime()
+                                                                )
+                                                                .psp(
+                                                                        new PspDto()
+                                                                                .idPsp(
+                                                                                        transactionAuthorizationRequestData
+                                                                                                .getPspId()
+                                                                                )
+                                                                                .idChannel(
+                                                                                        transactionAuthorizationRequestData
+                                                                                                .getPspChannelCode()
+                                                                                )
+                                                                                .businessName(
+                                                                                        transactionAuthorizationRequestData
+                                                                                                .getPspBusinessName()
+                                                                                )
+                                                                )
+                                                )
+                                                .info(
+                                                        new InfoDto()
+                                                                .type(
+                                                                        transactionAuthorizationRequestData
+                                                                                .getPaymentTypeCode()
+                                                                )
+                                                                .brandLogo(
+                                                                        transactionAuthorizationRequestData.getLogo()
+                                                                                .getPath()
+                                                                )
+                                                )
+                                                .user(new UserDto().type(UserDto.TypeEnum.GUEST))
+
                                 );
                     }
                     /*
