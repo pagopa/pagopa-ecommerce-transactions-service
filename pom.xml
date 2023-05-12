@@ -16,7 +16,7 @@
         <java.version>17</java.version>
         <spring-cloud-azure.version>4.0.0</spring-cloud-azure.version>
         <jacoco.version>0.8.8</jacoco.version>
-        <pagopa-ecommerce-commons.version>0.12.1</pagopa-ecommerce-commons.version>
+        <pagopa-ecommerce-commons.version>0.13.0</pagopa-ecommerce-commons.version>
         <spotless.version>2.28.0</spotless.version>
     </properties>
     <dependencies>
@@ -307,7 +307,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-infra/2d3db67b9638dc53ff2c04b1fc4fd2bc0f54763e/src/core/api/nodopagamenti_api/nodoPerPM/v2/_swagger.json.tpl</inputSpec>
+                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-infra/closepaymentv2-alignement/src/core/api/nodopagamenti_api/nodoPerPM/v2/_swagger.json.tpl</inputSpec>
                             <generatorName>java</generatorName>
                             <library>webclient</library>
                             <generateApiDocumentation>false</generateApiDocumentation>

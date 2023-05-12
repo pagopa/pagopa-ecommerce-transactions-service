@@ -130,7 +130,10 @@ class TransactionServiceTests {
 
     @MockBean
     private TransactionsUtils transactionsUtils;
+
     final String TRANSACTION_ID = TransactionTestUtils.TRANSACTION_ID;
+
+    private static final String expectedOperationTimestamp = "2023-01-01T01:02:03";
 
     @Test
     void getTransactionReturnsTransactionDataOriginProvided() {
@@ -338,6 +341,7 @@ class TransactionServiceTests {
         TransactionAuthorizationCompletedData statusUpdateData = new TransactionAuthorizationCompletedData(
                 "authorizationCode",
                 null,
+                expectedOperationTimestamp,
                 it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto
                         .fromValue(
                                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
@@ -1047,6 +1051,7 @@ class TransactionServiceTests {
         TransactionAuthorizationCompletedData statusUpdateData = new TransactionAuthorizationCompletedData(
                 "authorizationCode",
                 null,
+                expectedOperationTimestamp,
                 it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto
                         .fromValue(
                                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
