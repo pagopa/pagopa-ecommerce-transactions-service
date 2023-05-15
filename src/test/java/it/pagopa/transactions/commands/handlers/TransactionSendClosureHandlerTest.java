@@ -2525,7 +2525,7 @@ class TransactionSendClosureHandlerTest {
                                                 )
                                                 .brandLogo(
                                                         authorizationRequestData.getLogo()
-                                                                .getPath()
+                                                                .toString()
                                                 )
                                 )
                                 .user(new UserDto().type(UserDto.TypeEnum.GUEST))
@@ -2729,7 +2729,7 @@ class TransactionSendClosureHandlerTest {
                                                 )
                                                 .brandLogo(
                                                         authorizationRequestData.getLogo()
-                                                                .getPath()
+                                                                .toString()
                                                 )
                                 )
                                 .user(new UserDto().type(UserDto.TypeEnum.GUEST))
