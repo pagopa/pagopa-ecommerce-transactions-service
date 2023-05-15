@@ -183,6 +183,7 @@ public class TransactionSendClosureHandler implements
                                                         updateAuthorizationRequestDto.getTimestampOperation()
                                                 )
                                                 .rrn(authRequestData.rrn())
+                                                .totalAmount(totalAmount)
                                 )
                                 .transactionDetails(
                                         new TransactionDetailsDto()
