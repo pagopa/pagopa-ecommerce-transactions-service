@@ -227,7 +227,7 @@ public class TransactionSendClosureHandler implements
                                                                 )
                                                                 .brandLogo(
                                                                         transactionAuthorizationRequestData.getLogo()
-                                                                                .getPath()
+                                                                                .toString()
                                                                 )
                                                 )
                                                 .user(new UserDto().type(UserDto.TypeEnum.GUEST))
