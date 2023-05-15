@@ -44,6 +44,7 @@ import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -643,6 +644,12 @@ class TransactionSendClosureHandlerTest {
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
+        BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
+                ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
+                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                        + authorizationRequestData.getFee()
+        );
+
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         List.of(
@@ -655,13 +662,7 @@ class TransactionSendClosureHandlerTest {
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
                 .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
-                .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                        + authorizationRequestData.getFee()
-                        )
-                )
+                .totalAmount(totalAmount)
                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
@@ -683,6 +684,7 @@ class TransactionSendClosureHandlerTest {
                                         OffsetDateTime.now()
                                 )
                                 .rrn(((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getRrn())
+                                .totalAmount(totalAmount)
                 )
                 .transactionDetails(
                         new TransactionDetailsDto()
@@ -877,6 +879,13 @@ class TransactionSendClosureHandlerTest {
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
+        BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
+                (transactionActivatedEvent.getData().getPaymentNotices().stream()
+                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                        .sum()
+                        + authorizationRequestData.getFee())
+        );
+
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         transactionActivatedEvent.getData().getPaymentNotices().stream()
@@ -887,14 +896,7 @@ class TransactionSendClosureHandlerTest {
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
                 .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
-                .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                (transactionActivatedEvent.getData().getPaymentNotices().stream()
-                                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
-                                        .sum()
-                                        + authorizationRequestData.getFee())
-                        )
-                )
+                .totalAmount(totalAmount)
                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
@@ -915,6 +917,7 @@ class TransactionSendClosureHandlerTest {
                                 .timestampOperation(
                                         OffsetDateTime.now()
                                 )
+                                .totalAmount(totalAmount)
                 ).transactionDetails(
                         new TransactionDetailsDto()
                                 .transaction(
@@ -936,15 +939,7 @@ class TransactionSendClosureHandlerTest {
                                                         )
                                                 )
                                                 .grandTotal(
-                                                        EuroUtils.euroCentsToEuro(
-                                                                ((BaseTransactionWithPaymentToken) transaction)
-                                                                        .getPaymentNotices().stream()
-                                                                        .mapToInt(
-                                                                                PaymentNotice -> PaymentNotice
-                                                                                        .transactionAmount().value()
-                                                                        ).sum()
-                                                                        + authorizationRequestData.getFee()
-                                                        )
+                                                        totalAmount
                                                 )
                                                 .authorizationCode(
                                                         ((OutcomeXpayGatewayDto) updateAuthorizationRequest
@@ -1114,6 +1109,13 @@ class TransactionSendClosureHandlerTest {
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
+        BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
+                (transactionActivatedEvent.getData().getPaymentNotices().stream()
+                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                        .sum()
+                        + authorizationRequestData.getFee())
+        );
+
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         List.of(
@@ -1127,10 +1129,7 @@ class TransactionSendClosureHandlerTest {
                 .idChannel(authorizationRequestData.getPspChannelCode())
                 .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                ((BaseTransactionWithPaymentToken) transaction).getTransactionActivatedData()
-                                        .getPaymentNotices().get(0).getAmount() + authorizationRequestData.getFee()
-                        )
+                        totalAmount
                 )
                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
@@ -1153,6 +1152,7 @@ class TransactionSendClosureHandlerTest {
                                         OffsetDateTime.now()
                                 )
                                 .rrn(ECOMMERCE_RRN)
+                                .totalAmount(totalAmount)
                 ).transactionDetails(
                         new TransactionDetailsDto()
                                 .transaction(
@@ -1363,6 +1363,13 @@ class TransactionSendClosureHandlerTest {
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
+        BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
+                (transactionActivatedEvent.getData().getPaymentNotices().stream()
+                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                        .sum()
+                        + authorizationRequestData.getFee())
+        );
+
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         transactionActivatedEvent.getData().getPaymentNotices().stream()
@@ -1401,7 +1408,7 @@ class TransactionSendClosureHandlerTest {
                                 .timestampOperation(
                                         OffsetDateTime.now()
                                 )
-
+                                .totalAmount(totalAmount)
                 ).transactionDetails(
                         new TransactionDetailsDto()
                                 .transaction(
@@ -1423,15 +1430,7 @@ class TransactionSendClosureHandlerTest {
                                                         )
                                                 )
                                                 .grandTotal(
-                                                        EuroUtils.euroCentsToEuro(
-                                                                ((BaseTransactionWithPaymentToken) transaction)
-                                                                        .getPaymentNotices().stream()
-                                                                        .mapToInt(
-                                                                                PaymentNotice -> PaymentNotice
-                                                                                        .transactionAmount().value()
-                                                                        ).sum()
-                                                                        + authorizationRequestData.getFee()
-                                                        )
+                                                        totalAmount
                                                 )
                                                 .authorizationCode(
                                                         ((OutcomeXpayGatewayDto) updateAuthorizationRequest
@@ -1968,6 +1967,13 @@ class TransactionSendClosureHandlerTest {
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
+        BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
+                (transactionActivatedEvent.getData().getPaymentNotices().stream()
+                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                        .sum()
+                        + authorizationRequestData.getFee())
+        );
+
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         transactionActivatedEvent.getData().getPaymentNotices().stream()
@@ -2007,6 +2013,7 @@ class TransactionSendClosureHandlerTest {
                                         OffsetDateTime.now()
                                 )
                                 .rrn(ECOMMERCE_RRN)
+                                .totalAmount(totalAmount)
 
                 ).transactionDetails(
                         new TransactionDetailsDto()
@@ -2217,6 +2224,13 @@ class TransactionSendClosureHandlerTest {
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
+        BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
+                (transactionActivatedEvent.getData().getPaymentNotices().stream()
+                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                        .sum()
+                        + authorizationRequestData.getFee())
+        );
+
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         transactionActivatedEvent.getData().getPaymentNotices().stream()
@@ -2228,12 +2242,7 @@ class TransactionSendClosureHandlerTest {
                 .idChannel(authorizationRequestData.getPspChannelCode())
                 .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                (transactionActivatedEvent.getData().getPaymentNotices().stream()
-                                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
-                                        .sum()
-                                        + authorizationRequestData.getFee())
-                        )
+                        totalAmount
                 )
                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
@@ -2255,6 +2264,7 @@ class TransactionSendClosureHandlerTest {
                                 .timestampOperation(
                                         OffsetDateTime.now()
                                 )
+                                .totalAmount(totalAmount)
                 )
                 .transactionDetails(
                         new TransactionDetailsDto()
@@ -2411,6 +2421,12 @@ class TransactionSendClosureHandlerTest {
                 .transactionClosedEvent(TransactionClosureData.Outcome.KO);
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
+        BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
+                (transactionActivatedEvent.getData().getPaymentNotices().stream()
+                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                        .sum()
+                        + authorizationRequestData.getFee())
+        );
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         List.of(
@@ -2424,11 +2440,7 @@ class TransactionSendClosureHandlerTest {
                 .idChannel(authorizationRequestData.getPspChannelCode())
                 .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                        + authorizationRequestData.getFee()
-                        )
+                        totalAmount
                 )
                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
@@ -2451,6 +2463,7 @@ class TransactionSendClosureHandlerTest {
                                         OffsetDateTime.now()
                                 )
                                 .rrn(ECOMMERCE_RRN)
+                                .totalAmount(totalAmount)
                 ).transactionDetails(
                         new TransactionDetailsDto()
                                 .transaction(
@@ -2472,15 +2485,7 @@ class TransactionSendClosureHandlerTest {
                                                         )
                                                 )
                                                 .grandTotal(
-                                                        EuroUtils.euroCentsToEuro(
-                                                                ((BaseTransactionWithPaymentToken) transaction)
-                                                                        .getPaymentNotices().stream()
-                                                                        .mapToInt(
-                                                                                PaymentNotice -> PaymentNotice
-                                                                                        .transactionAmount().value()
-                                                                        ).sum()
-                                                                        + authorizationRequestData.getFee()
-                                                        )
+                                                        totalAmount
                                                 )
                                                 .rrn(
                                                         ((OutcomeVposGatewayDto) updateAuthorizationRequest
@@ -2520,7 +2525,7 @@ class TransactionSendClosureHandlerTest {
                                                 )
                                                 .brandLogo(
                                                         authorizationRequestData.getLogo()
-                                                                .getPath()
+                                                                .toString()
                                                 )
                                 )
                                 .user(new UserDto().type(UserDto.TypeEnum.GUEST))
@@ -2612,6 +2617,12 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
+        BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
+                (transactionActivatedEvent.getData().getPaymentNotices().stream()
+                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                        .sum()
+                        + authorizationRequestData.getFee())
+        );
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         List.of(
@@ -2625,11 +2636,7 @@ class TransactionSendClosureHandlerTest {
                 .idChannel(authorizationRequestData.getPspChannelCode())
                 .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                        + authorizationRequestData.getFee()
-                        )
+                        totalAmount
                 )
                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
@@ -2652,6 +2659,7 @@ class TransactionSendClosureHandlerTest {
                                         OffsetDateTime.now()
                                 )
                                 .rrn(ECOMMERCE_RRN)
+                                .totalAmount(totalAmount)
                 ).transactionDetails(
                         new TransactionDetailsDto()
                                 .transaction(
@@ -2721,7 +2729,7 @@ class TransactionSendClosureHandlerTest {
                                                 )
                                                 .brandLogo(
                                                         authorizationRequestData.getLogo()
-                                                                .getPath()
+                                                                .toString()
                                                 )
                                 )
                                 .user(new UserDto().type(UserDto.TypeEnum.GUEST))

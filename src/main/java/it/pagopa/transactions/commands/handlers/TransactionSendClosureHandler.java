@@ -184,6 +184,7 @@ public class TransactionSendClosureHandler implements
                                                         updateAuthorizationRequestDto.getTimestampOperation()
                                                 )
                                                 .rrn(authRequestData.rrn())
+                                                .totalAmount(totalAmount)
                                 )
                                 .transactionDetails(
                                         new TransactionDetailsDto()
@@ -227,7 +228,7 @@ public class TransactionSendClosureHandler implements
                                                                 )
                                                                 .brandLogo(
                                                                         transactionAuthorizationRequestData.getLogo()
-                                                                                .getPath()
+                                                                                .toString()
                                                                 )
                                                 )
                                                 .user(new UserDto().type(UserDto.TypeEnum.GUEST))
