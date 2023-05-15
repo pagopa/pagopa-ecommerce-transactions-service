@@ -6,8 +6,8 @@ import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
+import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
-import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
@@ -38,7 +38,7 @@ public class TransactionActivateHandler
         implements CommandHandler<TransactionActivateCommand, Mono<Tuple2<Mono<TransactionActivatedEvent>, String>>> {
 
     public static final int TRANSFER_LIST_MAX_SIZE = 5;
-    private final PaymentRequestsInfoRepository paymentRequestsInfoRepository;
+    private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper;
 
     private final TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository;
 
@@ -57,7 +57,7 @@ public class TransactionActivateHandler
 
     @Autowired
     public TransactionActivateHandler(
-            PaymentRequestsInfoRepository paymentRequestsInfoRepository,
+            PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
             TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository,
             NodoOperations nodoOperations,
             JwtTokenUtils jwtTokenUtils,
@@ -65,7 +65,7 @@ public class TransactionActivateHandler
             @Value("${payment.token.validity}") Integer paymentTokenTimeout,
             ConfidentialMailUtils confidentialMailUtils
     ) {
-        this.paymentRequestsInfoRepository = paymentRequestsInfoRepository;
+        this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
         this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
         this.nodoOperations = nodoOperations;
         this.paymentTokenTimeout = paymentTokenTimeout;
@@ -133,10 +133,11 @@ public class TransactionActivateHandler
                                                                                 ),
                                                                                 new ArrayList<>(TRANSFER_LIST_MAX_SIZE)
                                                                         );
-                                                                        return paymentRequestsInfoRepository
+                                                                        paymentRequestInfoRedisTemplateWrapper
                                                                                 .save(
                                                                                         paymentRequestWithOnlyIdempotencyKey
                                                                                 );
+                                                                        return paymentRequestWithOnlyIdempotencyKey;
                                                                     }
                                                             )
                                             )
@@ -198,7 +199,7 @@ public class TransactionActivateHandler
                                             paymentRequestInfo.id(),
                                             paymentRequestInfo.paymentToken()
                                     );
-                                    paymentRequestsInfoRepository.save(paymentRequestInfo);
+                                    paymentRequestInfoRedisTemplateWrapper.save(paymentRequestInfo);
                                 }
                         )
                         .sequential()
@@ -229,7 +230,8 @@ public class TransactionActivateHandler
     }
 
     private Optional<PaymentRequestInfo> getPaymentRequestInfoFromCache(RptId rptId) {
-        Optional<PaymentRequestInfo> paymentInfofromCache = paymentRequestsInfoRepository.findById(rptId);
+        Optional<PaymentRequestInfo> paymentInfofromCache = paymentRequestInfoRedisTemplateWrapper
+                .findById(rptId.value());
         log.info("PaymentRequestInfo cache hit for {}: {}", rptId, paymentInfofromCache.isPresent());
         return paymentInfofromCache;
     }
