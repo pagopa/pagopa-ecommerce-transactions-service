@@ -350,12 +350,15 @@ class TransactionSendClosureHandlerTest {
                                 .transaction(
                                         new TransactionDto()
                                                 .transactionId(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getTransactionId().value()
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
                                                 )
                                                 .transactionStatus("Rifiutato")
                                                 .creationDate(
-                                                        ZonedDateTime.parse(transactionActivatedEvent
-                                                                .getCreationDate()).toOffsetDateTime()
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
                                                 )
                                 )
                                 .info(
@@ -368,7 +371,6 @@ class TransactionSendClosureHandlerTest {
                                 .user(new UserDto().type(UserDto.TypeEnum.GUEST))
 
                 );
-
 
         ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
                 .outcome(ClosePaymentResponseDto.OutcomeEnum.KO);
@@ -501,12 +503,15 @@ class TransactionSendClosureHandlerTest {
                                 .transaction(
                                         new TransactionDto()
                                                 .transactionId(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getTransactionId().value()
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
                                                 )
                                                 .transactionStatus("Rifiutato")
                                                 .creationDate(
-                                                        ZonedDateTime.parse(transactionActivatedEvent
-                                                                .getCreationDate()).toOffsetDateTime()
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
                                                 )
                                 )
                                 .info(
@@ -519,7 +524,6 @@ class TransactionSendClosureHandlerTest {
                                 .user(new UserDto().type(UserDto.TypeEnum.GUEST))
 
                 );
-
 
         ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
                 .outcome(ClosePaymentResponseDto.OutcomeEnum.OK);
@@ -685,24 +689,45 @@ class TransactionSendClosureHandlerTest {
                                 .transaction(
                                         new TransactionDto()
                                                 .transactionId(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getTransactionId().value()
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
                                                 )
                                                 .transactionStatus("Autorizzato")
                                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
-                                                .amount(EuroUtils.euroCentsToEuro(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                                ))
-                                                .grandTotal(EuroUtils.euroCentsToEuro(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                                                + authorizationRequestData.getFee()
-                                                ))
-                                                .rrn(((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getRrn())
-                                                .authorizationCode(((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode())
+                                                .amount(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                        )
+                                                )
+                                                .grandTotal(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                                        + authorizationRequestData.getFee()
+                                                        )
+                                                )
+                                                .rrn(
+                                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getRrn()
+                                                )
+                                                .authorizationCode(
+                                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getAuthorizationCode()
+                                                )
                                                 .creationDate(
-                                                        ZonedDateTime.parse(transactionActivatedEvent
-                                                                .getCreationDate()).toOffsetDateTime()
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
                                                 )
                                                 .psp(
                                                         new PspDto()
@@ -895,23 +920,41 @@ class TransactionSendClosureHandlerTest {
                                 .transaction(
                                         new TransactionDto()
                                                 .transactionId(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getTransactionId().value()
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
                                                 )
                                                 .transactionStatus("Autorizzato")
                                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
-                                                .amount(EuroUtils.euroCentsToEuro(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                                ))
-                                                .grandTotal(EuroUtils.euroCentsToEuro(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                                                + authorizationRequestData.getFee()
-                                                ))
-                                                .authorizationCode(((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode())
+                                                .amount(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                        )
+                                                )
+                                                .grandTotal(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                                        + authorizationRequestData.getFee()
+                                                        )
+                                                )
+                                                .authorizationCode(
+                                                        ((OutcomeXpayGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getAuthorizationCode()
+                                                )
                                                 .creationDate(
-                                                        ZonedDateTime.parse(transactionActivatedEvent
-                                                                .getCreationDate()).toOffsetDateTime()
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
                                                 )
                                                 .psp(
                                                         new PspDto()
@@ -940,7 +983,8 @@ class TransactionSendClosureHandlerTest {
                                                                 .getPath()
                                                 )
                                 )
-                                .user(new UserDto().type(UserDto.TypeEnum.GUEST)));
+                                .user(new UserDto().type(UserDto.TypeEnum.GUEST))
+                );
 
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
                 transactionId.value()
@@ -1114,24 +1158,45 @@ class TransactionSendClosureHandlerTest {
                                 .transaction(
                                         new TransactionDto()
                                                 .transactionId(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getTransactionId().value()
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
                                                 )
                                                 .transactionStatus("Autorizzato")
                                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
-                                                .amount(EuroUtils.euroCentsToEuro(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                                ))
-                                                .grandTotal(EuroUtils.euroCentsToEuro(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                                                + authorizationRequestData.getFee()
-                                                ))
-                                                .rrn(((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getRrn())
-                                                .authorizationCode(((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode())
+                                                .amount(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                        )
+                                                )
+                                                .grandTotal(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                                        + authorizationRequestData.getFee()
+                                                        )
+                                                )
+                                                .rrn(
+                                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getRrn()
+                                                )
+                                                .authorizationCode(
+                                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getAuthorizationCode()
+                                                )
                                                 .creationDate(
-                                                        ZonedDateTime.parse(transactionActivatedEvent
-                                                                .getCreationDate()).toOffsetDateTime()
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
                                                 )
                                                 .psp(
                                                         new PspDto()
@@ -1342,23 +1407,41 @@ class TransactionSendClosureHandlerTest {
                                 .transaction(
                                         new TransactionDto()
                                                 .transactionId(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getTransactionId().value()
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
                                                 )
                                                 .transactionStatus("Autorizzato")
                                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
-                                                .amount(EuroUtils.euroCentsToEuro(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                                ))
-                                                .grandTotal(EuroUtils.euroCentsToEuro(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                                                + authorizationRequestData.getFee()
-                                                ))
-                                                .authorizationCode(((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode())
+                                                .amount(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                        )
+                                                )
+                                                .grandTotal(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                                        + authorizationRequestData.getFee()
+                                                        )
+                                                )
+                                                .authorizationCode(
+                                                        ((OutcomeXpayGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getAuthorizationCode()
+                                                )
                                                 .creationDate(
-                                                        ZonedDateTime.parse(transactionActivatedEvent
-                                                                .getCreationDate()).toOffsetDateTime()
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
                                                 )
                                                 .psp(
                                                         new PspDto()
@@ -1544,12 +1627,15 @@ class TransactionSendClosureHandlerTest {
                                 .transaction(
                                         new TransactionDto()
                                                 .transactionId(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getTransactionId().value()
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
                                                 )
                                                 .transactionStatus("Rifiutato")
                                                 .creationDate(
-                                                        ZonedDateTime.parse(transactionActivatedEvent
-                                                                .getCreationDate()).toOffsetDateTime()
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
                                                 )
                                 )
                                 .info(
@@ -1717,12 +1803,15 @@ class TransactionSendClosureHandlerTest {
                                 .transaction(
                                         new TransactionDto()
                                                 .transactionId(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getTransactionId().value()
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
                                                 )
                                                 .transactionStatus("Rifiutato")
                                                 .creationDate(
-                                                        ZonedDateTime.parse(transactionActivatedEvent
-                                                                .getCreationDate()).toOffsetDateTime()
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
                                                 )
                                 )
                                 .info(
@@ -1735,7 +1824,6 @@ class TransactionSendClosureHandlerTest {
                                 .user(new UserDto().type(UserDto.TypeEnum.GUEST))
 
                 );
-
 
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
                 transactionId.value()
@@ -1925,24 +2013,45 @@ class TransactionSendClosureHandlerTest {
                                 .transaction(
                                         new TransactionDto()
                                                 .transactionId(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getTransactionId().value()
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
                                                 )
                                                 .transactionStatus("Autorizzato")
                                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
-                                                .amount(EuroUtils.euroCentsToEuro(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                                ))
-                                                .grandTotal(EuroUtils.euroCentsToEuro(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                                                + authorizationRequestData.getFee()
-                                                ))
-                                                .rrn(((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getRrn())
-                                                .authorizationCode(((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode())
+                                                .amount(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                        )
+                                                )
+                                                .grandTotal(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                                        + authorizationRequestData.getFee()
+                                                        )
+                                                )
+                                                .rrn(
+                                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getRrn()
+                                                )
+                                                .authorizationCode(
+                                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getAuthorizationCode()
+                                                )
                                                 .creationDate(
-                                                        ZonedDateTime.parse(transactionActivatedEvent
-                                                                .getCreationDate()).toOffsetDateTime()
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
                                                 )
                                                 .psp(
                                                         new PspDto()
@@ -1974,7 +2083,6 @@ class TransactionSendClosureHandlerTest {
                                 .user(new UserDto().type(UserDto.TypeEnum.GUEST))
 
                 );
-
 
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
                 transactionId.value()
@@ -2153,25 +2261,41 @@ class TransactionSendClosureHandlerTest {
                                 .transaction(
                                         new TransactionDto()
                                                 .transactionId(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getTransactionId().value()
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
                                                 )
                                                 .transactionStatus("Autorizzato")
                                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
-                                                .amount(EuroUtils.euroCentsToEuro(
-                                                                (transactionActivatedEvent.getData().getPaymentNotices().stream()
-                                                                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
-                                                                        .sum())))
-                                                .grandTotal(EuroUtils.euroCentsToEuro(
-                                                        (transactionActivatedEvent.getData().getPaymentNotices().stream()
-                                                                .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
-                                                                .sum()
-                                                                + authorizationRequestData.getFee())
-                                                ))
+                                                .amount(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                (transactionActivatedEvent.getData().getPaymentNotices()
+                                                                        .stream()
+                                                                        .mapToInt(
+                                                                                it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount
+                                                                        )
+                                                                        .sum())
+                                                        )
+                                                )
+                                                .grandTotal(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                (transactionActivatedEvent.getData().getPaymentNotices()
+                                                                        .stream()
+                                                                        .mapToInt(
+                                                                                it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount
+                                                                        )
+                                                                        .sum()
+                                                                        + authorizationRequestData.getFee())
+                                                        )
+                                                )
                                                 .rrn(authorizationCompletedEvent.getData().getRrn())
-                                                .authorizationCode(((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
-                                                        .getAuthorizationCode())
+                                                .authorizationCode(
+                                                        ((OutcomeXpayGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway())
+                                                                        .getAuthorizationCode()
+                                                )
                                                 .creationDate(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getCreationDate().toOffsetDateTime()
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getCreationDate().toOffsetDateTime()
                                                 )
                                                 .psp(
                                                         new PspDto()
@@ -2332,24 +2456,45 @@ class TransactionSendClosureHandlerTest {
                                 .transaction(
                                         new TransactionDto()
                                                 .transactionId(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getTransactionId().value()
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
                                                 )
                                                 .transactionStatus("Autorizzato")
                                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
-                                                .amount(EuroUtils.euroCentsToEuro(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                                ))
-                                                .grandTotal(EuroUtils.euroCentsToEuro(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                                                + authorizationRequestData.getFee()
-                                                ))
-                                                .rrn(((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getRrn())
-                                                .authorizationCode(((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode())
+                                                .amount(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                        )
+                                                )
+                                                .grandTotal(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                                        + authorizationRequestData.getFee()
+                                                        )
+                                                )
+                                                .rrn(
+                                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getRrn()
+                                                )
+                                                .authorizationCode(
+                                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getAuthorizationCode()
+                                                )
                                                 .creationDate(
-                                                        ZonedDateTime.parse(transactionActivatedEvent
-                                                                .getCreationDate()).toOffsetDateTime()
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
                                                 )
                                                 .psp(
                                                         new PspDto()
@@ -2512,24 +2657,45 @@ class TransactionSendClosureHandlerTest {
                                 .transaction(
                                         new TransactionDto()
                                                 .transactionId(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getTransactionId().value()
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
                                                 )
                                                 .transactionStatus("Autorizzato")
                                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
-                                                .amount(EuroUtils.euroCentsToEuro(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                                ))
-                                                .grandTotal(EuroUtils.euroCentsToEuro(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                                                .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                                                + authorizationRequestData.getFee()
-                                                ))
-                                                .rrn(((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getRrn())
-                                                .authorizationCode(((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode())
+                                                .amount(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                        )
+                                                )
+                                                .grandTotal(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                                        + authorizationRequestData.getFee()
+                                                        )
+                                                )
+                                                .rrn(
+                                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getRrn()
+                                                )
+                                                .authorizationCode(
+                                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getAuthorizationCode()
+                                                )
                                                 .creationDate(
-                                                        ZonedDateTime.parse(transactionActivatedEvent
-                                                                .getCreationDate()).toOffsetDateTime()
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
                                                 )
                                                 .psp(
                                                         new PspDto()
@@ -2670,12 +2836,15 @@ class TransactionSendClosureHandlerTest {
                                 .transaction(
                                         new TransactionDto()
                                                 .transactionId(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getTransactionId().value()
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
                                                 )
                                                 .transactionStatus("Rifiutato")
                                                 .creationDate(
-                                                        ZonedDateTime.parse(transactionActivatedEvent
-                                                                .getCreationDate()).toOffsetDateTime()
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
                                                 )
                                 )
                                 .info(
@@ -2781,7 +2950,8 @@ class TransactionSendClosureHandlerTest {
                                                 )
                                                 .transactionStatus("Rifiutato")
                                                 .creationDate(
-                                                        ((BaseTransactionWithPaymentToken) transaction).getCreationDate().toOffsetDateTime()
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getCreationDate().toOffsetDateTime()
                                                 )
                                 )
                                 .info(
