@@ -4,6 +4,7 @@ import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -12,8 +13,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.time.ZonedDateTime;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
 class LogMaskTests {
@@ -62,6 +62,48 @@ class LogMaskTests {
         assertTrue(outContent.toString().contains("pan:***************"));
         assertTrue(outContent.toString().contains("*****************"));
         assertTrue(outContent.toString().contains("************"));
+    }
+
+    @Test
+    void testIgnoreCase() {
+        log.info("cvv=1234");
+        log.info("cvV=1234");
+        log.info("cVv=1234");
+        log.info("cVV=1234");
+        log.info("Cvv=1234");
+        log.info("CvV=1234");
+        log.info("CVv=1234");
+        log.info("CVV=1234");
+        log.info("pan=4000000000000101");
+        log.info("paN=4000000000000101");
+        log.info("pAn=4000000000000101");
+        log.info("pAN=4000000000000101");
+        log.info("Pan=4000000000000101");
+        log.info("PaN=4000000000000101");
+        log.info("PAn=4000000000000101");
+        log.info("PAN=4000000000000101");
+        assertEquals(8,StringUtils.countMatches(outContent.toString().toLowerCase(), "cv*****"));
+        assertEquals(8,StringUtils.countMatches(outContent.toString().toLowerCase(), "pa******************"));
+
+        log.info("cvv: 123");
+        log.info("cvV: 124");
+        log.info("cVv: 134");
+        log.info("cVV: 234");
+        log.info("Cvv: 234");
+        log.info("CvV: 134");
+        log.info("CVv: 124");
+        log.info("CVV: 124");
+        log.info("pan: 4000000000000101");
+        log.info("paN: 4000000000000101");
+        log.info("pAn: 4000000000000101");
+        log.info("pAN: 4000000000000101");
+        log.info("Pan: 4000000000000101");
+        log.info("PaN: 4000000000000101");
+        log.info("PAn: 4000000000000101");
+        log.info("PAN: 4000000000000101");
+        assertEquals(8,StringUtils.countMatches(outContent.toString().toLowerCase(), "cvv:****"));
+        assertEquals(8,StringUtils.countMatches(outContent.toString().toLowerCase(), "pan:****************"));
+        outContent.reset();
     }
 
     @Test
