@@ -19,7 +19,7 @@ public class MDCFilter implements WebFilter {
 
     public static final String CONTEXT_KEY = "contextKey";
     public static final String TRANSACTION_ID = "transactionId";
-    public static final String RPT_ID = "rptId";
+    public static final String RPT_ID = "rptIds";
     public static final String HEADER_TRANSACTION_ID = "x-transaction-id";
     public static final String HEADER_RPT_ID = "x-rpt-id";
 
@@ -31,9 +31,9 @@ public class MDCFilter implements WebFilter {
         final HttpHeaders headers = exchange.getRequest().getHeaders();
         final String transactionId = Optional.ofNullable(headers.get(HEADER_TRANSACTION_ID)).orElse(new ArrayList<>())
                 .stream()
-                .findFirst().orElse("transactionId-not-found");
+                .findFirst().orElse("{transactionId-not-found}");
         final String rptId = Optional.ofNullable(headers.get(HEADER_RPT_ID)).orElse(new ArrayList<>()).stream()
-                .findFirst().orElse("rptId-not-found");
+                .findFirst().orElse("{rptId-not-found}");
 
         return chain.filter(exchange)
                 .contextWrite(Context.of(CONTEXT_KEY, UUID.randomUUID().toString()))

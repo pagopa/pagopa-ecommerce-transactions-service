@@ -5,7 +5,7 @@
                 <maskPattern>([",']{0,1}[pan,PAN,Pan]{1}[",']{0,1}[:,=]{1}[ ]{0,1}[",']{0,1}[\d+]{14,16}[",']{0,1})</maskPattern> <!-- pan -->
                 <maskPattern>([",']{0,1}[cvv,CVV,Cvv]{1}[",']{0,1}[:,=]{1}[ ]{0,1}[",']{0,1}[\d+]{3,4}[",']{0,1})</maskPattern> <!-- cvv -->
                 <maskPattern>([a-z0-9.-]+@[a-z]+\.[a-z]{2,3})</maskPattern> <!-- email -->
-                <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg - contextKey=%X{contextKey} rpt-id=%X{x-rpt-id} transaction-id=%X{x-transaction-id}%n</pattern>
+                <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} [contextKey=%X{contextKey} rpt-ids=%X{rptIds} transaction-id=%X{transactionId}] - %msg%n</pattern>
             </layout>
         </encoder>
     </appender>
