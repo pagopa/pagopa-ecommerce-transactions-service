@@ -29,8 +29,15 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 
 @Component
 @Slf4j
@@ -166,25 +173,27 @@ public class TransactionSendClosureHandler implements
                         closePaymentRequest.idPSP(transactionAuthorizationRequestData.getPspId())
                                 .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())
                                 .idChannel(transactionAuthorizationRequestData.getPspChannelCode())
-                                .transactionId(tx.getTransactionId().value().toString())
+                                .transactionId(tx.getTransactionId().value())
                                 .totalAmount(totalAmount)
                                 .fee(fee)
                                 .timestampOperation(updateAuthorizationRequestDto.getTimestampOperation())
                                 .paymentMethod(transactionAuthorizationRequestData.getPaymentTypeCode())
                                 .additionalPaymentInformations(
                                         new AdditionalPaymentInformationsDto()
-                                                .tipoVersamento(TIPO_VERSAMENTO_CP)
                                                 .outcomePaymentGateway(
                                                         AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum
                                                                 .fromValue(authRequestData.outcome())
                                                 )
                                                 .authorizationCode(authRequestData.authorizationCode())
-                                                .fee(fee)
+                                                .fee(fee.toString())
                                                 .timestampOperation(
-                                                        updateAuthorizationRequestDto.getTimestampOperation()
+                                                        updateAuthorizationRequestDto
+                                                                .getTimestampOperation()
+                                                                .truncatedTo(ChronoUnit.SECONDS)
+                                                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                                 )
                                                 .rrn(authRequestData.rrn())
-                                                .totalAmount(totalAmount)
+                                                .totalAmount(totalAmount.toString())
                                 )
                                 .transactionDetails(
                                         new TransactionDetailsDto()

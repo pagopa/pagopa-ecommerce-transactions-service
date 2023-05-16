@@ -49,6 +49,8 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static it.pagopa.transactions.commands.handlers.TransactionSendClosureHandler.TIPO_VERSAMENTO_CP;
@@ -668,7 +670,6 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         new AdditionalPaymentInformationsDto()
-                                .tipoVersamento(TIPO_VERSAMENTO_CP)
                                 .outcomePaymentGateway(
                                         AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum.fromValue(
                                                 ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
@@ -679,12 +680,16 @@ class TransactionSendClosureHandlerTest {
                                         ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
                                                 .getAuthorizationCode()
                                 )
-                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                .fee(
+                                        EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).setScale(2)
+                                                .toPlainString()
+                                )
                                 .timestampOperation(
-                                        OffsetDateTime.now()
+                                        OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS)
+                                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                 )
                                 .rrn(((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getRrn())
-                                .totalAmount(totalAmount)
+                                .totalAmount(totalAmount.setScale(2).toPlainString())
                 )
                 .transactionDetails(
                         new TransactionDetailsDto()
@@ -886,6 +891,8 @@ class TransactionSendClosureHandlerTest {
                         + authorizationRequestData.getFee())
         );
 
+        BigDecimal fee = EuroUtils.euroCentsToEuro(authorizationRequestData.getFee());
+
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         transactionActivatedEvent.getData().getPaymentNotices().stream()
@@ -897,12 +904,11 @@ class TransactionSendClosureHandlerTest {
                 .idChannel(authorizationRequestData.getPspChannelCode())
                 .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(totalAmount)
-                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                .fee(fee)
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         new AdditionalPaymentInformationsDto()
-                                .tipoVersamento(TIPO_VERSAMENTO_CP)
                                 .outcomePaymentGateway(
                                         AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum.fromValue(
                                                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
@@ -913,11 +919,12 @@ class TransactionSendClosureHandlerTest {
                                         ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
                                                 .getAuthorizationCode()
                                 )
-                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                .fee(fee.toString())
                                 .timestampOperation(
-                                        OffsetDateTime.now()
+                                        OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS)
+                                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                 )
-                                .totalAmount(totalAmount)
+                                .totalAmount(totalAmount.toString())
                 ).transactionDetails(
                         new TransactionDetailsDto()
                                 .transaction(
@@ -1136,7 +1143,6 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         new AdditionalPaymentInformationsDto()
-                                .tipoVersamento(TIPO_VERSAMENTO_CP)
                                 .outcomePaymentGateway(
                                         AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum.fromValue(
                                                 ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
@@ -1147,12 +1153,13 @@ class TransactionSendClosureHandlerTest {
                                         ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
                                                 .getAuthorizationCode()
                                 )
-                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString())
                                 .timestampOperation(
-                                        OffsetDateTime.now()
+                                        OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS)
+                                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                 )
                                 .rrn(ECOMMERCE_RRN)
-                                .totalAmount(totalAmount)
+                                .totalAmount(totalAmount.toString())
                 ).transactionDetails(
                         new TransactionDetailsDto()
                                 .transaction(
@@ -1393,7 +1400,6 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         new AdditionalPaymentInformationsDto()
-                                .tipoVersamento(TIPO_VERSAMENTO_CP)
                                 .outcomePaymentGateway(
                                         AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum.fromValue(
                                                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
@@ -1404,11 +1410,12 @@ class TransactionSendClosureHandlerTest {
                                         ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
                                                 .getAuthorizationCode()
                                 )
-                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString())
                                 .timestampOperation(
-                                        OffsetDateTime.now()
+                                        OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS)
+                                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                 )
-                                .totalAmount(totalAmount)
+                                .totalAmount(totalAmount.toString())
                 ).transactionDetails(
                         new TransactionDetailsDto()
                                 .transaction(
@@ -1997,7 +2004,6 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         new AdditionalPaymentInformationsDto()
-                                .tipoVersamento(TIPO_VERSAMENTO_CP)
                                 .outcomePaymentGateway(
                                         AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum.fromValue(
                                                 ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
@@ -2008,12 +2014,13 @@ class TransactionSendClosureHandlerTest {
                                         ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
                                                 .getAuthorizationCode()
                                 )
-                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString())
                                 .timestampOperation(
-                                        OffsetDateTime.now()
+                                        OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS)
+                                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                 )
                                 .rrn(ECOMMERCE_RRN)
-                                .totalAmount(totalAmount)
+                                .totalAmount(totalAmount.toString())
 
                 ).transactionDetails(
                         new TransactionDetailsDto()
@@ -2249,7 +2256,6 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         new AdditionalPaymentInformationsDto()
-                                .tipoVersamento(TIPO_VERSAMENTO_CP)
                                 .outcomePaymentGateway(
                                         AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum.fromValue(
                                                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
@@ -2260,11 +2266,12 @@ class TransactionSendClosureHandlerTest {
                                         ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
                                                 .getAuthorizationCode()
                                 )
-                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString())
                                 .timestampOperation(
-                                        OffsetDateTime.now()
+                                        OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS)
+                                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                 )
-                                .totalAmount(totalAmount)
+                                .totalAmount(totalAmount.toString())
                 )
                 .transactionDetails(
                         new TransactionDetailsDto()
@@ -2447,7 +2454,6 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         new AdditionalPaymentInformationsDto()
-                                .tipoVersamento(TIPO_VERSAMENTO_CP)
                                 .outcomePaymentGateway(
                                         AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum.fromValue(
                                                 ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
@@ -2458,12 +2464,14 @@ class TransactionSendClosureHandlerTest {
                                         ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
                                                 .getAuthorizationCode()
                                 )
-                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString())
                                 .timestampOperation(
                                         OffsetDateTime.now()
+                                                .truncatedTo(ChronoUnit.SECONDS)
+                                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                 )
                                 .rrn(ECOMMERCE_RRN)
-                                .totalAmount(totalAmount)
+                                .totalAmount(totalAmount.toString())
                 ).transactionDetails(
                         new TransactionDetailsDto()
                                 .transaction(
@@ -2643,7 +2651,6 @@ class TransactionSendClosureHandlerTest {
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
                         new AdditionalPaymentInformationsDto()
-                                .tipoVersamento(TIPO_VERSAMENTO_CP)
                                 .outcomePaymentGateway(
                                         AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum.fromValue(
                                                 ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
@@ -2654,12 +2661,17 @@ class TransactionSendClosureHandlerTest {
                                         ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
                                                 .getAuthorizationCode()
                                 )
-                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                .fee(
+                                        EuroUtils.euroCentsToEuro(authorizationRequestData.getFee())
+                                                .toString()
+                                )
                                 .timestampOperation(
                                         OffsetDateTime.now()
+                                                .truncatedTo(ChronoUnit.SECONDS)
+                                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                 )
                                 .rrn(ECOMMERCE_RRN)
-                                .totalAmount(totalAmount)
+                                .totalAmount(totalAmount.toString())
                 ).transactionDetails(
                         new TransactionDetailsDto()
                                 .transaction(
