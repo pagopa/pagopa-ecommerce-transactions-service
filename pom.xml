@@ -254,6 +254,7 @@
                                 <skipDefaultInterface>true</skipDefaultInterface>
                                 <useSwaggerUI>false</useSwaggerUI>
                                 <reactive>true</reactive>
+                                <openApiNullable>false</openApiNullable>
                             </configOptions>
                         </configuration>
                     </execution>
