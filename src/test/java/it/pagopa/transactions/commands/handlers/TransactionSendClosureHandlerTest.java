@@ -8,16 +8,19 @@ import com.azure.storage.queue.QueueAsyncClient;
 import com.azure.storage.queue.models.SendMessageResult;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.*;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData.PaymentGateway;
 import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v1.PaymentNotice;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
-import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
+import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
+import it.pagopa.ecommerce.commons.utils.EuroUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
-import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
-import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
+import it.pagopa.generated.ecommerce.nodo.v2.dto.*;
+import it.pagopa.generated.transactions.server.model.OutcomeVposGatewayDto;
+import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
@@ -25,25 +28,30 @@ import it.pagopa.transactions.commands.data.ClosureSendData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
-import it.pagopa.transactions.utils.EuroUtils;
+import it.pagopa.transactions.utils.AuthRequestDataUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.util.UriTemplate;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.math.BigDecimal;
+import java.net.URI;
 import java.time.Duration;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
+import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
+import static it.pagopa.transactions.commands.handlers.TransactionSendClosureHandler.TIPO_VERSAMENTO_CP;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 
@@ -58,13 +66,14 @@ class TransactionSendClosureHandlerTest {
     private final TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
 
-    private final PaymentRequestsInfoRepository paymentRequestsInfoRepositoryRepository = Mockito
-            .mock(PaymentRequestsInfoRepository.class);
+    private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper = Mockito
+            .mock(PaymentRequestInfoRedisTemplateWrapper.class);
 
     private final TransactionsEventStoreRepository<Object> eventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
 
-    private final TransactionsUtils transactionsUtils = new TransactionsUtils(eventStoreRepository);
+    private final TransactionsUtils transactionsUtils = new TransactionsUtils(eventStoreRepository, "3020");
+    private final AuthRequestDataUtils authRequestDataUtils = new AuthRequestDataUtils();
     private final NodeForPspClient nodeForPspClient = Mockito.mock(NodeForPspClient.class);
 
     private final QueueAsyncClient transactionClosureSentEventQueueClient = Mockito.mock(QueueAsyncClient.class);
@@ -75,21 +84,41 @@ class TransactionSendClosureHandlerTest {
     private static final int SOFT_TIMEOUT_OFFSET = 10;
     private static final int RETRY_TIMEOUT_INTERVAL = 5;
 
+    private static final String ECOMMERCE_RRN = "rrn";
+
     private final TransactionSendClosureHandler transactionSendClosureHandler = new TransactionSendClosureHandler(
             transactionEventStoreRepository,
             transactionClosureErrorEventStoreRepository,
             transactionRefundedEventStoreRepository,
-            paymentRequestsInfoRepositoryRepository,
+            paymentRequestInfoRedisTemplateWrapper,
             nodeForPspClient,
             transactionClosureSentEventQueueClient,
             PAYMENT_TOKEN_VALIDITY,
             SOFT_TIMEOUT_OFFSET,
             RETRY_TIMEOUT_INTERVAL,
             refundQueueAsyncClient,
-            transactionsUtils
+            transactionsUtils,
+            authRequestDataUtils
     );
 
-    private final TransactionId transactionId = new TransactionId(UUID.fromString(TransactionTestUtils.TRANSACTION_ID));
+    private final TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
+
+    private static MockedStatic<OffsetDateTime> offsetDateTimeMockedStatic;
+
+    private static final String expectedOperationTimestamp = "2023-01-01T01:02:03";
+    private static final OffsetDateTime operationTimestamp = OffsetDateTime
+            .parse(expectedOperationTimestamp.concat("+01:00"));
+
+    @BeforeAll
+    static void init() {
+        offsetDateTimeMockedStatic = Mockito.mockStatic(OffsetDateTime.class);
+        offsetDateTimeMockedStatic.when(OffsetDateTime::now).thenReturn(operationTimestamp);
+    }
+
+    @AfterAll
+    static void shutdown() {
+        offsetDateTimeMockedStatic.close();
+    }
 
     @Test
     void shouldRejectTransactionInWrongState() {
@@ -112,6 +141,7 @@ class TransactionSendClosureHandlerTest {
 
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 PaymentNotices.stream().map(
@@ -135,12 +165,16 @@ class TransactionSendClosureHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                Transaction.ClientId.CHECKOUT
+                Transaction.ClientId.CHECKOUT,
+                idCart
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new OutcomeVposGatewayDto()
+                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         ClosureSendData closureSendData = new ClosureSendData(
@@ -154,18 +188,19 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionActivatedData(
                         email,
                         transaction.getTransactionActivatedData().getPaymentNotices(),
                         faultCode,
                         faultCodeString,
-                        it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                        it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                        idCart
                 )
         );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -176,14 +211,18 @@ class TransactionSendClosureHandlerTest {
                         "pspChannelCode",
                         "paymentMethodName",
                         "pspBusinessName",
-                        "authorizationRequestId"
+                        "authorizationRequestId",
+                        PaymentGateway.VPOS,
+                        null
                 )
         );
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
+                        "rrn",
+                        expectedOperationTimestamp,
                         AuthorizationResultDto.OK
                 )
         );
@@ -217,6 +256,7 @@ class TransactionSendClosureHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
@@ -229,18 +269,19 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionActivatedData(
                         email,
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT,
+                        idCart
                 )
         );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -251,21 +292,28 @@ class TransactionSendClosureHandlerTest {
                         "pspChannelCode",
                         "paymentMethodName",
                         "pspBusinessName",
-                        "authorizationRequestId"
+                        "authorizationRequestId",
+                        PaymentGateway.XPAY,
+                        null
                 )
         );
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationCompletedData(
-                        "authorizationCode",
+                        null,
+                        null,
+                        expectedOperationTimestamp,
                         AuthorizationResultDto.KO
                 )
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.KO)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new OutcomeXpayGatewayDto()
+                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.KO)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -297,27 +345,32 @@ class TransactionSendClosureHandlerTest {
                         )
                 )
                 .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.KO)
-                .idPSP(authorizationRequestData.getPspId())
-                .idBrokerPSP(authorizationRequestData.getBrokerName())
-                .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
-                .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                        + authorizationRequestData.getFee()
-                        )
-                )
-                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
-                .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
-                .paymentMethod(authorizationRequestData.getPaymentTypeCode())
-                .additionalPaymentInformations(
-                        Map.of(
-                                "outcome_payment_gateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
-                        )
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
+                .transactionDetails(
+                        new TransactionDetailsDto()
+                                .transaction(
+                                        new TransactionDto()
+                                                .transactionId(
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
+                                                )
+                                                .transactionStatus("Rifiutato")
+                                                .creationDate(
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
+                                                )
+                                )
+                                .info(
+                                        new InfoDto()
+                                                .type(
+                                                        authorizationRequestData
+                                                                .getPaymentTypeCode()
+                                                )
+                                )
+                                .user(new UserDto().type(UserDto.TypeEnum.GUEST))
+
                 );
 
         ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
@@ -326,7 +379,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
@@ -356,6 +409,7 @@ class TransactionSendClosureHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
@@ -368,18 +422,19 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionActivatedData(
                         email,
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT,
+                        idCart
                 )
         );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -390,21 +445,28 @@ class TransactionSendClosureHandlerTest {
                         "pspChannelCode",
                         "paymentMethodName",
                         "pspBusinessName",
-                        "authorizationRequestId"
+                        "authorizationRequestId",
+                        PaymentGateway.XPAY,
+                        null
                 )
         );
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationCompletedData(
-                        "authorizationCode",
+                        null,
+                        null,
+                        expectedOperationTimestamp,
                         AuthorizationResultDto.KO
                 )
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.KO)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new OutcomeXpayGatewayDto()
+                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.KO)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -436,27 +498,32 @@ class TransactionSendClosureHandlerTest {
                         )
                 )
                 .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.KO)
-                .idPSP(authorizationRequestData.getPspId())
-                .idBrokerPSP(authorizationRequestData.getBrokerName())
-                .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
-                .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                        + authorizationRequestData.getFee()
-                        )
-                )
-                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
-                .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
-                .paymentMethod(authorizationRequestData.getPaymentTypeCode())
-                .additionalPaymentInformations(
-                        Map.of(
-                                "outcome_payment_gateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
-                        )
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
+                .transactionDetails(
+                        new TransactionDetailsDto()
+                                .transaction(
+                                        new TransactionDto()
+                                                .transactionId(
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
+                                                )
+                                                .transactionStatus("Rifiutato")
+                                                .creationDate(
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
+                                                )
+                                )
+                                .info(
+                                        new InfoDto()
+                                                .type(
+                                                        authorizationRequestData
+                                                                .getPaymentTypeCode()
+                                                )
+                                )
+                                .user(new UserDto().type(UserDto.TypeEnum.GUEST))
+
                 );
 
         ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
@@ -465,7 +532,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
@@ -495,6 +562,7 @@ class TransactionSendClosureHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
@@ -507,18 +575,19 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionActivatedData(
                         email,
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT,
+                        idCart
                 )
         );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -529,21 +598,29 @@ class TransactionSendClosureHandlerTest {
                         "pspChannelCode",
                         "paymentMethodName",
                         "pspBusinessName",
-                        "authorizationRequestId"
+                        "authorizationRequestId",
+                        PaymentGateway.VPOS,
+                        URI.create("test/logo")
                 )
         );
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
+                        ECOMMERCE_RRN,
+                        expectedOperationTimestamp,
                         AuthorizationResultDto.OK
                 )
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new OutcomeVposGatewayDto()
+                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                                .rrn(ECOMMERCE_RRN)
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -567,6 +644,12 @@ class TransactionSendClosureHandlerTest {
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
+        BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
+                ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
+                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
+                        + authorizationRequestData.getFee()
+        );
+
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         List.of(
@@ -578,24 +661,105 @@ class TransactionSendClosureHandlerTest {
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
-                .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                        + authorizationRequestData.getFee()
-                        )
-                )
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
+                .totalAmount(totalAmount)
                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
-                        Map.of(
-                                "outcome_payment_gateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
-                        )
+                        new AdditionalPaymentInformationsDto()
+                                .tipoVersamento(TIPO_VERSAMENTO_CP)
+                                .outcomePaymentGateway(
+                                        AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum.fromValue(
+                                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                                        .getOutcome().toString()
+                                        )
+                                )
+                                .authorizationCode(
+                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                                .getAuthorizationCode()
+                                )
+                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                .timestampOperation(
+                                        OffsetDateTime.now()
+                                )
+                                .rrn(((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getRrn())
+                                .totalAmount(totalAmount)
+                )
+                .transactionDetails(
+                        new TransactionDetailsDto()
+                                .transaction(
+                                        new TransactionDto()
+                                                .transactionId(
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
+                                                )
+                                                .transactionStatus("Autorizzato")
+                                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                                .amount(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                        )
+                                                )
+                                                .grandTotal(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                                        + authorizationRequestData.getFee()
+                                                        )
+                                                )
+                                                .rrn(
+                                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getRrn()
+                                                )
+                                                .authorizationCode(
+                                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getAuthorizationCode()
+                                                )
+                                                .creationDate(
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
+                                                )
+                                                .psp(
+                                                        new PspDto()
+                                                                .idPsp(
+                                                                        authorizationRequestData
+                                                                                .getPspId()
+                                                                )
+                                                                .idChannel(
+                                                                        authorizationRequestData
+                                                                                .getPspChannelCode()
+                                                                )
+                                                                .businessName(
+                                                                        authorizationRequestData
+                                                                                .getPspBusinessName()
+                                                                )
+                                                )
+                                )
+                                .info(
+                                        new InfoDto()
+                                                .type(
+                                                        authorizationRequestData
+                                                                .getPaymentTypeCode()
+                                                )
+                                                .brandLogo(
+                                                        authorizationRequestData.getLogo()
+                                                                .getPath()
+                                                )
+                                )
+                                .user(new UserDto().type(UserDto.TypeEnum.GUEST))
+
                 );
 
         ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
@@ -604,7 +768,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
 
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
@@ -634,6 +798,7 @@ class TransactionSendClosureHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
@@ -646,18 +811,19 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionActivatedData(
                         email,
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT,
+                        idCart
                 )
         );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -668,21 +834,28 @@ class TransactionSendClosureHandlerTest {
                         "pspChannelCode",
                         "paymentMethodName",
                         "pspBusinessName",
-                        "authorizationRequestId"
+                        "authorizationRequestId",
+                        PaymentGateway.XPAY,
+                        URI.create("test/logo")
                 )
         );
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
+                        null,
+                        expectedOperationTimestamp,
                         AuthorizationResultDto.OK
                 )
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new OutcomeXpayGatewayDto()
+                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -706,6 +879,13 @@ class TransactionSendClosureHandlerTest {
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
+        BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
+                (transactionActivatedEvent.getData().getPaymentNotices().stream()
+                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                        .sum()
+                        + authorizationRequestData.getFee())
+        );
+
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         transactionActivatedEvent.getData().getPaymentNotices().stream()
@@ -715,29 +895,94 @@ class TransactionSendClosureHandlerTest {
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
-                .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                (transactionActivatedEvent.getData().getPaymentNotices().stream()
-                                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
-                                        .sum()
-                                        + authorizationRequestData.getFee())
-                        )
-                )
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
+                .totalAmount(totalAmount)
                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
-                        Map.of(
-                                "outcome_payment_gateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
-                        )
+                        new AdditionalPaymentInformationsDto()
+                                .tipoVersamento(TIPO_VERSAMENTO_CP)
+                                .outcomePaymentGateway(
+                                        AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum.fromValue(
+                                                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                                        .getOutcome().toString()
+                                        )
+                                )
+                                .authorizationCode(
+                                        ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                                .getAuthorizationCode()
+                                )
+                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                .timestampOperation(
+                                        OffsetDateTime.now()
+                                )
+                                .totalAmount(totalAmount)
+                ).transactionDetails(
+                        new TransactionDetailsDto()
+                                .transaction(
+                                        new TransactionDto()
+                                                .transactionId(
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
+                                                )
+                                                .transactionStatus("Autorizzato")
+                                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                                .amount(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                        )
+                                                )
+                                                .grandTotal(
+                                                        totalAmount
+                                                )
+                                                .authorizationCode(
+                                                        ((OutcomeXpayGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getAuthorizationCode()
+                                                )
+                                                .creationDate(
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
+                                                )
+                                                .psp(
+                                                        new PspDto()
+                                                                .idPsp(
+                                                                        authorizationRequestData
+                                                                                .getPspId()
+                                                                )
+                                                                .idChannel(
+                                                                        authorizationRequestData
+                                                                                .getPspChannelCode()
+                                                                )
+                                                                .businessName(
+                                                                        authorizationRequestData
+                                                                                .getPspBusinessName()
+                                                                )
+                                                )
+                                )
+                                .info(
+                                        new InfoDto()
+                                                .type(
+                                                        authorizationRequestData
+                                                                .getPaymentTypeCode()
+                                                )
+                                                .brandLogo(
+                                                        authorizationRequestData.getLogo()
+                                                                .getPath()
+                                                )
+                                )
+                                .user(new UserDto().type(UserDto.TypeEnum.GUEST))
                 );
 
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
-                transactionId.value().toString()
+                transactionId.value()
         );
 
         RuntimeException closePaymentError = new RuntimeException("Network error");
@@ -745,7 +990,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.error(closePaymentError));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
@@ -785,6 +1030,7 @@ class TransactionSendClosureHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
@@ -797,18 +1043,19 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionActivatedData(
                         email,
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT,
+                        idCart
                 )
         );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -819,21 +1066,29 @@ class TransactionSendClosureHandlerTest {
                         "pspChannelCode",
                         "paymentMethodName",
                         "pspBusinessName",
-                        "authorizationRequestId"
+                        "authorizationRequestId",
+                        PaymentGateway.VPOS,
+                        URI.create("logo/test")
                 )
         );
 
         TransactionAuthorizationCompletedEvent authorizationStatusUpdatedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
+                        ECOMMERCE_RRN,
+                        expectedOperationTimestamp,
                         AuthorizationResultDto.OK
                 )
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new OutcomeVposGatewayDto()
+                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                                .rrn(ECOMMERCE_RRN)
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -854,6 +1109,13 @@ class TransactionSendClosureHandlerTest {
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
+        BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
+                (transactionActivatedEvent.getData().getPaymentNotices().stream()
+                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                        .sum()
+                        + authorizationRequestData.getFee())
+        );
+
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         List.of(
@@ -865,37 +1127,120 @@ class TransactionSendClosureHandlerTest {
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                ((BaseTransactionWithPaymentToken) transaction).getTransactionActivatedData()
-                                        .getPaymentNotices().get(0).getAmount() + authorizationRequestData.getFee()
-                        )
+                        totalAmount
                 )
                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
-                        Map.of(
-                                "outcome_payment_gateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
-                        )
+                        new AdditionalPaymentInformationsDto()
+                                .tipoVersamento(TIPO_VERSAMENTO_CP)
+                                .outcomePaymentGateway(
+                                        AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum.fromValue(
+                                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                                        .getOutcome().toString()
+                                        )
+                                )
+                                .authorizationCode(
+                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                                .getAuthorizationCode()
+                                )
+                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                .timestampOperation(
+                                        OffsetDateTime.now()
+                                )
+                                .rrn(ECOMMERCE_RRN)
+                                .totalAmount(totalAmount)
+                ).transactionDetails(
+                        new TransactionDetailsDto()
+                                .transaction(
+                                        new TransactionDto()
+                                                .transactionId(
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
+                                                )
+                                                .transactionStatus("Autorizzato")
+                                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                                .amount(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                        )
+                                                )
+                                                .grandTotal(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                                        + authorizationRequestData.getFee()
+                                                        )
+                                                )
+                                                .rrn(
+                                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getRrn()
+                                                )
+                                                .authorizationCode(
+                                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getAuthorizationCode()
+                                                )
+                                                .creationDate(
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
+                                                )
+                                                .psp(
+                                                        new PspDto()
+                                                                .idPsp(
+                                                                        authorizationRequestData
+                                                                                .getPspId()
+                                                                )
+                                                                .idChannel(
+                                                                        authorizationRequestData
+                                                                                .getPspChannelCode()
+                                                                )
+                                                                .businessName(
+                                                                        authorizationRequestData
+                                                                                .getPspBusinessName()
+                                                                )
+                                                )
+                                )
+                                .info(
+                                        new InfoDto()
+                                                .type(
+                                                        authorizationRequestData
+                                                                .getPaymentTypeCode()
+                                                )
+                                                .brandLogo(
+                                                        authorizationRequestData.getLogo()
+                                                                .getPath()
+                                                )
+                                )
+                                .user(new UserDto().type(UserDto.TypeEnum.GUEST))
+
                 );
 
         ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
                 .outcome(ClosePaymentResponseDto.OutcomeEnum.KO);
 
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
-                transactionId.value().toString()
+                transactionId.value()
         );
 
         RuntimeException redisError = new RuntimeException("Network error");
 
         /* preconditions */
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
         // first call to redis is ko, second one is ok
         Mockito.when(transactionEventStoreRepository.save(any()))
                 .thenReturn(Mono.error(redisError));
@@ -940,6 +1285,7 @@ class TransactionSendClosureHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
@@ -952,18 +1298,19 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionActivatedData(
                         email,
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT,
+                        idCart
                 )
         );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -974,21 +1321,28 @@ class TransactionSendClosureHandlerTest {
                         "pspChannelCode",
                         "paymentMethodName",
                         "pspBusinessName",
-                        "authorizationRequestId"
+                        "authorizationRequestId",
+                        PaymentGateway.XPAY,
+                        URI.create("logo/test")
                 )
         );
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
+                        null,
+                        expectedOperationTimestamp,
                         AuthorizationResultDto.OK
                 )
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new OutcomeXpayGatewayDto()
+                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -1009,6 +1363,13 @@ class TransactionSendClosureHandlerTest {
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
+        BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
+                (transactionActivatedEvent.getData().getPaymentNotices().stream()
+                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                        .sum()
+                        + authorizationRequestData.getFee())
+        );
+
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         transactionActivatedEvent.getData().getPaymentNotices().stream()
@@ -1018,7 +1379,7 @@ class TransactionSendClosureHandlerTest {
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
                         EuroUtils.euroCentsToEuro(
                                 (transactionActivatedEvent.getData().getPaymentNotices().stream()
@@ -1031,15 +1392,88 @@ class TransactionSendClosureHandlerTest {
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
-                        Map.of(
-                                "outcome_payment_gateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
-                        )
+                        new AdditionalPaymentInformationsDto()
+                                .tipoVersamento(TIPO_VERSAMENTO_CP)
+                                .outcomePaymentGateway(
+                                        AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum.fromValue(
+                                                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                                        .getOutcome().toString()
+                                        )
+                                )
+                                .authorizationCode(
+                                        ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                                .getAuthorizationCode()
+                                )
+                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                .timestampOperation(
+                                        OffsetDateTime.now()
+                                )
+                                .totalAmount(totalAmount)
+                ).transactionDetails(
+                        new TransactionDetailsDto()
+                                .transaction(
+                                        new TransactionDto()
+                                                .transactionId(
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
+                                                )
+                                                .transactionStatus("Autorizzato")
+                                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                                .amount(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                        )
+                                                )
+                                                .grandTotal(
+                                                        totalAmount
+                                                )
+                                                .authorizationCode(
+                                                        ((OutcomeXpayGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getAuthorizationCode()
+                                                )
+                                                .creationDate(
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
+                                                )
+                                                .psp(
+                                                        new PspDto()
+                                                                .idPsp(
+                                                                        authorizationRequestData
+                                                                                .getPspId()
+                                                                )
+                                                                .idChannel(
+                                                                        authorizationRequestData
+                                                                                .getPspChannelCode()
+                                                                )
+                                                                .businessName(
+                                                                        authorizationRequestData
+                                                                                .getPspBusinessName()
+                                                                )
+                                                )
+                                )
+                                .info(
+                                        new InfoDto()
+                                                .type(
+                                                        authorizationRequestData
+                                                                .getPaymentTypeCode()
+                                                )
+                                                .brandLogo(
+                                                        authorizationRequestData.getLogo()
+                                                                .getPath()
+                                                )
+                                )
+                                .user(new UserDto().type(UserDto.TypeEnum.GUEST))
+
                 );
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
-                transactionId.value().toString()
+                transactionId.value()
         );
 
         RuntimeException closePaymentError = new BadGatewayException("Bad request error", HttpStatus.BAD_REQUEST);
@@ -1047,7 +1481,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.error(closePaymentError));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
@@ -1105,6 +1539,7 @@ class TransactionSendClosureHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
@@ -1117,18 +1552,19 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionActivatedData(
                         email,
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT,
+                        idCart
                 )
         );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -1139,21 +1575,27 @@ class TransactionSendClosureHandlerTest {
                         "pspChannelCode",
                         "paymentMethodName",
                         "pspBusinessName",
-                        "authorizationRequestId"
+                        "authorizationRequestId",
+                        PaymentGateway.VPOS,
+                        null
                 )
         );
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationCompletedData(
-                        "authorizationCode",
+                        null,
+                        null,
+                        expectedOperationTimestamp,
                         AuthorizationResultDto.KO
                 )
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.KO)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new OutcomeVposGatewayDto()
+                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.KO)
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -1172,39 +1614,42 @@ class TransactionSendClosureHandlerTest {
                 closureSendData
         );
 
-        TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
-
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         transactionActivatedEvent.getData().getPaymentNotices().stream()
                                 .map(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getPaymentToken).toList()
                 )
                 .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.KO)
-                .idPSP(authorizationRequestData.getPspId())
-                .idBrokerPSP(authorizationRequestData.getBrokerName())
-                .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
-                .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                (transactionActivatedEvent.getData().getPaymentNotices().stream()
-                                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
-                                        .sum()
-                                        + authorizationRequestData.getFee())
-                        )
-                )
-                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
-                .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
-                .paymentMethod(authorizationRequestData.getPaymentTypeCode())
-                .additionalPaymentInformations(
-                        Map.of(
-                                "outcome_payment_gateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
-                        )
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
+                .transactionDetails(
+                        new TransactionDetailsDto()
+                                .transaction(
+                                        new TransactionDto()
+                                                .transactionId(
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
+                                                )
+                                                .transactionStatus("Rifiutato")
+                                                .creationDate(
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
+                                                )
+                                )
+                                .info(
+                                        new InfoDto()
+                                                .type(
+                                                        authorizationRequestedEvent.getData()
+                                                                .getPaymentTypeCode()
+                                                )
+                                )
+                                .user(new UserDto().type(UserDto.TypeEnum.GUEST))
+
                 );
+
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
-                transactionId.value().toString()
+                transactionId.value()
         );
 
         RuntimeException closePaymentError = new BadGatewayException("Bad request error", HttpStatus.BAD_REQUEST);
@@ -1212,7 +1657,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.error(closePaymentError));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(transactionRefundedEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
         Mockito.when(
@@ -1267,6 +1712,7 @@ class TransactionSendClosureHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
@@ -1279,18 +1725,19 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionActivatedData(
                         email,
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT,
+                        idCart
                 )
         );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -1301,21 +1748,27 @@ class TransactionSendClosureHandlerTest {
                         "pspChannelCode",
                         "paymentMethodName",
                         "pspBusinessName",
-                        "authorizationRequestId"
+                        "authorizationRequestId",
+                        PaymentGateway.XPAY,
+                        URI.create("logo/test")
                 )
         );
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationCompletedData(
-                        "authorizationCode",
+                        null,
+                        null,
+                        expectedOperationTimestamp,
                         AuthorizationResultDto.KO
                 )
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.KO)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new OutcomeXpayGatewayDto()
+                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.KO)
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -1337,39 +1790,42 @@ class TransactionSendClosureHandlerTest {
         TransactionClosureFailedEvent event = TransactionTestUtils
                 .transactionClosureFailedEvent(TransactionClosureData.Outcome.KO);
 
-        TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
-
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         transactionActivatedEvent.getData().getPaymentNotices().stream()
                                 .map(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getPaymentToken).toList()
                 )
                 .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.KO)
-                .idPSP(authorizationRequestData.getPspId())
-                .idBrokerPSP(authorizationRequestData.getBrokerName())
-                .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
-                .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                (transactionActivatedEvent.getData().getPaymentNotices().stream()
-                                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
-                                        .sum()
-                                        + authorizationRequestData.getFee())
-                        )
-                )
-                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
-                .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
-                .paymentMethod(authorizationRequestData.getPaymentTypeCode())
-                .additionalPaymentInformations(
-                        Map.of(
-                                "outcome_payment_gateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
-                        )
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
+                .transactionDetails(
+                        new TransactionDetailsDto()
+                                .transaction(
+                                        new TransactionDto()
+                                                .transactionId(
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
+                                                )
+                                                .transactionStatus("Rifiutato")
+                                                .creationDate(
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
+                                                )
+                                )
+                                .info(
+                                        new InfoDto()
+                                                .type(
+                                                        authorizationRequestedEvent.getData()
+                                                                .getPaymentTypeCode()
+                                                )
+                                )
+                                .user(new UserDto().type(UserDto.TypeEnum.GUEST))
+
                 );
+
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
-                transactionId.value().toString()
+                transactionId.value()
         );
 
         RuntimeException closePaymentError = new BadGatewayException(
@@ -1380,7 +1836,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.error(closePaymentError));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
@@ -1429,6 +1885,7 @@ class TransactionSendClosureHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
@@ -1441,18 +1898,19 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionActivatedData(
                         email,
                         PaymentNotices,
                         faultCode,
                         faultCodeString,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT,
+                        idCart
                 )
         );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -1463,21 +1921,29 @@ class TransactionSendClosureHandlerTest {
                         "pspChannelCode",
                         "paymentMethodName",
                         "pspBusinessName",
-                        "authorizationRequestId"
+                        "authorizationRequestId",
+                        PaymentGateway.VPOS,
+                        URI.create("logo/test")
                 )
         );
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
+                        ECOMMERCE_RRN,
+                        expectedOperationTimestamp,
                         AuthorizationResultDto.OK
                 )
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new OutcomeVposGatewayDto()
+                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                                .rrn(ECOMMERCE_RRN)
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -1501,6 +1967,13 @@ class TransactionSendClosureHandlerTest {
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
+        BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
+                (transactionActivatedEvent.getData().getPaymentNotices().stream()
+                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                        .sum()
+                        + authorizationRequestData.getFee())
+        );
+
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         transactionActivatedEvent.getData().getPaymentNotices().stream()
@@ -1510,7 +1983,7 @@ class TransactionSendClosureHandlerTest {
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
                         EuroUtils.euroCentsToEuro(
                                 (transactionActivatedEvent.getData().getPaymentNotices().stream()
@@ -1523,15 +1996,103 @@ class TransactionSendClosureHandlerTest {
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
-                        Map.of(
-                                "outcome_payment_gateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
-                        )
+                        new AdditionalPaymentInformationsDto()
+                                .tipoVersamento(TIPO_VERSAMENTO_CP)
+                                .outcomePaymentGateway(
+                                        AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum.fromValue(
+                                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                                        .getOutcome().toString()
+                                        )
+                                )
+                                .authorizationCode(
+                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                                .getAuthorizationCode()
+                                )
+                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                .timestampOperation(
+                                        OffsetDateTime.now()
+                                )
+                                .rrn(ECOMMERCE_RRN)
+                                .totalAmount(totalAmount)
+
+                ).transactionDetails(
+                        new TransactionDetailsDto()
+                                .transaction(
+                                        new TransactionDto()
+                                                .transactionId(
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
+                                                )
+                                                .transactionStatus("Autorizzato")
+                                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                                .amount(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                        )
+                                                )
+                                                .grandTotal(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                                        + authorizationRequestData.getFee()
+                                                        )
+                                                )
+                                                .rrn(
+                                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getRrn()
+                                                )
+                                                .authorizationCode(
+                                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getAuthorizationCode()
+                                                )
+                                                .creationDate(
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
+                                                )
+                                                .psp(
+                                                        new PspDto()
+                                                                .idPsp(
+                                                                        authorizationRequestData
+                                                                                .getPspId()
+                                                                )
+                                                                .idChannel(
+                                                                        authorizationRequestData
+                                                                                .getPspChannelCode()
+                                                                )
+                                                                .businessName(
+                                                                        authorizationRequestData
+                                                                                .getPspBusinessName()
+                                                                )
+                                                )
+                                )
+                                .info(
+                                        new InfoDto()
+                                                .type(
+                                                        authorizationRequestData
+                                                                .getPaymentTypeCode()
+                                                )
+                                                .brandLogo(
+                                                        authorizationRequestData.getLogo()
+                                                                .getPath()
+                                                )
+                                )
+                                .user(new UserDto().type(UserDto.TypeEnum.GUEST))
+
                 );
+
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
-                transactionId.value().toString()
+                transactionId.value()
         );
 
         RuntimeException closePaymentError = new BadGatewayException(
@@ -1542,7 +2103,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.error(closePaymentError));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
@@ -1582,6 +2143,7 @@ class TransactionSendClosureHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> paymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
@@ -1594,18 +2156,19 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionActivatedData(
                         email,
                         paymentNotices,
                         faultCode,
                         faultCodeString,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT,
+                        idCart
                 )
         );
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationRequestData(
                         amount.value(),
                         10,
@@ -1616,21 +2179,28 @@ class TransactionSendClosureHandlerTest {
                         "pspChannelCode",
                         "paymentMethodName",
                         "pspBusinessName",
-                        "authorizationRequestId"
+                        "authorizationRequestId",
+                        PaymentGateway.XPAY,
+                        URI.create("logo/test")
                 )
         );
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
-                transactionId.value().toString(),
+                transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
+                        null,
+                        expectedOperationTimestamp,
                         AuthorizationResultDto.OK
                 )
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new OutcomeXpayGatewayDto()
+                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -1654,6 +2224,13 @@ class TransactionSendClosureHandlerTest {
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
 
+        BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
+                (transactionActivatedEvent.getData().getPaymentNotices().stream()
+                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                        .sum()
+                        + authorizationRequestData.getFee())
+        );
+
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         transactionActivatedEvent.getData().getPaymentNotices().stream()
@@ -1663,29 +2240,106 @@ class TransactionSendClosureHandlerTest {
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                (transactionActivatedEvent.getData().getPaymentNotices().stream()
-                                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
-                                        .sum()
-                                        + authorizationRequestData.getFee())
-                        )
+                        totalAmount
                 )
                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
-                        Map.of(
-                                "outcome_payment_gateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
-                        )
+                        new AdditionalPaymentInformationsDto()
+                                .tipoVersamento(TIPO_VERSAMENTO_CP)
+                                .outcomePaymentGateway(
+                                        AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum.fromValue(
+                                                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                                        .getOutcome().toString()
+                                        )
+                                )
+                                .authorizationCode(
+                                        ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                                .getAuthorizationCode()
+                                )
+                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                .timestampOperation(
+                                        OffsetDateTime.now()
+                                )
+                                .totalAmount(totalAmount)
+                )
+                .transactionDetails(
+                        new TransactionDetailsDto()
+                                .transaction(
+                                        new TransactionDto()
+                                                .transactionId(
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
+                                                )
+                                                .transactionStatus("Autorizzato")
+                                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                                .amount(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                (transactionActivatedEvent.getData().getPaymentNotices()
+                                                                        .stream()
+                                                                        .mapToInt(
+                                                                                it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount
+                                                                        )
+                                                                        .sum())
+                                                        )
+                                                )
+                                                .grandTotal(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                (transactionActivatedEvent.getData().getPaymentNotices()
+                                                                        .stream()
+                                                                        .mapToInt(
+                                                                                it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount
+                                                                        )
+                                                                        .sum()
+                                                                        + authorizationRequestData.getFee())
+                                                        )
+                                                )
+                                                .rrn(authorizationCompletedEvent.getData().getRrn())
+                                                .authorizationCode(
+                                                        ((OutcomeXpayGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway())
+                                                                        .getAuthorizationCode()
+                                                )
+                                                .creationDate(
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getCreationDate().toOffsetDateTime()
+                                                )
+                                                .psp(
+                                                        new PspDto()
+                                                                .idPsp(
+                                                                        authorizationRequestData
+                                                                                .getPspId()
+                                                                )
+                                                                .idChannel(
+                                                                        authorizationRequestData
+                                                                                .getPspChannelCode()
+                                                                )
+                                                                .businessName(
+                                                                        authorizationRequestData
+                                                                                .getPspBusinessName()
+                                                                )
+                                                )
+                                )
+                                .info(
+                                        new InfoDto()
+                                                .type(
+                                                        authorizationRequestData
+                                                                .getPaymentTypeCode()
+                                                )
+                                                .brandLogo(
+                                                        authorizationRequestData.getLogo()
+                                                                .getPath()
+                                                )
+                                )
+                                .user(new UserDto().type(UserDto.TypeEnum.GUEST))
+
                 );
 
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
-                transactionId.value().toString()
+                transactionId.value()
         );
 
         RuntimeException closePaymentError = new BadGatewayException(
@@ -1696,7 +2350,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.error(closePaymentError));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
@@ -1739,8 +2393,12 @@ class TransactionSendClosureHandlerTest {
                 .transactionAuthorizationCompletedEvent(AuthorizationResultDto.OK);
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new OutcomeVposGatewayDto()
+                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                                .rrn(ECOMMERCE_RRN)
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -1763,7 +2421,12 @@ class TransactionSendClosureHandlerTest {
                 .transactionClosedEvent(TransactionClosureData.Outcome.KO);
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
-
+        BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
+                (transactionActivatedEvent.getData().getPaymentNotices().stream()
+                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                        .sum()
+                        + authorizationRequestData.getFee())
+        );
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         List.of(
@@ -1775,24 +2438,98 @@ class TransactionSendClosureHandlerTest {
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                        + authorizationRequestData.getFee()
-                        )
+                        totalAmount
                 )
                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
-                        Map.of(
-                                "outcome_payment_gateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
-                        )
+                        new AdditionalPaymentInformationsDto()
+                                .tipoVersamento(TIPO_VERSAMENTO_CP)
+                                .outcomePaymentGateway(
+                                        AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum.fromValue(
+                                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                                        .getOutcome().toString()
+                                        )
+                                )
+                                .authorizationCode(
+                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                                .getAuthorizationCode()
+                                )
+                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                .timestampOperation(
+                                        OffsetDateTime.now()
+                                )
+                                .rrn(ECOMMERCE_RRN)
+                                .totalAmount(totalAmount)
+                ).transactionDetails(
+                        new TransactionDetailsDto()
+                                .transaction(
+                                        new TransactionDto()
+                                                .transactionId(
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
+                                                )
+                                                .transactionStatus("Autorizzato")
+                                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                                .amount(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                        )
+                                                )
+                                                .grandTotal(
+                                                        totalAmount
+                                                )
+                                                .rrn(
+                                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getRrn()
+                                                )
+                                                .authorizationCode(
+                                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getAuthorizationCode()
+                                                )
+                                                .creationDate(
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
+                                                )
+                                                .psp(
+                                                        new PspDto()
+                                                                .idPsp(
+                                                                        authorizationRequestData
+                                                                                .getPspId()
+                                                                )
+                                                                .idChannel(
+                                                                        authorizationRequestData
+                                                                                .getPspChannelCode()
+                                                                )
+                                                                .businessName(
+                                                                        authorizationRequestData
+                                                                                .getPspBusinessName()
+                                                                )
+                                                )
+                                )
+                                .info(
+                                        new InfoDto()
+                                                .type(
+                                                        authorizationRequestData
+                                                                .getPaymentTypeCode()
+                                                )
+                                                .brandLogo(
+                                                        authorizationRequestData.getLogo()
+                                                                .toString()
+                                                )
+                                )
+                                .user(new UserDto().type(UserDto.TypeEnum.GUEST))
+
                 );
 
         ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
@@ -1801,7 +2538,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());
@@ -1834,7 +2571,7 @@ class TransactionSendClosureHandlerTest {
                                 (BinaryData b) -> {
                                     TransactionRefundRequestedEvent e = b
                                             .toObject(TransactionRefundRequestedEvent.class);
-                                    return e.getTransactionId().equals(transactionId.value().toString()) && e.getData()
+                                    return e.getTransactionId().equals(transactionId.value()) && e.getData()
                                             .getStatusBeforeRefunded().equals(TransactionStatusDto.CLOSED);
                                 }
 
@@ -1855,8 +2592,12 @@ class TransactionSendClosureHandlerTest {
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = TransactionTestUtils
                 .transactionAuthorizationCompletedEvent(AuthorizationResultDto.OK);
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new OutcomeVposGatewayDto()
+                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                                .rrn(ECOMMERCE_RRN)
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -1876,7 +2617,12 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
-
+        BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
+                (transactionActivatedEvent.getData().getPaymentNotices().stream()
+                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                        .sum()
+                        + authorizationRequestData.getFee())
+        );
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         List.of(
@@ -1888,36 +2634,118 @@ class TransactionSendClosureHandlerTest {
                 .idPSP(authorizationRequestData.getPspId())
                 .idBrokerPSP(authorizationRequestData.getBrokerName())
                 .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
                 .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                        + authorizationRequestData.getFee()
-                        )
+                        totalAmount
                 )
                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
-                        Map.of(
-                                "outcome_payment_gateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
-                        )
+                        new AdditionalPaymentInformationsDto()
+                                .tipoVersamento(TIPO_VERSAMENTO_CP)
+                                .outcomePaymentGateway(
+                                        AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum.fromValue(
+                                                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                                        .getOutcome().toString()
+                                        )
+                                )
+                                .authorizationCode(
+                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
+                                                .getAuthorizationCode()
+                                )
+                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                .timestampOperation(
+                                        OffsetDateTime.now()
+                                )
+                                .rrn(ECOMMERCE_RRN)
+                                .totalAmount(totalAmount)
+                ).transactionDetails(
+                        new TransactionDetailsDto()
+                                .transaction(
+                                        new TransactionDto()
+                                                .transactionId(
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
+                                                )
+                                                .transactionStatus("Autorizzato")
+                                                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                                                .amount(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                        )
+                                                )
+                                                .grandTotal(
+                                                        EuroUtils.euroCentsToEuro(
+                                                                ((BaseTransactionWithPaymentToken) transaction)
+                                                                        .getPaymentNotices().stream()
+                                                                        .mapToInt(
+                                                                                PaymentNotice -> PaymentNotice
+                                                                                        .transactionAmount().value()
+                                                                        ).sum()
+                                                                        + authorizationRequestData.getFee()
+                                                        )
+                                                )
+                                                .rrn(
+                                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getRrn()
+                                                )
+                                                .authorizationCode(
+                                                        ((OutcomeVposGatewayDto) updateAuthorizationRequest
+                                                                .getOutcomeGateway()).getAuthorizationCode()
+                                                )
+                                                .creationDate(
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
+                                                )
+                                                .psp(
+                                                        new PspDto()
+                                                                .idPsp(
+                                                                        authorizationRequestData
+                                                                                .getPspId()
+                                                                )
+                                                                .idChannel(
+                                                                        authorizationRequestData
+                                                                                .getPspChannelCode()
+                                                                )
+                                                                .businessName(
+                                                                        authorizationRequestData
+                                                                                .getPspBusinessName()
+                                                                )
+                                                )
+                                )
+                                .info(
+                                        new InfoDto()
+                                                .type(
+                                                        authorizationRequestData
+                                                                .getPaymentTypeCode()
+                                                )
+                                                .brandLogo(
+                                                        authorizationRequestData.getLogo()
+                                                                .toString()
+                                                )
+                                )
+                                .user(new UserDto().type(UserDto.TypeEnum.GUEST))
+
                 );
 
         RuntimeException closePaymentError = new BadGatewayException("Bad request error", HttpStatus.BAD_REQUEST);
 
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
-                transactionId.value().toString()
+                transactionId.value()
         );
 
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.error(closePaymentError));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
         Mockito.when(
                 refundQueueAsyncClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());
@@ -1945,7 +2773,7 @@ class TransactionSendClosureHandlerTest {
                                 (BinaryData b) -> {
                                     TransactionRefundRequestedEvent e = b
                                             .toObject(TransactionRefundRequestedEvent.class);
-                                    return e.getTransactionId().equals(transactionId.value().toString()) && e.getData()
+                                    return e.getTransactionId().equals(transactionId.value()) && e.getData()
                                             .getStatusBeforeRefunded().equals(TransactionStatusDto.CLOSURE_ERROR);
                                 }
                         ),
@@ -1975,8 +2803,10 @@ class TransactionSendClosureHandlerTest {
                 .transactionAuthorizationCompletedEvent(AuthorizationResultDto.KO);
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.KO)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new OutcomeVposGatewayDto()
+                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.KO)
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -2008,27 +2838,32 @@ class TransactionSendClosureHandlerTest {
                         )
                 )
                 .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.KO)
-                .idPSP(authorizationRequestData.getPspId())
-                .idBrokerPSP(authorizationRequestData.getBrokerName())
-                .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
-                .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                        + authorizationRequestData.getFee()
-                        )
-                )
-                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
-                .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
-                .paymentMethod(authorizationRequestData.getPaymentTypeCode())
-                .additionalPaymentInformations(
-                        Map.of(
-                                "outcome_payment_gateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
-                        )
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
+                .transactionDetails(
+                        new TransactionDetailsDto()
+                                .transaction(
+                                        new TransactionDto()
+                                                .transactionId(
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getTransactionId().value()
+                                                )
+                                                .transactionStatus("Rifiutato")
+                                                .creationDate(
+                                                        ZonedDateTime.parse(
+                                                                transactionActivatedEvent
+                                                                        .getCreationDate()
+                                                        ).toOffsetDateTime()
+                                                )
+                                )
+                                .info(
+                                        new InfoDto()
+                                                .type(
+                                                        authorizationRequestData
+                                                                .getPaymentTypeCode()
+                                                )
+                                )
+                                .user(new UserDto().type(UserDto.TypeEnum.GUEST))
+
                 );
 
         ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
@@ -2037,7 +2872,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());
@@ -2081,8 +2916,10 @@ class TransactionSendClosureHandlerTest {
                 );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(it.pagopa.generated.transactions.server.model.AuthorizationResultDto.KO)
-                .authorizationCode("authorizationCode")
+                .outcomeGateway(
+                        new OutcomeVposGatewayDto()
+                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.KO)
+                )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<TransactionEvent<Object>> events = ((Flux) Flux
@@ -2111,31 +2948,33 @@ class TransactionSendClosureHandlerTest {
                         )
                 )
                 .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.KO)
-                .idPSP(authorizationRequestData.getPspId())
-                .idBrokerPSP(authorizationRequestData.getBrokerName())
-                .idChannel(authorizationRequestData.getPspChannelCode())
-                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value().toString())
-                .totalAmount(
-                        EuroUtils.euroCentsToEuro(
-                                ((BaseTransactionWithPaymentToken) transaction).getPaymentNotices().stream()
-                                        .mapToInt(PaymentNotice -> PaymentNotice.transactionAmount().value()).sum()
-                                        + authorizationRequestData.getFee()
-                        )
-                )
-                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
-                .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
-                .paymentMethod(authorizationRequestData.getPaymentTypeCode())
-                .additionalPaymentInformations(
-                        Map.of(
-                                "outcome_payment_gateway",
-                                updateAuthorizationRequest.getAuthorizationResult().toString(),
-                                "authorization_code",
-                                updateAuthorizationRequest.getAuthorizationCode()
-                        )
+                .transactionId(((BaseTransactionWithPaymentToken) transaction).getTransactionId().value())
+                .transactionDetails(
+                        new TransactionDetailsDto()
+                                .transaction(
+                                        new TransactionDto()
+                                                .transactionId(
+                                                        transactionId.value()
+                                                )
+                                                .transactionStatus("Rifiutato")
+                                                .creationDate(
+                                                        ((BaseTransactionWithPaymentToken) transaction)
+                                                                .getCreationDate().toOffsetDateTime()
+                                                )
+                                )
+                                .info(
+                                        new InfoDto()
+                                                .type(
+                                                        authorizationRequestData
+                                                                .getPaymentTypeCode()
+                                                )
+                                )
+                                .user(new UserDto().type(UserDto.TypeEnum.GUEST))
+
                 );
 
         TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
-                transactionId.value().toString()
+                transactionId.value()
         );
 
         RuntimeException closePaymentError = new BadGatewayException("Bad request error", HttpStatus.BAD_REQUEST);
@@ -2143,7 +2982,7 @@ class TransactionSendClosureHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.error(closePaymentError));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
         Mockito.when(
                 refundQueueAsyncClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());

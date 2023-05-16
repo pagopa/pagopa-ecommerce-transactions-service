@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.time.ZonedDateTime;
-import java.util.UUID;
 
 @Component
 @Slf4j
@@ -27,12 +26,13 @@ public class AuthorizationUpdateProjectionHandler
                         Mono.error(new TransactionNotFoundException(data.getTransactionId()))
                 )
                 .flatMap(transactionDocument -> {
+                    transactionDocument.setRrn(data.getData().getRrn());
                     transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_COMPLETED);
                     return transactionsViewRepository.save(transactionDocument);
                 })
                 .map(
                         transactionDocument -> new TransactionActivated(
-                                new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
+                                new TransactionId(transactionDocument.getTransactionId()),
                                 transactionDocument.getPaymentNotices().stream()
                                         .map(
                                                 paymentNotice -> new PaymentNotice(
@@ -56,8 +56,10 @@ public class AuthorizationUpdateProjectionHandler
                                 null,
                                 null,
                                 ZonedDateTime.parse(transactionDocument.getCreationDate()),
-                                transactionDocument.getClientId()
+                                transactionDocument.getClientId(),
+                                transactionDocument.getIdCart()
                         )
                 );
     }
+
 }

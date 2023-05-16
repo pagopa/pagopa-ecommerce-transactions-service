@@ -4,11 +4,10 @@ import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
-import it.pagopa.ecommerce.commons.domain.v1.PaymentTransferInfo;
 import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
+import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
-import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
@@ -39,7 +38,7 @@ public class TransactionActivateHandler
         implements CommandHandler<TransactionActivateCommand, Mono<Tuple2<Mono<TransactionActivatedEvent>, String>>> {
 
     public static final int TRANSFER_LIST_MAX_SIZE = 5;
-    private final PaymentRequestsInfoRepository paymentRequestsInfoRepository;
+    private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper;
 
     private final TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository;
 
@@ -58,7 +57,7 @@ public class TransactionActivateHandler
 
     @Autowired
     public TransactionActivateHandler(
-            PaymentRequestsInfoRepository paymentRequestsInfoRepository,
+            PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
             TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository,
             NodoOperations nodoOperations,
             JwtTokenUtils jwtTokenUtils,
@@ -66,7 +65,7 @@ public class TransactionActivateHandler
             @Value("${payment.token.validity}") Integer paymentTokenTimeout,
             ConfidentialMailUtils confidentialMailUtils
     ) {
-        this.paymentRequestsInfoRepository = paymentRequestsInfoRepository;
+        this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
         this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
         this.nodoOperations = nodoOperations;
         this.paymentTokenTimeout = paymentTokenTimeout;
@@ -78,15 +77,16 @@ public class TransactionActivateHandler
     public Mono<Tuple2<Mono<TransactionActivatedEvent>, String>> handle(
                                                                         TransactionActivateCommand command
     ) {
-        final String transactionId = UUID.randomUUID().toString();
+        final TransactionId transactionId = new TransactionId(UUID.randomUUID());
         final NewTransactionRequestDto newTransactionRequestDto = command.getData();
         final List<PaymentNoticeInfoDto> paymentNotices = newTransactionRequestDto.getPaymentNotices();
         final boolean multiplePaymentNotices = paymentNotices.size() > 1;
 
         log.info(
-                "Nodo parallel processed requests : [{}]. Multiple payment notices: [{}]",
+                "Nodo parallel processed requests : [{}]. Multiple payment notices: [{}]. Id cart: [{}]",
                 nodoParallelRequests,
-                multiplePaymentNotices
+                multiplePaymentNotices,
+                Optional.ofNullable(newTransactionRequestDto.getIdCart()).orElse("id cart not found")
         );
         return Mono.defer(
                 () -> Flux.fromIterable(paymentNotices)
@@ -133,10 +133,11 @@ public class TransactionActivateHandler
                                                                                 ),
                                                                                 new ArrayList<>(TRANSFER_LIST_MAX_SIZE)
                                                                         );
-                                                                        return paymentRequestsInfoRepository
+                                                                        paymentRequestInfoRedisTemplateWrapper
                                                                                 .save(
                                                                                         paymentRequestWithOnlyIdempotencyKey
                                                                                 );
+                                                                        return paymentRequestWithOnlyIdempotencyKey;
                                                                     }
                                                             )
                                             )
@@ -177,8 +178,9 @@ public class TransactionActivateHandler
                                                                     rptId,
                                                                     idempotencyKey,
                                                                     paymentNotice.getAmount(),
-                                                                    transactionId,
-                                                                    paymentTokenTimeout
+                                                                    transactionId.value(),
+                                                                    paymentTokenTimeout,
+                                                                    newTransactionRequestDto.getIdCart()
                                                             )
                                                             .doOnSuccess(
                                                                     p -> log.info(
@@ -197,14 +199,14 @@ public class TransactionActivateHandler
                                             paymentRequestInfo.id(),
                                             paymentRequestInfo.paymentToken()
                                     );
-                                    paymentRequestsInfoRepository.save(paymentRequestInfo);
+                                    paymentRequestInfoRedisTemplateWrapper.save(paymentRequestInfo);
                                 }
                         )
                         .sequential()
                         .collectList()
                         .flatMap(
                                 paymentRequestInfos -> jwtTokenUtils
-                                        .generateToken(new TransactionId(UUID.fromString(transactionId)))
+                                        .generateToken(transactionId)
                                         .map(generatedToken -> Tuples.of(generatedToken, paymentRequestInfos))
                         ).flatMap(
                                 args -> {
@@ -214,9 +216,10 @@ public class TransactionActivateHandler
                                             Tuples.of(
                                                     newTransactionActivatedEvent(
                                                             paymentRequestsInfo,
-                                                            transactionId,
+                                                            transactionId.value(),
                                                             newTransactionRequestDto.getEmail(),
-                                                            command.getClientId()
+                                                            command.getClientId(),
+                                                            newTransactionRequestDto.getIdCart()
                                                     ),
                                                     authToken
                                             )
@@ -227,7 +230,8 @@ public class TransactionActivateHandler
     }
 
     private Optional<PaymentRequestInfo> getPaymentRequestInfoFromCache(RptId rptId) {
-        Optional<PaymentRequestInfo> paymentInfofromCache = paymentRequestsInfoRepository.findById(rptId);
+        Optional<PaymentRequestInfo> paymentInfofromCache = paymentRequestInfoRedisTemplateWrapper
+                .findById(rptId.value());
         log.info("PaymentRequestInfo cache hit for {}: {}", rptId, paymentInfofromCache.isPresent());
         return paymentInfofromCache;
     }
@@ -244,7 +248,8 @@ public class TransactionActivateHandler
                                                                          List<PaymentRequestInfo> paymentRequestsInfo,
                                                                          String transactionId,
                                                                          String email,
-                                                                         Transaction.ClientId clientId
+                                                                         Transaction.ClientId clientId,
+                                                                         String idCart
     ) {
         List<PaymentNotice> paymentNotices = toPaymentNoticeList(paymentRequestsInfo);
         Mono<TransactionActivatedData> data = confidentialMailUtils.toConfidential(email).map(
@@ -253,7 +258,8 @@ public class TransactionActivateHandler
                         paymentNotices,
                         null,
                         null,
-                        clientId
+                        clientId,
+                        idCart
                 )
         );
 

@@ -2,6 +2,7 @@ package it.pagopa.transactions.utils;
 
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
+import it.pagopa.ecommerce.commons.utils.EuroUtils;
 import it.pagopa.generated.transactions.model.*;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.configurations.NodoConfig;
@@ -16,6 +17,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -37,7 +39,8 @@ public class NodoOperations {
                                                            IdempotencyKey idempotencyKey,
                                                            Integer amount,
                                                            String transactionId,
-                                                           Integer paymentTokenTimeout
+                                                           Integer paymentTokenTimeout,
+                                                           String idCart
     ) {
 
         final BigDecimal amountAsBigDecimal = BigDecimal.valueOf(amount.doubleValue() / 100)
@@ -48,7 +51,8 @@ public class NodoOperations {
                 amountAsBigDecimal,
                 idempotencyKey.rawValue(),
                 transactionId,
-                paymentTokenTimeout
+                paymentTokenTimeout,
+                idCart
         );
     }
 
@@ -57,7 +61,8 @@ public class NodoOperations {
                                                                         BigDecimal amount,
                                                                         String idempotencyKey,
                                                                         String transactionId,
-                                                                        Integer paymentTokenTimeout
+                                                                        Integer paymentTokenTimeout,
+                                                                        String idCart
     ) {
         CtQrCode qrCode = new CtQrCode();
         qrCode.setFiscalCode(rptId.getFiscalCode());
@@ -69,6 +74,7 @@ public class NodoOperations {
         // multiply paymentTokenTimeout by 1000 because on ecommerce it is represented
         // in seconds
         request.setExpirationTime(BigInteger.valueOf(paymentTokenTimeout).multiply(BigInteger.valueOf(1000)));
+        request.setPaymentNote(idCart);
         // TODO Maybe here more values (all optional) can be passed such as Touchpoint
         // and PaymentMethod
         return nodeForPspClient
@@ -76,9 +82,10 @@ public class NodoOperations {
                 .flatMap(
                         activatePaymentNoticeV2Response -> {
                             log.info(
-                                    "Nodo activation for NM3 payment. Transaction id: [{}] RPT id: [{}] response outcome: [{}]",
+                                    "Nodo activation for NM3 payment. Transaction id: [{}] RPT id: [{}] idCart: [{}] response outcome: [{}]",
                                     transactionId,
                                     rptId,
+                                    Optional.ofNullable(idCart).orElse("idCart not present"),
                                     activatePaymentNoticeV2Response.getOutcome()
                             );
                             if (StOutcome.OK.value().equals(activatePaymentNoticeV2Response.getOutcome().value())) {
@@ -106,7 +113,7 @@ public class NodoOperations {
                                                         transfer.getFiscalCodePA(),
                                                         transfer.getRichiestaMarcaDaBollo() != null,
                                                         EuroUtils.euroToEuroCents(transfer.getTransferAmount()),
-                                                        null // TODO il valore non è reperibile sulla struttura dati
+                                                        transfer.getTransferCategory()
                                                 )
                                         ).toList()
                         )

@@ -8,16 +8,16 @@ import it.pagopa.ecommerce.commons.domain.v1.TransactionAuthorizationCompleted;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
-import it.pagopa.ecommerce.commons.repositories.PaymentRequestsInfoRepository;
-import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
-import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
+import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
+import it.pagopa.ecommerce.commons.utils.EuroUtils;
+import it.pagopa.generated.ecommerce.nodo.v2.dto.*;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
-import it.pagopa.transactions.utils.EuroUtils;
+import it.pagopa.transactions.utils.AuthRequestDataUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -28,14 +28,16 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Map;
 
 @Component
 @Slf4j
 public class TransactionSendClosureHandler implements
         CommandHandler<TransactionClosureSendCommand, Mono<Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>>> {
+
+    public static final String TIPO_VERSAMENTO_CP = "CP";
 
     private final TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository;
 
@@ -43,7 +45,7 @@ public class TransactionSendClosureHandler implements
 
     private final TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository;
 
-    private final PaymentRequestsInfoRepository paymentRequestsInfoRepository;
+    private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper;
 
     private final NodeForPspClient nodeForPspClient;
 
@@ -57,13 +59,14 @@ public class TransactionSendClosureHandler implements
 
     private final QueueAsyncClient refundQueueAsyncClient;
     private final TransactionsUtils transactionsUtils;
+    private final AuthRequestDataUtils authRequestDataUtils;
 
     @Autowired
     public TransactionSendClosureHandler(
             TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository,
             TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository,
             TransactionsEventStoreRepository<TransactionRefundedData> transactionRefundedEventStoreRepository,
-            PaymentRequestsInfoRepository paymentRequestsInfoRepository,
+            PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
             NodeForPspClient nodeForPspClient,
             @Qualifier(
                 "transactionClosureRetryQueueAsyncClient"
@@ -72,12 +75,13 @@ public class TransactionSendClosureHandler implements
             @Value("${transactions.ecommerce.retry.offset}") Integer softTimeoutOffset,
             @Value("${transactions.closure_handler.retry_interval}") Integer retryTimeoutInterval,
             @Qualifier("transactionRefundQueueAsyncClient") QueueAsyncClient refundQueueAsyncClient,
-            TransactionsUtils transactionsUtils
+            TransactionsUtils transactionsUtils,
+            AuthRequestDataUtils authRequestDataUtils
     ) {
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionClosureErrorEventStoreRepository = transactionClosureErrorEventStoreRepository;
         this.transactionRefundedEventStoreRepository = transactionRefundedEventStoreRepository;
-        this.paymentRequestsInfoRepository = paymentRequestsInfoRepository;
+        this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
         this.nodeForPspClient = nodeForPspClient;
         this.closureRetryQueueAsyncClient = closureRetryQueueAsyncClient;
         this.paymentTokenValidity = paymentTokenValidity;
@@ -85,6 +89,7 @@ public class TransactionSendClosureHandler implements
         this.retryTimeoutInterval = retryTimeoutInterval;
         this.refundQueueAsyncClient = refundQueueAsyncClient;
         this.transactionsUtils = transactionsUtils;
+        this.authRequestDataUtils = authRequestDataUtils;
     }
 
     @Override
@@ -98,7 +103,6 @@ public class TransactionSendClosureHandler implements
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
                 .doOnNext(t -> log.error("Error: requesting closure for transaction in state {}", t.getStatus()))
                 .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
-
         return transaction
                 .filter(
                         t -> t.getStatus() == TransactionStatusDto.AUTHORIZATION_COMPLETED
@@ -108,11 +112,20 @@ public class TransactionSendClosureHandler implements
                 .flatMap(tx -> {
                     UpdateAuthorizationRequestDto updateAuthorizationRequestDto = command.getData()
                             .updateAuthorizationRequest();
+                    AuthRequestDataUtils.AuthRequestData authRequestData = authRequestDataUtils
+                            .from(updateAuthorizationRequestDto);
                     TransactionAuthorizationRequestData transactionAuthorizationRequestData = tx
                             .getTransactionAuthorizationRequestData();
                     TransactionAuthorizationCompletedData transactionAuthorizationCompletedData = tx
                             .getTransactionAuthorizationCompletedData();
-
+                    BigDecimal amount = EuroUtils.euroCentsToEuro(
+                            tx.getPaymentNotices().stream()
+                                    .mapToInt(
+                                            paymentNotice -> paymentNotice.transactionAmount().value()
+                                    ).sum()
+                    );
+                    BigDecimal fee = EuroUtils.euroCentsToEuro(transactionAuthorizationRequestData.getFee());
+                    BigDecimal totalAmount = amount.add(fee);
                     ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                             .paymentTokens(
                                     tx.getTransactionActivatedData().getPaymentNotices().stream()
@@ -123,32 +136,105 @@ public class TransactionSendClosureHandler implements
                                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
                                     )
                             )
-                            .idPSP(transactionAuthorizationRequestData.getPspId())
-                            .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())
-                            .idChannel(transactionAuthorizationRequestData.getPspChannelCode())
-                            .transactionId(tx.getTransactionId().value().toString())
-                            .totalAmount(
-                                    EuroUtils.euroCentsToEuro(
-                                            tx.getPaymentNotices().stream()
-                                                    .mapToInt(
-                                                            paymentNotice -> paymentNotice.transactionAmount().value()
-                                                    )
-                                                    .sum() + transactionAuthorizationRequestData.getFee()
-                                    )
-                            )
-                            .fee(EuroUtils.euroCentsToEuro(transactionAuthorizationRequestData.getFee()))
-                            .timestampOperation(updateAuthorizationRequestDto.getTimestampOperation())
-                            .paymentMethod(transactionAuthorizationRequestData.getPaymentTypeCode())
-                            .additionalPaymentInformations(
-                                    Map.of(
-                                            "outcome_payment_gateway",
-                                            transactionAuthorizationCompletedData.getAuthorizationResultDto()
-                                                    .toString(),
-                                            "authorization_code",
-                                            updateAuthorizationRequestDto.getAuthorizationCode()
-                                    )
+                            .transactionId(tx.getTransactionId().value())
+                            .transactionDetails(
+                                    new TransactionDetailsDto()
+                                            .transaction(
+                                                    new TransactionDto()
+                                                            .transactionId(
+                                                                    command.getData().transaction()
+                                                                            .getTransactionId().value()
+                                                            )
+                                                            .transactionStatus("Rifiutato")
+                                                            .creationDate(
+                                                                    command.getData().transaction()
+                                                                            .getCreationDate().toOffsetDateTime()
+                                                            )
+                                            )
+                                            .info(
+                                                    new InfoDto()
+                                                            .type(
+                                                                    transactionAuthorizationRequestData
+                                                                            .getPaymentTypeCode()
+                                                            )
+                                            )
+                                            .user(new UserDto().type(UserDto.TypeEnum.GUEST))
+
                             );
 
+                    if (ClosePaymentRequestV2Dto.OutcomeEnum.OK.equals(closePaymentRequest.getOutcome())) {
+                        closePaymentRequest.idPSP(transactionAuthorizationRequestData.getPspId())
+                                .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())
+                                .idChannel(transactionAuthorizationRequestData.getPspChannelCode())
+                                .transactionId(tx.getTransactionId().value().toString())
+                                .totalAmount(totalAmount)
+                                .fee(fee)
+                                .timestampOperation(updateAuthorizationRequestDto.getTimestampOperation())
+                                .paymentMethod(transactionAuthorizationRequestData.getPaymentTypeCode())
+                                .additionalPaymentInformations(
+                                        new AdditionalPaymentInformationsDto()
+                                                .tipoVersamento(TIPO_VERSAMENTO_CP)
+                                                .outcomePaymentGateway(
+                                                        AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum
+                                                                .fromValue(authRequestData.outcome())
+                                                )
+                                                .authorizationCode(authRequestData.authorizationCode())
+                                                .fee(fee)
+                                                .timestampOperation(
+                                                        updateAuthorizationRequestDto.getTimestampOperation()
+                                                )
+                                                .rrn(authRequestData.rrn())
+                                                .totalAmount(totalAmount)
+                                )
+                                .transactionDetails(
+                                        new TransactionDetailsDto()
+                                                .transaction(
+                                                        new TransactionDto()
+                                                                .transactionId(
+                                                                        command.getData().transaction()
+                                                                                .getTransactionId().value()
+                                                                )
+                                                                .transactionStatus("Autorizzato")
+                                                                .fee(fee)
+                                                                .amount(amount)
+                                                                .grandTotal(totalAmount)
+                                                                .rrn(authRequestData.rrn())
+                                                                .authorizationCode(authRequestData.authorizationCode())
+                                                                .creationDate(
+                                                                        command.getData().transaction()
+                                                                                .getCreationDate().toOffsetDateTime()
+                                                                )
+                                                                .psp(
+                                                                        new PspDto()
+                                                                                .idPsp(
+                                                                                        transactionAuthorizationRequestData
+                                                                                                .getPspId()
+                                                                                )
+                                                                                .idChannel(
+                                                                                        transactionAuthorizationRequestData
+                                                                                                .getPspChannelCode()
+                                                                                )
+                                                                                .businessName(
+                                                                                        transactionAuthorizationRequestData
+                                                                                                .getPspBusinessName()
+                                                                                )
+                                                                )
+                                                )
+                                                .info(
+                                                        new InfoDto()
+                                                                .type(
+                                                                        transactionAuthorizationRequestData
+                                                                                .getPaymentTypeCode()
+                                                                )
+                                                                .brandLogo(
+                                                                        transactionAuthorizationRequestData.getLogo()
+                                                                                .toString()
+                                                                )
+                                                )
+                                                .user(new UserDto().type(UserDto.TypeEnum.GUEST))
+
+                                );
+                    }
                     /*
                      * ClosePayment (either OK or KO): save to event store and return event On
                      * error: save TransactionClosureErrorEvent to event store, enqueue and return
@@ -189,7 +275,7 @@ public class TransactionSendClosureHandler implements
                                 // authorized
                                 // and the error received from Nodo is a recoverable ones such as http code 500
                                 TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
-                                        tx.getTransactionId().value().toString()
+                                        tx.getTransactionId().value()
                                 );
 
                                 Mono<TransactionClosureErrorEvent> eventSaved = transactionClosureErrorEventStoreRepository
@@ -278,7 +364,7 @@ public class TransactionSendClosureHandler implements
                             .doFinally(response -> {
                                 tx.getPaymentNotices().forEach(el -> {
                                     log.info("Invalidate cache for RptId : {}", el.rptId().value());
-                                    paymentRequestsInfoRepository.deleteById(el.rptId());
+                                    paymentRequestInfoRedisTemplateWrapper.deleteById(el.rptId().value());
                                 }
                                 );
                             });
@@ -397,4 +483,5 @@ public class TransactionSendClosureHandler implements
             );
         }
     }
+
 }

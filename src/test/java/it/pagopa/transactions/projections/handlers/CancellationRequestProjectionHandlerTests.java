@@ -44,7 +44,9 @@ public class CancellationRequestProjectionHandlerTests {
                 transaction.getEmail(),
                 TransactionStatusDto.CANCELLATION_REQUESTED,
                 Transaction.ClientId.CHECKOUT,
-                transaction.getCreationDate()
+                transaction.getCreationDate(),
+                transaction.getIdCart(),
+                transaction.getRrn()
         );
 
         Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId()))

@@ -1,7 +1,8 @@
 package it.pagopa.transactions.projections.handlers;
 
-import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptAddedEvent;
+import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptData;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptRequestedEvent;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -30,28 +31,31 @@ class TransactionUserReceiptProjectionHandlerTest {
 
     @Test
     void shouldHandleTransactionWithOKOutcome() {
-        TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
+        Transaction transaction = TransactionTestUtils
+                .transactionDocument(TransactionStatusDto.AUTHORIZATION_COMPLETED, ZonedDateTime.now());
 
         it.pagopa.ecommerce.commons.documents.v1.Transaction expectedDocument = new it.pagopa.ecommerce.commons.documents.v1.Transaction(
-                transaction.getTransactionId().value().toString(),
-                transaction.getTransactionActivatedData().getPaymentNotices(),
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
                 null,
                 transaction.getEmail(),
-                TransactionStatusDto.NOTIFIED_OK,
+                TransactionStatusDto.NOTIFICATION_REQUESTED,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                transaction.getCreationDate().toString()
+                transaction.getCreationDate(),
+                transaction.getIdCart(),
+                "rrn"
         );
 
-        TransactionUserReceiptAddedEvent event = new TransactionUserReceiptAddedEvent(
-                transaction.getTransactionId().value().toString(),
-                new TransactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
-        );
+        TransactionUserReceiptRequestedEvent event = TransactionTestUtils
+                .transactionUserReceiptRequestedEvent(
+                        TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
+                );
 
         /*
          * Preconditions
          */
-        Mockito.when(viewRepository.findById(transaction.getTransactionId().value().toString()))
-                .thenReturn(Mono.just(it.pagopa.ecommerce.commons.documents.v1.Transaction.from(transaction)));
+        Mockito.when(viewRepository.findById(transaction.getTransactionId()))
+                .thenReturn(Mono.just(transaction));
 
         Mockito.when(viewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
 
@@ -69,7 +73,7 @@ class TransactionUserReceiptProjectionHandlerTest {
                 .save(
                         argThat(
                                 savedTransaction -> savedTransaction.getStatus()
-                                        .equals(TransactionStatusDto.NOTIFIED_OK)
+                                        .equals(TransactionStatusDto.NOTIFICATION_REQUESTED)
                         )
                 );
     }
@@ -79,22 +83,26 @@ class TransactionUserReceiptProjectionHandlerTest {
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
 
         it.pagopa.ecommerce.commons.documents.v1.Transaction expectedDocument = new it.pagopa.ecommerce.commons.documents.v1.Transaction(
-                transaction.getTransactionId().value().toString(),
+                transaction.getTransactionId().value(),
                 transaction.getTransactionActivatedData().getPaymentNotices(),
                 null,
                 transaction.getEmail(),
-                TransactionStatusDto.REFUND_REQUESTED,
+                TransactionStatusDto.NOTIFICATION_REQUESTED,
                 transaction.getClientId(),
-                transaction.getCreationDate().toString()
+                transaction.getCreationDate().toString(),
+                transaction.getTransactionActivatedData().getIdCart(),
+                null
         );
 
-        TransactionUserReceiptAddedEvent event = TransactionTestUtils
-                .transactionUserReceiptAddedEvent(TransactionUserReceiptData.Outcome.KO);
+        TransactionUserReceiptRequestedEvent event = TransactionTestUtils
+                .transactionUserReceiptRequestedEvent(
+                        TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.KO)
+                );
 
         /*
          * Preconditions
          */
-        Mockito.when(viewRepository.findById(transaction.getTransactionId().value().toString()))
+        Mockito.when(viewRepository.findById(transaction.getTransactionId().value()))
                 .thenReturn(Mono.just(it.pagopa.ecommerce.commons.documents.v1.Transaction.from(transaction)));
 
         Mockito.when(viewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
@@ -113,7 +121,7 @@ class TransactionUserReceiptProjectionHandlerTest {
                 .save(
                         argThat(
                                 savedTransaction -> savedTransaction.getStatus()
-                                        .equals(TransactionStatusDto.REFUND_REQUESTED)
+                                        .equals(TransactionStatusDto.NOTIFICATION_REQUESTED)
                         )
                 );
     }

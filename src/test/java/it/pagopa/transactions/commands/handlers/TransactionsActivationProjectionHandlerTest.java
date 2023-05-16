@@ -17,7 +17,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,7 +36,7 @@ class TransactionsActivationProjectionHandlerTest {
     void shouldSaveTransaction() {
         /* preconditions */
 
-        String transactionIdString = UUID.randomUUID().toString();
+        String transactionIdString = TransactionTestUtils.TRANSACTION_ID;
         String paFiscalCode = "77777777777";
         String rptIdString = paFiscalCode + "111111111111111111";
         String paymentTokenString = UUID.randomUUID().toString();
@@ -64,7 +63,7 @@ class TransactionsActivationProjectionHandlerTest {
         );
 
         TransactionActivatedData data = event.getData();
-        TransactionId transactionId = new TransactionId(UUID.fromString(event.getTransactionId()));
+        TransactionId transactionId = new TransactionId(event.getTransactionId());
         PaymentToken paymentToken = new PaymentToken(event.getData().getPaymentNotices().get(0).getPaymentToken());
         RptId rptId = new RptId(event.getData().getPaymentNotices().get(0).getRptId());
         TransactionDescription description = new TransactionDescription(
@@ -74,6 +73,7 @@ class TransactionsActivationProjectionHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
 
         TransactionActivated transaction = new TransactionActivated(
@@ -98,7 +98,8 @@ class TransactionsActivationProjectionHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                idCart
         );
 
         it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.v1.Transaction

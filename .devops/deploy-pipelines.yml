@@ -72,6 +72,11 @@ resources:
       name: pagopa/azure-pipeline-templates
       ref: refs/tags/v2.10.1
       endpoint: 'io-azure-devops-github-ro'
+    - repository: pagopaCheckoutTests
+      type: github
+      name: pagopa/pagopa-checkout-tests
+      ref: main
+      endpoint: 'io-azure-devops-github-ro'
 
 pool:
   vmImage: ubuntu-latest
@@ -121,6 +126,18 @@ stages:
                     APP_NAME: $(K8S_IMAGE_REPOSITORY_NAME)
                     VALUE_FILE: "helm/values-dev.yaml"
                     GREEN_VERSION: $(Build.SourceVersion)
+
+  - stage: "API_DEV_test"
+    displayName: 'Running API test on blue app'
+    dependsOn: Deploy_for_DEV
+    jobs:
+      - job: newman_api_test
+        steps:
+          - checkout: pagopaCheckoutTests
+          - template: azure-templates/api-tests.yml
+            parameters:
+              ENV_FILE: "api-tests/dev.envs.json"
+              TEST_FILE_PREFIX: "dev"
 
   - stage: "Build_release_candidate"
     displayName: 'Build release candidate'
@@ -192,10 +209,22 @@ stages:
                     GREEN_VERSION: $(green_version)
                     BLUE_VERSION: $(Build.SourceVersion)
 
+  - stage: "Blue_API_UAT_test"
+    displayName: 'Running API test on blue app'
+    dependsOn: Deploy_UAT_Blue
+    jobs:
+      - job: newman_api_test
+        steps:
+          - checkout: pagopaCheckoutTests
+          - template: azure-templates/api-tests.yml
+            parameters:
+              ENV_FILE: "api-tests/uat.transactions.blue.envs.json"
+              TEST_FILE_PREFIX: "blue-uat"
 
   - stage: "Bluegreen_WaitForApproval"
     displayName: 'UAT green approval deployment'
-    dependsOn: Deploy_UAT_Blue
+    dependsOn: Blue_API_UAT_test
+    condition: succeeded()
     jobs:
       - job: Bluegreen_WaitForApproval
         displayName: Manual blue deploy approval
@@ -211,8 +240,11 @@ stages:
   - stage: Release
     ${{ if eq(parameters['UAT_SKIP_BLUE_DEPLOYMENT'], True) }}:
       dependsOn: Build_release_candidate
+
+
     ${{ if eq(parameters['UAT_SKIP_BLUE_DEPLOYMENT'], False) }}:
       dependsOn: Bluegreen_WaitForApproval
+      condition: succeeded()
     jobs:
       - job: make_release
         displayName: Make github release
@@ -285,6 +317,7 @@ stages:
                   inputs:
                     targetType: "inline"
                     script: |
+                      helm repo add microservice-chart https://pagopa.github.io/aks-microservice-chart-blueprint
                       helm dep build helm
                 - template: azure-templates/helm-microservice-chart-deploy.yml
                   parameters:
@@ -296,3 +329,15 @@ stages:
                     APP_NAME: $(K8S_IMAGE_REPOSITORY_NAME)
                     VALUE_FILE: "helm/values-uat.yaml"
                     GREEN_VERSION: $(green_version)
+
+  - stage: "Green_API_UAT_test"
+    displayName: 'Running API test on green app'
+    dependsOn: Deploy_UAT_Green
+    jobs:
+      - job: newman_api_test
+        steps:
+          - checkout: pagopaCheckoutTests
+          - template: azure-templates/api-tests.yml
+            parameters:
+              ENV_FILE: "api-tests/uat.envs.json"
+              TEST_FILE_PREFIX: "green-uat"

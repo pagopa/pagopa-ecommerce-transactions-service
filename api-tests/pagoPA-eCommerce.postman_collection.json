@@ -34,7 +34,35 @@
 			"response": []
 		},
 		{
-			"name": "get tramsaction info",
+			"name": "new transaction",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"rptId\": \"77777777777302016723749670001\",\n    \"email\": \"test@example.com\",\n    \"idCart\": \"idCartTest\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/transactions",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"transactions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get transaction info",
 			"request": {
 				"method": "GET",
 				"header": [],

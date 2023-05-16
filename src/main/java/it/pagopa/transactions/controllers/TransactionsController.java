@@ -1,11 +1,43 @@
 package it.pagopa.transactions.controllers;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
+import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
+import it.pagopa.generated.transactions.server.model.AddUserReceiptResponseDto;
+import it.pagopa.generated.transactions.server.model.ClientIdDto;
+import it.pagopa.generated.transactions.server.model.FaultCategoryDto;
+import it.pagopa.generated.transactions.server.model.GatewayFaultDto;
+import it.pagopa.generated.transactions.server.model.GatewayFaultPaymentProblemJsonDto;
+import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
+import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
+import it.pagopa.generated.transactions.server.model.PartyConfigurationFaultDto;
+import it.pagopa.generated.transactions.server.model.PartyConfigurationFaultPaymentProblemJsonDto;
+import it.pagopa.generated.transactions.server.model.PartyTimeoutFaultDto;
+import it.pagopa.generated.transactions.server.model.PartyTimeoutFaultPaymentProblemJsonDto;
+import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
+import it.pagopa.generated.transactions.server.model.PaymentStatusFaultDto;
+import it.pagopa.generated.transactions.server.model.PaymentStatusFaultPaymentProblemJsonDto;
 import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
-import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.transactions.exceptions.*;
+import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
+import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
+import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
+import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
+import it.pagopa.generated.transactions.server.model.ValidationFaultDto;
+import it.pagopa.generated.transactions.server.model.ValidationFaultPaymentProblemJsonDto;
+import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.BadGatewayException;
+import it.pagopa.transactions.exceptions.GatewayTimeoutException;
+import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
+import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.exceptions.JWTTokenGenerationException;
+import it.pagopa.transactions.exceptions.NodoErrorException;
+import it.pagopa.transactions.exceptions.NotImplementedException;
+import it.pagopa.transactions.exceptions.TransactionAmountMismatchException;
+import it.pagopa.transactions.exceptions.TransactionNotFoundException;
+import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
 import it.pagopa.transactions.services.TransactionsService;
+import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,10 +46,12 @@ import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.support.WebExchangeBindException;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import javax.validation.ConstraintViolationException;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -26,6 +60,9 @@ import java.util.stream.Collectors;
 public class TransactionsController implements TransactionsApi {
     @Autowired
     private TransactionsService transactionsService;
+
+    @Autowired
+    private TransactionsUtils transactionsUtils;
 
     @ExceptionHandler(
         {
@@ -341,4 +378,19 @@ public class TransactionsController implements TransactionsApi {
                 httpStatus
         );
     }
+
+    @Warmup
+    public void postNewTransactionWarmupMethod() {
+        WebClient
+                .create()
+                .post()
+                .uri("http://localhost:8080/transactions")
+                .header("X-Client-Id", TransactionInfoDto.ClientIdEnum.CHECKOUT.toString())
+                .bodyValue(transactionsUtils.buildWarmupRequest())
+                .retrieve()
+                .toBodilessEntity()
+                .block(Duration.ofSeconds(30));
+
+    }
+
 }

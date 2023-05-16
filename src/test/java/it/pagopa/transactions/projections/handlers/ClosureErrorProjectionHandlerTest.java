@@ -43,7 +43,9 @@ class ClosureErrorProjectionHandlerTest {
                 transaction.getEmail(),
                 TransactionStatusDto.REFUND_REQUESTED,
                 Transaction.ClientId.CHECKOUT,
-                transaction.getCreationDate()
+                transaction.getCreationDate(),
+                transaction.getIdCart(),
+                transaction.getRrn()
         );
 
         Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId()))
