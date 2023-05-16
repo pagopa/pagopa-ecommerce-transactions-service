@@ -157,7 +157,7 @@ microservice-chart:
     TRANSACTION_CLOSE_PAYMENT_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-close-payment-queue
     TRANSACTION_REFUND_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-refund-queue
     TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-notifications-queue
-    PAYMENT_TOKEN_VALIDITY_TIME: "1800"
+    PAYMENT_TOKEN_VALIDITY_TIME: "900"
     TRANSACTIONS_RETRY_OFFSET: "60"
     CLOSURE_RETRY_INTERVAL: "30"
     WEB_LOGGING_LEVEL: "off"
