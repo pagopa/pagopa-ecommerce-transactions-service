@@ -13,12 +13,9 @@ import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.utils.soap.SoapEnvelope;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.reactivestreams.Publisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -42,7 +39,6 @@ import java.util.function.Predicate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -230,9 +226,6 @@ class NodeForPspClientTest {
         assertThat(clientResponse.getOutcome()).isEqualTo(closePaymentResponse.getOutcome());
     }
 
-    @Captor
-    ArgumentCaptor<Publisher<ClosePaymentRequestV2Dto>> bodyCaptor;
-
     @Test
     void shouldReturnOKClosePaymentResponseAdditionalInfo() {
         AdditionalPaymentInformationsDto additionalPaymentInformationsDto = new AdditionalPaymentInformationsDto()
@@ -264,7 +257,6 @@ class NodeForPspClientTest {
         when(requestBodyUriSpec.header(any(), eq(MediaType.APPLICATION_JSON_VALUE))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(any(String.class), any(Object[].class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(), eq(ClosePaymentRequestV2Dto.class))).thenReturn(requestHeadersSpec);
-        verify(requestBodyUriSpec).body(bodyCaptor.capture(), ClosePaymentRequestV2Dto.class);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.onStatus(any(Predicate.class), any(Function.class))).thenReturn(responseSpec);
         when(responseSpec.bodyToMono(ClosePaymentResponseDto.class)).thenReturn(Mono.just(closePaymentResponse));

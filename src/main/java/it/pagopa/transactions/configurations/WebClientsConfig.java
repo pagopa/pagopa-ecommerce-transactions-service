@@ -42,11 +42,8 @@ public class WebClientsConfig {
                 );
 
         ExchangeStrategies exchangeStrategies = ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.registerModule(new JavaTimeModule());
-            mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-            mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
+            ObjectMapper mapper = getNodeObjectMapper();
             clientCodecConfigurer.registerDefaults(false);
             clientCodecConfigurer.customCodecs().register(StringDecoder.allMimeTypes());
             clientCodecConfigurer.customCodecs().register(new Jaxb2SoapDecoder());
@@ -58,6 +55,16 @@ public class WebClientsConfig {
         return WebClient.builder().baseUrl(nodoHostname)
                 .clientConnector(new ReactorClientHttpConnector(httpClient)).exchangeStrategies(exchangeStrategies)
                 .build();
+    }
+
+    public ObjectMapper getNodeObjectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+
+        mapper.registerModule(new JavaTimeModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
+        return mapper;
     }
 
     @Bean(name = "paymentTransactionGatewayPostepayWebClient")
