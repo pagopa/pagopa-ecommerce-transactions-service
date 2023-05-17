@@ -607,7 +607,6 @@ components:
               - description
               - creditorReferenceId
               - fiscalCode
-              - companyName
               - debtor
           minItems: 1
           maxItems: 5
