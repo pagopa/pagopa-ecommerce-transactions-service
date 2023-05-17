@@ -190,7 +190,6 @@ public class TransactionSendClosureHandler implements
                                                                 .truncatedTo(ChronoUnit.SECONDS)
                                                                 .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                                 )
-                                                .rrn(authRequestData.rrn())
                                                 .totalAmount(totalAmount.toString())
                                 )
                                 .transactionDetails(

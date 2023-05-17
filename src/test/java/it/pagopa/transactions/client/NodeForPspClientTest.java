@@ -1,15 +1,22 @@
 package it.pagopa.transactions.client;
 
+import it.pagopa.generated.ecommerce.nodo.v2.dto.AdditionalPaymentInformationsDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
-import it.pagopa.generated.transactions.model.*;
+import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Request;
+import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Response;
+import it.pagopa.generated.transactions.model.CtFaultBean;
+import it.pagopa.generated.transactions.model.CtQrCode;
+import it.pagopa.generated.transactions.model.CtTransferListPSPV2;
+import it.pagopa.generated.transactions.model.ObjectFactory;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.utils.soap.SoapEnvelope;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.reactivestreams.Publisher;
 import org.springframework.http.HttpStatus;
@@ -25,6 +32,8 @@ import reactor.test.StepVerifier;
 import javax.xml.bind.JAXBElement;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
@@ -33,6 +42,7 @@ import java.util.function.Predicate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -79,7 +89,7 @@ class NodeForPspClientTest {
         /**
          * preconditions
          */
-        when(nodoWebClient.post()).thenReturn((RequestBodyUriSpec) requestBodyUriSpec);
+        when(nodoWebClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(any(), any(Object[].class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.header(any(), any())).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(), eq(SoapEnvelope.class))).thenReturn(requestHeadersSpec);
@@ -210,6 +220,51 @@ class NodeForPspClientTest {
         when(requestBodyUriSpec.header(any(), eq(MediaType.APPLICATION_JSON_VALUE))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(any(String.class), any(Object[].class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(), eq(ClosePaymentRequestV2Dto.class))).thenReturn(requestHeadersSpec);
+        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.onStatus(any(Predicate.class), any(Function.class))).thenReturn(responseSpec);
+        when(responseSpec.bodyToMono(ClosePaymentResponseDto.class)).thenReturn(Mono.just(closePaymentResponse));
+
+        ClosePaymentResponseDto clientResponse = client.closePaymentV2(closePaymentRequest).block();
+
+        /* test */
+        assertThat(clientResponse.getOutcome()).isEqualTo(closePaymentResponse.getOutcome());
+    }
+
+    @Captor
+    ArgumentCaptor<Publisher<ClosePaymentRequestV2Dto>> bodyCaptor;
+
+    @Test
+    void shouldReturnOKClosePaymentResponseAdditionalInfo() {
+        AdditionalPaymentInformationsDto additionalPaymentInformationsDto = new AdditionalPaymentInformationsDto()
+                .outcomePaymentGateway(AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum.OK)
+                .totalAmount(new BigDecimal((101)).toString())
+                .fee(new BigDecimal(1).toString())
+                .timestampOperation(
+                        OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS)
+                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                );
+
+        ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
+                .paymentTokens(List.of("paymentToken"))
+                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
+                .idPSP("identificativoPsp")
+                .idBrokerPSP("identificativoIntermediario")
+                .idChannel("identificativoCanale")
+                .transactionId("transactionId")
+                .fee(new BigDecimal(1))
+                .timestampOperation(OffsetDateTime.now())
+                .totalAmount(new BigDecimal(101))
+                .additionalPaymentInformations(additionalPaymentInformationsDto);
+
+        ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
+                .outcome(ClosePaymentResponseDto.OutcomeEnum.OK);
+
+        /* preconditions */
+        when(nodoWebClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.header(any(), eq(MediaType.APPLICATION_JSON_VALUE))).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(any(String.class), any(Object[].class))).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.body(any(), eq(ClosePaymentRequestV2Dto.class))).thenReturn(requestHeadersSpec);
+        verify(requestBodyUriSpec).body(bodyCaptor.capture(), ClosePaymentRequestV2Dto.class);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.onStatus(any(Predicate.class), any(Function.class))).thenReturn(responseSpec);
         when(responseSpec.bodyToMono(ClosePaymentResponseDto.class)).thenReturn(Mono.just(closePaymentResponse));
