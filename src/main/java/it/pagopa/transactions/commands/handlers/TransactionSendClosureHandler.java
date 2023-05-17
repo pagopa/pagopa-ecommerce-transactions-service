@@ -191,6 +191,7 @@ public class TransactionSendClosureHandler implements
                                                                 .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                                 )
                                                 .totalAmount(totalAmount.toString())
+                                                .rrn(authRequestData.rrn())
                                 )
                                 .transactionDetails(
                                         new TransactionDetailsDto()
