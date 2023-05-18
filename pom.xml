@@ -401,8 +401,8 @@
                 <configuration>
                     <skipCheckoutIfExists>false</skipCheckoutIfExists>
                     <connectionUrl>scm:git:https://github.com/pagopa/pagopa-ecommerce-commons.git</connectionUrl>
-                    <scmVersionType>branch</scmVersionType>
-                    <scmVersion>chk-1515-sendPaymentResult</scmVersion>
+                    <scmVersionType>tag</scmVersionType>
+                    <scmVersion>0.14.2</scmVersion>
                     <goals>install -DskipTests</goals>
                 </configuration>
                 <executions>
