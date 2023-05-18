@@ -45,7 +45,6 @@ public class WebClientsConfig {
 
             ObjectMapper mapper = getNodeObjectMapper();
             clientCodecConfigurer.registerDefaults(false);
-            ObjectMapper mapper = getNodeObjectMapper();
             clientCodecConfigurer.customCodecs().register(StringDecoder.allMimeTypes());
             clientCodecConfigurer.customCodecs().register(new Jaxb2SoapDecoder());
             clientCodecConfigurer.customCodecs().register(new Jaxb2SoapEncoder());
