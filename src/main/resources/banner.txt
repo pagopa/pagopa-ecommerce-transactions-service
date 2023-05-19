@@ -4,6 +4,6 @@
 ️|  __/ |__| (_) | | | | | | | | | | |  __/ | | (_|  __/
 ️ \___|\____\___/|_| |_| |_|_| |_| |_|\___|_|  \___\___|
 
-${application.name}:${build.version} 🚀
-Developed by pagoPA Touchpoints ❤️
+${application.name}:${build.version}
+Developed by pagoPA Touchpoints
 
