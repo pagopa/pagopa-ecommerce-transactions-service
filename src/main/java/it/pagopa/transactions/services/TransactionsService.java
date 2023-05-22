@@ -745,23 +745,4 @@ public class TransactionsService {
                         : null;
     }
 
-    public static void main(String[] args) {
-        log.info("cvv=1234");
-        log.info("cvV=1234");
-        log.info("cVv=1234");
-        log.info("cVV=1234");
-        log.info("Cvv=1234");
-        log.info("CvV=1234");
-        log.info("CVv=1234");
-        log.info("CVV=1234");
-        log.info("pan=4000000000000101");
-        log.info("paN=4000000000000101");
-        log.info("pAn=4000000000000101");
-        log.info("pAN=4000000000000101");
-        log.info("Pan=4000000000000101");
-        log.info("PaN=4000000000000101");
-        log.info("PAn=4000000000000101");
-        log.info("PAN=4000000000000101");
-    }
-
 }
