@@ -225,6 +225,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         "rrn",
                         expectedOperationTimestamp,
+                        null,
                         AuthorizationResultDto.OK
                 )
         );
@@ -307,6 +308,7 @@ class TransactionSendClosureHandlerTest {
                         null,
                         null,
                         expectedOperationTimestamp,
+                        OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(),
                         AuthorizationResultDto.KO
                 )
         );
@@ -460,6 +462,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         null,
                         null,
+                        OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(),
                         expectedOperationTimestamp,
                         AuthorizationResultDto.KO
                 )
@@ -615,6 +618,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         ECOMMERCE_RRN,
                         expectedOperationTimestamp,
+                        null,
                         AuthorizationResultDto.OK
                 )
         );
@@ -855,6 +859,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         null,
                         expectedOperationTimestamp,
+                        null,
                         AuthorizationResultDto.OK
                 )
         );
@@ -1090,6 +1095,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         ECOMMERCE_RRN,
                         expectedOperationTimestamp,
+                        null,
                         AuthorizationResultDto.OK
                 )
         );
@@ -1346,6 +1352,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         null,
                         expectedOperationTimestamp,
+                        null,
                         AuthorizationResultDto.OK
                 )
         );
@@ -1601,6 +1608,7 @@ class TransactionSendClosureHandlerTest {
                         null,
                         null,
                         expectedOperationTimestamp,
+                        OutcomeVposGatewayDto.ErrorCodeEnum._07.toString(),
                         AuthorizationResultDto.KO
                 )
         );
@@ -1775,6 +1783,7 @@ class TransactionSendClosureHandlerTest {
                         null,
                         null,
                         expectedOperationTimestamp,
+                        OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(),
                         AuthorizationResultDto.KO
                 )
         );
@@ -1949,6 +1958,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         ECOMMERCE_RRN,
                         expectedOperationTimestamp,
+                        null,
                         AuthorizationResultDto.OK
                 )
         );
@@ -2208,6 +2218,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         null,
                         expectedOperationTimestamp,
+                        null,
                         AuthorizationResultDto.OK
                 )
         );

@@ -66,6 +66,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode(),
                 null,
                 expectedOperationTimestamp,
+                null,
                 it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto
                         .fromValue(
                                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
@@ -143,6 +144,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode(),
                 "rrn",
                 expectedOperationTimestamp,
+                null,
                 it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto
                         .fromValue(
                                 ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome()
