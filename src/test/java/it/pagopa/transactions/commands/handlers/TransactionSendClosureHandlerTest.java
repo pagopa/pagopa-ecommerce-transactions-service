@@ -215,7 +215,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
                         null,
-                        CardAuthRequestDetailsDto.BrandEnum.VISA.getValue()
+                        TransactionAuthorizationRequestData.BrandType.VISA
                 )
         );
 
@@ -298,7 +298,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
                         null,
-                        CardAuthRequestDetailsDto.BrandEnum.VISA.getValue()
+                        TransactionAuthorizationRequestData.BrandType.VISA
                 )
         );
 
@@ -453,7 +453,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
                         null,
-                        CardAuthRequestDetailsDto.BrandEnum.VISA.getValue()
+                        TransactionAuthorizationRequestData.BrandType.VISA
                 )
         );
 
@@ -608,7 +608,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
                         URI.create("test/logo"),
-                        CardAuthRequestDetailsDto.BrandEnum.VISA.getValue()
+                        TransactionAuthorizationRequestData.BrandType.VISA
                 )
         );
 
@@ -849,7 +849,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
                         URI.create("test/logo"),
-                        CardAuthRequestDetailsDto.BrandEnum.VISA.getValue()
+                        TransactionAuthorizationRequestData.BrandType.VISA
                 )
         );
 
@@ -1085,7 +1085,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
                         URI.create("logo/test"),
-                        CardAuthRequestDetailsDto.BrandEnum.VISA.getValue()
+                        TransactionAuthorizationRequestData.BrandType.VISA
                 )
         );
 
@@ -1342,7 +1342,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
                         URI.create("logo/test"),
-                        CardAuthRequestDetailsDto.BrandEnum.VISA.getValue()
+                        TransactionAuthorizationRequestData.BrandType.VISA
                 )
         );
 
@@ -1598,7 +1598,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
                         null,
-                        CardAuthRequestDetailsDto.BrandEnum.VISA.getValue()
+                        TransactionAuthorizationRequestData.BrandType.VISA
                 )
         );
 
@@ -1773,7 +1773,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
                         URI.create("logo/test"),
-                        CardAuthRequestDetailsDto.BrandEnum.VISA.getValue()
+                        TransactionAuthorizationRequestData.BrandType.VISA
                 )
         );
 
@@ -1948,7 +1948,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
                         URI.create("logo/test"),
-                        CardAuthRequestDetailsDto.BrandEnum.VISA.getValue()
+                        TransactionAuthorizationRequestData.BrandType.VISA
                 )
         );
 
@@ -2208,7 +2208,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
                         URI.create("logo/test"),
-                        CardAuthRequestDetailsDto.BrandEnum.VISA.getValue()
+                        TransactionAuthorizationRequestData.BrandType.VISA
                 )
         );
 
