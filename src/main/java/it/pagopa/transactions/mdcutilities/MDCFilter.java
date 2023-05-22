@@ -19,7 +19,7 @@ public class MDCFilter implements WebFilter {
 
     public static final String CONTEXT_KEY = "contextKey";
     public static final String TRANSACTION_ID = "transactionId";
-    public static final String RPT_ID = "rptIds";
+    public static final String RPT_IDS = "rptIds";
     public static final String HEADER_TRANSACTION_ID = "x-transaction-id";
     public static final String HEADER_RPT_ID = "x-rpt-id";
 
@@ -38,6 +38,6 @@ public class MDCFilter implements WebFilter {
         return chain.filter(exchange)
                 .contextWrite(Context.of(CONTEXT_KEY, UUID.randomUUID().toString()))
                 .contextWrite(Context.of(TRANSACTION_ID, transactionId))
-                .contextWrite(Context.of(RPT_ID, rptId));
+                .contextWrite(Context.of(RPT_IDS, rptId));
     }
 }
