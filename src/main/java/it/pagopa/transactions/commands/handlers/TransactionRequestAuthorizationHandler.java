@@ -7,13 +7,13 @@ import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequeste
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
-import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
-import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDetailsDto;
-import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
+import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import it.pagopa.transactions.utils.AuthRequestDataUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -130,6 +130,18 @@ public class TransactionRequestAuthorizationHandler
                                             "Logging authorization event for transaction id {}",
                                             t.getTransactionId().value()
                                     );
+
+                                    // TODO remove this after the cancellation of the postepay logic
+                                    String cardBrand = null;
+                                    switch (command.getData().authDetails()) {
+                                        case CardAuthRequestDetailsDto detailType -> {
+                                            cardBrand = detailType.getBrand().getValue();
+                                        }
+                                        case PostePayAuthRequestDetailsDto detailType -> {
+                                        }
+                                        default ->
+                                                throw new InvalidRequestException("Unexpected value: " + command.getData().authDetails());
+                                    }
                                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                                             t.getTransactionId().value().toString(),
                                             new TransactionAuthorizationRequestData(
@@ -148,7 +160,8 @@ public class TransactionRequestAuthorizationHandler
                                                     command.getData().pspBusinessName(),
                                                     tuple3.getT1(),
                                                     tuple3.getT3(),
-                                                    logo
+                                                    logo,
+                                                    cardBrand
                                             )
                                     );
 

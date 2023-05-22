@@ -19,6 +19,7 @@ import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedi
 import it.pagopa.ecommerce.commons.utils.EuroUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.*;
+import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.OutcomeVposGatewayDto;
 import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
@@ -38,7 +39,6 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.util.UriTemplate;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
@@ -214,7 +214,8 @@ class TransactionSendClosureHandlerTest {
                         "pspBusinessName",
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
-                        null
+                        null,
+                        CardAuthRequestDetailsDto.BrandEnum.VISA.getValue()
                 )
         );
 
@@ -295,7 +296,8 @@ class TransactionSendClosureHandlerTest {
                         "pspBusinessName",
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
-                        null
+                        null,
+                        CardAuthRequestDetailsDto.BrandEnum.VISA.getValue()
                 )
         );
 
@@ -448,7 +450,8 @@ class TransactionSendClosureHandlerTest {
                         "pspBusinessName",
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
-                        null
+                        null,
+                        CardAuthRequestDetailsDto.BrandEnum.VISA.getValue()
                 )
         );
 
@@ -601,7 +604,8 @@ class TransactionSendClosureHandlerTest {
                         "pspBusinessName",
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
-                        URI.create("test/logo")
+                        URI.create("test/logo"),
+                        CardAuthRequestDetailsDto.BrandEnum.VISA.getValue()
                 )
         );
 
@@ -840,7 +844,8 @@ class TransactionSendClosureHandlerTest {
                         "pspBusinessName",
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
-                        URI.create("test/logo")
+                        URI.create("test/logo"),
+                        CardAuthRequestDetailsDto.BrandEnum.VISA.getValue()
                 )
         );
 
@@ -1074,7 +1079,8 @@ class TransactionSendClosureHandlerTest {
                         "pspBusinessName",
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
-                        URI.create("logo/test")
+                        URI.create("logo/test"),
+                        CardAuthRequestDetailsDto.BrandEnum.VISA.getValue()
                 )
         );
 
@@ -1329,7 +1335,8 @@ class TransactionSendClosureHandlerTest {
                         "pspBusinessName",
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
-                        URI.create("logo/test")
+                        URI.create("logo/test"),
+                        CardAuthRequestDetailsDto.BrandEnum.VISA.getValue()
                 )
         );
 
@@ -1583,7 +1590,8 @@ class TransactionSendClosureHandlerTest {
                         "pspBusinessName",
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
-                        null
+                        null,
+                        CardAuthRequestDetailsDto.BrandEnum.VISA.getValue()
                 )
         );
 
@@ -1756,7 +1764,8 @@ class TransactionSendClosureHandlerTest {
                         "pspBusinessName",
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
-                        URI.create("logo/test")
+                        URI.create("logo/test"),
+                        CardAuthRequestDetailsDto.BrandEnum.VISA.getValue()
                 )
         );
 
@@ -1929,7 +1938,8 @@ class TransactionSendClosureHandlerTest {
                         "pspBusinessName",
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
-                        URI.create("logo/test")
+                        URI.create("logo/test"),
+                        CardAuthRequestDetailsDto.BrandEnum.VISA.getValue()
                 )
         );
 
@@ -2187,7 +2197,8 @@ class TransactionSendClosureHandlerTest {
                         "pspBusinessName",
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
-                        URI.create("logo/test")
+                        URI.create("logo/test"),
+                        CardAuthRequestDetailsDto.BrandEnum.VISA.getValue()
                 )
         );
 

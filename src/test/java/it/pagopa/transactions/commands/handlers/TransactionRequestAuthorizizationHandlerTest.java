@@ -155,7 +155,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 null,
-                null
+                new CardAuthRequestDetailsDto().brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -230,7 +230,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 "XPAY",
-                null
+                new CardAuthRequestDetailsDto().brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
