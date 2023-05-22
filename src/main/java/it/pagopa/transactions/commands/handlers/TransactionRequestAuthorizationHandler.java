@@ -133,14 +133,9 @@ public class TransactionRequestAuthorizationHandler
 
                                     // TODO remove this after the cancellation of the postepay logic
                                     String cardBrand = null;
-                                    switch (command.getData().authDetails()) {
-                                        case CardAuthRequestDetailsDto detailType -> {
-                                            cardBrand = detailType.getBrand().getValue();
-                                        }
-                                        case PostePayAuthRequestDetailsDto detailType -> {
-                                        }
-                                        default ->
-                                                throw new InvalidRequestException("Unexpected value: " + command.getData().authDetails());
+                                    if (command.getData()
+                                            .authDetails()instanceof CardAuthRequestDetailsDto detailType) {
+                                        cardBrand = detailType.getBrand().getValue();
                                     }
                                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                                             t.getTransactionId().value().toString(),
