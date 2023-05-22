@@ -84,7 +84,7 @@ class LogMaskTests {
         log.info("PAN=4000000000000101");
         assertEquals(8, StringUtils.countMatches(outContent.toString().toLowerCase(), "cv*****"));
         assertEquals(8, StringUtils.countMatches(outContent.toString().toLowerCase(), "pa******************"));
-
+        outContent.reset();
         log.info("cvv: 123");
         log.info("cvV: 124");
         log.info("cVv: 134");
