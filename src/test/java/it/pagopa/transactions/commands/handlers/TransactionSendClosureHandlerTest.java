@@ -38,7 +38,6 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.util.UriTemplate;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
@@ -214,7 +213,8 @@ class TransactionSendClosureHandlerTest {
                         "pspBusinessName",
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
-                        null
+                        null,
+                        TransactionAuthorizationRequestData.CardBrand.VISA
                 )
         );
 
@@ -224,6 +224,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         "rrn",
                         expectedOperationTimestamp,
+                        null,
                         AuthorizationResultDto.OK
                 )
         );
@@ -295,7 +296,8 @@ class TransactionSendClosureHandlerTest {
                         "pspBusinessName",
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
-                        null
+                        null,
+                        TransactionAuthorizationRequestData.CardBrand.VISA
                 )
         );
 
@@ -305,6 +307,7 @@ class TransactionSendClosureHandlerTest {
                         null,
                         null,
                         expectedOperationTimestamp,
+                        OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(),
                         AuthorizationResultDto.KO
                 )
         );
@@ -448,7 +451,8 @@ class TransactionSendClosureHandlerTest {
                         "pspBusinessName",
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
-                        null
+                        null,
+                        TransactionAuthorizationRequestData.CardBrand.VISA
                 )
         );
 
@@ -457,6 +461,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         null,
                         null,
+                        OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(),
                         expectedOperationTimestamp,
                         AuthorizationResultDto.KO
                 )
@@ -601,7 +606,8 @@ class TransactionSendClosureHandlerTest {
                         "pspBusinessName",
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
-                        URI.create("test/logo")
+                        URI.create("test/logo"),
+                        TransactionAuthorizationRequestData.CardBrand.VISA
                 )
         );
 
@@ -611,6 +617,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         ECOMMERCE_RRN,
                         expectedOperationTimestamp,
+                        null,
                         AuthorizationResultDto.OK
                 )
         );
@@ -840,7 +847,8 @@ class TransactionSendClosureHandlerTest {
                         "pspBusinessName",
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
-                        URI.create("test/logo")
+                        URI.create("test/logo"),
+                        TransactionAuthorizationRequestData.CardBrand.VISA
                 )
         );
 
@@ -850,6 +858,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         null,
                         expectedOperationTimestamp,
+                        null,
                         AuthorizationResultDto.OK
                 )
         );
@@ -1074,7 +1083,8 @@ class TransactionSendClosureHandlerTest {
                         "pspBusinessName",
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
-                        URI.create("logo/test")
+                        URI.create("logo/test"),
+                        TransactionAuthorizationRequestData.CardBrand.VISA
                 )
         );
 
@@ -1084,6 +1094,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         ECOMMERCE_RRN,
                         expectedOperationTimestamp,
+                        null,
                         AuthorizationResultDto.OK
                 )
         );
@@ -1329,7 +1340,8 @@ class TransactionSendClosureHandlerTest {
                         "pspBusinessName",
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
-                        URI.create("logo/test")
+                        URI.create("logo/test"),
+                        TransactionAuthorizationRequestData.CardBrand.VISA
                 )
         );
 
@@ -1339,6 +1351,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         null,
                         expectedOperationTimestamp,
+                        null,
                         AuthorizationResultDto.OK
                 )
         );
@@ -1583,7 +1596,8 @@ class TransactionSendClosureHandlerTest {
                         "pspBusinessName",
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
-                        null
+                        null,
+                        TransactionAuthorizationRequestData.CardBrand.VISA
                 )
         );
 
@@ -1593,6 +1607,7 @@ class TransactionSendClosureHandlerTest {
                         null,
                         null,
                         expectedOperationTimestamp,
+                        OutcomeVposGatewayDto.ErrorCodeEnum._07.toString(),
                         AuthorizationResultDto.KO
                 )
         );
@@ -1756,7 +1771,8 @@ class TransactionSendClosureHandlerTest {
                         "pspBusinessName",
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
-                        URI.create("logo/test")
+                        URI.create("logo/test"),
+                        TransactionAuthorizationRequestData.CardBrand.VISA
                 )
         );
 
@@ -1766,6 +1782,7 @@ class TransactionSendClosureHandlerTest {
                         null,
                         null,
                         expectedOperationTimestamp,
+                        OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(),
                         AuthorizationResultDto.KO
                 )
         );
@@ -1929,7 +1946,8 @@ class TransactionSendClosureHandlerTest {
                         "pspBusinessName",
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
-                        URI.create("logo/test")
+                        URI.create("logo/test"),
+                        TransactionAuthorizationRequestData.CardBrand.VISA
                 )
         );
 
@@ -1939,6 +1957,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         ECOMMERCE_RRN,
                         expectedOperationTimestamp,
+                        null,
                         AuthorizationResultDto.OK
                 )
         );
@@ -2187,7 +2206,8 @@ class TransactionSendClosureHandlerTest {
                         "pspBusinessName",
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
-                        URI.create("logo/test")
+                        URI.create("logo/test"),
+                        TransactionAuthorizationRequestData.CardBrand.VISA
                 )
         );
 
@@ -2197,6 +2217,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         null,
                         expectedOperationTimestamp,
+                        null,
                         AuthorizationResultDto.OK
                 )
         );

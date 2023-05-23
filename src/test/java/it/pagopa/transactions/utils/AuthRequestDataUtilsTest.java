@@ -44,6 +44,32 @@ class AuthRequestDataUtilsTest {
     }
 
     @Test
+    void shouldExtractVposInformationWithErrorCode() {
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .outcomeGateway(
+                        new OutcomeVposGatewayDto()
+                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
+                                .errorCode(OutcomeVposGatewayDto.ErrorCodeEnum._01)
+                )
+                .timestampOperation(OffsetDateTime.now());
+        AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils.from(updateAuthorizationRequest);
+
+        assertEquals(
+                data.authorizationCode(),
+                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode()
+        );
+        assertEquals(data.rrn(), ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getRrn());
+        assertEquals(
+                data.outcome(),
+                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome().toString()
+        );
+        assertEquals(
+                data.errorCode(),
+                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getErrorCode().toString()
+        );
+    }
+
+    @Test
     void shouldExtractXpayInformation() {
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
@@ -61,6 +87,31 @@ class AuthRequestDataUtilsTest {
         assertEquals(
                 data.outcome(),
                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome().toString()
+        );
+    }
+
+    @Test
+    void shouldExtractXpayInformationWithErrorCode() {
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .outcomeGateway(
+                        new OutcomeXpayGatewayDto()
+                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
+                                .errorCode(OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1)
+                )
+                .timestampOperation(OffsetDateTime.now());
+        AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils.from(updateAuthorizationRequest);
+
+        assertEquals(
+                data.authorizationCode(),
+                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode()
+        );
+        assertEquals(
+                data.outcome(),
+                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome().toString()
+        );
+        assertEquals(
+                data.errorCode(),
+                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getErrorCode().toString()
         );
     }
 
