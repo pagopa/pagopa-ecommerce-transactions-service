@@ -932,6 +932,7 @@ class TransactionSendClosureHandlerTest {
                                         OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS)
                                                 .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                 )
+                                .rrn(transactionId.value())
                                 .totalAmount(totalAmount.toString())
                 ).transactionDetails(
                         new TransactionDetailsDto()
@@ -980,7 +981,7 @@ class TransactionSendClosureHandlerTest {
                                                                         authorizationRequestData
                                                                                 .getPspBusinessName()
                                                                 )
-                                                )
+                                                ).rrn(transactionId.value())
                                 )
                                 .info(
                                         new InfoDto()
@@ -1428,6 +1429,7 @@ class TransactionSendClosureHandlerTest {
                                                 .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                 )
                                 .totalAmount(totalAmount.toString())
+                                .rrn(transactionId.value())
                 ).transactionDetails(
                         new TransactionDetailsDto()
                                 .transaction(
@@ -1475,7 +1477,7 @@ class TransactionSendClosureHandlerTest {
                                                                         authorizationRequestData
                                                                                 .getPspBusinessName()
                                                                 )
-                                                )
+                                                ).rrn(transactionId.value())
                                 )
                                 .info(
                                         new InfoDto()
@@ -2290,7 +2292,7 @@ class TransactionSendClosureHandlerTest {
                                 .timestampOperation(
                                         OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS)
                                                 .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                                )
+                                ).rrn(transactionId.value())
                                 .totalAmount(totalAmount.toString())
                 )
                 .transactionDetails(
@@ -2348,7 +2350,7 @@ class TransactionSendClosureHandlerTest {
                                                                         authorizationRequestData
                                                                                 .getPspBusinessName()
                                                                 )
-                                                )
+                                                ).rrn(transactionId.value())
                                 )
                                 .info(
                                         new InfoDto()
