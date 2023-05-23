@@ -72,6 +72,9 @@ public class TransactionsService {
     private TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandler;
 
     @Autowired
+    private RefundRequestProjectionHandler refundRequestProjectionHandler;
+
+    @Autowired
     private ClosureSendProjectionHandler closureSendProjectionHandler;
 
     @Autowired
@@ -509,11 +512,12 @@ public class TransactionsService {
                 .flatMap(
                         result -> result.fold(
                                 errorEvent -> errorEvent.fold(
-                                        errorEventRefunded -> null, // TODO aggiornare la pagina con REFUND STATUS
+                                        errorEventRefunded -> refundRequestProjectionHandler.handle(errorEventRefunded),
                                         errorEventNoRefund -> closureErrorProjectionHandler.handle(errorEventNoRefund)
                                 ),
                                 closureSentEvent -> closureSentEvent.fold(
-                                        closureSentEventRefunded -> null, // TODO aggiornare la pagina con REFUND STATUS
+                                        closureSentEventRefunded -> refundRequestProjectionHandler
+                                                .handle(closureSentEventRefunded),
                                         closureSentEventNoRefunded -> closureSendProjectionHandler
                                                 .handle(closureSentEventNoRefunded)
                                 )
