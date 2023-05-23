@@ -19,18 +19,17 @@ public class AuthorizationRequestProjectionHandler
 
     @Override
     public Mono<Transaction> handle(AuthorizationRequestData data) {
-        return transactionsViewRepository.findById(data.transaction().getTransactionId().value().toString())
+        return transactionsViewRepository.findById(data.transaction().getTransactionId().value())
                 .switchIfEmpty(
                         Mono.error(
                                 new TransactionNotFoundException(
-                                        data.transaction().getTransactionId().value().toString()
+                                        data.transaction().getTransactionId().value()
                                 )
                         )
                 )
                 .flatMap(transactionDocument -> {
                     transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_REQUESTED);
-                    String paymentGateway = data.paymentGatewayId();
-                    transactionDocument.setPaymentGateway(paymentGateway);
+                    transactionDocument.setPaymentGateway(data.paymentGatewayId());
 
                     return transactionsViewRepository.save(transactionDocument);
                 });
