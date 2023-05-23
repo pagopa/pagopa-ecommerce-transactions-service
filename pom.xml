@@ -16,7 +16,7 @@
         <java.version>17</java.version>
         <spring-cloud-azure.version>4.0.0</spring-cloud-azure.version>
         <jacoco.version>0.8.8</jacoco.version>
-        <pagopa-ecommerce-commons.version>0.14.2</pagopa-ecommerce-commons.version>
+        <pagopa-ecommerce-commons.version>0.16.0</pagopa-ecommerce-commons.version>
         <spotless.version>2.28.0</spotless.version>
     </properties>
     <dependencies>
@@ -401,8 +401,8 @@
                 <configuration>
                     <skipCheckoutIfExists>false</skipCheckoutIfExists>
                     <connectionUrl>scm:git:https://github.com/pagopa/pagopa-ecommerce-commons.git</connectionUrl>
-                    <scmVersionType>branch</scmVersionType>
-                    <scmVersion>CHK-1531-save-brand-and-pgs-errorCode</scmVersion>
+                    <scmVersionType>tag</scmVersionType>
+                    <scmVersion>${pagopa-ecommerce-commons.version}</scmVersion>
                     <goals>install -DskipTests</goals>
                 </configuration>
                 <executions>
