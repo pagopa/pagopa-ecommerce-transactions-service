@@ -19,7 +19,6 @@ import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedi
 import it.pagopa.ecommerce.commons.utils.EuroUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.*;
-import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.OutcomeVposGatewayDto;
 import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
@@ -215,7 +214,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
                         null,
-                        TransactionAuthorizationRequestData.BrandType.VISA
+                        TransactionAuthorizationRequestData.CardBrand.VISA
                 )
         );
 
@@ -298,7 +297,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
                         null,
-                        TransactionAuthorizationRequestData.BrandType.VISA
+                        TransactionAuthorizationRequestData.CardBrand.VISA
                 )
         );
 
@@ -453,7 +452,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
                         null,
-                        TransactionAuthorizationRequestData.BrandType.VISA
+                        TransactionAuthorizationRequestData.CardBrand.VISA
                 )
         );
 
@@ -608,7 +607,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
                         URI.create("test/logo"),
-                        TransactionAuthorizationRequestData.BrandType.VISA
+                        TransactionAuthorizationRequestData.CardBrand.VISA
                 )
         );
 
@@ -849,7 +848,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
                         URI.create("test/logo"),
-                        TransactionAuthorizationRequestData.BrandType.VISA
+                        TransactionAuthorizationRequestData.CardBrand.VISA
                 )
         );
 
@@ -1085,7 +1084,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
                         URI.create("logo/test"),
-                        TransactionAuthorizationRequestData.BrandType.VISA
+                        TransactionAuthorizationRequestData.CardBrand.VISA
                 )
         );
 
@@ -1342,7 +1341,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
                         URI.create("logo/test"),
-                        TransactionAuthorizationRequestData.BrandType.VISA
+                        TransactionAuthorizationRequestData.CardBrand.VISA
                 )
         );
 
@@ -1598,7 +1597,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
                         null,
-                        TransactionAuthorizationRequestData.BrandType.VISA
+                        TransactionAuthorizationRequestData.CardBrand.VISA
                 )
         );
 
@@ -1773,7 +1772,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
                         URI.create("logo/test"),
-                        TransactionAuthorizationRequestData.BrandType.VISA
+                        TransactionAuthorizationRequestData.CardBrand.VISA
                 )
         );
 
@@ -1948,7 +1947,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
                         URI.create("logo/test"),
-                        TransactionAuthorizationRequestData.BrandType.VISA
+                        TransactionAuthorizationRequestData.CardBrand.VISA
                 )
         );
 
@@ -2208,7 +2207,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
                         URI.create("logo/test"),
-                        TransactionAuthorizationRequestData.BrandType.VISA
+                        TransactionAuthorizationRequestData.CardBrand.VISA
                 )
         );
 

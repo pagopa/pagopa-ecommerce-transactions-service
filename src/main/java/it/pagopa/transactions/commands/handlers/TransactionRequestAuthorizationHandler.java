@@ -132,14 +132,14 @@ public class TransactionRequestAuthorizationHandler
                                     );
 
                                     // TODO remove this after the cancellation of the postepay logic
-                                    TransactionAuthorizationRequestData.BrandType cardBrand = null;
+                                    TransactionAuthorizationRequestData.CardBrand cardBrand = null;
                                     if (command.getData()
                                             .authDetails()instanceof CardAuthRequestDetailsDto detailType) {
-                                        cardBrand = TransactionAuthorizationRequestData.BrandType
+                                        cardBrand = TransactionAuthorizationRequestData.CardBrand
                                                 .valueOf(detailType.getBrand().getValue());
                                     }
                                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
-                                            t.getTransactionId().value().toString(),
+                                            t.getTransactionId().value(),
                                             new TransactionAuthorizationRequestData(
                                                     command.getData().transaction().getPaymentNotices().stream()
                                                             .mapToInt(
