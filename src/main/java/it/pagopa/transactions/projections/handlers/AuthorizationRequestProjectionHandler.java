@@ -29,6 +29,9 @@ public class AuthorizationRequestProjectionHandler
                 )
                 .flatMap(transactionDocument -> {
                     transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_REQUESTED);
+                    String paymentGateway = data.paymentGatewayId();
+                    transactionDocument.setPaymentGateway(paymentGateway);
+
                     return transactionsViewRepository.save(transactionDocument);
                 });
     }
