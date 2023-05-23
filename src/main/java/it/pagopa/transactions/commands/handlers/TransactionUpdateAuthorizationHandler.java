@@ -74,6 +74,7 @@ public class TransactionUpdateAuthorizationHandler
                                             authRequestDataExtracted.authorizationCode(),
                                             authRequestDataExtracted.rrn(),
                                             updateAuthorizationRequest.getTimestampOperation().toString(),
+                                            authRequestDataExtracted.errorCode(),
                                             authorizationResultDto
                                     )
                             )

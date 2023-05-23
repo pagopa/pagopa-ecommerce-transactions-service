@@ -342,6 +342,7 @@ class TransactionServiceTests {
                 "authorizationCode",
                 null,
                 expectedOperationTimestamp,
+                null,
                 it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto
                         .fromValue(
                                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
@@ -1052,6 +1053,7 @@ class TransactionServiceTests {
                 "authorizationCode",
                 null,
                 expectedOperationTimestamp,
+                null,
                 it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto
                         .fromValue(
                                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())

@@ -155,7 +155,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 null,
-                null
+                new PostePayAuthRequestDetailsDto()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -171,7 +171,7 @@ class TransactionRequestAuthorizizationHandlerTest {
         /* preconditions */
         Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
                 .thenReturn(Mono.just(postePayAuthResponseEntityDto));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString()))
+        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(args -> Mono.just(args.getArguments()[0]));
 
@@ -230,7 +230,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 "paymentMethodName",
                 "pspBusinessName",
                 "XPAY",
-                null
+                new CardAuthRequestDetailsDto().brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
