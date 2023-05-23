@@ -1,5 +1,6 @@
 package it.pagopa.transactions.utils;
 
+import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
 import it.pagopa.generated.transactions.server.model.OutcomeVposGatewayDto;
 import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
@@ -9,6 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -30,7 +32,9 @@ class AuthRequestDataUtilsTest {
                                 .rrn("rrn")
                 )
                 .timestampOperation(OffsetDateTime.now());
-        AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils.from(updateAuthorizationRequest);
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils
+                .from(updateAuthorizationRequest, transactionId);
 
         assertEquals(
                 data.authorizationCode(),
@@ -52,7 +56,9 @@ class AuthRequestDataUtilsTest {
                                 .errorCode(OutcomeVposGatewayDto.ErrorCodeEnum._01)
                 )
                 .timestampOperation(OffsetDateTime.now());
-        AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils.from(updateAuthorizationRequest);
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils
+                .from(updateAuthorizationRequest, transactionId);
 
         assertEquals(
                 data.authorizationCode(),
@@ -78,8 +84,12 @@ class AuthRequestDataUtilsTest {
                                 .authorizationCode("authorizationCode")
                 )
                 .timestampOperation(OffsetDateTime.now());
-        AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils.from(updateAuthorizationRequest);
 
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils
+                .from(updateAuthorizationRequest, transactionId);
+
+        assertEquals(data.rrn(), transactionId.value());
         assertEquals(
                 data.authorizationCode(),
                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode()
@@ -99,8 +109,11 @@ class AuthRequestDataUtilsTest {
                                 .errorCode(OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1)
                 )
                 .timestampOperation(OffsetDateTime.now());
-        AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils.from(updateAuthorizationRequest);
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils
+                .from(updateAuthorizationRequest, transactionId);
 
+        assertEquals(data.rrn(), transactionId.value());
         assertEquals(
                 data.authorizationCode(),
                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode()
