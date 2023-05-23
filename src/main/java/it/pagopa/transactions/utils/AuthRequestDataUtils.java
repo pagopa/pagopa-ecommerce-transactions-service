@@ -1,5 +1,6 @@
 package it.pagopa.transactions.utils;
 
+import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
 import it.pagopa.generated.transactions.server.model.OutcomeVposGatewayDto;
 import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
@@ -20,14 +21,14 @@ public class AuthRequestDataUtils {
 
     }
 
-    public AuthRequestData from(UpdateAuthorizationRequestDto updateAuthorizationRequest) {
+    public AuthRequestData from(UpdateAuthorizationRequestDto updateAuthorizationRequest, TransactionId transactionId) {
         AuthRequestData result;
         switch (updateAuthorizationRequest.getOutcomeGateway()) {
             case OutcomeVposGatewayDto t -> {
                 result = new AuthRequestData(t.getAuthorizationCode(),t.getOutcome().toString(),t.getRrn(), t.getErrorCode() != null ? t.getErrorCode().getValue() : null);
             }
             case OutcomeXpayGatewayDto t -> {
-                result = new AuthRequestData(t.getAuthorizationCode(),t.getOutcome().toString(), null, t.getErrorCode() != null ? t.getErrorCode().getValue().toString() : null);
+                result = new AuthRequestData(t.getAuthorizationCode(),t.getOutcome().toString(), transactionId.value(), t.getErrorCode() != null ? t.getErrorCode().getValue().toString() : null);
             }
             default ->
                     throw new InvalidRequestException("Unexpected value: " + updateAuthorizationRequest.getOutcomeGateway());
