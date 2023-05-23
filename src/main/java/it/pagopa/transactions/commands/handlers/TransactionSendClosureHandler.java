@@ -70,7 +70,7 @@ public class TransactionSendClosureHandler implements
             PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
             NodeForPspClient nodeForPspClient,
             @Qualifier(
-                    "transactionClosureRetryQueueAsyncClient"
+                "transactionClosureRetryQueueAsyncClient"
             ) QueueAsyncClient closureRetryQueueAsyncClient,
             @Value("${payment.token.validity}") Integer paymentTokenValidity,
             @Value("${transactions.ecommerce.retry.offset}") Integer softTimeoutOffset,
@@ -95,7 +95,7 @@ public class TransactionSendClosureHandler implements
 
     @Override
     public Mono<Either<Either<TransactionRefundRequestedEvent, TransactionClosureErrorEvent>, Either<TransactionRefundRequestedEvent, TransactionEvent<TransactionClosureData>>>> handle(
-            TransactionClosureSendCommand command
+                                                                                                                                                                                         TransactionClosureSendCommand command
     ) {
         Mono<BaseTransaction> transaction = transactionsUtils.reduceEvents(
                 command.getData().transaction().getTransactionId()
@@ -264,8 +264,8 @@ public class TransactionSendClosureHandler implements
                                                             refundRequestedEvent
                                                     )
                                                     : Either.<TransactionRefundRequestedEvent, TransactionEvent<TransactionClosureData>>right(
-                                                    closureEvent
-                                            ))
+                                                            closureEvent
+                                                    ))
                                     )
                             )
                             .map(
@@ -382,24 +382,24 @@ public class TransactionSendClosureHandler implements
                                                                         refundRequestedEvent
                                                                 )
                                                                 : Either.<TransactionRefundRequestedEvent, TransactionClosureErrorEvent>right(
-                                                                closureErrorEvent
-                                                        ))
+                                                                        closureErrorEvent
+                                                                ))
                                                 )
                                         ).map((event) -> Either.left(event));
 
                             })
                             .doFinally(response -> {
                                 tx.getPaymentNotices().forEach(el -> {
-                                            log.info("Invalidate cache for RptId : {}", el.rptId().value());
-                                            paymentRequestInfoRedisTemplateWrapper.deleteById(el.rptId().value());
-                                        }
+                                    log.info("Invalidate cache for RptId : {}", el.rptId().value());
+                                    paymentRequestInfoRedisTemplateWrapper.deleteById(el.rptId().value());
+                                }
                                 );
                             });
                 });
     }
 
     private ClosePaymentRequestV2Dto.OutcomeEnum authorizationResultToOutcomeV2(
-            AuthorizationResultDto authorizationResult
+                                                                                AuthorizationResultDto authorizationResult
     ) {
         switch (authorizationResult) {
             case OK -> {
@@ -415,8 +415,8 @@ public class TransactionSendClosureHandler implements
     }
 
     private Mono<TransactionRefundRequestedEvent> sendRefundRequestEvent(
-            Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>> closureOutcomeEvent,
-            AuthorizationResultDto authorizationResult
+                                                                         Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>> closureOutcomeEvent,
+                                                                         AuthorizationResultDto authorizationResult
     ) {
         return Mono.just(closureOutcomeEvent)
                 .filter(
@@ -496,7 +496,7 @@ public class TransactionSendClosureHandler implements
     }
 
     private TransactionClosureData.Outcome outcomeV2ToTransactionClosureDataOutcome(
-            ClosePaymentResponseDto.OutcomeEnum closePaymentOutcome
+                                                                                    ClosePaymentResponseDto.OutcomeEnum closePaymentOutcome
     ) {
         switch (closePaymentOutcome) {
             case OK -> {
