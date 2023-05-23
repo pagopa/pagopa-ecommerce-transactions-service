@@ -2,6 +2,7 @@ package it.pagopa.transactions.commands.handlers;
 
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
+import io.vavr.Tuple;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionAuthorizationCompleted;
@@ -29,20 +30,15 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
-import java.math.MathContext;
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
 @Component
 @Slf4j
 public class TransactionSendClosureHandler implements
-        CommandHandler<TransactionClosureSendCommand, Mono<Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>>> {
+        CommandHandler<TransactionClosureSendCommand, Mono<Either<Either<TransactionRefundRequestedEvent, TransactionClosureErrorEvent>, Either<TransactionRefundRequestedEvent, TransactionEvent<TransactionClosureData>>>>> {
 
     private final TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository;
 
@@ -74,7 +70,7 @@ public class TransactionSendClosureHandler implements
             PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
             NodeForPspClient nodeForPspClient,
             @Qualifier(
-                "transactionClosureRetryQueueAsyncClient"
+                    "transactionClosureRetryQueueAsyncClient"
             ) QueueAsyncClient closureRetryQueueAsyncClient,
             @Value("${payment.token.validity}") Integer paymentTokenValidity,
             @Value("${transactions.ecommerce.retry.offset}") Integer softTimeoutOffset,
@@ -98,8 +94,8 @@ public class TransactionSendClosureHandler implements
     }
 
     @Override
-    public Mono<Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>> handle(
-                                                                                                       TransactionClosureSendCommand command
+    public Mono<Either<Either<TransactionRefundRequestedEvent, TransactionClosureErrorEvent>, Either<TransactionRefundRequestedEvent, TransactionEvent<TransactionClosureData>>>> handle(
+            TransactionClosureSendCommand command
     ) {
         Mono<BaseTransaction> transaction = transactionsUtils.reduceEvents(
                 command.getData().transaction().getTransactionId()
@@ -259,12 +255,25 @@ public class TransactionSendClosureHandler implements
                                     )
                             )
                             .flatMap(
-                                    closureEvent -> sendRefundRequestEvent(
+                                    (closureEvent) -> sendRefundRequestEvent(
                                             Either.right(closureEvent),
                                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
-                                    ).thenReturn(closureEvent)
+                                    ).map(
+                                            (refundRequestedEvent) -> (refundRequestedEvent != null ? Either
+                                                    .<TransactionRefundRequestedEvent, TransactionEvent<TransactionClosureData>>left(
+                                                            refundRequestedEvent
+                                                    )
+                                                    : Either.<TransactionRefundRequestedEvent, TransactionEvent<TransactionClosureData>>right(
+                                                    closureEvent
+                                            ))
+                                    )
                             )
-                            .map(Either::<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>right)
+                            .map(
+                                    (event) -> Either
+                                            .<Either<TransactionRefundRequestedEvent, TransactionClosureErrorEvent>, Either<TransactionRefundRequestedEvent, TransactionEvent<TransactionClosureData>>>right(
+                                                    event
+                                            )
+                            )
                             .onErrorResume(exception -> {
 
                                 // in case response code from Nodo is a 4xx class error retrying closure have no
@@ -351,35 +360,46 @@ public class TransactionSendClosureHandler implements
                                         );
                                     }
 
-                                    return eventSaved.map(Either::left);
+                                    return eventSaved.map(
+                                            Either::<TransactionRefundRequestedEvent, TransactionClosureErrorEvent>right
+                                    ).map(
+                                            (event) -> Either.left(event)
+                                    );
                                 }
                                 // Unrecoverable error calling Nodo for perform close payment.
                                 // Generate closure event setting closure outcome to KO
                                 // and enqueue refund request event
                                 return eventSaved
-                                        .<Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>>map(
-                                                Either::left
-                                        )
                                         .flatMap(
+
                                                 closureErrorEvent -> sendRefundRequestEvent(
-                                                        closureErrorEvent,
+                                                        Either.left(closureErrorEvent),
                                                         transactionAuthorizationCompletedData
                                                                 .getAuthorizationResultDto()
-                                                ).thenReturn(closureErrorEvent)
-                                        );
+                                                ).map(
+                                                        (refundRequestedEvent) -> (refundRequestedEvent != null ? Either
+                                                                .<TransactionRefundRequestedEvent, TransactionClosureErrorEvent>left(
+                                                                        refundRequestedEvent
+                                                                )
+                                                                : Either.<TransactionRefundRequestedEvent, TransactionClosureErrorEvent>right(
+                                                                closureErrorEvent
+                                                        ))
+                                                )
+                                        ).map((event) -> Either.left(event));
+
                             })
                             .doFinally(response -> {
                                 tx.getPaymentNotices().forEach(el -> {
-                                    log.info("Invalidate cache for RptId : {}", el.rptId().value());
-                                    paymentRequestInfoRedisTemplateWrapper.deleteById(el.rptId().value());
-                                }
+                                            log.info("Invalidate cache for RptId : {}", el.rptId().value());
+                                            paymentRequestInfoRedisTemplateWrapper.deleteById(el.rptId().value());
+                                        }
                                 );
                             });
                 });
     }
 
     private ClosePaymentRequestV2Dto.OutcomeEnum authorizationResultToOutcomeV2(
-                                                                                AuthorizationResultDto authorizationResult
+            AuthorizationResultDto authorizationResult
     ) {
         switch (authorizationResult) {
             case OK -> {
@@ -395,13 +415,13 @@ public class TransactionSendClosureHandler implements
     }
 
     private Mono<TransactionRefundRequestedEvent> sendRefundRequestEvent(
-                                                                         Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>> closureOutcomeEvent,
-                                                                         AuthorizationResultDto authorizationResult
+            Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>> closureOutcomeEvent,
+            AuthorizationResultDto authorizationResult
     ) {
         return Mono.just(closureOutcomeEvent)
                 .filter(
                         e -> e.fold(
-                                closureErrorEvent -> true,
+                                closureErrorEvent -> AuthorizationResultDto.OK.equals(authorizationResult),
                                 // Refund requested event sent on the queue only if the transaction was
                                 // previously
                                 // authorized and the Nodo response outcome is KO
@@ -476,7 +496,7 @@ public class TransactionSendClosureHandler implements
     }
 
     private TransactionClosureData.Outcome outcomeV2ToTransactionClosureDataOutcome(
-                                                                                    ClosePaymentResponseDto.OutcomeEnum closePaymentOutcome
+            ClosePaymentResponseDto.OutcomeEnum closePaymentOutcome
     ) {
         switch (closePaymentOutcome) {
             case OK -> {

@@ -101,8 +101,8 @@ public class TransactionsService {
     @CircuitBreaker(name = "node-backend")
     @Retry(name = "newTransaction")
     public Mono<NewTransactionResponseDto> newTransaction(
-                                                          NewTransactionRequestDto newTransactionRequestDto,
-                                                          ClientIdDto clientIdDto
+            NewTransactionRequestDto newTransactionRequestDto,
+            ClientIdDto clientIdDto
     ) {
         ClientId clientId = ClientId.fromString(
                 Optional.ofNullable(clientIdDto)
@@ -206,9 +206,9 @@ public class TransactionsService {
     @CircuitBreaker(name = "transactions-backend")
     @Retry(name = "requestTransactionAuthorization")
     public Mono<RequestAuthorizationResponseDto> requestTransactionAuthorization(
-                                                                                 String transactionId,
-                                                                                 String paymentGatewayId,
-                                                                                 RequestAuthorizationRequestDto requestAuthorizationRequestDto
+            String transactionId,
+            String paymentGatewayId,
+            RequestAuthorizationRequestDto requestAuthorizationRequestDto
     ) {
         return transactionsViewRepository
                 .findById(transactionId)
@@ -225,11 +225,11 @@ public class TransactionsService {
                             );
                             return !amountTotal.equals(requestAuthorizationRequestDto.getAmount())
                                     ? Mono.error(
-                                            new TransactionAmountMismatchException(
-                                                    requestAuthorizationRequestDto.getAmount(),
-                                                    amountTotal
-                                            )
+                                    new TransactionAmountMismatchException(
+                                            requestAuthorizationRequestDto.getAmount(),
+                                            amountTotal
                                     )
+                            )
                                     : Mono.just(transaction);
                         }
                 )
@@ -283,12 +283,12 @@ public class TransactionsService {
                                                                                             .getPspId()
                                                                             )
                                                                             && psp.getTaxPayerFee()
-                                                                                    .equals(
-                                                                                            Long.valueOf(
-                                                                                                    requestAuthorizationRequestDto
-                                                                                                            .getFee()
-                                                                                            )
+                                                                            .equals(
+                                                                                    Long.valueOf(
+                                                                                            requestAuthorizationRequestDto
+                                                                                                    .getFee()
                                                                                     )
+                                                                            )
                                                             ).findFirst()
                                             )
                                     )
@@ -403,8 +403,8 @@ public class TransactionsService {
     @CircuitBreaker(name = "node-backend")
     @Retry(name = "updateTransactionAuthorization")
     public Mono<TransactionInfoDto> updateTransactionAuthorization(
-                                                                   String encodedTransactionId,
-                                                                   UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+            String encodedTransactionId,
+            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
         return uuidUtils.uuidFromBase64(encodedTransactionId)
                 .fold(
@@ -455,8 +455,8 @@ public class TransactionsService {
     }
 
     private Mono<TransactionActivated> updateTransactionAuthorizationStatus(
-                                                                            BaseTransaction transaction,
-                                                                            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+            BaseTransaction transaction,
+            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction,
@@ -484,8 +484,8 @@ public class TransactionsService {
     }
 
     private Mono<it.pagopa.ecommerce.commons.documents.v1.Transaction> closePayment(
-                                                                                    BaseTransactionWithPaymentToken transaction,
-                                                                                    UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+            BaseTransactionWithPaymentToken transaction,
+            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
         ClosureSendData closureSendData = new ClosureSendData(
                 transaction,
@@ -500,22 +500,29 @@ public class TransactionsService {
         return transactionSendClosureHandler
                 .handle(transactionClosureSendCommand)
                 .doOnNext(closureSentEvent ->
-                // FIXME Handle multiple rtpId
-                log.info(
-                        "Requested transaction closure for rptId: {}",
-                        transaction.getPaymentNotices().get(0).rptId().value()
-                )
+                        // FIXME Handle multiple rtpId
+                        log.info(
+                                "Requested transaction closure for rptId: {}",
+                                transaction.getPaymentNotices().get(0).rptId().value()
+                        )
                 )
                 .flatMap(
                         result -> result.fold(
-                                errorEvent -> closureErrorProjectionHandler.handle(errorEvent),
-                                closureSentEvent -> closureSendProjectionHandler.handle(closureSentEvent)
+                                errorEvent -> errorEvent.fold(
+                                        errorEventRefunded -> null, // TODO aggiornare la pagina con REFUND STATUS
+                                        errorEventNoRefund -> closureErrorProjectionHandler.handle(errorEventNoRefund)
+                                ),
+                                closureSentEvent -> closureSentEvent.fold(
+                                        closureSentEventRefunded -> null, // TODO aggiornare la pagina con REFUND STATUS
+                                        closureSentEventNoRefunded -> closureSendProjectionHandler
+                                                .handle(closureSentEventNoRefunded)
+                                )
                         )
                 );
     }
 
     private TransactionInfoDto buildTransactionInfoDto(
-                                                       it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument
+            it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument
     ) {
         return new TransactionInfoDto()
                 .transactionId(
@@ -557,7 +564,7 @@ public class TransactionsService {
     }
 
     private Mono<Boolean> wasTransactionAuthorized(
-                                                   TransactionId transactionId
+            TransactionId transactionId
     ) {
         /*
          * @formatter:off
@@ -587,8 +594,8 @@ public class TransactionsService {
     @CircuitBreaker(name = "transactions-backend")
     @Retry(name = "addUserReceipt")
     public Mono<TransactionInfoDto> addUserReceipt(
-                                                   String transactionId,
-                                                   AddUserReceiptRequestDto addUserReceiptRequest
+            String transactionId,
+            AddUserReceiptRequestDto addUserReceiptRequest
     ) {
         return transactionsViewRepository
                 .findById(transactionId)
@@ -676,8 +683,8 @@ public class TransactionsService {
     }
 
     private Mono<NewTransactionResponseDto> projectActivatedEvent(
-                                                                  TransactionActivatedEvent transactionActivatedEvent,
-                                                                  String authToken
+            TransactionActivatedEvent transactionActivatedEvent,
+            String authToken
     ) {
         return transactionsActivationProjectionHandler
                 .handle(transactionActivatedEvent)
@@ -723,7 +730,7 @@ public class TransactionsService {
     }
 
     NewTransactionResponseDto.ClientIdEnum convertClientId(
-                                                           it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId clientId
+            it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId clientId
     ) {
         return Optional.ofNullable(clientId).filter(Objects::nonNull)
                 .map(
@@ -741,8 +748,8 @@ public class TransactionsService {
     private String extractBinFromPan(RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
         return requestAuthorizationRequestDto
                 .getDetails()instanceof CardAuthRequestDetailsDto cardData
-                        ? cardData.getPan().substring(0, 6)
-                        : null;
+                ? cardData.getPan().substring(0, 6)
+                : null;
     }
 
 }
