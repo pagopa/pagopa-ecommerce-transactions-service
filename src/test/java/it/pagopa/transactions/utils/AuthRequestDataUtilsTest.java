@@ -110,7 +110,7 @@ class AuthRequestDataUtilsTest {
                                 .errorCode(OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1)
                 )
                 .timestampOperation(OffsetDateTime.now());
-        TransactionId transactionId = new TransactionId(UUID.randomUUID().toString().replace("-", ""));
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
         AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils
                 .from(updateAuthorizationRequest, transactionId);
 
