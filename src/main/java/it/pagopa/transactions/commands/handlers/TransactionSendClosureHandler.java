@@ -114,7 +114,7 @@ public class TransactionSendClosureHandler implements
                     UpdateAuthorizationRequestDto updateAuthorizationRequestDto = command.getData()
                             .updateAuthorizationRequest();
                     AuthRequestDataUtils.AuthRequestData authRequestData = authRequestDataUtils
-                            .from(updateAuthorizationRequestDto);
+                            .from(updateAuthorizationRequestDto, tx.getTransactionId());
                     TransactionAuthorizationRequestData transactionAuthorizationRequestData = tx
                             .getTransactionAuthorizationRequestData();
                     TransactionAuthorizationCompletedData transactionAuthorizationCompletedData = tx
