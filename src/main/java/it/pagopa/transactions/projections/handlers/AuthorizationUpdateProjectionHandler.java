@@ -30,9 +30,7 @@ public class AuthorizationUpdateProjectionHandler
                     transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_COMPLETED);
                     transactionDocument.setSendPaymentResultOutcome(data.getData().getAuthorizationResultDto());
                     transactionDocument.setAuthorizationCode(data.getData().getAuthorizationCode());
-
-                    // TODO: add auth error
-                    // transactionDocument.setAuthorizationErrorCode(data.getData().getAuthorizationError());
+                    transactionDocument.setAuthorizationErrorCode(data.getData().getErrorCode());
 
                     return transactionsViewRepository.save(transactionDocument);
                 })
