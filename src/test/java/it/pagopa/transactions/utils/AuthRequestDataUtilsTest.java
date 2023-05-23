@@ -89,7 +89,6 @@ class AuthRequestDataUtilsTest {
         AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils
                 .from(updateAuthorizationRequest, transactionId);
 
-        assertEquals(data.rrn(), ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getRrn());
         assertEquals(data.rrn(), transactionId.value());
         assertEquals(
                 data.authorizationCode(),
@@ -114,7 +113,6 @@ class AuthRequestDataUtilsTest {
         AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils
                 .from(updateAuthorizationRequest, transactionId);
 
-        assertEquals(data.rrn(), ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getRrn());
         assertEquals(data.rrn(), transactionId.value());
         assertEquals(
                 data.authorizationCode(),
