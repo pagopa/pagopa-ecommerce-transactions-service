@@ -115,7 +115,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 faultCode,
                 faultCodeString,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                idCart
+                idCart,
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
