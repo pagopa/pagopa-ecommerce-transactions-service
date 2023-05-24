@@ -384,15 +384,14 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
         Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value())).thenReturn(events);
-
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
                 .consumeNextWith(next -> {
                     assertTrue(next.isRight());
                     assertNotNull(next.get());
-                    assertEquals(event.getData().getResponseOutcome(), next.get().getData().getResponseOutcome());
-                    assertEquals(event.getEventCode(), next.get().getEventCode());
-                    assertEquals(event.getTransactionId(), next.get().getTransactionId());
+                    assertEquals(event.getData().getResponseOutcome(), next.get().get().getData().getResponseOutcome());
+                    assertEquals(event.getEventCode(), next.get().get().getEventCode());
+                    assertEquals(event.getTransactionId(), next.get().get().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -545,9 +544,9 @@ class TransactionSendClosureHandlerTest {
                 .consumeNextWith(next -> {
                     assertTrue(next.isRight());
                     assertNotNull(next.get());
-                    assertEquals(event.getData().getResponseOutcome(), next.get().getData().getResponseOutcome());
-                    assertEquals(event.getEventCode(), next.get().getEventCode());
-                    assertEquals(event.getTransactionId(), next.get().getTransactionId());
+                    assertEquals(event.getData().getResponseOutcome(), next.get().get().getData().getResponseOutcome());
+                    assertEquals(event.getEventCode(), next.get().get().getEventCode());
+                    assertEquals(event.getTransactionId(), next.get().get().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -786,9 +785,9 @@ class TransactionSendClosureHandlerTest {
                 .consumeNextWith(next -> {
                     assertTrue(next.isRight());
                     assertNotNull(next.get());
-                    assertEquals(event.getData().getResponseOutcome(), next.get().getData().getResponseOutcome());
-                    assertEquals(event.getEventCode(), next.get().getEventCode());
-                    assertEquals(event.getTransactionId(), next.get().getTransactionId());
+                    assertEquals(event.getData().getResponseOutcome(), next.get().get().getData().getResponseOutcome());
+                    assertEquals(event.getEventCode(), next.get().get().getEventCode());
+                    assertEquals(event.getTransactionId(), next.get().get().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -1019,8 +1018,8 @@ class TransactionSendClosureHandlerTest {
                 .consumeNextWith(next -> {
                     assertTrue(next.isLeft());
                     assertNotNull(next.getLeft());
-                    assertEquals(errorEvent.getEventCode(), next.getLeft().getEventCode());
-                    assertEquals(errorEvent.getTransactionId(), next.getLeft().getTransactionId());
+                    assertEquals(errorEvent.getEventCode(), next.getLeft().get().getEventCode());
+                    assertEquals(errorEvent.getTransactionId(), next.getLeft().get().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -1275,8 +1274,8 @@ class TransactionSendClosureHandlerTest {
                 .consumeNextWith(next -> {
                     assertTrue(next.isLeft());
                     assertNotNull(next.getLeft());
-                    assertEquals(errorEvent.getEventCode(), next.getLeft().getEventCode());
-                    assertEquals(errorEvent.getTransactionId(), next.getLeft().getTransactionId());
+                    assertEquals(errorEvent.getEventCode(), next.getLeft().get().getEventCode());
+                    assertEquals(errorEvent.getTransactionId(), next.getLeft().get().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -1497,6 +1496,11 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value()
         );
 
+        TransactionRefundRequestedEvent refundRequestedEvent = new TransactionRefundRequestedEvent(
+                transactionId.value(),
+                new TransactionRefundedData()
+        );
+
         RuntimeException closePaymentError = new BadGatewayException("Bad request error", HttpStatus.BAD_REQUEST);
 
         /* preconditions */
@@ -1507,7 +1511,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());
-        Mockito.when(transactionRefundedEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
+        Mockito.when(transactionRefundedEventStoreRepository.save(any())).thenReturn(Mono.just(refundRequestedEvent));
         Mockito.when(
                 refundQueueAsyncClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
 
@@ -1520,8 +1524,8 @@ class TransactionSendClosureHandlerTest {
                 .consumeNextWith(next -> {
                     assertTrue(next.isLeft());
                     assertNotNull(next.getLeft());
-                    assertEquals(errorEvent.getEventCode(), next.getLeft().getEventCode());
-                    assertEquals(errorEvent.getTransactionId(), next.getLeft().getTransactionId());
+                    assertEquals(refundRequestedEvent.getEventCode(), next.getLeft().getLeft().getEventCode());
+                    assertEquals(refundRequestedEvent.getTransactionId(), next.getLeft().getLeft().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -1694,22 +1698,11 @@ class TransactionSendClosureHandlerTest {
                 .consumeNextWith(next -> {
                     assertTrue(next.isLeft());
                     assertNotNull(next.getLeft());
-                    assertEquals(errorEvent.getEventCode(), next.getLeft().getEventCode());
-                    assertEquals(errorEvent.getTransactionId(), next.getLeft().getTransactionId());
+                    assertEquals(errorEvent.getEventCode(), next.getLeft().get().getEventCode());
+                    assertEquals(errorEvent.getTransactionId(), next.getLeft().get().getTransactionId());
                 })
                 .verifyComplete();
 
-        Mockito.verify(
-                refundQueueAsyncClient,
-                Mockito.times(1)
-        ).sendMessageWithResponse(
-                argThat(
-                        (BinaryData b) -> b.toObject(TransactionRefundRequestedEvent.class).getData()
-                                .getStatusBeforeRefunded().equals(TransactionStatusDto.CLOSURE_ERROR)
-                ),
-                any(),
-                any()
-        );
         // check that no closure error event is saved but not sent to event dispatcher
         Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
                 .save(any());
@@ -1874,8 +1867,8 @@ class TransactionSendClosureHandlerTest {
                 .consumeNextWith(next -> {
                     assertTrue(next.isLeft());
                     assertNotNull(next.getLeft());
-                    assertEquals(errorEvent.getEventCode(), next.getLeft().getEventCode());
-                    assertEquals(errorEvent.getTransactionId(), next.getLeft().getTransactionId());
+                    assertEquals(errorEvent.getEventCode(), next.getLeft().get().getEventCode());
+                    assertEquals(errorEvent.getTransactionId(), next.getLeft().get().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -2143,8 +2136,8 @@ class TransactionSendClosureHandlerTest {
                 .consumeNextWith(next -> {
                     assertTrue(next.isLeft());
                     assertNotNull(next.getLeft());
-                    assertEquals(errorEvent.getEventCode(), next.getLeft().getEventCode());
-                    assertEquals(errorEvent.getTransactionId(), next.getLeft().getTransactionId());
+                    assertEquals(errorEvent.getEventCode(), next.getLeft().get().getEventCode());
+                    assertEquals(errorEvent.getTransactionId(), next.getLeft().get().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -2392,8 +2385,8 @@ class TransactionSendClosureHandlerTest {
                 .consumeNextWith(next -> {
                     assertTrue(next.isLeft());
                     assertNotNull(next.getLeft());
-                    assertEquals(errorEvent.getEventCode(), next.getLeft().getEventCode());
-                    assertEquals(errorEvent.getTransactionId(), next.getLeft().getTransactionId());
+                    assertEquals(errorEvent.getEventCode(), next.getLeft().get().getEventCode());
+                    assertEquals(errorEvent.getTransactionId(), next.getLeft().get().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -2448,6 +2441,11 @@ class TransactionSendClosureHandlerTest {
 
         TransactionClosedEvent event = TransactionTestUtils
                 .transactionClosedEvent(TransactionClosureData.Outcome.KO);
+
+        TransactionRefundRequestedEvent refundRequestedEvent = new TransactionRefundRequestedEvent(
+                transactionId.value(),
+                new TransactionRefundedData()
+        );
 
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
         BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
@@ -2572,7 +2570,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(
                 transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());
-        Mockito.when(transactionRefundedEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
+        Mockito.when(transactionRefundedEventStoreRepository.save(any())).thenReturn(Mono.just(refundRequestedEvent));
         Mockito.when(
                 refundQueueAsyncClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
 
@@ -2583,9 +2581,8 @@ class TransactionSendClosureHandlerTest {
                 .consumeNextWith(next -> {
                     assertTrue(next.isRight());
                     assertNotNull(next.get());
-                    assertEquals(event.getData().getResponseOutcome(), next.get().getData().getResponseOutcome());
-                    assertEquals(event.getEventCode(), next.get().getEventCode());
-                    assertEquals(event.getTransactionId(), next.get().getTransactionId());
+                    assertEquals(refundRequestedEvent.getEventCode(), next.get().getLeft().getEventCode());
+                    assertEquals(refundRequestedEvent.getTransactionId(), next.get().getLeft().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -2776,6 +2773,11 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value()
         );
 
+        TransactionRefundRequestedEvent refundRequestedEvent = new TransactionRefundRequestedEvent(
+                transactionId.value(),
+                new TransactionRefundedData()
+        );
+
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.error(closePaymentError));
@@ -2783,7 +2785,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(
                 refundQueueAsyncClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
         ).thenReturn(queueSuccessfulResponse());
-        Mockito.when(transactionRefundedEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
+        Mockito.when(transactionRefundedEventStoreRepository.save(any())).thenReturn(Mono.just(refundRequestedEvent));
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any()))
                 .thenAnswer(a -> Mono.just(a.getArgument(0)));
 
@@ -2792,8 +2794,8 @@ class TransactionSendClosureHandlerTest {
                 .consumeNextWith(next -> {
                     assertTrue(next.isLeft());
                     assertNotNull(next.getLeft());
-                    assertEquals(errorEvent.getEventCode(), next.getLeft().getEventCode());
-                    assertEquals(errorEvent.getTransactionId(), next.getLeft().getTransactionId());
+                    assertEquals(refundRequestedEvent.getEventCode(), next.getLeft().getLeft().getEventCode());
+                    assertEquals(refundRequestedEvent.getTransactionId(), next.getLeft().getLeft().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -2916,9 +2918,9 @@ class TransactionSendClosureHandlerTest {
                 .consumeNextWith(next -> {
                     assertTrue(next.isRight());
                     assertNotNull(next.get());
-                    assertEquals(event.getData().getResponseOutcome(), next.get().getData().getResponseOutcome());
-                    assertEquals(event.getEventCode(), next.get().getEventCode());
-                    assertEquals(event.getTransactionId(), next.get().getTransactionId());
+                    assertEquals(event.getData().getResponseOutcome(), next.get().get().getData().getResponseOutcome());
+                    assertEquals(event.getEventCode(), next.get().get().getEventCode());
+                    assertEquals(event.getTransactionId(), next.get().get().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -3029,22 +3031,11 @@ class TransactionSendClosureHandlerTest {
                 .consumeNextWith(next -> {
                     assertTrue(next.isLeft());
                     assertNotNull(next.getLeft());
-                    assertEquals(errorEvent.getEventCode(), next.getLeft().getEventCode());
-                    assertEquals(errorEvent.getTransactionId(), next.getLeft().getTransactionId());
+                    assertEquals(errorEvent.getEventCode(), next.getLeft().get().getEventCode());
+                    assertEquals(errorEvent.getTransactionId(), next.getLeft().get().getTransactionId());
                 })
                 .verifyComplete();
 
-        Mockito.verify(
-                refundQueueAsyncClient,
-                Mockito.times(1)
-        ).sendMessageWithResponse(
-                argThat(
-                        (BinaryData b) -> b.toObject(TransactionRefundRequestedEvent.class).getData()
-                                .getStatusBeforeRefunded().equals(TransactionStatusDto.CLOSURE_ERROR)
-                ),
-                any(),
-                any()
-        );
         Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1)).save(any());
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(0))
                 .sendMessageWithResponse(

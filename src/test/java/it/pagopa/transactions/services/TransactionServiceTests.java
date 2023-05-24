@@ -391,7 +391,7 @@ class TransactionServiceTests {
         Mockito.when(authorizationUpdateProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
 
         Mockito.when(transactionSendClosureHandler.handle(any()))
-                .thenReturn(Mono.just(Either.right(closureSentEvent)));
+                .thenReturn(Mono.just(Either.right(Either.right(closureSentEvent))));
 
         Mockito.when(closureSendProjectionHandler.handle(any()))
                 .thenReturn(Mono.just(closedTransactionDocument));
@@ -1102,7 +1102,7 @@ class TransactionServiceTests {
         Mockito.when(authorizationUpdateProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
 
         Mockito.when(transactionSendClosureHandler.handle(any()))
-                .thenReturn(Mono.just(Either.left(closureSentEvent)));
+                .thenReturn(Mono.just(Either.left(Either.right(closureSentEvent))));
 
         Mockito.when(closureErrorProjectionHandler.handle(any()))
                 .thenReturn(Mono.just(closedTransactionDocument));

@@ -258,15 +258,11 @@ public class TransactionSendClosureHandler implements
                                     (closureEvent) -> sendRefundRequestEvent(
                                             Either.right(closureEvent),
                                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
-                                    ).map(
-                                            (refundRequestedEvent) -> (refundRequestedEvent != null ? Either
-                                                    .<TransactionRefundRequestedEvent, TransactionEvent<TransactionClosureData>>left(
-                                                            refundRequestedEvent
-                                                    )
-                                                    : Either.<TransactionRefundRequestedEvent, TransactionEvent<TransactionClosureData>>right(
-                                                            closureEvent
-                                                    ))
                                     )
+                                            .map(
+                                                    Either::<TransactionRefundRequestedEvent, TransactionEvent<TransactionClosureData>>left
+
+                                            ).switchIfEmpty(Mono.just(Either.right(closureEvent)))
                             )
                             .map(
                                     (event) -> Either
@@ -377,13 +373,11 @@ public class TransactionSendClosureHandler implements
                                                         transactionAuthorizationCompletedData
                                                                 .getAuthorizationResultDto()
                                                 ).map(
-                                                        (refundRequestedEvent) -> (refundRequestedEvent != null ? Either
-                                                                .<TransactionRefundRequestedEvent, TransactionClosureErrorEvent>left(
-                                                                        refundRequestedEvent
-                                                                )
-                                                                : Either.<TransactionRefundRequestedEvent, TransactionClosureErrorEvent>right(
-                                                                        closureErrorEvent
-                                                                ))
+                                                        Either::<TransactionRefundRequestedEvent, TransactionClosureErrorEvent>left
+
+                                                ).switchIfEmpty(
+                                                        Mono.just(Either.right(closureErrorEvent))
+
                                                 )
                                         ).map((event) -> Either.left(event));
 
