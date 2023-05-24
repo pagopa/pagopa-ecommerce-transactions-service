@@ -634,6 +634,18 @@ components:
           properties:
             feeTotal:
               $ref: "#/components/schemas/AmountEuroCents"
+            paymentGateway:
+              type: string
+              example: 'XPAY'
+            sendPaymentResultOutcome:
+              type: string
+              enum:
+                - OK
+                - KO
+            authorizationCode:
+              type: string
+            authorizationErrorCode:
+              type: string
           required:
             - status
     AmountEuroCents:

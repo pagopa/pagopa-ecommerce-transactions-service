@@ -177,6 +177,14 @@ public class TransactionsService {
                                 )
                                 .status(transactionsUtils.convertEnumeration(transaction.getStatus()))
                                 .idCart(transaction.getIdCart())
+                                .paymentGateway(transaction.getPaymentGateway())
+                                .sendPaymentResultOutcome(
+                                        transaction.getSendPaymentResultOutcome() == null ? null
+                                                : TransactionInfoDto.SendPaymentResultOutcomeEnum
+                                                        .valueOf(transaction.getSendPaymentResultOutcome().getValue())
+                                )
+                                .authorizationCode(transaction.getAuthorizationCode())
+                                .authorizationErrorCode(transaction.getAuthorizationErrorCode())
                 );
     }
 

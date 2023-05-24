@@ -143,6 +143,13 @@ class TransactionServiceTests {
                 ZonedDateTime.now()
         );
 
+        transaction.setPaymentGateway("VPOS");
+        transaction.setSendPaymentResultOutcome(
+                it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto.OK
+        );
+        transaction.setAuthorizationCode("00");
+        transaction.setAuthorizationErrorCode(null);
+
         final TransactionInfoDto expected = new TransactionInfoDto()
                 .transactionId(TRANSACTION_ID)
                 .payments(
@@ -166,7 +173,65 @@ class TransactionServiceTests {
                 .clientId(TransactionInfoDto.ClientIdEnum.CHECKOUT)
                 .feeTotal(null)
                 .status(TransactionStatusDto.ACTIVATED)
-                .idCart("ecIdCart");
+                .idCart("ecIdCart")
+                .paymentGateway("VPOS")
+                .sendPaymentResultOutcome(TransactionInfoDto.SendPaymentResultOutcomeEnum.OK)
+                .authorizationCode("00")
+                .authorizationErrorCode(null);
+
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        when(transactionsUtils.convertEnumeration(any())).thenCallRealMethod();
+        assertEquals(
+                transactionsService.getTransactionInfo(TRANSACTION_ID).block(),
+                expected
+        );
+
+        StepVerifier.create(transactionsService.getTransactionInfo(TRANSACTION_ID))
+                .expectNext(expected)
+                .verifyComplete();
+    }
+
+    @Test
+    void getTransactionReturnsTransactionDataOriginProvidedNoAdditionalFields() {
+
+        final Transaction transaction = TransactionTestUtils.transactionDocument(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
+                ZonedDateTime.now()
+        );
+
+        transaction.setPaymentGateway(null);
+        transaction.setSendPaymentResultOutcome(null);
+        transaction.setAuthorizationCode(null);
+        transaction.setAuthorizationErrorCode(null);
+
+        final TransactionInfoDto expected = new TransactionInfoDto()
+                .transactionId(TRANSACTION_ID)
+                .payments(
+                        transaction.getPaymentNotices().stream().map(
+                                p -> new PaymentInfoDto()
+                                        .paymentToken(p.getPaymentToken())
+                                        .rptId(p.getRptId())
+                                        .reason(p.getDescription())
+                                        .amount(p.getAmount())
+                                        .transferList(
+                                                p.getTransferList().stream().map(
+                                                        notice -> new TransferDto()
+                                                                .paFiscalCode(notice.getPaFiscalCode())
+                                                                .digitalStamp(notice.getDigitalStamp())
+                                                                .transferAmount(notice.getTransferAmount())
+                                                                .transferCategory(notice.getTransferCategory())
+                                                ).toList()
+                                        )
+                        ).toList()
+                )
+                .clientId(TransactionInfoDto.ClientIdEnum.CHECKOUT)
+                .feeTotal(null)
+                .status(TransactionStatusDto.ACTIVATED)
+                .idCart("ecIdCart")
+                .paymentGateway(null)
+                .sendPaymentResultOutcome(null)
+                .authorizationCode(null)
+                .authorizationErrorCode(null);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
         when(transactionsUtils.convertEnumeration(any())).thenCallRealMethod();
