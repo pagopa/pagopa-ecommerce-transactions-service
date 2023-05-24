@@ -60,7 +60,7 @@ microservice-chart:
       ELASTIC_APM_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
       ELASTIC_APM_APPLICATION_PACKAGES: it.pagopa.ecommerce.transactions
       ELASTIC_APM_SERVER_URL: http://quickstart-apm-http.elastic-system.svc:8200
-      ELASTIC_APM_LOG_SENDING: 'true'
+      ELASTIC_APM_LOG_SENDING: 'false'
     envSecret:
       MONGO_PASSWORD: mongo-ecommerce-password
       REDIS_PASSWORD: redis-ecommerce-password
@@ -170,7 +170,7 @@ microservice-chart:
     ELASTIC_APM_SERVICE_NAME: pagopa-ecommerce-transactions-service
     ELASTIC_APM_APPLICATION_PACKAGES: it.pagopa.ecommerce.transactions
     ELASTIC_APM_SERVER_URL: http://quickstart-apm-http.elastic-system.svc:8200
-    ELASTIC_APM_LOG_SENDING: 'true'
+    ELASTIC_APM_LOG_SENDING: 'false'
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password
