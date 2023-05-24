@@ -134,7 +134,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                idCart
+                idCart,
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -209,7 +210,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                idCart
+                idCart,
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -288,7 +290,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                 faultCode,
                 faultCodeString,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                idCart
+                idCart,
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -361,7 +364,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                 faultCode,
                 faultCodeString,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                idCart
+                idCart,
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -440,7 +444,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                idCart
+                idCart,
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()

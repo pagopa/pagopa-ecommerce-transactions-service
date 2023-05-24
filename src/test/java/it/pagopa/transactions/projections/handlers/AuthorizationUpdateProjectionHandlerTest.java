@@ -5,18 +5,13 @@ import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationComplete
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
-import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.OutcomeVposGatewayDto;
 import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -25,17 +20,16 @@ import java.time.ZonedDateTime;
 
 import static org.mockito.ArgumentMatchers.argThat;
 
-@ExtendWith(MockitoExtension.class)
 class AuthorizationUpdateProjectionHandlerTest {
 
-    @InjectMocks
-    private AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandler;
+    private final TransactionsViewRepository viewRepository = Mockito.mock(TransactionsViewRepository.class);
 
-    @Mock
-    private TransactionsViewRepository viewRepository;
+    private final int paymentTokenValidity = TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC;
 
-    @Mock
-    private ConfidentialDataManager confidentialDataManager;
+    private final AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandler = new AuthorizationUpdateProjectionHandler(
+            viewRepository,
+            paymentTokenValidity
+    );
 
     private static final String expectedOperationTimestamp = "2023-01-01T01:02:03";
 
@@ -93,7 +87,8 @@ class AuthorizationUpdateProjectionHandlerTest {
                 null,
                 ZonedDateTime.parse(expectedDocument.getCreationDate()),
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                transaction.getTransactionActivatedData().getIdCart()
+                transaction.getTransactionActivatedData().getIdCart(),
+                paymentTokenValidity
         );
 
         /*
@@ -176,7 +171,8 @@ class AuthorizationUpdateProjectionHandlerTest {
                 null,
                 ZonedDateTime.parse(expectedDocument.getCreationDate()),
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                transaction.getTransactionActivatedData().getIdCart()
+                transaction.getTransactionActivatedData().getIdCart(),
+                paymentTokenValidity
         );
 
         /*
