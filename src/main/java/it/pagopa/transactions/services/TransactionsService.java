@@ -179,11 +179,9 @@ public class TransactionsService {
                                 .idCart(transaction.getIdCart())
                                 .paymentGateway(transaction.getPaymentGateway())
                                 .sendPaymentResultOutcome(
-                                        TransactionInfoDto.SendPaymentResultOutcomeEnum
-                                                .valueOf(
-                                                        transaction.getSendPaymentResultOutcome() == null ? null
-                                                                : transaction.getSendPaymentResultOutcome().getValue()
-                                                )
+                                        transaction.getSendPaymentResultOutcome() == null ? null
+                                                : TransactionInfoDto.SendPaymentResultOutcomeEnum
+                                                        .valueOf(transaction.getSendPaymentResultOutcome().getValue())
                                 )
                                 .authorizationCode(transaction.getAuthorizationCode())
                                 .authorizationErrorCode(transaction.getAuthorizationErrorCode())
