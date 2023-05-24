@@ -41,7 +41,7 @@ class ClosureErrorProjectionHandlerTest {
                 transaction.getPaymentNotices(),
                 transaction.getFeeTotal(),
                 transaction.getEmail(),
-                TransactionStatusDto.REFUND_REQUESTED,
+                TransactionStatusDto.CLOSURE_ERROR,
                 Transaction.ClientId.CHECKOUT,
                 transaction.getCreationDate(),
                 transaction.getIdCart(),
