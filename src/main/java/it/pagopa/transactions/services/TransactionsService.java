@@ -37,7 +37,6 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
-import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -366,7 +365,7 @@ public class TransactionsService {
                                     null,
                                     transactionDocument.getClientId(),
                                     transactionDocument.getIdCart(),
-                                    BigInteger.valueOf(paymentTokenValidity)
+                                    paymentTokenValidity
                             );
 
                             AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -631,7 +630,7 @@ public class TransactionsService {
                                     null,
                                     transactionDocument.getClientId(),
                                     transactionDocument.getIdCart(),
-                                    BigInteger.valueOf(paymentTokenValidity)
+                                    paymentTokenValidity
 
                             );
                             AddUserReceiptData addUserReceiptData = new AddUserReceiptData(

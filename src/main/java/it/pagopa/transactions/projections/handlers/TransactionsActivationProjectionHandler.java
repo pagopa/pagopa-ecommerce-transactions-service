@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-import java.math.BigInteger;
 import java.util.List;
 
 @Component
@@ -48,7 +47,7 @@ public class TransactionsActivationProjectionHandler
         String faultCodeString = event.getData().getFaultCodeString();
         ClientId clientId = event.getData().getClientId();
         String idCart = event.getData().getIdCart();
-        BigInteger paymentTokenValiditySeconds = event.getData().getPaymentTokenValiditySeconds();
+        int paymentTokenValiditySeconds = event.getData().getPaymentTokenValiditySeconds();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 paymentNoticeList,

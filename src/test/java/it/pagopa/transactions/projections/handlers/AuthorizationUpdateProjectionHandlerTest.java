@@ -15,7 +15,6 @@ import org.mockito.Mockito;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.math.BigInteger;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 
@@ -25,7 +24,7 @@ class AuthorizationUpdateProjectionHandlerTest {
 
     private final TransactionsViewRepository viewRepository = Mockito.mock(TransactionsViewRepository.class);
 
-    private final int paymentTokenValidity = TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC.intValue();
+    private final int paymentTokenValidity = TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC;
 
     private final AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandler = new AuthorizationUpdateProjectionHandler(
             viewRepository,
@@ -89,7 +88,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 ZonedDateTime.parse(expectedDocument.getCreationDate()),
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
                 transaction.getTransactionActivatedData().getIdCart(),
-                BigInteger.valueOf(paymentTokenValidity)
+                paymentTokenValidity
         );
 
         /*
@@ -173,7 +172,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 ZonedDateTime.parse(expectedDocument.getCreationDate()),
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
                 transaction.getTransactionActivatedData().getIdCart(),
-                BigInteger.valueOf(paymentTokenValidity)
+                paymentTokenValidity
         );
 
         /*

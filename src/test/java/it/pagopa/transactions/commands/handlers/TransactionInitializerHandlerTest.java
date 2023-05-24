@@ -151,7 +151,7 @@ class TransactionInitializerHandlerTest {
         assertNotNull(event.getEventCode());
         assertNotNull(event.getCreationDate());
         assertNotNull(event.getId());
-        assertEquals(paymentTokenTimeout, event.getData().getPaymentTokenValiditySeconds().intValue());
+        assertEquals(paymentTokenTimeout, event.getData().getPaymentTokenValiditySeconds());
     }
 
     @Test
@@ -402,7 +402,7 @@ class TransactionInitializerHandlerTest {
         assertNotNull(event.getEventCode());
         assertNotNull(event.getCreationDate());
         assertNotNull(event.getId());
-        assertEquals(paymentTokenTimeout, event.getData().getPaymentTokenValiditySeconds().intValue());
+        assertEquals(paymentTokenTimeout, event.getData().getPaymentTokenValiditySeconds());
     }
 
     @Test
@@ -484,6 +484,6 @@ class TransactionInitializerHandlerTest {
         assertNotNull(event.getEventCode());
         assertNotNull(event.getCreationDate());
         assertNotNull(event.getId());
-        assertEquals(paymentTokenTimeout, event.getData().getPaymentTokenValiditySeconds().intValue());
+        assertEquals(paymentTokenTimeout, event.getData().getPaymentTokenValiditySeconds());
     }
 }

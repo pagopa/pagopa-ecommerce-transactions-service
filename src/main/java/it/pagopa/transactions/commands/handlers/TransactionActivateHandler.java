@@ -26,7 +26,6 @@ import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import java.math.BigInteger;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -263,7 +262,7 @@ public class TransactionActivateHandler
                         null,
                         clientId,
                         idCart,
-                        BigInteger.valueOf(paymentTokenTimeout)
+                        paymentTokenTimeout
                 )
         );
 

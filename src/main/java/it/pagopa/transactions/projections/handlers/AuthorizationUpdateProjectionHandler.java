@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-import java.math.BigInteger;
 import java.time.ZonedDateTime;
 
 @Component
@@ -75,7 +74,7 @@ public class AuthorizationUpdateProjectionHandler
                                 ZonedDateTime.parse(transactionDocument.getCreationDate()),
                                 transactionDocument.getClientId(),
                                 transactionDocument.getIdCart(),
-                                BigInteger.valueOf(paymentTokenValidity)
+                                paymentTokenValidity
                         )
                 );
     }
