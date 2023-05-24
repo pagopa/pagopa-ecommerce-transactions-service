@@ -3,7 +3,6 @@ package it.pagopa.transactions.projections.handlers;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionRefundRequestedEvent;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionRefundedData;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
@@ -22,7 +21,7 @@ import java.time.ZonedDateTime;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
-public class RefundRequestProjectionHandlerTests {
+class RefundRequestProjectionHandlerTests {
 
     @InjectMocks
     private RefundRequestProjectionHandler refundRequestProjectionHandler;

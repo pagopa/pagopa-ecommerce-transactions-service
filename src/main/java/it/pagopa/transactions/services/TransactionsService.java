@@ -518,8 +518,8 @@ public class TransactionsService {
                                 closureSentEvent -> closureSentEvent.fold(
                                         closureSentEventRefunded -> refundRequestProjectionHandler
                                                 .handle(closureSentEventRefunded),
-                                        closureSentEventNoRefunded -> closureSendProjectionHandler
-                                                .handle(closureSentEventNoRefunded)
+                                        closureDataTransactionEvent -> closureSendProjectionHandler
+                                                .handle(closureDataTransactionEvent)
                                 )
                         )
                 );

@@ -255,7 +255,7 @@ public class TransactionSendClosureHandler implements
                                     )
                             )
                             .flatMap(
-                                    (closureEvent) -> sendRefundRequestEvent(
+                                    closureEvent -> sendRefundRequestEvent(
                                             Either.right(closureEvent),
                                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
                                     )
@@ -265,7 +265,7 @@ public class TransactionSendClosureHandler implements
                                             ).switchIfEmpty(Mono.just(Either.right(closureEvent)))
                             )
                             .map(
-                                    (event) -> Either
+                                    event -> Either
                                             .<Either<TransactionRefundRequestedEvent, TransactionClosureErrorEvent>, Either<TransactionRefundRequestedEvent, TransactionEvent<TransactionClosureData>>>right(
                                                     event
                                             )
