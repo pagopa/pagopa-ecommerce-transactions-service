@@ -105,6 +105,9 @@ class TransactionServiceTests {
     private TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandler;
 
     @MockBean
+    private RefundRequestProjectionHandler refundRequestProjectionHandler;
+
+    @MockBean
     private TransactionsEventStoreRepository transactionsEventStoreRepository;
 
     @MockBean
