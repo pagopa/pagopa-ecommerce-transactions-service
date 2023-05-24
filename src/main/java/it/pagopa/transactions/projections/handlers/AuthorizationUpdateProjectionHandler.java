@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.time.ZonedDateTime;
-import java.util.UUID;
 
 @Component
 @Slf4j
@@ -27,12 +26,17 @@ public class AuthorizationUpdateProjectionHandler
                         Mono.error(new TransactionNotFoundException(data.getTransactionId()))
                 )
                 .flatMap(transactionDocument -> {
+                    transactionDocument.setRrn(data.getData().getRrn());
                     transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_COMPLETED);
+                    transactionDocument.setSendPaymentResultOutcome(data.getData().getAuthorizationResultDto());
+                    transactionDocument.setAuthorizationCode(data.getData().getAuthorizationCode());
+                    transactionDocument.setAuthorizationErrorCode(data.getData().getErrorCode());
+
                     return transactionsViewRepository.save(transactionDocument);
                 })
                 .map(
                         transactionDocument -> new TransactionActivated(
-                                new TransactionId(UUID.fromString(transactionDocument.getTransactionId())),
+                                new TransactionId(transactionDocument.getTransactionId()),
                                 transactionDocument.getPaymentNotices().stream()
                                         .map(
                                                 paymentNotice -> new PaymentNotice(
@@ -40,15 +44,26 @@ public class AuthorizationUpdateProjectionHandler
                                                         new RptId(paymentNotice.getRptId()),
                                                         new TransactionAmount(paymentNotice.getAmount()),
                                                         new TransactionDescription(paymentNotice.getDescription()),
-                                                        new PaymentContextCode(paymentNotice.getPaymentContextCode())
+                                                        new PaymentContextCode(paymentNotice.getPaymentContextCode()),
+                                                        paymentNotice.getTransferList().stream()
+                                                                .map(
+                                                                        p -> new PaymentTransferInfo(
+                                                                                p.getPaFiscalCode(),
+                                                                                p.getDigitalStamp(),
+                                                                                p.getTransferAmount(),
+                                                                                p.getTransferCategory()
+                                                                        )
+                                                                ).toList()
                                                 )
                                         ).toList(),
                                 transactionDocument.getEmail(),
                                 null,
                                 null,
                                 ZonedDateTime.parse(transactionDocument.getCreationDate()),
-                                transactionDocument.getClientId()
+                                transactionDocument.getClientId(),
+                                transactionDocument.getIdCart()
                         )
                 );
     }
+
 }

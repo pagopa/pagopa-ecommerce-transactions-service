@@ -1,6 +1,7 @@
 package it.pagopa.transactions.documents;
 
 import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.v1.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v1.*;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,8 +26,11 @@ class TransactionDocumentTest {
     void shouldGetAndSetTransaction() {
         String TEST_TRANSACTIONID = "d56ab1e6-f845-11ec-b939-0242ac120002";
         String TEST_TOKEN = "token1";
-        String TEST_RPTID = "77777777777302016723749670035";
+        String TEST_PAFISCALCODE = "77777777777";
+        String TEST_RPTID = TEST_PAFISCALCODE + "302016723749670035";
         String TEST_DESC = "";
+        String TEST_CART = "TEST_CART";
+        String RRN = "RRN";
         ZonedDateTime TEST_TIME = ZonedDateTime.now();
         Confidential<Email> CONFIDENTIAL_TEST_EMAIL = TransactionTestUtils.EMAIL;
         int TEST_AMOUNT = 1;
@@ -51,14 +56,17 @@ class TransactionDocumentTest {
                                 TEST_RPTID,
                                 TEST_DESC,
                                 TEST_AMOUNT,
-                                ""
+                                "",
+                                List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null))
                         )
                 ),
                 0,
                 CONFIDENTIAL_TEST_EMAIL,
                 TEST_STATUS,
                 Transaction.ClientId.CHECKOUT,
-                TEST_TIME.toString()
+                TEST_TIME.toString(),
+                TEST_CART,
+                RRN
         );
 
         Transaction sameTransaction = new Transaction(
@@ -69,14 +77,17 @@ class TransactionDocumentTest {
                                 TEST_RPTID,
                                 TEST_DESC,
                                 TEST_AMOUNT,
-                                ""
+                                "",
+                                List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null))
                         )
                 ),
                 0,
                 CONFIDENTIAL_TEST_EMAIL,
                 TEST_STATUS,
                 Transaction.ClientId.CHECKOUT,
-                TEST_TIME.toString()
+                TEST_TIME.toString(),
+                TEST_CART,
+                RRN
         );
 
         // Different transaction (creation date)
@@ -88,21 +99,25 @@ class TransactionDocumentTest {
                                 TEST_RPTID,
                                 TEST_DESC,
                                 TEST_AMOUNT,
-                                ""
+                                "",
+                                List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null))
                         )
                 ),
                 0,
                 CONFIDENTIAL_TEST_EMAIL,
                 TEST_STATUS,
                 Transaction.ClientId.CHECKOUT,
-                ZonedDateTime.now().toString()
+                ZonedDateTime.now().toString(),
+                TEST_CART,
+                RRN
         );
         it.pagopa.ecommerce.commons.documents.v1.PaymentNotice paymentNotice = new PaymentNotice(
                 TEST_TOKEN,
                 TEST_RPTID,
                 TEST_DESC,
                 TEST_AMOUNT,
-                null
+                null,
+                List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null))
         );
         differentTransaction.setPaymentNotices(List.of(paymentNotice));
         differentTransaction.setStatus(TEST_STATUS);
@@ -133,6 +148,7 @@ class TransactionDocumentTest {
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
+        String idCart = "idCart";
 
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -142,13 +158,15 @@ class TransactionDocumentTest {
                                 rptId,
                                 amount,
                                 description,
-                                nullPaymentContextCode
+                                nullPaymentContextCode,
+                                List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, amount.value(), null))
                         )
                 ),
                 email,
                 faultCode,
                 faultCodeString,
-                Transaction.ClientId.CHECKOUT
+                Transaction.ClientId.CHECKOUT,
+                idCart
         );
 
         Transaction transactionDocument = Transaction.from(transaction);

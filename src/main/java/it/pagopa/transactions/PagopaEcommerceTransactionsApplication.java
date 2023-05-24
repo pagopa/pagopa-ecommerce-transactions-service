@@ -1,6 +1,7 @@
 package it.pagopa.transactions;
 
 import it.pagopa.ecommerce.commons.ConfigScan;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
@@ -11,10 +12,10 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @SpringBootApplication
 @EnableRedisRepositories(basePackages = "it.pagopa.ecommerce.commons.repositories")
 @Import(ConfigScan.class)
+@Slf4j
 public class PagopaEcommerceTransactionsApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(PagopaEcommerceTransactionsApplication.class, args);
     }
-
 }

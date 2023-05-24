@@ -8,6 +8,7 @@ import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.TransactionsService;
 import it.pagopa.transactions.utils.JwtTokenUtils;
+import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -58,6 +59,9 @@ class TransactionsControllerTest {
 
     @Autowired
     private WebTestClient webTestClient;
+
+    @MockBean
+    private TransactionsUtils transactionsUtils;
 
     @Mock
     ServerWebExchange mockExchange;
@@ -235,9 +239,11 @@ class TransactionsControllerTest {
                 .status(TransactionStatusDto.AUTHORIZATION_COMPLETED);
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
-                .timestampOperation(OffsetDateTime.now());
+                .outcomeGateway(
+                        new OutcomeXpayGatewayDto()
+                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                ).timestampOperation(OffsetDateTime.now());
 
         /* preconditions */
         Mockito.when(transactionsService.updateTransactionAuthorization(paymentToken, updateAuthorizationRequest))
@@ -256,9 +262,11 @@ class TransactionsControllerTest {
         String paymentToken = "paymentToken";
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
-                .timestampOperation(OffsetDateTime.now());
+                .outcomeGateway(
+                        new OutcomeXpayGatewayDto()
+                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                ).timestampOperation(OffsetDateTime.now());
 
         /* preconditions */
         Mockito.when(transactionsService.updateTransactionAuthorization(paymentToken, updateAuthorizationRequest))
@@ -278,9 +286,11 @@ class TransactionsControllerTest {
         String paymentToken = "paymentToken";
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .authorizationResult(AuthorizationResultDto.OK)
-                .authorizationCode("authorizationCode")
-                .timestampOperation(OffsetDateTime.now());
+                .outcomeGateway(
+                        new OutcomeXpayGatewayDto()
+                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                ).timestampOperation(OffsetDateTime.now());
 
         /* preconditions */
         Mockito.when(transactionsService.updateTransactionAuthorization(paymentToken, updateAuthorizationRequest))

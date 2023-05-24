@@ -62,7 +62,7 @@ class PaymentGatewayClientTest {
     @Mock
     ConfidentialMailUtils confidentialMailUtils;
 
-    private final UUID transactionIdUUID = UUID.randomUUID();
+    private final TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
     @Spy
     ObjectMapper objectMapper = new ObjectMapper();
@@ -84,20 +84,22 @@ class PaymentGatewayClientTest {
     @Test
     void shouldNotCallAuthorizationGatewayWithInvalidDetailTypeGatewayIdTuple() {
         TransactionActivated transaction = new TransactionActivated(
-                new TransactionId(transactionIdUUID),
+                transactionId,
                 List.of(
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -134,20 +136,22 @@ class PaymentGatewayClientTest {
     void shouldReturnAuthorizationResponseForCreditCardWithXPay() throws JsonProcessingException {
 
         TransactionActivated transaction = new TransactionActivated(
-                new TransactionId(transactionIdUUID),
+                transactionId,
                 List.of(
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
@@ -155,7 +159,7 @@ class PaymentGatewayClientTest {
                 .expiryDate("203012")
                 .detailType("card")
                 .holderName("John Doe")
-                .brand("VISA")
+                .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -176,7 +180,7 @@ class PaymentGatewayClientTest {
                 .cvv(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
                 .expiryDate(cardDetails.getExpiryDate())
-                .idTransaction(transactionIdUUID.toString())
+                .idTransaction(transactionId.value())
                 .grandTotal(
                         BigDecimal.valueOf(
                                 transaction.getPaymentNotices().stream()
@@ -185,18 +189,17 @@ class PaymentGatewayClientTest {
                         )
                 );
 
-        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
+        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionId.value()));
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
 
         XPayAuthResponseEntityDto xPayResponse = new XPayAuthResponseEntityDto()
                 .requestId("requestId")
                 .urlRedirect("https://example.com");
-
         /* preconditions */
-        Mockito.when(xPayInternalApi.authRequestXpay(xPayAuthRequestDto, encodedMdcFields))
+        Mockito.when(xPayInternalApi.authXpay(xPayAuthRequestDto, encodedMdcFields))
                 .thenReturn(Mono.just(xPayResponse));
 
-        Mockito.when(mockUuidUtils.uuidToBase64(any()))
+        Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
                 .thenReturn(xPayAuthRequestDto.getIdTransaction());
 
         /* test */
@@ -212,28 +215,30 @@ class PaymentGatewayClientTest {
                 .expectNextCount(0)
                 .verifyComplete();
 
-        verify(xPayInternalApi, times(1)).authRequestXpay(any(), any());
+        verify(xPayInternalApi, times(1)).authXpay(any(), any());
         verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(0)).step0Vpos(any(), any());
+        verify(creditCardInternalApi, times(0)).step0VposAuth(any(), any());
     }
 
     @Test
     void shouldReturnAuthorizationResponseWithPostePay() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
-                new TransactionId(transactionIdUUID),
+                transactionId,
                 List.of(
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -260,9 +265,9 @@ class PaymentGatewayClientTest {
                 )
                 .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
-                .idTransaction(transactionIdUUID.toString());
+                .idTransaction(transactionId.value());
 
-        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
+        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionId.value()));
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
 
         PostePayAuthResponseEntityDto postePayResponse = new PostePayAuthResponseEntityDto()
@@ -289,28 +294,30 @@ class PaymentGatewayClientTest {
                 .expectNextCount(0)
                 .verifyComplete();
 
-        verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
+        verify(xPayInternalApi, times(0)).authXpay(any(), any());
         verify(postePayInternalApi, times(1)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(0)).step0Vpos(any(), any());
+        verify(creditCardInternalApi, times(0)).step0VposAuth(any(), any());
     }
 
     @Test
     void shouldReturnAuthorizationResponseForCreditCardWithVPOS() throws Exception {
         TransactionActivated transaction = new TransactionActivated(
-                new TransactionId(transactionIdUUID),
+                transactionId,
                 List.of(
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
@@ -318,7 +325,7 @@ class PaymentGatewayClientTest {
                 .expiryDate("203012")
                 .detailType("card")
                 .holderName("John Doe")
-                .brand("VISA")
+                .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
@@ -338,7 +345,7 @@ class PaymentGatewayClientTest {
                 .securityCode(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
                 .expireDate(cardDetails.getExpiryDate())
-                .idTransaction(transactionIdUUID.toString())
+                .idTransaction(transactionId.value())
                 .amount(
                         BigDecimal.valueOf(
                                 transaction.getPaymentNotices().stream()
@@ -347,13 +354,13 @@ class PaymentGatewayClientTest {
                         )
                 )
                 .emailCH(EMAIL_STRING)
-                .circuit(cardDetails.getBrand())
+                .circuit(VposAuthRequestDto.CircuitEnum.fromValue(cardDetails.getBrand().toString()))
                 .holder(cardDetails.getHolderName())
                 .isFirstPayment(true)
                 .threeDsData("threeDsData")
                 .idPsp(authorizationData.pspId());
 
-        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
+        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionId.value()));
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
 
         VposAuthResponseDto vposAuthResponseDto = new VposAuthResponseDto()
@@ -361,7 +368,7 @@ class PaymentGatewayClientTest {
                 .urlRedirect("https://example.com");
 
         /* preconditions */
-        Mockito.when(creditCardInternalApi.step0Vpos(vposAuthRequestDto, encodedMdcFields))
+        Mockito.when(creditCardInternalApi.step0VposAuth(vposAuthRequestDto, encodedMdcFields))
                 .thenReturn(Mono.just(vposAuthResponseDto));
 
         Mockito.when(mockUuidUtils.uuidToBase64(any()))
@@ -382,35 +389,37 @@ class PaymentGatewayClientTest {
                 .expectNext(vposAuthResponseDto)
                 .verifyComplete();
 
-        verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
+        verify(xPayInternalApi, times(0)).authXpay(any(), any());
         verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(1)).step0Vpos(any(), any());
+        verify(creditCardInternalApi, times(1)).step0VposAuth(any(), any());
     }
 
     @Test
     void shouldThrowAlreadyProcessedOn401ForCreditCardWithXpay() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
-                new TransactionId(transactionIdUUID),
+                transactionId,
                 List.of(
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .detailType("card")
                 .cvv("345")
                 .pan("16589654852")
                 .expiryDate("203012")
-                .brand("VISA")
+                .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
@@ -430,7 +439,7 @@ class PaymentGatewayClientTest {
                 .cvv(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
                 .expiryDate(cardDetails.getExpiryDate())
-                .idTransaction(transactionIdUUID.toString())
+                .idTransaction(transactionId.value())
                 .grandTotal(
                         BigDecimal.valueOf(
                                 transaction.getPaymentNotices().stream()
@@ -439,11 +448,11 @@ class PaymentGatewayClientTest {
                         )
                 );
 
-        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
+        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionId.value()));
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
 
         /* preconditions */
-        Mockito.when(xPayInternalApi.authRequestXpay(xPayAuthRequestDto, encodedMdcFields))
+        Mockito.when(xPayInternalApi.authXpay(xPayAuthRequestDto, encodedMdcFields))
                 .thenReturn(
                         Mono.error(
                                 new WebClientResponseException(
@@ -478,28 +487,30 @@ class PaymentGatewayClientTest {
                 )
                 .verify();
 
-        verify(xPayInternalApi, times(1)).authRequestXpay(any(), any());
+        verify(xPayInternalApi, times(1)).authXpay(any(), any());
         verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(0)).step0Vpos(any(), any());
+        verify(creditCardInternalApi, times(0)).step0VposAuth(any(), any());
     }
 
     @Test
     void shouldThrowAlreadyProcessedOn401ForPostePay() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
-                new TransactionId(transactionIdUUID),
+                transactionId,
                 List.of(
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -526,9 +537,9 @@ class PaymentGatewayClientTest {
                 )
                 .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
-                .idTransaction(transactionIdUUID.toString());
+                .idTransaction(transactionId.value());
 
-        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
+        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionId.value()));
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
 
         /* preconditions */
@@ -564,28 +575,30 @@ class PaymentGatewayClientTest {
                 .expectNextCount(0)
                 .verifyComplete();
 
-        verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
+        verify(xPayInternalApi, times(0)).authXpay(any(), any());
         verify(postePayInternalApi, times(1)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(0)).step0Vpos(any(), any());
+        verify(creditCardInternalApi, times(0)).step0VposAuth(any(), any());
     }
 
     @Test
     void shouldThrowGatewayTimeoutOn504() {
         TransactionActivated transaction = new TransactionActivated(
-                new TransactionId(transactionIdUUID),
+                transactionId,
                 List.of(
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
                 "faultCode",
                 "faultCodeString",
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -632,28 +645,30 @@ class PaymentGatewayClientTest {
                 .expectNextCount(0)
                 .verifyComplete();
 
-        verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
+        verify(xPayInternalApi, times(0)).authXpay(any(), any());
         verify(postePayInternalApi, times(1)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(0)).step0Vpos(any(), any());
+        verify(creditCardInternalApi, times(0)).step0VposAuth(any(), any());
     }
 
     @Test
     void shouldThrowBadGatewayOn500ForPostePay() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
-                new TransactionId(transactionIdUUID),
+                transactionId,
                 List.of(
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -680,9 +695,9 @@ class PaymentGatewayClientTest {
                 )
                 .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
-                .idTransaction(transactionIdUUID.toString());
+                .idTransaction(transactionId.value());
 
-        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
+        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionId.value()));
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
 
         /* preconditions */
@@ -715,34 +730,36 @@ class PaymentGatewayClientTest {
                 .expectNextCount(0)
                 .verifyComplete();
 
-        verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
+        verify(xPayInternalApi, times(0)).authXpay(any(), any());
         verify(postePayInternalApi, times(1)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(0)).step0Vpos(any(), any());
+        verify(creditCardInternalApi, times(0)).step0VposAuth(any(), any());
     }
 
     @Test
     void shouldThrowBadGatewayOn500ForCreditCardWithXPay() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
-                new TransactionId(transactionIdUUID),
+                transactionId,
                 List.of(
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
                 .pan("16589654852")
                 .expiryDate("203012")
-                .brand("VISA")
+                .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
@@ -762,7 +779,7 @@ class PaymentGatewayClientTest {
                 .cvv(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
                 .expiryDate(cardDetails.getExpiryDate())
-                .idTransaction(transactionIdUUID.toString())
+                .idTransaction(transactionId.value())
                 .grandTotal(
                         BigDecimal.valueOf(
                                 transaction.getPaymentNotices().stream()
@@ -771,11 +788,11 @@ class PaymentGatewayClientTest {
                         )
                 );
 
-        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
+        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionId.value()));
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
 
         /* preconditions */
-        Mockito.when(xPayInternalApi.authRequestXpay(xPayAuthRequestDto, encodedMdcFields))
+        Mockito.when(xPayInternalApi.authXpay(xPayAuthRequestDto, encodedMdcFields))
                 .thenReturn(
                         Mono.error(
                                 new WebClientResponseException(
@@ -804,34 +821,36 @@ class PaymentGatewayClientTest {
                 .expectNextCount(0)
                 .verifyComplete();
 
-        verify(xPayInternalApi, times(1)).authRequestXpay(any(), any());
+        verify(xPayInternalApi, times(1)).authXpay(any(), any());
         verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(0)).step0Vpos(any(), any());
+        verify(creditCardInternalApi, times(0)).step0VposAuth(any(), any());
     }
 
     @Test
     void shouldThrowBadGatewayOn500ForCreditCardWithVPOS() throws Exception {
         TransactionActivated transaction = new TransactionActivated(
-                new TransactionId(transactionIdUUID),
+                transactionId,
                 List.of(
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
                 .pan("16589654852")
                 .expiryDate("203012")
-                .brand("VISA")
+                .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
@@ -851,7 +870,7 @@ class PaymentGatewayClientTest {
                 .securityCode(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
                 .expireDate(cardDetails.getExpiryDate())
-                .idTransaction(transactionIdUUID.toString())
+                .idTransaction(transactionId.value())
                 .amount(
                         BigDecimal.valueOf(
                                 transaction.getPaymentNotices().stream()
@@ -860,17 +879,17 @@ class PaymentGatewayClientTest {
                         )
                 )
                 .emailCH(EMAIL_STRING)
-                .circuit(cardDetails.getBrand())
+                .circuit(VposAuthRequestDto.CircuitEnum.fromValue(cardDetails.getBrand().toString()))
                 .holder(cardDetails.getHolderName())
                 .isFirstPayment(true)
                 .threeDsData("threeDsData")
                 .idPsp(authorizationData.pspId());
 
-        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID));
+        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionId.value()));
         String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
 
         /* preconditions */
-        Mockito.when(creditCardInternalApi.step0Vpos(vposAuthRequestDto, encodedMdcFields))
+        Mockito.when(creditCardInternalApi.step0VposAuth(vposAuthRequestDto, encodedMdcFields))
                 .thenReturn(
                         Mono.error(
                                 new WebClientResponseException(
@@ -901,28 +920,30 @@ class PaymentGatewayClientTest {
                 .expectNextCount(0)
                 .verifyComplete();
 
-        verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
+        verify(xPayInternalApi, times(0)).authXpay(any(), any());
         verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(1)).step0Vpos(any(), any());
+        verify(creditCardInternalApi, times(1)).step0VposAuth(any(), any());
     }
 
     @Test
     void fallbackOnEmptyMdcInfoOnMapperErrorForPostePay() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
-                new TransactionId(transactionIdUUID),
+                transactionId,
                 List.of(
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -949,7 +970,7 @@ class PaymentGatewayClientTest {
                 )
                 .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
                 .paymentChannel(authorizationData.pspChannelCode())
-                .idTransaction(transactionIdUUID.toString());
+                .idTransaction(transactionId.value());
 
         String encodedMdcFields = "";
 
@@ -958,7 +979,7 @@ class PaymentGatewayClientTest {
                 .urlRedirect("https://example.com");
 
         /* preconditions */
-        Mockito.when(objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID)))
+        Mockito.when(objectMapper.writeValueAsString(Map.of("transactionId", transactionId.value())))
                 .thenThrow(new JsonProcessingException("") {
                 });
         Mockito.when(postePayInternalApi.authRequest(postePayAuthRequest, false, encodedMdcFields))
@@ -978,34 +999,36 @@ class PaymentGatewayClientTest {
                 .expectNextCount(0)
                 .verifyComplete();
 
-        verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
+        verify(xPayInternalApi, times(0)).authXpay(any(), any());
         verify(postePayInternalApi, times(1)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(0)).step0Vpos(any(), any());
+        verify(creditCardInternalApi, times(0)).step0VposAuth(any(), any());
     }
 
     @Test
     void fallbackOnEmptyMdcInfoOnMapperErrorForCreditCardWithXPay() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
-                new TransactionId(transactionIdUUID),
+                transactionId,
                 List.of(
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
                 .pan("16589654852")
                 .expiryDate("203012")
-                .brand("VISA")
+                .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
@@ -1025,7 +1048,7 @@ class PaymentGatewayClientTest {
                 .cvv(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
                 .expiryDate(cardDetails.getExpiryDate())
-                .idTransaction(transactionIdUUID.toString())
+                .idTransaction(transactionId.value())
                 .grandTotal(
                         BigDecimal.valueOf(
                                 transaction.getPaymentNotices().stream()
@@ -1041,10 +1064,10 @@ class PaymentGatewayClientTest {
                 .urlRedirect("https://example.com");
 
         /* preconditions */
-        Mockito.when(objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID)))
+        Mockito.when(objectMapper.writeValueAsString(Map.of("transactionId", transactionId.value())))
                 .thenThrow(new JsonProcessingException("") {
                 });
-        Mockito.when(xPayInternalApi.authRequestXpay(xPayAuthRequestDto, encodedMdcFields))
+        Mockito.when(xPayInternalApi.authXpay(xPayAuthRequestDto, encodedMdcFields))
                 .thenReturn(Mono.just(xPayResponse));
         Mockito.when(mockUuidUtils.uuidToBase64(any()))
                 .thenReturn(xPayAuthRequestDto.getIdTransaction());
@@ -1061,34 +1084,36 @@ class PaymentGatewayClientTest {
                 .expectNextCount(0)
                 .verifyComplete();
 
-        verify(xPayInternalApi, times(1)).authRequestXpay(any(), any());
+        verify(xPayInternalApi, times(1)).authXpay(any(), any());
         verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(0)).step0Vpos(any(), any());
+        verify(creditCardInternalApi, times(0)).step0VposAuth(any(), any());
     }
 
     @Test
     void fallbackOnEmptyMdcInfoOnMapperErrorForCreditCardWithVPOS() throws Exception {
         TransactionActivated transaction = new TransactionActivated(
-                new TransactionId(transactionIdUUID),
+                transactionId,
                 List.of(
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
                 .pan("16589654852")
                 .expiryDate("203012")
-                .brand("VISA")
+                .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
@@ -1108,7 +1133,7 @@ class PaymentGatewayClientTest {
                 .securityCode(cardDetails.getCvv())
                 .pan(cardDetails.getPan())
                 .expireDate(cardDetails.getExpiryDate())
-                .idTransaction(transactionIdUUID.toString())
+                .idTransaction(transactionId.value())
                 .amount(
                         BigDecimal.valueOf(
                                 transaction.getPaymentNotices().stream()
@@ -1117,7 +1142,7 @@ class PaymentGatewayClientTest {
                         )
                 )
                 .emailCH(EMAIL_STRING)
-                .circuit(cardDetails.getBrand())
+                .circuit(VposAuthRequestDto.CircuitEnum.fromValue(cardDetails.getBrand().toString()))
                 .holder(cardDetails.getHolderName())
                 .isFirstPayment(true)
                 .threeDsData("threeDsData")
@@ -1130,10 +1155,10 @@ class PaymentGatewayClientTest {
                 .urlRedirect("https://example.com");
 
         /* preconditions */
-        Mockito.when(objectMapper.writeValueAsString(Map.of("transactionId", transactionIdUUID)))
+        Mockito.when(objectMapper.writeValueAsString(Map.of("transactionId", transactionId.value())))
                 .thenThrow(new JsonProcessingException("") {
                 });
-        Mockito.when(creditCardInternalApi.step0Vpos(vposAuthRequestDto, encodedMdcFields))
+        Mockito.when(creditCardInternalApi.step0VposAuth(vposAuthRequestDto, encodedMdcFields))
                 .thenReturn(Mono.just(creditCardAuthResponseDto));
         Mockito.when(mockUuidUtils.uuidToBase64(any()))
                 .thenReturn(vposAuthRequestDto.getIdTransaction());
@@ -1152,28 +1177,30 @@ class PaymentGatewayClientTest {
                 .expectNextCount(0)
                 .verifyComplete();
 
-        verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
+        verify(xPayInternalApi, times(0)).authXpay(any(), any());
         verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(1)).step0Vpos(any(), any());
+        verify(creditCardInternalApi, times(1)).step0VposAuth(any(), any());
     }
 
     @Test
     void shouldThrowInvalidRequestWhenCardDetailsAreMissingForCreditCardWithXPay() {
         TransactionActivated transaction = new TransactionActivated(
-                new TransactionId(transactionIdUUID),
+                transactionId,
                 List.of(
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -1203,28 +1230,30 @@ class PaymentGatewayClientTest {
                 .expectNextCount(0)
                 .verifyComplete();
 
-        verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
+        verify(xPayInternalApi, times(0)).authXpay(any(), any());
         verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(0)).step0Vpos(any(), any());
+        verify(creditCardInternalApi, times(0)).step0VposAuth(any(), any());
     }
 
     @Test
     void shouldThrowInvalidRequestWhenCardDetailsAreMissingForCreditCardWithVPOS() {
         TransactionActivated transaction = new TransactionActivated(
-                new TransactionId(transactionIdUUID),
+                transactionId,
                 List.of(
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
                                 new TransactionDescription("description"),
-                                new PaymentContextCode(null)
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
                         )
                 ),
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart"
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -1257,8 +1286,8 @@ class PaymentGatewayClientTest {
                 .expectNextCount(0)
                 .verifyComplete();
 
-        verify(xPayInternalApi, times(0)).authRequestXpay(any(), any());
+        verify(xPayInternalApi, times(0)).authXpay(any(), any());
         verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
-        verify(creditCardInternalApi, times(0)).step0Vpos(any(), any());
+        verify(creditCardInternalApi, times(0)).step0VposAuth(any(), any());
     }
 }

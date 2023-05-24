@@ -1,6 +1,7 @@
 package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.v1.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.Confidential;
@@ -35,8 +36,9 @@ class TransactionsActivationProjectionHandlerTest {
     void shouldSaveTransaction() {
         /* preconditions */
 
-        String transactionIdString = UUID.randomUUID().toString();
-        String rptIdString = "77777777777111111111111111111";
+        String transactionIdString = TransactionTestUtils.TRANSACTION_ID;
+        String paFiscalCode = "77777777777";
+        String rptIdString = paFiscalCode + "111111111111111111";
         String paymentTokenString = UUID.randomUUID().toString();
         String transactionDescription = "transaction description";
         int amountInt = 100;
@@ -49,7 +51,8 @@ class TransactionsActivationProjectionHandlerTest {
                                 rptIdString,
                                 transactionDescription,
                                 amountInt,
-                                null
+                                null,
+                                List.of(new PaymentTransferInformation(paFiscalCode, false, amountInt, null))
                         )
                 )
         );
@@ -60,7 +63,7 @@ class TransactionsActivationProjectionHandlerTest {
         );
 
         TransactionActivatedData data = event.getData();
-        TransactionId transactionId = new TransactionId(UUID.fromString(event.getTransactionId()));
+        TransactionId transactionId = new TransactionId(event.getTransactionId());
         PaymentToken paymentToken = new PaymentToken(event.getData().getPaymentNotices().get(0).getPaymentToken());
         RptId rptId = new RptId(event.getData().getPaymentNotices().get(0).getRptId());
         TransactionDescription description = new TransactionDescription(
@@ -70,6 +73,7 @@ class TransactionsActivationProjectionHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
 
         TransactionActivated transaction = new TransactionActivated(
@@ -80,13 +84,22 @@ class TransactionsActivationProjectionHandlerTest {
                                 rptId,
                                 amount,
                                 description,
-                                nullPaymentContextCode
+                                nullPaymentContextCode,
+                                List.of(
+                                        new PaymentTransferInfo(
+                                                rptIdString.substring(0, 11),
+                                                false,
+                                                amount.value(),
+                                                null
+                                        )
+                                )
                         )
                 ),
                 email,
                 faultCode,
                 faultCodeString,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                idCart
         );
 
         it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.v1.Transaction

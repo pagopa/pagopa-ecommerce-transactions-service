@@ -307,14 +307,30 @@ components:
           type: string
         amount:
           $ref: '#/components/schemas/AmountEuroCents'
+        transferList:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transfer'
+          minItems: 1
+          maxItems: 5
       required:
         - rptId
         - amount
+        - transferList
       example:
         rptId: "77777777777302012387654312384"
         paymentToken: "paymentToken1"
         reason: "reason1"
-        amount: 100
+        amount: 600
+        transferList:
+          - paFiscalCode: "77777777777"
+            digitalStamp: false
+            transferCategory: "transferCategory1"
+            transferAmount: 500
+          - paFiscalCode: "11111111111"
+            digitalStamp: true
+            transferCategory: "transferCategory2"
+            transferAmount: 100
     NewTransactionRequest:
       description: Request body for creating a new transaction
       type: object
@@ -335,6 +351,10 @@ components:
           type: string
           pattern: (?:[a-z0-9!#$%&'*+\/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+\/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])
           example : mario.rossi@gmail.it
+        idCart:
+          description: Cart identifier provided by creditor institution
+          type: string
+          example: idCartFromCreditorInstitution
       required:
         - paymentNotices
         - email
@@ -357,11 +377,29 @@ components:
             - rptId: "77777777777302012387654312384"
               paymentToken: "paymentToken1"
               reason: "reason1"
-              amount: 100
+              amount: 600
+              transferList:
+                - paFiscalCode: "77777777777"
+                  digitalStamp: false
+                  transferCategory: "transferCategory1"
+                  transferAmount: 500
+                - paFiscalCode: "11111111111"
+                  digitalStamp: true
+                  transferCategory: "transferCategory2"
+                  transferAmount: 100
             - rptId: "77777777777302012387654312385"
               paymentToken: "paymentToken2"
               reason: "reason2"
-              amount: 100
+              amount: 400
+              transferList:
+                - paFiscalCode: "44444444444"
+                  digitalStamp: true
+                  transferCategory: "transferCategory1"
+                  transferAmount: 200
+                - paFiscalCode: "22222222222"
+                  digitalStamp: false
+                  transferCategory: "transferCategory2"
+                  transferAmount: 100
         clientId:
           description: transaction client id
           enum:
@@ -371,6 +409,10 @@ components:
         authToken:
           description: authorization token
           type: string
+        idCart:
+          description: Cart identifier provided by creditor institution
+          type: string
+          example: idCartFromCreditorInstitution
       required:
         - transactionId
         - amountTotal
@@ -454,6 +496,13 @@ components:
         brand:
           type: string
           description: The card brand name
+          enum:
+            - VISA
+            - MASTERCARD
+            - UNKNOWN
+            - DINERS
+            - MAESTRO
+            - AMEX
         threeDsData:
           type: string
           description: The 3ds data evaluated by the client
@@ -494,23 +543,23 @@ components:
       type: object
       description: Request body for updating an authorization for a transaction
       properties:
-        authorizationResult:
-          $ref: '#/components/schemas/AuthorizationResult'
+        outcomeGateway:
+          type: object
+          oneOf:
+            - $ref: '#/components/schemas/OutcomeVposGateway'
+            - $ref: '#/components/schemas/OutcomeXpayGateway'
+          discriminator:
+            propertyName: paymentGatewayType
+            mapping:
+              XPAY: "#/components/schemas/OutcomeXpayGateway"
+              VPOS: "#/components/schemas/OutcomeVposGateway"
         timestampOperation:
           type: string
           format: date-time
           description: Payment timestamp
-        authorizationCode:
-          type: string
-          description: Payment gateway-specific authorization code related to the transaction
       required:
-        - authorizationResult
+        - outcomeGateway
         - timestampOperation
-        - authorizationCode
-      example:
-        authorizationResult: OK
-        timestampOperation: 2022-02-11T13:00:00+01:00
-        authorizationCode: auth-code
     AddUserReceiptRequest:
       type: object
       description: Request body for adding a user receipt to a transaction
@@ -558,8 +607,6 @@ components:
               - description
               - creditorReferenceId
               - fiscalCode
-              - companyName
-              - officeName
               - debtor
           minItems: 1
           maxItems: 5
@@ -587,6 +634,18 @@ components:
           properties:
             feeTotal:
               $ref: "#/components/schemas/AmountEuroCents"
+            paymentGateway:
+              type: string
+              example: 'XPAY'
+            sendPaymentResultOutcome:
+              type: string
+              enum:
+                - OK
+                - KO
+            authorizationCode:
+              type: string
+            authorizationErrorCode:
+              type: string
           required:
             - status
     AmountEuroCents:
@@ -612,6 +671,7 @@ components:
         - NOTIFIED_OK
         - NOTIFIED_KO
         - NOTIFICATION_ERROR
+        - NOTIFICATION_REQUESTED
         - EXPIRED
         - REFUNDED
         - CANCELED
@@ -628,6 +688,26 @@ components:
         - IO
         - CHECKOUT
         - CHECKOUT_CART
+    Transfer:
+      type: object
+      description: The dto that contains information about the creditor entities
+      properties:
+        paFiscalCode:
+          type: string
+          description: The creditor institution fiscal code
+          pattern: '^[a-zA-Z0-9]{11}'
+        digitalStamp:
+          type: boolean
+          description: True if it is a digital stamp. False otherwise
+        transferCategory:
+          type: string
+          description: The taxonomy of the transfer
+        transferAmount:
+          $ref: '#/components/schemas/AmountEuroCents'
+      required:
+        - paFiscalCode
+        - digitalStamp
+        - transferAmount
     ProblemJson:
       description: Body definition for error responses containing failure details
       type: object
@@ -908,6 +988,102 @@ components:
         - PPT_STAZIONE_INT_PA_IRRAGGIUNGIBILE
         - PPT_STAZIONE_INT_PA_SERVIZIO_NONATTIVO
         - GENERIC_ERROR
+    OutcomeVposGateway:
+      type: object
+      properties:
+        paymentGatewayType:
+          type: string
+          example: 'VPOS'
+        outcome:
+          type: string
+          enum:
+            - OK
+            - KO
+        rrn:
+          type: string
+        authorizationCode:
+          type: string
+        errorCode:
+          type: string
+          description: error code received from Vpos - https://github.com/pagopa/pagopa-wisp2.0-pp-server/blob/ff0e8e3354fc11d296fe5547b9b00941ead64e96/pp-server/pp-dto/src/main/java/com/pagopa/utils/VposResultCodeEnum.java
+          enum:
+            - '00'
+            - '01'
+            - '02'
+            - '03'
+            - '04'
+            - '05'
+            - '06'
+            - '07'
+            - '08'
+            - '09'
+            - '10'
+            - '11'
+            - '12'
+            - '13'
+            - '16'
+            - '17'
+            - '20'
+            - '21'
+            - '25'
+            - '26'
+            - '35'
+            - '37'
+            - '38'
+            - '40'
+            - '41'
+            - '50'
+            - '51'
+            - '98'
+            - '99'
+      required:
+        - paymentGatewayType
+        - outcome
+    OutcomeXpayGateway:
+      type: object
+      properties:
+        paymentGatewayType:
+          type: string
+          example: 'XPAY'
+        outcome:
+          type: string
+          enum:
+            - OK
+            - KO
+        authorizationCode:
+          type: string
+        errorCode:
+          type: number
+          description: error code received from XPay - https://ecommerce.nexi.it/specifiche-tecniche/tabelleecodifiche/codicierroreapirestful.html
+          enum:
+            - 1
+            - 2
+            - 3
+            - 4
+            - 5
+            - 7
+            - 8
+            - 9
+            - 12
+            - 13
+            - 14
+            - 15
+            - 16
+            - 17
+            - 18
+            - 19
+            - 20
+            - 21
+            - 22
+            - 50
+            - 96
+            - 97
+            - 98
+            - 99
+            - 100
+      required:
+        - paymentGatewayType
+        - outcome
   requestBodies:
     NewTransactionRequest:
       required: true
