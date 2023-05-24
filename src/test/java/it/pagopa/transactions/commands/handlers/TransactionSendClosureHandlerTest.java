@@ -166,7 +166,8 @@ class TransactionSendClosureHandlerTest {
                 faultCode,
                 faultCodeString,
                 Transaction.ClientId.CHECKOUT,
-                idCart
+                idCart,
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -195,7 +196,8 @@ class TransactionSendClosureHandlerTest {
                         faultCode,
                         faultCodeString,
                         it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                        idCart
+                        idCart,
+                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
                 )
         );
 
@@ -278,7 +280,8 @@ class TransactionSendClosureHandlerTest {
                         faultCode,
                         faultCodeString,
                         Transaction.ClientId.CHECKOUT,
-                        idCart
+                        idCart,
+                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
                 )
         );
 
@@ -433,7 +436,8 @@ class TransactionSendClosureHandlerTest {
                         faultCode,
                         faultCodeString,
                         Transaction.ClientId.CHECKOUT,
-                        idCart
+                        idCart,
+                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
                 )
         );
 
@@ -588,7 +592,8 @@ class TransactionSendClosureHandlerTest {
                         faultCode,
                         faultCodeString,
                         Transaction.ClientId.CHECKOUT,
-                        idCart
+                        idCart,
+                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
                 )
         );
 
@@ -829,7 +834,8 @@ class TransactionSendClosureHandlerTest {
                         faultCode,
                         faultCodeString,
                         Transaction.ClientId.CHECKOUT,
-                        idCart
+                        idCart,
+                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
                 )
         );
 
@@ -1066,7 +1072,8 @@ class TransactionSendClosureHandlerTest {
                         faultCode,
                         faultCodeString,
                         Transaction.ClientId.CHECKOUT,
-                        idCart
+                        idCart,
+                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
                 )
         );
 
@@ -1323,7 +1330,8 @@ class TransactionSendClosureHandlerTest {
                         faultCode,
                         faultCodeString,
                         Transaction.ClientId.CHECKOUT,
-                        idCart
+                        idCart,
+                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
                 )
         );
 
@@ -1580,7 +1588,8 @@ class TransactionSendClosureHandlerTest {
                         faultCode,
                         faultCodeString,
                         Transaction.ClientId.CHECKOUT,
-                        idCart
+                        idCart,
+                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
                 )
         );
 
@@ -1755,7 +1764,8 @@ class TransactionSendClosureHandlerTest {
                         faultCode,
                         faultCodeString,
                         Transaction.ClientId.CHECKOUT,
-                        idCart
+                        idCart,
+                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
                 )
         );
 
@@ -1930,7 +1940,8 @@ class TransactionSendClosureHandlerTest {
                         faultCode,
                         faultCodeString,
                         Transaction.ClientId.CHECKOUT,
-                        idCart
+                        idCart,
+                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
                 )
         );
 
@@ -2190,7 +2201,8 @@ class TransactionSendClosureHandlerTest {
                         faultCode,
                         faultCodeString,
                         Transaction.ClientId.CHECKOUT,
-                        idCart
+                        idCart,
+                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
                 )
         );
 

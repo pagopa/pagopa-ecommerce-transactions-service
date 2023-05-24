@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import java.math.BigInteger;
 import java.util.List;
 
 @Component
@@ -47,7 +48,7 @@ public class TransactionsActivationProjectionHandler
         String faultCodeString = event.getData().getFaultCodeString();
         ClientId clientId = event.getData().getClientId();
         String idCart = event.getData().getIdCart();
-
+        BigInteger paymentTokenValiditySeconds = event.getData().getPaymentTokenValiditySeconds();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 paymentNoticeList,
@@ -55,7 +56,8 @@ public class TransactionsActivationProjectionHandler
                 faultCode,
                 faultCodeString,
                 clientId,
-                idCart
+                idCart,
+                paymentTokenValiditySeconds
         );
 
         it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.v1.Transaction

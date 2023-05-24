@@ -12,7 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -166,7 +165,8 @@ class TransactionDocumentTest {
                 faultCode,
                 faultCodeString,
                 Transaction.ClientId.CHECKOUT,
-                idCart
+                idCart,
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
         Transaction transactionDocument = Transaction.from(transaction);

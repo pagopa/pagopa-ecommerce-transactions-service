@@ -26,6 +26,7 @@ import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
+import java.math.BigInteger;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -219,7 +220,8 @@ public class TransactionActivateHandler
                                                             transactionId.value(),
                                                             newTransactionRequestDto.getEmail(),
                                                             command.getClientId(),
-                                                            newTransactionRequestDto.getIdCart()
+                                                            newTransactionRequestDto.getIdCart(),
+                                                            paymentTokenTimeout
                                                     ),
                                                     authToken
                                             )
@@ -249,7 +251,8 @@ public class TransactionActivateHandler
                                                                          String transactionId,
                                                                          String email,
                                                                          Transaction.ClientId clientId,
-                                                                         String idCart
+                                                                         String idCart,
+                                                                         Integer paymentTokenTimeout
     ) {
         List<PaymentNotice> paymentNotices = toPaymentNoticeList(paymentRequestsInfo);
         Mono<TransactionActivatedData> data = confidentialMailUtils.toConfidential(email).map(
@@ -259,7 +262,8 @@ public class TransactionActivateHandler
                         null,
                         null,
                         clientId,
-                        idCart
+                        idCart,
+                        BigInteger.valueOf(paymentTokenTimeout)
                 )
         );
 
