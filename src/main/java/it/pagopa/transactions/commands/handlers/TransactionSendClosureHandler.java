@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
@@ -33,11 +34,12 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 
 @Component
 @Slf4j
 public class TransactionSendClosureHandler implements
-        CommandHandler<TransactionClosureSendCommand, Mono<Either<Either<TransactionRefundRequestedEvent, TransactionClosureErrorEvent>, Either<TransactionRefundRequestedEvent, TransactionEvent<TransactionClosureData>>>>> {
+        CommandHandler<TransactionClosureSendCommand, Mono<Tuple2<Optional<TransactionRefundRequestedEvent>, Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>>>> {
 
     private final TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository;
 
@@ -93,8 +95,8 @@ public class TransactionSendClosureHandler implements
     }
 
     @Override
-    public Mono<Either<Either<TransactionRefundRequestedEvent, TransactionClosureErrorEvent>, Either<TransactionRefundRequestedEvent, TransactionEvent<TransactionClosureData>>>> handle(
-                                                                                                                                                                                         TransactionClosureSendCommand command
+    public Mono<Tuple2<Optional<TransactionRefundRequestedEvent>, Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>>> handle(
+                                                                                                                                                          TransactionClosureSendCommand command
     ) {
         Mono<BaseTransaction> transaction = transactionsUtils.reduceEvents(
                 command.getData().transaction().getTransactionId()
@@ -259,14 +261,15 @@ public class TransactionSendClosureHandler implements
                                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
                                     )
                                             .map(
-                                                    Either::<TransactionRefundRequestedEvent, TransactionEvent<TransactionClosureData>>left
+                                                    (refundedEvent) -> Tuples.of(
+                                                            Optional.of(refundedEvent),
+                                                            Either.<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>right(
+                                                                    closureEvent
+                                                            )
+                                                    )
 
-                                            ).switchIfEmpty(Mono.just(Either.right(closureEvent)))
-                            )
-                            .map(
-                                    event -> Either
-                                            .<Either<TransactionRefundRequestedEvent, TransactionClosureErrorEvent>, Either<TransactionRefundRequestedEvent, TransactionEvent<TransactionClosureData>>>right(
-                                                    event
+                                            ).switchIfEmpty(
+                                                    Mono.just(Tuples.of(Optional.empty(), Either.right(closureEvent)))
                                             )
                             )
                             .onErrorResume(exception -> {
@@ -356,9 +359,12 @@ public class TransactionSendClosureHandler implements
                                     }
 
                                     return eventSaved.map(
-                                            Either::<TransactionRefundRequestedEvent, TransactionClosureErrorEvent>right
-                                    ).map(
-                                            (event) -> Either.left(event)
+                                            (closureErrorEvent) -> Tuples.of(
+                                                    Optional.empty(),
+                                                    Either.<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>left(
+                                                            closureErrorEvent
+                                                    )
+                                            )
                                     );
                                 }
                                 // Unrecoverable error calling Nodo for perform close payment.
@@ -372,13 +378,23 @@ public class TransactionSendClosureHandler implements
                                                         transactionAuthorizationCompletedData
                                                                 .getAuthorizationResultDto()
                                                 ).map(
-                                                        Either::<TransactionRefundRequestedEvent, TransactionClosureErrorEvent>left
+                                                        (refundRequestedEvent) -> Tuples.of(
+                                                                Optional.of(refundRequestedEvent),
+                                                                Either.<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>left(
+                                                                        closureErrorEvent
+                                                                )
+                                                        )
 
                                                 ).switchIfEmpty(
-                                                        Mono.just(Either.right(closureErrorEvent))
+                                                        Mono.just(
+                                                                Tuples.of(
+                                                                        Optional.empty(),
+                                                                        Either.left(closureErrorEvent)
+                                                                )
+                                                        )
 
                                                 )
-                                        ).map((event) -> Either.left(event));
+                                        );
 
                             })
                             .doFinally(response -> {
