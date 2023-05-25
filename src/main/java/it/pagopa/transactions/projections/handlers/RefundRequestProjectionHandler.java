@@ -15,8 +15,14 @@ import reactor.core.publisher.Mono;
 public class RefundRequestProjectionHandler
         implements ProjectionHandler<TransactionRefundRequestedEvent, Mono<Transaction>> {
 
+    private final TransactionsViewRepository transactionsViewRepository;
+
     @Autowired
-    private TransactionsViewRepository transactionsViewRepository;
+    public RefundRequestProjectionHandler(
+            TransactionsViewRepository transactionsViewRepository
+    ) {
+        this.transactionsViewRepository = transactionsViewRepository;
+    }
 
     @Override
     public Mono<Transaction> handle(TransactionRefundRequestedEvent transactionRefundRequestedEvent) {

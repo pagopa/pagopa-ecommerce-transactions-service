@@ -23,11 +23,12 @@ import static org.mockito.ArgumentMatchers.any;
 @ExtendWith(MockitoExtension.class)
 class RefundRequestProjectionHandlerTests {
 
-    @InjectMocks
-    private RefundRequestProjectionHandler refundRequestProjectionHandler;
+    private final TransactionsViewRepository transactionsViewRepository = Mockito
+            .mock(TransactionsViewRepository.class);;
 
-    @Mock
-    private TransactionsViewRepository transactionsViewRepository;
+    private final RefundRequestProjectionHandler refundRequestProjectionHandler = new RefundRequestProjectionHandler(
+            transactionsViewRepository
+    );
 
     @Test
     void shouldHandleProjection() {
