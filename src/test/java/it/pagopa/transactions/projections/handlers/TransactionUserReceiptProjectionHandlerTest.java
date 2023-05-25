@@ -45,6 +45,7 @@ class TransactionUserReceiptProjectionHandlerTest {
                 transaction.getIdCart(),
                 "rrn"
         );
+        expectedDocument.setSendPaymentResultOutcome(TransactionUserReceiptData.Outcome.OK);
 
         TransactionUserReceiptRequestedEvent event = TransactionTestUtils
                 .transactionUserReceiptRequestedEvent(
@@ -93,6 +94,7 @@ class TransactionUserReceiptProjectionHandlerTest {
                 transaction.getTransactionActivatedData().getIdCart(),
                 null
         );
+        expectedDocument.setSendPaymentResultOutcome(TransactionUserReceiptData.Outcome.KO);
 
         TransactionUserReceiptRequestedEvent event = TransactionTestUtils
                 .transactionUserReceiptRequestedEvent(

@@ -2,6 +2,7 @@ package it.pagopa.transactions.projections.handlers;
 
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedEvent;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptData;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
@@ -58,7 +59,6 @@ class AuthorizationUpdateProjectionHandlerTest {
         );
 
         expectedDocument.setPaymentGateway(null);
-        expectedDocument.setSendPaymentResultOutcome(AuthorizationResultDto.OK);
         expectedDocument.setAuthorizationCode("authorizationCode");
         expectedDocument.setAuthorizationErrorCode(null);
 
@@ -142,7 +142,6 @@ class AuthorizationUpdateProjectionHandlerTest {
         );
 
         expectedDocument.setPaymentGateway(null);
-        expectedDocument.setSendPaymentResultOutcome(AuthorizationResultDto.OK);
         expectedDocument.setAuthorizationCode("authorizationCode");
         expectedDocument.setAuthorizationErrorCode(null);
 

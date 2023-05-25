@@ -188,7 +188,7 @@ public class TransactionsService {
                                 .sendPaymentResultOutcome(
                                         transaction.getSendPaymentResultOutcome() == null ? null
                                                 : TransactionInfoDto.SendPaymentResultOutcomeEnum
-                                                        .valueOf(transaction.getSendPaymentResultOutcome().getValue())
+                                                        .valueOf(transaction.getSendPaymentResultOutcome().name())
                                 )
                                 .authorizationCode(transaction.getAuthorizationCode())
                                 .authorizationErrorCode(transaction.getAuthorizationErrorCode())

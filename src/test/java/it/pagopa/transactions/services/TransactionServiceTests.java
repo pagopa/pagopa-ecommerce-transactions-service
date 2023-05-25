@@ -148,7 +148,7 @@ class TransactionServiceTests {
 
         transaction.setPaymentGateway("VPOS");
         transaction.setSendPaymentResultOutcome(
-                it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto.OK
+                TransactionUserReceiptData.Outcome.OK
         );
         transaction.setAuthorizationCode("00");
         transaction.setAuthorizationErrorCode(null);
