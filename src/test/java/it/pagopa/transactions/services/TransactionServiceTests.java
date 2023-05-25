@@ -1107,7 +1107,8 @@ class TransactionServiceTests {
                 "faultCode",
                 "faultCodeString",
                 Transaction.ClientId.CHECKOUT,
-                transactionDocument.getIdCart()
+                transactionDocument.getIdCart(),
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -1362,7 +1363,8 @@ class TransactionServiceTests {
                 "faultCode",
                 "faultCodeString",
                 Transaction.ClientId.CHECKOUT,
-                transactionDocument.getIdCart()
+                transactionDocument.getIdCart(),
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -1490,7 +1492,8 @@ class TransactionServiceTests {
                 "faultCode",
                 "faultCodeString",
                 Transaction.ClientId.CHECKOUT,
-                transactionDocument.getIdCart()
+                transactionDocument.getIdCart(),
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
