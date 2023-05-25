@@ -9,8 +9,6 @@ import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
