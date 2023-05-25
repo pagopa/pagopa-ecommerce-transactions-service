@@ -99,7 +99,8 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                "idCart"
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -151,7 +152,8 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                "idCart"
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
@@ -238,7 +240,8 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                "idCart"
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -317,7 +320,8 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                "idCart"
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
@@ -412,7 +416,8 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                "idCart"
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .detailType("card")
@@ -510,7 +515,8 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                "idCart"
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -598,7 +604,8 @@ class PaymentGatewayClientTest {
                 "faultCode",
                 "faultCodeString",
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                "idCart"
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -668,7 +675,8 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                "idCart"
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -753,7 +761,8 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                "idCart"
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
@@ -844,7 +853,8 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                "idCart"
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
@@ -943,7 +953,8 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                "idCart"
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -1022,7 +1033,8 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                "idCart"
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
@@ -1107,7 +1119,8 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                "idCart"
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
         CardAuthRequestDetailsDto cardDetails = new CardAuthRequestDetailsDto()
                 .cvv("345")
@@ -1200,7 +1213,8 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                "idCart"
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -1253,7 +1267,8 @@ class PaymentGatewayClientTest {
                 null,
                 null,
                 it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                "idCart"
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(

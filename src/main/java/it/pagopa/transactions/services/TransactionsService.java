@@ -32,6 +32,7 @@ import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
@@ -100,6 +101,9 @@ public class TransactionsService {
 
     @Autowired
     private TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> eventStoreRepository;
+
+    @Value("${payment.token.validity}")
+    private Integer paymentTokenValidity;
 
     @CircuitBreaker(name = "node-backend")
     @Retry(name = "newTransaction")
@@ -371,7 +375,8 @@ public class TransactionsService {
                                     null,
                                     null,
                                     transactionDocument.getClientId(),
-                                    transactionDocument.getIdCart()
+                                    transactionDocument.getIdCart(),
+                                    paymentTokenValidity
                             );
 
                             AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -643,7 +648,9 @@ public class TransactionsService {
                                     null,
                                     null,
                                     transactionDocument.getClientId(),
-                                    transactionDocument.getIdCart()
+                                    transactionDocument.getIdCart(),
+                                    paymentTokenValidity
+
                             );
                             AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
                                     transaction,

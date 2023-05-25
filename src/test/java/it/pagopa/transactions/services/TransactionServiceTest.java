@@ -22,13 +22,11 @@ import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL_STRING;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
@@ -103,7 +101,8 @@ class TransactionServiceTest {
                 "faultCode",
                 "faultCodeString",
                 Transaction.ClientId.CHECKOUT,
-                "idCart"
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
         /*

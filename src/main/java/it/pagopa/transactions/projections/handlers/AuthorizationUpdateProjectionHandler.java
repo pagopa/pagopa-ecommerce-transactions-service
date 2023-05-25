@@ -7,6 +7,7 @@ import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -16,8 +17,19 @@ import java.time.ZonedDateTime;
 @Slf4j
 public class AuthorizationUpdateProjectionHandler
         implements ProjectionHandler<TransactionAuthorizationCompletedEvent, Mono<TransactionActivated>> {
+
+    private final TransactionsViewRepository transactionsViewRepository;
+
+    private final Integer paymentTokenValidity;
+
     @Autowired
-    private TransactionsViewRepository transactionsViewRepository;
+    public AuthorizationUpdateProjectionHandler(
+            TransactionsViewRepository transactionsViewRepository,
+            @Value("${payment.token.validity}") Integer paymentTokenValidity
+    ) {
+        this.transactionsViewRepository = transactionsViewRepository;
+        this.paymentTokenValidity = paymentTokenValidity;
+    }
 
     @Override
     public Mono<TransactionActivated> handle(TransactionAuthorizationCompletedEvent data) {
@@ -61,7 +73,8 @@ public class AuthorizationUpdateProjectionHandler
                                 null,
                                 ZonedDateTime.parse(transactionDocument.getCreationDate()),
                                 transactionDocument.getClientId(),
-                                transactionDocument.getIdCart()
+                                transactionDocument.getIdCart(),
+                                paymentTokenValidity
                         )
                 );
     }
