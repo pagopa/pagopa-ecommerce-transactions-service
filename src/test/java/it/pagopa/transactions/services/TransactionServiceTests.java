@@ -1,5 +1,6 @@
 package it.pagopa.transactions.services;
 
+import io.vavr.Tuple;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.*;
@@ -36,10 +37,13 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -460,7 +464,7 @@ class TransactionServiceTests {
         Mockito.when(authorizationUpdateProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
 
         Mockito.when(transactionSendClosureHandler.handle(any()))
-                .thenReturn(Mono.just(Either.right(Either.right(closureSentEvent))));
+                .thenReturn(Mono.just(Tuples.of(Optional.empty(), Either.right(closureSentEvent))));
 
         Mockito.when(closureSendProjectionHandler.handle(any()))
                 .thenReturn(Mono.just(closedTransactionDocument));
@@ -1174,7 +1178,7 @@ class TransactionServiceTests {
         Mockito.when(authorizationUpdateProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
 
         Mockito.when(transactionSendClosureHandler.handle(any()))
-                .thenReturn(Mono.just(Either.left(Either.left(refundRequestedEvent))));
+                .thenReturn(Mono.just(Tuples.of(Optional.of(refundRequestedEvent), Either.right(null))));
 
         Mockito.when(refundRequestProjectionHandler.handle(any()))
                 .thenReturn(Mono.just(refundedRequestedTransactionDocument));
@@ -1265,7 +1269,7 @@ class TransactionServiceTests {
                 statusUpdateData
         );
 
-        TransactionClosureErrorEvent closureSentEvent = TransactionTestUtils
+        TransactionClosureErrorEvent closureErrorSentEvent = TransactionTestUtils
                 .transactionClosureErrorEvent();
 
         TransactionInfoDto expectedResponse = new TransactionInfoDto()
@@ -1301,7 +1305,7 @@ class TransactionServiceTests {
         Mockito.when(authorizationUpdateProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
 
         Mockito.when(transactionSendClosureHandler.handle(any()))
-                .thenReturn(Mono.just(Either.left(Either.right(closureSentEvent))));
+                .thenReturn(Mono.just(Tuples.of(Optional.empty(), Either.left(closureErrorSentEvent))));
 
         Mockito.when(closureErrorProjectionHandler.handle(any()))
                 .thenReturn(Mono.just(refundedRequestedTransactionDocument));
@@ -1430,7 +1434,7 @@ class TransactionServiceTests {
         Mockito.when(authorizationUpdateProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
 
         Mockito.when(transactionSendClosureHandler.handle(any()))
-                .thenReturn(Mono.just(Either.right(Either.left(refundRequestedEvent))));
+                .thenReturn(Mono.just(Tuples.of(Optional.of(refundRequestedEvent), Either.left(null))));
 
         Mockito.when(refundRequestProjectionHandler.handle(any()))
                 .thenReturn(Mono.just(refundedRequestedTransactionDocument));
@@ -1557,7 +1561,7 @@ class TransactionServiceTests {
         Mockito.when(authorizationUpdateProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
 
         Mockito.when(transactionSendClosureHandler.handle(any()))
-                .thenReturn(Mono.just(Either.right(Either.right(closureSentEvent))));
+                .thenReturn(Mono.just(Tuples.of(Optional.empty(), Either.right(closureSentEvent))));
 
         Mockito.when(closureSendProjectionHandler.handle(any()))
                 .thenReturn(Mono.just(requestedTransactionDocument));

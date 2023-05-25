@@ -523,18 +523,12 @@ public class TransactionsService {
                 )
                 )
                 .flatMap(
-                        result -> result.fold(
-                                errorEvent -> errorEvent.fold(
-                                        errorEventRefunded -> refundRequestProjectionHandler.handle(errorEventRefunded),
-                                        errorEventNoRefund -> closureErrorProjectionHandler.handle(errorEventNoRefund)
-                                ),
-                                closureSentEvent -> closureSentEvent.fold(
-                                        closureSentEventRefunded -> refundRequestProjectionHandler
-                                                .handle(closureSentEventRefunded),
-                                        closureDataTransactionEvent -> closureSendProjectionHandler
-                                                .handle(closureDataTransactionEvent)
-                                )
-                        )
+                        el -> el.getT1().isEmpty() ? el.getT2().fold(
+                                closureErrorEvent -> closureErrorProjectionHandler.handle(closureErrorEvent),
+                                closureDataTransactionEvent -> closureSendProjectionHandler
+                                        .handle(closureDataTransactionEvent)
+                        ) : refundRequestProjectionHandler.handle(el.getT1().get())
+
                 );
     }
 
