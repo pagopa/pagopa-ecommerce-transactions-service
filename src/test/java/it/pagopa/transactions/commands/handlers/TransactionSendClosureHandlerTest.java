@@ -390,11 +390,14 @@ class TransactionSendClosureHandlerTest {
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
                 .consumeNextWith(next -> {
-                    assertTrue(next.isRight());
-                    assertNotNull(next.get());
-                    assertEquals(event.getData().getResponseOutcome(), next.get().get().getData().getResponseOutcome());
-                    assertEquals(event.getEventCode(), next.get().get().getEventCode());
-                    assertEquals(event.getTransactionId(), next.get().get().getTransactionId());
+                    assertTrue(next.getT2().isRight());
+                    assertNotNull(next.getT2());
+                    assertEquals(
+                            event.getData().getResponseOutcome(),
+                            next.getT2().get().getData().getResponseOutcome()
+                    );
+                    assertEquals(event.getEventCode(), next.getT2().get().getEventCode());
+                    assertEquals(event.getTransactionId(), next.getT2().get().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -546,11 +549,14 @@ class TransactionSendClosureHandlerTest {
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
                 .consumeNextWith(next -> {
-                    assertTrue(next.isRight());
-                    assertNotNull(next.get());
-                    assertEquals(event.getData().getResponseOutcome(), next.get().get().getData().getResponseOutcome());
-                    assertEquals(event.getEventCode(), next.get().get().getEventCode());
-                    assertEquals(event.getTransactionId(), next.get().get().getTransactionId());
+                    assertTrue(next.getT2().isRight());
+                    assertNotNull(next.getT2());
+                    assertEquals(
+                            event.getData().getResponseOutcome(),
+                            next.getT2().get().getData().getResponseOutcome()
+                    );
+                    assertEquals(event.getEventCode(), next.getT2().get().getEventCode());
+                    assertEquals(event.getTransactionId(), next.getT2().get().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -788,11 +794,14 @@ class TransactionSendClosureHandlerTest {
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
                 .consumeNextWith(next -> {
-                    assertTrue(next.isRight());
-                    assertNotNull(next.get());
-                    assertEquals(event.getData().getResponseOutcome(), next.get().get().getData().getResponseOutcome());
-                    assertEquals(event.getEventCode(), next.get().get().getEventCode());
-                    assertEquals(event.getTransactionId(), next.get().get().getTransactionId());
+                    assertTrue(next.getT2().isRight());
+                    assertNotNull(next.getT2().get());
+                    assertEquals(
+                            event.getData().getResponseOutcome(),
+                            next.getT2().get().getData().getResponseOutcome()
+                    );
+                    assertEquals(event.getEventCode(), next.getT2().get().getEventCode());
+                    assertEquals(event.getTransactionId(), next.getT2().get().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -1022,10 +1031,10 @@ class TransactionSendClosureHandlerTest {
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
                 .consumeNextWith(next -> {
-                    assertTrue(next.isLeft());
-                    assertNotNull(next.getLeft());
-                    assertEquals(errorEvent.getEventCode(), next.getLeft().get().getEventCode());
-                    assertEquals(errorEvent.getTransactionId(), next.getLeft().get().getTransactionId());
+                    assertTrue(next.getT2().isLeft());
+                    assertNotNull(next.getT2().getLeft());
+                    assertEquals(errorEvent.getEventCode(), next.getT2().getLeft().getEventCode());
+                    assertEquals(errorEvent.getTransactionId(), next.getT2().getLeft().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -1279,10 +1288,10 @@ class TransactionSendClosureHandlerTest {
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
                 .consumeNextWith(next -> {
-                    assertTrue(next.isLeft());
-                    assertNotNull(next.getLeft());
-                    assertEquals(errorEvent.getEventCode(), next.getLeft().get().getEventCode());
-                    assertEquals(errorEvent.getTransactionId(), next.getLeft().get().getTransactionId());
+                    assertTrue(next.getT2().isLeft());
+                    assertNotNull(next.getT2().getLeft());
+                    assertEquals(errorEvent.getEventCode(), next.getT2().getLeft().getEventCode());
+                    assertEquals(errorEvent.getTransactionId(), next.getT2().getLeft().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -1530,10 +1539,10 @@ class TransactionSendClosureHandlerTest {
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
                 .consumeNextWith(next -> {
-                    assertTrue(next.isLeft());
-                    assertNotNull(next.getLeft());
-                    assertEquals(refundRequestedEvent.getEventCode(), next.getLeft().getLeft().getEventCode());
-                    assertEquals(refundRequestedEvent.getTransactionId(), next.getLeft().getLeft().getTransactionId());
+                    assertTrue(next.getT1().isPresent());
+                    assertNotNull(next.getT1().get());
+                    assertEquals(refundRequestedEvent.getEventCode(), next.getT1().get().getEventCode());
+                    assertEquals(refundRequestedEvent.getTransactionId(), next.getT1().get().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -1705,10 +1714,10 @@ class TransactionSendClosureHandlerTest {
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
                 .consumeNextWith(next -> {
-                    assertTrue(next.isLeft());
-                    assertNotNull(next.getLeft());
-                    assertEquals(errorEvent.getEventCode(), next.getLeft().get().getEventCode());
-                    assertEquals(errorEvent.getTransactionId(), next.getLeft().get().getTransactionId());
+                    assertTrue(next.getT2().isLeft());
+                    assertNotNull(next.getT2().getLeft());
+                    assertEquals(errorEvent.getEventCode(), next.getT2().getLeft().getEventCode());
+                    assertEquals(errorEvent.getTransactionId(), next.getT2().getLeft().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -1875,10 +1884,10 @@ class TransactionSendClosureHandlerTest {
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
                 .consumeNextWith(next -> {
-                    assertTrue(next.isLeft());
-                    assertNotNull(next.getLeft());
-                    assertEquals(errorEvent.getEventCode(), next.getLeft().get().getEventCode());
-                    assertEquals(errorEvent.getTransactionId(), next.getLeft().get().getTransactionId());
+                    assertTrue(next.getT2().isLeft());
+                    assertNotNull(next.getT2().getLeft());
+                    assertEquals(errorEvent.getEventCode(), next.getT2().getLeft().getEventCode());
+                    assertEquals(errorEvent.getTransactionId(), next.getT2().getLeft().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -2145,10 +2154,10 @@ class TransactionSendClosureHandlerTest {
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
                 .consumeNextWith(next -> {
-                    assertTrue(next.isLeft());
-                    assertNotNull(next.getLeft());
-                    assertEquals(errorEvent.getEventCode(), next.getLeft().get().getEventCode());
-                    assertEquals(errorEvent.getTransactionId(), next.getLeft().get().getTransactionId());
+                    assertTrue(next.getT2().isLeft());
+                    assertNotNull(next.getT2().getLeft());
+                    assertEquals(errorEvent.getEventCode(), next.getT2().getLeft().getEventCode());
+                    assertEquals(errorEvent.getTransactionId(), next.getT2().getLeft().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -2395,10 +2404,10 @@ class TransactionSendClosureHandlerTest {
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
                 .consumeNextWith(next -> {
-                    assertTrue(next.isLeft());
-                    assertNotNull(next.getLeft());
-                    assertEquals(errorEvent.getEventCode(), next.getLeft().get().getEventCode());
-                    assertEquals(errorEvent.getTransactionId(), next.getLeft().get().getTransactionId());
+                    assertTrue(next.getT2().isLeft());
+                    assertNotNull(next.getT2().getLeft());
+                    assertEquals(errorEvent.getEventCode(), next.getT2().getLeft().getEventCode());
+                    assertEquals(errorEvent.getTransactionId(), next.getT2().getLeft().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -2591,10 +2600,10 @@ class TransactionSendClosureHandlerTest {
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
                 .consumeNextWith(next -> {
-                    assertTrue(next.isRight());
-                    assertNotNull(next.get());
-                    assertEquals(refundRequestedEvent.getEventCode(), next.get().getLeft().getEventCode());
-                    assertEquals(refundRequestedEvent.getTransactionId(), next.get().getLeft().getTransactionId());
+                    assertTrue(next.getT1().isPresent());
+                    assertNotNull(next.getT1().get());
+                    assertEquals(refundRequestedEvent.getEventCode(), next.getT1().get().getEventCode());
+                    assertEquals(refundRequestedEvent.getTransactionId(), next.getT1().get().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -2804,10 +2813,10 @@ class TransactionSendClosureHandlerTest {
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
                 .consumeNextWith(next -> {
-                    assertTrue(next.isLeft());
-                    assertNotNull(next.getLeft());
-                    assertEquals(refundRequestedEvent.getEventCode(), next.getLeft().getLeft().getEventCode());
-                    assertEquals(refundRequestedEvent.getTransactionId(), next.getLeft().getLeft().getTransactionId());
+                    assertTrue(next.getT1().isPresent());
+                    assertNotNull(next.getT1().get());
+                    assertEquals(refundRequestedEvent.getEventCode(), next.getT1().get().getEventCode());
+                    assertEquals(refundRequestedEvent.getTransactionId(), next.getT1().get().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -2928,11 +2937,14 @@ class TransactionSendClosureHandlerTest {
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
                 .consumeNextWith(next -> {
-                    assertTrue(next.isRight());
-                    assertNotNull(next.get());
-                    assertEquals(event.getData().getResponseOutcome(), next.get().get().getData().getResponseOutcome());
-                    assertEquals(event.getEventCode(), next.get().get().getEventCode());
-                    assertEquals(event.getTransactionId(), next.get().get().getTransactionId());
+                    assertTrue(next.getT2().isRight());
+                    assertNotNull(next.getT2().get());
+                    assertEquals(
+                            event.getData().getResponseOutcome(),
+                            next.getT2().get().getData().getResponseOutcome()
+                    );
+                    assertEquals(event.getEventCode(), next.getT2().get().getEventCode());
+                    assertEquals(event.getTransactionId(), next.getT2().get().getTransactionId());
                 })
                 .verifyComplete();
 
@@ -3041,10 +3053,10 @@ class TransactionSendClosureHandlerTest {
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
                 .consumeNextWith(next -> {
-                    assertTrue(next.isLeft());
-                    assertNotNull(next.getLeft());
-                    assertEquals(errorEvent.getEventCode(), next.getLeft().get().getEventCode());
-                    assertEquals(errorEvent.getTransactionId(), next.getLeft().get().getTransactionId());
+                    assertTrue(next.getT2().isLeft());
+                    assertNotNull(next.getT2().getLeft());
+                    assertEquals(errorEvent.getEventCode(), next.getT2().getLeft().getEventCode());
+                    assertEquals(errorEvent.getTransactionId(), next.getT2().getLeft().getTransactionId());
                 })
                 .verifyComplete();
 
