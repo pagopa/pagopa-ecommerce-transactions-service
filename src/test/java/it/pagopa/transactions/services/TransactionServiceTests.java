@@ -316,7 +316,7 @@ class TransactionServiceTests {
         RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
                 .authorizationUrl(postePayAuthResponseEntityDto.getUrlRedirect());
 
-        Mockito.when(ecommercePaymentMethodsClient.calculateFee(any(), any(), any())).thenReturn(
+        Mockito.when(ecommercePaymentMethodsClient.calculateFee(any(), any(), any(), any())).thenReturn(
                 Mono.just(calculateFeeResponseDto)
         );
 
@@ -714,7 +714,7 @@ class TransactionServiceTests {
         RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
                 .authorizationUrl(gatewayResponse.getUrlRedirect());
 
-        Mockito.when(ecommercePaymentMethodsClient.calculateFee(any(), any(), any())).thenReturn(
+        Mockito.when(ecommercePaymentMethodsClient.calculateFee(any(), any(), any(), any())).thenReturn(
                 Mono.just(calculateFeeResponseDto)
         );
 
@@ -790,7 +790,7 @@ class TransactionServiceTests {
         RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
                 .authorizationUrl(gatewayResponse.getUrlRedirect());
 
-        Mockito.when(ecommercePaymentMethodsClient.calculateFee(any(), any(), any())).thenReturn(
+        Mockito.when(ecommercePaymentMethodsClient.calculateFee(any(), any(), any(), any())).thenReturn(
                 Mono.just(calculateFeeResponseDto)
         );
 

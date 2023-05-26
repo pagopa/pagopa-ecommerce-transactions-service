@@ -261,6 +261,7 @@ public class TransactionsService {
                             return ecommercePaymentMethodsClient
                                     .calculateFee(
                                             requestAuthorizationRequestDto.getPaymentInstrumentId(),
+                                            transactionId,
                                             new CalculateFeeRequestDto()
                                                     .touchpoint(transaction.getClientId().toString())
                                                     .bin(
