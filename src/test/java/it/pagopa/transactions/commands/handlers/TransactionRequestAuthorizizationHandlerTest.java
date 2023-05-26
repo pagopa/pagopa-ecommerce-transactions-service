@@ -172,7 +172,7 @@ class TransactionRequestAuthorizizationHandlerTest {
         /* preconditions */
         Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
                 .thenReturn(Mono.just(postePayAuthResponseEntityDto));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value()))
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(args -> Mono.just(args.getArguments()[0]));
 
@@ -250,7 +250,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.just(xPayAuthResponseEntityDto));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString()))
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(args -> Mono.just(args.getArguments()[0]));
 
@@ -319,12 +319,13 @@ class TransactionRequestAuthorizizationHandlerTest {
                 transaction.getPaymentNotices().get(0).rptId(),
                 authorizationData
         );
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString())).thenReturn(
-                (Flux) Flux.just(
-                        TransactionTestUtils.transactionActivateEvent(),
-                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
-                )
-        );
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
+                .thenReturn(
+                        (Flux) Flux.just(
+                                TransactionTestUtils.transactionActivateEvent(),
+                                TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                        )
+                );
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -393,7 +394,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 transaction.getPaymentNotices().get(0).rptId(),
                 authorizationData
         );
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString()))
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData)).thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData)).thenReturn(Mono.empty());
@@ -490,7 +491,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.just(xPayAuthResponseEntityDto));
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId.value().toString()))
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         Mockito.when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));

@@ -113,7 +113,7 @@ class TransactionRequestUserReceiptHandlerTest {
 
         /* preconditions */
         Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
-        Mockito.when(eventStoreRepository.findByTransactionId(TRANSACTION_ID)).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
         Mockito.when(queueAsyncClient.sendMessageWithResponse(queueArgumentCaptor.capture(), any(), any()))
                 .thenReturn(QUEUE_SUCCESSFUL_RESPONSE);
         /* test */
@@ -186,7 +186,7 @@ class TransactionRequestUserReceiptHandlerTest {
 
         /* preconditions */
         Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
-        Mockito.when(eventStoreRepository.findByTransactionId(TRANSACTION_ID)).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
         Mockito.when(queueAsyncClient.sendMessageWithResponse(queueArgumentCaptor.capture(), any(), any()))
                 .thenReturn(QUEUE_SUCCESSFUL_RESPONSE);
         /* test */
@@ -259,7 +259,7 @@ class TransactionRequestUserReceiptHandlerTest {
 
         /* preconditions */
         Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
-        Mockito.when(eventStoreRepository.findByTransactionId(TRANSACTION_ID)).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
         Mockito.when(queueAsyncClient.sendMessageWithResponse(queueArgumentCaptor.capture(), any(), any()))
                 .thenReturn(Mono.error(new RuntimeException("Error writing message to queue")));
         /* test */
@@ -320,7 +320,7 @@ class TransactionRequestUserReceiptHandlerTest {
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
         /* preconditions */
-        Mockito.when(eventStoreRepository.findByTransactionId(TRANSACTION_ID)).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(requestStatusCommand))
@@ -378,7 +378,7 @@ class TransactionRequestUserReceiptHandlerTest {
                 ));
 
         /* preconditions */
-        Mockito.when(eventStoreRepository.findByTransactionId(TRANSACTION_ID)).thenReturn(events);
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(requestStatusCommand))
