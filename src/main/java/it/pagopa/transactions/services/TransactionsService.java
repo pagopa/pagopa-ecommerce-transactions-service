@@ -73,6 +73,9 @@ public class TransactionsService {
     private TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandler;
 
     @Autowired
+    private RefundRequestProjectionHandler refundRequestProjectionHandler;
+
+    @Autowired
     private ClosureSendProjectionHandler closureSendProjectionHandler;
 
     @Autowired
@@ -520,10 +523,16 @@ public class TransactionsService {
                 )
                 )
                 .flatMap(
-                        result -> result.fold(
-                                errorEvent -> closureErrorProjectionHandler.handle(errorEvent),
-                                closureSentEvent -> closureSendProjectionHandler.handle(closureSentEvent)
+                        el -> el.getT1().map(
+                                refundEvent -> refundRequestProjectionHandler.handle(refundEvent)
+                        ).orElse(
+                                el.getT2().fold(
+                                        closureErrorEvent -> closureErrorProjectionHandler.handle(closureErrorEvent),
+                                        closureDataTransactionEvent -> closureSendProjectionHandler
+                                                .handle(closureDataTransactionEvent)
+                                )
                         )
+
                 );
     }
 
