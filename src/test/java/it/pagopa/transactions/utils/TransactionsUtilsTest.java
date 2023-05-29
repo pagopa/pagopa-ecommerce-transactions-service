@@ -33,7 +33,8 @@ class TransactionsUtilsTest {
         TransactionAuthorizationRequestedEvent transactionAuthorizationRequestedEvent = TransactionTestUtils
                 .transactionAuthorizationRequestedEvent();
         Flux events = Flux.just(transactionActivatedEvent, transactionAuthorizationRequestedEvent);
-        given(eventStoreRepository.findByTransactionId(transactionId.value().toString())).willReturn(events);
+        given(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
+                .willReturn(events);
         StepVerifier.create(transactionsUtils.reduceEvents(transactionId))
                 .expectNextMatches(
                         baseTransaction -> baseTransaction instanceof TransactionWithRequestedAuthorization
@@ -45,7 +46,8 @@ class TransactionsUtilsTest {
     @Test
     void shouldThrowTransactionNotFoundForNoEventsFoundForTransactionId() {
         TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
-        given(eventStoreRepository.findByTransactionId(transactionId.value().toString())).willReturn(Flux.empty());
+        given(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
+                .willReturn(Flux.empty());
         StepVerifier.create(transactionsUtils.reduceEvents(transactionId))
                 .expectErrorMatches(
                         ex -> ex instanceof TransactionNotFoundException transactionNotFoundException

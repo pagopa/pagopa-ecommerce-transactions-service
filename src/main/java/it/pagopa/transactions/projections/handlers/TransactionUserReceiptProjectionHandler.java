@@ -24,6 +24,7 @@ public class TransactionUserReceiptProjectionHandler
                 .flatMap(transactionDocument -> {
                     TransactionStatusDto newStatus = TransactionStatusDto.NOTIFICATION_REQUESTED;
                     transactionDocument.setStatus(newStatus);
+                    transactionDocument.setSendPaymentResultOutcome(data.getData().getResponseOutcome());
                     return transactionsViewRepository.save(transactionDocument);
                 });
     }

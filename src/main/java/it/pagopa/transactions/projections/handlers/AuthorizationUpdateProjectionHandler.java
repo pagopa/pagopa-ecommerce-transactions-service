@@ -40,7 +40,6 @@ public class AuthorizationUpdateProjectionHandler
                 .flatMap(transactionDocument -> {
                     transactionDocument.setRrn(data.getData().getRrn());
                     transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_COMPLETED);
-                    transactionDocument.setSendPaymentResultOutcome(data.getData().getAuthorizationResultDto());
                     transactionDocument.setAuthorizationCode(data.getData().getAuthorizationCode());
                     transactionDocument.setAuthorizationErrorCode(data.getData().getErrorCode());
 

@@ -26,23 +26,20 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
-import java.math.MathContext;
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 
 @Component
 @Slf4j
 public class TransactionSendClosureHandler implements
-        CommandHandler<TransactionClosureSendCommand, Mono<Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>>> {
+        CommandHandler<TransactionClosureSendCommand, Mono<Tuple2<Optional<TransactionRefundRequestedEvent>, Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>>>> {
 
     private final TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository;
 
@@ -98,8 +95,8 @@ public class TransactionSendClosureHandler implements
     }
 
     @Override
-    public Mono<Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>> handle(
-                                                                                                       TransactionClosureSendCommand command
+    public Mono<Tuple2<Optional<TransactionRefundRequestedEvent>, Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>>> handle(
+                                                                                                                                                          TransactionClosureSendCommand command
     ) {
         Mono<BaseTransaction> transaction = transactionsUtils.reduceEvents(
                 command.getData().transaction().getTransactionId()
@@ -262,9 +259,19 @@ public class TransactionSendClosureHandler implements
                                     closureEvent -> sendRefundRequestEvent(
                                             Either.right(closureEvent),
                                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
-                                    ).thenReturn(closureEvent)
+                                    )
+                                            .map(
+                                                    (refundedEvent) -> Tuples.of(
+                                                            Optional.of(refundedEvent),
+                                                            Either.<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>right(
+                                                                    closureEvent
+                                                            )
+                                                    )
+
+                                            ).switchIfEmpty(
+                                                    Mono.just(Tuples.of(Optional.empty(), Either.right(closureEvent)))
+                                            )
                             )
-                            .map(Either::<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>right)
                             .onErrorResume(exception -> {
 
                                 // in case response code from Nodo is a 4xx class error retrying closure have no
@@ -351,22 +358,44 @@ public class TransactionSendClosureHandler implements
                                         );
                                     }
 
-                                    return eventSaved.map(Either::left);
+                                    return eventSaved.map(
+                                            (closureErrorEvent) -> Tuples.of(
+                                                    Optional.empty(),
+                                                    Either.<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>left(
+                                                            closureErrorEvent
+                                                    )
+                                            )
+                                    );
                                 }
                                 // Unrecoverable error calling Nodo for perform close payment.
                                 // Generate closure event setting closure outcome to KO
                                 // and enqueue refund request event
                                 return eventSaved
-                                        .<Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>>map(
-                                                Either::left
-                                        )
                                         .flatMap(
+
                                                 closureErrorEvent -> sendRefundRequestEvent(
-                                                        closureErrorEvent,
+                                                        Either.left(closureErrorEvent),
                                                         transactionAuthorizationCompletedData
                                                                 .getAuthorizationResultDto()
-                                                ).thenReturn(closureErrorEvent)
+                                                ).map(
+                                                        (refundRequestedEvent) -> Tuples.of(
+                                                                Optional.of(refundRequestedEvent),
+                                                                Either.<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>left(
+                                                                        closureErrorEvent
+                                                                )
+                                                        )
+
+                                                ).switchIfEmpty(
+                                                        Mono.just(
+                                                                Tuples.of(
+                                                                        Optional.empty(),
+                                                                        Either.left(closureErrorEvent)
+                                                                )
+                                                        )
+
+                                                )
                                         );
+
                             })
                             .doFinally(response -> {
                                 tx.getPaymentNotices().forEach(el -> {
@@ -401,7 +430,7 @@ public class TransactionSendClosureHandler implements
         return Mono.just(closureOutcomeEvent)
                 .filter(
                         e -> e.fold(
-                                closureErrorEvent -> true,
+                                closureErrorEvent -> AuthorizationResultDto.OK.equals(authorizationResult),
                                 // Refund requested event sent on the queue only if the transaction was
                                 // previously
                                 // authorized and the Nodo response outcome is KO

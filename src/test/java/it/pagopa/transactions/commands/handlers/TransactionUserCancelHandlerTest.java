@@ -61,7 +61,7 @@ class TransactionUserCancelHandlerTest {
         );
 
         /* PRECONDITION */
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId))
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
 
         Mockito.when(transactionEventUserCancelStoreRepository.save(any()))
@@ -93,7 +93,7 @@ class TransactionUserCancelHandlerTest {
         );
 
         /* PRECONDITION */
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId))
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
 
         Mockito.when(transactionEventUserCancelStoreRepository.save(any()))
@@ -117,7 +117,7 @@ class TransactionUserCancelHandlerTest {
         );
 
         /* PRECONDITION */
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId))
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
 
         Mockito.when(transactionEventUserCancelStoreRepository.save(any()))
@@ -144,7 +144,7 @@ class TransactionUserCancelHandlerTest {
         );
 
         /* PRECONDITION */
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId))
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId))
                 .thenReturn(Flux.empty());
 
         /* TEST EXECUTION */
@@ -165,7 +165,7 @@ class TransactionUserCancelHandlerTest {
         );
 
         /* PRECONDITION */
-        Mockito.when(eventStoreRepository.findByTransactionId(transactionId))
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId))
                 .thenReturn(
                         (Flux) Flux.just(
                                 TransactionTestUtils.transactionActivateEvent(),
