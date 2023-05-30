@@ -165,10 +165,6 @@ public class TransactionSendClosureHandler implements
                             );
 
                     if (ClosePaymentRequestV2Dto.OutcomeEnum.OK.equals(closePaymentRequest.getOutcome())) {
-                        final String rrnForClosePayment = getRrnForClosePaymentByAuthorization(
-                                transactionAuthorizationRequestData.getPaymentGateway(),
-                                authRequestData.rrn()
-                        );
                         closePaymentRequest.idPSP(transactionAuthorizationRequestData.getPspId())
                                 .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())
                                 .idChannel(transactionAuthorizationRequestData.getPspChannelCode())
@@ -192,9 +188,7 @@ public class TransactionSendClosureHandler implements
                                                                 .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                                 )
                                                 .totalAmount(totalAmount.toString())
-                                                .rrn(
-                                                        rrnForClosePayment
-                                                )
+                                                .rrn(authRequestData.rrn())
                                 )
                                 .transactionDetails(
                                         new TransactionDetailsDto()
@@ -208,7 +202,7 @@ public class TransactionSendClosureHandler implements
                                                                 .fee(fee)
                                                                 .amount(amount)
                                                                 .grandTotal(totalAmount)
-                                                                .rrn(rrnForClosePayment)
+                                                                .rrn(authRequestData.rrn())
                                                                 .authorizationCode(authRequestData.authorizationCode())
                                                                 .creationDate(
                                                                         command.getData().transaction()
@@ -524,17 +518,6 @@ public class TransactionSendClosureHandler implements
                     "Missing transaction closure data outcome mapping to Nodo closePaymentV2 outcome"
             );
         }
-    }
-
-    private String getRrnForClosePaymentByAuthorization(
-                                                        TransactionAuthorizationRequestData.PaymentGateway paymentGatewayFromAuthorization,
-                                                        String rrnFromAuthorizationCompletedData
-    ) {
-        final int xpayRrnLength = 7;
-        return paymentGatewayFromAuthorization.equals(TransactionAuthorizationRequestData.PaymentGateway.XPAY)
-                && rrnFromAuthorizationCompletedData.length() > xpayRrnLength
-                        ? rrnFromAuthorizationCompletedData.substring(0, xpayRrnLength)
-                        : rrnFromAuthorizationCompletedData;
     }
 
 }
