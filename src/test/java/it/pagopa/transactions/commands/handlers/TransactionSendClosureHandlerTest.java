@@ -84,7 +84,7 @@ class TransactionSendClosureHandlerTest {
     private static final int SOFT_TIMEOUT_OFFSET = 10;
     private static final int RETRY_TIMEOUT_INTERVAL = 5;
 
-    private static final String ECOMMERCE_RRN = "rrn";
+    private static final String ECOMMERCE_RRN = "4d02b9b7-f09e-4ba2-92cd-0f02fbf84b89";
 
     private final TransactionSendClosureHandler transactionSendClosureHandler = new TransactionSendClosureHandler(
             transactionEventStoreRepository,
