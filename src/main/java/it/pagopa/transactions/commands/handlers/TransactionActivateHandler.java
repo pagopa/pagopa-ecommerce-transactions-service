@@ -182,23 +182,16 @@ public class TransactionActivateHandler
                                                                     newTransactionRequestDto.getIdCart()
                                                             )
                                                             .doOnSuccess(
-                                                                    p -> log.info(
-                                                                            "Nodo activation for {} with paymentToken {}",
-                                                                            p.id(),
-                                                                            p.paymentToken()
-                                                                    )
+                                                                    p -> {
+                                                                        log.info(
+                                                                                "Nodo activation for {} with paymentToken {}",
+                                                                                p.id(),
+                                                                                p.paymentToken()
+                                                                        );
+                                                                        paymentRequestInfoRedisTemplateWrapper.save(p);
+                                                                    }
                                                             )
                                             );
-                                }
-                        )
-                        .doOnNext(
-                                paymentRequestInfo -> {
-                                    log.info(
-                                            "Cache Nodo activation info for {} with paymentToken {}",
-                                            paymentRequestInfo.id(),
-                                            paymentRequestInfo.paymentToken()
-                                    );
-                                    paymentRequestInfoRedisTemplateWrapper.save(paymentRequestInfo);
                                 }
                         )
                         .sequential()
