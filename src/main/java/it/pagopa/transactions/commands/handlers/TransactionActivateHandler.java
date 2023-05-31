@@ -244,7 +244,8 @@ public class TransactionActivateHandler
                 paymentRequestInfo.paymentToken(),
                 paymentTokenValidityTimeLeft
         );
-        co.elastic.apm.api.Span span = ElasticApm.currentTransaction().startSpan();
+        co.elastic.apm.api.Span span = ElasticApm.currentTransaction()
+                .startSpan("transaction", "activation", "activation cached");
         try {
             span
                     .setName("Transaction re-activated")
