@@ -168,15 +168,7 @@ public class TransactionActivateHandler
                                             .map(
                                                     requestInfo -> Mono.just(requestInfo)
                                                             .doOnSuccess(
-                                                                    p -> {
-                                                                        log.info(
-                                                                                "PaymentRequestInfo cache hit for {} with valid paymentToken {}",
-                                                                                p.id(),
-                                                                                p.paymentToken()
-                                                                        );
-                                                                        spanCustomTransaction(p);
-
-                                                                    }
+                                                                    this::spanCustomTransaction
                                                             )
                                             )
                                             .orElseGet(
@@ -239,20 +231,27 @@ public class TransactionActivateHandler
 
     private void spanCustomTransaction(PaymentRequestInfo paymentRequestInfo) {
         String transactionActivationDateString = paymentRequestInfo.activationDate();
+        Duration paymentTokenValidityTimeLeft = Duration.ofSeconds(paymentTokenTimeout);
         if (transactionActivationDateString != null) {
-            co.elastic.apm.api.Transaction transaction = ElasticApm.startTransaction();
-            try {
-                ZonedDateTime transactionActivation = ZonedDateTime.parse(transactionActivationDateString);
-                ZonedDateTime paymentTokenValidityEnd = transactionActivation
-                        .plus(Duration.ofSeconds(paymentTokenTimeout));
-                Duration paymentTokenValidityTimeLeft = Duration.between(ZonedDateTime.now(), paymentTokenValidityEnd);
-                transaction
-                        .setName("Transaction re-activated")
-                        .setLabel("paymentToken", paymentRequestInfo.paymentToken())
-                        .setLabel("paymentTokenLeftTimeSec", paymentTokenValidityTimeLeft.getSeconds());
-            } finally {
-                transaction.end();
-            }
+            ZonedDateTime transactionActivation = ZonedDateTime.parse(transactionActivationDateString);
+            ZonedDateTime paymentTokenValidityEnd = transactionActivation
+                    .plus(Duration.ofSeconds(paymentTokenTimeout));
+            paymentTokenValidityTimeLeft = Duration.between(ZonedDateTime.now(), paymentTokenValidityEnd);
+        }
+        log.info(
+                "PaymentRequestInfo cache hit for {} with valid paymentToken {}. Validity left time: {}",
+                paymentRequestInfo.id(),
+                paymentRequestInfo.paymentToken(),
+                paymentTokenValidityTimeLeft
+        );
+        co.elastic.apm.api.Transaction transaction = ElasticApm.startTransaction();
+        try {
+            transaction
+                    .setName("Transaction re-activated")
+                    .setLabel("paymentToken", paymentRequestInfo.paymentToken())
+                    .setLabel("paymentTokenLeftTimeSec", paymentTokenValidityTimeLeft.getSeconds());
+        } finally {
+            transaction.end();
         }
 
     }
