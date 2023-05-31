@@ -31,6 +31,8 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
 
+import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -70,6 +72,8 @@ class TransactionInitializerHandlerTest {
 
     @Test
     void shouldHandleCommandForNM3CachedPaymentRequest() {
+        Duration elapsedTimeFromActivation = Duration.ofMinutes(5);
+        ZonedDateTime transactionActivatedTime = ZonedDateTime.now().minus(elapsedTimeFromActivation);
         RptId rptId = new RptId(RPT_ID);
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String transactionId = UUID.randomUUID().toString();
@@ -97,6 +101,7 @@ class TransactionInitializerHandlerTest {
                 AMOUNT,
                 null,
                 paymentToken,
+                transactionActivatedTime.toString(),
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, AMOUNT, null))
         );
@@ -147,11 +152,13 @@ class TransactionInitializerHandlerTest {
         assertNotNull(paymentRequestInfoCached.id());
         TransactionActivatedEvent event = response.getT1().block();
         Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(1)).findById(rptId.value());
+
         assertNotNull(event.getTransactionId());
         assertNotNull(event.getEventCode());
         assertNotNull(event.getCreationDate());
         assertNotNull(event.getId());
         assertEquals(paymentTokenTimeout, event.getData().getPaymentTokenValiditySeconds());
+
     }
 
     @Test
@@ -185,6 +192,7 @@ class TransactionInitializerHandlerTest {
                 amount,
                 null,
                 paymentToken,
+                ZonedDateTime.now().toString(),
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, amount, null))
         );
@@ -300,6 +308,7 @@ class TransactionInitializerHandlerTest {
                 amount,
                 null,
                 null,
+                null,
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.value().substring(0, 11), false, amount, null))
 
@@ -352,6 +361,7 @@ class TransactionInitializerHandlerTest {
                 null,
                 null,
                 null,
+                null,
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, null, null))
         );
@@ -364,6 +374,7 @@ class TransactionInitializerHandlerTest {
                 paymentNotice.getAmount(),
                 null,
                 paymentNotice.getPaymentToken(),
+                ZonedDateTime.now().toString(),
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, paymentNotice.getAmount(), null))
         );
@@ -437,6 +448,7 @@ class TransactionInitializerHandlerTest {
                 paymentNotice.getAmount(),
                 null,
                 paymentNotice.getPaymentToken(),
+                ZonedDateTime.now().toString(),
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, paymentNotice.getAmount(), null))
         );
@@ -486,4 +498,5 @@ class TransactionInitializerHandlerTest {
         assertNotNull(event.getId());
         assertEquals(paymentTokenTimeout, event.getData().getPaymentTokenValiditySeconds());
     }
+
 }

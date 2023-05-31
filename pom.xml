@@ -18,6 +18,7 @@
         <jacoco.version>0.8.8</jacoco.version>
         <pagopa-ecommerce-commons.version>0.16.2</pagopa-ecommerce-commons.version>
         <spotless.version>2.28.0</spotless.version>
+        <elastic-apm.version>1.38.0</elastic-apm.version>
     </properties>
     <dependencies>
         <dependency>
@@ -203,6 +204,11 @@
             <artifactId>netty-resolver-dns-native-macos</artifactId>
             <version>4.1.82.Final</version>
             <classifier>osx-aarch_64</classifier>
+        </dependency>
+        <dependency>
+            <groupId>co.elastic.apm</groupId>
+            <artifactId>apm-agent-api</artifactId>
+            <version>${elastic-apm.version}</version>
         </dependency>
     </dependencies>
     <dependencyManagement>
@@ -403,6 +409,8 @@
                     <connectionUrl>scm:git:https://github.com/pagopa/pagopa-ecommerce-commons.git</connectionUrl>
                     <scmVersionType>tag</scmVersionType>
                     <scmVersion>${pagopa-ecommerce-commons.version}</scmVersion>
+                    <scmVersionType>branch</scmVersionType>
+                    <scmVersion>CHK-756-redis-template-wrapper</scmVersion>
                     <goals>install -DskipTests</goals>
                 </configuration>
                 <executions>

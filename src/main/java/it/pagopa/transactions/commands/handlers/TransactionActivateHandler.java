@@ -1,5 +1,6 @@
 package it.pagopa.transactions.commands.handlers;
 
+import co.elastic.apm.api.ElasticApm;
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.*;
@@ -27,6 +28,7 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -125,6 +127,7 @@ public class TransactionActivateHandler
                                                                                 null,
                                                                                 null,
                                                                                 null,
+                                                                                null,
                                                                                 new IdempotencyKey(
                                                                                         nodoOperations
                                                                                                 .getEcommerceFiscalCode(),
@@ -165,11 +168,15 @@ public class TransactionActivateHandler
                                             .map(
                                                     requestInfo -> Mono.just(requestInfo)
                                                             .doOnSuccess(
-                                                                    p -> log.info(
-                                                                            "PaymentRequestInfo cache hit for {} with valid paymentToken {}",
-                                                                            p.id(),
-                                                                            p.paymentToken()
-                                                                    )
+                                                                    p -> {
+                                                                        log.info(
+                                                                                "PaymentRequestInfo cache hit for {} with valid paymentToken {}",
+                                                                                p.id(),
+                                                                                p.paymentToken()
+                                                                        );
+                                                                        spanCustomTransaction(p);
+
+                                                                    }
                                                             )
                                             )
                                             .orElseGet(
@@ -228,6 +235,26 @@ public class TransactionActivateHandler
                                 }
                         )
         );
+    }
+
+    private void spanCustomTransaction(PaymentRequestInfo paymentRequestInfo) {
+        String transactionActivationDateString = paymentRequestInfo.activationDate();
+        if (transactionActivationDateString != null) {
+            co.elastic.apm.api.Transaction transaction = ElasticApm.startTransaction();
+            try {
+                ZonedDateTime transactionActivation = ZonedDateTime.parse(transactionActivationDateString);
+                ZonedDateTime paymentTokenValidityEnd = transactionActivation
+                        .plus(Duration.ofSeconds(paymentTokenTimeout));
+                Duration paymentTokenValidityTimeLeft = Duration.between(ZonedDateTime.now(), paymentTokenValidityEnd);
+                transaction
+                        .setName("Transaction re-activated")
+                        .setLabel("paymentToken", paymentRequestInfo.paymentToken())
+                        .setLabel("paymentTokenLeftTimeSec", paymentTokenValidityTimeLeft.getSeconds());
+            } finally {
+                transaction.end();
+            }
+        }
+
     }
 
     private Optional<PaymentRequestInfo> getPaymentRequestInfoFromCache(RptId rptId) {

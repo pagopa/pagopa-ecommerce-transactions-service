@@ -6,6 +6,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 
+import java.time.Duration;
+
 @Configuration
 public class RedisConfig {
 
@@ -13,6 +15,9 @@ public class RedisConfig {
     public PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoWrapper(
                                                                             RedisConnectionFactory redisConnectionFactory
     ) {
-        return RedisTemplateWrapperBuilder.buildPaymentRequestInfoRedisTemplateWrapper(redisConnectionFactory);
+        return RedisTemplateWrapperBuilder.buildPaymentRequestInfoRedisTemplateWrapper(
+                redisConnectionFactory,
+                Duration.ofMinutes(10)
+        );
     }
 }

@@ -1,9 +1,13 @@
 package it.pagopa.transactions.utils;
 
-import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
+import it.pagopa.ecommerce.commons.domain.v1.PaymentTransferInfo;
+import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.EuroUtils;
-import it.pagopa.generated.transactions.model.*;
+import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Request;
+import it.pagopa.generated.transactions.model.CtQrCode;
+import it.pagopa.generated.transactions.model.StOutcome;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.configurations.NodoConfig;
 import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
@@ -17,6 +21,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 @Slf4j
@@ -106,6 +111,7 @@ public class NodoOperations {
                                 amount.multiply(BigDecimal.valueOf(100)).intValue(),
                                 null,
                                 response.getPaymentToken(),
+                                ZonedDateTime.now().toString(),
                                 new IdempotencyKey(idempotencyKey),
                                 response.getTransferList().getTransfer().stream()
                                         .map(
