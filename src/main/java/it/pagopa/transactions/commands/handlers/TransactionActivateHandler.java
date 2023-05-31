@@ -249,7 +249,6 @@ public class TransactionActivateHandler
         try {
             span
                     .setName("Transaction re-activated")
-                    .setLabel("paymentToken", paymentRequestInfo.paymentToken())
                     .setLabel("paymentTokenLeftTimeSec", paymentTokenValidityTimeLeft.getSeconds());
         } finally {
             span.end();
