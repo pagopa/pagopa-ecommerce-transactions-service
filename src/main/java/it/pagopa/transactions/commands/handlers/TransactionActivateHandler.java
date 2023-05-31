@@ -244,14 +244,14 @@ public class TransactionActivateHandler
                 paymentRequestInfo.paymentToken(),
                 paymentTokenValidityTimeLeft
         );
-        co.elastic.apm.api.Transaction transaction = ElasticApm.startTransaction();
+        co.elastic.apm.api.Span span = ElasticApm.currentTransaction().startSpan();
         try {
-            transaction
+            span
                     .setName("Transaction re-activated")
                     .setLabel("paymentToken", paymentRequestInfo.paymentToken())
                     .setLabel("paymentTokenLeftTimeSec", paymentTokenValidityTimeLeft.getSeconds());
         } finally {
-            transaction.end();
+            span.end();
         }
 
     }
