@@ -84,8 +84,6 @@ class TransactionSendClosureHandlerTest {
     private static final int SOFT_TIMEOUT_OFFSET = 10;
     private static final int RETRY_TIMEOUT_INTERVAL = 5;
 
-    private static final String ECOMMERCE_RRN = "rrn";
-
     private final TransactionSendClosureHandler transactionSendClosureHandler = new TransactionSendClosureHandler(
             transactionEventStoreRepository,
             transactionClosureErrorEventStoreRepository,
@@ -102,6 +100,8 @@ class TransactionSendClosureHandlerTest {
     );
 
     private final TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
+
+    private final String ECOMMERCE_RRN = transactionId.value().substring(0, 7);
 
     private static MockedStatic<OffsetDateTime> offsetDateTimeMockedStatic;
 
@@ -873,7 +873,7 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
-                        null,
+                        ECOMMERCE_RRN,
                         expectedOperationTimestamp,
                         null,
                         AuthorizationResultDto.OK
@@ -949,7 +949,7 @@ class TransactionSendClosureHandlerTest {
                                         OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS)
                                                 .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                 )
-                                .rrn(transactionId.value())
+                                .rrn(authorizationCompletedEvent.getData().getRrn())
                                 .totalAmount(totalAmount.toString())
                 ).transactionDetails(
                         new TransactionDetailsDto()
@@ -998,7 +998,7 @@ class TransactionSendClosureHandlerTest {
                                                                         authorizationRequestData
                                                                                 .getPspBusinessName()
                                                                 )
-                                                ).rrn(transactionId.value())
+                                                ).rrn(ECOMMERCE_RRN)
                                 )
                                 .info(
                                         new InfoDto()
@@ -1371,7 +1371,7 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
-                        null,
+                        ECOMMERCE_RRN,
                         expectedOperationTimestamp,
                         null,
                         AuthorizationResultDto.OK
@@ -1450,7 +1450,7 @@ class TransactionSendClosureHandlerTest {
                                                 .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                 )
                                 .totalAmount(totalAmount.toString())
-                                .rrn(transactionId.value())
+                                .rrn(ECOMMERCE_RRN)
                 ).transactionDetails(
                         new TransactionDetailsDto()
                                 .transaction(
@@ -1498,7 +1498,7 @@ class TransactionSendClosureHandlerTest {
                                                                         authorizationRequestData
                                                                                 .getPspBusinessName()
                                                                 )
-                                                ).rrn(transactionId.value())
+                                                ).rrn(ECOMMERCE_RRN)
                                 )
                                 .info(
                                         new InfoDto()
@@ -2240,7 +2240,7 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
-                        null,
+                        ECOMMERCE_RRN,
                         expectedOperationTimestamp,
                         null,
                         AuthorizationResultDto.OK
@@ -2315,7 +2315,7 @@ class TransactionSendClosureHandlerTest {
                                 .timestampOperation(
                                         OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS)
                                                 .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                                ).rrn(transactionId.value())
+                                ).rrn(ECOMMERCE_RRN)
                                 .totalAmount(totalAmount.toString())
                 )
                 .transactionDetails(
@@ -2373,7 +2373,7 @@ class TransactionSendClosureHandlerTest {
                                                                         authorizationRequestData
                                                                                 .getPspBusinessName()
                                                                 )
-                                                ).rrn(transactionId.value())
+                                                ).rrn(ECOMMERCE_RRN)
                                 )
                                 .info(
                                         new InfoDto()

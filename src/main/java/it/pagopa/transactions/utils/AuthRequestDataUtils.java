@@ -28,7 +28,7 @@ public class AuthRequestDataUtils {
                 result = new AuthRequestData(t.getAuthorizationCode(),t.getOutcome().toString(),t.getRrn(), t.getErrorCode() != null ? t.getErrorCode().getValue() : null);
             }
             case OutcomeXpayGatewayDto t -> {
-                result = new AuthRequestData(t.getAuthorizationCode(),t.getOutcome().toString(), transactionId.value(), t.getErrorCode() != null ? t.getErrorCode().getValue().toString() : null);
+                result = new AuthRequestData(t.getAuthorizationCode(),t.getOutcome().toString(), transactionId.value().substring(0,7), t.getErrorCode() != null ? t.getErrorCode().getValue().toString() : null);
             }
             default ->
                     throw new InvalidRequestException("Unexpected value: " + updateAuthorizationRequest.getOutcomeGateway());
