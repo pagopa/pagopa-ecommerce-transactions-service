@@ -113,7 +113,7 @@ class AuthRequestDataUtilsTest {
         AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils
                 .from(updateAuthorizationRequest, transactionId);
 
-        assertEquals(data.rrn(), transactionId.value().substring(0,7));
+        assertEquals(data.rrn(), transactionId.value().substring(0, 7));
         assertEquals(
                 data.authorizationCode(),
                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode()
