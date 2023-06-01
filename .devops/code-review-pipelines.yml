@@ -88,6 +88,8 @@ stages:
       - job: make_integration_test  
         steps:
         - checkout: pagopaEcommerceLocal
+        - script: |
+            ls
         - script: | 
             echo "##[debug] Change placeholder for ecommerce-transaction-service set branch: $(BRANCH_NAME)"
             sed -i "s/^ECOMMERCE_TRANSACTIONS_COMMIT_SHA=.*$/ECOMMERCE_TRANSACTIONS_COMMIT_SHA=$(BRANCH_NAME)/" .env
