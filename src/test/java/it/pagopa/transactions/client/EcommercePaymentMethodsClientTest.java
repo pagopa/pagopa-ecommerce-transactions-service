@@ -1,5 +1,6 @@
 package it.pagopa.transactions.client;
 
+import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.api.PaymentMethodsApi;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.*;
 import org.junit.jupiter.api.Test;
@@ -56,7 +57,12 @@ class EcommercePaymentMethodsClientTest {
          */
         when(
                 ecommercePaymentInstrumentsWebClient
-                        .calculateFees(paymentMethodId, calculateFeeRequestDto, TEST_MAX_OCCURRERNCES)
+                        .calculateFees(
+                                paymentMethodId,
+                                TransactionTestUtils.TRANSACTION_ID,
+                                calculateFeeRequestDto,
+                                TEST_MAX_OCCURRERNCES
+                        )
         )
                 .thenReturn(Mono.just(bundleOptionDto));
 
@@ -64,7 +70,12 @@ class EcommercePaymentMethodsClientTest {
          * test
          */
         CalculateFeeResponseDto calculateFeeResponseDto = ecommercePaymentMethodsClient
-                .calculateFee(paymentMethodId, calculateFeeRequestDto, TEST_MAX_OCCURRERNCES)
+                .calculateFee(
+                        paymentMethodId,
+                        TransactionTestUtils.TRANSACTION_ID,
+                        calculateFeeRequestDto,
+                        TEST_MAX_OCCURRERNCES
+                )
                 .block();
 
         /**
