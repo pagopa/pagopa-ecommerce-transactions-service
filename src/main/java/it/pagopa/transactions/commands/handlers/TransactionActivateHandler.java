@@ -168,7 +168,7 @@ public class TransactionActivateHandler
                                             .map(
                                                     requestInfo -> Mono.just(requestInfo)
                                                             .doOnSuccess(
-                                                                    this::spanCustomTransaction
+                                                                    this::traceRepeatedActivation
                                                             )
                                             )
                                             .orElseGet(
@@ -222,7 +222,7 @@ public class TransactionActivateHandler
         );
     }
 
-    private void spanCustomTransaction(PaymentRequestInfo paymentRequestInfo) {
+    private void traceRepeatedActivation(PaymentRequestInfo paymentRequestInfo) {
         String transactionActivationDateString = paymentRequestInfo.activationDate();
         Duration paymentTokenValidityTimeLeft = Duration.ofSeconds(paymentTokenTimeout);
         if (transactionActivationDateString != null) {
