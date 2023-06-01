@@ -162,6 +162,95 @@ class TransactionInitializerHandlerTest {
     }
 
     @Test
+    void shouldHandleCommandForNM3CachedPaymentRequestWithoutActivationDate() {
+        RptId rptId = new RptId(RPT_ID);
+        IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
+        String transactionId = UUID.randomUUID().toString();
+        String paymentToken = PAYMENT_TOKEN;
+        String paName = "paName";
+        String paTaxcode = rptId.getFiscalCode();
+
+        NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
+        PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto();
+        requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
+        paymentNoticeInfoDto.setRptId(rptId.value());
+        requestDto.setEmail(EMAIL_STRING);
+        paymentNoticeInfoDto.setAmount(1200);
+        TransactionActivateCommand command = new TransactionActivateCommand(
+                rptId,
+                requestDto,
+                Transaction.ClientId.CHECKOUT
+        );
+
+        PaymentRequestInfo paymentRequestInfoCached = new PaymentRequestInfo(
+                rptId,
+                paTaxcode,
+                paName,
+                DESCRIPTION,
+                AMOUNT,
+                null,
+                paymentToken,
+                null,
+                idempotencyKey,
+                List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, AMOUNT, null))
+        );
+
+        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
+        transactionActivatedEvent.setTransactionId(transactionId);
+        transactionActivatedEvent.setEventCode(TransactionEventCode.TRANSACTION_ACTIVATED_EVENT);
+        TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
+        transactionActivatedData.setPaymentNotices(
+                List.of(
+                        new PaymentNotice(
+                                paymentToken,
+                                rptId.value(),
+                                null,
+                                null,
+                                null,
+                                List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, null, null))
+                        )
+                )
+        );
+        transactionActivatedEvent.setData(transactionActivatedData);
+
+        /* preconditions */
+        Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
+                .thenReturn(Optional.of(paymentRequestInfoCached));
+        Mockito.when(transactionEventActivatedStoreRepository.save(any()))
+                .thenAnswer(args -> Mono.just(args.getArguments()[0]));
+        Mockito.doNothing().when(paymentRequestInfoRedisTemplateWrapper).save(any(PaymentRequestInfo.class));
+        Mockito.when(
+                transactionActivatedQueueAsyncClient.sendMessageWithResponse(
+                        any(BinaryData.class),
+                        any(),
+                        any()
+                )
+        )
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
+        Mockito.when(jwtTokenUtils.generateToken(any()))
+                .thenReturn(Mono.just("authToken"));
+        ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
+        Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
+
+        /* run test */
+        Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
+                .handle(command).block();
+
+        /* asserts */
+        Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(1)).findById(rptId.value());
+        assertNotNull(paymentRequestInfoCached.id());
+        TransactionActivatedEvent event = response.getT1().block();
+        Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(1)).findById(rptId.value());
+
+        assertNotNull(event.getTransactionId());
+        assertNotNull(event.getEventCode());
+        assertNotNull(event.getCreationDate());
+        assertNotNull(event.getId());
+        assertEquals(paymentTokenTimeout, event.getData().getPaymentTokenValiditySeconds());
+
+    }
+
+    @Test
     void shouldFailForTokenGenerationError() {
         RptId rptId = new RptId("77777777777302016723749670035");
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
