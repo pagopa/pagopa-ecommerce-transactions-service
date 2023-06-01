@@ -22,12 +22,13 @@ public class EcommercePaymentMethodsClient {
 
     public Mono<CalculateFeeResponseDto> calculateFee(
                                                       String paymentMethodId,
+                                                      String transactionId,
                                                       CalculateFeeRequestDto calculateFeeRequestDto,
                                                       Integer maxOccurrences
 
     ) {
         return ecommercePaymentInstrumentsWebClient
-                .calculateFees(paymentMethodId, calculateFeeRequestDto, maxOccurrences)
+                .calculateFees(paymentMethodId, transactionId, calculateFeeRequestDto, maxOccurrences)
                 .doOnError(
                         WebClientResponseException.class,
                         e -> log.info(
