@@ -250,7 +250,7 @@ public class TransactionActivateHandler
                 );
                 span.captureException(
                         new IllegalArgumentException(
-                                "Invalid transaction activation date null for rptId: %s"
+                                "Null transaction activation date for rptId %s in repeated activation"
                                         .formatted(paymentRequestInfo.id().toString())
                         )
                 );
