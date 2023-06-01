@@ -224,34 +224,39 @@ public class TransactionActivateHandler
 
     private void traceRepeatedActivation(PaymentRequestInfo paymentRequestInfo) {
         String transactionActivationDateString = paymentRequestInfo.activationDate();
-
-        if (transactionActivationDateString != null) {
-            ZonedDateTime transactionActivation = ZonedDateTime.parse(transactionActivationDateString);
-            ZonedDateTime paymentTokenValidityEnd = transactionActivation
-                    .plus(Duration.ofSeconds(paymentTokenTimeout));
-            Duration paymentTokenValidityTimeLeft = Duration.between(ZonedDateTime.now(), paymentTokenValidityEnd);
-            co.elastic.apm.api.Span span = ElasticApm.currentTransaction()
-                    .startSpan("transaction", "activation", "activation cached");
-            try {
-                span
+        co.elastic.apm.api.Span span = ElasticApm.currentTransaction();
+        try {
+            if (transactionActivationDateString != null) {
+                ZonedDateTime transactionActivation = ZonedDateTime.parse(transactionActivationDateString);
+                ZonedDateTime paymentTokenValidityEnd = transactionActivation
+                        .plus(Duration.ofSeconds(paymentTokenTimeout));
+                Duration paymentTokenValidityTimeLeft = Duration.between(ZonedDateTime.now(), paymentTokenValidityEnd);
+                span.startSpan("transaction", "activation", "activation cached")
                         .setName("Transaction re-activated")
                         .setLabel("paymentToken", paymentRequestInfo.paymentToken())
                         .setLabel("paymentTokenLeftTimeSec", paymentTokenValidityTimeLeft.getSeconds());
-            } finally {
-                span.end();
+
+                log.info(
+                        "PaymentRequestInfo cache hit for {} with valid paymentToken {}. Validity left time: {}",
+                        paymentRequestInfo.id(),
+                        paymentRequestInfo.paymentToken(),
+                        paymentTokenValidityTimeLeft
+                );
+            } else {
+                log.error(
+                        "Cannot trace repeated transaction activation for {} with payment token: {}, missing transaction activation date",
+                        paymentRequestInfo.id(),
+                        paymentRequestInfo.paymentToken()
+                );
+                span.captureException(
+                        new IllegalArgumentException(
+                                "Invalid transaction activation date null for rptId: %s"
+                                        .formatted(paymentRequestInfo.id().toString())
+                        )
+                );
             }
-            log.info(
-                    "PaymentRequestInfo cache hit for {} with valid paymentToken {}. Validity left time: {}",
-                    paymentRequestInfo.id(),
-                    paymentRequestInfo.paymentToken(),
-                    paymentTokenValidityTimeLeft
-            );
-        } else {
-            log.error(
-                    "Cannot trace repeated transaction activation for {} with payment token: {}, missing transaction activation date",
-                    paymentRequestInfo.id(),
-                    paymentRequestInfo.paymentToken()
-            );
+        } finally {
+            span.end();
         }
 
     }
