@@ -108,7 +108,7 @@ public class NodoOperations {
                                 response.getFiscalCodePA(),
                                 response.getCompanyName(),
                                 response.getPaymentDescription(),
-                                amount.multiply(BigDecimal.valueOf(100)).intValue(),
+                                getEuroCentsFromNodoAmount(response.getTotalAmount()),
                                 null,
                                 response.getPaymentToken(),
                                 ZonedDateTime.now().toString(),
