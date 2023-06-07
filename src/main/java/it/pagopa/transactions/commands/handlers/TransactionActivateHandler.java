@@ -134,7 +134,8 @@ public class TransactionActivateHandler
                                                                                         nodoOperations
                                                                                                 .generateRandomStringToIdempotencyKey()
                                                                                 ),
-                                                                                new ArrayList<>(TRANSFER_LIST_MAX_SIZE)
+                                                                                new ArrayList<>(TRANSFER_LIST_MAX_SIZE),
+                                                                                false
                                                                         );
                                                                         paymentRequestInfoRedisTemplateWrapper
                                                                                 .save(

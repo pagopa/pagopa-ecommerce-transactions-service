@@ -121,7 +121,31 @@ public class NodoOperations {
                                                         EuroUtils.euroToEuroCents(transfer.getTransferAmount()),
                                                         transfer.getTransferCategory()
                                                 )
-                                        ).toList()
+                                        ).toList(),
+                                response.getTransferList().getTransfer().parallelStream().allMatch(
+                                        ctTransferPSPV2 -> ctTransferPSPV2.getMetadata() != null &&
+                                                ctTransferPSPV2.getMetadata().getMapEntry().parallelStream()
+                                                        .allMatch(
+                                                                ctMapEntry -> ctMapEntry.getKey()
+                                                                        .equalsIgnoreCase("IBANAPPOGGIO")
+                                                        )
+                                                &&
+                                                ((ctTransferPSPV2.getIBAN() != null
+                                                        && ctTransferPSPV2.getIBAN().substring(6, 11)
+                                                                .equalsIgnoreCase("07601"))
+                                                        ||
+                                                        ctTransferPSPV2.getMetadata().getMapEntry()
+                                                                .parallelStream()
+                                                                .anyMatch(
+                                                                        ctMapEntry -> ctMapEntry
+                                                                                .getKey()
+                                                                                .equalsIgnoreCase("IBANAPPOGGIO")
+                                                                                && ctMapEntry.getValue() != null
+                                                                                && ctMapEntry.getValue()
+                                                                                        .substring(6, 11)
+                                                                                        .equalsIgnoreCase("07601")
+                                                                ))
+                                )
                         )
                 );
     }
