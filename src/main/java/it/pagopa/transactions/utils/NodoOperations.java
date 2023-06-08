@@ -131,8 +131,8 @@ public class NodoOperations {
                                                         )
                                                 &&
                                                 ((ctTransferPSPV2.getIBAN() != null
-                                                        && ctTransferPSPV2.getIBAN().length() > 10
-                                                        && ctTransferPSPV2.getIBAN().substring(6, 11)
+                                                        && ctTransferPSPV2.getIBAN().length() > 9
+                                                        && ctTransferPSPV2.getIBAN().substring(5, 10)
                                                                 .equalsIgnoreCase("07601"))
                                                         ||
                                                         ctTransferPSPV2.getMetadata().getMapEntry()
@@ -142,9 +142,9 @@ public class NodoOperations {
                                                                                 .getKey()
                                                                                 .equalsIgnoreCase("IBANAPPOGGIO")
                                                                                 && ctMapEntry.getValue() != null
-                                                                                && ctMapEntry.getValue().length() > 10
+                                                                                && ctMapEntry.getValue().length() > 9
                                                                                 && ctMapEntry.getValue()
-                                                                                        .substring(6, 11)
+                                                                                        .substring(5, 10)
                                                                                         .equalsIgnoreCase("07601")
                                                                 ))
                                 )
