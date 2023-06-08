@@ -60,7 +60,7 @@ class NodoOperationsTest {
         ctTransferPSPV2.setIdTransfer(1);
         ctTransferPSPV2.setFiscalCodePA(fiscalCode);
         ctTransferPSPV2.setTransferAmount(BigDecimal.valueOf(amount));
-        ctTransferPSPV2.setIBAN("It41B0000000000000000899876543234567");
+        ctTransferPSPV2.setIBAN("IT41B0000100899876113235567");
         ctTransferPSPV2.setRemittanceInformation("test1");
         byte[] testByte = new byte[] {
                 0,
@@ -146,12 +146,12 @@ class NodoOperationsTest {
         ctTransferPSPV2.setIdTransfer(1);
         ctTransferPSPV2.setFiscalCodePA(fiscalCode);
         ctTransferPSPV2.setTransferAmount(BigDecimal.valueOf(amount));
-        ctTransferPSPV2.setIBAN("It41B0000000000000000899876543234567");
+        ctTransferPSPV2.setIBAN("IT41B0000100899876113235567");
         ctTransferPSPV2.setRemittanceInformation("test1");
         CtMetadata metadata = new CtMetadata();
         CtMapEntry ctMapEntry = new CtMapEntry();
         ctMapEntry.setKey("IBANAPPOGGIO");
-        ctMapEntry.setValue("It41B0000000000000000899876113235567");
+        ctMapEntry.setValue("IT41B0000100899876113235567");
         metadata.getMapEntry().add(ctMapEntry);
         ctTransferPSPV2.setMetadata(metadata);
         byte[] testByte = new byte[] {
@@ -173,7 +173,7 @@ class NodoOperationsTest {
         CtMetadata metadata_1 = new CtMetadata();
         CtMapEntry ctMapEntry_1 = new CtMapEntry();
         ctMapEntry_1.setKey("IBANAPPOGGIO");
-        ctMapEntry_1.setValue("It41B0000000000000000123476113235567");
+        ctMapEntry_1.setValue("IT41B0000100899876113235567");
         metadata_1.getMapEntry().add(ctMapEntry_1);
         ctTransferPSPV2_1.setMetadata(metadata_1);
         ctTransferListPSPV2.getTransfer().add(ctTransferPSPV2);
@@ -244,12 +244,12 @@ class NodoOperationsTest {
         ctTransferPSPV2.setIdTransfer(1);
         ctTransferPSPV2.setFiscalCodePA(fiscalCode);
         ctTransferPSPV2.setTransferAmount(BigDecimal.valueOf(amount));
-        ctTransferPSPV2.setIBAN("It41B0000000000000000899876543234567");
+        ctTransferPSPV2.setIBAN("IT41B0000100899876113235567");
         ctTransferPSPV2.setRemittanceInformation("test1");
         CtMetadata metadata = new CtMetadata();
         CtMapEntry ctMapEntry = new CtMapEntry();
         ctMapEntry.setKey("IBANAPPOGGIO");
-        ctMapEntry.setValue("IT20U0760100000000000899876113235567");
+        ctMapEntry.setValue("IT20U0760100899876113235567");
         metadata.getMapEntry().add(ctMapEntry);
         ctTransferPSPV2.setMetadata(metadata);
         byte[] testByte = new byte[] {
@@ -271,7 +271,7 @@ class NodoOperationsTest {
         CtMetadata metadata_1 = new CtMetadata();
         CtMapEntry ctMapEntry_1 = new CtMapEntry();
         ctMapEntry_1.setKey("IBANAPPOGGIO");
-        ctMapEntry_1.setValue("It41B0000000000000000123476113235567");
+        ctMapEntry_1.setValue("IT41B00060100899876113235567");
         metadata_1.getMapEntry().add(ctMapEntry_1);
         ctTransferPSPV2_1.setMetadata(metadata_1);
         ctTransferListPSPV2.getTransfer().add(ctTransferPSPV2);
@@ -342,12 +342,12 @@ class NodoOperationsTest {
         ctTransferPSPV2.setIdTransfer(1);
         ctTransferPSPV2.setFiscalCodePA(fiscalCode);
         ctTransferPSPV2.setTransferAmount(BigDecimal.valueOf(amount));
-        ctTransferPSPV2.setIBAN("It41B0000000000000000899876543234567");
+        ctTransferPSPV2.setIBAN("IT41B0760100899876113235567");
         ctTransferPSPV2.setRemittanceInformation("test1");
         CtMetadata metadata = new CtMetadata();
         CtMapEntry ctMapEntry = new CtMapEntry();
         ctMapEntry.setKey("IBANAPPOGGIO");
-        ctMapEntry.setValue("IT20U0760100000000000899876113235567");
+        ctMapEntry.setValue("IT20U0760100899876113235567");
         metadata.getMapEntry().add(ctMapEntry);
         ctTransferPSPV2.setMetadata(metadata);
         byte[] testByte = new byte[] {
@@ -369,7 +369,7 @@ class NodoOperationsTest {
         CtMetadata metadata_1 = new CtMetadata();
         CtMapEntry ctMapEntry_1 = new CtMapEntry();
         ctMapEntry_1.setKey("IBANAPPOGGIO");
-        ctMapEntry_1.setValue("IT20U0760100000000000899876113123456");
+        ctMapEntry_1.setValue("IT20U0760100899876113235567");
         metadata_1.getMapEntry().add(ctMapEntry_1);
         ctTransferPSPV2_1.setMetadata(metadata_1);
         ctTransferListPSPV2.getTransfer().add(ctTransferPSPV2);
@@ -440,12 +440,12 @@ class NodoOperationsTest {
         ctTransferPSPV2.setIdTransfer(1);
         ctTransferPSPV2.setFiscalCodePA(fiscalCode);
         ctTransferPSPV2.setTransferAmount(BigDecimal.valueOf(amount));
-        ctTransferPSPV2.setIBAN("It41B0000000000000000899876543234567");
+        ctTransferPSPV2.setIBAN("IT41B0000100899876113235567");
         ctTransferPSPV2.setRemittanceInformation("test1");
         CtMetadata metadata = new CtMetadata();
         CtMapEntry ctMapEntry = new CtMapEntry();
         ctMapEntry.setKey("IBANAPPOGGIO");
-        ctMapEntry.setValue("IT20U0760100000000000899876113235567");
+        ctMapEntry.setValue("IT20U0760100899876113235567");
         metadata.getMapEntry().add(ctMapEntry);
         ctTransferPSPV2.setMetadata(metadata);
         byte[] testByte = new byte[] {
@@ -538,12 +538,12 @@ class NodoOperationsTest {
         ctTransferPSPV2.setIdTransfer(1);
         ctTransferPSPV2.setFiscalCodePA(fiscalCode);
         ctTransferPSPV2.setTransferAmount(BigDecimal.valueOf(amount));
-        ctTransferPSPV2.setIBAN("It41B0000000000000000899876543234567");
+        ctTransferPSPV2.setIBAN("IT41B0000100899876113235567");
         ctTransferPSPV2.setRemittanceInformation("test1");
         CtMetadata metadata = new CtMetadata();
         CtMapEntry ctMapEntry = new CtMapEntry();
         ctMapEntry.setKey("IBANAPPOGGIO");
-        ctMapEntry.setValue("IT20U0760100000000000899876113235567");
+        ctMapEntry.setValue("IT20U0760100899876113235567");
         metadata.getMapEntry().add(ctMapEntry);
         ctTransferPSPV2.setMetadata(metadata);
         byte[] testByte = new byte[] {
@@ -636,12 +636,12 @@ class NodoOperationsTest {
         ctTransferPSPV2.setIdTransfer(1);
         ctTransferPSPV2.setFiscalCodePA(fiscalCode);
         ctTransferPSPV2.setTransferAmount(BigDecimal.valueOf(amount));
-        ctTransferPSPV2.setIBAN("IT20U0760100000000000899876113235567");
+        ctTransferPSPV2.setIBAN("IT20U0760100899876113235567");
         ctTransferPSPV2.setRemittanceInformation("test1");
         CtMetadata metadata = new CtMetadata();
         CtMapEntry ctMapEntry = new CtMapEntry();
         ctMapEntry.setKey("IBANAPPOGGIO");
-        ctMapEntry.setValue("It41B0000000000000000899876543234567");
+        ctMapEntry.setValue("IT41B1230100899876113235567");
         metadata.getMapEntry().add(ctMapEntry);
         ctTransferPSPV2.setMetadata(metadata);
         byte[] testByte = new byte[] {
@@ -654,12 +654,12 @@ class NodoOperationsTest {
         ctTransferPSPV2_1.setIdTransfer(1);
         ctTransferPSPV2_1.setFiscalCodePA(fiscalCode);
         ctTransferPSPV2_1.setTransferAmount(BigDecimal.valueOf(amount));
-        ctTransferPSPV2_1.setIBAN("IT20U0760100000000000899876113235567");
+        ctTransferPSPV2_1.setIBAN("IT20U0760100899876113235567");
         ctTransferPSPV2_1.setRemittanceInformation("test1");
         CtMetadata metadata_1 = new CtMetadata();
         CtMapEntry ctMapEntry_1 = new CtMapEntry();
         ctMapEntry_1.setKey("IBANAPPOGGIO");
-        ctMapEntry_1.setValue("It41B0000000000000000899876543234321");
+        ctMapEntry_1.setValue("IT20U0850100899876113235567");
         metadata_1.getMapEntry().add(ctMapEntry_1);
         ctTransferPSPV2_1.setMetadata(metadata_1);
         ctTransferListPSPV2.getTransfer().add(ctTransferPSPV2);
@@ -730,12 +730,12 @@ class NodoOperationsTest {
         ctTransferPSPV2.setIdTransfer(1);
         ctTransferPSPV2.setFiscalCodePA(fiscalCode);
         ctTransferPSPV2.setTransferAmount(BigDecimal.valueOf(amount));
-        ctTransferPSPV2.setIBAN("IT20U0760100000000000899876113235567");
+        ctTransferPSPV2.setIBAN("IT20U0760100899876113235567");
         ctTransferPSPV2.setRemittanceInformation("test1");
         CtMetadata metadata = new CtMetadata();
         CtMapEntry ctMapEntry = new CtMapEntry();
         ctMapEntry.setKey("IBANAPPOGGIO");
-        ctMapEntry.setValue("It41B0000000000000000899876543234567");
+        ctMapEntry.setValue("IT41B0000100899876113235567");
         metadata.getMapEntry().add(ctMapEntry);
         ctTransferPSPV2.setMetadata(metadata);
         byte[] testByte = new byte[] {
@@ -748,12 +748,12 @@ class NodoOperationsTest {
         ctTransferPSPV2_1.setIdTransfer(1);
         ctTransferPSPV2_1.setFiscalCodePA(fiscalCode);
         ctTransferPSPV2_1.setTransferAmount(BigDecimal.valueOf(amount));
-        ctTransferPSPV2_1.setIBAN("It41B0000000000000000899876543234321");
+        ctTransferPSPV2_1.setIBAN("IT41B0000100899876113235567");
         ctTransferPSPV2_1.setRemittanceInformation("test1");
         CtMetadata metadata_1 = new CtMetadata();
         CtMapEntry ctMapEntry_1 = new CtMapEntry();
         ctMapEntry_1.setKey("IBANAPPOGGIO");
-        ctMapEntry_1.setValue("IT20U0760100000000000899876113235567");
+        ctMapEntry_1.setValue("IT20U0760100899876113235567");
         metadata_1.getMapEntry().add(ctMapEntry_1);
         ctTransferPSPV2_1.setMetadata(metadata_1);
         ctTransferListPSPV2.getTransfer().add(ctTransferPSPV2);
@@ -823,7 +823,7 @@ class NodoOperationsTest {
         ctTransferPSPV2.setIdTransfer(1);
         ctTransferPSPV2.setFiscalCodePA(fiscalCode);
         ctTransferPSPV2.setTransferAmount(BigDecimal.valueOf(amount));
-        ctTransferPSPV2.setIBAN("It41B0000000000000000899876543234567");
+        ctTransferPSPV2.setIBAN("IT41B0000100899876113235567");
         ctTransferPSPV2.setRemittanceInformation("test1");
         byte[] testByte = new byte[] {
                 0,
@@ -1125,7 +1125,7 @@ class NodoOperationsTest {
         ctTransferPSPV2.setIdTransfer(1);
         ctTransferPSPV2.setFiscalCodePA(fiscalCode);
         ctTransferPSPV2.setTransferAmount(BigDecimal.valueOf(amount));
-        ctTransferPSPV2.setIBAN("It41B0000000000000000899876543234567");
+        ctTransferPSPV2.setIBAN("IT41B0000100899876113235567");
         ctTransferPSPV2.setRemittanceInformation("test1");
         byte[] testByte = new byte[] {
                 0,
