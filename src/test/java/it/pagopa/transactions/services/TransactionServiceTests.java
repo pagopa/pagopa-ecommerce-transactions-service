@@ -392,7 +392,8 @@ class TransactionServiceTests {
                                                 paymentNotice.getAmount(),
                                                 null
                                         )
-                                )
+                                ),
+                                paymentNotice.isAllCCP()
                         )
                 ).toList(),
                 transactionDocument.getEmail(),
@@ -1104,7 +1105,8 @@ class TransactionServiceTests {
                                                 paymentNotice.getAmount(),
                                                 null
                                         )
-                                )
+                                ),
+                                paymentNotice.isAllCCP()
                         )
                 ).toList(),
                 transactionDocument.getEmail(),
@@ -1233,7 +1235,8 @@ class TransactionServiceTests {
                                                 paymentNotice.getAmount(),
                                                 null
                                         )
-                                )
+                                ),
+                                paymentNotice.isAllCCP()
                         )
                 ).toList(),
                 transactionDocument.getEmail(),
@@ -1360,7 +1363,8 @@ class TransactionServiceTests {
                                                 paymentNotice.getAmount(),
                                                 null
                                         )
-                                )
+                                ),
+                                paymentNotice.isAllCCP()
                         )
                 ).toList(),
                 transactionDocument.getEmail(),
@@ -1489,7 +1493,8 @@ class TransactionServiceTests {
                                                 paymentNotice.getAmount(),
                                                 null
                                         )
-                                )
+                                ),
+                                paymentNotice.isAllCCP()
                         )
                 ).toList(),
                 transactionDocument.getEmail(),

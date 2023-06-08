@@ -131,6 +131,7 @@ public class NodoOperations {
                                                         )
                                                 &&
                                                 ((ctTransferPSPV2.getIBAN() != null
+                                                        && ctTransferPSPV2.getIBAN().length() > 10
                                                         && ctTransferPSPV2.getIBAN().substring(6, 11)
                                                                 .equalsIgnoreCase("07601"))
                                                         ||
@@ -141,6 +142,7 @@ public class NodoOperations {
                                                                                 .getKey()
                                                                                 .equalsIgnoreCase("IBANAPPOGGIO")
                                                                                 && ctMapEntry.getValue() != null
+                                                                                && ctMapEntry.getValue().length() > 10
                                                                                 && ctMapEntry.getValue()
                                                                                         .substring(6, 11)
                                                                                         .equalsIgnoreCase("07601")

@@ -343,7 +343,8 @@ public class TransactionActivateHandler
                                         transfer.transferAmount(),
                                         transfer.transferCategory()
                                 )
-                        ).toList()
+                        ).toList(),
+                        paymentRequestInfo.allCCP()
                 )
         ).toList();
     }

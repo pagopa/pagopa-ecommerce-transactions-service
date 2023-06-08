@@ -369,7 +369,8 @@ public class TransactionsService {
                                                                                     transfer.getTransferAmount(),
                                                                                     transfer.getTransferCategory()
                                                                             )
-                                                                    ).toList()
+                                                                    ).toList(),
+                                                            paymentNotice.isAllCCP()
                                                     )
                                             ).toList(),
                                     transactionDocument.getEmail(),
@@ -638,8 +639,8 @@ public class TransactionsService {
                                                                                     transfer.getTransferAmount(),
                                                                                     transfer.getTransferCategory()
                                                                             )
-                                                                    ).toList()
-
+                                                                    ).toList(),
+                                                            paymentNotice.isAllCCP()
                                                     )
                                             )
                                             .toList(),

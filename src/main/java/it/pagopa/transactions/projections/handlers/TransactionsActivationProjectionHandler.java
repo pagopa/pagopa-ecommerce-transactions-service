@@ -39,7 +39,8 @@ public class TransactionsActivationProjectionHandler
                                         transfer.getTransferAmount(),
                                         transfer.getTransferCategory()
                                 )
-                        ).toList()
+                        ).toList(),
+                        paymentNoticeData.isAllCCP()
                 )
         ).toList();
         Confidential<Email> email = event.getData().getEmail();

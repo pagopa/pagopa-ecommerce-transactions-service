@@ -119,7 +119,8 @@ class TransactionInitializerHandlerTest {
                                 null,
                                 null,
                                 null,
-                                List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, null, null))
+                                List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, null, null)),
+                                false
                         )
                 )
         );
@@ -209,7 +210,8 @@ class TransactionInitializerHandlerTest {
                                 null,
                                 null,
                                 null,
-                                List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, null, null))
+                                List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, null, null)),
+                                false
                         )
                 )
         );
@@ -301,7 +303,8 @@ class TransactionInitializerHandlerTest {
                                 null,
                                 null,
                                 null,
-                                List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount, null))
+                                List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount, null)),
+                                false
                         )
                 )
         );
