@@ -285,7 +285,8 @@ public class TransactionsService {
                                                                                             t.getTransferCategory()
                                                                                     )
                                                                     ).toList()
-                                                    ),
+                                                    )
+                                                    .allCCP(transaction.getPaymentNotices().get(0).isAllCCP()),
                                             Integer.MAX_VALUE
                                     )
                                     .map(
