@@ -30,6 +30,7 @@ public class NodoOperations {
 
     private static final String ALPHANUMERICS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     private static final SecureRandom RANDOM = new SecureRandom();
+    private static final int IBAN_LENGTH = 27;
 
     @Autowired
     NodeForPspClient nodeForPspClient;
@@ -127,25 +128,18 @@ public class NodoOperations {
                                                 ctTransferPSPV2.getMetadata().getMapEntry().parallelStream()
                                                         .allMatch(
                                                                 ctMapEntry -> ctMapEntry.getKey()
-                                                                        .equalsIgnoreCase("IBANAPPOGGIO")
+                                                                        .equals("IBANAPPOGGIO")
                                                         )
                                                 &&
-                                                ((ctTransferPSPV2.getIBAN() != null
-                                                        && ctTransferPSPV2.getIBAN().length() > 9
-                                                        && ctTransferPSPV2.getIBAN().substring(5, 10)
-                                                                .equalsIgnoreCase("07601"))
+                                                (isIbanCCP(ctTransferPSPV2.getIBAN())
                                                         ||
                                                         ctTransferPSPV2.getMetadata().getMapEntry()
                                                                 .parallelStream()
                                                                 .anyMatch(
                                                                         ctMapEntry -> ctMapEntry
                                                                                 .getKey()
-                                                                                .equalsIgnoreCase("IBANAPPOGGIO")
-                                                                                && ctMapEntry.getValue() != null
-                                                                                && ctMapEntry.getValue().length() > 9
-                                                                                && ctMapEntry.getValue()
-                                                                                        .substring(5, 10)
-                                                                                        .equalsIgnoreCase("07601")
+                                                                                .equals("IBANAPPOGGIO")
+                                                                                && isIbanCCP(ctMapEntry.getValue())
                                                                 ))
                                 )
                         )
@@ -154,6 +148,13 @@ public class NodoOperations {
 
     private boolean isOkPaymentToken(String paymentToken) {
         return paymentToken != null && !paymentToken.isBlank();
+    }
+
+    private boolean isIbanCCP(String iban) {
+        return iban != null
+                && iban.length() == IBAN_LENGTH
+                && iban.substring(5, 10).equalsIgnoreCase("07601");
+
     }
 
     public Integer getEuroCentsFromNodoAmount(BigDecimal amountFromNodo) {
