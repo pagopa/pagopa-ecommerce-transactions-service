@@ -135,7 +135,7 @@ public class TransactionActivateHandler
                                                                                                 .generateRandomStringToIdempotencyKey()
                                                                                 ),
                                                                                 new ArrayList<>(TRANSFER_LIST_MAX_SIZE),
-                                                                                false
+                                                                                null
                                                                         );
                                                                         paymentRequestInfoRedisTemplateWrapper
                                                                                 .save(
