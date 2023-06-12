@@ -313,15 +313,20 @@ components:
             $ref: '#/components/schemas/Transfer'
           minItems: 1
           maxItems: 5
+        isAllCCP:
+          type: boolean
+          description: Flag for poste psp enabling in gec request
       required:
         - rptId
         - amount
         - transferList
+        - isAllCCP
       example:
         rptId: "77777777777302012387654312384"
         paymentToken: "paymentToken1"
         reason: "reason1"
         amount: 600
+        isAllCCP: false
         transferList:
           - paFiscalCode: "77777777777"
             digitalStamp: false

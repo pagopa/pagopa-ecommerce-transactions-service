@@ -162,6 +162,7 @@ public class TransactionsService {
                                                         .reason(paymentNotice.getDescription())
                                                         .paymentToken(paymentNotice.getPaymentToken())
                                                         .rptId(paymentNotice.getRptId())
+                                                        .isAllCCP(paymentNotice.isAllCCP())
                                                         .transferList(
                                                                 paymentNotice.getTransferList().stream().map(
                                                                         notice -> new TransferDto()
@@ -286,7 +287,7 @@ public class TransactionsService {
                                                                                     )
                                                                     ).toList()
                                                     )
-                                                    .allCCP(transaction.getPaymentNotices().get(0).isAllCCP()),
+                                                    .isAllCCP(transaction.getPaymentNotices().get(0).isAllCCP()),
                                             Integer.MAX_VALUE
                                     )
                                     .map(
@@ -718,6 +719,7 @@ public class TransactionsService {
                                                         .reason(paymentNotice.transactionDescription().value())
                                                         .rptId(paymentNotice.rptId().value())
                                                         .paymentToken(paymentNotice.paymentToken().value())
+                                                        .isAllCCP(paymentNotice.isAllCCP())
                                                         .transferList(
                                                                 paymentNotice.transferList().stream().map(
                                                                         paymentTransferInfo -> new TransferDto()

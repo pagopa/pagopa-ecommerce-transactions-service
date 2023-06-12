@@ -344,7 +344,7 @@ public class TransactionActivateHandler
                                         transfer.transferCategory()
                                 )
                         ).toList(),
-                        paymentRequestInfo.allCCP()
+                        paymentRequestInfo.isAllCCP()
                 )
         ).toList();
     }

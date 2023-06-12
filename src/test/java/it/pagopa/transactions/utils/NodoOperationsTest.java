@@ -124,7 +124,7 @@ class NodoOperationsTest {
         assertEquals(description, response.description());
         assertEquals(idempotencyKey, response.idempotencyKey());
         assertEquals(paTaxCode, response.paFiscalCode());
-        assertEquals(false, response.allCCP());
+        assertEquals(false, response.isAllCCP());
     }
 
     @Test
@@ -222,7 +222,7 @@ class NodoOperationsTest {
         assertEquals(description, response.description());
         assertEquals(idempotencyKey, response.idempotencyKey());
         assertEquals(paTaxCode, response.paFiscalCode());
-        assertEquals(false, response.allCCP());
+        assertEquals(false, response.isAllCCP());
     }
 
     @Test
@@ -320,7 +320,7 @@ class NodoOperationsTest {
         assertEquals(description, response.description());
         assertEquals(idempotencyKey, response.idempotencyKey());
         assertEquals(paTaxCode, response.paFiscalCode());
-        assertEquals(false, response.allCCP());
+        assertEquals(false, response.isAllCCP());
     }
 
     @Test
@@ -418,7 +418,7 @@ class NodoOperationsTest {
         assertEquals(description, response.description());
         assertEquals(idempotencyKey, response.idempotencyKey());
         assertEquals(paTaxCode, response.paFiscalCode());
-        assertEquals(false, response.allCCP());
+        assertEquals(false, response.isAllCCP());
     }
 
     @Test
@@ -516,7 +516,7 @@ class NodoOperationsTest {
         assertEquals(description, response.description());
         assertEquals(idempotencyKey, response.idempotencyKey());
         assertEquals(paTaxCode, response.paFiscalCode());
-        assertEquals(true, response.allCCP());
+        assertEquals(true, response.isAllCCP());
     }
 
     @Test
@@ -614,7 +614,7 @@ class NodoOperationsTest {
         assertEquals(description, response.description());
         assertEquals(idempotencyKey, response.idempotencyKey());
         assertEquals(paTaxCode, response.paFiscalCode());
-        assertEquals(false, response.allCCP());
+        assertEquals(false, response.isAllCCP());
     }
 
     @Test
@@ -712,7 +712,7 @@ class NodoOperationsTest {
         assertEquals(description, response.description());
         assertEquals(idempotencyKey, response.idempotencyKey());
         assertEquals(paTaxCode, response.paFiscalCode());
-        assertEquals(false, response.allCCP());
+        assertEquals(false, response.isAllCCP());
     }
 
     @Test
@@ -810,7 +810,7 @@ class NodoOperationsTest {
         assertEquals(description, response.description());
         assertEquals(idempotencyKey, response.idempotencyKey());
         assertEquals(paTaxCode, response.paFiscalCode());
-        assertEquals(false, response.allCCP());
+        assertEquals(false, response.isAllCCP());
     }
 
     @Test
@@ -904,7 +904,7 @@ class NodoOperationsTest {
         assertEquals(description, response.description());
         assertEquals(idempotencyKey, response.idempotencyKey());
         assertEquals(paTaxCode, response.paFiscalCode());
-        assertEquals(true, response.allCCP());
+        assertEquals(true, response.isAllCCP());
     }
 
     @Test
@@ -998,7 +998,7 @@ class NodoOperationsTest {
         assertEquals(description, response.description());
         assertEquals(idempotencyKey, response.idempotencyKey());
         assertEquals(paTaxCode, response.paFiscalCode());
-        assertEquals(true, response.allCCP());
+        assertEquals(true, response.isAllCCP());
     }
 
     @Test

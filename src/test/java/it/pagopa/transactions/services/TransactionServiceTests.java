@@ -166,6 +166,7 @@ class TransactionServiceTests {
                                         .rptId(p.getRptId())
                                         .reason(p.getDescription())
                                         .amount(p.getAmount())
+                                        .isAllCCP(p.isAllCCP())
                                         .transferList(
                                                 p.getTransferList().stream().map(
                                                         notice -> new TransferDto()
@@ -220,6 +221,7 @@ class TransactionServiceTests {
                                         .rptId(p.getRptId())
                                         .reason(p.getDescription())
                                         .amount(p.getAmount())
+                                        .isAllCCP(p.isAllCCP())
                                         .transferList(
                                                 p.getTransferList().stream().map(
                                                         notice -> new TransferDto()
