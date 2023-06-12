@@ -26,7 +26,7 @@ import javax.xml.bind.JAXBElement;
 @Slf4j
 public class NodeForPspClient {
 
-    private static final String CLIENT_ID_CLOSE_PAYMENT = "ecomm";
+    private static final String CLOSE_PAYMENT_CLIENT_ID = "ecomm";
     @Autowired
     @Qualifier("nodoWebClient")
     private WebClient nodoWebClient;
@@ -84,7 +84,7 @@ public class NodeForPspClient {
         return nodoWebClient.post()
                 .uri(
                         uriBuilder -> uriBuilder.path("/nodo/nodo-per-pm/v2/closepayment")
-                                .queryParam("clientId", CLIENT_ID_CLOSE_PAYMENT).build()
+                                .queryParam("clientId", CLOSE_PAYMENT_CLIENT_ID).build()
                 )
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(Mono.just(request), ClosePaymentRequestV2Dto.class)
