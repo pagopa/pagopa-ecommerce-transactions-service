@@ -226,7 +226,7 @@ class NodoOperationsTest {
     }
 
     @Test
-    void shouldActiveNM3PaymentRequestWithNotAllMatchIBANAPPOGGIO() {
+    void shouldActiveNM3PaymentRequestWithNotAllMatchClause() {
         RptId rptId = new RptId("77777777777302016723749670035");
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
@@ -270,8 +270,8 @@ class NodoOperationsTest {
         ctTransferPSPV2_1.setRemittanceInformation("test1");
         CtMetadata metadata_1 = new CtMetadata();
         CtMapEntry ctMapEntry_1 = new CtMapEntry();
-        ctMapEntry_1.setKey("NOIBANAPPOGGIO");
-        ctMapEntry_1.setValue("IT41B0000100899876113235567");
+        ctMapEntry_1.setKey("IBANAPPOGGIO");
+        ctMapEntry_1.setValue("IT41B00001008998761132355672");
         metadata_1.getMapEntry().add(ctMapEntry_1);
         ctTransferPSPV2_1.setMetadata(metadata_1);
         ctTransferListPSPV2.getTransfer().add(ctTransferPSPV2);
