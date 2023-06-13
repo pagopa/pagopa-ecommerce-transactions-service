@@ -248,8 +248,8 @@ public class TransactionsService {
                                                     ? Mono.error(
                                                             new PaymentNoticeAllCCPMismatchException(
                                                                     transaction.getPaymentNotices().get(0).getRptId(),
-                                                                    requestAuthorizationRequestDto.getAmount(),
-                                                                    amountTotal
+                                                                    requestAuthorizationRequestDto.getIsAllCCP(),
+                                                                    transaction.getPaymentNotices().get(0).isAllCCP()
                                                             )
                                                     )
                                                     : Mono.just(transaction);

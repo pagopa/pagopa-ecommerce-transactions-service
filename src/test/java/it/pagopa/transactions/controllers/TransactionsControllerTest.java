@@ -595,6 +595,20 @@ class TransactionsControllerTest {
     }
 
     @Test
+    void shouldReturnResponseEntityWithMismatchAllCCP() {
+        ResponseEntity<ProblemJsonDto> responseEntity = transactionsController
+                .paymentNoticeAllCCPMismatchErrorHandler(
+                        new PaymentNoticeAllCCPMismatchException("testRptID", false, true)
+                );
+
+        assertEquals(HttpStatus.CONFLICT, responseEntity.getStatusCode());
+        assertEquals(
+                "Invalid request: Payment notice allCCP mismatch",
+                responseEntity.getBody().getDetail()
+        );
+    }
+
+    @Test
     void shouldReturnResponseEntityWithInternalServerErrorForErrorGeneratingJwtToken() {
         ResponseEntity<ProblemJsonDto> responseEntity = transactionsController
                 .jwtTokenGenerationError(new JWTTokenGenerationException());

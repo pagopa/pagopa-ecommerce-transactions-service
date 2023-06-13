@@ -8,19 +8,19 @@ public class PaymentNoticeAllCCPMismatchException extends RuntimeException {
 
     private String rptId;
 
-    private Integer requestAllCCP;
+    private Boolean requestAllCCP;
 
-    private Integer transactionAllCCP;
+    private Boolean paymentNoticeAllCCP;
 
     public PaymentNoticeAllCCPMismatchException(
             String rptId,
-            Integer requestAllCCP,
-            Integer transactionAllCCP
+            Boolean requestAllCCP,
+            Boolean paymentNoticeAllCCP
     ) {
         super("Payment notice allCCP mismatch");
         this.rptId = rptId;
         this.requestAllCCP = requestAllCCP;
-        this.transactionAllCCP = transactionAllCCP;
+        this.paymentNoticeAllCCP = paymentNoticeAllCCP;
     }
 
 }
