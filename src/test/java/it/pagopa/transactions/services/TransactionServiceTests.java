@@ -17,6 +17,7 @@ import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.*;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException;
 import it.pagopa.transactions.exceptions.TransactionAmountMismatchException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.*;
@@ -351,6 +352,7 @@ class TransactionServiceTests {
                 .amount(100)
                 .fee(0)
                 .paymentInstrumentId("paymentInstrumentId")
+                .isAllCCP(false)
                 .pspId("pspId");
 
         /* preconditions */
@@ -763,6 +765,7 @@ class TransactionServiceTests {
                 .paymentInstrumentId("paymentInstrumentId")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
                 .pspId("PSP_CODE")
+                .isAllCCP(false)
                 .details(cardAuthRequestDetailsDto);
         Transaction transaction = TransactionTestUtils.transactionDocument(
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
@@ -816,6 +819,74 @@ class TransactionServiceTests {
                                 .requestTransactionAuthorization(TRANSACTION_ID, "XPAY", authorizationRequest)
                 )
                 .expectErrorMatches(exception -> exception instanceof TransactionAmountMismatchException);
+    }
+
+    @Test
+    void shouldReturnBadRequestForMismatchingFlagAllCCP() {
+        CardAuthRequestDetailsDto cardAuthRequestDetailsDto = new CardAuthRequestDetailsDto()
+                .expiryDate("203012")
+                .cvv("000")
+                .pan("0123456789012345")
+                .holderName("Name Surname");
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .paymentInstrumentId("paymentInstrumentId")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
+                .pspId("PSP_CODE")
+                .isAllCCP(true)
+                .details(cardAuthRequestDetailsDto);
+        Transaction transaction = TransactionTestUtils.transactionDocument(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
+                ZonedDateTime.now()
+        );
+
+        CalculateFeeResponseDto calculateFeeResponseDto = new CalculateFeeResponseDto()
+                .belowThreshold(true)
+                .bundles(
+                        List.of(
+                                new BundleDto()
+                                        .idPsp("PSP_CODE")
+                                        .taxPayerFee(200l)
+                        )
+                );
+
+        PaymentMethodResponseDto paymentMethod = new PaymentMethodResponseDto()
+                .name("paymentMethodName")
+                .description("desc")
+                .status(PaymentMethodStatusDto.ENABLED)
+                .id("id")
+                .paymentTypeCode("PO")
+                .addRangesItem(new RangeDto().min(0L).max(100L));
+
+        PostePayAuthResponseEntityDto gatewayResponse = new PostePayAuthResponseEntityDto()
+                .channel("channel")
+                .requestId("requestId")
+                .urlRedirect("http://example.com");
+
+        RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
+                .authorizationUrl(gatewayResponse.getUrlRedirect());
+
+        Mockito.when(ecommercePaymentMethodsClient.calculateFee(any(), any(), any(), any())).thenReturn(
+                Mono.just(calculateFeeResponseDto)
+        );
+
+        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
+
+        Mockito.when(repository.findById(TRANSACTION_ID))
+                .thenReturn(Mono.just(transaction));
+
+        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(any())).thenReturn(Mono.just(gatewayResponse));
+        Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.empty());
+
+        Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
+
+        /* test */
+        StepVerifier
+                .create(
+                        transactionsService
+                                .requestTransactionAuthorization(TRANSACTION_ID, "XPAY", authorizationRequest)
+                )
+                .expectErrorMatches(exception -> exception instanceof PaymentNoticeAllCCPMismatchException);
     }
 
     @Test
