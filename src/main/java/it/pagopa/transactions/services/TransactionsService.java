@@ -21,10 +21,7 @@ import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.data.ClosureSendData;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
 import it.pagopa.transactions.commands.handlers.*;
-import it.pagopa.transactions.exceptions.InvalidRequestException;
-import it.pagopa.transactions.exceptions.TransactionAmountMismatchException;
-import it.pagopa.transactions.exceptions.TransactionNotFoundException;
-import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
+import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.projections.handlers.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
@@ -246,7 +243,16 @@ public class TransactionsService {
                                                     amountTotal
                                             )
                                     )
-                                    : Mono.just(transaction);
+                                    : !requestAuthorizationRequestDto.getIsAllCCP()
+                                            .equals(transaction.getPaymentNotices().get(0).isAllCCP())
+                                                    ? Mono.error(
+                                                            new PaymentNoticeAllCCPMismatchException(
+                                                                    transaction.getPaymentNotices().get(0).getRptId(),
+                                                                    requestAuthorizationRequestDto.getAmount(),
+                                                                    amountTotal
+                                                            )
+                                                    )
+                                                    : Mono.just(transaction);
                         }
                 )
                 .flatMap(

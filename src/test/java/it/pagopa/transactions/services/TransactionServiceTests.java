@@ -282,7 +282,8 @@ class TransactionServiceTests {
                 .amount(100)
                 .paymentInstrumentId("paymentInstrumentId")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
-                .pspId("PSP_CODE");
+                .pspId("PSP_CODE")
+                .isAllCCP(false);
 
         Transaction transaction = TransactionTestUtils.transactionDocument(
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
@@ -682,6 +683,7 @@ class TransactionServiceTests {
                 .paymentInstrumentId("paymentInstrumentId")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
                 .pspId("PSP_CODE")
+                .isAllCCP(false)
                 .details(cardAuthRequestDetailsDto);
         Transaction transaction = TransactionTestUtils.transactionDocument(
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSED,

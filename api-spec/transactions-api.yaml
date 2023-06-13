@@ -442,6 +442,9 @@ components:
           type: string
           enum: [IT, EN, FR, DE, SL]
           description: Requested language
+        isAllCCP:
+          type: boolean
+          description: Check flag for psp validation
         details:
           description: Additional payment authorization details. Must match the correct format for the chosen payment method.
           oneOf:
@@ -459,6 +462,7 @@ components:
         - pspId
         - language
         - details
+        - isAllCCP
     PostePayAuthRequestDetails:
       type: object
       description: Additional payment authorization details for the PostePay payment method
