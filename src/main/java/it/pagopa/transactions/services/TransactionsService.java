@@ -232,27 +232,25 @@ public class TransactionsService {
                                     .mapToInt(
                                             it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount
                                     ).sum();
+
+                            Boolean isAllCCP = transaction.getPaymentNotices().get(0).isAllCCP();
                             log.info(
                                     "Authorization request amount validation for transactionId: {}",
                                     transactionId
                             );
-                            return !amountTotal.equals(requestAuthorizationRequestDto.getAmount())
+                            boolean amountMismatch = !amountTotal.equals(requestAuthorizationRequestDto.getAmount());
+                            boolean allCCPMismatch = !isAllCCP.equals(requestAuthorizationRequestDto.getIsAllCCP());
+                            return amountMismatch || !allCCPMismatch
                                     ? Mono.error(
-                                            new TransactionAmountMismatchException(
-                                                    requestAuthorizationRequestDto.getAmount(),
-                                                    amountTotal
+                                            getError(
+                                                    requestAuthorizationRequestDto,
+                                                    transaction.getPaymentNotices().get(0).getRptId(),
+                                                    amountTotal,
+                                                    isAllCCP,
+                                                    amountMismatch
                                             )
                                     )
-                                    : !requestAuthorizationRequestDto.getIsAllCCP()
-                                            .equals(transaction.getPaymentNotices().get(0).isAllCCP())
-                                                    ? Mono.error(
-                                                            new PaymentNoticeAllCCPMismatchException(
-                                                                    transaction.getPaymentNotices().get(0).getRptId(),
-                                                                    requestAuthorizationRequestDto.getIsAllCCP(),
-                                                                    transaction.getPaymentNotices().get(0).isAllCCP()
-                                                            )
-                                                    )
-                                                    : Mono.just(transaction);
+                                    : Mono.just(transaction);
                         }
                 )
                 .flatMap(
@@ -423,6 +421,25 @@ public class TransactionsService {
                                                     .thenReturn(res)
                                     );
                         }
+                );
+    }
+
+    private static Throwable getError(
+                                      RequestAuthorizationRequestDto requestAuthorizationRequestDto,
+                                      String rptId,
+                                      Integer amountTotal,
+                                      Boolean isAllCCP,
+                                      boolean amountMismatch
+    ) {
+        return amountMismatch ? new TransactionAmountMismatchException(
+                requestAuthorizationRequestDto.getAmount(),
+                amountTotal
+        )
+                : new PaymentNoticeAllCCPMismatchException(
+                        rptId,
+                        requestAuthorizationRequestDto.getIsAllCCP(),
+                        isAllCCP
+
                 );
     }
 
