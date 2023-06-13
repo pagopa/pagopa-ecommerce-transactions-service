@@ -32,6 +32,7 @@ import reactor.util.function.Tuples;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
@@ -484,17 +485,23 @@ public class TransactionSendClosureHandler implements
     }
 
     private Mono<TransactionEvent<TransactionClosureData>> buildAndSaveClosureEvent(
-            TransactionClosureSendCommand command,
-            AuthorizationResultDto authorizationResult,
-            ClosePaymentResponseDto.OutcomeEnum nodoOutcome
+                                                                                    TransactionClosureSendCommand command,
+                                                                                    AuthorizationResultDto authorizationResult,
+                                                                                    ClosePaymentResponseDto.OutcomeEnum nodoOutcome
     ) {
-        String transactionId = command.getData().transaction().getTransactionId().value().toString();
+        String transactionId = command.getData().transaction().getTransactionId().value();
         TransactionClosureData.Outcome eventNodoOutcome = outcomeV2ToTransactionClosureDataOutcome(nodoOutcome);
-        TransactionClosureData transactionClosureData = new TransactionClosureData(eventNodoOutcome);
         Mono<TransactionEvent<TransactionClosureData>> closureEvent = switch (authorizationResult) {
-            case OK -> Mono.just(new TransactionClosedEvent(transactionId, transactionClosureData));
-            case KO -> Mono.just(new TransactionClosureFailedEvent(transactionId, transactionClosureData));
-            case null, default -> Mono.error(
+            case OK -> Mono.just(
+                    new TransactionClosedEvent(
+                            transactionId,
+                            new TransactionClosureData(eventNodoOutcome, OffsetDateTime.now())
+                    )
+            );
+            case KO -> Mono.just(
+                    new TransactionClosureFailedEvent(transactionId, new TransactionClosureData(eventNodoOutcome, null))
+            );
+            case null -> Mono.error(
                     new IllegalArgumentException(
                             "Unhandled authorization result: %s".formatted(authorizationResult)
                     )
