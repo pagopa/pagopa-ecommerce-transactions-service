@@ -1,16 +1,15 @@
 package it.pagopa.transactions.exceptions;
 
-import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import lombok.Getter;
 
 @Getter
 public class PaymentNoticeAllCCPMismatchException extends RuntimeException {
 
-    private String rptId;
+    private final String rptId;
 
-    private Boolean requestAllCCP;
+    private final Boolean requestAllCCP;
 
-    private Boolean paymentNoticeAllCCP;
+    private final Boolean paymentNoticeAllCCP;
 
     public PaymentNoticeAllCCPMismatchException(
             String rptId,

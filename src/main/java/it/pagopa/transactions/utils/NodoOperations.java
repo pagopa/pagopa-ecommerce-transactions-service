@@ -30,7 +30,6 @@ public class NodoOperations {
 
     private static final String ALPHANUMERICS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     private static final SecureRandom RANDOM = new SecureRandom();
-    private static final int IBAN_LENGTH = 27;
 
     @Autowired
     NodeForPspClient nodeForPspClient;
