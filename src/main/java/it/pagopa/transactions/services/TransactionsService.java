@@ -240,16 +240,20 @@ public class TransactionsService {
                             );
                             boolean amountMismatch = !amountTotal.equals(requestAuthorizationRequestDto.getAmount());
                             boolean allCCPMismatch = !isAllCCP.equals(requestAuthorizationRequestDto.getIsAllCCP());
+                            log.info("amounMismatch " + amountMismatch);
+                            log.info("allCCPMismatch " + allCCPMismatch);
                             return amountMismatch || allCCPMismatch
-                                    ? Mono.error(
-                                            getError(
-                                                    requestAuthorizationRequestDto,
-                                                    transaction.getPaymentNotices().get(0).getRptId(),
-                                                    amountTotal,
-                                                    isAllCCP,
-                                                    amountMismatch
+                                    ? (amountMismatch ? Mono.error(
+                                            new TransactionAmountMismatchException(
+                                                    requestAuthorizationRequestDto.getAmount(),
+                                                    amountTotal
                                             )
-                                    )
+                                    ) : Mono.error(
+                                    new PaymentNoticeAllCCPMismatchException(
+                                            transaction.getPaymentNotices().get(0).getRptId(),
+                                            requestAuthorizationRequestDto.getIsAllCCP(),
+                                            isAllCCP
+                                    )))
                                     : Mono.just(transaction);
                         }
                 )
@@ -424,12 +428,12 @@ public class TransactionsService {
                 );
     }
 
-    private static Throwable getError(
-                                      RequestAuthorizationRequestDto requestAuthorizationRequestDto,
-                                      String rptId,
-                                      Integer amountTotal,
-                                      Boolean isAllCCP,
-                                      boolean amountMismatch
+    private Throwable getError(
+                               RequestAuthorizationRequestDto requestAuthorizationRequestDto,
+                               String rptId,
+                               Integer amountTotal,
+                               Boolean isAllCCP,
+                               boolean amountMismatch
     ) {
         return amountMismatch ? new TransactionAmountMismatchException(
                 requestAuthorizationRequestDto.getAmount(),

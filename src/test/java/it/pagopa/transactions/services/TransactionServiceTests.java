@@ -761,7 +761,7 @@ class TransactionServiceTests {
                 .pan("0123456789012345")
                 .holderName("Name Surname");
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(110)
                 .paymentInstrumentId("paymentInstrumentId")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
                 .pspId("PSP_CODE")
@@ -818,30 +818,29 @@ class TransactionServiceTests {
                         transactionsService
                                 .requestTransactionAuthorization(TRANSACTION_ID, "XPAY", authorizationRequest)
                 )
-                .expectErrorMatches(exception -> exception instanceof TransactionAmountMismatchException);
+                .expectErrorMatches(exception -> exception instanceof TransactionAmountMismatchException)
+                .verify();
     }
 
     @Test
     void shouldReturnBadRequestForMismatchingFlagAllCCP() {
-        CardAuthRequestDetailsDto cardAuthRequestDetailsDto = new CardAuthRequestDetailsDto()
-                .expiryDate("203012")
-                .cvv("000")
-                .pan("0123456789012345")
-                .holderName("Name Surname");
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
                 .amount(100)
                 .paymentInstrumentId("paymentInstrumentId")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
                 .pspId("PSP_CODE")
-                .isAllCCP(true)
-                .details(cardAuthRequestDetailsDto);
+                .isAllCCP(true);
+
         Transaction transaction = TransactionTestUtils.transactionDocument(
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
                 ZonedDateTime.now()
         );
 
+        /* preconditions */
         CalculateFeeResponseDto calculateFeeResponseDto = new CalculateFeeResponseDto()
                 .belowThreshold(true)
+                .paymentMethodName("PaymentMethodName")
+                .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
                 .bundles(
                         List.of(
                                 new BundleDto()
@@ -858,13 +857,13 @@ class TransactionServiceTests {
                 .paymentTypeCode("PO")
                 .addRangesItem(new RangeDto().min(0L).max(100L));
 
-        PostePayAuthResponseEntityDto gatewayResponse = new PostePayAuthResponseEntityDto()
+        PostePayAuthResponseEntityDto postePayAuthResponseEntityDto = new PostePayAuthResponseEntityDto()
                 .channel("channel")
                 .requestId("requestId")
                 .urlRedirect("http://example.com");
 
         RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
-                .authorizationUrl(gatewayResponse.getUrlRedirect());
+                .authorizationUrl(postePayAuthResponseEntityDto.getUrlRedirect());
 
         Mockito.when(ecommercePaymentMethodsClient.calculateFee(any(), any(), any(), any())).thenReturn(
                 Mono.just(calculateFeeResponseDto)
@@ -875,18 +874,23 @@ class TransactionServiceTests {
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
 
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(any())).thenReturn(Mono.just(gatewayResponse));
+        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(any()))
+                .thenReturn(Mono.just(postePayAuthResponseEntityDto));
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.empty());
 
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
+
+        Mockito.when(transactionRequestAuthorizationHandler.handle(any()))
+                .thenReturn(Mono.just(requestAuthorizationResponse));
 
         /* test */
         StepVerifier
                 .create(
                         transactionsService
-                                .requestTransactionAuthorization(TRANSACTION_ID, "XPAY", authorizationRequest)
+                                .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest)
                 )
-                .expectErrorMatches(exception -> exception instanceof PaymentNoticeAllCCPMismatchException);
+                .expectErrorMatches(exception -> exception instanceof PaymentNoticeAllCCPMismatchException)
+                .verify();
     }
 
     @Test
