@@ -739,7 +739,7 @@ class NodoOperationsTest {
         CtMetadata metadata = new CtMetadata();
         CtMapEntry ctMapEntry = new CtMapEntry();
         ctMapEntry.setKey("IBANAPPOGGIO");
-        ctMapEntry.setValue("IT20U0760100899876113235567");
+        ctMapEntry.setValue("IT20U0760");
         metadata.getMapEntry().add(ctMapEntry);
         ctTransferPSPV2.setMetadata(metadata);
         byte[] testByte = new byte[] {

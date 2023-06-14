@@ -152,7 +152,7 @@ public class NodoOperations {
 
     private boolean isIbanCCP(String iban) {
         return iban != null
-                && iban.length() == IBAN_LENGTH
+                && iban.length() > 10
                 && iban.substring(5, 10).equalsIgnoreCase("07601");
 
     }
