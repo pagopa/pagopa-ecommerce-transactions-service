@@ -240,7 +240,7 @@ public class TransactionsService {
                             );
                             boolean amountMismatch = !amountTotal.equals(requestAuthorizationRequestDto.getAmount());
                             boolean allCCPMismatch = !isAllCCP.equals(requestAuthorizationRequestDto.getIsAllCCP());
-                            return amountMismatch || !allCCPMismatch
+                            return amountMismatch || allCCPMismatch
                                     ? Mono.error(
                                             getError(
                                                     requestAuthorizationRequestDto,
