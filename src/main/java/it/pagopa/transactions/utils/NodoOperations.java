@@ -121,13 +121,39 @@ public class NodoOperations {
                                                         EuroUtils.euroToEuroCents(transfer.getTransferAmount()),
                                                         transfer.getTransferCategory()
                                                 )
-                                        ).toList()
+                                        ).toList(),
+                                response.getTransferList().getTransfer().parallelStream().allMatch(
+                                        ctTransferPSPV2 -> ctTransferPSPV2.getMetadata() != null &&
+                                                ctTransferPSPV2.getMetadata().getMapEntry().parallelStream()
+                                                        .allMatch(
+                                                                ctMapEntry -> ctMapEntry.getKey()
+                                                                        .equals("IBANAPPOGGIO")
+                                                        )
+                                                &&
+                                                (isIbanCCP(ctTransferPSPV2.getIBAN())
+                                                        ||
+                                                        ctTransferPSPV2.getMetadata().getMapEntry()
+                                                                .parallelStream()
+                                                                .anyMatch(
+                                                                        ctMapEntry -> ctMapEntry
+                                                                                .getKey()
+                                                                                .equals("IBANAPPOGGIO")
+                                                                                && isIbanCCP(ctMapEntry.getValue())
+                                                                ))
+                                )
                         )
                 );
     }
 
     private boolean isOkPaymentToken(String paymentToken) {
         return paymentToken != null && !paymentToken.isBlank();
+    }
+
+    private boolean isIbanCCP(String iban) {
+        return iban != null
+                && iban.length() > 10
+                && iban.substring(5, 10).equalsIgnoreCase("07601");
+
     }
 
     public Integer getEuroCentsFromNodoAmount(BigDecimal amountFromNodo) {

@@ -64,7 +64,8 @@ public class AuthorizationUpdateProjectionHandler
                                                                                 p.getTransferAmount(),
                                                                                 p.getTransferCategory()
                                                                         )
-                                                                ).toList()
+                                                                ).toList(),
+                                                        paymentNotice.isAllCCP()
                                                 )
                                         ).toList(),
                                 transactionDocument.getEmail(),
