@@ -356,7 +356,7 @@ stages:
     displayName: 'PROD approval deployment'
     dependsOn: [ Deploy_UAT_Green,Release ]
     variables:
-      prod_version: $[ stageDependencies.Release.make_release.outputs['current_version.value'] ]
+      prod_version: $[ stageDependencies.Release.make_release.outputs['chart_current_version.appVersion'] ]
     jobs:
       - job: Prod_Approval
         displayName: Manual prod deploy approval
@@ -379,7 +379,7 @@ stages:
       )
     dependsOn: [ Prod_WaitForApproval,Release ]
     variables:
-      prod_version: $[ stageDependencies.Release.make_release.outputs['current_version.value'] ]
+      prod_version: $[ stageDependencies.Release.make_release.outputs['chart_current_version.appVersion'] ]
     jobs:
       - job: "PROD_image"
         displayName: 'Build PROD image'
@@ -411,7 +411,7 @@ stages:
     displayName: 'PROD blue deployment'
     dependsOn: [ Build_PROD_Blue,Release ]
     variables:
-      prod_version: $[ stageDependencies.Release.make_release.outputs['current_version.value'] ]
+      prod_version: $[ stageDependencies.Release.make_release.outputs['chart_current_version.appVersion'] ]
     jobs:
       - deployment: "Blue_PROD_deployment"
         displayName: "Blue PROD deployment"
@@ -467,7 +467,7 @@ stages:
     displayName: 'PROD green Build'
     dependsOn: [ PROD_Green_WaitForApproval,Release ]
     variables:
-      prod_version: $[ stageDependencies.Release.make_release.outputs['current_version.value'] ]
+      prod_version: $[ stageDependencies.Release.make_release.outputs['chart_current_version.appVersion'] ]
     jobs:
       - job: "PROD_image"
         displayName: 'Build PROD image'
@@ -499,7 +499,7 @@ stages:
     displayName: 'PROD green deployment'
     dependsOn: [ Build_PROD_Green,Release ]
     variables:
-      prod_version: $[ stageDependencies.Release.make_release.outputs['current_version.value'] ]
+      prod_version: $[ stageDependencies.Release.make_release.outputs['chart_current_version.appVersion'] ]
     jobs:
       - deployment: "Green_PROD_deployment"
         displayName: "Green PROD deployment"
@@ -536,7 +536,7 @@ stages:
     displayName: 'PROD approval ROLLBACK'
     dependsOn: [ Deploy_PROD_Green,Release ]
     variables:
-      prod_version: $[ stageDependencies.Release.make_release.outputs['current_version.value'] ]
+      prod_version: $[ stageDependencies.Release.make_release.outputs['chart_current_version.appVersion'] ]
     jobs:
       - job: Prod_Rollback_Approval
         displayName: Manual prod rollback approval
