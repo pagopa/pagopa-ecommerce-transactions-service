@@ -214,7 +214,7 @@ class NodeForPspClientTest {
         /* preconditions */
         when(nodoWebClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.header(any(), eq(MediaType.APPLICATION_JSON_VALUE))).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.uri(any(String.class), any(Object[].class))).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(any(Function.class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(), eq(ClosePaymentRequestV2Dto.class))).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.onStatus(any(Predicate.class), any(Function.class))).thenReturn(responseSpec);
@@ -255,7 +255,7 @@ class NodeForPspClientTest {
         /* preconditions */
         when(nodoWebClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.header(any(), eq(MediaType.APPLICATION_JSON_VALUE))).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.uri(any(String.class), any(Object[].class))).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(any(Function.class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(), eq(ClosePaymentRequestV2Dto.class))).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.onStatus(any(Predicate.class), any(Function.class))).thenReturn(responseSpec);
@@ -287,7 +287,7 @@ class NodeForPspClientTest {
         /* preconditions */
         when(nodoWebClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.header(any(), eq(MediaType.APPLICATION_JSON_VALUE))).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.uri(any(String.class), any(Object[].class))).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(any(Function.class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(), eq(ClosePaymentRequestV2Dto.class))).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.onStatus(any(Predicate.class), any(Function.class))).thenReturn(responseSpec);
@@ -319,7 +319,7 @@ class NodeForPspClientTest {
         /* preconditions */
         when(nodoWebClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.header(any(), eq(MediaType.APPLICATION_JSON_VALUE))).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.uri(any(String.class), any(Object[].class))).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(any(Function.class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(), eq(ClosePaymentRequestV2Dto.class))).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.onStatus(any(Predicate.class), any(Function.class))).thenReturn(responseSpec);
