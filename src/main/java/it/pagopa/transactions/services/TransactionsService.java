@@ -21,10 +21,7 @@ import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.data.ClosureSendData;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
 import it.pagopa.transactions.commands.handlers.*;
-import it.pagopa.transactions.exceptions.InvalidRequestException;
-import it.pagopa.transactions.exceptions.TransactionAmountMismatchException;
-import it.pagopa.transactions.exceptions.TransactionNotFoundException;
-import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
+import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.projections.handlers.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
@@ -162,6 +159,7 @@ public class TransactionsService {
                                                         .reason(paymentNotice.getDescription())
                                                         .paymentToken(paymentNotice.getPaymentToken())
                                                         .rptId(paymentNotice.getRptId())
+                                                        .isAllCCP(paymentNotice.isAllCCP())
                                                         .transferList(
                                                                 paymentNotice.getTransferList().stream().map(
                                                                         notice -> new TransferDto()
@@ -234,17 +232,28 @@ public class TransactionsService {
                                     .mapToInt(
                                             it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount
                                     ).sum();
+
+                            Boolean isAllCCP = transaction.getPaymentNotices().get(0).isAllCCP();
                             log.info(
                                     "Authorization request amount validation for transactionId: {}",
                                     transactionId
                             );
-                            return !amountTotal.equals(requestAuthorizationRequestDto.getAmount())
-                                    ? Mono.error(
+                            boolean amountMismatch = !amountTotal.equals(requestAuthorizationRequestDto.getAmount());
+                            boolean allCCPMismatch = !isAllCCP.equals(requestAuthorizationRequestDto.getIsAllCCP());
+                            return amountMismatch || allCCPMismatch
+                                    ? (amountMismatch ? Mono.error(
                                             new TransactionAmountMismatchException(
                                                     requestAuthorizationRequestDto.getAmount(),
                                                     amountTotal
                                             )
                                     )
+                                            : Mono.error(
+                                                    new PaymentNoticeAllCCPMismatchException(
+                                                            transaction.getPaymentNotices().get(0).getRptId(),
+                                                            requestAuthorizationRequestDto.getIsAllCCP(),
+                                                            isAllCCP
+                                                    )
+                                            ))
                                     : Mono.just(transaction);
                         }
                 )
@@ -285,7 +294,8 @@ public class TransactionsService {
                                                                                             t.getTransferCategory()
                                                                                     )
                                                                     ).toList()
-                                                    ),
+                                                    )
+                                                    .isAllCCP(transaction.getPaymentNotices().get(0).isAllCCP()),
                                             Integer.MAX_VALUE
                                     )
                                     .map(
@@ -369,7 +379,8 @@ public class TransactionsService {
                                                                                     transfer.getTransferAmount(),
                                                                                     transfer.getTransferCategory()
                                                                             )
-                                                                    ).toList()
+                                                                    ).toList(),
+                                                            paymentNotice.isAllCCP()
                                                     )
                                             ).toList(),
                                     transactionDocument.getEmail(),
@@ -638,8 +649,8 @@ public class TransactionsService {
                                                                                     transfer.getTransferAmount(),
                                                                                     transfer.getTransferCategory()
                                                                             )
-                                                                    ).toList()
-
+                                                                    ).toList(),
+                                                            paymentNotice.isAllCCP()
                                                     )
                                             )
                                             .toList(),
@@ -716,6 +727,7 @@ public class TransactionsService {
                                                         .reason(paymentNotice.transactionDescription().value())
                                                         .rptId(paymentNotice.rptId().value())
                                                         .paymentToken(paymentNotice.paymentToken().value())
+                                                        .isAllCCP(paymentNotice.isAllCCP())
                                                         .transferList(
                                                                 paymentNotice.transferList().stream().map(
                                                                         paymentTransferInfo -> new TransferDto()

@@ -134,7 +134,8 @@ public class TransactionActivateHandler
                                                                                         nodoOperations
                                                                                                 .generateRandomStringToIdempotencyKey()
                                                                                 ),
-                                                                                new ArrayList<>(TRANSFER_LIST_MAX_SIZE)
+                                                                                new ArrayList<>(TRANSFER_LIST_MAX_SIZE),
+                                                                                null
                                                                         );
                                                                         paymentRequestInfoRedisTemplateWrapper
                                                                                 .save(
@@ -342,7 +343,8 @@ public class TransactionActivateHandler
                                         transfer.transferAmount(),
                                         transfer.transferCategory()
                                 )
-                        ).toList()
+                        ).toList(),
+                        paymentRequestInfo.isAllCCP()
                 )
         ).toList();
     }

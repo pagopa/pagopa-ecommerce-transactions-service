@@ -128,14 +128,15 @@ class TransactionSendClosureHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
-        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
+        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> paymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
                         rptId.value(),
                         description.value(),
                         amount.value(),
                         null,
-                        List.of(new PaymentTransferInformation("77777777777", false, 100, null))
+                        List.of(new PaymentTransferInformation("77777777777", false, 100, null)),
+                        false
                 )
         );
 
@@ -144,7 +145,7 @@ class TransactionSendClosureHandlerTest {
         String idCart = "idCart";
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                PaymentNotices.stream().map(
+                paymentNotices.stream().map(
                         paymentNotice -> new PaymentNotice(
                                 new PaymentToken(paymentNotice.getPaymentToken()),
                                 new RptId(paymentNotice.getRptId()),
@@ -158,7 +159,8 @@ class TransactionSendClosureHandlerTest {
                                                 100,
                                                 null
                                         )
-                                )
+                                ),
+                                paymentNotice.isAllCCP()
                         )
                 )
                         .toList(),
@@ -268,7 +270,8 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null)),
+                        false
                 )
         );
 
@@ -427,7 +430,8 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null)),
+                        false
                 )
         );
 
@@ -587,7 +591,8 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        List.of(new PaymentTransferInformation("77777777777", false, 100, null))
+                        List.of(new PaymentTransferInformation("77777777777", false, 100, null)),
+                        false
                 )
         );
 
@@ -833,7 +838,8 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null)),
+                        false
                 )
         );
 
@@ -1072,7 +1078,8 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null)),
+                        false
                 )
         );
 
@@ -1331,7 +1338,8 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null)),
+                        false
                 )
         );
 
@@ -1595,7 +1603,8 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null)),
+                        false
                 )
         );
 
@@ -1761,7 +1770,8 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null)),
+                        false
                 )
         );
 
@@ -1938,7 +1948,8 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null)),
+                        false
                 )
         );
 
@@ -2200,7 +2211,8 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null)),
+                        false
                 )
         );
 

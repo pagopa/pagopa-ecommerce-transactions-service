@@ -125,7 +125,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 amount,
                                 description,
                                 nullPaymentContextCode,
-                                new ArrayList<>()
+                                new ArrayList<>(),
+                                false
                         )
                 ), // TODO
                    // TRANSFER
@@ -201,7 +202,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 amount,
                                 description,
                                 nullPaymentContextCode,
-                                new ArrayList<>()
+                                new ArrayList<>(),
+                                false
                         )
                 ), // TODO
                    // TRANSFER
@@ -281,7 +283,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 amount,
                                 description,
                                 nullPaymentContextCode,
-                                new ArrayList<>()
+                                new ArrayList<>(),
+                                false
                         )
                 ), // TODO
                    // TRANSFER
@@ -356,7 +359,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 amount,
                                 description,
                                 nullPaymentContextCode,
-                                new ArrayList<>()
+                                new ArrayList<>(),
+                                false
                         )
                 ), // TODO
                    // TRANSFER
@@ -436,7 +440,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 amount,
                                 description,
                                 nullPaymentContextCode,
-                                new ArrayList<>()
+                                new ArrayList<>(),
+                                false
                         )
                 ), // TODO
                    // TRANSFER

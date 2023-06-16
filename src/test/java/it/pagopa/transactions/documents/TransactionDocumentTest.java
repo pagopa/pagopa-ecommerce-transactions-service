@@ -56,7 +56,8 @@ class TransactionDocumentTest {
                                 TEST_DESC,
                                 TEST_AMOUNT,
                                 "",
-                                List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null))
+                                List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null)),
+                                false
                         )
                 ),
                 0,
@@ -77,7 +78,8 @@ class TransactionDocumentTest {
                                 TEST_DESC,
                                 TEST_AMOUNT,
                                 "",
-                                List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null))
+                                List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null)),
+                                false
                         )
                 ),
                 0,
@@ -99,7 +101,8 @@ class TransactionDocumentTest {
                                 TEST_DESC,
                                 TEST_AMOUNT,
                                 "",
-                                List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null))
+                                List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null)),
+                                false
                         )
                 ),
                 0,
@@ -116,7 +119,8 @@ class TransactionDocumentTest {
                 TEST_DESC,
                 TEST_AMOUNT,
                 null,
-                List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null))
+                List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null)),
+                false
         );
         differentTransaction.setPaymentNotices(List.of(paymentNotice));
         differentTransaction.setStatus(TEST_STATUS);
@@ -158,7 +162,8 @@ class TransactionDocumentTest {
                                 amount,
                                 description,
                                 nullPaymentContextCode,
-                                List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, amount.value(), null))
+                                List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, amount.value(), null)),
+                                false
                         )
                 ),
                 email,

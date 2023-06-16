@@ -2,8 +2,6 @@ package it.pagopa.transactions.client;
 
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
-import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
-import it.pagopa.generated.transactions.model.ActivatePaymentNoticeRes;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Request;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Response;
 import it.pagopa.transactions.exceptions.BadGatewayException;
