@@ -651,6 +651,7 @@ components:
               enum:
                 - OK
                 - KO
+                - NOT_RECEIVED
             authorizationCode:
               type: string
             authorizationErrorCode:
