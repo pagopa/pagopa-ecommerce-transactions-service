@@ -67,6 +67,7 @@ microservice-chart:
       JWT_SECRET: sessions-jwt-secret
       PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
       ELASTIC_APM_SECRET_TOKEN: elastic-apm-secret-token
+      ECOMMERCE_PAYMENT_INSTRUMENTS_APY_KEY: payment-method-api-key
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
     tag: "0.19.7"
@@ -177,6 +178,7 @@ microservice-chart:
     JWT_SECRET: sessions-jwt-secret
     PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
     ELASTIC_APM_SECRET_TOKEN: elastic-apm-secret-token
+    ECOMMERCE_PAYMENT_INSTRUMENTS_APY_KEY: payment-method-api-key
   keyvault:
     name: "pagopa-p-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"

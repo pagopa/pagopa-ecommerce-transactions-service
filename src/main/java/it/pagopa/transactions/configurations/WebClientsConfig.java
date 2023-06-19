@@ -191,7 +191,10 @@ public class WebClientsConfig {
                                                                                                                       ) int ecommercePaymentInstrumentsReadTimeout,
                                                                                                                       @Value(
                                                                                                                           "${ecommercePaymentInstruments.connectionTimeout}"
-                                                                                                                      ) int ecommercePaymentInstrumentsConnectionTimeout
+                                                                                                                      ) int ecommercePaymentInstrumentsConnectionTimeout,
+                                                                                                                      @Value(
+                                                                                                                          "ecommercePaymentInstruments.apiKey"
+                                                                                                                      ) String apiKey
     ) {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, ecommercePaymentInstrumentsConnectionTimeout)
@@ -212,7 +215,7 @@ public class WebClientsConfig {
         it.pagopa.generated.ecommerce.paymentmethods.v1.ApiClient apiClient = new it.pagopa.generated.ecommerce.paymentmethods.v1.ApiClient(
                 webClient
         ).setBasePath(ecommercePaymentInstrumentsUri);
-
+        apiClient.setApiKey(apiKey);
         return new it.pagopa.generated.ecommerce.paymentmethods.v1.api.PaymentMethodsApi(apiClient);
     }
 
