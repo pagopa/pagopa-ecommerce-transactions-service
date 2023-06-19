@@ -54,8 +54,10 @@ public class TransactionActivateHandler
 
     private final ConfidentialMailUtils confidentialMailUtils;
 
-    @Value("${nodo.parallelRequests}")
-    private int nodoParallelRequests;
+    private final int transactionExpirationQueueTtlMinutes;
+
+
+    private final int nodoParallelRequests;
 
     @Autowired
     public TransactionActivateHandler(
@@ -65,8 +67,9 @@ public class TransactionActivateHandler
             JwtTokenUtils jwtTokenUtils,
             @Qualifier("transactionActivatedQueueAsyncClient") QueueAsyncClient transactionActivatedQueueAsyncClient,
             @Value("${payment.token.validity}") Integer paymentTokenTimeout,
-            ConfidentialMailUtils confidentialMailUtils
-    ) {
+            ConfidentialMailUtils confidentialMailUtils,
+            @Value("${azurestorage.queues.transactionexpiration.ttlMinutes}") int transactionExpirationQueueTtlMinutes,
+            @Value("${nodo.parallelRequests}") int nodoParallelRequests) {
         this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
         this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
         this.nodoOperations = nodoOperations;
@@ -74,6 +77,8 @@ public class TransactionActivateHandler
         this.transactionActivatedQueueAsyncClient = transactionActivatedQueueAsyncClient;
         this.jwtTokenUtils = jwtTokenUtils;
         this.confidentialMailUtils = confidentialMailUtils;
+        this.transactionExpirationQueueTtlMinutes = transactionExpirationQueueTtlMinutes;
+        this.nodoParallelRequests = nodoParallelRequests;
     }
 
     public Mono<Tuple2<Mono<TransactionActivatedEvent>, String>> handle(
@@ -310,7 +315,7 @@ public class TransactionActivateHandler
                         e -> transactionActivatedQueueAsyncClient.sendMessageWithResponse(
                                 BinaryData.fromObject(e),
                                 Duration.ofSeconds(paymentTokenTimeout),
-                                null
+                                Duration.ofMinutes(transactionExpirationQueueTtlMinutes)
                         ).thenReturn(e)
                 )
                 .doOnError(

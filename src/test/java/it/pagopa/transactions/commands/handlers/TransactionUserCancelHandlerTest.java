@@ -48,8 +48,8 @@ class TransactionUserCancelHandlerTest {
         transactionUserCancelHandler = new TransactionUserCancelHandler(
                 transactionEventUserCancelStoreRepository,
                 transactionUserCancelQueueClient,
-                transactionsUtils
-        );
+                transactionsUtils,
+                transactionClosureQueueTtlMinutes);
     }
 
     @Test

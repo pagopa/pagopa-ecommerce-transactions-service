@@ -63,6 +63,10 @@ public class TransactionSendClosureHandler implements
     private final TransactionsUtils transactionsUtils;
     private final AuthRequestDataUtils authRequestDataUtils;
 
+    private final int transactionClosePaymentRetryQueueTtlMinutes;
+
+    private final int transactionRefundQueueTtlMinutes;
+
     @Autowired
     public TransactionSendClosureHandler(
             TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository,
@@ -71,15 +75,16 @@ public class TransactionSendClosureHandler implements
             PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
             NodeForPspClient nodeForPspClient,
             @Qualifier(
-                "transactionClosureRetryQueueAsyncClient"
+                    "transactionClosureRetryQueueAsyncClient"
             ) QueueAsyncClient closureRetryQueueAsyncClient,
             @Value("${payment.token.validity}") Integer paymentTokenValidity,
             @Value("${transactions.ecommerce.retry.offset}") Integer softTimeoutOffset,
             @Value("${transactions.closure_handler.retry_interval}") Integer retryTimeoutInterval,
             @Qualifier("transactionRefundQueueAsyncClient") QueueAsyncClient refundQueueAsyncClient,
             TransactionsUtils transactionsUtils,
-            AuthRequestDataUtils authRequestDataUtils
-    ) {
+            AuthRequestDataUtils authRequestDataUtils,
+            @Value("${azurestorage.queues.transactionclosepaymentretry.ttlMinutes}") int transactionClosePaymentRetryQueueTtlMinutes,
+            @Value("${azurestorage.queues.transactionrefund.ttlMinutes}") int transactionRefundQueueTtlMinutes) {
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionClosureErrorEventStoreRepository = transactionClosureErrorEventStoreRepository;
         this.transactionRefundedEventStoreRepository = transactionRefundedEventStoreRepository;
@@ -92,6 +97,8 @@ public class TransactionSendClosureHandler implements
         this.refundQueueAsyncClient = refundQueueAsyncClient;
         this.transactionsUtils = transactionsUtils;
         this.authRequestDataUtils = authRequestDataUtils;
+        this.transactionClosePaymentRetryQueueTtlMinutes = transactionClosePaymentRetryQueueTtlMinutes;
+        this.transactionRefundQueueTtlMinutes = transactionRefundQueueTtlMinutes;
     }
 
     @Override
@@ -346,7 +353,7 @@ public class TransactionSendClosureHandler implements
                                                                 .sendMessageWithResponse(
                                                                         BinaryData.fromObject(e),
                                                                         visibilityTimeout,
-                                                                        null
+                                                                        Duration.ofMinutes(transactionClosePaymentRetryQueueTtlMinutes)
                                                                 )
                                                                 .thenReturn(e)
                                                 );
@@ -476,7 +483,7 @@ public class TransactionSendClosureHandler implements
                                             .sendMessageWithResponse(
                                                     BinaryData.fromObject(refundRequestedEvent),
                                                     Duration.ZERO,
-                                                    null
+                                                    Duration.ofMinutes(transactionRefundQueueTtlMinutes)
                                             )
                             )
                             .thenReturn(refundRequestedEvent);

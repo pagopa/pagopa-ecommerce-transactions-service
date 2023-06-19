@@ -16,6 +16,7 @@ import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -30,20 +31,22 @@ public class TransactionRequestUserReceiptHandler
 
     private final TransactionsUtils transactionsUtils;
 
-    @Qualifier("transactionNotificationRequestedQueueAsyncClient")
     private final QueueAsyncClient transactionNotificationRequestedQueueAsyncClient;
+
+    private final int transactionNotificationRequestedQueueTtlMinutes;
 
     @Autowired
     public TransactionRequestUserReceiptHandler(
             TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptAddedEventRepository,
             TransactionsUtils transactionsUtils,
             @Qualifier(
-                "transactionNotificationRequestedQueueAsyncClient"
-            ) QueueAsyncClient transactionNotificationRequestedQueueAsyncClient
-    ) {
+                    "transactionNotificationRequestedQueueAsyncClient"
+            ) QueueAsyncClient transactionNotificationRequestedQueueAsyncClient,
+            @Value("${azurestorage.queues.transactionnotificationrequested.ttlMinutes}") int transactionNotificationRequestedQueueTtlMinutes) {
         this.userReceiptAddedEventRepository = userReceiptAddedEventRepository;
         this.transactionsUtils = transactionsUtils;
         this.transactionNotificationRequestedQueueAsyncClient = transactionNotificationRequestedQueueAsyncClient;
+        this.transactionNotificationRequestedQueueTtlMinutes = transactionNotificationRequestedQueueTtlMinutes;
     }
 
     @Override
@@ -101,7 +104,7 @@ public class TransactionRequestUserReceiptHandler
                                             .sendMessageWithResponse(
                                                     BinaryData.fromObject(userReceiptEvent),
                                                     Duration.ZERO,
-                                                    null
+                                                    Duration.ofMinutes(transactionNotificationRequestedQueueTtlMinutes)
                                             ).doOnError(
                                                     exception -> log.error(
                                                             "Error to generate event {} for transactionId {} - error {}",

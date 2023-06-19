@@ -67,8 +67,8 @@ class TransactionInitializerHandlerTest {
             jwtTokenUtils,
             transactionActivatedQueueAsyncClient,
             paymentTokenTimeout,
-            confidentialMailUtils
-    );
+            confidentialMailUtils,
+            transactionExpirationTtlMinutes, nodoParallelRequests);
 
     @Test
     void shouldHandleCommandForNM3CachedPaymentRequest() {

@@ -57,8 +57,8 @@ class TransactionRequestUserReceiptHandlerTest {
         updateStatusHandler = new TransactionRequestUserReceiptHandler(
                 userReceiptDataEventRepository,
                 transactionsUtils,
-                queueAsyncClient
-        );
+                queueAsyncClient,
+                userReceiptTtlMinutes);
     }
 
     @Test

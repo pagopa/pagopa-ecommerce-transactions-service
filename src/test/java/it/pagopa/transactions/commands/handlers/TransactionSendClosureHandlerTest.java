@@ -96,8 +96,8 @@ class TransactionSendClosureHandlerTest {
             RETRY_TIMEOUT_INTERVAL,
             refundQueueAsyncClient,
             transactionsUtils,
-            authRequestDataUtils
-    );
+            authRequestDataUtils,
+            closePaymentEventsTtlMinutes, transactionRefundQueueTtlMinutes);
 
     private final TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
 

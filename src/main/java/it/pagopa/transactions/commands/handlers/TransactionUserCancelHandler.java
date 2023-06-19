@@ -3,20 +3,16 @@ package it.pagopa.transactions.commands.handlers;
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent;
-import it.pagopa.ecommerce.commons.domain.v1.Transaction;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
-import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionExpired;
-import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
-import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.qpid.proton.engine.BaseHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -32,15 +28,18 @@ public class TransactionUserCancelHandler implements
 
     private final TransactionsUtils transactionsUtils;
 
+    private final int transactionClosureQueueTtlMinutes;
+
     @Autowired
     public TransactionUserCancelHandler(
             TransactionsEventStoreRepository<Void> transactionEventUserCancelStoreRepository,
             @Qualifier("transactionClosureQueueAsyncClient") QueueAsyncClient transactionClosureQueueAsyncClient,
-            TransactionsUtils transactionsUtils
-    ) {
+            TransactionsUtils transactionsUtils,
+            @Value("${azurestorage.queues.transactionclosepayment.ttlMinutes}") int transactionClosureQueueTtlMinutes) {
         this.transactionsUtils = transactionsUtils;
         this.transactionEventUserCancelStoreRepository = transactionEventUserCancelStoreRepository;
         this.transactionClosureQueueAsyncClient = transactionClosureQueueAsyncClient;
+        this.transactionClosureQueueTtlMinutes = transactionClosureQueueTtlMinutes;
     }
 
     @Override
@@ -62,7 +61,7 @@ public class TransactionUserCancelHandler implements
                                             event -> transactionClosureQueueAsyncClient.sendMessageWithResponse(
                                                     BinaryData.fromObject(userCanceledEvent),
                                                     Duration.ZERO,
-                                                    null
+                                                    Duration.ofMinutes(transactionClosureQueueTtlMinutes)
                                             )
                                     )
                                     .thenReturn(userCanceledEvent)
