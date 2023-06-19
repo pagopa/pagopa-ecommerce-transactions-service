@@ -80,9 +80,9 @@ microservice-chart:
     NODO_READ_TIMEOUT: "10000"
     NODO_CONNECTION_TIMEOUT: "10000"
     NODO_PARALLEL_REQUESTS: "5"
-    ECOMMERCE_PAYMENT_INSTRUMENTS_URI: https://api.dev.platform.pagopa.it/ecommerce/payment-methods-service/v1
-    ECOMMERCE_PAYMENT_INSTRUMENTS_READ_TIMEOUT: "10000"
-    ECOMMERCE_PAYMENT_INSTRUMENTS_CONNECTION_TIMEOUT: "10000"
+    ECOMMERCE_PAYMENT_METHODS_URI: https://api.dev.platform.pagopa.it/ecommerce/payment-methods-service/v1
+    ECOMMERCE_PAYMENT_METHODS_READ_TIMEOUT: "10000"
+    ECOMMERCE_PAYMENT_METHODS_CONNECTION_TIMEOUT: "10000"
     PAYMENT_TRANSACTIONS_GATEWAY_URI: https://api.dev.platform.pagopa.it/payment-transactions-gateway/internal/v1
     PAYMENT_TRANSACTIONS_GATEWAY_READ_TIMEOUT: "10000"
     PAYMENT_TRANSACTIONS_GATEWAY_CONNECTION_TIMEOUT: "10000"
@@ -119,7 +119,7 @@ microservice-chart:
     JWT_SECRET: sessions-jwt-secret
     PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
     ELASTIC_APM_SECRET_TOKEN: elastic-apm-secret-token
-    ECOMMERCE_PAYMENT_INSTRUMENTS_APY_KEY: payment-method-api-key
+    ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
   keyvault:
     name: "pagopa-d-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
