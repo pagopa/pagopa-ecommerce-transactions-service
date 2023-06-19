@@ -193,7 +193,7 @@ public class WebClientsConfig {
                                                                                                                           "${ecommercePaymentMethods.connectionTimeout}"
                                                                                                                       ) int ecommercePaymentInstrumentsConnectionTimeout,
                                                                                                                       @Value(
-                                                                                                                          "ecommercePaymentMethods.apiKey"
+                                                                                                                          "${ecommercePaymentMethods.apiKey}"
                                                                                                                       ) String apiKey
     ) {
         HttpClient httpClient = HttpClient.create()
