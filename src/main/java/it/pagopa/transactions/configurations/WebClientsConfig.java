@@ -184,14 +184,17 @@ public class WebClientsConfig {
     @Bean(name = "ecommercePaymentInstrumentsWebClient")
     public it.pagopa.generated.ecommerce.paymentmethods.v1.api.PaymentMethodsApi ecommercePaymentInstrumentsWebClient(
                                                                                                                       @Value(
-                                                                                                                          "${ecommercePaymentInstruments.uri}"
+                                                                                                                          "${ecommercePaymentMethods.uri}"
                                                                                                                       ) String ecommercePaymentInstrumentsUri,
                                                                                                                       @Value(
-                                                                                                                          "${ecommercePaymentInstruments.readTimeout}"
+                                                                                                                          "${ecommercePaymentMethods.readTimeout}"
                                                                                                                       ) int ecommercePaymentInstrumentsReadTimeout,
                                                                                                                       @Value(
-                                                                                                                          "${ecommercePaymentInstruments.connectionTimeout}"
-                                                                                                                      ) int ecommercePaymentInstrumentsConnectionTimeout
+                                                                                                                          "${ecommercePaymentMethods.connectionTimeout}"
+                                                                                                                      ) int ecommercePaymentInstrumentsConnectionTimeout,
+                                                                                                                      @Value(
+                                                                                                                          "${ecommercePaymentMethods.apiKey}"
+                                                                                                                      ) String apiKey
     ) {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, ecommercePaymentInstrumentsConnectionTimeout)
@@ -212,7 +215,7 @@ public class WebClientsConfig {
         it.pagopa.generated.ecommerce.paymentmethods.v1.ApiClient apiClient = new it.pagopa.generated.ecommerce.paymentmethods.v1.ApiClient(
                 webClient
         ).setBasePath(ecommercePaymentInstrumentsUri);
-
+        apiClient.setApiKey(apiKey);
         return new it.pagopa.generated.ecommerce.paymentmethods.v1.api.PaymentMethodsApi(apiClient);
     }
 

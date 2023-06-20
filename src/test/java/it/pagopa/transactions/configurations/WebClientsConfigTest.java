@@ -4,9 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.AdditionalPaymentInformationsDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
+import it.pagopa.generated.ecommerce.paymentmethods.v1.api.PaymentMethodsApi;
+import it.pagopa.generated.ecommerce.paymentmethods.v1.auth.ApiKeyAuth;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -16,12 +17,12 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
-public class WebClientsConfigTest {
+class WebClientsConfigTest {
 
-    @InjectMocks
-    WebClientsConfig webClientsConfig;
+    private final WebClientsConfig webClientsConfig = new WebClientsConfig();
 
     @Test
     void shouldCorrectlySerialize() {
@@ -99,6 +100,20 @@ public class WebClientsConfigTest {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Test
+    void shouldValueApiKeyForEcommercePaymentMethodClient() {
+        // pre-conditions
+        String basePath = "http://paymentMethod/base/path";
+        String apiKey = "paymentMethodsApiKey";
+        // test
+        PaymentMethodsApi paymentMethodsApi = webClientsConfig
+                .ecommercePaymentInstrumentsWebClient(basePath, 1000, 1000, apiKey);
+        // assertions
+        assertEquals(basePath, paymentMethodsApi.getApiClient().getBasePath());
+        ApiKeyAuth apiKeyAuth = (ApiKeyAuth) paymentMethodsApi.getApiClient().getAuthentication("ApiKeyAuth");
+        assertEquals(apiKey, apiKeyAuth.getApiKey());
     }
 
 }
