@@ -21,10 +21,10 @@ These are all environment variables needed by the application:
 | NODO_URI                                          |     | Nodo connection URI                                                                                        | string |         |
 | NODO_READ_TIMEOUT                                 |     | Timeout for requests towards Nodo                                                                          | number |         |
 | NODO_CONNECTION_TIMEOUT                           |     | Timeout for establishing connections towards Nodo                                                          | number |         |
-| ECOMMERCE_PAYMENT_METHODS_URI                  |     | eCommerce payment methods service connection URI                                                           | string |         |
-| ECOMMERCE_PAYMENT_METHODS_READ_TIMEOUT         |     | Timeout for requests towards eCommerce payment methods service                                             | number |         |
-| ECOMMERCE_PAYMENT_METHODS_CONNECTION_TIMEOUT   |     | Timeout for establishing connections towards eCommerce payment methods  service                            | number |         |
-| ECOMMERCE_PAYMENT_METHODS_APY_KEY              |     | Payment methods API key                                                                                    | string |         |
+| ECOMMERCE_PAYMENT_METHODS_URI                     |     | eCommerce payment methods service connection URI                                                           | string |         |
+| ECOMMERCE_PAYMENT_METHODS_READ_TIMEOUT            |     | Timeout for requests towards eCommerce payment methods service                                             | number |         |
+| ECOMMERCE_PAYMENT_METHODS_CONNECTION_TIMEOUT      |     | Timeout for establishing connections towards eCommerce payment methods  service                            | number |         |
+| ECOMMERCE_PAYMENT_METHODS_APY_KEY                 |     | Payment methods API key                                                                                    | string |         |
 | NOTIFICATIONS_SERVICE_URI                         |     | Notifications service connection URI                                                                       | string |         |
 | NOTIFICATIONS_SERVICE_READ_TIMEOUT                |     | Timeout for requests towards Notifications service                                                         | number |         |
 | NOTIFICATIONS_SERVICE_CONNECTION_TIMEOUT          |     | Timeout for establishing connections towards Notifications service                                         | number |         |
