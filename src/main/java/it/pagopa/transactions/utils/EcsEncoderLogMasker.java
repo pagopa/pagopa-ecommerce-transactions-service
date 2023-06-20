@@ -1,28 +1,34 @@
 package it.pagopa.transactions.utils;
 
-import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import co.elastic.logging.logback.EcsEncoder;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class LogMaskerPatternLayout extends PatternLayout {
+public class EcsEncoderLogMasker extends EcsEncoder {
     private Pattern patternString;
-    private List<String> maskPatterns = new ArrayList<>();
+    private final List<String> maskPatterns = new ArrayList<>();
+
+    public void setMaskPattern(String maskPatter) {
+        this.maskPatterns.add(maskPatter);
+    }
 
     public void addMaskPattern(String maskPattern) {
         maskPatterns.add(maskPattern);
-        patternString = Pattern.compile(maskPatterns.stream().collect(Collectors.joining("|")), Pattern.MULTILINE);
+        patternString = Pattern.compile(String.join("|", maskPatterns), Pattern.MULTILINE);
     }
 
     @Override
-    public String doLayout(ILoggingEvent event) {
-        return maskMessage(super.doLayout(event));
+    public byte[] encode(ILoggingEvent event) {
+        byte[] encodedLog = super.encode(event);
+        String clearLog = new String(encodedLog, StandardCharsets.UTF_8);
+        return maskMessage(clearLog).getBytes(StandardCharsets.UTF_8);
     }
 
     private String maskMessage(String message) {
