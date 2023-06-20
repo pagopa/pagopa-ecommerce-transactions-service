@@ -28,19 +28,19 @@ public class TransactionUserCancelHandler implements
 
     private final TransactionsUtils transactionsUtils;
 
-    private final int transientQueuesTTLMinutes;
+    private final int transientQueuesTTLSeconds;
 
     @Autowired
     public TransactionUserCancelHandler(
             TransactionsEventStoreRepository<Void> transactionEventUserCancelStoreRepository,
             @Qualifier("transactionClosureQueueAsyncClient") QueueAsyncClient transactionClosureQueueAsyncClient,
             TransactionsUtils transactionsUtils,
-            @Value("${azurestorage.queues.transientQueues.ttlMinutes}") int transientQueuesTTLMinutes
+            @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds
     ) {
         this.transactionsUtils = transactionsUtils;
         this.transactionEventUserCancelStoreRepository = transactionEventUserCancelStoreRepository;
         this.transactionClosureQueueAsyncClient = transactionClosureQueueAsyncClient;
-        this.transientQueuesTTLMinutes = transientQueuesTTLMinutes;
+        this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
     }
 
     @Override
@@ -62,7 +62,7 @@ public class TransactionUserCancelHandler implements
                                             event -> transactionClosureQueueAsyncClient.sendMessageWithResponse(
                                                     BinaryData.fromObject(userCanceledEvent),
                                                     Duration.ZERO,
-                                                    Duration.ofMinutes(transientQueuesTTLMinutes)
+                                                    Duration.ofSeconds(transientQueuesTTLSeconds)
                                             )
                                     )
                                     .thenReturn(userCanceledEvent)

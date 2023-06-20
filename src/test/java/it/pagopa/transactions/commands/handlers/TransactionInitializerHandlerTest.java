@@ -63,7 +63,7 @@ class TransactionInitializerHandlerTest {
 
     private final int nodoParallelRequests = 5;
 
-    private final int transientQueueEventsTtlMinutes = 30;
+    private final int transientQueueEventsTtlSeconds = 30;
 
     @Captor
     private ArgumentCaptor<Duration> durationArgumentCaptor;
@@ -76,7 +76,7 @@ class TransactionInitializerHandlerTest {
             transactionActivatedQueueAsyncClient,
             paymentTokenTimeout,
             confidentialMailUtils,
-            transientQueueEventsTtlMinutes,
+            transientQueueEventsTtlSeconds,
             nodoParallelRequests
     );
 
@@ -170,7 +170,7 @@ class TransactionInitializerHandlerTest {
         assertNotNull(event.getCreationDate());
         assertNotNull(event.getId());
         assertEquals(paymentTokenTimeout, event.getData().getPaymentTokenValiditySeconds());
-        assertEquals(Duration.ofMinutes(transientQueueEventsTtlMinutes), durationArgumentCaptor.getValue());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
 
     }
 
@@ -262,7 +262,7 @@ class TransactionInitializerHandlerTest {
         assertNotNull(event.getCreationDate());
         assertNotNull(event.getId());
         assertEquals(paymentTokenTimeout, event.getData().getPaymentTokenValiditySeconds());
-        assertEquals(Duration.ofMinutes(transientQueueEventsTtlMinutes), durationArgumentCaptor.getValue());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
 
     }
 
@@ -470,7 +470,7 @@ class TransactionInitializerHandlerTest {
         assertNotNull(event.getCreationDate());
         assertNotNull(event.getId());
         assertEquals(paymentTokenTimeout, event.getData().getPaymentTokenValiditySeconds());
-        assertEquals(Duration.ofMinutes(transientQueueEventsTtlMinutes), durationArgumentCaptor.getValue());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
 
     @Test
@@ -554,7 +554,7 @@ class TransactionInitializerHandlerTest {
         assertNotNull(event.getCreationDate());
         assertNotNull(event.getId());
         assertEquals(paymentTokenTimeout, event.getData().getPaymentTokenValiditySeconds());
-        assertEquals(Duration.ofMinutes(transientQueueEventsTtlMinutes), durationArgumentCaptor.getValue());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
 
 }

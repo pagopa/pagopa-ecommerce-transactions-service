@@ -33,7 +33,7 @@ public class TransactionRequestUserReceiptHandler
 
     private final QueueAsyncClient transactionNotificationRequestedQueueAsyncClient;
 
-    private final int transientQueuesTTLMinutes;
+    private final int transientQueuesTTLSeconds;
 
     @Autowired
     public TransactionRequestUserReceiptHandler(
@@ -42,12 +42,12 @@ public class TransactionRequestUserReceiptHandler
             @Qualifier(
                 "transactionNotificationRequestedQueueAsyncClient"
             ) QueueAsyncClient transactionNotificationRequestedQueueAsyncClient,
-            @Value("${azurestorage.queues.transientQueues.ttlMinutes}") int transientQueuesTTLMinutes
+            @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds
     ) {
         this.userReceiptAddedEventRepository = userReceiptAddedEventRepository;
         this.transactionsUtils = transactionsUtils;
         this.transactionNotificationRequestedQueueAsyncClient = transactionNotificationRequestedQueueAsyncClient;
-        this.transientQueuesTTLMinutes = transientQueuesTTLMinutes;
+        this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
     }
 
     @Override
@@ -105,7 +105,7 @@ public class TransactionRequestUserReceiptHandler
                                             .sendMessageWithResponse(
                                                     BinaryData.fromObject(userReceiptEvent),
                                                     Duration.ZERO,
-                                                    Duration.ofMinutes(transientQueuesTTLMinutes)
+                                                    Duration.ofSeconds(transientQueuesTTLSeconds)
                                             ).doOnError(
                                                     exception -> log.error(
                                                             "Error to generate event {} for transactionId {} - error {}",

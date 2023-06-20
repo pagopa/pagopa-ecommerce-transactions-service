@@ -35,7 +35,7 @@ These are all environment variables needed by the application:
 | TRANSACTION_CLOSE_PAYMENT_QUEUE_NAME           |     | Name of the queue for close payment events                                                                 | string |         |
 | TRANSACTION_NOTIFICATIONS_QUEUE_NAME           |     | Name of the queue for notification requested events                                                        | string |         |
 | TRANSACTION_REFUND_QUEUE_NAME                  |     | Name of the refund queue for transactions that receive a closePayment with OK authorization and KO outcome | string |         |
-| TRANSIENT_QUEUES_TTL_MINUTES                   |     | TTL to be used when sending events on transient queues                                                     | number | 7 days  |
+| TRANSIENT_QUEUES_TTL_SECONDS                   |     | TTL to be used when sending events on transient queues                                                     | number | 7 days  |
 | TRANSACTIONS_RETRY_OFFSET                      |     | Seconds to offset validity end to account for more retries                                                 | number |         |
 | CLOSURE_RETRY_INTERVAL                         |     | Seconds to wait at closing the transaction before making a retry                                           | number |         |
 | PERSONAL_DATA_VAULT_API_KEY                    |     | API Key for Personal Data Vault (PDV is used to safely encrypt PIIs, e.g. the user's email address)        | string |         |

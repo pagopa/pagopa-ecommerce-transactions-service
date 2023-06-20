@@ -53,7 +53,7 @@ class TransactionRequestUserReceiptHandlerTest {
 
     private final TransactionsUtils transactionsUtils = new TransactionsUtils(eventStoreRepository, "3020");
 
-    private final int transientQueueEventsTtlMinutes = 30;
+    private final int transientQueueEventsTtlSeconds = 30;
 
     @Captor
     private ArgumentCaptor<Duration> durationArgumentCaptor;
@@ -64,7 +64,7 @@ class TransactionRequestUserReceiptHandlerTest {
                 userReceiptDataEventRepository,
                 transactionsUtils,
                 queueAsyncClient,
-                transientQueueEventsTtlMinutes
+                transientQueueEventsTtlSeconds
         );
     }
 
@@ -142,7 +142,7 @@ class TransactionRequestUserReceiptHandlerTest {
                 .toObject(TransactionUserReceiptRequestedEvent.class);
         assertEquals(TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT, queueEvent.getEventCode());
         assertEquals(event.getData(), queueEvent.getData());
-        assertEquals(Duration.ofMinutes(transientQueueEventsTtlMinutes), durationArgumentCaptor.getValue());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
 
     @Test
@@ -219,7 +219,7 @@ class TransactionRequestUserReceiptHandlerTest {
                 .toObject(TransactionUserReceiptRequestedEvent.class);
         assertEquals(TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT, queueEvent.getEventCode());
         assertEquals(event.getData(), queueEvent.getData());
-        assertEquals(Duration.ofMinutes(transientQueueEventsTtlMinutes), durationArgumentCaptor.getValue());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
 
     @Test
@@ -296,7 +296,7 @@ class TransactionRequestUserReceiptHandlerTest {
                 .toObject(TransactionUserReceiptRequestedEvent.class);
         assertEquals(TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT, queueEvent.getEventCode());
         assertEquals(event.getData(), queueEvent.getData());
-        assertEquals(Duration.ofMinutes(transientQueueEventsTtlMinutes), durationArgumentCaptor.getValue());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
 
     @Test

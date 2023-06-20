@@ -63,7 +63,7 @@ public class TransactionSendClosureHandler implements
     private final TransactionsUtils transactionsUtils;
     private final AuthRequestDataUtils authRequestDataUtils;
 
-    private final int transientQueuesTTLMinutes;
+    private final int transientQueuesTTLSeconds;
 
     @Autowired
     public TransactionSendClosureHandler(
@@ -81,7 +81,7 @@ public class TransactionSendClosureHandler implements
             @Qualifier("transactionRefundQueueAsyncClient") QueueAsyncClient refundQueueAsyncClient,
             TransactionsUtils transactionsUtils,
             AuthRequestDataUtils authRequestDataUtils,
-            @Value("${azurestorage.queues.transientQueues.ttlMinutes}") int transientQueuesTTLMinutes
+            @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds
     ) {
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionClosureErrorEventStoreRepository = transactionClosureErrorEventStoreRepository;
@@ -95,7 +95,7 @@ public class TransactionSendClosureHandler implements
         this.refundQueueAsyncClient = refundQueueAsyncClient;
         this.transactionsUtils = transactionsUtils;
         this.authRequestDataUtils = authRequestDataUtils;
-        this.transientQueuesTTLMinutes = transientQueuesTTLMinutes;
+        this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
     }
 
     @Override
@@ -350,7 +350,7 @@ public class TransactionSendClosureHandler implements
                                                                 .sendMessageWithResponse(
                                                                         BinaryData.fromObject(e),
                                                                         visibilityTimeout,
-                                                                        Duration.ofMinutes(transientQueuesTTLMinutes)
+                                                                        Duration.ofSeconds(transientQueuesTTLSeconds)
                                                                 )
                                                                 .thenReturn(e)
                                                 );
@@ -480,7 +480,7 @@ public class TransactionSendClosureHandler implements
                                             .sendMessageWithResponse(
                                                     BinaryData.fromObject(refundRequestedEvent),
                                                     Duration.ZERO,
-                                                    Duration.ofMinutes(transientQueuesTTLMinutes)
+                                                    Duration.ofSeconds(transientQueuesTTLSeconds)
                                             )
                             )
                             .thenReturn(refundRequestedEvent);

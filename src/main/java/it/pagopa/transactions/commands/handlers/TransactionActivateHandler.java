@@ -54,7 +54,7 @@ public class TransactionActivateHandler
 
     private final ConfidentialMailUtils confidentialMailUtils;
 
-    private final int transientQueuesTTLMinutes;
+    private final int transientQueuesTTLSeconds;
 
     private final int nodoParallelRequests;
 
@@ -67,7 +67,7 @@ public class TransactionActivateHandler
             @Qualifier("transactionActivatedQueueAsyncClient") QueueAsyncClient transactionActivatedQueueAsyncClient,
             @Value("${payment.token.validity}") Integer paymentTokenTimeout,
             ConfidentialMailUtils confidentialMailUtils,
-            @Value("${azurestorage.queues.transientQueues.ttlMinutes}") int transientQueuesTTLMinutes,
+            @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
             @Value("${nodo.parallelRequests}") int nodoParallelRequests
     ) {
         this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
@@ -77,7 +77,7 @@ public class TransactionActivateHandler
         this.transactionActivatedQueueAsyncClient = transactionActivatedQueueAsyncClient;
         this.jwtTokenUtils = jwtTokenUtils;
         this.confidentialMailUtils = confidentialMailUtils;
-        this.transientQueuesTTLMinutes = transientQueuesTTLMinutes;
+        this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
         this.nodoParallelRequests = nodoParallelRequests;
     }
 
@@ -315,7 +315,7 @@ public class TransactionActivateHandler
                         e -> transactionActivatedQueueAsyncClient.sendMessageWithResponse(
                                 BinaryData.fromObject(e),
                                 Duration.ofSeconds(paymentTokenTimeout),
-                                Duration.ofMinutes(transientQueuesTTLMinutes)
+                                Duration.ofSeconds(transientQueuesTTLSeconds)
                         ).thenReturn(e)
                 )
                 .doOnError(

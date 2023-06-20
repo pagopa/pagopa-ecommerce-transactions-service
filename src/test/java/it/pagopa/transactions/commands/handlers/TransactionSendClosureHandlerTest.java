@@ -86,7 +86,7 @@ class TransactionSendClosureHandlerTest {
     private static final int SOFT_TIMEOUT_OFFSET = 10;
     private static final int RETRY_TIMEOUT_INTERVAL = 5;
 
-    private final int transientQueueEventsTtlMinutes = 30;
+    private final int transientQueueEventsTtlSeconds = 30;
 
     @Captor
     private ArgumentCaptor<Duration> durationArgumentCaptor;
@@ -104,7 +104,7 @@ class TransactionSendClosureHandlerTest {
             refundQueueAsyncClient,
             transactionsUtils,
             authRequestDataUtils,
-            transientQueueEventsTtlMinutes
+            transientQueueEventsTtlSeconds
     );
 
     private final TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
@@ -1068,7 +1068,7 @@ class TransactionSendClosureHandlerTest {
                         argThat(d -> d.compareTo(Duration.ofSeconds(RETRY_TIMEOUT_INTERVAL)) <= 0),
                         any()
                 );
-        assertEquals(Duration.ofMinutes(transientQueueEventsTtlMinutes), durationArgumentCaptor.getValue());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
 
     @Test
@@ -1330,7 +1330,7 @@ class TransactionSendClosureHandlerTest {
                         argThat(d -> d.compareTo(Duration.ofSeconds(RETRY_TIMEOUT_INTERVAL)) <= 0),
                         any()
                 );
-        assertEquals(Duration.ofMinutes(transientQueueEventsTtlMinutes), durationArgumentCaptor.getValue());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
 
     @Test
@@ -1599,7 +1599,7 @@ class TransactionSendClosureHandlerTest {
                         isNull()
                 );
         durationArgumentCaptor.getAllValues()
-                .forEach(duration -> assertEquals(Duration.ofMinutes(transientQueueEventsTtlMinutes), duration));
+                .forEach(duration -> assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), duration));
     }
 
     @Test
@@ -1947,7 +1947,7 @@ class TransactionSendClosureHandlerTest {
                                 && eventArg.getData().getResponseOutcome().equals(TransactionClosureData.Outcome.KO)
                 )
         );
-        assertEquals(Duration.ofMinutes(transientQueueEventsTtlMinutes), durationArgumentCaptor.getValue());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
 
     @Test
@@ -2212,7 +2212,7 @@ class TransactionSendClosureHandlerTest {
                         argThat(d -> d.compareTo(Duration.ofSeconds(RETRY_TIMEOUT_INTERVAL)) <= 0),
                         any()
                 );
-        assertEquals(Duration.ofMinutes(transientQueueEventsTtlMinutes), durationArgumentCaptor.getValue());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
 
     @Test
@@ -2466,7 +2466,7 @@ class TransactionSendClosureHandlerTest {
                         argThat(d -> d.compareTo(Duration.ofSeconds(RETRY_TIMEOUT_INTERVAL)) <= 0),
                         any()
                 );
-        assertEquals(Duration.ofMinutes(transientQueueEventsTtlMinutes), durationArgumentCaptor.getValue());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
 
     @Test
@@ -2676,7 +2676,7 @@ class TransactionSendClosureHandlerTest {
                         any()
                 );
         durationArgumentCaptor.getAllValues()
-                .forEach(duration -> assertEquals(Duration.ofMinutes(transientQueueEventsTtlMinutes), duration));
+                .forEach(duration -> assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), duration));
     }
 
     @Test
@@ -2899,7 +2899,7 @@ class TransactionSendClosureHandlerTest {
                         any(),
                         isNull()
                 );
-        assertEquals(Duration.ofMinutes(transientQueueEventsTtlMinutes), durationArgumentCaptor.getValue());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
 
     @Test

@@ -47,7 +47,7 @@ class TransactionUserCancelHandlerTest {
             .mock(TransactionsEventStoreRepository.class);
     private final TransactionsUtils transactionsUtils = new TransactionsUtils(eventStoreRepository, "3020");
 
-    private final int transientQueueEventsTtlMinutes = 30;
+    private final int transientQueueEventsTtlSeconds = 30;
 
     @Captor
     private ArgumentCaptor<Duration> durationCaptor;
@@ -58,7 +58,7 @@ class TransactionUserCancelHandlerTest {
                 transactionEventUserCancelStoreRepository,
                 transactionUserCancelQueueClient,
                 transactionsUtils,
-                transientQueueEventsTtlMinutes
+                transientQueueEventsTtlSeconds
         );
     }
 
@@ -95,7 +95,7 @@ class TransactionUserCancelHandlerTest {
 
         verify(transactionEventUserCancelStoreRepository, times(1)).save(any());
         verify(transactionUserCancelQueueClient, times(1)).sendMessageWithResponse(any(BinaryData.class), any(), any());
-        assertEquals(Duration.ofMinutes(transientQueueEventsTtlMinutes), durationCaptor.getValue());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationCaptor.getValue());
     }
 
     @Test
@@ -150,7 +150,7 @@ class TransactionUserCancelHandlerTest {
 
         verify(transactionEventUserCancelStoreRepository, times(1)).save(any());
         verify(transactionUserCancelQueueClient, times(1)).sendMessageWithResponse(any(BinaryData.class), any(), any());
-        assertEquals(Duration.ofMinutes(transientQueueEventsTtlMinutes), durationCaptor.getValue());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationCaptor.getValue());
     }
 
     @Test
