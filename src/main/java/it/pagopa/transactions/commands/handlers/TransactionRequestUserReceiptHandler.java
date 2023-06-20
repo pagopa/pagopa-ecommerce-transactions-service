@@ -33,20 +33,21 @@ public class TransactionRequestUserReceiptHandler
 
     private final QueueAsyncClient transactionNotificationRequestedQueueAsyncClient;
 
-    private final int transactionNotificationRequestedQueueTtlMinutes;
+    private final int transientQueuesTTLMinutes;
 
     @Autowired
     public TransactionRequestUserReceiptHandler(
             TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptAddedEventRepository,
             TransactionsUtils transactionsUtils,
             @Qualifier(
-                    "transactionNotificationRequestedQueueAsyncClient"
+                "transactionNotificationRequestedQueueAsyncClient"
             ) QueueAsyncClient transactionNotificationRequestedQueueAsyncClient,
-            @Value("${azurestorage.queues.transactionnotificationrequested.ttlMinutes}") int transactionNotificationRequestedQueueTtlMinutes) {
+            @Value("${azurestorage.queues.transientQueues.ttlMinutes}") int transientQueuesTTLMinutes
+    ) {
         this.userReceiptAddedEventRepository = userReceiptAddedEventRepository;
         this.transactionsUtils = transactionsUtils;
         this.transactionNotificationRequestedQueueAsyncClient = transactionNotificationRequestedQueueAsyncClient;
-        this.transactionNotificationRequestedQueueTtlMinutes = transactionNotificationRequestedQueueTtlMinutes;
+        this.transientQueuesTTLMinutes = transientQueuesTTLMinutes;
     }
 
     @Override
@@ -104,7 +105,7 @@ public class TransactionRequestUserReceiptHandler
                                             .sendMessageWithResponse(
                                                     BinaryData.fromObject(userReceiptEvent),
                                                     Duration.ZERO,
-                                                    Duration.ofMinutes(transactionNotificationRequestedQueueTtlMinutes)
+                                                    Duration.ofMinutes(transientQueuesTTLMinutes)
                                             ).doOnError(
                                                     exception -> log.error(
                                                             "Error to generate event {} for transactionId {} - error {}",

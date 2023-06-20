@@ -54,8 +54,7 @@ public class TransactionActivateHandler
 
     private final ConfidentialMailUtils confidentialMailUtils;
 
-    private final int transactionExpirationQueueTtlMinutes;
-
+    private final int transientQueuesTTLMinutes;
 
     private final int nodoParallelRequests;
 
@@ -68,8 +67,9 @@ public class TransactionActivateHandler
             @Qualifier("transactionActivatedQueueAsyncClient") QueueAsyncClient transactionActivatedQueueAsyncClient,
             @Value("${payment.token.validity}") Integer paymentTokenTimeout,
             ConfidentialMailUtils confidentialMailUtils,
-            @Value("${azurestorage.queues.transactionexpiration.ttlMinutes}") int transactionExpirationQueueTtlMinutes,
-            @Value("${nodo.parallelRequests}") int nodoParallelRequests) {
+            @Value("${azurestorage.queues.transientQueues.ttlMinutes}") int transientQueuesTTLMinutes,
+            @Value("${nodo.parallelRequests}") int nodoParallelRequests
+    ) {
         this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
         this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
         this.nodoOperations = nodoOperations;
@@ -77,7 +77,7 @@ public class TransactionActivateHandler
         this.transactionActivatedQueueAsyncClient = transactionActivatedQueueAsyncClient;
         this.jwtTokenUtils = jwtTokenUtils;
         this.confidentialMailUtils = confidentialMailUtils;
-        this.transactionExpirationQueueTtlMinutes = transactionExpirationQueueTtlMinutes;
+        this.transientQueuesTTLMinutes = transientQueuesTTLMinutes;
         this.nodoParallelRequests = nodoParallelRequests;
     }
 
@@ -315,7 +315,7 @@ public class TransactionActivateHandler
                         e -> transactionActivatedQueueAsyncClient.sendMessageWithResponse(
                                 BinaryData.fromObject(e),
                                 Duration.ofSeconds(paymentTokenTimeout),
-                                Duration.ofMinutes(transactionExpirationQueueTtlMinutes)
+                                Duration.ofMinutes(transientQueuesTTLMinutes)
                         ).thenReturn(e)
                 )
                 .doOnError(
