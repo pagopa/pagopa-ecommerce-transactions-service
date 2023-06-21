@@ -9,7 +9,7 @@
     </parent>
     <groupId>it.pagopa</groupId>
     <artifactId>pagopa-ecommerce-transactions-service</artifactId>
-    <version>0.19.9</version>
+    <version>0.19.12</version>
     <name>pagopa-ecommerce-transactions-service</name>
     <description>pagopa-ecommerce-transactions-service</description>
     <properties>
@@ -19,6 +19,7 @@
         <pagopa-ecommerce-commons.version>0.18.2</pagopa-ecommerce-commons.version>
         <spotless.version>2.28.0</spotless.version>
         <elastic-apm.version>1.38.0</elastic-apm.version>
+        <ecs-logging-version>1.5.0</ecs-logging-version>
     </properties>
     <dependencies>
         <dependency>
@@ -107,6 +108,11 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>co.elastic.logging</groupId>
+            <artifactId>logback-ecs-encoder</artifactId>
+            <version>${ecs-logging-version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
