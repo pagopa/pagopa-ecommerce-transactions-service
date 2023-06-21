@@ -6,8 +6,7 @@
             <serviceName>${ECS_SERVICE_NAME:-undefined}</serviceName>
             <serviceVersion>${ECS_SERVICE_VERSION}</serviceVersion>
             <serviceEnvironment>${ECS_SERVICE_ENVIRONMENT:-undefined}</serviceEnvironment>
-            <maskPattern>(?i)([",']{0,1}[pan]{1}[",']{0,1}[:,=]{1}[ ]{0,1}[",']{0,1}[\d+]{14,16}[",']{0,1})</maskPattern> <!-- pan -->
-            <maskPattern>(?i)([",']{0,1}[cvv]{1}[",']{0,1}[:,=]{1}[ ]{0,1}[",']{0,1}[\d+]{3,4}[",']{0,1})</maskPattern> <!-- cvv -->
+            <maskPattern>([\d+]{3,20})</maskPattern> <!-- NUMERIC PATTERN -->
             <maskPattern>([a-z0-9.-]+@[a-z]+\.[a-z]{2,3})</maskPattern> <!-- email -->
         </encoder>
     </appender>
