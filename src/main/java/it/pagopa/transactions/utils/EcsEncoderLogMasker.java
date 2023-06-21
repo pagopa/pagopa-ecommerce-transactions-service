@@ -15,10 +15,6 @@ public class EcsEncoderLogMasker extends EcsEncoder {
     private Pattern patternString;
     private final List<String> maskPatterns = new ArrayList<>();
 
-    public void setMaskPattern(String maskPatter) {
-        this.maskPatterns.add(maskPatter);
-    }
-
     public void addMaskPattern(String maskPattern) {
         maskPatterns.add(maskPattern);
         patternString = Pattern.compile(String.join("|", maskPatterns), Pattern.MULTILINE);
