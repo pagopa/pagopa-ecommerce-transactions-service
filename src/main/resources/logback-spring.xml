@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <springProperty name="SERVICE_NAME" source="application.name"/>
-    <springProperty name="SERVICE_VERSION" source="build.version"/>
+    <springProperty name="ECS_SERVICE_VERSION" source="build.version"/>
     <appender name="ECS_JSON_CONSOLE_MASKED" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="it.pagopa.transactions.utils.EcsEncoderLogMasker">
-            <serviceName>${SERVICE_NAME}</serviceName>
-            <serviceVersion>${SERVICE_VERSION}</serviceVersion>
+            <serviceName>${ECS_SERVICE_NAME:-undefined}</serviceName>
+            <serviceVersion>${ECS_SERVICE_VERSION}</serviceVersion>
+            <serviceEnvironment>${ECS_SERVICE_ENVIRONMENT:-undefined}</serviceEnvironment>
             <maskPattern>(?i)([",']{0,1}[pan]{1}[",']{0,1}[:,=]{1}[ ]{0,1}[",']{0,1}[\d+]{14,16}[",']{0,1})</maskPattern> <!-- pan -->
             <maskPattern>(?i)([",']{0,1}[cvv]{1}[",']{0,1}[:,=]{1}[ ]{0,1}[",']{0,1}[\d+]{3,4}[",']{0,1})</maskPattern> <!-- cvv -->
             <maskPattern>([a-z0-9.-]+@[a-z]+\.[a-z]{2,3})</maskPattern> <!-- email -->
