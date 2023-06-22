@@ -25,6 +25,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 
@@ -52,12 +53,18 @@ class TransactionRequestUserReceiptHandlerTest {
 
     private final TransactionsUtils transactionsUtils = new TransactionsUtils(eventStoreRepository, "3020");
 
+    private final int transientQueueEventsTtlSeconds = 30;
+
+    @Captor
+    private ArgumentCaptor<Duration> durationArgumentCaptor;
+
     @BeforeEach
     public void initTest() {
         updateStatusHandler = new TransactionRequestUserReceiptHandler(
                 userReceiptDataEventRepository,
                 transactionsUtils,
-                queueAsyncClient
+                queueAsyncClient,
+                transientQueueEventsTtlSeconds
         );
     }
 
@@ -114,7 +121,10 @@ class TransactionRequestUserReceiptHandlerTest {
         /* preconditions */
         Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
-        Mockito.when(queueAsyncClient.sendMessageWithResponse(queueArgumentCaptor.capture(), any(), any()))
+        Mockito.when(
+                queueAsyncClient
+                        .sendMessageWithResponse(queueArgumentCaptor.capture(), any(), durationArgumentCaptor.capture())
+        )
                 .thenReturn(QUEUE_SUCCESSFUL_RESPONSE);
         /* test */
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
@@ -132,6 +142,7 @@ class TransactionRequestUserReceiptHandlerTest {
                 .toObject(TransactionUserReceiptRequestedEvent.class);
         assertEquals(TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT, queueEvent.getEventCode());
         assertEquals(event.getData(), queueEvent.getData());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
 
     @Test
@@ -187,7 +198,10 @@ class TransactionRequestUserReceiptHandlerTest {
         /* preconditions */
         Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
-        Mockito.when(queueAsyncClient.sendMessageWithResponse(queueArgumentCaptor.capture(), any(), any()))
+        Mockito.when(
+                queueAsyncClient
+                        .sendMessageWithResponse(queueArgumentCaptor.capture(), any(), durationArgumentCaptor.capture())
+        )
                 .thenReturn(QUEUE_SUCCESSFUL_RESPONSE);
         /* test */
         StepVerifier.create(updateStatusHandler.handle(transactionAddUserReceiptCommand))
@@ -205,6 +219,7 @@ class TransactionRequestUserReceiptHandlerTest {
                 .toObject(TransactionUserReceiptRequestedEvent.class);
         assertEquals(TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT, queueEvent.getEventCode());
         assertEquals(event.getData(), queueEvent.getData());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
 
     @Test
@@ -260,7 +275,10 @@ class TransactionRequestUserReceiptHandlerTest {
         /* preconditions */
         Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
-        Mockito.when(queueAsyncClient.sendMessageWithResponse(queueArgumentCaptor.capture(), any(), any()))
+        Mockito.when(
+                queueAsyncClient
+                        .sendMessageWithResponse(queueArgumentCaptor.capture(), any(), durationArgumentCaptor.capture())
+        )
                 .thenReturn(Mono.error(new RuntimeException("Error writing message to queue")));
         /* test */
         StepVerifier.create(updateStatusHandler.handle(transactionAddUserReceiptCommand))
@@ -278,6 +296,7 @@ class TransactionRequestUserReceiptHandlerTest {
                 .toObject(TransactionUserReceiptRequestedEvent.class);
         assertEquals(TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT, queueEvent.getEventCode());
         assertEquals(event.getData(), queueEvent.getData());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
 
     @Test
