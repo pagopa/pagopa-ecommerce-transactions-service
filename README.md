@@ -31,8 +31,11 @@ These are all environment variables needed by the application:
 | NOTIFICATIONS_SERVICE_API_KEY                  |     | Notifications service API Key                                                                              | string |         |
 | PAYMENT_TOKEN_VALIDITY_TIME                    |     | Validity time in seconds of a payment token                                                                | number |         |
 | TRANSACTION_EXPIRATION_QUEUE_NAME              |     | Name of the queue for transaction expiration for activated transactions                                    | string |         |
-| TRANSACTION_CLOSEPAYMENT_RETRY_QUEUE_NAME      |     | Name of the retry queue for closure error events                                                           | string |         |
+| TRANSACTION_CLOSE_PAYMENT_RETRY_QUEUE_NAME     |     | Name of the retry queue for closure error events                                                           | string |         |
+| TRANSACTION_CLOSE_PAYMENT_QUEUE_NAME           |     | Name of the queue for close payment events                                                                 | string |         |
+| TRANSACTION_NOTIFICATIONS_QUEUE_NAME           |     | Name of the queue for notification requested events                                                        | string |         |
 | TRANSACTION_REFUND_QUEUE_NAME                  |     | Name of the refund queue for transactions that receive a closePayment with OK authorization and KO outcome | string |         |
+| TRANSIENT_QUEUES_TTL_SECONDS                   |     | TTL to be used when sending events on transient queues                                                     | number | 7 days  |
 | TRANSACTIONS_RETRY_OFFSET                      |     | Seconds to offset validity end to account for more retries                                                 | number |         |
 | CLOSURE_RETRY_INTERVAL                         |     | Seconds to wait at closing the transaction before making a retry                                           | number |         |
 | PERSONAL_DATA_VAULT_API_KEY                    |     | API Key for Personal Data Vault (PDV is used to safely encrypt PIIs, e.g. the user's email address)        | string |         |
