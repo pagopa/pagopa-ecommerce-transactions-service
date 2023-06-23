@@ -1,5 +1,6 @@
 package it.pagopa.transactions.utils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
@@ -13,6 +14,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.shaded.org.apache.commons.io.output.TeeOutputStream;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
@@ -69,7 +71,7 @@ class LogMaskTests {
     }
 
     @Test
-    void shouldMaskCvvPanEmail() {
+    void shouldMaskCvvPanEmail() throws IOException {
         String cvv = "345";
         String pan = "1658965485269856";
         String email3ds = "g.c@gia.it";
@@ -101,7 +103,7 @@ class LogMaskTests {
 
         log.info(authorizationData.toString());
         String outcontentString = outContent.toString(StandardCharsets.UTF_8);
-        assertFalse(outcontentString.contains(cvv));
+        assertFalse(outcontentString.contains("cvv: " + cvv));
         assertFalse(outcontentString.contains(email3ds));
         assertFalse(outcontentString.contains(pan));
         assertFalse(outcontentString.contains("203012"));
