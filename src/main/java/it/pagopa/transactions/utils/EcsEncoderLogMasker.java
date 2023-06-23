@@ -2,7 +2,12 @@ package it.pagopa.transactions.utils;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.elastic.logging.logback.EcsEncoder;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,57 +18,43 @@ import java.util.stream.IntStream;
 
 public class EcsEncoderLogMasker extends EcsEncoder {
     private Pattern patternString;
-    private Pattern safePatternString;
     private final List<String> maskPatterns = new ArrayList<>();
     private final List<String> safePatterns = new ArrayList<>();
+
+    private ObjectMapper objectMapper;
+
+    public EcsEncoderLogMasker() {
+        this.objectMapper = new ObjectMapper();
+    }
 
     public void addMaskPattern(String maskPattern) {
         maskPatterns.add(maskPattern);
         patternString = Pattern.compile(String.join("|", maskPatterns), Pattern.MULTILINE);
     }
 
-    public void addSafePattern(String safePattern) {
-        safePatterns.add(safePattern);
-        safePatternString = Pattern.compile(String.join("|", safePatterns), Pattern.MULTILINE);
-    }
-
     @Override
     public byte[] encode(ILoggingEvent event) {
         byte[] encodedLog = super.encode(event);
         String clearLog = new String(encodedLog, StandardCharsets.UTF_8);
-        return maskMessage(clearLog).getBytes(StandardCharsets.UTF_8);
+        try {
+            JsonNode node = objectMapper.readTree(clearLog);
+            String maskedMessage = maskMessage(node.get("message").asText());
+            ((ObjectNode) node).put("message", maskedMessage);
+            return objectMapper.writeValueAsString(node).getBytes(StandardCharsets.UTF_8);
+        } catch (IOException ex) {
+            return maskMessage(clearLog).getBytes(StandardCharsets.UTF_8);
+        }
     }
 
     private String maskMessage(String message) {
         StringBuilder sb = new StringBuilder(message);
-        ArrayList<List<Integer>> safeIndexes = new ArrayList<>();
         Matcher matcher = patternString.matcher(sb);
-        if (safePatternString != null) {
-            Matcher safePatternMatcher = safePatternString.matcher(sb);
-            while (safePatternMatcher.find()) {
-                IntStream.rangeClosed(1, safePatternMatcher.groupCount()).forEach(group -> {
-                    if (safePatternMatcher.group(group) != null) {
-                        safeIndexes.add(
-                                Arrays.asList(
-                                        safePatternMatcher.start(group),
-                                        safePatternMatcher.end(group)
-                                )
-                        );
-                    }
-                });
-            }
-        }
         while (matcher.find()) {
             IntStream.rangeClosed(1, matcher.groupCount()).forEach(group -> {
                 if (matcher.group(group) != null) {
                     IntStream.range(
                             matcher.start(group) + getOffset(matcher.group()),
                             matcher.end(group)
-                    ).filter(
-                            i -> !safeIndexes.stream().anyMatch(
-                                    safeIndexInterval -> safeIndexInterval.get(0) <= i
-                                            && safeIndexInterval.get(1) > i
-                            )
                     ).forEach(i -> sb.setCharAt(i, '*'));
                 }
             });
