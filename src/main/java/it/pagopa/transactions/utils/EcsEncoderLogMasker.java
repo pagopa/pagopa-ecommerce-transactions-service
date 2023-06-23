@@ -2,7 +2,6 @@ package it.pagopa.transactions.utils;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.elastic.logging.logback.EcsEncoder;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -19,7 +18,6 @@ import java.util.stream.IntStream;
 public class EcsEncoderLogMasker extends EcsEncoder {
     private Pattern patternString;
     private final List<String> maskPatterns = new ArrayList<>();
-    private final List<String> safePatterns = new ArrayList<>();
 
     private ObjectMapper objectMapper;
 
