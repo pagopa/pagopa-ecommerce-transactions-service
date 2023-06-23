@@ -1,5 +1,8 @@
 package it.pagopa.transactions.configurations;
 
+import com.azure.core.http.policy.HttpLogDetailLevel;
+import com.azure.core.http.policy.HttpLogOptions;
+import com.azure.core.util.HttpClientOptions;
 import com.azure.storage.queue.QueueAsyncClient;
 import com.azure.storage.queue.QueueClientBuilder;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -78,6 +81,11 @@ public class AzureStorageConfig {
         QueueAsyncClient queueAsyncClient = new QueueClientBuilder()
                 .connectionString(storageConnectionString)
                 .queueName(queueName)
+                .httpLogOptions(
+                        QueueClientBuilder.getDefaultHttpLogOptions()
+                                .setLogLevel(HttpLogDetailLevel.HEADERS)
+                                .addAllowedHeaderName("traceparent")
+                )
                 .buildAsyncClient();
         queueAsyncClient.createIfNotExists().block();
         return queueAsyncClient;
