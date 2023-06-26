@@ -7,6 +7,8 @@ import com.azure.core.http.policy.HttpPipelinePolicy;
 import com.azure.core.util.HttpClientOptions;
 import com.azure.storage.queue.QueueAsyncClient;
 import com.azure.storage.queue.QueueClientBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -17,6 +19,9 @@ import java.util.Set;
 
 @Configuration
 public class AzureStorageConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(AzureStorageConfig.class);
+
     @Bean("transactionActivatedQueueAsyncClient")
     @Qualifier
     public QueueAsyncClient transactionActivatedQueueAsyncClient(
@@ -102,6 +107,15 @@ public class AzureStorageConfig {
 
                             return next.process();
                         }
+                )
+                .addPolicy(
+                        ((
+                          context,
+                          next
+                        ) -> {
+                            log.info("Request headers: {}", context.getHttpRequest().getHeaders().toMap());
+                            return next.process();
+                        })
                 )
                 .httpLogOptions(
                         QueueClientBuilder.getDefaultHttpLogOptions()
