@@ -168,11 +168,6 @@ microservice-chart:
       { VISA:'https://dev.checkout.pagopa.it/assets/creditcard/carta_visa.png',  MASTERCARD:'https://dev.checkout.pagopa.it/assets/creditcard/carta_mc.png', DINERS:'https://dev.checkout.pagopa.it/assets/creditcard/carta_diners.png', MAESTRO:'https://dev.checkout.pagopa.it/assets/creditcard/carta_maestro.png', AMEX:'https://dev.checkout.pagopa.it/assets/creditcard/carta_amex.png', UNKNOWN:'https://dev.checkout.pagopa.it/assets/creditcard/generic.png' }
 
     SERVER_ERROR_INCLUDE_STACKTRACE: "never"
-    ELASTIC_APM_SERVICE_NAME: pagopa-ecommerce-transactions-service
-    ELASTIC_APM_APPLICATION_PACKAGES: it.pagopa.ecommerce.transactions
-    ELASTIC_APM_SERVER_URL: http://quickstart-apm-http.elastic-system.svc:8200
-    ELASTIC_APM_LOG_SENDING: 'true'
-    ELASTIC_APM_TRACE_CONTINUATION_STRATEGY: "restart_external"
     OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service,deployment.environment=uat"
     OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.elastic-system.svc:4317"
     OTEL_TRACES_EXPORTER: otlp
