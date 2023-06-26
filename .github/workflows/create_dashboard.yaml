@@ -27,7 +27,7 @@ jobs:
 
     strategy:
       matrix:
-        environment: [prod]
+        environment: [uat]
     environment:
       name: ${{ matrix.environment }}
     # Steps represent a sequence of tasks that will be executed as part of the job
