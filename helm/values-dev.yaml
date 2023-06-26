@@ -4,7 +4,7 @@ microservice-chart:
   fullnameOverride: ""
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.19.10" #improve
+    tag: "0.19.13" #improve
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -104,11 +104,14 @@ microservice-chart:
     WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3111"
     LOGO_CARD_BRANDING_MAPPING: >
       { VISA:'https://dev.checkout.pagopa.it/assets/creditcard/carta_visa.png',  MASTERCARD:'https://dev.checkout.pagopa.it/assets/creditcard/carta_mc.png', DINERS:'https://dev.checkout.pagopa.it/assets/creditcard/carta_diners.png', MAESTRO:'https://dev.checkout.pagopa.it/assets/creditcard/carta_maestro.png', AMEX:'https://dev.checkout.pagopa.it/assets/creditcard/carta_amex.png', UNKNOWN:'https://dev.checkout.pagopa.it/assets/creditcard/generic.png' }
-
-    ELASTIC_APM_SERVICE_NAME: pagopa-ecommerce-transactions-service
-    ELASTIC_APM_APPLICATION_PACKAGES: it.pagopa.ecommerce.transactions
-    ELASTIC_APM_SERVER_URL: http://quickstart-apm-http.elastic-system.svc:8200
-    ELASTIC_APM_LOG_SENDING: 'true'
+    ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service
+    ECS_SERVICE_ENVIRONMENT: "dev"
+    OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service,deployment.environment=dev"
+    OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.elastic-system.svc:4317"
+    OTEL_TRACES_EXPORTER: otlp
+    OTEL_METRICS_EXPORTER: otlp
+    OTEL_LOGS_EXPORTER: none
+    OTEL_TRACES_SAMPLER: "always_on"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password
@@ -118,8 +121,8 @@ microservice-chart:
     PAYMENT_TRANSACTIONS_GATEWAY_API_KEY: payment-transactions-gateway-api-key
     JWT_SECRET: sessions-jwt-secret
     PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
-    ELASTIC_APM_SECRET_TOKEN: elastic-apm-secret-token
     ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
+    OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
   keyvault:
     name: "pagopa-d-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"

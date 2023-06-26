@@ -24,9 +24,10 @@ import it.pagopa.transactions.utils.NodoOperations;
 import it.pagopa.transactions.utils.Queues;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
@@ -60,6 +61,13 @@ class TransactionInitializerHandlerTest {
 
     private final int paymentTokenTimeout = 120;
 
+    private final int nodoParallelRequests = 5;
+
+    private final int transientQueueEventsTtlSeconds = 30;
+
+    @Captor
+    private ArgumentCaptor<Duration> durationArgumentCaptor;
+
     private final TransactionActivateHandler handler = new TransactionActivateHandler(
             paymentRequestInfoRedisTemplateWrapper,
             transactionEventActivatedStoreRepository,
@@ -67,7 +75,9 @@ class TransactionInitializerHandlerTest {
             jwtTokenUtils,
             transactionActivatedQueueAsyncClient,
             paymentTokenTimeout,
-            confidentialMailUtils
+            confidentialMailUtils,
+            transientQueueEventsTtlSeconds,
+            nodoParallelRequests
     );
 
     @Test
@@ -136,13 +146,13 @@ class TransactionInitializerHandlerTest {
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(
                         any(BinaryData.class),
                         any(),
-                        any()
+                        durationArgumentCaptor.capture()
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
         Mockito.when(jwtTokenUtils.generateToken(any()))
                 .thenReturn(Mono.just("authToken"));
-        ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
+
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
 
         /* run test */
@@ -160,6 +170,7 @@ class TransactionInitializerHandlerTest {
         assertNotNull(event.getCreationDate());
         assertNotNull(event.getId());
         assertEquals(paymentTokenTimeout, event.getData().getPaymentTokenValiditySeconds());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
 
     }
 
@@ -227,13 +238,13 @@ class TransactionInitializerHandlerTest {
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(
                         any(BinaryData.class),
                         any(),
-                        any()
+                        durationArgumentCaptor.capture()
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
         Mockito.when(jwtTokenUtils.generateToken(any()))
                 .thenReturn(Mono.just("authToken"));
-        ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
+
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
 
         /* run test */
@@ -251,19 +262,13 @@ class TransactionInitializerHandlerTest {
         assertNotNull(event.getCreationDate());
         assertNotNull(event.getId());
         assertEquals(paymentTokenTimeout, event.getData().getPaymentTokenValiditySeconds());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
 
     }
 
     @Test
     void shouldFailForTokenGenerationError() {
         RptId rptId = new RptId("77777777777302016723749670035");
-        IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
-        String transactionId = UUID.randomUUID().toString();
-        String paymentToken = UUID.randomUUID().toString();
-        String paName = "paName";
-        String paTaxcode = "77777777777";
-        String description = "Description";
-        Integer amount = 1000;
 
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
         PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto();
@@ -277,56 +282,11 @@ class TransactionInitializerHandlerTest {
                 Transaction.ClientId.CHECKOUT
         );
 
-        PaymentRequestInfo paymentRequestInfoCached = new PaymentRequestInfo(
-                rptId,
-                paTaxcode,
-                paName,
-                description,
-                amount,
-                null,
-                paymentToken,
-                ZonedDateTime.now().toString(),
-                idempotencyKey,
-                List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, amount, null)),
-                false
-        );
-
-        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
-        transactionActivatedEvent.setTransactionId(transactionId);
-        transactionActivatedEvent.setEventCode(TransactionEventCode.TRANSACTION_ACTIVATED_EVENT);
-        TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
-        transactionActivatedData.setPaymentNotices(
-                List.of(
-                        new PaymentNotice(
-                                paymentToken,
-                                rptId.value(),
-                                null,
-                                null,
-                                null,
-                                List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount, null)),
-                                false
-                        )
-                )
-        );
-        transactionActivatedEvent.setData(transactionActivatedData);
-
         /* preconditions */
-        Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
-                .thenReturn(Optional.of(paymentRequestInfoCached));
-        Mockito.when(transactionEventActivatedStoreRepository.save(any()))
-                .thenReturn(Mono.just(transactionActivatedEvent));
-        Mockito.doNothing().when(paymentRequestInfoRedisTemplateWrapper).save(any(PaymentRequestInfo.class));
-        Mockito.when(
-                transactionActivatedQueueAsyncClient.sendMessageWithResponse(
-                        any(BinaryData.class),
-                        any(),
-                        any()
-                )
-        )
-                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
+
         Mockito.when(jwtTokenUtils.generateToken(any()))
                 .thenReturn(Mono.error(new JWTTokenGenerationException()));
-        ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
+
         /* run test */
         StepVerifier
                 .create(handler.handle(command))
@@ -414,7 +374,7 @@ class TransactionInitializerHandlerTest {
                 .thenReturn(Optional.of(paymentRequestInfoCached));
         Mockito.when(nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any()))
                 .thenReturn(Mono.error(new InvalidNodoResponseException("Invalid payment token received")));
-        ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
+
         /* run test */
         Mono<Tuple2<Mono<TransactionActivatedEvent>, String>> response = handler
                 .handle(command);
@@ -492,13 +452,12 @@ class TransactionInitializerHandlerTest {
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(
                         any(BinaryData.class),
                         any(),
-                        any()
+                        durationArgumentCaptor.capture()
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
 
-        ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
         /* run test */
         Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
                 .handle(command).block();
@@ -511,6 +470,7 @@ class TransactionInitializerHandlerTest {
         assertNotNull(event.getCreationDate());
         assertNotNull(event.getId());
         assertEquals(paymentTokenTimeout, event.getData().getPaymentTokenValiditySeconds());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
 
     @Test
@@ -575,12 +535,11 @@ class TransactionInitializerHandlerTest {
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(
                         any(BinaryData.class),
                         any(),
-                        any()
+                        durationArgumentCaptor.capture()
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
 
-        ReflectionTestUtils.setField(handler, "nodoParallelRequests", 5);
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
 
         /* run test */
@@ -595,6 +554,7 @@ class TransactionInitializerHandlerTest {
         assertNotNull(event.getCreationDate());
         assertNotNull(event.getId());
         assertEquals(paymentTokenTimeout, event.getData().getPaymentTokenValiditySeconds());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
 
 }
