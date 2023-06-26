@@ -74,7 +74,7 @@ microservice-chart:
       ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.19.13"
+    tag: "0.19.15"
     pullPolicy: Always
   livenessProbe:
     httpGet:
