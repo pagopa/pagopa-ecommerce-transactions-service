@@ -55,10 +55,14 @@ microservice-chart:
         { VISA:'https://dev.checkout.pagopa.it/assets/creditcard/carta_visa.png',  MASTERCARD:'https://dev.checkout.pagopa.it/assets/creditcard/carta_mc.png', DINERS:'https://dev.checkout.pagopa.it/assets/creditcard/carta_diners.png', MAESTRO:'https://dev.checkout.pagopa.it/assets/creditcard/carta_maestro.png', AMEX:'https://dev.checkout.pagopa.it/assets/creditcard/carta_amex.png', UNKNOWN:'https://dev.checkout.pagopa.it/assets/creditcard/generic.png' }
 
       SERVER_ERROR_INCLUDE_STACKTRACE: "never"
-      ELASTIC_APM_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
-      ELASTIC_APM_APPLICATION_PACKAGES: it.pagopa.ecommerce.transactions
-      ELASTIC_APM_SERVER_URL: http://quickstart-apm-http.elastic-system.svc:8200
-      ELASTIC_APM_LOG_SENDING: 'true'
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-blue,deployment.environment=uat"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.elastic-system.svc:4317"
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_LOGS_EXPORTER: none
+      OTEL_TRACES_SAMPLER: "always_on"
+      ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
+      ECS_SERVICE_ENVIRONMENT: "uat"
     envSecret:
       MONGO_PASSWORD: mongo-ecommerce-password
       REDIS_PASSWORD: redis-ecommerce-password
@@ -66,11 +70,11 @@ microservice-chart:
       PAYMENT_TRANSACTIONS_GATEWAY_API_KEY: payment-transactions-gateway-api-key
       JWT_SECRET: sessions-jwt-secret
       PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
-      ELASTIC_APM_SECRET_TOKEN: elastic-apm-secret-token
+      OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
       ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.19.10"
+    tag: "0.19.15"
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -164,10 +168,14 @@ microservice-chart:
       { VISA:'https://dev.checkout.pagopa.it/assets/creditcard/carta_visa.png',  MASTERCARD:'https://dev.checkout.pagopa.it/assets/creditcard/carta_mc.png', DINERS:'https://dev.checkout.pagopa.it/assets/creditcard/carta_diners.png', MAESTRO:'https://dev.checkout.pagopa.it/assets/creditcard/carta_maestro.png', AMEX:'https://dev.checkout.pagopa.it/assets/creditcard/carta_amex.png', UNKNOWN:'https://dev.checkout.pagopa.it/assets/creditcard/generic.png' }
 
     SERVER_ERROR_INCLUDE_STACKTRACE: "never"
-    ELASTIC_APM_SERVICE_NAME: pagopa-ecommerce-transactions-service
-    ELASTIC_APM_APPLICATION_PACKAGES: it.pagopa.ecommerce.transactions
-    ELASTIC_APM_SERVER_URL: http://quickstart-apm-http.elastic-system.svc:8200
-    ELASTIC_APM_LOG_SENDING: 'true'
+    OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service,deployment.environment=uat"
+    OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.elastic-system.svc:4317"
+    OTEL_TRACES_EXPORTER: otlp
+    OTEL_METRICS_EXPORTER: otlp
+    OTEL_LOGS_EXPORTER: none
+    OTEL_TRACES_SAMPLER: "always_on"
+    ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service
+    ECS_SERVICE_ENVIRONMENT: "uat"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password
@@ -177,7 +185,7 @@ microservice-chart:
     PAYMENT_TRANSACTIONS_GATEWAY_API_KEY: payment-transactions-gateway-api-key
     JWT_SECRET: sessions-jwt-secret
     PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
-    ELASTIC_APM_SECRET_TOKEN: elastic-apm-secret-token
+    OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
     ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
   keyvault:
     name: "pagopa-u-ecommerce-kv"
