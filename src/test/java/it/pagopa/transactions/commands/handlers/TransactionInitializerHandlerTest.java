@@ -1,27 +1,24 @@
 package it.pagopa.transactions.commands.handlers;
 
-import com.azure.core.util.BinaryData;
-import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.v1.PaymentTransferInfo;
 import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
+import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.generated.transactions.server.model.PaymentInfoDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
+import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
 import it.pagopa.transactions.exceptions.JWTTokenGenerationException;
 import it.pagopa.transactions.projections.TransactionsProjection;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
-import it.pagopa.transactions.utils.ConfidentialMailUtils;
-import it.pagopa.transactions.utils.JwtTokenUtils;
-import it.pagopa.transactions.utils.NodoOperations;
-import it.pagopa.transactions.utils.Queues;
+import it.pagopa.transactions.utils.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -68,6 +65,8 @@ class TransactionInitializerHandlerTest {
 
     private final String dueDate = "2031-12-31";
 
+    private final TracingUtils tracingUtils = TracingUtilsTests.getMock();
+
     @Captor
     private ArgumentCaptor<Duration> durationArgumentCaptor;
 
@@ -83,7 +82,8 @@ class TransactionInitializerHandlerTest {
             paymentTokenTimeout,
             confidentialMailUtils,
             transientQueueEventsTtlSeconds,
-            nodoParallelRequests
+            nodoParallelRequests,
+            tracingUtils
     );
 
     @Test
@@ -151,7 +151,7 @@ class TransactionInitializerHandlerTest {
                 .save(paymentRequestInfoArgumentCaptor.capture());
         Mockito.when(
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(
-                        any(BinaryData.class),
+                        any(QueueEvent.class),
                         any(),
                         durationArgumentCaptor.capture()
                 )
@@ -242,7 +242,7 @@ class TransactionInitializerHandlerTest {
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
         Mockito.when(
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(
-                        any(BinaryData.class),
+                        any(QueueEvent.class),
                         any(),
                         durationArgumentCaptor.capture()
                 )
@@ -457,7 +457,7 @@ class TransactionInitializerHandlerTest {
                 .thenReturn(Mono.just("authToken"));
         Mockito.when(
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(
-                        any(BinaryData.class),
+                        any(),
                         any(),
                         durationArgumentCaptor.capture()
                 )
@@ -548,7 +548,7 @@ class TransactionInitializerHandlerTest {
                 .thenReturn(Mono.just("authToken"));
         Mockito.when(
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(
-                        any(BinaryData.class),
+                        any(QueueEvent.class),
                         any(),
                         durationArgumentCaptor.capture()
                 )
@@ -633,7 +633,7 @@ class TransactionInitializerHandlerTest {
                 .thenReturn(Mono.just("authToken"));
         Mockito.when(
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(
-                        any(BinaryData.class),
+                        any(QueueEvent.class),
                         any(),
                         durationArgumentCaptor.capture()
                 )

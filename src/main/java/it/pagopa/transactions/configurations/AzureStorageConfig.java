@@ -1,10 +1,9 @@
 package it.pagopa.transactions.configurations;
 
-import com.azure.core.http.*;
+import com.azure.core.http.HttpHeaders;
 import com.azure.core.http.policy.HttpLogDetailLevel;
-import com.azure.core.http.policy.HttpLogOptions;
-import com.azure.core.http.policy.HttpPipelinePolicy;
-import com.azure.core.util.HttpClientOptions;
+import com.azure.core.implementation.serializer.DefaultJsonSerializer;
+import com.azure.core.util.serializer.JsonSerializer;
 import com.azure.storage.queue.QueueAsyncClient;
 import com.azure.storage.queue.QueueClientBuilder;
 import org.slf4j.Logger;
@@ -13,7 +12,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import reactor.core.publisher.Mono;
 
 import java.util.Set;
 
@@ -22,17 +20,26 @@ public class AzureStorageConfig {
 
     private static final Logger log = LoggerFactory.getLogger(AzureStorageConfig.class);
 
+    @Bean
+    public JsonSerializer jsonSerializer() {
+        return new DefaultJsonSerializer();
+    }
+
     @Bean("transactionActivatedQueueAsyncClient")
     @Qualifier
-    public QueueAsyncClient transactionActivatedQueueAsyncClient(
-                                                                 @Value(
-                                                                     "${azurestorage.connectionstringtransient}"
-                                                                 ) String storageConnectionString,
-                                                                 @Value(
-                                                                     "${azurestorage.queues.transactionexpiration.name}"
-                                                                 ) String queueName
+    public it.pagopa.ecommerce.commons.client.QueueAsyncClient transactionActivatedQueueAsyncClient(
+                                                                                                    @Value(
+                                                                                                        "${azurestorage.connectionstringtransient}"
+                                                                                                    ) String storageConnectionString,
+                                                                                                    @Value(
+                                                                                                        "${azurestorage.queues.transactionexpiration.name}"
+                                                                                                    ) String queueName,
+                                                                                                    JsonSerializer jsonSerializer
     ) {
-        return buildQueueAsyncClient(storageConnectionString, queueName);
+        return new it.pagopa.ecommerce.commons.client.QueueAsyncClient(
+                buildQueueAsyncClient(storageConnectionString, queueName),
+                jsonSerializer
+        );
     }
 
     @Bean("transactionRefundQueueAsyncClient")
@@ -88,7 +95,7 @@ public class AzureStorageConfig {
                                                    String storageConnectionString,
                                                    String queueName
     ) {
-        QueueAsyncClient queueAsyncClient = new QueueClientBuilder()
+        com.azure.storage.queue.QueueAsyncClient queueAsyncClient = new QueueClientBuilder()
                 .connectionString(storageConnectionString)
                 .queueName(queueName)
                 .addPolicy(
@@ -104,6 +111,8 @@ public class AzureStorageConfig {
                             for (String header : rebrandedHeaders) {
                                 context.getHttpRequest().setHeader("pagopa-" + header, requestHeaders.getValue(header));
                             }
+
+                            context.getHttpRequest().setHeader("pagopa-foo", "bar");
 
                             return next.process();
                         }
