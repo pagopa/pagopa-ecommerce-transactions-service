@@ -69,7 +69,8 @@ class TransactionServiceTest {
                                         "dest",
                                         0,
                                         TEST_CPP.toString(),
-                                        List.of(new PaymentTransferInformation("77777777777", false, 0, null))
+                                        List.of(new PaymentTransferInformation("77777777777", false, 0, null)),
+                                        false
                                 )
                         )
                 );
@@ -94,7 +95,8 @@ class TransactionServiceTest {
                                 new TransactionAmount(0),
                                 new TransactionDescription("desc"),
                                 new PaymentContextCode(TEST_CPP.toString()),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null))
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                false
                         )
                 ),
                 TransactionTestUtils.EMAIL,

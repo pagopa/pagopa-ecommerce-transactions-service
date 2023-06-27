@@ -1,5 +1,6 @@
 package it.pagopa.transactions.commands.handlers;
 
+import co.elastic.apm.api.ElasticApm;
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.*;
@@ -27,6 +28,7 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -52,8 +54,9 @@ public class TransactionActivateHandler
 
     private final ConfidentialMailUtils confidentialMailUtils;
 
-    @Value("${nodo.parallelRequests}")
-    private int nodoParallelRequests;
+    private final int transientQueuesTTLSeconds;
+
+    private final int nodoParallelRequests;
 
     @Autowired
     public TransactionActivateHandler(
@@ -63,7 +66,9 @@ public class TransactionActivateHandler
             JwtTokenUtils jwtTokenUtils,
             @Qualifier("transactionActivatedQueueAsyncClient") QueueAsyncClient transactionActivatedQueueAsyncClient,
             @Value("${payment.token.validity}") Integer paymentTokenTimeout,
-            ConfidentialMailUtils confidentialMailUtils
+            ConfidentialMailUtils confidentialMailUtils,
+            @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
+            @Value("${nodo.parallelRequests}") int nodoParallelRequests
     ) {
         this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
         this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
@@ -72,6 +77,8 @@ public class TransactionActivateHandler
         this.transactionActivatedQueueAsyncClient = transactionActivatedQueueAsyncClient;
         this.jwtTokenUtils = jwtTokenUtils;
         this.confidentialMailUtils = confidentialMailUtils;
+        this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
+        this.nodoParallelRequests = nodoParallelRequests;
     }
 
     public Mono<Tuple2<Mono<TransactionActivatedEvent>, String>> handle(
@@ -125,13 +132,15 @@ public class TransactionActivateHandler
                                                                                 null,
                                                                                 null,
                                                                                 null,
+                                                                                null,
                                                                                 new IdempotencyKey(
                                                                                         nodoOperations
                                                                                                 .getEcommerceFiscalCode(),
                                                                                         nodoOperations
                                                                                                 .generateRandomStringToIdempotencyKey()
                                                                                 ),
-                                                                                new ArrayList<>(TRANSFER_LIST_MAX_SIZE)
+                                                                                new ArrayList<>(TRANSFER_LIST_MAX_SIZE),
+                                                                                null
                                                                         );
                                                                         paymentRequestInfoRedisTemplateWrapper
                                                                                 .save(
@@ -165,11 +174,7 @@ public class TransactionActivateHandler
                                             .map(
                                                     requestInfo -> Mono.just(requestInfo)
                                                             .doOnSuccess(
-                                                                    p -> log.info(
-                                                                            "PaymentRequestInfo cache hit for {} with valid paymentToken {}",
-                                                                            p.id(),
-                                                                            p.paymentToken()
-                                                                    )
+                                                                    this::traceRepeatedActivation
                                                             )
                                             )
                                             .orElseGet(
@@ -183,23 +188,16 @@ public class TransactionActivateHandler
                                                                     newTransactionRequestDto.getIdCart()
                                                             )
                                                             .doOnSuccess(
-                                                                    p -> log.info(
-                                                                            "Nodo activation for {} with paymentToken {}",
-                                                                            p.id(),
-                                                                            p.paymentToken()
-                                                                    )
+                                                                    p -> {
+                                                                        log.info(
+                                                                                "Nodo activation for {} with paymentToken {}",
+                                                                                p.id(),
+                                                                                p.paymentToken()
+                                                                        );
+                                                                        paymentRequestInfoRedisTemplateWrapper.save(p);
+                                                                    }
                                                             )
                                             );
-                                }
-                        )
-                        .doOnNext(
-                                paymentRequestInfo -> {
-                                    log.info(
-                                            "Cache Nodo activation info for {} with paymentToken {}",
-                                            paymentRequestInfo.id(),
-                                            paymentRequestInfo.paymentToken()
-                                    );
-                                    paymentRequestInfoRedisTemplateWrapper.save(paymentRequestInfo);
                                 }
                         )
                         .sequential()
@@ -228,6 +226,45 @@ public class TransactionActivateHandler
                                 }
                         )
         );
+    }
+
+    private void traceRepeatedActivation(PaymentRequestInfo paymentRequestInfo) {
+        String transactionActivationDateString = paymentRequestInfo.activationDate();
+        co.elastic.apm.api.Span span = ElasticApm.currentTransaction();
+        try {
+            if (transactionActivationDateString != null) {
+                ZonedDateTime transactionActivation = ZonedDateTime.parse(transactionActivationDateString);
+                ZonedDateTime paymentTokenValidityEnd = transactionActivation
+                        .plus(Duration.ofSeconds(paymentTokenTimeout));
+                Duration paymentTokenValidityTimeLeft = Duration.between(ZonedDateTime.now(), paymentTokenValidityEnd);
+                span.startSpan("transaction", "activation", "activation cached")
+                        .setName("Transaction re-activated")
+                        .setLabel("paymentToken", paymentRequestInfo.paymentToken())
+                        .setLabel("paymentTokenLeftTimeSec", paymentTokenValidityTimeLeft.getSeconds());
+
+                log.info(
+                        "PaymentRequestInfo cache hit for {} with valid paymentToken {}. Validity left time: {}",
+                        paymentRequestInfo.id(),
+                        paymentRequestInfo.paymentToken(),
+                        paymentTokenValidityTimeLeft
+                );
+            } else {
+                log.error(
+                        "Cannot trace repeated transaction activation for {} with payment token: {}, missing transaction activation date",
+                        paymentRequestInfo.id(),
+                        paymentRequestInfo.paymentToken()
+                );
+                span.captureException(
+                        new IllegalArgumentException(
+                                "Null transaction activation date for rptId %s in repeated activation"
+                                        .formatted(paymentRequestInfo.id().toString())
+                        )
+                );
+            }
+        } finally {
+            span.end();
+        }
+
     }
 
     private Optional<PaymentRequestInfo> getPaymentRequestInfoFromCache(RptId rptId) {
@@ -278,7 +315,7 @@ public class TransactionActivateHandler
                         e -> transactionActivatedQueueAsyncClient.sendMessageWithResponse(
                                 BinaryData.fromObject(e),
                                 Duration.ofSeconds(paymentTokenTimeout),
-                                null
+                                Duration.ofSeconds(transientQueuesTTLSeconds)
                         ).thenReturn(e)
                 )
                 .doOnError(
@@ -311,7 +348,8 @@ public class TransactionActivateHandler
                                         transfer.transferAmount(),
                                         transfer.transferCategory()
                                 )
-                        ).toList()
+                        ).toList(),
+                        paymentRequestInfo.isAllCCP()
                 )
         ).toList();
     }

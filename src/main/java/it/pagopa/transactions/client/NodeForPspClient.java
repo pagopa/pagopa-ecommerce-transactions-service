@@ -2,8 +2,6 @@ package it.pagopa.transactions.client;
 
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
-import it.pagopa.generated.transactions.model.ActivatePaymentNoticeReq;
-import it.pagopa.generated.transactions.model.ActivatePaymentNoticeRes;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Request;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Response;
 import it.pagopa.transactions.exceptions.BadGatewayException;
@@ -26,6 +24,7 @@ import javax.xml.bind.JAXBElement;
 @Slf4j
 public class NodeForPspClient {
 
+    private static final String CLOSE_PAYMENT_CLIENT_ID = "ecomm";
     @Autowired
     @Qualifier("nodoWebClient")
     private WebClient nodoWebClient;
@@ -81,7 +80,10 @@ public class NodeForPspClient {
                 request.getOutcome().getValue()
         );
         return nodoWebClient.post()
-                .uri("/nodo/nodo-per-pm/v2/closepayment")
+                .uri(
+                        uriBuilder -> uriBuilder.path("/nodo/nodo-per-pm/v2/closepayment")
+                                .queryParam("clientId", CLOSE_PAYMENT_CLIENT_ID).build()
+                )
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(Mono.just(request), ClosePaymentRequestV2Dto.class)
                 .retrieve()

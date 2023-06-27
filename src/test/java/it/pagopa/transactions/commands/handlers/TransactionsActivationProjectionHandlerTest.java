@@ -52,7 +52,8 @@ class TransactionsActivationProjectionHandlerTest {
                                 transactionDescription,
                                 amountInt,
                                 null,
-                                List.of(new PaymentTransferInformation(paFiscalCode, false, amountInt, null))
+                                List.of(new PaymentTransferInformation(paFiscalCode, false, amountInt, null)),
+                                false
                         )
                 )
         );
@@ -92,7 +93,8 @@ class TransactionsActivationProjectionHandlerTest {
                                                 amount.value(),
                                                 null
                                         )
-                                )
+                                ),
+                                false
                         )
                 ),
                 email,

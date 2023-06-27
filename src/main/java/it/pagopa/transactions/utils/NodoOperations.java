@@ -1,9 +1,13 @@
 package it.pagopa.transactions.utils;
 
-import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
+import it.pagopa.ecommerce.commons.domain.v1.PaymentTransferInfo;
+import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.EuroUtils;
-import it.pagopa.generated.transactions.model.*;
+import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Request;
+import it.pagopa.generated.transactions.model.CtQrCode;
+import it.pagopa.generated.transactions.model.StOutcome;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.configurations.NodoConfig;
 import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
@@ -17,6 +21,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 @Slf4j
@@ -103,9 +108,10 @@ public class NodoOperations {
                                 response.getFiscalCodePA(),
                                 response.getCompanyName(),
                                 response.getPaymentDescription(),
-                                amount.multiply(BigDecimal.valueOf(100)).intValue(),
+                                getEuroCentsFromNodoAmount(response.getTotalAmount()),
                                 null,
                                 response.getPaymentToken(),
+                                ZonedDateTime.now().toString(),
                                 new IdempotencyKey(idempotencyKey),
                                 response.getTransferList().getTransfer().stream()
                                         .map(
@@ -115,13 +121,39 @@ public class NodoOperations {
                                                         EuroUtils.euroToEuroCents(transfer.getTransferAmount()),
                                                         transfer.getTransferCategory()
                                                 )
-                                        ).toList()
+                                        ).toList(),
+                                response.getTransferList().getTransfer().parallelStream().allMatch(
+                                        ctTransferPSPV2 -> ctTransferPSPV2.getMetadata() != null &&
+                                                ctTransferPSPV2.getMetadata().getMapEntry().parallelStream()
+                                                        .allMatch(
+                                                                ctMapEntry -> ctMapEntry.getKey()
+                                                                        .equals("IBANAPPOGGIO")
+                                                        )
+                                                &&
+                                                (isIbanCCP(ctTransferPSPV2.getIBAN())
+                                                        ||
+                                                        ctTransferPSPV2.getMetadata().getMapEntry()
+                                                                .parallelStream()
+                                                                .anyMatch(
+                                                                        ctMapEntry -> ctMapEntry
+                                                                                .getKey()
+                                                                                .equals("IBANAPPOGGIO")
+                                                                                && isIbanCCP(ctMapEntry.getValue())
+                                                                ))
+                                )
                         )
                 );
     }
 
     private boolean isOkPaymentToken(String paymentToken) {
         return paymentToken != null && !paymentToken.isBlank();
+    }
+
+    private boolean isIbanCCP(String iban) {
+        return iban != null
+                && iban.length() > 10
+                && iban.substring(5, 10).equalsIgnoreCase("07601");
+
     }
 
     public Integer getEuroCentsFromNodoAmount(BigDecimal amountFromNodo) {

@@ -16,6 +16,7 @@ import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -30,8 +31,9 @@ public class TransactionRequestUserReceiptHandler
 
     private final TransactionsUtils transactionsUtils;
 
-    @Qualifier("transactionNotificationRequestedQueueAsyncClient")
     private final QueueAsyncClient transactionNotificationRequestedQueueAsyncClient;
+
+    private final int transientQueuesTTLSeconds;
 
     @Autowired
     public TransactionRequestUserReceiptHandler(
@@ -39,11 +41,13 @@ public class TransactionRequestUserReceiptHandler
             TransactionsUtils transactionsUtils,
             @Qualifier(
                 "transactionNotificationRequestedQueueAsyncClient"
-            ) QueueAsyncClient transactionNotificationRequestedQueueAsyncClient
+            ) QueueAsyncClient transactionNotificationRequestedQueueAsyncClient,
+            @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds
     ) {
         this.userReceiptAddedEventRepository = userReceiptAddedEventRepository;
         this.transactionsUtils = transactionsUtils;
         this.transactionNotificationRequestedQueueAsyncClient = transactionNotificationRequestedQueueAsyncClient;
+        this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
     }
 
     @Override
@@ -101,7 +105,7 @@ public class TransactionRequestUserReceiptHandler
                                             .sendMessageWithResponse(
                                                     BinaryData.fromObject(userReceiptEvent),
                                                     Duration.ZERO,
-                                                    null
+                                                    Duration.ofSeconds(transientQueuesTTLSeconds)
                                             ).doOnError(
                                                     exception -> log.error(
                                                             "Error to generate event {} for transactionId {} - error {}",

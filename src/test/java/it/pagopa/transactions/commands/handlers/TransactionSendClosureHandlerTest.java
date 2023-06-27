@@ -34,6 +34,8 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -84,7 +86,10 @@ class TransactionSendClosureHandlerTest {
     private static final int SOFT_TIMEOUT_OFFSET = 10;
     private static final int RETRY_TIMEOUT_INTERVAL = 5;
 
-    private static final String ECOMMERCE_RRN = "rrn";
+    private final int transientQueueEventsTtlSeconds = 30;
+
+    @Captor
+    private ArgumentCaptor<Duration> durationArgumentCaptor;
 
     private final TransactionSendClosureHandler transactionSendClosureHandler = new TransactionSendClosureHandler(
             transactionEventStoreRepository,
@@ -98,10 +103,13 @@ class TransactionSendClosureHandlerTest {
             RETRY_TIMEOUT_INTERVAL,
             refundQueueAsyncClient,
             transactionsUtils,
-            authRequestDataUtils
+            authRequestDataUtils,
+            transientQueueEventsTtlSeconds
     );
 
     private final TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
+
+    private final String ECOMMERCE_RRN = transactionId.value().substring(0, 7);
 
     private static MockedStatic<OffsetDateTime> offsetDateTimeMockedStatic;
 
@@ -128,14 +136,15 @@ class TransactionSendClosureHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
-        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
+        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> paymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
                         paymentToken.value(),
                         rptId.value(),
                         description.value(),
                         amount.value(),
                         null,
-                        List.of(new PaymentTransferInformation("77777777777", false, 100, null))
+                        List.of(new PaymentTransferInformation("77777777777", false, 100, null)),
+                        false
                 )
         );
 
@@ -144,7 +153,7 @@ class TransactionSendClosureHandlerTest {
         String idCart = "idCart";
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
-                PaymentNotices.stream().map(
+                paymentNotices.stream().map(
                         paymentNotice -> new PaymentNotice(
                                 new PaymentToken(paymentNotice.getPaymentToken()),
                                 new RptId(paymentNotice.getRptId()),
@@ -158,7 +167,8 @@ class TransactionSendClosureHandlerTest {
                                                 100,
                                                 null
                                         )
-                                )
+                                ),
+                                paymentNotice.isAllCCP()
                         )
                 )
                         .toList(),
@@ -268,7 +278,8 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null)),
+                        false
                 )
         );
 
@@ -427,7 +438,8 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null)),
+                        false
                 )
         );
 
@@ -587,7 +599,8 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        List.of(new PaymentTransferInformation("77777777777", false, 100, null))
+                        List.of(new PaymentTransferInformation("77777777777", false, 100, null)),
+                        false
                 )
         );
 
@@ -833,7 +846,8 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null)),
+                        false
                 )
         );
 
@@ -873,7 +887,7 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
-                        null,
+                        ECOMMERCE_RRN,
                         expectedOperationTimestamp,
                         null,
                         AuthorizationResultDto.OK
@@ -949,7 +963,7 @@ class TransactionSendClosureHandlerTest {
                                         OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS)
                                                 .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                 )
-                                .rrn(transactionId.value())
+                                .rrn(authorizationCompletedEvent.getData().getRrn())
                                 .totalAmount(totalAmount.toString())
                 ).transactionDetails(
                         new TransactionDetailsDto()
@@ -998,7 +1012,7 @@ class TransactionSendClosureHandlerTest {
                                                                         authorizationRequestData
                                                                                 .getPspBusinessName()
                                                                 )
-                                                ).rrn(transactionId.value())
+                                                ).rrn(ECOMMERCE_RRN)
                                 )
                                 .info(
                                         new InfoDto()
@@ -1027,7 +1041,8 @@ class TransactionSendClosureHandlerTest {
                 .thenReturn(events);
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(
-                transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
+                transactionClosureSentEventQueueClient
+                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
         ).thenReturn(queueSuccessfulResponse());
 
         Hooks.onOperatorDebug();
@@ -1051,8 +1066,9 @@ class TransactionSendClosureHandlerTest {
                                         .equals(BinaryData.fromObject(errorEvent).toByteBuffer())
                         ),
                         argThat(d -> d.compareTo(Duration.ofSeconds(RETRY_TIMEOUT_INTERVAL)) <= 0),
-                        isNull()
+                        any()
                 );
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
 
     @Test
@@ -1072,7 +1088,8 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null)),
+                        false
                 )
         );
 
@@ -1285,7 +1302,8 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any()))
                 .thenReturn(Mono.just(errorEvent));
         Mockito.when(
-                transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
+                transactionClosureSentEventQueueClient
+                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
         ).thenReturn(queueSuccessfulResponse());
 
         Hooks.onOperatorDebug();
@@ -1310,8 +1328,9 @@ class TransactionSendClosureHandlerTest {
                                         .equals(BinaryData.fromObject(errorEvent).toByteBuffer())
                         ),
                         argThat(d -> d.compareTo(Duration.ofSeconds(RETRY_TIMEOUT_INTERVAL)) <= 0),
-                        isNull()
+                        any()
                 );
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
 
     @Test
@@ -1331,7 +1350,8 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null)),
+                        false
                 )
         );
 
@@ -1371,7 +1391,7 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
-                        null,
+                        ECOMMERCE_RRN,
                         expectedOperationTimestamp,
                         null,
                         AuthorizationResultDto.OK
@@ -1450,7 +1470,7 @@ class TransactionSendClosureHandlerTest {
                                                 .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                 )
                                 .totalAmount(totalAmount.toString())
-                                .rrn(transactionId.value())
+                                .rrn(ECOMMERCE_RRN)
                 ).transactionDetails(
                         new TransactionDetailsDto()
                                 .transaction(
@@ -1498,7 +1518,7 @@ class TransactionSendClosureHandlerTest {
                                                                         authorizationRequestData
                                                                                 .getPspBusinessName()
                                                                 )
-                                                ).rrn(transactionId.value())
+                                                ).rrn(ECOMMERCE_RRN)
                                 )
                                 .info(
                                         new InfoDto()
@@ -1532,11 +1552,13 @@ class TransactionSendClosureHandlerTest {
                 .thenReturn(events);
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(
-                transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
+                transactionClosureSentEventQueueClient
+                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
         ).thenReturn(queueSuccessfulResponse());
         Mockito.when(transactionRefundedEventStoreRepository.save(any())).thenReturn(Mono.just(refundRequestedEvent));
         Mockito.when(
-                refundQueueAsyncClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
+                refundQueueAsyncClient
+                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
 
         ).thenReturn(queueSuccessfulResponse());
 
@@ -1576,6 +1598,8 @@ class TransactionSendClosureHandlerTest {
                         argThat(d -> d.compareTo(Duration.ofSeconds(RETRY_TIMEOUT_INTERVAL)) <= 0),
                         isNull()
                 );
+        durationArgumentCaptor.getAllValues()
+                .forEach(duration -> assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), duration));
     }
 
     @Test
@@ -1595,7 +1619,8 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null)),
+                        false
                 )
         );
 
@@ -1713,7 +1738,8 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(transactionRefundedEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
         Mockito.when(
-                refundQueueAsyncClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
+                refundQueueAsyncClient
+                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
         ).thenReturn(queueSuccessfulResponse());
 
         Hooks.onOperatorDebug();
@@ -1761,7 +1787,8 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null)),
+                        false
                 )
         );
 
@@ -1884,7 +1911,8 @@ class TransactionSendClosureHandlerTest {
                 .thenReturn(events);
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(
-                transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
+                transactionClosureSentEventQueueClient
+                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
         ).thenReturn(queueSuccessfulResponse());
 
         Hooks.onOperatorDebug();
@@ -1909,7 +1937,7 @@ class TransactionSendClosureHandlerTest {
                                         .equals(BinaryData.fromObject(errorEvent).toByteBuffer())
                         ),
                         argThat(d -> d.compareTo(Duration.ofSeconds(RETRY_TIMEOUT_INTERVAL)) <= 0),
-                        isNull()
+                        any()
                 );
         // check that closure event with KO status is not saved
         Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(
@@ -1919,6 +1947,7 @@ class TransactionSendClosureHandlerTest {
                                 && eventArg.getData().getResponseOutcome().equals(TransactionClosureData.Outcome.KO)
                 )
         );
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
 
     @Test
@@ -1938,7 +1967,8 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null)),
+                        false
                 )
         );
 
@@ -2155,7 +2185,8 @@ class TransactionSendClosureHandlerTest {
                 .thenReturn(events);
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(
-                transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
+                transactionClosureSentEventQueueClient
+                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
         ).thenReturn(queueSuccessfulResponse());
 
         Hooks.onOperatorDebug();
@@ -2179,8 +2210,9 @@ class TransactionSendClosureHandlerTest {
                                         .equals(BinaryData.fromObject(errorEvent).toByteBuffer())
                         ),
                         argThat(d -> d.compareTo(Duration.ofSeconds(RETRY_TIMEOUT_INTERVAL)) <= 0),
-                        isNull()
+                        any()
                 );
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
 
     @Test
@@ -2200,7 +2232,8 @@ class TransactionSendClosureHandlerTest {
                         description.value(),
                         amount.value(),
                         null,
-                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null))
+                        List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, amount.value(), null)),
+                        false
                 )
         );
 
@@ -2240,7 +2273,7 @@ class TransactionSendClosureHandlerTest {
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
-                        null,
+                        ECOMMERCE_RRN,
                         expectedOperationTimestamp,
                         null,
                         AuthorizationResultDto.OK
@@ -2315,7 +2348,7 @@ class TransactionSendClosureHandlerTest {
                                 .timestampOperation(
                                         OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS)
                                                 .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                                ).rrn(transactionId.value())
+                                ).rrn(ECOMMERCE_RRN)
                                 .totalAmount(totalAmount.toString())
                 )
                 .transactionDetails(
@@ -2373,7 +2406,7 @@ class TransactionSendClosureHandlerTest {
                                                                         authorizationRequestData
                                                                                 .getPspBusinessName()
                                                                 )
-                                                ).rrn(transactionId.value())
+                                                ).rrn(ECOMMERCE_RRN)
                                 )
                                 .info(
                                         new InfoDto()
@@ -2406,7 +2439,8 @@ class TransactionSendClosureHandlerTest {
                 .thenReturn(events);
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(
-                transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
+                transactionClosureSentEventQueueClient
+                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
         ).thenReturn(queueSuccessfulResponse());
 
         Hooks.onOperatorDebug();
@@ -2430,8 +2464,9 @@ class TransactionSendClosureHandlerTest {
                                         .equals(BinaryData.fromObject(errorEvent).toByteBuffer())
                         ),
                         argThat(d -> d.compareTo(Duration.ofSeconds(RETRY_TIMEOUT_INTERVAL)) <= 0),
-                        isNull()
+                        any()
                 );
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
 
     @Test
@@ -2600,11 +2635,13 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(events);
         Mockito.when(
-                transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
+                transactionClosureSentEventQueueClient
+                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
         ).thenReturn(queueSuccessfulResponse());
         Mockito.when(transactionRefundedEventStoreRepository.save(any())).thenReturn(Mono.just(refundRequestedEvent));
         Mockito.when(
-                refundQueueAsyncClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
+                refundQueueAsyncClient
+                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
 
         ).thenReturn(queueSuccessfulResponse());
 
@@ -2636,8 +2673,10 @@ class TransactionSendClosureHandlerTest {
 
                         ),
                         eq(Duration.ZERO),
-                        isNull()
+                        any()
                 );
+        durationArgumentCaptor.getAllValues()
+                .forEach(duration -> assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), duration));
     }
 
     @Test
@@ -2816,7 +2855,8 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(events);
         Mockito.when(
-                refundQueueAsyncClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
+                refundQueueAsyncClient
+                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
         ).thenReturn(queueSuccessfulResponse());
         Mockito.when(transactionRefundedEventStoreRepository.save(any())).thenReturn(Mono.just(refundRequestedEvent));
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any()))
@@ -2847,7 +2887,7 @@ class TransactionSendClosureHandlerTest {
                                 }
                         ),
                         eq(Duration.ZERO),
-                        isNull()
+                        any()
                 );
 
         /*
@@ -2859,6 +2899,7 @@ class TransactionSendClosureHandlerTest {
                         any(),
                         isNull()
                 );
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
 
     @Test
@@ -2944,7 +2985,8 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(events);
         Mockito.when(
-                transactionClosureSentEventQueueClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
+                transactionClosureSentEventQueueClient
+                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
         ).thenReturn(queueSuccessfulResponse());
 
         /* test */
@@ -3058,7 +3100,8 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(events);
         Mockito.when(
-                refundQueueAsyncClient.sendMessageWithResponse(any(BinaryData.class), any(), any())
+                refundQueueAsyncClient
+                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
         ).thenReturn(queueSuccessfulResponse());
         Mockito.when(transactionRefundedEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any()))

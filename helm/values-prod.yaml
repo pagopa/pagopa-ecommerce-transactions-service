@@ -29,9 +29,9 @@ microservice-chart:
       NODO_READ_TIMEOUT: "10000"
       NODO_CONNECTION_TIMEOUT: "10000"
       NODO_PARALLEL_REQUESTS: "5"
-      ECOMMERCE_PAYMENT_INSTRUMENTS_URI: https://api.platform.pagopa.it/ecommerce/payment-methods-service/v1
-      ECOMMERCE_PAYMENT_INSTRUMENTS_READ_TIMEOUT: "10000"
-      ECOMMERCE_PAYMENT_INSTRUMENTS_CONNECTION_TIMEOUT: "10000"
+      ECOMMERCE_PAYMENT_METHODS_URI: https://api.platform.pagopa.it/ecommerce/payment-methods-service/v1
+      ECOMMERCE_PAYMENT_METHODS_READ_TIMEOUT: "10000"
+      ECOMMERCE_PAYMENT_METHODS_CONNECTION_TIMEOUT: "10000"
       PAYMENT_TRANSACTIONS_GATEWAY_URI: https://api.platform.pagopa.it/payment-transactions-gateway/internal/v1
       PAYMENT_TRANSACTIONS_GATEWAY_READ_TIMEOUT: "10000"
       PAYMENT_TRANSACTIONS_GATEWAY_CONNECTION_TIMEOUT: "10000"
@@ -43,6 +43,7 @@ microservice-chart:
       TRANSACTION_CLOSE_PAYMENT_QUEUE_NAME: pagopa-p-weu-ecommerce-transactions-close-payment-queue
       TRANSACTION_REFUND_QUEUE_NAME: pagopa-p-weu-ecommerce-transactions-refund-queue
       TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-p-weu-ecommerce-transaction-notifications-queue
+      TRANSIENT_QUEUES_TTL_SECONDS: "2592000"
       PAYMENT_TOKEN_VALIDITY_TIME: "900"
       TRANSACTIONS_RETRY_OFFSET: "60"
       CLOSURE_RETRY_INTERVAL: "30"
@@ -55,10 +56,14 @@ microservice-chart:
         { VISA:'https://checkout.pagopa.it/assets/creditcard/carta_visa.png',  MASTERCARD:'https://checkout.pagopa.it/assets/creditcard/carta_mc.png', DINERS:'https://checkout.pagopa.it/assets/creditcard/carta_diners.png', MAESTRO:'https://checkout.pagopa.it/assets/creditcard/carta_maestro.png', AMEX:'https://checkout.pagopa.it/assets/creditcard/carta_amex.png', UNKNOWN:'https://checkout.pagopa.it/assets/creditcard/generic.png' }
 
       SERVER_ERROR_INCLUDE_STACKTRACE: "never"
-      ELASTIC_APM_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
-      ELASTIC_APM_APPLICATION_PACKAGES: it.pagopa.ecommerce.transactions
-      ELASTIC_APM_SERVER_URL: http://quickstart-apm-http.elastic-system.svc:8200
-      ELASTIC_APM_LOG_SENDING: 'true'
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-blue,deployment.environment=prod"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.elastic-system.svc:4317"
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_LOGS_EXPORTER: none
+      OTEL_TRACES_SAMPLER: "always_on"
+      ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
+      ECS_SERVICE_ENVIRONMENT: "prod"
     envSecret:
       MONGO_PASSWORD: mongo-ecommerce-password
       REDIS_PASSWORD: redis-ecommerce-password
@@ -66,23 +71,24 @@ microservice-chart:
       PAYMENT_TRANSACTIONS_GATEWAY_API_KEY: payment-transactions-gateway-api-key
       JWT_SECRET: sessions-jwt-secret
       PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
-      ELASTIC_APM_SECRET_TOKEN: elastic-apm-secret-token
+      OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
+      ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.16.2"
+    tag: "0.19.15"
     pullPolicy: Always
   livenessProbe:
     httpGet:
       path: /actuator/health/liveness
       port: 8080
-    initialDelaySeconds: 80
+    initialDelaySeconds: 60
     failureThreshold: 6
     periodSeconds: 10
   readinessProbe:
     httpGet:
       path: /actuator/health/readiness
       port: 8080
-    initialDelaySeconds: 80
+    initialDelaySeconds: 60
     failureThreshold: 6
     periodSeconds: 10
   service:
@@ -137,9 +143,9 @@ microservice-chart:
     NODO_READ_TIMEOUT: "10000"
     NODO_CONNECTION_TIMEOUT: "10000"
     NODO_PARALLEL_REQUESTS: "5"
-    ECOMMERCE_PAYMENT_INSTRUMENTS_URI: https://api.platform.pagopa.it/ecommerce/payment-methods-service/v1
-    ECOMMERCE_PAYMENT_INSTRUMENTS_READ_TIMEOUT: "10000"
-    ECOMMERCE_PAYMENT_INSTRUMENTS_CONNECTION_TIMEOUT: "10000"
+    ECOMMERCE_PAYMENT_METHODS_URI: https://api.platform.pagopa.it/ecommerce/payment-methods-service/v1
+    ECOMMERCE_PAYMENT_METHODS_READ_TIMEOUT: "10000"
+    ECOMMERCE_PAYMENT_METHODS_CONNECTION_TIMEOUT: "10000"
     PAYMENT_TRANSACTIONS_GATEWAY_URI: https://api.platform.pagopa.it/payment-transactions-gateway/internal/v1
     PAYMENT_TRANSACTIONS_GATEWAY_READ_TIMEOUT: "10000"
     PAYMENT_TRANSACTIONS_GATEWAY_CONNECTION_TIMEOUT: "10000"
@@ -151,6 +157,7 @@ microservice-chart:
     TRANSACTION_CLOSE_PAYMENT_QUEUE_NAME: pagopa-p-weu-ecommerce-transactions-close-payment-queue
     TRANSACTION_REFUND_QUEUE_NAME: pagopa-p-weu-ecommerce-transactions-refund-queue
     TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-p-weu-ecommerce-transaction-notifications-queue
+    TRANSIENT_QUEUES_TTL_SECONDS: "2592000"
     PAYMENT_TOKEN_VALIDITY_TIME: "900"
     TRANSACTIONS_RETRY_OFFSET: "60"
     CLOSURE_RETRY_INTERVAL: "30"
@@ -163,10 +170,14 @@ microservice-chart:
       { VISA:'https://checkout.pagopa.it/assets/creditcard/carta_visa.png',  MASTERCARD:'https://checkout.pagopa.it/assets/creditcard/carta_mc.png', DINERS:'https://checkout.pagopa.it/assets/creditcard/carta_diners.png', MAESTRO:'https://checkout.pagopa.it/assets/creditcard/carta_maestro.png', AMEX:'https://checkout.pagopa.it/assets/creditcard/carta_amex.png', UNKNOWN:'https://checkout.pagopa.it/assets/creditcard/generic.png' }
 
     SERVER_ERROR_INCLUDE_STACKTRACE: "never"
-    ELASTIC_APM_SERVICE_NAME: pagopa-ecommerce-transactions-service
-    ELASTIC_APM_APPLICATION_PACKAGES: it.pagopa.ecommerce.transactions
-    ELASTIC_APM_SERVER_URL: http://quickstart-apm-http.elastic-system.svc:8200
-    ELASTIC_APM_LOG_SENDING: 'true'
+    OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service,deployment.environment=prod"
+    OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.elastic-system.svc:4317"
+    OTEL_TRACES_EXPORTER: otlp
+    OTEL_METRICS_EXPORTER: otlp
+    OTEL_LOGS_EXPORTER: none
+    OTEL_TRACES_SAMPLER: "always_on"
+    ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service
+    ECS_SERVICE_ENVIRONMENT: "prod"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password
@@ -176,7 +187,8 @@ microservice-chart:
     PAYMENT_TRANSACTIONS_GATEWAY_API_KEY: payment-transactions-gateway-api-key
     JWT_SECRET: sessions-jwt-secret
     PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
-    ELASTIC_APM_SECRET_TOKEN: elastic-apm-secret-token
+    OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
+    ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
   keyvault:
     name: "pagopa-p-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"

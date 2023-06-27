@@ -14,6 +14,8 @@ tags:
 externalDocs:
   url: https://pagopa.atlassian.net/wiki/spaces/I/pages/492339720/pagoPA+eCommerce+Design+Review
   description: Design review
+servers:
+  - url: https://api.platform.pagopa.it/transactions-service
 paths:
   /transactions:
     post:
@@ -313,15 +315,20 @@ components:
             $ref: '#/components/schemas/Transfer'
           minItems: 1
           maxItems: 5
+        isAllCCP:
+          type: boolean
+          description: Flag for poste psp enabling in gec request
       required:
         - rptId
         - amount
         - transferList
+        - isAllCCP
       example:
         rptId: "77777777777302012387654312384"
         paymentToken: "paymentToken1"
         reason: "reason1"
         amount: 600
+        isAllCCP: false
         transferList:
           - paFiscalCode: "77777777777"
             digitalStamp: false
@@ -437,6 +444,9 @@ components:
           type: string
           enum: [IT, EN, FR, DE, SL]
           description: Requested language
+        isAllCCP:
+          type: boolean
+          description: Check flag for psp validation
         details:
           description: Additional payment authorization details. Must match the correct format for the chosen payment method.
           oneOf:
@@ -454,6 +464,7 @@ components:
         - pspId
         - language
         - details
+        - isAllCCP
     PostePayAuthRequestDetails:
       type: object
       description: Additional payment authorization details for the PostePay payment method
@@ -642,6 +653,7 @@ components:
               enum:
                 - OK
                 - KO
+                - NOT_RECEIVED
             authorizationCode:
               type: string
             authorizationErrorCode:

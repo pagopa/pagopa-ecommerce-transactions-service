@@ -3,39 +3,8 @@ package it.pagopa.transactions.controllers;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
-import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
-import it.pagopa.generated.transactions.server.model.AddUserReceiptResponseDto;
-import it.pagopa.generated.transactions.server.model.ClientIdDto;
-import it.pagopa.generated.transactions.server.model.FaultCategoryDto;
-import it.pagopa.generated.transactions.server.model.GatewayFaultDto;
-import it.pagopa.generated.transactions.server.model.GatewayFaultPaymentProblemJsonDto;
-import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
-import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
-import it.pagopa.generated.transactions.server.model.PartyConfigurationFaultDto;
-import it.pagopa.generated.transactions.server.model.PartyConfigurationFaultPaymentProblemJsonDto;
-import it.pagopa.generated.transactions.server.model.PartyTimeoutFaultDto;
-import it.pagopa.generated.transactions.server.model.PartyTimeoutFaultPaymentProblemJsonDto;
-import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
-import it.pagopa.generated.transactions.server.model.PaymentStatusFaultDto;
-import it.pagopa.generated.transactions.server.model.PaymentStatusFaultPaymentProblemJsonDto;
-import it.pagopa.generated.transactions.server.model.ProblemJsonDto;
-import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
-import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
-import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
-import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
-import it.pagopa.generated.transactions.server.model.ValidationFaultDto;
-import it.pagopa.generated.transactions.server.model.ValidationFaultPaymentProblemJsonDto;
-import it.pagopa.transactions.exceptions.AlreadyProcessedException;
-import it.pagopa.transactions.exceptions.BadGatewayException;
-import it.pagopa.transactions.exceptions.GatewayTimeoutException;
-import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
-import it.pagopa.transactions.exceptions.InvalidRequestException;
-import it.pagopa.transactions.exceptions.JWTTokenGenerationException;
-import it.pagopa.transactions.exceptions.NodoErrorException;
-import it.pagopa.transactions.exceptions.NotImplementedException;
-import it.pagopa.transactions.exceptions.TransactionAmountMismatchException;
-import it.pagopa.transactions.exceptions.TransactionNotFoundException;
-import it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException;
+import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.TransactionsService;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -109,7 +78,7 @@ public class TransactionsController implements TransactionsApi {
                                                                        ServerWebExchange exchange
     ) {
         return transactionsService.getTransactionInfo(transactionId)
-                .doOnEach(t -> log.info("getTransactionInfo for transactionId: {} ", transactionId))
+                .doOnNext(t -> log.info("getTransactionInfo for transactionId: {} ", transactionId))
                 .map(ResponseEntity::ok);
     }
 
@@ -121,7 +90,7 @@ public class TransactionsController implements TransactionsApi {
                                                                                                  ServerWebExchange exchange
     ) {
         return requestAuthorizationRequestDto
-                .doOnEach(t -> log.info("requestTransactionAuthorization for transactionId: {} ", transactionId))
+                .doOnNext(t -> log.info("requestTransactionAuthorization for transactionId: {} ", transactionId))
                 .flatMap(
                         requestAuthorizationRequest -> transactionsService
                                 .requestTransactionAuthorization(transactionId, xPgsId, requestAuthorizationRequest)
@@ -136,7 +105,7 @@ public class TransactionsController implements TransactionsApi {
                                                                                    ServerWebExchange exchange
     ) {
         return updateAuthorizationRequestDto
-                .doOnEach(t -> log.info("updateTransactionAuthorization for transactionId: {} ", transactionId))
+                .doOnNext(t -> log.info("updateTransactionAuthorization for transactionId: {} ", transactionId))
                 .flatMap(
                         updateAuthorizationRequest -> transactionsService
                                 .updateTransactionAuthorization(transactionId, updateAuthorizationRequest)
@@ -151,7 +120,7 @@ public class TransactionsController implements TransactionsApi {
                                                                           ServerWebExchange exchange
     ) {
         return addUserReceiptRequestDto
-                .doOnEach(t -> log.info("addUserReceipt for transactionId: {} ", transactionId))
+                .doOnNext(t -> log.info("addUserReceipt for transactionId: {} ", transactionId))
                 .flatMap(
                         addUserReceiptRequest -> transactionsService
                                 .addUserReceipt(transactionId, addUserReceiptRequest)
@@ -293,6 +262,27 @@ public class TransactionsController implements TransactionsApi {
                 exception.getMessage(),
                 exception.getRequestAmount(),
                 exception.getTransactionAmount()
+        );
+        HttpStatus httpStatus = HttpStatus.CONFLICT;
+        return new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(httpStatus.value())
+                        .title(httpStatus.getReasonPhrase())
+                        .detail("Invalid request: %s".formatted(exception.getMessage())),
+                httpStatus
+        );
+    }
+
+    @ExceptionHandler(PaymentNoticeAllCCPMismatchException.class)
+    ResponseEntity<ProblemJsonDto> paymentNoticeAllCCPMismatchErrorHandler(
+                                                                           PaymentNoticeAllCCPMismatchException exception
+    ) {
+        log.warn(
+                "Got invalid input: {}. RptID: [{}] request allCCP: [{}], payment notice allCCP: [{}]",
+                exception.getMessage(),
+                exception.getRptId(),
+                exception.getRequestAllCCP(),
+                exception.getPaymentNoticeAllCCP()
         );
         HttpStatus httpStatus = HttpStatus.CONFLICT;
         return new ResponseEntity<>(
