@@ -19,10 +19,14 @@ public class EcsEncoderLogMasker extends EcsEncoder {
     private Pattern patternString;
     private final List<String> maskPatterns = new ArrayList<>();
 
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
     public EcsEncoderLogMasker() {
         this.objectMapper = new ObjectMapper();
+    }
+
+    EcsEncoderLogMasker(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
     }
 
     public void addMaskPattern(String maskPattern) {

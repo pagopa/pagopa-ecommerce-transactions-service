@@ -11,7 +11,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
@@ -30,8 +29,7 @@ class EcsEncoderExceptionTest {
     @Test
     void testPatternMatchReadException() throws IOException {
         Mockito.when(objectMapperMock.readTree(anyString())).thenThrow(JsonProcessingException.class);
-        EcsEncoderLogMasker maskedEcsEncoder = new EcsEncoderLogMasker();
-        ReflectionTestUtils.setField(maskedEcsEncoder, "objectMapper", objectMapperMock);
+        EcsEncoderLogMasker maskedEcsEncoder = new EcsEncoderLogMasker(objectMapperMock);
         LoggerContext loggerContext = new LoggerContext();
 
         maskedEcsEncoder.addMaskPattern("([\\d+]{3,20})");
@@ -68,8 +66,7 @@ class EcsEncoderExceptionTest {
         String clearLog = new String(encodedLog, StandardCharsets.UTF_8);
         Mockito.when(objectMapperMock.readTree(anyString())).thenReturn(new ObjectMapper().readTree(clearLog));
         Mockito.when(objectMapperMock.writeValueAsString(any())).thenThrow(JsonProcessingException.class);
-        EcsEncoderLogMasker maskedEcsEncoder = new EcsEncoderLogMasker();
-        ReflectionTestUtils.setField(maskedEcsEncoder, "objectMapper", objectMapperMock);
+        EcsEncoderLogMasker maskedEcsEncoder = new EcsEncoderLogMasker(objectMapperMock);
         maskedEcsEncoder.addMaskPattern("([\\d+]{3,20})");
         maskedEcsEncoder.setContext(loggerContext);
         maskedEcsEncoder.start();
