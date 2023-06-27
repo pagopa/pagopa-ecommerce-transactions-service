@@ -2,7 +2,11 @@ package it.pagopa.transactions.utils;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.elastic.logging.logback.EcsEncoder;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,6 +19,16 @@ public class EcsEncoderLogMasker extends EcsEncoder {
     private Pattern patternString;
     private final List<String> maskPatterns = new ArrayList<>();
 
+    private final ObjectMapper objectMapper;
+
+    public EcsEncoderLogMasker() {
+        this.objectMapper = new ObjectMapper();
+    }
+
+    EcsEncoderLogMasker(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
+
     public void addMaskPattern(String maskPattern) {
         maskPatterns.add(maskPattern);
         patternString = Pattern.compile(String.join("|", maskPatterns), Pattern.MULTILINE);
@@ -24,7 +38,14 @@ public class EcsEncoderLogMasker extends EcsEncoder {
     public byte[] encode(ILoggingEvent event) {
         byte[] encodedLog = super.encode(event);
         String clearLog = new String(encodedLog, StandardCharsets.UTF_8);
-        return maskMessage(clearLog).getBytes(StandardCharsets.UTF_8);
+        try {
+            JsonNode node = objectMapper.readTree(clearLog);
+            String maskedMessage = maskMessage(node.get("message").asText());
+            ((ObjectNode) node).put("message", maskedMessage);
+            return objectMapper.writeValueAsString(node).getBytes(StandardCharsets.UTF_8);
+        } catch (IOException ex) {
+            return maskMessage(clearLog).getBytes(StandardCharsets.UTF_8);
+        }
     }
 
     private String maskMessage(String message) {
