@@ -142,18 +142,18 @@ stages:
   - stage: "Build_release_candidate"
     displayName: 'Build release candidate'
     dependsOn: [ ]
-    condition:
-      and(
-      succeeded(),
-      eq(${{parameters.UAT_PROD_DEPLOY}}, true),
-      or(
-      eq(variables['Build.SourceBranch'], 'refs/heads/perf-tests-mock-apim-no-app-insight'),
-      and(
-      startsWith(variables['Build.SourceBranch'], 'refs/tags'),
-      endsWith(variables['Build.SourceBranch'], '-RELEASE')
-      )
-      )
-      )
+    #condition:
+    #  and(
+    #  succeeded(),
+    #  eq(${{parameters.UAT_PROD_DEPLOY}}, true),
+    #  or(
+    #  eq(variables['Build.SourceBranch'], 'refs/heads/main'),
+    #  and(
+    #  startsWith(variables['Build.SourceBranch'], 'refs/tags'),
+    #  endsWith(variables['Build.SourceBranch'], '-RELEASE')
+    #  )
+    #  )
+    #  )
     jobs:
       - job: "build"
         displayName: 'Build UAT service beta'
@@ -259,7 +259,7 @@ stages:
                   gitEmail: $(GIT_EMAIL)
                   gitUsername: $(GIT_USERNAME)
                   gitHubConnection: $(GITHUB_CONNECTION)
-                  release_branch: perf-tests-mock-apim-no-app-insight
+                  release_branch: main
                   semver_chart: '${{ parameters.RELEASE_CHART_SEMVER }}'
                   semver: '${{ parameters.RELEASE_SEMVER }}'
           - template: azure-templates/chart-current-version.yml
