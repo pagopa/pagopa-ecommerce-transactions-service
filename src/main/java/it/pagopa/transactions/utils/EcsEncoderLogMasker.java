@@ -42,7 +42,7 @@ public class EcsEncoderLogMasker extends EcsEncoder {
             JsonNode node = objectMapper.readTree(clearLog);
             String maskedMessage = maskMessage(node.get("message").asText());
             ((ObjectNode) node).put("message", maskedMessage);
-            return objectMapper.writeValueAsString(node).getBytes(StandardCharsets.UTF_8);
+            return objectMapper.writeValueAsString(node).concat("\n").getBytes(StandardCharsets.UTF_8);
         } catch (IOException ex) {
             return maskMessage(clearLog).getBytes(StandardCharsets.UTF_8);
         }
