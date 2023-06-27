@@ -537,7 +537,7 @@ stages:
     condition: |
       and(
         eq(${{parameters.UAT_PROD_DEPLOY}}, true),
-        in(dependencies.Build_PROD_Green.result, 'Succeeded'),
+        eq(dependencies.Build_PROD_Green.result, 'Succeeded'),
         in(dependencies.Release.result, 'Succeeded', 'Skipped')
       )
     variables:
