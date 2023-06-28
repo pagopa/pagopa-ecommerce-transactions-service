@@ -422,7 +422,6 @@ components:
           example: idCartFromCreditorInstitution
       required:
         - transactionId
-        - amountTotal
         - status
         - payments
         - clientId

@@ -7,5 +7,5 @@ output "subscription_id" {
 }
 
 output "client_id" {
-  value = azuread_service_principal.main.object_id
+  value = azuread_service_principal.main.application_id
 }
