@@ -4,6 +4,12 @@ resource "azurerm_role_assignment" "main_terraform_subscription" {
   principal_id         = azuread_service_principal.main.object_id
 }
 
+resource "azurerm_role_assignment" "main_terraform_storage_account_tfstate_app" {
+  scope                = data.azurerm_storage_account.tfstate_app.id
+  role_definition_name = "Contributor"
+  principal_id         = azuread_service_principal.main.object_id
+}
+
 resource "azurerm_role_assignment" "main_terraform_resource_group_dashboards" {
   scope                = data.azurerm_resource_group.dashboards.id
   role_definition_name = "Contributor"
