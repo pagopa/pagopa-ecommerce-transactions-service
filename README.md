@@ -30,6 +30,7 @@ These are all environment variables needed by the application:
 | NOTIFICATIONS_SERVICE_CONNECTION_TIMEOUT       |     | Timeout for establishing connections towards Notifications service                                         | number |         |
 | NOTIFICATIONS_SERVICE_API_KEY                  |     | Notifications service API Key                                                                              | string |         |
 | PAYMENT_TOKEN_VALIDITY_TIME                    |     | Validity time in seconds of a payment token                                                                | number |         |
+| ECOMMERCE_STORAGE_TRANSIENT_CONNECTION_STRING  |     | Transient queue connection string                                                                          | string |         |
 | TRANSACTION_EXPIRATION_QUEUE_NAME              |     | Name of the queue for transaction expiration for activated transactions                                    | string |         |
 | TRANSACTION_CLOSE_PAYMENT_RETRY_QUEUE_NAME     |     | Name of the retry queue for closure error events                                                           | string |         |
 | TRANSACTION_CLOSE_PAYMENT_QUEUE_NAME           |     | Name of the queue for close payment events                                                                 | string |         |
