@@ -29,7 +29,6 @@ public class TracingUtils {
 
     public record TracingContext(
             @NonNull Span span,
-            @NonNull Scope scope,
             @NonNull TracingInfo tracingInfo
     ) {
     }
@@ -40,8 +39,10 @@ public class TracingUtils {
     ) {
         return Mono.using(
                 () -> {
-                    Span span = tracer.spanBuilder(spanName).setSpanKind(SpanKind.PRODUCER).startSpan();
-                    Scope scope = span.makeCurrent();
+                    Span span = tracer.spanBuilder(spanName)
+                            .setSpanKind(SpanKind.PRODUCER)
+                            .setParent(Context.current().with(Span.current()))
+                            .startSpan();
 
                     HashMap<String, String> rawTracingInfo = new HashMap<>();
                     openTelemetry.getPropagators().getTextMapPropagator().inject(
@@ -60,16 +61,10 @@ public class TracingUtils {
                             rawTracingInfo.get("baggage")
                     );
 
-                    return new TracingContext(span, scope, tracingInfo);
+                    return new TracingContext(span, tracingInfo);
                 },
                 tracingContext -> traced.apply(tracingContext.tracingInfo),
-                tracingContext -> {
-                    Span span = tracingContext.span;
-                    Scope scope = tracingContext.scope;
-
-                    scope.close();
-                    span.end();
-                }
+                tracingContext -> tracingContext.span.end()
         );
     }
 }
