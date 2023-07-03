@@ -6,6 +6,7 @@ import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.EuroUtils;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Request;
+import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Response;
 import it.pagopa.generated.transactions.model.CtQrCode;
 import it.pagopa.generated.transactions.model.StOutcome;
 import it.pagopa.transactions.client.NodeForPspClient;
@@ -14,6 +15,7 @@ import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
 import it.pagopa.transactions.exceptions.NodoErrorException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -38,6 +40,9 @@ public class NodoOperations {
     it.pagopa.generated.transactions.model.ObjectFactory objectFactoryNodeForPsp;
     @Autowired
     NodoConfig nodoConfig;
+
+    @Value("${nodo.lightAllCCP}")
+    private boolean lightAllCCPCheck;
 
     public Mono<PaymentRequestInfo> activatePaymentRequest(
                                                            RptId rptId,
@@ -122,26 +127,35 @@ public class NodoOperations {
                                                         transfer.getTransferCategory()
                                                 )
                                         ).toList(),
-                                response.getTransferList().getTransfer().parallelStream().allMatch(
-                                        ctTransferPSPV2 -> ctTransferPSPV2.getMetadata() != null &&
-                                                ctTransferPSPV2.getMetadata().getMapEntry().parallelStream()
-                                                        .allMatch(
-                                                                ctMapEntry -> ctMapEntry.getKey()
-                                                                        .equals("IBANAPPOGGIO")
-                                                        )
-                                                &&
-                                                (isIbanCCP(ctTransferPSPV2.getIBAN())
-                                                        ||
-                                                        ctTransferPSPV2.getMetadata().getMapEntry()
-                                                                .parallelStream()
-                                                                .anyMatch(
-                                                                        ctMapEntry -> ctMapEntry
-                                                                                .getKey()
-                                                                                .equals("IBANAPPOGGIO")
-                                                                                && isIbanCCP(ctMapEntry.getValue())
-                                                                ))
-                                )
+                                isAllCCP(response, lightAllCCPCheck)
                         )
+                );
+    }
+
+    private boolean isAllCCP(
+                             ActivatePaymentNoticeV2Response response,
+                             boolean lightAllCCPCheck
+    ) {
+        return lightAllCCPCheck
+                ? response.getTransferList().getTransfer().parallelStream().allMatch(t -> isIbanCCP(t.getIBAN()))
+                : response.getTransferList().getTransfer().parallelStream().allMatch(
+                        ctTransferPSPV2 -> ctTransferPSPV2.getMetadata() != null &&
+                                ctTransferPSPV2.getMetadata().getMapEntry().parallelStream()
+                                        .allMatch(
+                                                ctMapEntry -> ctMapEntry.getKey()
+                                                        .equals("IBANAPPOGGIO")
+                                        )
+                                &&
+                                (isIbanCCP(ctTransferPSPV2.getIBAN())
+                                        ||
+                                        ctTransferPSPV2.getMetadata().getMapEntry()
+                                                .parallelStream()
+                                                .anyMatch(
+                                                        ctMapEntry -> ctMapEntry
+                                                                .getKey()
+                                                                .equals("IBANAPPOGGIO")
+                                                                && isIbanCCP(ctMapEntry.getValue())
+                                                ))
                 );
     }
 
