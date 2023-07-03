@@ -41,7 +41,7 @@ public class NodoOperations {
     @Autowired
     NodoConfig nodoConfig;
 
-    @Value("${nodo.lightAllCCP}")
+    @Value("${nodo.lightAllCCPCheck}")
     private boolean lightAllCCPCheck;
 
     public Mono<PaymentRequestInfo> activatePaymentRequest(

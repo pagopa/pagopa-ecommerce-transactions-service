@@ -25,7 +25,6 @@ import static org.mockito.ArgumentMatchers.argThat;
 
 @ExtendWith(MockitoExtension.class)
 class NodoOperationsTest {
-
     @InjectMocks
     private NodoOperations nodoOperations;
 
