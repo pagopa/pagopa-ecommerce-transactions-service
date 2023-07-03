@@ -6,6 +6,8 @@ import it.pagopa.ecommerce.commons.domain.v1.PaymentTransferInfo;
 import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
+import it.pagopa.ecommerce.commons.queues.TracingUtils;
+import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;

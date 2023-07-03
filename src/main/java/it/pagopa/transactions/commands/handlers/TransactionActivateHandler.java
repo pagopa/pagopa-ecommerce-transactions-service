@@ -1,23 +1,22 @@
 package it.pagopa.transactions.commands.handlers;
 
 import co.elastic.apm.api.ElasticApm;
-import com.azure.core.util.BinaryData;
+import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
+import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
-import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.JwtTokenUtils;
 import it.pagopa.transactions.utils.NodoOperations;
-import it.pagopa.transactions.utils.TracingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
