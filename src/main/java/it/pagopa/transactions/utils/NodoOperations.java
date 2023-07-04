@@ -33,6 +33,7 @@ public class NodoOperations {
 
     private static final String ALPHANUMERICS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     private static final SecureRandom RANDOM = new SecureRandom();
+    private static final String IBANAPPOGGIO = "IBANAPPOGGIO";
 
     @Autowired
     NodeForPspClient nodeForPspClient;
@@ -148,7 +149,7 @@ public class NodoOperations {
                                 ctTransferPSPV2.getMetadata().getMapEntry().parallelStream()
                                         .allMatch(
                                                 ctMapEntry -> ctMapEntry.getKey()
-                                                        .equals("IBANAPPOGGIO")
+                                                        .equals(IBANAPPOGGIO)
                                         )
                                 &&
                                 (isIbanCCP(ctTransferPSPV2.getIBAN())
@@ -158,7 +159,7 @@ public class NodoOperations {
                                                 .anyMatch(
                                                         ctMapEntry -> ctMapEntry
                                                                 .getKey()
-                                                                .equals("IBANAPPOGGIO")
+                                                                .equals(IBANAPPOGGIO)
                                                                 && isIbanCCP(ctMapEntry.getValue())
                                                 ))
                 );

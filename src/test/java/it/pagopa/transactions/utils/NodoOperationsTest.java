@@ -25,6 +25,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 
 @ExtendWith(MockitoExtension.class)
 class NodoOperationsTest {
+    public static final String IBANAPPOGGIO = "IBANAPPOGGIO";
     @InjectMocks
     private NodoOperations nodoOperations;
 
@@ -149,7 +150,7 @@ class NodoOperationsTest {
         ctTransferPSPV2.setRemittanceInformation("test1");
         CtMetadata metadata = new CtMetadata();
         CtMapEntry ctMapEntry = new CtMapEntry();
-        ctMapEntry.setKey("IBANAPPOGGIO");
+        ctMapEntry.setKey(IBANAPPOGGIO);
         ctMapEntry.setValue("IT41B0000100899876113235567");
         metadata.getMapEntry().add(ctMapEntry);
         ctTransferPSPV2.setMetadata(metadata);
@@ -171,7 +172,7 @@ class NodoOperationsTest {
         ctTransferPSPV2_1.setRemittanceInformation("test1");
         CtMetadata metadata_1 = new CtMetadata();
         CtMapEntry ctMapEntry_1 = new CtMapEntry();
-        ctMapEntry_1.setKey("IBANAPPOGGIO");
+        ctMapEntry_1.setKey(IBANAPPOGGIO);
         ctMapEntry_1.setValue("IT41B0000100899876113235567");
         metadata_1.getMapEntry().add(ctMapEntry_1);
         ctTransferPSPV2_1.setMetadata(metadata_1);
@@ -247,7 +248,7 @@ class NodoOperationsTest {
         ctTransferPSPV2.setRemittanceInformation("test1");
         CtMetadata metadata = new CtMetadata();
         CtMapEntry ctMapEntry = new CtMapEntry();
-        ctMapEntry.setKey("IBANAPPOGGIO");
+        ctMapEntry.setKey(IBANAPPOGGIO);
         ctMapEntry.setValue("IT41B0000100899876113235567");
         metadata.getMapEntry().add(ctMapEntry);
         ctTransferPSPV2.setMetadata(metadata);
@@ -269,7 +270,7 @@ class NodoOperationsTest {
         ctTransferPSPV2_1.setRemittanceInformation("test1");
         CtMetadata metadata_1 = new CtMetadata();
         CtMapEntry ctMapEntry_1 = new CtMapEntry();
-        ctMapEntry_1.setKey("IBANAPPOGGIO");
+        ctMapEntry_1.setKey(IBANAPPOGGIO);
         ctMapEntry_1.setValue("IT41B00001008998761132355672");
         metadata_1.getMapEntry().add(ctMapEntry_1);
         ctTransferPSPV2_1.setMetadata(metadata_1);
@@ -591,7 +592,7 @@ class NodoOperationsTest {
         ctTransferPSPV2.setRemittanceInformation("test1");
         CtMetadata metadata = new CtMetadata();
         CtMapEntry ctMapEntry = new CtMapEntry();
-        ctMapEntry.setKey("IBANAPPOGGIO");
+        ctMapEntry.setKey(IBANAPPOGGIO);
         ctMapEntry.setValue("IT41B0000100899876113235567");
         metadata.getMapEntry().add(ctMapEntry);
         ctTransferPSPV2.setMetadata(metadata);
@@ -604,7 +605,7 @@ class NodoOperationsTest {
         ctTransferPSPV2_1.setRemittanceInformation("test1");
         CtMetadata metadata_1 = new CtMetadata();
         CtMapEntry ctMapEntry_1 = new CtMapEntry();
-        ctMapEntry_1.setKey("IBANAPPOGGIO");
+        ctMapEntry_1.setKey(IBANAPPOGGIO);
         ctMapEntry_1.setValue("IT20U0760100899876113235567");
         metadata_1.getMapEntry().add(ctMapEntry_1);
         ctTransferPSPV2_1.setMetadata(metadata_1);
@@ -681,7 +682,7 @@ class NodoOperationsTest {
         ctTransferPSPV2.setRemittanceInformation("test1");
         CtMetadata metadata = new CtMetadata();
         CtMapEntry ctMapEntry = new CtMapEntry();
-        ctMapEntry.setKey("IBANAPPOGGIO");
+        ctMapEntry.setKey(IBANAPPOGGIO);
         ctMapEntry.setValue("IT20U0760100899876113235567");
         metadata.getMapEntry().add(ctMapEntry);
         ctTransferPSPV2.setMetadata(metadata);
@@ -703,7 +704,7 @@ class NodoOperationsTest {
         ctTransferPSPV2_1.setRemittanceInformation("test1");
         CtMetadata metadata_1 = new CtMetadata();
         CtMapEntry ctMapEntry_1 = new CtMapEntry();
-        ctMapEntry_1.setKey("IBANAPPOGGIO");
+        ctMapEntry_1.setKey(IBANAPPOGGIO);
         ctMapEntry_1.setValue("IT41B00060100899876113235567");
         metadata_1.getMapEntry().add(ctMapEntry_1);
         ctTransferPSPV2_1.setMetadata(metadata_1);
@@ -779,7 +780,7 @@ class NodoOperationsTest {
         ctTransferPSPV2.setRemittanceInformation("test1");
         CtMetadata metadata = new CtMetadata();
         CtMapEntry ctMapEntry = new CtMapEntry();
-        ctMapEntry.setKey("IBANAPPOGGIO");
+        ctMapEntry.setKey(IBANAPPOGGIO);
         ctMapEntry.setValue("IT20U0760100899876113235567");
         metadata.getMapEntry().add(ctMapEntry);
         ctTransferPSPV2.setMetadata(metadata);
@@ -801,7 +802,7 @@ class NodoOperationsTest {
         ctTransferPSPV2_1.setRemittanceInformation("test1");
         CtMetadata metadata_1 = new CtMetadata();
         CtMapEntry ctMapEntry_1 = new CtMapEntry();
-        ctMapEntry_1.setKey("IBANAPPOGGIO");
+        ctMapEntry_1.setKey(IBANAPPOGGIO);
         ctMapEntry_1.setValue("IT20U0760100899876113235567");
         metadata_1.getMapEntry().add(ctMapEntry_1);
         ctTransferPSPV2_1.setMetadata(metadata_1);
@@ -877,7 +878,7 @@ class NodoOperationsTest {
         ctTransferPSPV2.setRemittanceInformation("test1");
         CtMetadata metadata = new CtMetadata();
         CtMapEntry ctMapEntry = new CtMapEntry();
-        ctMapEntry.setKey("IBANAPPOGGIO");
+        ctMapEntry.setKey(IBANAPPOGGIO);
         ctMapEntry.setValue("IT20U0760100899876113235567");
         metadata.getMapEntry().add(ctMapEntry);
         ctTransferPSPV2.setMetadata(metadata);
@@ -975,7 +976,7 @@ class NodoOperationsTest {
         ctTransferPSPV2.setRemittanceInformation("test1");
         CtMetadata metadata = new CtMetadata();
         CtMapEntry ctMapEntry = new CtMapEntry();
-        ctMapEntry.setKey("IBANAPPOGGIO");
+        ctMapEntry.setKey(IBANAPPOGGIO);
         ctMapEntry.setValue("IT20U0760100899876113235567");
         metadata.getMapEntry().add(ctMapEntry);
         ctTransferPSPV2.setMetadata(metadata);
@@ -997,7 +998,7 @@ class NodoOperationsTest {
         ctTransferPSPV2_1.setRemittanceInformation("test1");
         CtMetadata metadata_1 = new CtMetadata();
         CtMapEntry ctMapEntry_1 = new CtMapEntry();
-        ctMapEntry_1.setKey("IBANAPPOGGIO");
+        ctMapEntry_1.setKey(IBANAPPOGGIO);
         ctMapEntry_1.setValue(null);
         metadata_1.getMapEntry().add(ctMapEntry_1);
         ctTransferPSPV2_1.setMetadata(metadata_1);
@@ -1073,7 +1074,7 @@ class NodoOperationsTest {
         ctTransferPSPV2.setRemittanceInformation("test1");
         CtMetadata metadata = new CtMetadata();
         CtMapEntry ctMapEntry = new CtMapEntry();
-        ctMapEntry.setKey("IBANAPPOGGIO");
+        ctMapEntry.setKey(IBANAPPOGGIO);
         ctMapEntry.setValue("IT20U0760");
         metadata.getMapEntry().add(ctMapEntry);
         ctTransferPSPV2.setMetadata(metadata);
@@ -1095,7 +1096,7 @@ class NodoOperationsTest {
         ctTransferPSPV2_1.setRemittanceInformation("test1");
         CtMetadata metadata_1 = new CtMetadata();
         CtMapEntry ctMapEntry_1 = new CtMapEntry();
-        ctMapEntry_1.setKey("IBANAPPOGGIO");
+        ctMapEntry_1.setKey(IBANAPPOGGIO);
         ctMapEntry_1.setValue("IT20U076010000000000089987611323556");
         metadata_1.getMapEntry().add(ctMapEntry_1);
         ctTransferPSPV2_1.setMetadata(metadata_1);
@@ -1171,7 +1172,7 @@ class NodoOperationsTest {
         ctTransferPSPV2.setRemittanceInformation("test1");
         CtMetadata metadata = new CtMetadata();
         CtMapEntry ctMapEntry = new CtMapEntry();
-        ctMapEntry.setKey("IBANAPPOGGIO");
+        ctMapEntry.setKey(IBANAPPOGGIO);
         ctMapEntry.setValue("IT41B1230100899876113235567");
         metadata.getMapEntry().add(ctMapEntry);
         ctTransferPSPV2.setMetadata(metadata);
@@ -1189,7 +1190,7 @@ class NodoOperationsTest {
         ctTransferPSPV2_1.setRemittanceInformation("test1");
         CtMetadata metadata_1 = new CtMetadata();
         CtMapEntry ctMapEntry_1 = new CtMapEntry();
-        ctMapEntry_1.setKey("IBANAPPOGGIO");
+        ctMapEntry_1.setKey(IBANAPPOGGIO);
         ctMapEntry_1.setValue("IT20U0850100899876113235567");
         metadata_1.getMapEntry().add(ctMapEntry_1);
         ctTransferPSPV2_1.setMetadata(metadata_1);
@@ -1265,7 +1266,7 @@ class NodoOperationsTest {
         ctTransferPSPV2.setRemittanceInformation("test1");
         CtMetadata metadata = new CtMetadata();
         CtMapEntry ctMapEntry = new CtMapEntry();
-        ctMapEntry.setKey("IBANAPPOGGIO");
+        ctMapEntry.setKey(IBANAPPOGGIO);
         ctMapEntry.setValue("IT41B0000100899876113235567");
         metadata.getMapEntry().add(ctMapEntry);
         ctTransferPSPV2.setMetadata(metadata);
@@ -1283,7 +1284,7 @@ class NodoOperationsTest {
         ctTransferPSPV2_1.setRemittanceInformation("test1");
         CtMetadata metadata_1 = new CtMetadata();
         CtMapEntry ctMapEntry_1 = new CtMapEntry();
-        ctMapEntry_1.setKey("IBANAPPOGGIO");
+        ctMapEntry_1.setKey(IBANAPPOGGIO);
         ctMapEntry_1.setValue("IT20U0760100899876113235567");
         metadata_1.getMapEntry().add(ctMapEntry_1);
         ctTransferPSPV2_1.setMetadata(metadata_1);
