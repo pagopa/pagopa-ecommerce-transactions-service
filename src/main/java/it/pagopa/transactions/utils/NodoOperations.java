@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import javax.crypto.SecretKey;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
@@ -43,6 +44,10 @@ public class NodoOperations {
 
     @Value("${nodo.lightAllCCPCheck}")
     private boolean lightAllCCPCheck;
+
+    void setLightAllCCPCheck(boolean lightAllCCPCheck) {
+        this.lightAllCCPCheck = lightAllCCPCheck;
+    }
 
     public Mono<PaymentRequestInfo> activatePaymentRequest(
                                                            RptId rptId,
