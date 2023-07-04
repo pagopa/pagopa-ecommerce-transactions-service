@@ -3,9 +3,8 @@ package it.pagopa.transactions.commands.handlers;
 import com.azure.core.http.HttpHeaders;
 import com.azure.core.http.HttpRequest;
 import com.azure.core.http.rest.Response;
-import com.azure.core.util.BinaryData;
-import com.azure.storage.queue.QueueAsyncClient;
 import com.azure.storage.queue.models.SendMessageResult;
+import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData.PaymentGateway;
@@ -15,6 +14,9 @@ import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.queues.QueueEvent;
+import it.pagopa.ecommerce.commons.queues.TracingUtils;
+import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.utils.EuroUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -90,6 +92,8 @@ class TransactionSendClosureHandlerTest {
 
     private final int transientQueueEventsTtlSeconds = 30;
 
+    private final TracingUtils tracingUtils = TracingUtilsTests.getMock();
+
     @Captor
     private ArgumentCaptor<Duration> durationArgumentCaptor;
 
@@ -106,7 +110,8 @@ class TransactionSendClosureHandlerTest {
             refundQueueAsyncClient,
             transactionsUtils,
             authRequestDataUtils,
-            transientQueueEventsTtlSeconds
+            transientQueueEventsTtlSeconds,
+            tracingUtils
     );
 
     private final TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
@@ -1195,7 +1200,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(
                 transactionClosureSentEventQueueClient
-                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
+                        .sendMessageWithResponse(any(), any(), durationArgumentCaptor.capture())
         ).thenReturn(queueSuccessfulResponse());
 
         Hooks.onOperatorDebug();
@@ -1215,8 +1220,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
                 .sendMessageWithResponse(
                         argThat(
-                                (BinaryData b) -> b.toByteBuffer()
-                                        .equals(BinaryData.fromObject(errorEvent).toByteBuffer())
+                                (QueueEvent<TransactionClosureErrorEvent> e) -> e.event().equals(errorEvent)
                         ),
                         argThat(d -> d.compareTo(Duration.ofSeconds(RETRY_TIMEOUT_INTERVAL)) <= 0),
                         any()
@@ -1476,7 +1480,7 @@ class TransactionSendClosureHandlerTest {
                 .thenReturn(Mono.just(errorEvent));
         Mockito.when(
                 transactionClosureSentEventQueueClient
-                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
+                        .sendMessageWithResponse(any(), any(), durationArgumentCaptor.capture())
         ).thenReturn(queueSuccessfulResponse());
 
         Hooks.onOperatorDebug();
@@ -1497,8 +1501,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
                 .sendMessageWithResponse(
                         argThat(
-                                (BinaryData b) -> b.toByteBuffer()
-                                        .equals(BinaryData.fromObject(errorEvent).toByteBuffer())
+                                (QueueEvent<TransactionClosureErrorEvent> e) -> e.event().equals(errorEvent)
                         ),
                         argThat(d -> d.compareTo(Duration.ofSeconds(RETRY_TIMEOUT_INTERVAL)) <= 0),
                         any()
@@ -1742,12 +1745,12 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(
                 transactionClosureSentEventQueueClient
-                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
+                        .sendMessageWithResponse(any(), any(), durationArgumentCaptor.capture())
         ).thenReturn(queueSuccessfulResponse());
         Mockito.when(transactionRefundedEventStoreRepository.save(any())).thenReturn(Mono.just(refundRequestedEvent));
         Mockito.when(
                 refundQueueAsyncClient
-                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
+                        .sendMessageWithResponse(any(), any(), durationArgumentCaptor.capture())
 
         ).thenReturn(queueSuccessfulResponse());
 
@@ -1768,7 +1771,7 @@ class TransactionSendClosureHandlerTest {
                 Mockito.times(1)
         ).sendMessageWithResponse(
                 argThat(
-                        (BinaryData b) -> b.toObject(TransactionRefundRequestedEvent.class).getData()
+                        (QueueEvent<TransactionRefundRequestedEvent> e) -> e.event().getData()
                                 .getStatusBeforeRefunded().equals(TransactionStatusDto.CLOSURE_ERROR)
                 ),
                 any(),
@@ -1781,8 +1784,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(0))
                 .sendMessageWithResponse(
                         argThat(
-                                (BinaryData b) -> b.toByteBuffer()
-                                        .equals(BinaryData.fromObject(errorEvent).toByteBuffer())
+                                (QueueEvent<TransactionClosureErrorEvent> e) -> e.event().equals(errorEvent)
                         ),
                         argThat(d -> d.compareTo(Duration.ofSeconds(RETRY_TIMEOUT_INTERVAL)) <= 0),
                         isNull()
@@ -1998,7 +2000,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(transactionRefundedEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
         Mockito.when(
                 refundQueueAsyncClient
-                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
+                        .sendMessageWithResponse(any(), any(), durationArgumentCaptor.capture())
         ).thenReturn(queueSuccessfulResponse());
 
         Hooks.onOperatorDebug();
@@ -2019,8 +2021,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(0))
                 .sendMessageWithResponse(
                         argThat(
-                                (BinaryData b) -> b.toByteBuffer()
-                                        .equals(BinaryData.fromObject(errorEvent).toByteBuffer())
+                                (QueueEvent<TransactionClosureErrorEvent> e) -> e.event().equals(errorEvent)
                         ),
                         argThat(d -> d.compareTo(Duration.ofSeconds(RETRY_TIMEOUT_INTERVAL)) <= 0),
                         isNull()
@@ -2241,7 +2242,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(
                 transactionClosureSentEventQueueClient
-                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
+                        .sendMessageWithResponse(any(), any(), durationArgumentCaptor.capture())
         ).thenReturn(queueSuccessfulResponse());
 
         Hooks.onOperatorDebug();
@@ -2262,8 +2263,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
                 .sendMessageWithResponse(
                         argThat(
-                                (BinaryData b) -> b.toByteBuffer()
-                                        .equals(BinaryData.fromObject(errorEvent).toByteBuffer())
+                                (QueueEvent<TransactionClosureErrorEvent> e) -> e.event().equals(errorEvent)
                         ),
                         argThat(d -> d.compareTo(Duration.ofSeconds(RETRY_TIMEOUT_INTERVAL)) <= 0),
                         any()
@@ -2529,7 +2529,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(
                 transactionClosureSentEventQueueClient
-                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
+                        .sendMessageWithResponse(any(), any(), durationArgumentCaptor.capture())
         ).thenReturn(queueSuccessfulResponse());
 
         Hooks.onOperatorDebug();
@@ -2549,8 +2549,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
                 .sendMessageWithResponse(
                         argThat(
-                                (BinaryData b) -> b.toByteBuffer()
-                                        .equals(BinaryData.fromObject(errorEvent).toByteBuffer())
+                                (QueueEvent<TransactionClosureErrorEvent> e) -> e.event().equals(errorEvent)
                         ),
                         argThat(d -> d.compareTo(Duration.ofSeconds(RETRY_TIMEOUT_INTERVAL)) <= 0),
                         any()
@@ -2798,7 +2797,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any())).thenReturn(Mono.just(errorEvent));
         Mockito.when(
                 transactionClosureSentEventQueueClient
-                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
+                        .sendMessageWithResponse(any(), any(), durationArgumentCaptor.capture())
         ).thenReturn(queueSuccessfulResponse());
 
         Hooks.onOperatorDebug();
@@ -2818,8 +2817,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
                 .sendMessageWithResponse(
                         argThat(
-                                (BinaryData b) -> b.toByteBuffer()
-                                        .equals(BinaryData.fromObject(errorEvent).toByteBuffer())
+                                (QueueEvent<TransactionClosureErrorEvent> e) -> e.event().equals(errorEvent)
                         ),
                         argThat(d -> d.compareTo(Duration.ofSeconds(RETRY_TIMEOUT_INTERVAL)) <= 0),
                         any()
@@ -3006,12 +3004,12 @@ class TransactionSendClosureHandlerTest {
                 .thenReturn(events);
         Mockito.when(
                 transactionClosureSentEventQueueClient
-                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
+                        .sendMessageWithResponse(any(), any(), durationArgumentCaptor.capture())
         ).thenReturn(queueSuccessfulResponse());
         Mockito.when(transactionRefundedEventStoreRepository.save(any())).thenReturn(Mono.just(refundRequestedEvent));
         Mockito.when(
                 refundQueueAsyncClient
-                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
+                        .sendMessageWithResponse(any(), any(), durationArgumentCaptor.capture())
 
         ).thenReturn(queueSuccessfulResponse());
 
@@ -3034,13 +3032,10 @@ class TransactionSendClosureHandlerTest {
         Mockito.verify(refundQueueAsyncClient, Mockito.times(1))
                 .sendMessageWithResponse(
                         argThat(
-                                (BinaryData b) -> {
-                                    TransactionRefundRequestedEvent e = b
-                                            .toObject(TransactionRefundRequestedEvent.class);
-                                    return e.getTransactionId().equals(transactionId.value()) && e.getData()
-                                            .getStatusBeforeRefunded().equals(TransactionStatusDto.CLOSED);
-                                }
-
+                                (
+                                 QueueEvent<TransactionRefundRequestedEvent> e
+                                ) -> e.event().getTransactionId().equals(transactionId.value()) && e.event().getData()
+                                        .getStatusBeforeRefunded().equals(TransactionStatusDto.CLOSED)
                         ),
                         eq(Duration.ZERO),
                         any()
@@ -3235,7 +3230,7 @@ class TransactionSendClosureHandlerTest {
                 .thenReturn(events);
         Mockito.when(
                 refundQueueAsyncClient
-                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
+                        .sendMessageWithResponse(any(), any(), durationArgumentCaptor.capture())
         ).thenReturn(queueSuccessfulResponse());
         Mockito.when(transactionRefundedEventStoreRepository.save(any())).thenReturn(Mono.just(refundRequestedEvent));
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any()))
@@ -3258,12 +3253,10 @@ class TransactionSendClosureHandlerTest {
         Mockito.verify(refundQueueAsyncClient, Mockito.times(1))
                 .sendMessageWithResponse(
                         argThat(
-                                (BinaryData b) -> {
-                                    TransactionRefundRequestedEvent e = b
-                                            .toObject(TransactionRefundRequestedEvent.class);
-                                    return e.getTransactionId().equals(transactionId.value()) && e.getData()
-                                            .getStatusBeforeRefunded().equals(TransactionStatusDto.CLOSURE_ERROR);
-                                }
+                                (
+                                 QueueEvent<TransactionRefundRequestedEvent> e
+                                ) -> e.event().getTransactionId().equals(transactionId.value()) && e.event().getData()
+                                        .getStatusBeforeRefunded().equals(TransactionStatusDto.CLOSURE_ERROR)
                         ),
                         eq(Duration.ZERO),
                         any()
@@ -3274,7 +3267,7 @@ class TransactionSendClosureHandlerTest {
          */
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(0))
                 .sendMessageWithResponse(
-                        any(BinaryData.class),
+                        any(),
                         any(),
                         isNull()
                 );
@@ -3405,7 +3398,7 @@ class TransactionSendClosureHandlerTest {
                 .thenReturn(events);
         Mockito.when(
                 transactionClosureSentEventQueueClient
-                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
+                        .sendMessageWithResponse(any(), any(), durationArgumentCaptor.capture())
         ).thenReturn(queueSuccessfulResponse());
 
         /* test */
@@ -3430,7 +3423,7 @@ class TransactionSendClosureHandlerTest {
         );
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(0))
                 .sendMessageWithResponse(
-                        any(BinaryData.class),
+                        any(),
                         any(),
                         any()
                 );
@@ -3563,7 +3556,7 @@ class TransactionSendClosureHandlerTest {
                 .thenReturn(events);
         Mockito.when(
                 refundQueueAsyncClient
-                        .sendMessageWithResponse(any(BinaryData.class), any(), durationArgumentCaptor.capture())
+                        .sendMessageWithResponse(any(), any(), durationArgumentCaptor.capture())
         ).thenReturn(queueSuccessfulResponse());
         Mockito.when(transactionRefundedEventStoreRepository.save(any())).thenAnswer(a -> Mono.just(a.getArgument(0)));
         Mockito.when(transactionClosureErrorEventStoreRepository.save(any()))
@@ -3582,7 +3575,7 @@ class TransactionSendClosureHandlerTest {
         Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1)).save(any());
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(0))
                 .sendMessageWithResponse(
-                        any(BinaryData.class),
+                        any(),
                         any(),
                         any()
                 );
