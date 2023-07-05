@@ -7,7 +7,6 @@ import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.configurations.NodoConfig;
 import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
 import it.pagopa.transactions.exceptions.NodoErrorException;
-import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,7 +15,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.UUID;
 
@@ -26,7 +24,6 @@ import static org.mockito.ArgumentMatchers.argThat;
 @ExtendWith(MockitoExtension.class)
 class NodoOperationsTest {
     public static final String IBANAPPOGGIO = "IBANAPPOGGIO";
-    @InjectMocks
     private NodoOperations nodoOperations;
 
     @Mock
@@ -41,8 +38,18 @@ class NodoOperationsTest {
     @Captor
     ArgumentCaptor<ActivatePaymentNoticeV2Request> activatePaymentNoticeReqArgumentCaptor;
 
+    void instantiateNodoOperations(boolean lightAllCCPCheck) {
+        nodoOperations = new NodoOperations(
+                nodeForPspClient,
+                objectFactoryNodeForPsp,
+                nodoConfig,
+                lightAllCCPCheck
+        );
+    }
+
     @Test
     void shouldActiveNM3PaymentRequest() {
+        instantiateNodoOperations(false);
         RptId rptId = new RptId("77777777777302016723749670035");
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
@@ -129,6 +136,7 @@ class NodoOperationsTest {
 
     @Test
     void shouldActiveNM3PaymentRequestWithFieldIbanAppoggioWithoutWantedABI() {
+        instantiateNodoOperations(false);
         RptId rptId = new RptId("77777777777302016723749670035");
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
@@ -227,6 +235,7 @@ class NodoOperationsTest {
 
     @Test
     void shouldActiveNM3PaymentRequestWithNotAllMatchClause() {
+        instantiateNodoOperations(false);
         RptId rptId = new RptId("77777777777302016723749670035");
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
@@ -325,7 +334,7 @@ class NodoOperationsTest {
 
     @Test
     void allCCPTrue_LightWeightCheckTrue() {
-        nodoOperations.setLightAllCCPCheck(true);
+        instantiateNodoOperations(true);
         RptId rptId = new RptId("77777777777302016723749670035");
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
@@ -403,7 +412,7 @@ class NodoOperationsTest {
 
     @Test
     void allCCPFalse_LightWeightCheckTrue_TransferWithoutIBAN() {
-        nodoOperations.setLightAllCCPCheck(true);
+        instantiateNodoOperations(true);
         RptId rptId = new RptId("77777777777302016723749670035");
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
@@ -492,7 +501,7 @@ class NodoOperationsTest {
 
     @Test
     void allCCPFalse_LightWeightCheckTrue_IbanNotValid() {
-        nodoOperations.setLightAllCCPCheck(true);
+        instantiateNodoOperations(true);
         RptId rptId = new RptId("77777777777302016723749670035");
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
@@ -570,7 +579,7 @@ class NodoOperationsTest {
 
     @Test
     void allCCPFalse_LightWeightCheckTrue_NoIbanAndIBANAPPOGGIOPresent() {
-        nodoOperations.setLightAllCCPCheck(true);
+        instantiateNodoOperations(true);
         RptId rptId = new RptId("77777777777302016723749670035");
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
@@ -661,6 +670,7 @@ class NodoOperationsTest {
 
     @Test
     void shouldActiveNM3PaymentRequestWithFieldIbanAppoggioWithOnlyOneWantedABI() {
+        instantiateNodoOperations(false);
         RptId rptId = new RptId("77777777777302016723749670035");
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
@@ -759,6 +769,7 @@ class NodoOperationsTest {
 
     @Test
     void shouldActiveNM3PaymentRequestWithBothFieldIbanAppoggioWithWantedABI() {
+        instantiateNodoOperations(false);
         RptId rptId = new RptId("77777777777302016723749670035");
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
@@ -857,6 +868,7 @@ class NodoOperationsTest {
 
     @Test
     void shouldActiveNM3PaymentRequestWithBothFieldIbanAppoggioWithUnwantedMetadata() {
+        instantiateNodoOperations(false);
         RptId rptId = new RptId("77777777777302016723749670035");
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
@@ -955,6 +967,7 @@ class NodoOperationsTest {
 
     @Test
     void shouldActiveNM3PaymentRequestIsIbanFailOnMetadata() {
+        instantiateNodoOperations(false);
         RptId rptId = new RptId("77777777777302016723749670035");
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
@@ -1053,6 +1066,7 @@ class NodoOperationsTest {
 
     @Test
     void shouldActiveNM3PaymentRequestIsIbanFailTooShort() {
+        instantiateNodoOperations(false);
         RptId rptId = new RptId("77777777777302016723749670035");
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
@@ -1151,6 +1165,7 @@ class NodoOperationsTest {
 
     @Test
     void shouldActiveNM3PaymentRequestWithBothFieldIbanAppoggioWithWantedABIOnTransferIban() {
+        instantiateNodoOperations(false);
         RptId rptId = new RptId("77777777777302016723749670035");
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
@@ -1245,6 +1260,7 @@ class NodoOperationsTest {
 
     @Test
     void shouldActiveNM3PaymentRequestWithBothFieldIbanAppoggioWithWantedABIOnTransferIbanAndIbanAppoggio() {
+        instantiateNodoOperations(false);
         RptId rptId = new RptId("77777777777302016723749670035");
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
@@ -1339,6 +1355,7 @@ class NodoOperationsTest {
 
     @Test
     void shouldActiveNM3PaymentRequestWithIdCartNull() {
+        instantiateNodoOperations(false);
         RptId rptId = new RptId("77777777777302016723749670035");
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
@@ -1423,6 +1440,7 @@ class NodoOperationsTest {
 
     @Test
     void shouldNotActiveNM3PaymentRequestdueFaultError() {
+        instantiateNodoOperations(false);
         RptId rptId = new RptId("77777777777302016723749670035");
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String transactionId = UUID.randomUUID().toString();
@@ -1472,6 +1490,7 @@ class NodoOperationsTest {
 
     @Test
     void shouldNotActiveNM3PaymentRequestForMissingPaymentToken() {
+        instantiateNodoOperations(false);
         RptId rptId = new RptId("77777777777302016723749670035");
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String transactionId = UUID.randomUUID().toString();
@@ -1524,7 +1543,7 @@ class NodoOperationsTest {
 
     @Test
     void shouldTrasformNodoAmountWithCentInEuroCent() {
-
+        instantiateNodoOperations(false);
         BigDecimal amountFromNodo = BigDecimal.valueOf(19.91);
         Integer amount = nodoOperations.getEuroCentsFromNodoAmount(amountFromNodo);
         assertEquals(1991, amount);
@@ -1532,7 +1551,7 @@ class NodoOperationsTest {
 
     @Test
     void shouldTrasformNodoAmountWithoutCentInEuroCent() {
-
+        instantiateNodoOperations(false);
         BigDecimal amountFromNodo = BigDecimal.valueOf(19.00);
         Integer amount = nodoOperations.getEuroCentsFromNodoAmount(amountFromNodo);
         assertEquals(1900, amount);
@@ -1540,6 +1559,7 @@ class NodoOperationsTest {
 
     @Test
     void shouldConvertAmountCorrectly() {
+        instantiateNodoOperations(false);
         RptId rptId = new RptId("77777777777302016723749670035");
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
@@ -1613,6 +1633,7 @@ class NodoOperationsTest {
     void shouldReturnFiscalCodeEcommerce() {
 
         /* preconditions */
+        instantiateNodoOperations(false);
         String ecommerceFiscalCode = "00000000000";
         NodoConnectionString nodoConnectionString = new NodoConnectionString();
         nodoConnectionString.setIdBrokerPSP(ecommerceFiscalCode);
@@ -1628,7 +1649,7 @@ class NodoOperationsTest {
 
     @Test
     void shouldReturnRandomStringforIdempotencykey() {
-
+        instantiateNodoOperations(false);
         /* test */
         String randomStringToIdempotencyKey = nodoOperations
                 .generateRandomStringToIdempotencyKey();
@@ -1639,6 +1660,7 @@ class NodoOperationsTest {
 
     @Test
     void shouldGetTheUpdatedAmount() {
+        instantiateNodoOperations(false);
         RptId rptId = new RptId("77777777777302016723749670035");
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();

@@ -35,18 +35,24 @@ public class NodoOperations {
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final String IBANAPPOGGIO = "IBANAPPOGGIO";
 
-    @Autowired
     NodeForPspClient nodeForPspClient;
 
-    @Autowired
     it.pagopa.generated.transactions.model.ObjectFactory objectFactoryNodeForPsp;
-    @Autowired
+
     NodoConfig nodoConfig;
 
-    @Value("${nodo.lightAllCCPCheck}")
     private boolean lightAllCCPCheck;
 
-    void setLightAllCCPCheck(boolean lightAllCCPCheck) {
+    @Autowired
+    public NodoOperations(
+            NodeForPspClient nodeForPspClient,
+            it.pagopa.generated.transactions.model.ObjectFactory objectFactoryNodeForPsp,
+            NodoConfig nodoConfig,
+            @Value("${nodo.lightAllCCPCheck}") boolean lightAllCCPCheck
+    ) {
+        this.nodeForPspClient = nodeForPspClient;
+        this.objectFactoryNodeForPsp = objectFactoryNodeForPsp;
+        this.nodoConfig = nodoConfig;
         this.lightAllCCPCheck = lightAllCCPCheck;
     }
 
