@@ -13,6 +13,7 @@ public record AuthorizationRequestData(
         String pspChannelCode,
         String paymentMethodName,
         String pspBusinessName,
+        Boolean pspOnUs,
         String paymentGatewayId,
         RequestAuthorizationRequestDetailsDto authDetails
 ) {

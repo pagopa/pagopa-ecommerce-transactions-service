@@ -156,6 +156,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
+                false,
                 null,
                 new PostePayAuthRequestDetailsDto()
         );
@@ -233,6 +234,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
+                false,
                 "XPAY",
                 new CardAuthRequestDetailsDto().brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
         );
@@ -314,6 +316,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
+                false,
                 null,
                 null
         );
@@ -390,6 +393,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
+                false,
                 "GPAY",
                 new PostePayAuthRequestDetailsDto().detailType("GPAY").accountEmail("test@test.it")
         );
@@ -470,6 +474,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
+                false,
                 "VPOS",
                 new CardAuthRequestDetailsDto()
                         .cvv("000")

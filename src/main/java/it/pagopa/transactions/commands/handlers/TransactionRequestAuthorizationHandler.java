@@ -154,6 +154,7 @@ public class TransactionRequestAuthorizationHandler
                                                     command.getData().pspChannelCode(),
                                                     command.getData().paymentMethodName(),
                                                     command.getData().pspBusinessName(),
+                                                    command.getData().pspOnUs(),
                                                     tuple3.getT1(),
                                                     tuple3.getT3(),
                                                     logo,
