@@ -146,9 +146,9 @@ public class NodoOperations {
 
     private boolean isAllCCP(
                              ActivatePaymentNoticeV2Response response,
-                             boolean lightAllCCPCheck
+                             boolean allCCPOnTransferIbanEnabled
     ) {
-        return lightAllCCPCheck
+        return allCCPOnTransferIbanEnabled
                 ? response.getTransferList().getTransfer().parallelStream().allMatch(t -> isIbanCCP(t.getIBAN()))
                 : response.getTransferList().getTransfer().parallelStream().allMatch(
                         ctTransferPSPV2 -> ctTransferPSPV2.getMetadata() != null &&
