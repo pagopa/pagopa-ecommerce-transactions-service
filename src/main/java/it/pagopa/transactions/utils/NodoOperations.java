@@ -41,19 +41,19 @@ public class NodoOperations {
 
     NodoConfig nodoConfig;
 
-    private boolean lightAllCCPCheck;
+    private boolean allCCPOnTransferIbanEnabled;
 
     @Autowired
     public NodoOperations(
             NodeForPspClient nodeForPspClient,
             it.pagopa.generated.transactions.model.ObjectFactory objectFactoryNodeForPsp,
             NodoConfig nodoConfig,
-            @Value("${nodo.lightAllCCPCheck}") boolean lightAllCCPCheck
+            @Value("${nodo.allCCPOnTransferIbanEnabled}") boolean allCCPOnTransferIbanEnabled
     ) {
         this.nodeForPspClient = nodeForPspClient;
         this.objectFactoryNodeForPsp = objectFactoryNodeForPsp;
         this.nodoConfig = nodoConfig;
-        this.lightAllCCPCheck = lightAllCCPCheck;
+        this.allCCPOnTransferIbanEnabled = allCCPOnTransferIbanEnabled;
     }
 
     public Mono<PaymentRequestInfo> activatePaymentRequest(
@@ -139,7 +139,7 @@ public class NodoOperations {
                                                         transfer.getTransferCategory()
                                                 )
                                         ).toList(),
-                                isAllCCP(response, lightAllCCPCheck)
+                                isAllCCP(response, allCCPOnTransferIbanEnabled)
                         )
                 );
     }
