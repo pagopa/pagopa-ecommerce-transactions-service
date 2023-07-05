@@ -21,7 +21,7 @@ These are all environment variables needed by the application:
 | NODO_URI                                       |     | Nodo connection URI                                                                                                  | string  |         |
 | NODO_READ_TIMEOUT                              |     | Timeout for requests towards Nodo                                                                                    | number  |         |
 | NODO_CONNECTION_TIMEOUT                        |     | Timeout for establishing connections towards Nodo                                                                    | number  |         |
-| NODO_ALL_CCP_ON_TRANSFER_IBAN                  |     | Flag to enable light check for allCCP. If true it checks only all transfers' iban. If false, it checks also metadata | boolean |         |
+| NODO_ALL_CCP_ON_TRANSFER_IBAN_ENABLED                  |     | Flag to enable light check for allCCP. If true it checks only all transfers' iban. If false, it checks also metadata | boolean |         |
 | ECOMMERCE_PAYMENT_METHODS_URI                  |     | eCommerce payment methods service connection URI                                                                     | string  |         |
 | ECOMMERCE_PAYMENT_METHODS_READ_TIMEOUT         |     | Timeout for requests towards eCommerce payment methods service                                                       | number  |         |
 | ECOMMERCE_PAYMENT_METHODS_CONNECTION_TIMEOUT   |     | Timeout for establishing connections towards eCommerce payment methods  service                                      | number  |         |
