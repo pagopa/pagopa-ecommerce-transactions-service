@@ -139,17 +139,31 @@ public class TransactionSendClosureHandler implements
                     );
                     BigDecimal fee = EuroUtils.euroCentsToEuro(transactionAuthorizationRequestData.getFee());
                     BigDecimal totalAmount = amount.add(fee);
+                    ClosePaymentRequestV2Dto.OutcomeEnum outcome = authorizationResultToOutcomeV2(
+                            transactionAuthorizationCompletedData.getAuthorizationResultDto()
+                    );
                     ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                             .paymentTokens(
                                     tx.getTransactionActivatedData().getPaymentNotices().stream()
                                             .map(PaymentNotice::getPaymentToken).toList()
                             )
                             .outcome(
-                                    authorizationResultToOutcomeV2(
-                                            transactionAuthorizationCompletedData.getAuthorizationResultDto()
-                                    )
+                                    outcome
                             )
-                            .transactionId(tx.getTransactionId().value());
+                            .transactionId(tx.getTransactionId().value())
+                            .transactionDetails(
+                                    buildTransactionDetailsDto(
+                                            transactionActivatedData,
+                                            authRequestData,
+                                            transactionAuthorizationRequestData,
+                                            transactionAuthorizationCompletedData,
+                                            command,
+                                            fee,
+                                            amount,
+                                            totalAmount,
+                                            outcome
+                                    )
+                            );
 
                     if (ClosePaymentRequestV2Dto.OutcomeEnum.OK.equals(closePaymentRequest.getOutcome())) {
                         closePaymentRequest.idPSP(transactionAuthorizationRequestData.getPspId())
@@ -178,20 +192,7 @@ public class TransactionSendClosureHandler implements
                                                 .rrn(authRequestData.rrn())
                                 );
                     }
-                    ClosePaymentRequestV2Dto.OutcomeEnum outcomeEnum = closePaymentRequest.getOutcome();
-                    closePaymentRequest.transactionDetails(
-                            buildTransactionDetailsDto(
-                                    transactionActivatedData,
-                                    authRequestData,
-                                    transactionAuthorizationRequestData,
-                                    transactionAuthorizationCompletedData,
-                                    command,
-                                    fee,
-                                    amount,
-                                    totalAmount,
-                                    outcomeEnum
-                            )
-                    );
+
                     /*
                      * ClosePayment (either OK or KO): save to event store and return event On
                      * error: save TransactionClosureErrorEvent to event store, enqueue and return
@@ -400,104 +401,51 @@ public class TransactionSendClosureHandler implements
                                                BigDecimal totalAmount,
                                                ClosePaymentRequestV2Dto.OutcomeEnum outcomeEnum
     ) {
-        final TransactionDto transactionDto = new TransactionDto()
+        return new TransactionDto()
                 .transactionStatus(
                         ClosePaymentRequestV2Dto.OutcomeEnum.OK.equals(outcomeEnum) ? "Autorizzato" : "Rifiutato"
                 )
                 .fee(fee)
                 .amount(amount)
-                .grandTotal(totalAmount);
-        applyClosureSendData(command.getData(), transactionDto);
-        applyAuthRequestData(transactionAuthorizationRequestData, transactionDto);
-        applyUpdateAuthorizationData(authRequestData, transactionDto);
-        applyAuthCompletedData(transactionAuthorizationCompletedData, transactionDto, outcomeEnum);
-        return transactionDto;
-    }
-
-    private void applyAuthCompletedData(
-                                        TransactionAuthorizationCompletedData transactionAuthorizationCompletedData,
-                                        TransactionDto transactionDto,
-                                        ClosePaymentRequestV2Dto.OutcomeEnum outcomeEnum
-    ) {
-        Stream.ofNullable(transactionAuthorizationCompletedData)
-                .filter(Objects::nonNull)
-                .map(
-                        data -> transactionDto
-                                .timestampOperation(data.getTimestampOperation())
-                                .errorCode(
-                                        ClosePaymentRequestV2Dto.OutcomeEnum.KO.equals(outcomeEnum)
-                                                ? data.getErrorCode()
-                                                : null
-                                )
+                .grandTotal(totalAmount)
+                .transactionId(
+                        Optional.ofNullable(command.getData()).get().transaction()
+                                .getTransactionId().value()
                 )
-                .findFirst().orElse(transactionDto);
+                .creationDate(
+                        Optional.ofNullable(command.getData()).get().transaction()
+                                .getCreationDate().toOffsetDateTime()
+                )
+                .paymentGateway(Optional.ofNullable(transactionAuthorizationRequestData).get().getPaymentGateway().name())
+                .rrn(Optional.ofNullable(authRequestData).get().rrn())
+                .authorizationCode(Optional.ofNullable(authRequestData).get().authorizationCode())
+                .timestampOperation(Optional.ofNullable(transactionAuthorizationCompletedData).get().getTimestampOperation())
+                .errorCode(
+                        ClosePaymentRequestV2Dto.OutcomeEnum.KO.equals(outcomeEnum)
+                                ? Optional.ofNullable(transactionAuthorizationCompletedData).get().getErrorCode()
+                                : null
+                )
+                .psp(buildPspDto(Optional.ofNullable(transactionAuthorizationRequestData).get()));
     }
 
-    private void applyClosureSendData(
-                                      ClosureSendData data,
-                                      TransactionDto transactionDto
-    ) {
-        Stream.ofNullable(data)
-                .filter(Objects::nonNull)
-                .map(
-                        d -> transactionDto.transactionId(
-                                d.transaction()
-                                        .getTransactionId().value()
+
+    private PspDto buildPspDto(TransactionAuthorizationRequestData transactionAuthorizationRequestData) {
+
+        return new PspDto()
+                        .idPsp(
+                                transactionAuthorizationRequestData
+                                        .getPspId()
                         )
-                                .creationDate(
-                                        d.transaction()
-                                                .getCreationDate().toOffsetDateTime()
-                                )
-                )
-                .findFirst()
-                .orElse(transactionDto);
-    }
-
-    private void applyAuthRequestData(
-                                      TransactionAuthorizationRequestData transactionAuthorizationRequestData,
-                                      TransactionDto transactionDto
-    ) {
-
-        Stream.ofNullable(transactionAuthorizationRequestData)
-                .filter(Objects::nonNull)
-                .map(
-                        d -> transactionDto
-                                .paymentGateway(transactionAuthorizationRequestData.getPaymentGateway().name())
-                                .psp(
-                                        new PspDto()
-                                                .idPsp(
-                                                        transactionAuthorizationRequestData
-                                                                .getPspId()
-                                                )
-                                                .idChannel(
-                                                        transactionAuthorizationRequestData
-                                                                .getPspChannelCode()
-                                                )
-                                                .businessName(
-                                                        transactionAuthorizationRequestData
-                                                                .getPspBusinessName()
-                                                )
-                                                .brokerName(transactionAuthorizationRequestData.getBrokerName())
-                                                .pspOnUs(transactionAuthorizationRequestData.isPspOnUs())
-                                )
-                )
-                .findFirst()
-                .orElse(transactionDto);
-    }
-
-    private void applyUpdateAuthorizationData(
-                                              AuthRequestDataUtils.AuthRequestData authRequestData,
-                                              TransactionDto transactionDto
-    ) {
-        Stream.ofNullable(authRequestData)
-                .filter(Objects::nonNull)
-                .map(
-                        data -> transactionDto
-                                .rrn(authRequestData.rrn())
-                                .authorizationCode(authRequestData.authorizationCode())
-                )
-                .findFirst()
-                .orElse(transactionDto);
+                        .idChannel(
+                                transactionAuthorizationRequestData
+                                        .getPspChannelCode()
+                        )
+                        .businessName(
+                                transactionAuthorizationRequestData
+                                        .getPspBusinessName()
+                        )
+                        .brokerName(transactionAuthorizationRequestData.getBrokerName())
+                        .pspOnUs(transactionAuthorizationRequestData.isPspOnUs());
     }
 
     private InfoDto buildInfoDto(
