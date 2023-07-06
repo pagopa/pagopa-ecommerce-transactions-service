@@ -31,11 +31,14 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
+import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Component
 @Slf4j
@@ -414,11 +417,6 @@ public class TransactionSendClosureHandler implements
                                     .getCreationDate().toOffsetDateTime()
                     );
         }
-        if (authRequestData != null) {
-            transactionDto = transactionDto
-                    .rrn(authRequestData.rrn())
-                    .authorizationCode(authRequestData.authorizationCode());
-        }
         if (transactionAuthorizationRequestData != null) {
             transactionDto = transactionDto
                     .paymentGateway(transactionAuthorizationRequestData.getPaymentGateway().name())
@@ -440,7 +438,11 @@ public class TransactionSendClosureHandler implements
                                     .pspOnUs(transactionAuthorizationRequestData.isPspOnUs())
                     );
         }
-
+        if (authRequestData != null) {
+            transactionDto = transactionDto
+                    .rrn(authRequestData.rrn())
+                    .authorizationCode(authRequestData.authorizationCode());
+        }
         if (transactionAuthorizationCompletedData != null) {
             transactionDto = transactionDto
                     .timestampOperation(transactionAuthorizationCompletedData.getTimestampOperation())
@@ -463,8 +465,11 @@ public class TransactionSendClosureHandler implements
         }
         if (transactionAuthorizationRequestData != null) {
             result = result.brandLogo(
-                    transactionAuthorizationRequestData.getLogo()
-                            .toString()
+                    Stream.ofNullable(transactionAuthorizationRequestData.getLogo())
+                            .filter(logo -> logo != null)
+                            .map(l -> l.toString())
+                            .findFirst()
+                            .orElse(null)
             )
                     .brand(
                             transactionAuthorizationRequestData.getBrand()
