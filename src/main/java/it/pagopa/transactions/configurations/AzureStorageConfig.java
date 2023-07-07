@@ -13,7 +13,7 @@ public class AzureStorageConfig {
     @Qualifier
     public QueueAsyncClient transactionActivatedQueueAsyncClient(
                                                                  @Value(
-                                                                     "${azurestorage.connectionstring}"
+                                                                     "${azurestorage.connectionstringtransient}"
                                                                  ) String storageConnectionString,
                                                                  @Value(
                                                                      "${azurestorage.queues.transactionexpiration.name}"
@@ -26,7 +26,7 @@ public class AzureStorageConfig {
     @Qualifier
     public QueueAsyncClient transactionRefundQueueAsyncClient(
                                                               @Value(
-                                                                  "${azurestorage.connectionstring}"
+                                                                  "${azurestorage.connectionstringtransient}"
                                                               ) String storageConnectionString,
                                                               @Value(
                                                                   "${azurestorage.queues.transactionrefund.name}"
@@ -38,7 +38,7 @@ public class AzureStorageConfig {
     @Bean("transactionClosureRetryQueueAsyncClient")
     public QueueAsyncClient transactionClosureRetryQueueAsyncClient(
                                                                     @Value(
-                                                                        "${azurestorage.connectionstring}"
+                                                                        "${azurestorage.connectionstringtransient}"
                                                                     ) String storageConnectionString,
                                                                     @Value(
                                                                         "${azurestorage.queues.transactionclosepaymentretry.name}"
@@ -50,7 +50,7 @@ public class AzureStorageConfig {
     @Bean("transactionClosureQueueAsyncClient")
     public QueueAsyncClient transactionClosureQueueAsyncClient(
                                                                @Value(
-                                                                   "${azurestorage.connectionstring}"
+                                                                   "${azurestorage.connectionstringtransient}"
                                                                ) String storageConnectionString,
                                                                @Value(
                                                                    "${azurestorage.queues.transactionclosepayment.name}"
@@ -62,7 +62,7 @@ public class AzureStorageConfig {
     @Bean("transactionNotificationRequestedQueueAsyncClient")
     public QueueAsyncClient transactionNotificationRequestedQueueAsyncClient(
                                                                              @Value(
-                                                                                 "${azurestorage.connectionstring}"
+                                                                                 "${azurestorage.connectionstringtransient}"
                                                                              ) String storageConnectionString,
                                                                              @Value(
                                                                                  "${azurestorage.queues.transactionnotificationrequested.name}"

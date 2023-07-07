@@ -6,6 +6,7 @@ import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.EuroUtils;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Request;
+import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Response;
 import it.pagopa.generated.transactions.model.CtQrCode;
 import it.pagopa.generated.transactions.model.StOutcome;
 import it.pagopa.transactions.client.NodeForPspClient;
@@ -14,9 +15,11 @@ import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
 import it.pagopa.transactions.exceptions.NodoErrorException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import javax.crypto.SecretKey;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
@@ -30,14 +33,28 @@ public class NodoOperations {
 
     private static final String ALPHANUMERICS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     private static final SecureRandom RANDOM = new SecureRandom();
+    private static final String IBANAPPOGGIO = "IBANAPPOGGIO";
 
-    @Autowired
     NodeForPspClient nodeForPspClient;
 
-    @Autowired
     it.pagopa.generated.transactions.model.ObjectFactory objectFactoryNodeForPsp;
-    @Autowired
+
     NodoConfig nodoConfig;
+
+    private boolean allCCPOnTransferIbanEnabled;
+
+    @Autowired
+    public NodoOperations(
+            NodeForPspClient nodeForPspClient,
+            it.pagopa.generated.transactions.model.ObjectFactory objectFactoryNodeForPsp,
+            NodoConfig nodoConfig,
+            @Value("${nodo.allCCPOnTransferIbanEnabled}") boolean allCCPOnTransferIbanEnabled
+    ) {
+        this.nodeForPspClient = nodeForPspClient;
+        this.objectFactoryNodeForPsp = objectFactoryNodeForPsp;
+        this.nodoConfig = nodoConfig;
+        this.allCCPOnTransferIbanEnabled = allCCPOnTransferIbanEnabled;
+    }
 
     public Mono<PaymentRequestInfo> activatePaymentRequest(
                                                            RptId rptId,
@@ -122,26 +139,35 @@ public class NodoOperations {
                                                         transfer.getTransferCategory()
                                                 )
                                         ).toList(),
-                                response.getTransferList().getTransfer().parallelStream().allMatch(
-                                        ctTransferPSPV2 -> ctTransferPSPV2.getMetadata() != null &&
-                                                ctTransferPSPV2.getMetadata().getMapEntry().parallelStream()
-                                                        .allMatch(
-                                                                ctMapEntry -> ctMapEntry.getKey()
-                                                                        .equals("IBANAPPOGGIO")
-                                                        )
-                                                &&
-                                                (isIbanCCP(ctTransferPSPV2.getIBAN())
-                                                        ||
-                                                        ctTransferPSPV2.getMetadata().getMapEntry()
-                                                                .parallelStream()
-                                                                .anyMatch(
-                                                                        ctMapEntry -> ctMapEntry
-                                                                                .getKey()
-                                                                                .equals("IBANAPPOGGIO")
-                                                                                && isIbanCCP(ctMapEntry.getValue())
-                                                                ))
-                                )
+                                isAllCCP(response, allCCPOnTransferIbanEnabled)
                         )
+                );
+    }
+
+    private boolean isAllCCP(
+                             ActivatePaymentNoticeV2Response response,
+                             boolean allCCPOnTransferIbanEnabled
+    ) {
+        return allCCPOnTransferIbanEnabled
+                ? response.getTransferList().getTransfer().parallelStream().allMatch(t -> isIbanCCP(t.getIBAN()))
+                : response.getTransferList().getTransfer().parallelStream().allMatch(
+                        ctTransferPSPV2 -> ctTransferPSPV2.getMetadata() != null &&
+                                ctTransferPSPV2.getMetadata().getMapEntry().parallelStream()
+                                        .allMatch(
+                                                ctMapEntry -> ctMapEntry.getKey()
+                                                        .equals(IBANAPPOGGIO)
+                                        )
+                                &&
+                                (isIbanCCP(ctTransferPSPV2.getIBAN())
+                                        ||
+                                        ctTransferPSPV2.getMetadata().getMapEntry()
+                                                .parallelStream()
+                                                .anyMatch(
+                                                        ctMapEntry -> ctMapEntry
+                                                                .getKey()
+                                                                .equals(IBANAPPOGGIO)
+                                                                && isIbanCCP(ctMapEntry.getValue())
+                                                ))
                 );
     }
 

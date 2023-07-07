@@ -14,12 +14,3 @@ resource "azuread_application_federated_identity_credential" "main" {
   issuer                = "https://token.actions.githubusercontent.com"
   subject               = "repo:${var.github.org}/${var.github.repository}:environment:${var.env}"
 }
-
-output "azure_main" {
-  value = {
-    app_name       = "${local.app_name}-main"
-    client_id      = azuread_service_principal.main.application_id
-    application_id = azuread_service_principal.main.application_id
-    object_id      = azuread_service_principal.main.object_id
-  }
-}
