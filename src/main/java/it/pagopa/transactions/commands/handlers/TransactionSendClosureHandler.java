@@ -416,10 +416,14 @@ public class TransactionSendClosureHandler implements
                         Optional.ofNullable(command.getData()).get().transaction()
                                 .getCreationDate().toOffsetDateTime()
                 )
-                .paymentGateway(Optional.ofNullable(transactionAuthorizationRequestData).get().getPaymentGateway().name())
+                .paymentGateway(
+                        Optional.ofNullable(transactionAuthorizationRequestData).get().getPaymentGateway().name()
+                )
                 .rrn(Optional.ofNullable(authRequestData).get().rrn())
                 .authorizationCode(Optional.ofNullable(authRequestData).get().authorizationCode())
-                .timestampOperation(Optional.ofNullable(transactionAuthorizationCompletedData).get().getTimestampOperation())
+                .timestampOperation(
+                        Optional.ofNullable(transactionAuthorizationCompletedData).get().getTimestampOperation()
+                )
                 .errorCode(
                         ClosePaymentRequestV2Dto.OutcomeEnum.KO.equals(outcomeEnum)
                                 ? Optional.ofNullable(transactionAuthorizationCompletedData).get().getErrorCode()
@@ -428,24 +432,23 @@ public class TransactionSendClosureHandler implements
                 .psp(buildPspDto(Optional.ofNullable(transactionAuthorizationRequestData).get()));
     }
 
-
     private PspDto buildPspDto(TransactionAuthorizationRequestData transactionAuthorizationRequestData) {
 
         return new PspDto()
-                        .idPsp(
-                                transactionAuthorizationRequestData
-                                        .getPspId()
-                        )
-                        .idChannel(
-                                transactionAuthorizationRequestData
-                                        .getPspChannelCode()
-                        )
-                        .businessName(
-                                transactionAuthorizationRequestData
-                                        .getPspBusinessName()
-                        )
-                        .brokerName(transactionAuthorizationRequestData.getBrokerName())
-                        .pspOnUs(transactionAuthorizationRequestData.isPspOnUs());
+                .idPsp(
+                        transactionAuthorizationRequestData
+                                .getPspId()
+                )
+                .idChannel(
+                        transactionAuthorizationRequestData
+                                .getPspChannelCode()
+                )
+                .businessName(
+                        transactionAuthorizationRequestData
+                                .getPspBusinessName()
+                )
+                .brokerName(transactionAuthorizationRequestData.getBrokerName())
+                .pspOnUs(transactionAuthorizationRequestData.isPspOnUs());
     }
 
     private InfoDto buildInfoDto(
