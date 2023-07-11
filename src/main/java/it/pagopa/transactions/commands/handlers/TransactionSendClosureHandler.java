@@ -46,6 +46,8 @@ import java.util.stream.Stream;
 public class TransactionSendClosureHandler implements
         CommandHandler<TransactionClosureSendCommand, Mono<Tuple2<Optional<TransactionRefundRequestedEvent>, Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>>>> {
 
+    private static final String AUTORIZZATO = "Autorizzato";
+    private static final String RIFIUTATO = "Rifiutato";
     private final TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository;
 
     private final TransactionsEventStoreRepository<TransactionRefundedData> transactionRefundedEventStoreRepository;
@@ -403,7 +405,7 @@ public class TransactionSendClosureHandler implements
     ) {
         return new TransactionDto()
                 .transactionStatus(
-                        ClosePaymentRequestV2Dto.OutcomeEnum.OK.equals(outcomeEnum) ? "Autorizzato" : "Rifiutato"
+                        ClosePaymentRequestV2Dto.OutcomeEnum.OK.equals(outcomeEnum) ? AUTORIZZATO : RIFIUTATO
                 )
                 .fee(fee)
                 .amount(amount)
