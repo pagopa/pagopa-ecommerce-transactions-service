@@ -1,6 +1,5 @@
 package it.pagopa.transactions.commands.handlers;
 
-import com.azure.core.amqp.models.AmqpMessageBody;
 import com.azure.core.util.BinaryData;
 import com.azure.storage.queue.QueueAsyncClient;
 import io.vavr.control.Either;
@@ -15,7 +14,6 @@ import it.pagopa.generated.ecommerce.nodo.v2.dto.*;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
-import it.pagopa.transactions.commands.data.ClosureSendData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -32,12 +30,10 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
-import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
