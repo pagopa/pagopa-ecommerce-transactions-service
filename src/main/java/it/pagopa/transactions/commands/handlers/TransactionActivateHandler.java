@@ -111,6 +111,8 @@ public class TransactionActivateHandler
                                     final PaymentNoticeInfoDto paymentNotice = paymentRequest.getT1();
                                     final Optional<PaymentRequestInfo> maybePaymentRequestInfo = paymentRequest
                                             .getT2();
+                                    final String dueDate = maybePaymentRequestInfo.map(PaymentRequestInfo::dueDate)
+                                            .orElse(null);
                                     return Mono.just(
                                             Tuples.of(
                                                     paymentNotice,
@@ -130,7 +132,7 @@ public class TransactionActivateHandler
                                                                                 null,
                                                                                 null,
                                                                                 null,
-                                                                                null,
+                                                                                dueDate,
                                                                                 null,
                                                                                 null,
                                                                                 new IdempotencyKey(
@@ -185,7 +187,8 @@ public class TransactionActivateHandler
                                                                     paymentNotice.getAmount(),
                                                                     transactionId.value(),
                                                                     paymentTokenTimeout,
-                                                                    newTransactionRequestDto.getIdCart()
+                                                                    newTransactionRequestDto.getIdCart(),
+                                                                    partialPaymentRequestInfo.dueDate()
                                                             )
                                                             .doOnSuccess(
                                                                     p -> {
