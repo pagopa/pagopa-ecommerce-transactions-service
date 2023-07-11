@@ -411,27 +411,27 @@ public class TransactionSendClosureHandler implements
                 .amount(amount)
                 .grandTotal(totalAmount)
                 .transactionId(
-                        Optional.ofNullable(command.getData()).get().transaction()
+                        command.getData().transaction()
                                 .getTransactionId().value()
                 )
                 .creationDate(
-                        Optional.ofNullable(command.getData()).get().transaction()
+                        command.getData().transaction()
                                 .getCreationDate().toOffsetDateTime()
                 )
                 .paymentGateway(
-                        Optional.ofNullable(transactionAuthorizationRequestData).get().getPaymentGateway().name()
+                        transactionAuthorizationRequestData.getPaymentGateway().name()
                 )
-                .rrn(Optional.ofNullable(authRequestData).get().rrn())
-                .authorizationCode(Optional.ofNullable(authRequestData).get().authorizationCode())
+                .rrn(authRequestData.rrn())
+                .authorizationCode(authRequestData.authorizationCode())
                 .timestampOperation(
-                        Optional.ofNullable(transactionAuthorizationCompletedData).get().getTimestampOperation()
+                        transactionAuthorizationCompletedData.getTimestampOperation()
                 )
                 .errorCode(
                         ClosePaymentRequestV2Dto.OutcomeEnum.KO.equals(outcomeEnum)
-                                ? Optional.ofNullable(transactionAuthorizationCompletedData).get().getErrorCode()
+                                ? transactionAuthorizationCompletedData.getErrorCode()
                                 : null
                 )
-                .psp(buildPspDto(Optional.ofNullable(transactionAuthorizationRequestData).get()));
+                .psp(buildPspDto(transactionAuthorizationRequestData));
     }
 
     private PspDto buildPspDto(TransactionAuthorizationRequestData transactionAuthorizationRequestData) {
@@ -457,28 +457,25 @@ public class TransactionSendClosureHandler implements
                                  TransactionActivatedData transactionActivatedData,
                                  TransactionAuthorizationRequestData transactionAuthorizationRequestData
     ) {
-        InfoDto result = new InfoDto();
-        if (transactionActivatedData != null) {
-            result = result.clientId(transactionActivatedData.getClientId().name());
-        }
-        if (transactionAuthorizationRequestData != null) {
-            result = result.brandLogo(
-                    Stream.ofNullable(transactionAuthorizationRequestData.getLogo())
-                            .filter(logo -> logo != null)
-                            .map(l -> l.toString())
-                            .findFirst()
-                            .orElse(null)
-            )
-                    .brand(
-                            transactionAuthorizationRequestData.getBrand()
-                                    .name()
-                    )
-                    .type(
-                            transactionAuthorizationRequestData
-                                    .getPaymentTypeCode()
-                    )
-                    .paymentMethodName(transactionAuthorizationRequestData.getPaymentMethodName());
-        }
+        InfoDto result = new InfoDto()
+                .clientId(transactionActivatedData.getClientId().name())
+                .brandLogo(
+                        Stream.ofNullable(transactionAuthorizationRequestData.getLogo())
+                                .filter(logo -> logo != null)
+                                .map(l -> l.toString())
+                                .findFirst()
+                                .orElse(null)
+                )
+                .brand(
+                        transactionAuthorizationRequestData.getBrand()
+                                .name()
+                )
+                .type(
+                        transactionAuthorizationRequestData
+                                .getPaymentTypeCode()
+                )
+                .paymentMethodName(transactionAuthorizationRequestData.getPaymentMethodName());
+
         return result;
     }
 
