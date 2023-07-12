@@ -19,7 +19,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-import javax.crypto.SecretKey;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
@@ -62,7 +61,8 @@ public class NodoOperations {
                                                            Integer amount,
                                                            String transactionId,
                                                            Integer paymentTokenTimeout,
-                                                           String idCart
+                                                           String idCart,
+                                                           String dueDate
     ) {
 
         final BigDecimal amountAsBigDecimal = BigDecimal.valueOf(amount.doubleValue() / 100)
@@ -74,7 +74,8 @@ public class NodoOperations {
                 idempotencyKey.rawValue(),
                 transactionId,
                 paymentTokenTimeout,
-                idCart
+                idCart,
+                dueDate
         );
     }
 
@@ -84,7 +85,8 @@ public class NodoOperations {
                                                                         String idempotencyKey,
                                                                         String transactionId,
                                                                         Integer paymentTokenTimeout,
-                                                                        String idCart
+                                                                        String idCart,
+                                                                        String dueDate
     ) {
         CtQrCode qrCode = new CtQrCode();
         qrCode.setFiscalCode(rptId.getFiscalCode());
@@ -126,7 +128,7 @@ public class NodoOperations {
                                 response.getCompanyName(),
                                 response.getPaymentDescription(),
                                 getEuroCentsFromNodoAmount(response.getTotalAmount()),
-                                null,
+                                dueDate,
                                 response.getPaymentToken(),
                                 ZonedDateTime.now().toString(),
                                 new IdempotencyKey(idempotencyKey),

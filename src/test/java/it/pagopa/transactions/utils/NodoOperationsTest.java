@@ -1,6 +1,7 @@
 package it.pagopa.transactions.utils;
 
-import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
+import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.generated.transactions.model.*;
 import it.pagopa.transactions.client.NodeForPspClient;
@@ -10,7 +11,10 @@ import it.pagopa.transactions.exceptions.NodoErrorException;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 
@@ -37,6 +41,8 @@ class NodoOperationsTest {
 
     @Captor
     ArgumentCaptor<ActivatePaymentNoticeV2Request> activatePaymentNoticeReqArgumentCaptor;
+
+    private final String dueDate = "2031-12-31";
 
     void instantiateNodoOperations(boolean lightAllCCPCheck) {
         nodoOperations = new NodoOperations(
@@ -119,7 +125,8 @@ class NodoOperationsTest {
                         amount,
                         transactionId,
                         900,
-                        idCart
+                        idCart,
+                        dueDate
                 )
                 .block();
 
@@ -218,7 +225,8 @@ class NodoOperationsTest {
                         amount,
                         transactionId,
                         900,
-                        idCart
+                        idCart,
+                        dueDate
                 )
                 .block();
 
@@ -317,7 +325,8 @@ class NodoOperationsTest {
                         amount,
                         transactionId,
                         900,
-                        idCart
+                        idCart,
+                        dueDate
                 )
                 .block();
 
@@ -395,7 +404,8 @@ class NodoOperationsTest {
                         amount,
                         transactionId,
                         900,
-                        idCart
+                        idCart,
+                        dueDate
                 )
                 .block();
 
@@ -484,7 +494,8 @@ class NodoOperationsTest {
                         amount,
                         transactionId,
                         900,
-                        idCart
+                        idCart,
+                        dueDate
                 )
                 .block();
 
@@ -562,7 +573,8 @@ class NodoOperationsTest {
                         amount,
                         transactionId,
                         900,
-                        idCart
+                        idCart,
+                        dueDate
                 )
                 .block();
 
@@ -653,7 +665,8 @@ class NodoOperationsTest {
                         amount,
                         transactionId,
                         900,
-                        idCart
+                        idCart,
+                        dueDate
                 )
                 .block();
 
@@ -752,7 +765,8 @@ class NodoOperationsTest {
                         amount,
                         transactionId,
                         900,
-                        idCart
+                        idCart,
+                        dueDate
                 )
                 .block();
 
@@ -851,7 +865,8 @@ class NodoOperationsTest {
                         amount,
                         transactionId,
                         900,
-                        idCart
+                        idCart,
+                        dueDate
                 )
                 .block();
 
@@ -950,7 +965,8 @@ class NodoOperationsTest {
                         amount,
                         transactionId,
                         900,
-                        idCart
+                        idCart,
+                        dueDate
                 )
                 .block();
 
@@ -1049,7 +1065,8 @@ class NodoOperationsTest {
                         amount,
                         transactionId,
                         900,
-                        idCart
+                        idCart,
+                        dueDate
                 )
                 .block();
 
@@ -1148,7 +1165,8 @@ class NodoOperationsTest {
                         amount,
                         transactionId,
                         900,
-                        idCart
+                        idCart,
+                        dueDate
                 )
                 .block();
 
@@ -1243,7 +1261,8 @@ class NodoOperationsTest {
                         amount,
                         transactionId,
                         900,
-                        idCart
+                        idCart,
+                        dueDate
                 )
                 .block();
 
@@ -1338,7 +1357,8 @@ class NodoOperationsTest {
                         amount,
                         transactionId,
                         900,
-                        idCart
+                        idCart,
+                        dueDate
                 )
                 .block();
 
@@ -1424,7 +1444,8 @@ class NodoOperationsTest {
                         amount,
                         transactionId,
                         900,
-                        null
+                        null,
+                        dueDate
                 )
                 .block();
 
@@ -1479,7 +1500,8 @@ class NodoOperationsTest {
                         amount,
                         transactionId,
                         900,
-                        idCart
+                        idCart,
+                        dueDate
                 );
 
         Assert.assertThrows(
@@ -1531,7 +1553,8 @@ class NodoOperationsTest {
                         amount,
                         transactionId,
                         900,
-                        idCart
+                        idCart,
+                        dueDate
                 );
 
         InvalidNodoResponseException exception = Assert.assertThrows(
@@ -1608,7 +1631,8 @@ class NodoOperationsTest {
                         amount,
                         transactionId,
                         900,
-                        idCart
+                        idCart,
+                        dueDate
                 )
                 .block();
 
@@ -1731,7 +1755,8 @@ class NodoOperationsTest {
                         amount,
                         transactionId,
                         900,
-                        idCart
+                        idCart,
+                        dueDate
                 )
                 .block();
 
