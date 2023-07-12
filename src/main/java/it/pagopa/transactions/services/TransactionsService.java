@@ -401,6 +401,7 @@ public class TransactionsService {
                                     bundle.getIdChannel(),
                                     paymentMethodName,
                                     bundle.getBundleName(),
+                                    bundle.getOnUs(),
                                     paymentGatewayId,
                                     requestAuthorizationRequestDto.getDetails()
                             );

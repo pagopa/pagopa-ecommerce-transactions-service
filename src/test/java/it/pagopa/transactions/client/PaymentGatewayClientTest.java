@@ -114,6 +114,7 @@ class PaymentGatewayClientTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
+                false,
                 "GID",
                 new PostePayAuthRequestDetailsDto().detailType("invalid").accountEmail("test@test.it")
         );
@@ -176,6 +177,7 @@ class PaymentGatewayClientTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
+                false,
                 "XPAY",
                 cardDetails
         );
@@ -257,6 +259,7 @@ class PaymentGatewayClientTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
+                false,
                 null,
                 null
         );
@@ -345,6 +348,7 @@ class PaymentGatewayClientTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
+                false,
                 "VPOS",
                 cardDetails
         );
@@ -441,6 +445,7 @@ class PaymentGatewayClientTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
+                false,
                 "XPAY",
                 cardDetails
         );
@@ -535,6 +540,7 @@ class PaymentGatewayClientTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
+                false,
                 null,
                 null
         );
@@ -625,6 +631,7 @@ class PaymentGatewayClientTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
+                false,
                 null,
                 null
         );
@@ -697,6 +704,7 @@ class PaymentGatewayClientTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
+                false,
                 null,
                 null
         );
@@ -789,6 +797,7 @@ class PaymentGatewayClientTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
+                false,
                 "XPAY",
                 cardDetails
         );
@@ -882,6 +891,7 @@ class PaymentGatewayClientTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
+                false,
                 "VPOS",
                 cardDetails
         );
@@ -978,6 +988,7 @@ class PaymentGatewayClientTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
+                false,
                 null,
                 null
         );
@@ -1064,6 +1075,7 @@ class PaymentGatewayClientTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
+                false,
                 "XPAY",
                 cardDetails
         );
@@ -1151,6 +1163,7 @@ class PaymentGatewayClientTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
+                false,
                 "VPOS",
                 cardDetails
         );
@@ -1241,6 +1254,7 @@ class PaymentGatewayClientTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
+                false,
                 "XPAY",
                 null
         );
@@ -1296,6 +1310,7 @@ class PaymentGatewayClientTest {
                 "pspChannelCode",
                 "paymentMethodName",
                 "pspBusinessName",
+                false,
                 "VPOS",
                 null
         );
