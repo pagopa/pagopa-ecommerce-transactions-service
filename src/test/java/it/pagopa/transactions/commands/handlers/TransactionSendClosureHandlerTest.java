@@ -842,7 +842,7 @@ class TransactionSendClosureHandlerTest {
                                                         ((BaseTransactionWithPaymentToken) transaction)
                                                                 .getTransactionId().value()
                                                 )
-                                                .transactionStatus("Autorizzato")
+                                                .transactionStatus("Confermato")
                                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                                                 .amount(
                                                         EuroUtils.euroCentsToEuro(
@@ -1103,7 +1103,7 @@ class TransactionSendClosureHandlerTest {
                                                         ((BaseTransactionWithPaymentToken) transaction)
                                                                 .getTransactionId().value()
                                                 )
-                                                .transactionStatus("Autorizzato")
+                                                .transactionStatus("Confermato")
                                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                                                 .amount(
                                                         EuroUtils.euroCentsToEuro(
@@ -1364,7 +1364,7 @@ class TransactionSendClosureHandlerTest {
                                                         ((BaseTransactionWithPaymentToken) transaction)
                                                                 .getTransactionId().value()
                                                 )
-                                                .transactionStatus("Autorizzato")
+                                                .transactionStatus("Confermato")
                                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                                                 .amount(
                                                         EuroUtils.euroCentsToEuro(
@@ -1647,7 +1647,7 @@ class TransactionSendClosureHandlerTest {
                                                         ((BaseTransactionWithPaymentToken) transaction)
                                                                 .getTransactionId().value()
                                                 )
-                                                .transactionStatus("Autorizzato")
+                                                .transactionStatus("Confermato")
                                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                                                 .amount(
                                                         EuroUtils.euroCentsToEuro(
@@ -2422,7 +2422,7 @@ class TransactionSendClosureHandlerTest {
                                                         ((BaseTransactionWithPaymentToken) transaction)
                                                                 .getTransactionId().value()
                                                 )
-                                                .transactionStatus("Autorizzato")
+                                                .transactionStatus("Confermato")
                                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                                                 .amount(
                                                         EuroUtils.euroCentsToEuro(
@@ -2693,7 +2693,7 @@ class TransactionSendClosureHandlerTest {
                                                         ((BaseTransactionWithPaymentToken) transaction)
                                                                 .getTransactionId().value()
                                                 )
-                                                .transactionStatus("Autorizzato")
+                                                .transactionStatus("Confermato")
                                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                                                 .amount(
                                                         EuroUtils.euroCentsToEuro(
@@ -2913,7 +2913,7 @@ class TransactionSendClosureHandlerTest {
                                                         ((BaseTransactionWithPaymentToken) transaction)
                                                                 .getTransactionId().value()
                                                 )
-                                                .transactionStatus("Autorizzato")
+                                                .transactionStatus("Confermato")
                                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                                                 .amount(
                                                         EuroUtils.euroCentsToEuro(
@@ -3128,7 +3128,7 @@ class TransactionSendClosureHandlerTest {
                                                         ((BaseTransactionWithPaymentToken) transaction)
                                                                 .getTransactionId().value()
                                                 )
-                                                .transactionStatus("Autorizzato")
+                                                .transactionStatus("Confermato")
                                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
                                                 .paymentGateway(authorizationRequestData.getPaymentGateway().name())
                                                 .timestampOperation(
