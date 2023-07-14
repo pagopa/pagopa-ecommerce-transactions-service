@@ -604,7 +604,7 @@ stages:
   - stage: "Prod_RollbackToLatestRelease"
     displayName: 'PROD rollback to the latest Release'
     dependsOn: [Prod_RollbackForApproval]
-    condition: succeeded()
+    condition: eq(dependencies.Deploy_UAT_Green.result, 'Succeeded')
     jobs:
       - job: Prod_Rollback
         pool:
