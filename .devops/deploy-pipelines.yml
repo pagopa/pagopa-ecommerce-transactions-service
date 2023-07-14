@@ -351,7 +351,7 @@ stages:
   - stage: "API_Green_UAT_test"
     displayName: 'Running API test on green app'
     dependsOn: Deploy_UAT_Green
-    condition: succeeded()
+    condition: eq(dependencies.Deploy_UAT_Green.result, 'Succeeded')
     jobs:
       - job: newman_api_test
         steps:
@@ -604,7 +604,7 @@ stages:
   - stage: "Prod_RollbackToLatestRelease"
     displayName: 'PROD rollback to the latest Release'
     dependsOn: [Prod_RollbackForApproval]
-    condition: eq(dependencies.Deploy_UAT_Green.result, 'Succeeded')
+    condition: succeeded()
     jobs:
       - job: Prod_Rollback
         pool:
