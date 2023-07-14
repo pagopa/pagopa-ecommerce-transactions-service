@@ -1,8 +1,11 @@
 name: Trigger pipeline deploy
 
 on:
-  push:
-    branches: [ "main" ]
+  pull_request:
+    branches:
+      - main
+    types: [ opened, synchronize, labeled, unlabeled, reopened, edited ]
+
 
   workflow_dispatch:
 
