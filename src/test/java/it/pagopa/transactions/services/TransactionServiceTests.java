@@ -295,6 +295,7 @@ class TransactionServiceTests {
         CalculateFeeResponseDto calculateFeeResponseDto = new CalculateFeeResponseDto()
                 .belowThreshold(true)
                 .paymentMethodName("PaymentMethodName")
+                .paymentMethodDescription("PaymentMethodDescription")
                 .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
                 .bundles(
                         List.of(
@@ -697,6 +698,7 @@ class TransactionServiceTests {
                 .belowThreshold(true)
                 .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
                 .paymentMethodName("paymentMethodName")
+                .paymentMethodDescription("paymentMethodDescription")
                 .bundles(
                         List.of(
                                 new BundleDto()
