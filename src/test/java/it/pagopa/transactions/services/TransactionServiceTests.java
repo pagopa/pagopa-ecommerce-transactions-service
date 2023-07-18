@@ -142,6 +142,7 @@ class TransactionServiceTests {
 
     private static final String expectedOperationTimestamp = "2023-01-01T01:02:03";
 
+
     @Test
     void getTransactionReturnsTransactionDataOriginProvided() {
 
