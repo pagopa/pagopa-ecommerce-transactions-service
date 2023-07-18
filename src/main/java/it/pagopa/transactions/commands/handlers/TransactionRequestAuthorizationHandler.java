@@ -158,7 +158,8 @@ public class TransactionRequestAuthorizationHandler
                                                     tuple3.getT1(),
                                                     tuple3.getT3(),
                                                     logo,
-                                                    cardBrand
+                                                    cardBrand,
+                                                    command.getData().paymentMethodDescription()
                                             )
                                     );
 

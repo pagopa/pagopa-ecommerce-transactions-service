@@ -96,6 +96,7 @@ class LogMaskTests {
                 "brokerName",
                 "pspChannelCode",
                 "paymentMethodName",
+                "paymentMethodDescription",
                 "pspBusinessName",
                 false,
                 "XPAY",

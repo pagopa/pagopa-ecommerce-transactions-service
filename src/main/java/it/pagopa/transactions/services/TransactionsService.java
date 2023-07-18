@@ -301,6 +301,7 @@ public class TransactionsService {
                                     .map(
                                             calculateFeeResponse -> Tuples.of(
                                                     calculateFeeResponse.getPaymentMethodName(),
+                                                    calculateFeeResponse.getPaymentMethodDescription(),
                                                     calculateFeeResponse.getBundles().stream()
                                                             .filter(
                                                                     psp -> psp.getIdPsp()
@@ -318,7 +319,7 @@ public class TransactionsService {
                                                             ).findFirst()
                                             )
                                     )
-                                    .filter(t -> t.getT2().isPresent())
+                                    .filter(t -> t.getT3().isPresent())
                                     .switchIfEmpty(
                                             Mono.error(
                                                     new UnsatisfiablePspRequestException(
@@ -332,7 +333,8 @@ public class TransactionsService {
                                             t -> Tuples.of(
                                                     transaction,
                                                     t.getT1(),
-                                                    t.getT2().get()
+                                                    t.getT2(),
+                                                    t.getT3().get()
                                             )
 
                                     );
@@ -342,8 +344,9 @@ public class TransactionsService {
                         args -> {
                             it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument = args
                                     .getT1();
-                            BundleDto bundle = args.getT3();
                             String paymentMethodName = args.getT2();
+                            String paymentMethodDescription = args.getT3();
+                            BundleDto bundle = args.getT4();
 
                             log.info(
                                     "Requesting authorization for transactionId: {}",
@@ -400,6 +403,7 @@ public class TransactionsService {
                                     bundle.getIdBrokerPsp(),
                                     bundle.getIdChannel(),
                                     paymentMethodName,
+                                    paymentMethodDescription,
                                     bundle.getBundleName(),
                                     bundle.getOnUs(),
                                     paymentGatewayId,

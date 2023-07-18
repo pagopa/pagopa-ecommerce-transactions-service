@@ -38,7 +38,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.time.OffsetDateTime;
@@ -295,6 +294,7 @@ class TransactionServiceTests {
         CalculateFeeResponseDto calculateFeeResponseDto = new CalculateFeeResponseDto()
                 .belowThreshold(true)
                 .paymentMethodName("PaymentMethodName")
+                .paymentMethodDescription("PaymentMethodDescription")
                 .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
                 .bundles(
                         List.of(
@@ -335,13 +335,16 @@ class TransactionServiceTests {
 
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 
-        Mockito.when(transactionRequestAuthorizationHandler.handle(any()))
+        Mockito.when(transactionRequestAuthorizationHandler.handle(commandArgumentCaptor.capture()))
                 .thenReturn(Mono.just(requestAuthorizationResponse));
 
         /* test */
         RequestAuthorizationResponseDto postePayAuthorizationResponse = transactionsService
                 .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest).block();
 
+        AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
+        assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
+        assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
         assertNotNull(postePayAuthorizationResponse);
         assertFalse(postePayAuthorizationResponse.getAuthorizationUrl().isEmpty());
     }
@@ -697,6 +700,7 @@ class TransactionServiceTests {
                 .belowThreshold(true)
                 .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
                 .paymentMethodName("paymentMethodName")
+                .paymentMethodDescription("paymentMethodDescription")
                 .bundles(
                         List.of(
                                 new BundleDto()
@@ -741,6 +745,9 @@ class TransactionServiceTests {
         RequestAuthorizationResponseDto authorizationResponse = transactionsService
                 .requestTransactionAuthorization(TRANSACTION_ID, "XPAY", authorizationRequest).block();
 
+        AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
+        assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
+        assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
         assertNotNull(authorizationResponse);
         assertFalse(authorizationResponse.getAuthorizationUrl().isEmpty());
         AuthorizationRequestData authData = commandArgumentCaptor.getValue().getData();
@@ -839,6 +846,7 @@ class TransactionServiceTests {
         /* preconditions */
         CalculateFeeResponseDto calculateFeeResponseDto = new CalculateFeeResponseDto()
                 .belowThreshold(true)
+                .paymentMethodDescription("PaymentMethodDescription")
                 .paymentMethodName("PaymentMethodName")
                 .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
                 .bundles(
