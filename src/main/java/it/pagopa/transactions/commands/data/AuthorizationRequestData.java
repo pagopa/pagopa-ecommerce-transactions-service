@@ -12,6 +12,7 @@ public record AuthorizationRequestData(
         String brokerName,
         String pspChannelCode,
         String paymentMethodName,
+        String paymentMethodDescription,
         String pspBusinessName,
         Boolean pspOnUs,
         String paymentGatewayId,

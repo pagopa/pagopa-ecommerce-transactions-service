@@ -28,6 +28,7 @@ import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.javatuples.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -301,6 +302,7 @@ public class TransactionsService {
                                     .map(
                                             calculateFeeResponse -> Tuples.of(
                                                     calculateFeeResponse.getPaymentMethodName(),
+                                                    calculateFeeResponse.getPaymentMethodDescription(),
                                                     calculateFeeResponse.getBundles().stream()
                                                             .filter(
                                                                     psp -> psp.getIdPsp()
@@ -318,7 +320,7 @@ public class TransactionsService {
                                                             ).findFirst()
                                             )
                                     )
-                                    .filter(t -> t.getT2().isPresent())
+                                    .filter(t -> t.getT3().isPresent())
                                     .switchIfEmpty(
                                             Mono.error(
                                                     new UnsatisfiablePspRequestException(
@@ -331,8 +333,8 @@ public class TransactionsService {
                                     .map(
                                             t -> Tuples.of(
                                                     transaction,
-                                                    t.getT1(),
-                                                    t.getT2().get()
+                                                    new Pair<>(t.getT1(), t.getT2()),
+                                                    t.getT3().get()
                                             )
 
                                     );
@@ -343,7 +345,8 @@ public class TransactionsService {
                             it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument = args
                                     .getT1();
                             BundleDto bundle = args.getT3();
-                            String paymentMethodName = args.getT2();
+                            String paymentMethodName = args.getT2().getValue0();
+                            String paymentMethodDescription = args.getT2().getValue1();
 
                             log.info(
                                     "Requesting authorization for transactionId: {}",
@@ -400,6 +403,7 @@ public class TransactionsService {
                                     bundle.getIdBrokerPsp(),
                                     bundle.getIdChannel(),
                                     paymentMethodName,
+                                    paymentMethodDescription,
                                     bundle.getBundleName(),
                                     bundle.getOnUs(),
                                     paymentGatewayId,
