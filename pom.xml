@@ -275,7 +275,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-infra/CHK-1708-paymentMethodDescription/src/domains/ecommerce-app/api/ecommerce-payment-methods-service/v1/_openapi.json.tpl</inputSpec>
+                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-infra/main/src/domains/ecommerce-app/api/ecommerce-payment-methods-service/v1/_openapi.json.tpl</inputSpec>
                             <generatorName>java</generatorName>
                             <library>webclient</library>
                             <generateApiDocumentation>false</generateApiDocumentation>
@@ -415,8 +415,6 @@
                     <connectionUrl>scm:git:https://github.com/pagopa/pagopa-ecommerce-commons.git</connectionUrl>
                     <scmVersionType>tag</scmVersionType>
                     <scmVersion>${pagopa-ecommerce-commons.version}</scmVersion>
-                    <scmVersionType>branch</scmVersionType>
-                    <scmVersion>CHK-1705-paymentMethodDescription</scmVersion>
                     <goals>install -DskipTests</goals>
                 </configuration>
                 <executions>
