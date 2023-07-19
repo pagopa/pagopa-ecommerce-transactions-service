@@ -11,6 +11,8 @@ import it.pagopa.transactions.utils.JwtTokenUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
@@ -38,8 +40,7 @@ import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
@@ -446,6 +447,7 @@ class TransactionsControllerTest {
         webTestClient.post()
                 .uri("/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("X-Client-Id", "CHECKOUT")
                 .body(BodyInserters.fromValue("{}"))
                 .exchange()
                 .expectStatus()
@@ -656,6 +658,59 @@ class TransactionsControllerTest {
                     .value(p -> assertEquals(status.toString(), p.getStatus().toString()));
         }
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"foo@test.it", "FoO@TeSt.iT", "FOO@TEST.IT"})
+    void shouldHandleTransactionCreatedWithMailCaseInsensitive(String email) {
+        Mockito.when(jwtTokenUtils.generateToken(any())).thenReturn(Mono.just(""));
+        Mockito.when(transactionsService.newTransaction(any(), any())).thenReturn(Mono.just(new NewTransactionResponseDto()));
+        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
+                .addPaymentNoticesItem(
+                        new PaymentNoticeInfoDto()
+                                .rptId(TransactionTestUtils.RPT_ID)
+                                .amount(TransactionTestUtils.AMOUNT)
+                )
+                .email(email)
+                .idCart(TransactionTestUtils.ID_CART);
+        webTestClient.post()
+                .uri("/transactions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(newTransactionRequestDto)
+                .header("X-Client-Id", "CHECKOUT")
+                .exchange()
+                .expectStatus()
+                .isOk();
+    }
+
+    @Test
+    void shouldReturnBadRequestForInvalidMail() {
+        Mockito.when(jwtTokenUtils.generateToken(any())).thenReturn(Mono.just(""));
+        Mockito.when(transactionsService.newTransaction(any(), any())).thenReturn(Mono.just(new NewTransactionResponseDto()));
+        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
+                .addPaymentNoticesItem(
+                        new PaymentNoticeInfoDto()
+                                .rptId(TransactionTestUtils.RPT_ID)
+                                .amount(TransactionTestUtils.AMOUNT)
+                )
+                .email("invalidMail")
+                .idCart(TransactionTestUtils.ID_CART);
+        webTestClient.post()
+                .uri("/transactions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(newTransactionRequestDto)
+                .header("X-Client-Id", "CHECKOUT")
+                .exchange()
+                .expectStatus()
+                .isBadRequest()
+                .expectBody(ProblemJsonDto.class)
+                .value(
+                        p -> {
+                            assertEquals(400, p.getStatus());
+                            assertTrue(p.getDetail().contains("Field error in object 'newTransactionRequestDtoMono' on field 'email'"));
+                        }
+                );
+    }
+
 
     private static CtFaultBean faultBeanWithCode(String faultCode) {
         CtFaultBean fault = new CtFaultBean();
