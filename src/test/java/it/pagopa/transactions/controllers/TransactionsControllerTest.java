@@ -660,10 +660,17 @@ class TransactionsControllerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"foo@test.it", "FoO@TeSt.iT", "FOO@TEST.IT"})
+    @ValueSource(
+            strings = {
+                    "foo@test.it",
+                    "FoO@TeSt.iT",
+                    "FOO@TEST.IT"
+            }
+    )
     void shouldHandleTransactionCreatedWithMailCaseInsensitive(String email) {
         Mockito.when(jwtTokenUtils.generateToken(any())).thenReturn(Mono.just(""));
-        Mockito.when(transactionsService.newTransaction(any(), any())).thenReturn(Mono.just(new NewTransactionResponseDto()));
+        Mockito.when(transactionsService.newTransaction(any(), any()))
+                .thenReturn(Mono.just(new NewTransactionResponseDto()));
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
                 .addPaymentNoticesItem(
                         new PaymentNoticeInfoDto()
@@ -685,7 +692,8 @@ class TransactionsControllerTest {
     @Test
     void shouldReturnBadRequestForInvalidMail() {
         Mockito.when(jwtTokenUtils.generateToken(any())).thenReturn(Mono.just(""));
-        Mockito.when(transactionsService.newTransaction(any(), any())).thenReturn(Mono.just(new NewTransactionResponseDto()));
+        Mockito.when(transactionsService.newTransaction(any(), any()))
+                .thenReturn(Mono.just(new NewTransactionResponseDto()));
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
                 .addPaymentNoticesItem(
                         new PaymentNoticeInfoDto()
@@ -706,11 +714,14 @@ class TransactionsControllerTest {
                 .value(
                         p -> {
                             assertEquals(400, p.getStatus());
-                            assertTrue(p.getDetail().contains("Field error in object 'newTransactionRequestDtoMono' on field 'email'"));
+                            assertTrue(
+                                    p.getDetail().contains(
+                                            "Field error in object 'newTransactionRequestDtoMono' on field 'email'"
+                                    )
+                            );
                         }
                 );
     }
-
 
     private static CtFaultBean faultBeanWithCode(String faultCode) {
         CtFaultBean fault = new CtFaultBean();
