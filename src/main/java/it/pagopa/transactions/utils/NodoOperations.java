@@ -106,11 +106,13 @@ public class NodoOperations {
                 .flatMap(
                         activatePaymentNoticeV2Response -> {
                             log.info(
-                                    "Nodo activation for NM3 payment. Transaction id: [{}] RPT id: [{}] idCart: [{}] response outcome: [{}]",
+                                    "Nodo activation for NM3 payment. Transaction id: [{}] RPT id: [{}] idCart: [{}] response outcome: [{}] faultCode: [{}]",
                                     transactionId,
                                     rptId,
                                     Optional.ofNullable(idCart).orElse("idCart not present"),
-                                    activatePaymentNoticeV2Response.getOutcome()
+                                    activatePaymentNoticeV2Response.getOutcome(),
+                                    Optional.ofNullable(activatePaymentNoticeV2Response.getFault().getFaultCode())
+                                            .orElse("faultCode not present")
                             );
                             if (StOutcome.OK.value().equals(activatePaymentNoticeV2Response.getOutcome().value())) {
                                 return isOkPaymentToken(activatePaymentNoticeV2Response.getPaymentToken())
