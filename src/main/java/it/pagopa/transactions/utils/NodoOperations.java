@@ -7,6 +7,7 @@ import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.EuroUtils;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Request;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Response;
+import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.generated.transactions.model.CtQrCode;
 import it.pagopa.generated.transactions.model.StOutcome;
 import it.pagopa.transactions.client.NodeForPspClient;
@@ -106,11 +107,14 @@ public class NodoOperations {
                 .flatMap(
                         activatePaymentNoticeV2Response -> {
                             log.info(
-                                    "Nodo activation for NM3 payment. Transaction id: [{}] RPT id: [{}] idCart: [{}] response outcome: [{}]",
+                                    "Nodo activation for NM3 payment. Transaction id: [{}] RPT id: [{}] idCart: [{}] response outcome: [{}] faultCode: [{}]",
                                     transactionId,
                                     rptId,
                                     Optional.ofNullable(idCart).orElse("idCart not present"),
-                                    activatePaymentNoticeV2Response.getOutcome()
+                                    activatePaymentNoticeV2Response.getOutcome(),
+                                    Optional.ofNullable(activatePaymentNoticeV2Response.getFault())
+                                            .map(CtFaultBean::getFaultCode)
+                                            .orElse("No faultCode received")
                             );
                             if (StOutcome.OK.value().equals(activatePaymentNoticeV2Response.getOutcome().value())) {
                                 return isOkPaymentToken(activatePaymentNoticeV2Response.getPaymentToken())
