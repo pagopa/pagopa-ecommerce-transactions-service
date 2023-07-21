@@ -54,7 +54,7 @@ microservice-chart:
       PERSONAL_DATA_VAULT_API_BASE_PATH: "https://api.tokenizer.pdv.pagopa.it/tokenizer/v1"
       WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3020"
       LOGO_CARD_BRANDING_MAPPING: >
-        { VISA:'https://checkout.pagopa.it/assets/creditcard/carta_visa.png',  MASTERCARD:'https://checkout.pagopa.it/assets/creditcard/carta_mc.png', DINERS:'https://checkout.pagopa.it/assets/creditcard/carta_diners.png', MAESTRO:'https://checkout.pagopa.it/assets/creditcard/carta_maestro.png', AMEX:'https://checkout.pagopa.it/assets/creditcard/carta_amex.png', UNKNOWN:'https://checkout.pagopa.it/assets/creditcard/generic.png' }
+        { VISA:'https://checkout.pagopa.it/assets/creditcard/visa.png',  MASTERCARD:'https://checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://checkout.pagopa.it/assets/creditcard/diners.png', MAESTRO:'https://checkout.pagopa.it/assets/creditcard/maestro.png', AMEX:'https://checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://checkout.pagopa.it/assets/creditcard/generic.png' }
 
       SERVER_ERROR_INCLUDE_STACKTRACE: "never"
       OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-blue,deployment.environment=prod"
@@ -76,7 +76,7 @@ microservice-chart:
       ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.21.1"
+    tag: "0.21.2"
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -169,7 +169,7 @@ microservice-chart:
     PERSONAL_DATA_VAULT_API_BASE_PATH: "https://api.tokenizer.pdv.pagopa.it/tokenizer/v1"
     WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3020"
     LOGO_CARD_BRANDING_MAPPING: >
-      { VISA:'https://checkout.pagopa.it/assets/creditcard/carta_visa.png',  MASTERCARD:'https://checkout.pagopa.it/assets/creditcard/carta_mc.png', DINERS:'https://checkout.pagopa.it/assets/creditcard/carta_diners.png', MAESTRO:'https://checkout.pagopa.it/assets/creditcard/carta_maestro.png', AMEX:'https://checkout.pagopa.it/assets/creditcard/carta_amex.png', UNKNOWN:'https://checkout.pagopa.it/assets/creditcard/generic.png' }
+      { VISA:'https://checkout.pagopa.it/assets/creditcard/visa.png',  MASTERCARD:'https://checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://checkout.pagopa.it/assets/creditcard/diners.png', MAESTRO:'https://checkout.pagopa.it/assets/creditcard/maestro.png', AMEX:'https://checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://checkout.pagopa.it/assets/creditcard/generic.png' }
 
     SERVER_ERROR_INCLUDE_STACKTRACE: "never"
     OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service,deployment.environment=prod"
