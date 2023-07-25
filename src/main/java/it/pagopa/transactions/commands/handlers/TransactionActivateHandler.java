@@ -1,12 +1,13 @@
 package it.pagopa.transactions.commands.handlers;
 
 import co.elastic.apm.api.ElasticApm;
-import com.azure.core.util.BinaryData;
-import com.azure.storage.queue.QueueAsyncClient;
+import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
+import it.pagopa.ecommerce.commons.queues.QueueEvent;
+import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
@@ -58,6 +59,8 @@ public class TransactionActivateHandler
 
     private final int nodoParallelRequests;
 
+    private final TracingUtils tracingUtils;
+
     @Autowired
     public TransactionActivateHandler(
             PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
@@ -68,7 +71,8 @@ public class TransactionActivateHandler
             @Value("${payment.token.validity}") Integer paymentTokenTimeout,
             ConfidentialMailUtils confidentialMailUtils,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
-            @Value("${nodo.parallelRequests}") int nodoParallelRequests
+            @Value("${nodo.parallelRequests}") int nodoParallelRequests,
+            TracingUtils tracingUtils
     ) {
         this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
         this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
@@ -79,6 +83,7 @@ public class TransactionActivateHandler
         this.confidentialMailUtils = confidentialMailUtils;
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
         this.nodoParallelRequests = nodoParallelRequests;
+        this.tracingUtils = tracingUtils;
     }
 
     public Mono<Tuple2<Mono<TransactionActivatedEvent>, String>> handle(
@@ -315,11 +320,14 @@ public class TransactionActivateHandler
 
         return transactionActivatedEvent.flatMap(transactionEventActivatedStoreRepository::save)
                 .flatMap(
-                        e -> transactionActivatedQueueAsyncClient.sendMessageWithResponse(
-                                BinaryData.fromObject(e),
-                                Duration.ofSeconds(paymentTokenTimeout),
-                                Duration.ofSeconds(transientQueuesTTLSeconds)
-                        ).thenReturn(e)
+                        e -> tracingUtils.traceMono(
+                                this.getClass().getSimpleName(),
+                                tracingInfo -> transactionActivatedQueueAsyncClient.sendMessageWithResponse(
+                                        new QueueEvent<>(e, tracingInfo),
+                                        Duration.ofSeconds(paymentTokenTimeout),
+                                        Duration.ofSeconds(transientQueuesTTLSeconds)
+                                ).thenReturn(e)
+                        )
                 )
                 .doOnError(
                         exception -> log.error(
