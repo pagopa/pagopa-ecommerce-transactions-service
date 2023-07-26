@@ -80,15 +80,19 @@ public class AzureStorageConfig {
     }
 
     @Bean("transactionNotificationRequestedQueueAsyncClient")
-    public QueueAsyncClient transactionNotificationRequestedQueueAsyncClient(
-                                                                             @Value(
-                                                                                 "${azurestorage.connectionstringtransient}"
-                                                                             ) String storageConnectionString,
-                                                                             @Value(
-                                                                                 "${azurestorage.queues.transactionnotificationrequested.name}"
-                                                                             ) String queueName
+    public it.pagopa.ecommerce.commons.client.QueueAsyncClient transactionNotificationRequestedQueueAsyncClient(
+                                                                                                                @Value(
+                                                                                                                    "${azurestorage.connectionstringtransient}"
+                                                                                                                ) String storageConnectionString,
+                                                                                                                @Value(
+                                                                                                                    "${azurestorage.queues.transactionnotificationrequested.name}"
+                                                                                                                ) String queueName,
+                                                                                                                JsonSerializer jsonSerializer
     ) {
-        return buildQueueAsyncClient(storageConnectionString, queueName);
+        return new it.pagopa.ecommerce.commons.client.QueueAsyncClient(
+                buildQueueAsyncClient(storageConnectionString, queueName),
+                jsonSerializer
+        );
     }
 
     private QueueAsyncClient buildQueueAsyncClient(

@@ -1,11 +1,13 @@
 package it.pagopa.transactions.commands.handlers;
 
-import com.azure.core.util.BinaryData;
-import com.azure.storage.queue.QueueAsyncClient;
+import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
+import it.pagopa.ecommerce.commons.queues.QueueEvent;
+import it.pagopa.ecommerce.commons.queues.TracingUtils;
+import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestPaymentsInnerDto;
@@ -46,7 +48,7 @@ class TransactionRequestUserReceiptHandlerTest {
     private QueueAsyncClient queueAsyncClient = Mockito.mock(QueueAsyncClient.class);
 
     @Captor
-    private ArgumentCaptor<BinaryData> queueArgumentCaptor;
+    private ArgumentCaptor<QueueEvent<?>> queueArgumentCaptor;
 
     private TransactionsEventStoreRepository<Object> eventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
@@ -54,6 +56,8 @@ class TransactionRequestUserReceiptHandlerTest {
     private final TransactionsUtils transactionsUtils = new TransactionsUtils(eventStoreRepository, "3020");
 
     private final int transientQueueEventsTtlSeconds = 30;
+
+    private final TracingUtils tracingUtils = TracingUtilsTests.getMock();
 
     @Captor
     private ArgumentCaptor<Duration> durationArgumentCaptor;
@@ -64,7 +68,8 @@ class TransactionRequestUserReceiptHandlerTest {
                 userReceiptDataEventRepository,
                 transactionsUtils,
                 queueAsyncClient,
-                transientQueueEventsTtlSeconds
+                transientQueueEventsTtlSeconds,
+                tracingUtils
         );
     }
 
@@ -137,9 +142,9 @@ class TransactionRequestUserReceiptHandlerTest {
                                 .equals(eventArg.getEventCode())
                 )
         );
-        Mockito.verify(queueAsyncClient, Mockito.times(1)).sendMessageWithResponse(any(BinaryData.class), any(), any());
-        TransactionUserReceiptRequestedEvent queueEvent = queueArgumentCaptor.getValue()
-                .toObject(TransactionUserReceiptRequestedEvent.class);
+        Mockito.verify(queueAsyncClient, Mockito.times(1)).sendMessageWithResponse(any(), any(), any());
+        TransactionUserReceiptRequestedEvent queueEvent = ((TransactionUserReceiptRequestedEvent) queueArgumentCaptor
+                .getValue().event());
         assertEquals(TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT, queueEvent.getEventCode());
         assertEquals(event.getData(), queueEvent.getData());
         assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
@@ -214,9 +219,9 @@ class TransactionRequestUserReceiptHandlerTest {
                                 .equals(eventArg.getEventCode())
                 )
         );
-        Mockito.verify(queueAsyncClient, Mockito.times(1)).sendMessageWithResponse(any(BinaryData.class), any(), any());
-        TransactionUserReceiptRequestedEvent queueEvent = queueArgumentCaptor.getValue()
-                .toObject(TransactionUserReceiptRequestedEvent.class);
+        Mockito.verify(queueAsyncClient, Mockito.times(1)).sendMessageWithResponse(any(), any(), any());
+        TransactionUserReceiptRequestedEvent queueEvent = ((TransactionUserReceiptRequestedEvent) queueArgumentCaptor
+                .getValue().event());
         assertEquals(TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT, queueEvent.getEventCode());
         assertEquals(event.getData(), queueEvent.getData());
         assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
@@ -291,9 +296,9 @@ class TransactionRequestUserReceiptHandlerTest {
                                 .equals(eventArg.getEventCode())
                 )
         );
-        Mockito.verify(queueAsyncClient, Mockito.times(1)).sendMessageWithResponse(any(BinaryData.class), any(), any());
-        TransactionUserReceiptRequestedEvent queueEvent = queueArgumentCaptor.getValue()
-                .toObject(TransactionUserReceiptRequestedEvent.class);
+        Mockito.verify(queueAsyncClient, Mockito.times(1)).sendMessageWithResponse(any(), any(), any());
+        TransactionUserReceiptRequestedEvent queueEvent = ((TransactionUserReceiptRequestedEvent) queueArgumentCaptor
+                .getValue().event());
         assertEquals(TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT, queueEvent.getEventCode());
         assertEquals(event.getData(), queueEvent.getData());
         assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());

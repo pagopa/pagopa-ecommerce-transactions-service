@@ -1,13 +1,15 @@
 package it.pagopa.transactions.commands.handlers;
 
 import com.azure.core.util.BinaryData;
-import com.azure.storage.queue.QueueAsyncClient;
+import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionClosureData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptRequestedEvent;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionClosed;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.queues.QueueEvent;
+import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
 import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
@@ -35,6 +37,8 @@ public class TransactionRequestUserReceiptHandler
 
     private final int transientQueuesTTLSeconds;
 
+    private final TracingUtils tracingUtils;
+
     @Autowired
     public TransactionRequestUserReceiptHandler(
             TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptAddedEventRepository,
@@ -42,12 +46,14 @@ public class TransactionRequestUserReceiptHandler
             @Qualifier(
                 "transactionNotificationRequestedQueueAsyncClient"
             ) QueueAsyncClient transactionNotificationRequestedQueueAsyncClient,
-            @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds
+            @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
+            TracingUtils tracingUtils
     ) {
         this.userReceiptAddedEventRepository = userReceiptAddedEventRepository;
         this.transactionsUtils = transactionsUtils;
         this.transactionNotificationRequestedQueueAsyncClient = transactionNotificationRequestedQueueAsyncClient;
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
+        this.tracingUtils = tracingUtils;
     }
 
     @Override
@@ -101,19 +107,22 @@ public class TransactionRequestUserReceiptHandler
 
                     return userReceiptAddedEventRepository.save(event)
                             .flatMap(
-                                    userReceiptEvent -> transactionNotificationRequestedQueueAsyncClient
-                                            .sendMessageWithResponse(
-                                                    BinaryData.fromObject(userReceiptEvent),
-                                                    Duration.ZERO,
-                                                    Duration.ofSeconds(transientQueuesTTLSeconds)
-                                            ).doOnError(
-                                                    exception -> log.error(
-                                                            "Error to generate event {} for transactionId {} - error {}",
-                                                            event.getEventCode(),
-                                                            event.getTransactionId(),
-                                                            exception.getMessage()
+                                    userReceiptEvent -> tracingUtils.traceMono(
+                                            this.getClass().getSimpleName(),
+                                            tracingInfo -> transactionNotificationRequestedQueueAsyncClient
+                                                    .sendMessageWithResponse(
+                                                            new QueueEvent<>(userReceiptEvent, tracingInfo),
+                                                            Duration.ZERO,
+                                                            Duration.ofSeconds(transientQueuesTTLSeconds)
                                                     )
+                                    ).doOnError(
+                                            exception -> log.error(
+                                                    "Error to generate event {} for transactionId {} - error {}",
+                                                    event.getEventCode(),
+                                                    event.getTransactionId(),
+                                                    exception.getMessage()
                                             )
+                                    )
                                             .doOnNext(
                                                     queueResponse -> log.info(
                                                             "Generated event {} for transactionId {}",
