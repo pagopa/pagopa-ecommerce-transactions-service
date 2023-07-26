@@ -278,7 +278,7 @@ public class TransactionActivateHandler
                     paymentRequestInfo.id(),
                     paymentRequestInfo.paymentToken()
             );
-            openTelemetryUtils.addErrorSpanWithError(
+            openTelemetryUtils.addErrorSpanWithException(
                     "Transaction re-activated",
                     new IllegalArgumentException(
                             "Null transaction activation date or payment token for rptId %s in repeated activation"

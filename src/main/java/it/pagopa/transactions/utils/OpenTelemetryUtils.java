@@ -28,9 +28,21 @@ public class OpenTelemetryUtils {
 
     }
 
-    public void addErrorSpanWithError(
-                                      String spanName,
-                                      Throwable throwable
+    public void addErrorSpanWithAttributes(
+                                           String spanName,
+                                           Attributes attributes
+    ) {
+
+        Span span = openTelemetryTracer.spanBuilder(spanName).startSpan();
+        span.setAllAttributes(attributes);
+        span.setStatus(StatusCode.ERROR);
+        span.end();
+
+    }
+
+    public void addErrorSpanWithException(
+                                          String spanName,
+                                          Throwable throwable
     ) {
         Span span = openTelemetryTracer.spanBuilder(spanName).startSpan();
         span
@@ -38,4 +50,5 @@ public class OpenTelemetryUtils {
                 .recordException(throwable);
         span.end();
     }
+
 }

@@ -1,15 +1,13 @@
 package it.pagopa.transactions.utils;
 
+import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.api.common.Attributes;
 import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.v1.PaymentTransferInfo;
 import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.EuroUtils;
-import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Request;
-import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Response;
-import it.pagopa.generated.transactions.model.CtFaultBean;
-import it.pagopa.generated.transactions.model.CtQrCode;
-import it.pagopa.generated.transactions.model.StOutcome;
+import it.pagopa.generated.transactions.model.*;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.configurations.NodoConfig;
 import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
@@ -43,17 +41,21 @@ public class NodoOperations {
 
     private boolean allCCPOnTransferIbanEnabled;
 
+    private final OpenTelemetryUtils openTelemetryUtils;
+
     @Autowired
     public NodoOperations(
             NodeForPspClient nodeForPspClient,
-            it.pagopa.generated.transactions.model.ObjectFactory objectFactoryNodeForPsp,
+            ObjectFactory objectFactoryNodeForPsp,
             NodoConfig nodoConfig,
-            @Value("${nodo.allCCPOnTransferIbanEnabled}") boolean allCCPOnTransferIbanEnabled
+            @Value("${nodo.allCCPOnTransferIbanEnabled}") boolean allCCPOnTransferIbanEnabled,
+            OpenTelemetryUtils openTelemetryUtils
     ) {
         this.nodeForPspClient = nodeForPspClient;
         this.objectFactoryNodeForPsp = objectFactoryNodeForPsp;
         this.nodoConfig = nodoConfig;
         this.allCCPOnTransferIbanEnabled = allCCPOnTransferIbanEnabled;
+        this.openTelemetryUtils = openTelemetryUtils;
     }
 
     public Mono<PaymentRequestInfo> activatePaymentRequest(
@@ -106,21 +108,29 @@ public class NodoOperations {
                 .activatePaymentNoticeV2(objectFactoryNodeForPsp.createActivatePaymentNoticeV2Request(request))
                 .flatMap(
                         activatePaymentNoticeV2Response -> {
+                            String faultCode = Optional.ofNullable(activatePaymentNoticeV2Response.getFault())
+                                    .map(CtFaultBean::getFaultCode)
+                                    .orElse("No faultCode received");
                             log.info(
                                     "Nodo activation for NM3 payment. Transaction id: [{}] RPT id: [{}] idCart: [{}] response outcome: [{}] faultCode: [{}]",
                                     transactionId,
                                     rptId,
                                     Optional.ofNullable(idCart).orElse("idCart not present"),
                                     activatePaymentNoticeV2Response.getOutcome(),
-                                    Optional.ofNullable(activatePaymentNoticeV2Response.getFault())
-                                            .map(CtFaultBean::getFaultCode)
-                                            .orElse("No faultCode received")
+                                    faultCode
                             );
                             if (StOutcome.OK.value().equals(activatePaymentNoticeV2Response.getOutcome().value())) {
                                 return isOkPaymentToken(activatePaymentNoticeV2Response.getPaymentToken())
                                         ? Mono.just(activatePaymentNoticeV2Response)
                                         : Mono.error(new InvalidNodoResponseException("No payment token received"));
                             } else {
+                                openTelemetryUtils.addErrorSpanWithAttributes(
+                                        "Nodo activatePaymentNoticeV2 error",
+                                        Attributes.of(
+                                                AttributeKey.stringKey("faultCode"),
+                                                faultCode
+                                        )
+                                );
                                 return Mono.error(new NodoErrorException(activatePaymentNoticeV2Response.getFault()));
                             }
                         }

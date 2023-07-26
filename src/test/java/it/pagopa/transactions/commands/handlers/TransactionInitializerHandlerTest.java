@@ -174,7 +174,7 @@ class TransactionInitializerHandlerTest {
         /* asserts */
         Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(1)).findById(rptId.value());
         Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(0)).save(any());
-        Mockito.verify(openTelemetryUtils, Mockito.times(0)).addErrorSpanWithError(any(), any());
+        Mockito.verify(openTelemetryUtils, Mockito.times(0)).addErrorSpanWithException(any(), any());
         assertNotNull(paymentRequestInfoCached.id());
         TransactionActivatedEvent event = response.getT1().block();
 
@@ -266,7 +266,7 @@ class TransactionInitializerHandlerTest {
         /* asserts */
         Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(1)).findById(rptId.value());
         Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(0)).save(any());
-        Mockito.verify(openTelemetryUtils, Mockito.times(1)).addErrorSpanWithError(any(), any());
+        Mockito.verify(openTelemetryUtils, Mockito.times(1)).addErrorSpanWithException(any(), any());
         assertNotNull(paymentRequestInfoCached.id());
         TransactionActivatedEvent event = response.getT1().block();
 

@@ -1,5 +1,7 @@
 package it.pagopa.transactions.utils;
 
+import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.api.common.Attributes;
 import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
@@ -17,13 +19,14 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
 class NodoOperationsTest {
@@ -44,12 +47,15 @@ class NodoOperationsTest {
 
     private final String dueDate = "2031-12-31";
 
+    private final OpenTelemetryUtils openTelemetryUtils = Mockito.mock(OpenTelemetryUtils.class);
+
     void instantiateNodoOperations(boolean lightAllCCPCheck) {
         nodoOperations = new NodoOperations(
                 nodeForPspClient,
                 objectFactoryNodeForPsp,
                 nodoConfig,
-                lightAllCCPCheck
+                lightAllCCPCheck,
+                openTelemetryUtils
         );
     }
 
@@ -1769,5 +1775,97 @@ class NodoOperationsTest {
         assertEquals(idempotencyKey, response.idempotencyKey());
         assertEquals(paTaxCode, response.paFiscalCode());
         assertEquals(updatedAmount.multiply(BigDecimal.valueOf(100)), BigDecimal.valueOf(response.amount()));
+    }
+
+    @Test
+    void shouldAddErrorSpanWithFaultCodeForNodoError() {
+        String nodoFaultCode = "PPT_FAULT_CODE";
+        instantiateNodoOperations(false);
+        RptId rptId = new RptId("77777777777302016723749670035");
+        IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
+        String paymentToken = UUID.randomUUID().toString();
+        String transactionId = UUID.randomUUID().toString();
+        String paTaxCode = "77777777777";
+        String description = "Description";
+        int amount = 1000;
+        String idCart = "idCart";
+        it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
+        BigDecimal outdatedAmount = BigDecimal.valueOf(amount);
+        BigDecimal updatedAmount = BigDecimal.valueOf(amount + 100);
+        String fiscalCode = "77777777777";
+        String paymentNotice = "302000100000009424";
+        CtTransferListPSPV2 ctTransferListPSPV2 = objectFactoryUtil.createCtTransferListPSPV2();
+        CtTransferPSPV2 ctTransferPSPV2 = objectFactoryUtil.createCtTransferPSPV2();
+        ctTransferPSPV2.setIdTransfer(1);
+        ctTransferPSPV2.setFiscalCodePA(fiscalCode);
+        ctTransferPSPV2.setTransferAmount(BigDecimal.valueOf(amount));
+        ctTransferPSPV2.setIBAN("IT41B0000100899876113235567");
+        ctTransferPSPV2.setRemittanceInformation("test1");
+        byte[] testByte = new byte[] {
+                0,
+                1,
+                2,
+                3
+        };
+        CtRichiestaMarcaDaBollo ctRichiestaMarcaDaBollo = objectFactoryUtil.createCtRichiestaMarcaDaBollo();
+        ctRichiestaMarcaDaBollo.setTipoBollo("Tipo Bollo");
+        ctRichiestaMarcaDaBollo.setProvinciaResidenza("RM");
+        ctRichiestaMarcaDaBollo.setHashDocumento(testByte);
+        CtTransferPSPV2 ctTransferPSPV2_1 = objectFactoryUtil.createCtTransferPSPV2();
+        ctTransferPSPV2_1.setIdTransfer(1);
+        ctTransferPSPV2_1.setFiscalCodePA(fiscalCode);
+        ctTransferPSPV2_1.setTransferAmount(BigDecimal.valueOf(amount));
+        ctTransferPSPV2_1.setRichiestaMarcaDaBollo(ctRichiestaMarcaDaBollo);
+        ctTransferPSPV2_1.setRemittanceInformation("test1");
+        ctTransferListPSPV2.getTransfer().add(ctTransferPSPV2);
+        ctTransferListPSPV2.getTransfer().add(ctTransferPSPV2_1);
+        ActivatePaymentNoticeV2Request activatePaymentReq = objectFactoryUtil.createActivatePaymentNoticeV2Request();
+        CtQrCode qrCode = new CtQrCode();
+        qrCode.setFiscalCode(fiscalCode);
+        qrCode.setNoticeNumber(paymentNotice);
+        activatePaymentReq.setAmount(outdatedAmount);
+        activatePaymentReq.setQrCode(qrCode);
+
+        ActivatePaymentNoticeV2Response activatePaymentRes = objectFactoryUtil.createActivatePaymentNoticeV2Response();
+        CtFaultBean ctFaultBean = new CtFaultBean();
+
+        ctFaultBean.setFaultCode(nodoFaultCode);
+        activatePaymentRes.setFault(ctFaultBean);
+        activatePaymentRes.setOutcome(StOutcome.KO);
+        /* preconditions */
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+                .thenReturn(Mono.just(activatePaymentRes));
+        Mockito.when(
+                objectFactoryNodeForPsp
+                        .createActivatePaymentNoticeV2Request(argThat(req -> req.getPaymentNote().equals(idCart)))
+        )
+                .thenAnswer(args -> objectFactoryUtil.createActivatePaymentNoticeV2Request(args.getArgument(0)));
+        Mockito.when(nodoConfig.baseActivatePaymentNoticeV2Request()).thenReturn(new ActivatePaymentNoticeV2Request());
+        /* test */
+        StepVerifier.create(
+                nodoOperations
+                        .activatePaymentRequest(
+                                rptId,
+                                idempotencyKey,
+                                amount,
+                                transactionId,
+                                900,
+                                idCart,
+                                dueDate
+                        )
+        )
+                .expectError(NodoErrorException.class)
+                .verify();
+
+        /* asserts */
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
+        Mockito.verify(openTelemetryUtils, Mockito.times(1)).addErrorSpanWithAttributes(
+                any(),
+                eq(
+                        Attributes
+                                .of(AttributeKey.stringKey("faultCode"), nodoFaultCode)
+                )
+        );
+
     }
 }
