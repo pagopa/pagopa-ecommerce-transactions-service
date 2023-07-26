@@ -1,6 +1,8 @@
 package it.pagopa.transactions.commands.handlers;
 
-import co.elastic.apm.api.ElasticApm;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.Tracer;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
@@ -61,6 +63,8 @@ public class TransactionActivateHandler
 
     private final TracingUtils tracingUtils;
 
+    private final Tracer openTelemetryTracer;
+
     @Autowired
     public TransactionActivateHandler(
             PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
@@ -72,7 +76,8 @@ public class TransactionActivateHandler
             ConfidentialMailUtils confidentialMailUtils,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
             @Value("${nodo.parallelRequests}") int nodoParallelRequests,
-            TracingUtils tracingUtils
+            TracingUtils tracingUtils,
+            Tracer openTelemetryTracer
     ) {
         this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
         this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
@@ -84,6 +89,7 @@ public class TransactionActivateHandler
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
         this.nodoParallelRequests = nodoParallelRequests;
         this.tracingUtils = tracingUtils;
+        this.openTelemetryTracer = openTelemetryTracer;
     }
 
     public Mono<Tuple2<Mono<TransactionActivatedEvent>, String>> handle(
@@ -238,17 +244,17 @@ public class TransactionActivateHandler
 
     private void traceRepeatedActivation(PaymentRequestInfo paymentRequestInfo) {
         String transactionActivationDateString = paymentRequestInfo.activationDate();
-        co.elastic.apm.api.Span span = ElasticApm.currentTransaction();
+        String paymentToken = paymentRequestInfo.paymentToken();
+        Span span = openTelemetryTracer.spanBuilder("Transaction re-activated").startSpan();
         try {
-            if (transactionActivationDateString != null) {
+            if (transactionActivationDateString != null && paymentToken != null) {
                 ZonedDateTime transactionActivation = ZonedDateTime.parse(transactionActivationDateString);
                 ZonedDateTime paymentTokenValidityEnd = transactionActivation
                         .plus(Duration.ofSeconds(paymentTokenTimeout));
                 Duration paymentTokenValidityTimeLeft = Duration.between(ZonedDateTime.now(), paymentTokenValidityEnd);
-                span.startSpan("transaction", "activation", "activation cached")
-                        .setName("Transaction re-activated")
-                        .setLabel("paymentToken", paymentRequestInfo.paymentToken())
-                        .setLabel("paymentTokenLeftTimeSec", paymentTokenValidityTimeLeft.getSeconds());
+                span
+                        .setAttribute("paymentToken", paymentToken)
+                        .setAttribute("paymentTokenLeftTimeSec", paymentTokenValidityTimeLeft.getSeconds());
 
                 log.info(
                         "PaymentRequestInfo cache hit for {} with valid paymentToken {}. Validity left time: {}",
@@ -262,12 +268,14 @@ public class TransactionActivateHandler
                         paymentRequestInfo.id(),
                         paymentRequestInfo.paymentToken()
                 );
-                span.captureException(
-                        new IllegalArgumentException(
-                                "Null transaction activation date for rptId %s in repeated activation"
-                                        .formatted(paymentRequestInfo.id().toString())
-                        )
-                );
+                span
+                        .setStatus(StatusCode.ERROR)
+                        .recordException(
+                                new IllegalArgumentException(
+                                        "Null transaction activation date or payment token for rptId %s in repeated activation"
+                                                .formatted(paymentRequestInfo.id().toString())
+                                )
+                        );
             }
         } finally {
             span.end();
