@@ -1,8 +1,5 @@
 package it.pagopa.transactions.commands.handlers;
 
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.SpanBuilder;
-import io.opentelemetry.api.trace.Tracer;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
@@ -23,10 +20,7 @@ import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
 import it.pagopa.transactions.exceptions.JWTTokenGenerationException;
 import it.pagopa.transactions.projections.TransactionsProjection;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
-import it.pagopa.transactions.utils.ConfidentialMailUtils;
-import it.pagopa.transactions.utils.JwtTokenUtils;
-import it.pagopa.transactions.utils.NodoOperations;
-import it.pagopa.transactions.utils.Queues;
+import it.pagopa.transactions.utils.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -81,11 +75,7 @@ class TransactionInitializerHandlerTest {
     @Captor
     private ArgumentCaptor<PaymentRequestInfo> paymentRequestInfoArgumentCaptor;
 
-    private final Tracer openTelemetryTracer = Mockito.mock(Tracer.class);
-
-    private final SpanBuilder spanBuilder = Mockito.mock(SpanBuilder.class);
-
-    private final Span span = Mockito.mock(Span.class);
+    private final OpenTelemetryUtils openTelemetryUtils = Mockito.mock(OpenTelemetryUtils.class);
 
     private final TransactionActivateHandler handler = new TransactionActivateHandler(
             paymentRequestInfoRedisTemplateWrapper,
@@ -98,7 +88,7 @@ class TransactionInitializerHandlerTest {
             transientQueueEventsTtlSeconds,
             nodoParallelRequests,
             tracingUtils,
-            openTelemetryTracer
+            openTelemetryUtils
     );
 
     @Test
@@ -177,11 +167,6 @@ class TransactionInitializerHandlerTest {
 
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
 
-        Mockito.when(openTelemetryTracer.spanBuilder(any())).thenReturn(spanBuilder);
-        Mockito.when(spanBuilder.startSpan()).thenReturn(span);
-        Mockito.when(span.setStatus(any())).thenReturn(span);
-        Mockito.when(span.setAttribute(any(String.class), any())).thenReturn(span);
-
         /* run test */
         Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
                 .handle(command).block();
@@ -189,7 +174,7 @@ class TransactionInitializerHandlerTest {
         /* asserts */
         Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(1)).findById(rptId.value());
         Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(0)).save(any());
-        Mockito.verify(span, Mockito.times(0)).recordException(any());
+        Mockito.verify(openTelemetryUtils, Mockito.times(0)).addErrorSpanWithError(any(), any());
         assertNotNull(paymentRequestInfoCached.id());
         TransactionActivatedEvent event = response.getT1().block();
 
@@ -274,11 +259,6 @@ class TransactionInitializerHandlerTest {
 
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
 
-        Mockito.when(openTelemetryTracer.spanBuilder(any())).thenReturn(spanBuilder);
-        Mockito.when(spanBuilder.startSpan()).thenReturn(span);
-        Mockito.when(span.setStatus(any())).thenReturn(span);
-        Mockito.when(span.setAttribute(any(String.class), any())).thenReturn(span);
-
         /* run test */
         Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
                 .handle(command).block();
@@ -286,7 +266,7 @@ class TransactionInitializerHandlerTest {
         /* asserts */
         Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(1)).findById(rptId.value());
         Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(0)).save(any());
-        Mockito.verify(span, Mockito.times(1)).recordException(any());
+        Mockito.verify(openTelemetryUtils, Mockito.times(1)).addErrorSpanWithError(any(), any());
         assertNotNull(paymentRequestInfoCached.id());
         TransactionActivatedEvent event = response.getT1().block();
 

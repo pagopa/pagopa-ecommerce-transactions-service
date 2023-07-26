@@ -1,8 +1,7 @@
 package it.pagopa.transactions.commands.handlers;
 
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.StatusCode;
-import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.api.common.Attributes;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
@@ -19,6 +18,7 @@ import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.JwtTokenUtils;
 import it.pagopa.transactions.utils.NodoOperations;
+import it.pagopa.transactions.utils.OpenTelemetryUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -63,7 +63,7 @@ public class TransactionActivateHandler
 
     private final TracingUtils tracingUtils;
 
-    private final Tracer openTelemetryTracer;
+    private final OpenTelemetryUtils openTelemetryUtils;
 
     @Autowired
     public TransactionActivateHandler(
@@ -77,7 +77,7 @@ public class TransactionActivateHandler
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
             @Value("${nodo.parallelRequests}") int nodoParallelRequests,
             TracingUtils tracingUtils,
-            Tracer openTelemetryTracer
+            OpenTelemetryUtils openTelemetryUtils
     ) {
         this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
         this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
@@ -89,7 +89,7 @@ public class TransactionActivateHandler
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
         this.nodoParallelRequests = nodoParallelRequests;
         this.tracingUtils = tracingUtils;
-        this.openTelemetryTracer = openTelemetryTracer;
+        this.openTelemetryUtils = openTelemetryUtils;
     }
 
     public Mono<Tuple2<Mono<TransactionActivatedEvent>, String>> handle(
@@ -245,46 +245,46 @@ public class TransactionActivateHandler
     private void traceRepeatedActivation(PaymentRequestInfo paymentRequestInfo) {
         String transactionActivationDateString = paymentRequestInfo.activationDate();
         String paymentToken = paymentRequestInfo.paymentToken();
-        /*
-         * Issue https://github.com/elastic/kibana/issues/123256 Span events attached to
-         * the Span.currentSpan() are not visible into Transaction detail so here we
-         * start a new span as workaround in order to make this event visible also
-         * inside Transaction view
-         */
-        Span span = openTelemetryTracer.spanBuilder("Transaction re-activated").startSpan();
-        try {
-            if (transactionActivationDateString != null && paymentToken != null) {
-                ZonedDateTime transactionActivation = ZonedDateTime.parse(transactionActivationDateString);
-                ZonedDateTime paymentTokenValidityEnd = transactionActivation
-                        .plus(Duration.ofSeconds(paymentTokenTimeout));
-                Duration paymentTokenValidityTimeLeft = Duration.between(ZonedDateTime.now(), paymentTokenValidityEnd);
-                span
-                        .setAttribute("paymentToken", paymentToken)
-                        .setAttribute("paymentTokenLeftTimeSec", paymentTokenValidityTimeLeft.getSeconds());
+        if (transactionActivationDateString != null && paymentToken != null) {
+            ZonedDateTime transactionActivation = ZonedDateTime.parse(transactionActivationDateString);
+            ZonedDateTime paymentTokenValidityEnd = transactionActivation
+                    .plus(Duration.ofSeconds(paymentTokenTimeout));
+            Duration paymentTokenValidityTimeLeft = Duration.between(ZonedDateTime.now(), paymentTokenValidityEnd);
 
-                log.info(
-                        "PaymentRequestInfo cache hit for {} with valid paymentToken {}. Validity left time: {}",
-                        paymentRequestInfo.id(),
-                        paymentRequestInfo.paymentToken(),
-                        paymentTokenValidityTimeLeft
-                );
-            } else {
-                log.error(
-                        "Cannot trace repeated transaction activation for {} with payment token: {}, missing transaction activation date",
-                        paymentRequestInfo.id(),
-                        paymentRequestInfo.paymentToken()
-                );
-                span
-                        .setStatus(StatusCode.ERROR)
-                        .recordException(
-                                new IllegalArgumentException(
-                                        "Null transaction activation date or payment token for rptId %s in repeated activation"
-                                                .formatted(paymentRequestInfo.id().toString())
-                                )
-                        );
-            }
-        } finally {
-            span.end();
+            /*
+             * Issue https://github.com/elastic/kibana/issues/123256 Span events attached to
+             * the Span.currentSpan() are not visible into Transaction detail so here we
+             * start a new span as workaround in order to make this event visible also
+             * inside Transaction view
+             */
+            openTelemetryUtils.addSpanWithAttributes(
+                    "Transaction re-activated",
+                    Attributes.of(
+                            AttributeKey.stringKey("paymentToken"),
+                            paymentToken,
+                            AttributeKey.longKey("paymentTokenLeftTimeSec"),
+                            paymentTokenValidityTimeLeft.getSeconds()
+                    )
+            );
+            log.info(
+                    "PaymentRequestInfo cache hit for {} with valid paymentToken {}. Validity left time: {}",
+                    paymentRequestInfo.id(),
+                    paymentRequestInfo.paymentToken(),
+                    paymentTokenValidityTimeLeft
+            );
+        } else {
+            log.error(
+                    "Cannot trace repeated transaction activation for {} with payment token: {}, missing transaction activation date",
+                    paymentRequestInfo.id(),
+                    paymentRequestInfo.paymentToken()
+            );
+            openTelemetryUtils.addErrorSpanWithError(
+                    "Transaction re-activated",
+                    new IllegalArgumentException(
+                            "Null transaction activation date or payment token for rptId %s in repeated activation"
+                                    .formatted(paymentRequestInfo.id().toString())
+                    )
+            );
         }
 
     }
