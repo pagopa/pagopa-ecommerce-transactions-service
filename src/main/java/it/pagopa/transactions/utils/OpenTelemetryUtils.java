@@ -23,11 +23,9 @@ public class OpenTelemetryUtils {
     ) {
 
         Span span = openTelemetryTracer.spanBuilder(spanName).startSpan();
-        try {
-            span.setAllAttributes(attributes);
-        } finally {
-            span.end();
-        }
+        span.setAllAttributes(attributes);
+        span.end();
+
     }
 
     public void addErrorSpanWithError(
@@ -35,12 +33,9 @@ public class OpenTelemetryUtils {
                                       Throwable throwable
     ) {
         Span span = openTelemetryTracer.spanBuilder(spanName).startSpan();
-        try {
-            span
-                    .setStatus(StatusCode.ERROR)
-                    .recordException(throwable);
-        } finally {
-            span.end();
-        }
+        span
+                .setStatus(StatusCode.ERROR)
+                .recordException(throwable);
+        span.end();
     }
 }
