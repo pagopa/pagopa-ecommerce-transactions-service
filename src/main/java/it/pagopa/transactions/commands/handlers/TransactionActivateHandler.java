@@ -1,9 +1,8 @@
 package it.pagopa.transactions.commands.handlers;
 
-import io.opentelemetry.api.common.AttributeKey;
-import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.Tracer;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
@@ -64,6 +63,8 @@ public class TransactionActivateHandler
 
     private final TracingUtils tracingUtils;
 
+    private final Tracer openTelemetryTracer;
+
     @Autowired
     public TransactionActivateHandler(
             PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
@@ -75,7 +76,8 @@ public class TransactionActivateHandler
             ConfidentialMailUtils confidentialMailUtils,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
             @Value("${nodo.parallelRequests}") int nodoParallelRequests,
-            TracingUtils tracingUtils
+            TracingUtils tracingUtils,
+            Tracer openTelemetryTracer
     ) {
         this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
         this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
@@ -87,6 +89,7 @@ public class TransactionActivateHandler
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
         this.nodoParallelRequests = nodoParallelRequests;
         this.tracingUtils = tracingUtils;
+        this.openTelemetryTracer = openTelemetryTracer;
     }
 
     public Mono<Tuple2<Mono<TransactionActivatedEvent>, String>> handle(
@@ -242,22 +245,17 @@ public class TransactionActivateHandler
     private void traceRepeatedActivation(PaymentRequestInfo paymentRequestInfo) {
         String transactionActivationDateString = paymentRequestInfo.activationDate();
         String paymentToken = paymentRequestInfo.paymentToken();
-        Span span = Span.current();
+        Span span = openTelemetryTracer.spanBuilder("Transaction re-activated").startSpan();
         try {
             if (transactionActivationDateString != null && paymentToken != null) {
                 ZonedDateTime transactionActivation = ZonedDateTime.parse(transactionActivationDateString);
                 ZonedDateTime paymentTokenValidityEnd = transactionActivation
                         .plus(Duration.ofSeconds(paymentTokenTimeout));
                 Duration paymentTokenValidityTimeLeft = Duration.between(ZonedDateTime.now(), paymentTokenValidityEnd);
-                span.addEvent(
-                        "Transaction re-activated",
-                        Attributes.of(
-                                AttributeKey.stringKey("paymentToken"),
-                                paymentToken,
-                                AttributeKey.longKey("paymentTokenLeftTimeSec"),
-                                paymentTokenValidityTimeLeft.getSeconds()
-                        )
-                );
+                span
+                        .setAttribute("paymentToken", paymentToken)
+                        .setAttribute("paymentTokenLeftTimeSec", paymentTokenValidityTimeLeft.getSeconds());
+
                 log.info(
                         "PaymentRequestInfo cache hit for {} with valid paymentToken {}. Validity left time: {}",
                         paymentRequestInfo.id(),
