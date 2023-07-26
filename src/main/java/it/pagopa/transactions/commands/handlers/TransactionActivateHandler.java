@@ -245,6 +245,12 @@ public class TransactionActivateHandler
     private void traceRepeatedActivation(PaymentRequestInfo paymentRequestInfo) {
         String transactionActivationDateString = paymentRequestInfo.activationDate();
         String paymentToken = paymentRequestInfo.paymentToken();
+        /*
+         * Issue https://github.com/elastic/kibana/issues/123256 Span events attached to
+         * the Span.currentSpan() are not visible into Transaction detail so here we
+         * start a new span as workaround in order to make this event visible also
+         * inside Transaction view
+         */
         Span span = openTelemetryTracer.spanBuilder("Transaction re-activated").startSpan();
         try {
             if (transactionActivationDateString != null && paymentToken != null) {
