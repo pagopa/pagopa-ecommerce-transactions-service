@@ -125,9 +125,11 @@ public class NodoOperations {
                                         : Mono.error(new InvalidNodoResponseException("No payment token received"));
                             } else {
                                 openTelemetryUtils.addErrorSpanWithAttributes(
-                                        "Nodo activatePaymentNoticeV2 error",
+                                        OpenTelemetryUtils.NODO_ACTIVATION_ERROR_SPAN_NAME,
                                         Attributes.of(
-                                                AttributeKey.stringKey("faultCode"),
+                                                AttributeKey.stringKey(
+                                                        OpenTelemetryUtils.NODO_ACTIVATION_ERROR_FAULT_CODE_ATTRIBUTE_KEY
+                                                ),
                                                 faultCode
                                         )
                                 );

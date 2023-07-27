@@ -17,6 +17,18 @@ import org.springframework.stereotype.Component;
 @Component
 public class OpenTelemetryUtils {
 
+    /**
+     * Nodo activation
+     */
+    public static final String NODO_ACTIVATION_ERROR_SPAN_NAME = "Nodo activatePaymentNoticeV2 error";
+    public static final String NODO_ACTIVATION_ERROR_FAULT_CODE_ATTRIBUTE_KEY = "faultCode";
+
+    public static final String REPEATED_ACTIVATION_SPAN_NAME = "Transaction re-activated";
+
+    public static final String REPEATED_ACTIVATION_PAYMENT_TOKEN_ATTRIBUTE_KEY = "paymentToken";
+
+    public static final String REPEATED_ACTIVATION_PAYMENT_TOKEN_LEFT_TIME_ATTRIBUTE_KEY = "paymentTokenLeftTimeSec";
+
     private final Tracer openTelemetryTracer;
 
     /**

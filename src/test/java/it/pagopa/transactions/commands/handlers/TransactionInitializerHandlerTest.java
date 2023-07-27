@@ -175,11 +175,19 @@ class TransactionInitializerHandlerTest {
         Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(1)).findById(rptId.value());
         Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(0)).save(any());
         Mockito.verify(openTelemetryUtils, Mockito.times(1)).addSpanWithAttributes(
-                eq("Transaction re-activated"),
+                eq(OpenTelemetryUtils.REPEATED_ACTIVATION_SPAN_NAME),
                 argThat(
                         arguments -> {
-                            String spanPaymentToken = arguments.get(AttributeKey.stringKey("paymentToken"));
-                            Long spanLeftTime = arguments.get(AttributeKey.longKey("paymentTokenLeftTimeSec"));
+                            String spanPaymentToken = arguments.get(
+                                    AttributeKey.stringKey(
+                                            OpenTelemetryUtils.REPEATED_ACTIVATION_PAYMENT_TOKEN_ATTRIBUTE_KEY
+                                    )
+                            );
+                            Long spanLeftTime = arguments.get(
+                                    AttributeKey.longKey(
+                                            OpenTelemetryUtils.REPEATED_ACTIVATION_PAYMENT_TOKEN_LEFT_TIME_ATTRIBUTE_KEY
+                                    )
+                            );
                             return paymentToken.equals(spanPaymentToken) && spanLeftTime != null;
                         }
                 )
@@ -278,7 +286,7 @@ class TransactionInitializerHandlerTest {
         Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(0)).save(any());
         Mockito.verify(openTelemetryUtils, Mockito.times(0)).addSpanWithAttributes(any(), any());
         Mockito.verify(openTelemetryUtils, Mockito.times(1)).addErrorSpanWithException(
-                eq("Transaction re-activated"),
+                eq(OpenTelemetryUtils.REPEATED_ACTIVATION_SPAN_NAME),
                 argThat(throwable -> throwable.getMessage().contains(rptId.value()))
         );
         assertNotNull(paymentRequestInfoCached.id());

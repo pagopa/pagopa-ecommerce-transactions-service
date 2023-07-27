@@ -258,11 +258,13 @@ public class TransactionActivateHandler
              * inside Transaction view
              */
             openTelemetryUtils.addSpanWithAttributes(
-                    "Transaction re-activated",
+                    OpenTelemetryUtils.REPEATED_ACTIVATION_SPAN_NAME,
                     Attributes.of(
-                            AttributeKey.stringKey("paymentToken"),
+                            AttributeKey.stringKey(OpenTelemetryUtils.REPEATED_ACTIVATION_PAYMENT_TOKEN_ATTRIBUTE_KEY),
                             paymentToken,
-                            AttributeKey.longKey("paymentTokenLeftTimeSec"),
+                            AttributeKey.longKey(
+                                    OpenTelemetryUtils.REPEATED_ACTIVATION_PAYMENT_TOKEN_LEFT_TIME_ATTRIBUTE_KEY
+                            ),
                             paymentTokenValidityTimeLeft.getSeconds()
                     )
             );
