@@ -27,7 +27,6 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
 
 @ExtendWith(MockitoExtension.class)
 class NodoOperationsTest {
@@ -1861,16 +1860,15 @@ class NodoOperationsTest {
         /* asserts */
         Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
         Mockito.verify(openTelemetryUtils, Mockito.times(1)).addErrorSpanWithAttributes(
-                eq(OpenTelemetryUtils.NODO_ACTIVATION_ERROR_SPAN_NAME),
-                eq(
-                        Attributes
-                                .of(
-                                        AttributeKey.stringKey(
-                                                OpenTelemetryUtils.NODO_ACTIVATION_ERROR_FAULT_CODE_ATTRIBUTE_KEY
-                                        ),
-                                        nodoFaultCode
-                                )
-                )
+                OpenTelemetryUtils.NODO_ACTIVATION_ERROR_SPAN_NAME,
+                Attributes
+                        .of(
+                                AttributeKey.stringKey(
+                                        OpenTelemetryUtils.NODO_ACTIVATION_ERROR_FAULT_CODE_ATTRIBUTE_KEY
+                                ),
+                                nodoFaultCode
+                        )
+
         );
 
     }
