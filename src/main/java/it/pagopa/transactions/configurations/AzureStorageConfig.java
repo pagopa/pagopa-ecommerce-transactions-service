@@ -44,27 +44,35 @@ public class AzureStorageConfig {
 
     @Bean("transactionRefundQueueAsyncClient")
     @Qualifier
-    public QueueAsyncClient transactionRefundQueueAsyncClient(
-                                                              @Value(
-                                                                  "${azurestorage.connectionstringtransient}"
-                                                              ) String storageConnectionString,
-                                                              @Value(
-                                                                  "${azurestorage.queues.transactionrefund.name}"
-                                                              ) String queueName
+    public it.pagopa.ecommerce.commons.client.QueueAsyncClient transactionRefundQueueAsyncClient(
+                                                                                                 @Value(
+                                                                                                     "${azurestorage.connectionstringtransient}"
+                                                                                                 ) String storageConnectionString,
+                                                                                                 @Value(
+                                                                                                     "${azurestorage.queues.transactionrefund.name}"
+                                                                                                 ) String queueName,
+                                                                                                 JsonSerializer jsonSerializer
     ) {
-        return buildQueueAsyncClient(storageConnectionString, queueName);
+        return new it.pagopa.ecommerce.commons.client.QueueAsyncClient(
+                buildQueueAsyncClient(storageConnectionString, queueName),
+                jsonSerializer
+        );
     }
 
     @Bean("transactionClosureRetryQueueAsyncClient")
-    public QueueAsyncClient transactionClosureRetryQueueAsyncClient(
-                                                                    @Value(
-                                                                        "${azurestorage.connectionstringtransient}"
-                                                                    ) String storageConnectionString,
-                                                                    @Value(
-                                                                        "${azurestorage.queues.transactionclosepaymentretry.name}"
-                                                                    ) String queueName
+    public it.pagopa.ecommerce.commons.client.QueueAsyncClient transactionClosureRetryQueueAsyncClient(
+                                                                                                       @Value(
+                                                                                                           "${azurestorage.connectionstringtransient}"
+                                                                                                       ) String storageConnectionString,
+                                                                                                       @Value(
+                                                                                                           "${azurestorage.queues.transactionclosepaymentretry.name}"
+                                                                                                       ) String queueName,
+                                                                                                       JsonSerializer jsonSerializer
     ) {
-        return buildQueueAsyncClient(storageConnectionString, queueName);
+        return new it.pagopa.ecommerce.commons.client.QueueAsyncClient(
+                buildQueueAsyncClient(storageConnectionString, queueName),
+                jsonSerializer
+        );
     }
 
     @Bean("transactionClosureQueueAsyncClient")
