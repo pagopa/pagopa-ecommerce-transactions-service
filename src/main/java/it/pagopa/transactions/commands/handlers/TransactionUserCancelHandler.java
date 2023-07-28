@@ -1,10 +1,11 @@
 package it.pagopa.transactions.commands.handlers;
 
-import com.azure.core.util.BinaryData;
-import com.azure.storage.queue.QueueAsyncClient;
+import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.queues.QueueEvent;
+import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -30,17 +31,21 @@ public class TransactionUserCancelHandler implements
 
     private final int transientQueuesTTLSeconds;
 
+    private final TracingUtils tracingUtils;
+
     @Autowired
     public TransactionUserCancelHandler(
             TransactionsEventStoreRepository<Void> transactionEventUserCancelStoreRepository,
             @Qualifier("transactionClosureQueueAsyncClient") QueueAsyncClient transactionClosureQueueAsyncClient,
             TransactionsUtils transactionsUtils,
-            @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds
+            @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
+            TracingUtils tracingUtils
     ) {
         this.transactionsUtils = transactionsUtils;
         this.transactionEventUserCancelStoreRepository = transactionEventUserCancelStoreRepository;
         this.transactionClosureQueueAsyncClient = transactionClosureQueueAsyncClient;
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
+        this.tracingUtils = tracingUtils;
     }
 
     @Override
@@ -59,10 +64,14 @@ public class TransactionUserCancelHandler implements
                             );
                             return transactionEventUserCancelStoreRepository.save(userCanceledEvent)
                                     .flatMap(
-                                            event -> transactionClosureQueueAsyncClient.sendMessageWithResponse(
-                                                    BinaryData.fromObject(userCanceledEvent),
-                                                    Duration.ZERO,
-                                                    Duration.ofSeconds(transientQueuesTTLSeconds)
+                                            event -> tracingUtils.traceMono(
+                                                    this.getClass().getSimpleName(),
+                                                    tracingInfo -> transactionClosureQueueAsyncClient
+                                                            .sendMessageWithResponse(
+                                                                    new QueueEvent<>(userCanceledEvent, tracingInfo),
+                                                                    Duration.ZERO,
+                                                                    Duration.ofSeconds(transientQueuesTTLSeconds)
+                                                            )
                                             )
                                     )
                                     .thenReturn(userCanceledEvent)

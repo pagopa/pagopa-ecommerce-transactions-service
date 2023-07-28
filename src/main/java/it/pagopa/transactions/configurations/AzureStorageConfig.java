@@ -68,15 +68,19 @@ public class AzureStorageConfig {
     }
 
     @Bean("transactionClosureQueueAsyncClient")
-    public QueueAsyncClient transactionClosureQueueAsyncClient(
-                                                               @Value(
-                                                                   "${azurestorage.connectionstringtransient}"
-                                                               ) String storageConnectionString,
-                                                               @Value(
-                                                                   "${azurestorage.queues.transactionclosepayment.name}"
-                                                               ) String queueName
+    public it.pagopa.ecommerce.commons.client.QueueAsyncClient transactionClosureQueueAsyncClient(
+                                                                                                  @Value(
+                                                                                                      "${azurestorage.connectionstringtransient}"
+                                                                                                  ) String storageConnectionString,
+                                                                                                  @Value(
+                                                                                                      "${azurestorage.queues.transactionclosepayment.name}"
+                                                                                                  ) String queueName,
+                                                                                                  JsonSerializer jsonSerializer
     ) {
-        return buildQueueAsyncClient(storageConnectionString, queueName);
+        return new it.pagopa.ecommerce.commons.client.QueueAsyncClient(
+                buildQueueAsyncClient(storageConnectionString, queueName),
+                jsonSerializer
+        );
     }
 
     @Bean("transactionNotificationRequestedQueueAsyncClient")
