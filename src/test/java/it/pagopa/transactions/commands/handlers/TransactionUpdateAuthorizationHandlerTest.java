@@ -16,6 +16,7 @@ import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
+import it.pagopa.transactions.utils.UUIDUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -35,9 +36,12 @@ class TransactionUpdateAuthorizationHandlerTest {
     private TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> transactionEventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
     private TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
+
+    private final UUIDUtils mockUuidUtils = Mockito.mock(UUIDUtils.class);;
+
     private TransactionUpdateAuthorizationHandler updateAuthorizationHandler = new TransactionUpdateAuthorizationHandler(
             transactionEventStoreRepository,
-            new AuthRequestDataUtils()
+            new AuthRequestDataUtils(mockUuidUtils)
     );
 
     @Test
@@ -70,7 +74,8 @@ class TransactionUpdateAuthorizationHandlerTest {
 
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
-
+        Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
+                .thenReturn(String.valueOf(transactionId.uuid().toString()));
         /* test */
         StepVerifier.create(updateAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectNextMatches(authorizationStatusUpdatedEvent -> authorizationStatusUpdatedEvent.equals(event))

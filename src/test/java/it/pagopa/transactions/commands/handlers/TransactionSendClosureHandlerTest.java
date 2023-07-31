@@ -32,6 +32,7 @@ import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
+import it.pagopa.transactions.utils.UUIDUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -79,7 +80,10 @@ class TransactionSendClosureHandlerTest {
             .mock(TransactionsEventStoreRepository.class);
 
     private final TransactionsUtils transactionsUtils = new TransactionsUtils(eventStoreRepository, "3020");
-    private final AuthRequestDataUtils authRequestDataUtils = new AuthRequestDataUtils();
+
+    private final UUIDUtils mockUuidUtils = Mockito.mock(UUIDUtils.class);
+
+    private final AuthRequestDataUtils authRequestDataUtils = new AuthRequestDataUtils(mockUuidUtils);
     private final NodeForPspClient nodeForPspClient = Mockito.mock(NodeForPspClient.class);
 
     private final QueueAsyncClient transactionClosureSentEventQueueClient = Mockito.mock(QueueAsyncClient.class);
@@ -1202,7 +1206,6 @@ class TransactionSendClosureHandlerTest {
                 transactionClosureSentEventQueueClient
                         .sendMessageWithResponse(any(), any(), durationArgumentCaptor.capture())
         ).thenReturn(queueSuccessfulResponse());
-
         Hooks.onOperatorDebug();
 
         /* test */
