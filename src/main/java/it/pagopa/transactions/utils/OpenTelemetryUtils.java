@@ -20,7 +20,9 @@ public class OpenTelemetryUtils {
     /**
      * Nodo activation
      */
-    public static final String NODO_ACTIVATION_ERROR_SPAN_NAME = "Nodo activatePaymentNoticeV2 error";
+    public static final String NODO_ACTIVATION_ERROR_SPAN_NAME = "ActivatePaymentNoticeV2 nodo error: [%s]";
+
+    public static final String NODO_ACTIVATION_OK_SPAN_NAME = "ActivatePaymentNoticeV2 nodo ok";
     public static final String NODO_ACTIVATION_ERROR_FAULT_CODE_ATTRIBUTE_KEY = "faultCode";
 
     public static final String REPEATED_ACTIVATION_SPAN_NAME = "Transaction re-activated";
