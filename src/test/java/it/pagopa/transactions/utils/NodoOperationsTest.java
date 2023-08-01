@@ -145,6 +145,17 @@ class NodoOperationsTest {
         assertEquals(idempotencyKey, response.idempotencyKey());
         assertEquals(paTaxCode, response.paFiscalCode());
         assertEquals(false, response.isAllCCP());
+        Mockito.verify(openTelemetryUtils, Mockito.times(1)).addSpanWithAttributes(
+                OpenTelemetryUtils.NODO_ACTIVATION_OK_SPAN_NAME,
+                Attributes
+                        .of(
+                                AttributeKey.stringKey(
+                                        OpenTelemetryUtils.NODO_ACTIVATION_ERROR_FAULT_CODE_ATTRIBUTE_KEY
+                                ),
+                                StOutcome.OK.toString()
+                        )
+
+        );
     }
 
     @Test
@@ -1860,7 +1871,7 @@ class NodoOperationsTest {
         /* asserts */
         Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
         Mockito.verify(openTelemetryUtils, Mockito.times(1)).addErrorSpanWithAttributes(
-                OpenTelemetryUtils.NODO_ACTIVATION_ERROR_SPAN_NAME,
+                OpenTelemetryUtils.NODO_ACTIVATION_ERROR_SPAN_NAME.formatted(nodoFaultCode),
                 Attributes
                         .of(
                                 AttributeKey.stringKey(

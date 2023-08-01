@@ -120,12 +120,21 @@ public class NodoOperations {
                                     faultCode
                             );
                             if (StOutcome.OK.value().equals(activatePaymentNoticeV2Response.getOutcome().value())) {
+                                openTelemetryUtils.addSpanWithAttributes(
+                                        OpenTelemetryUtils.NODO_ACTIVATION_OK_SPAN_NAME,
+                                        Attributes.of(
+                                                AttributeKey.stringKey(
+                                                        OpenTelemetryUtils.NODO_ACTIVATION_ERROR_FAULT_CODE_ATTRIBUTE_KEY
+                                                ),
+                                                StOutcome.OK.toString()
+                                        )
+                                );
                                 return isOkPaymentToken(activatePaymentNoticeV2Response.getPaymentToken())
                                         ? Mono.just(activatePaymentNoticeV2Response)
                                         : Mono.error(new InvalidNodoResponseException("No payment token received"));
                             } else {
                                 openTelemetryUtils.addErrorSpanWithAttributes(
-                                        OpenTelemetryUtils.NODO_ACTIVATION_ERROR_SPAN_NAME,
+                                        OpenTelemetryUtils.NODO_ACTIVATION_ERROR_SPAN_NAME.formatted(faultCode),
                                         Attributes.of(
                                                 AttributeKey.stringKey(
                                                         OpenTelemetryUtils.NODO_ACTIVATION_ERROR_FAULT_CODE_ATTRIBUTE_KEY
