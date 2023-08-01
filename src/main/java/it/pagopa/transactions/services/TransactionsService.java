@@ -37,6 +37,7 @@ import reactor.util.function.Tuples;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -124,8 +125,12 @@ public class TransactionsService {
                 clientId
         );
 
-        return transactionActivateHandler
-                .handle(transactionActivateCommand)
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        return Mono.just(transactionId)
+                .flatMap(
+                        newTransactionId -> transactionActivateHandler
+                                .handle(Tuples.of(transactionActivateCommand, newTransactionId))
+                )
                 .doOnNext(
                         args -> log.info(
                                 "Transaction initialized for rptId: {}",
@@ -213,6 +218,7 @@ public class TransactionsService {
                                 .handle(new TransactionUserCanceledEvent(transactionId))
                 )
                 .then();
+
     }
 
     @CircuitBreaker(name = "transactions-backend")
@@ -434,53 +440,48 @@ public class TransactionsService {
 
     @Retry(name = "updateTransactionAuthorization")
     public Mono<TransactionInfoDto> updateTransactionAuthorization(
-                                                                   String encodedTransactionId,
+                                                                   UUID decodedTransactionId,
                                                                    UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
-        return uuidUtils.uuidFromBase64(encodedTransactionId)
-                .fold(
-                        Mono::error,
-                        transactionIdDecoded -> {
-                            TransactionId transactionId = new TransactionId(transactionIdDecoded);
-                            log.info("decoded transaction id: {}", transactionIdDecoded);
-                            Mono<BaseTransaction> baseTransaction = transactionsUtils.reduceEvents(transactionId);
-                            return wasTransactionAuthorized(transactionId)
-                                    .<Either<TransactionInfoDto, Mono<BaseTransaction>>>flatMap(alreadyAuthorized -> {
-                                        if (Boolean.FALSE.equals(alreadyAuthorized)) {
-                                            return Mono.just(baseTransaction).map(Either::right);
-                                        } else {
-                                            return baseTransaction.map(
-                                                    trx -> {
-                                                        log.info(
-                                                                "Transaction authorization outcome already received. Transaction status: {}",
-                                                                trx.getStatus()
-                                                        );
-                                                        return buildTransactionInfoDto(trx);
-                                                    }
-                                            ).map(Either::left);
-                                        }
-                                    })
-                                    .flatMap(
-                                            either -> either.fold(
-                                                    Mono::just,
-                                                    tx -> baseTransaction
-                                                            .flatMap(
-                                                                    transaction -> updateTransactionAuthorizationStatus(
-                                                                            transaction,
-                                                                            updateAuthorizationRequestDto
-                                                                    )
-                                                            )
-                                                            .cast(BaseTransactionWithPaymentToken.class)
-                                                            .flatMap(
-                                                                    transaction -> closePayment(
-                                                                            transaction,
-                                                                            updateAuthorizationRequestDto
-                                                                    )
-                                                            )
-                                                            .map(this::buildTransactionInfoDto)
-                                            )
+
+        TransactionId transactionId = new TransactionId(decodedTransactionId);
+        log.info("decoded transaction id: {}", transactionId.value());
+        Mono<BaseTransaction> baseTransaction = transactionsUtils.reduceEvents(transactionId);
+        return wasTransactionAuthorized(transactionId)
+                .<Either<TransactionInfoDto, Mono<BaseTransaction>>>flatMap(alreadyAuthorized -> {
+                    if (Boolean.FALSE.equals(alreadyAuthorized)) {
+                        return Mono.just(baseTransaction).map(Either::right);
+                    } else {
+                        return baseTransaction.map(
+                                trx -> {
+                                    log.info(
+                                            "Transaction authorization outcome already received. Transaction status: {}",
+                                            trx.getStatus()
                                     );
-                        }
+                                    return buildTransactionInfoDto(trx);
+                                }
+                        ).map(Either::left);
+                    }
+                })
+                .flatMap(
+                        either -> either.fold(
+                                Mono::just,
+                                tx -> baseTransaction
+                                        .flatMap(
+                                                transaction -> updateTransactionAuthorizationStatus(
+                                                        transaction,
+                                                        updateAuthorizationRequestDto
+                                                )
+                                        )
+                                        .cast(BaseTransactionWithPaymentToken.class)
+                                        .flatMap(
+                                                transaction -> closePayment(
+                                                        transaction,
+                                                        updateAuthorizationRequestDto
+                                                )
+                                        )
+                                        .map(this::buildTransactionInfoDto)
+                        )
                 );
 
     }
@@ -711,6 +712,7 @@ public class TransactionsService {
                                 transaction.getTransactionId()
                         )
                 );
+
     }
 
     private Mono<NewTransactionResponseDto> projectActivatedEvent(

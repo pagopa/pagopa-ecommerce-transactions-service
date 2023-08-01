@@ -2,11 +2,10 @@ package it.pagopa.transactions.commands.handlers;
 
 import io.opentelemetry.api.common.AttributeKey;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
+import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.*;
-import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
-import it.pagopa.ecommerce.commons.domain.v1.PaymentTransferInfo;
-import it.pagopa.ecommerce.commons.domain.v1.RptId;
-import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
+import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
@@ -31,6 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -169,7 +169,7 @@ class TransactionInitializerHandlerTest {
 
         /* run test */
         Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
-                .handle(command).block();
+                .handle(Tuples.of(command, new TransactionId(TRANSACTION_ID))).block();
 
         /* asserts */
         Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(1)).findById(rptId.value());
@@ -279,7 +279,7 @@ class TransactionInitializerHandlerTest {
 
         /* run test */
         Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
-                .handle(command).block();
+                .handle(Tuples.of(command, new TransactionId(TRANSACTION_ID))).block();
 
         /* asserts */
         Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(1)).findById(rptId.value());
@@ -324,7 +324,7 @@ class TransactionInitializerHandlerTest {
 
         /* run test */
         StepVerifier
-                .create(handler.handle(command))
+                .create(handler.handle(Tuples.of(command, new TransactionId(TRANSACTION_ID))))
                 .expectErrorMatches(exception -> exception instanceof JWTTokenGenerationException);
 
     }
@@ -412,7 +412,7 @@ class TransactionInitializerHandlerTest {
 
         /* run test */
         Mono<Tuple2<Mono<TransactionActivatedEvent>, String>> response = handler
-                .handle(command);
+                .handle(Tuples.of(command, new TransactionId(TRANSACTION_ID)));
         /* Assertions */
         InvalidNodoResponseException exception = assertThrows(InvalidNodoResponseException.class, response::block);
         assertEquals("Invalid payment token received", exception.getErrorDescription());
@@ -496,7 +496,7 @@ class TransactionInitializerHandlerTest {
 
         /* run test */
         Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
-                .handle(command).block();
+                .handle(Tuples.of(command, new TransactionId(TRANSACTION_ID))).block();
 
         /* asserts */
         TransactionActivatedEvent event = response.getT1().block();
@@ -587,7 +587,7 @@ class TransactionInitializerHandlerTest {
 
         /* run test */
         Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
-                .handle(command).block();
+                .handle(Tuples.of(command, new TransactionId(TRANSACTION_ID))).block();
 
         /* asserts */
         TransactionActivatedEvent event = response.getT1().block();
@@ -673,7 +673,7 @@ class TransactionInitializerHandlerTest {
 
         /* run test */
         Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
-                .handle(command).block();
+                .handle(Tuples.of(command, new TransactionId(TRANSACTION_ID))).block();
 
         /* asserts */
         TransactionActivatedEvent event = response.getT1().block();

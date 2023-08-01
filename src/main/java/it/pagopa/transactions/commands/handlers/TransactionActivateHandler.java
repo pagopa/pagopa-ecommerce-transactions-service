@@ -8,7 +8,6 @@ import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
-import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
@@ -35,12 +34,12 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Slf4j
 @Component
 public class TransactionActivateHandler
-        implements CommandHandler<TransactionActivateCommand, Mono<Tuple2<Mono<TransactionActivatedEvent>, String>>> {
+        implements
+        CommandHandler<Tuple2<TransactionActivateCommand, TransactionId>, Mono<Tuple2<Mono<TransactionActivatedEvent>, String>>> {
 
     public static final int TRANSFER_LIST_MAX_SIZE = 5;
     private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper;
@@ -61,7 +60,7 @@ public class TransactionActivateHandler
 
     private final int nodoParallelRequests;
 
-    private final TracingUtils tracingUtils;
+    private final it.pagopa.ecommerce.commons.queues.TracingUtils tracingUtils;
 
     private final OpenTelemetryUtils openTelemetryUtils;
 
@@ -76,7 +75,7 @@ public class TransactionActivateHandler
             ConfidentialMailUtils confidentialMailUtils,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
             @Value("${nodo.parallelRequests}") int nodoParallelRequests,
-            TracingUtils tracingUtils,
+            it.pagopa.ecommerce.commons.queues.TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils
     ) {
         this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
@@ -93,13 +92,13 @@ public class TransactionActivateHandler
     }
 
     public Mono<Tuple2<Mono<TransactionActivatedEvent>, String>> handle(
-                                                                        TransactionActivateCommand command
+                                                                        Tuple2<TransactionActivateCommand, TransactionId> input
     ) {
-        final TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        final TransactionId transactionId = input.getT2();
+        final TransactionActivateCommand command = input.getT1();
         final NewTransactionRequestDto newTransactionRequestDto = command.getData();
         final List<PaymentNoticeInfoDto> paymentNotices = newTransactionRequestDto.getPaymentNotices();
         final boolean multiplePaymentNotices = paymentNotices.size() > 1;
-
         log.info(
                 "Nodo parallel processed requests : [{}]. Multiple payment notices: [{}]. Id cart: [{}]",
                 nodoParallelRequests,

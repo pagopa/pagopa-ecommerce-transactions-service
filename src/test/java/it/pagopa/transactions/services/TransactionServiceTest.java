@@ -7,7 +7,6 @@ import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
 import it.pagopa.transactions.projections.handlers.TransactionsActivationProjectionHandler;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -110,7 +109,7 @@ class TransactionServiceTest {
         /*
          * Preconditions
          */
-        Mockito.when(transactionActivateHandler.handle(Mockito.any(TransactionActivateCommand.class)))
+        Mockito.when(transactionActivateHandler.handle(Mockito.any(Tuple2.class)))
                 .thenReturn(Mono.just(response));
         Mockito.when(transactionsActivationProjectionHandler.handle(transactionActivatedEvent))
                 .thenReturn(Mono.just(transactionActivated));

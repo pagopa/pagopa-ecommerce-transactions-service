@@ -1,5 +1,6 @@
 package it.pagopa.transactions.controllers;
 
+import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.domain.v1.PaymentToken;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -9,6 +10,7 @@ import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.TransactionsService;
 import it.pagopa.transactions.utils.JwtTokenUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
+import it.pagopa.transactions.utils.UUIDUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -31,6 +33,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -63,6 +66,9 @@ class TransactionsControllerTest {
 
     @MockBean
     private TransactionsUtils transactionsUtils;
+
+    @MockBean
+    private UUIDUtils uuidUtils;
 
     @Mock
     ServerWebExchange mockExchange;
@@ -130,15 +136,15 @@ class TransactionsControllerTest {
         response.addPaymentsItem(paymentInfoDto);
         response.setAuthToken("token");
 
-        String paymentToken = UUID.randomUUID().toString();
+        String transactionId = new TransactionId(UUID.randomUUID()).value();
 
-        Mockito.lenient().when(transactionsService.getTransactionInfo(paymentToken)).thenReturn(Mono.just(response));
+        Mockito.lenient().when(transactionsService.getTransactionInfo(transactionId)).thenReturn(Mono.just(response));
 
         ResponseEntity<TransactionInfoDto> responseEntity = transactionsController
-                .getTransactionInfo(paymentToken, null).block();
+                .getTransactionInfo(transactionId, null).block();
 
         // Verify mock
-        Mockito.verify(transactionsService, Mockito.times(1)).getTransactionInfo(paymentToken);
+        Mockito.verify(transactionsService, Mockito.times(1)).getTransactionInfo(transactionId);
 
         // Verify status code and response
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -148,7 +154,7 @@ class TransactionsControllerTest {
     @Test
     void shouldCancelTransactionInfo() {
 
-        String transactionId = UUID.randomUUID().toString();
+        String transactionId = new TransactionId(UUID.randomUUID()).value();
         Mockito.lenient().when(transactionsService.cancelTransaction(transactionId)).thenReturn(Mono.empty());
 
         ResponseEntity<Void> responseEntity = transactionsController
@@ -164,7 +170,7 @@ class TransactionsControllerTest {
     @Test
     void shouldReturnTransactionNotFoundForCancelTransactionInfo() {
 
-        String transactionId = UUID.randomUUID().toString();
+        String transactionId = new TransactionId(UUID.randomUUID()).value();
         /* test */
         Mockito.when(transactionsService.cancelTransaction(transactionId))
                 .thenReturn(Mono.error(new TransactionNotFoundException(transactionId)));
@@ -178,7 +184,7 @@ class TransactionsControllerTest {
 
     @Test
     void shouldRedirectToAuthorizationURIForValidRequest() throws URISyntaxException {
-        String paymentToken = "paymentToken";
+        String transactionId = new TransactionId(UUID.randomUUID()).value();
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
                 .amount(100)
                 .fee(1)
@@ -190,12 +196,12 @@ class TransactionsControllerTest {
         String pgsId = "XPAY";
 
         /* preconditions */
-        Mockito.when(transactionsService.requestTransactionAuthorization(paymentToken, pgsId, authorizationRequest))
+        Mockito.when(transactionsService.requestTransactionAuthorization(transactionId, pgsId, authorizationRequest))
                 .thenReturn(Mono.just(authorizationResponse));
 
         /* test */
         ResponseEntity<RequestAuthorizationResponseDto> response = transactionsController
-                .requestTransactionAuthorization(paymentToken, Mono.just(authorizationRequest), pgsId, mockExchange)
+                .requestTransactionAuthorization(transactionId, Mono.just(authorizationRequest), pgsId, mockExchange)
                 .block();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -204,7 +210,7 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnNotFoundForNonExistingRequest() {
-        String paymentToken = "paymentToken";
+        String transactionId = new TransactionId(UUID.randomUUID()).value();
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
                 .amount(100)
                 .fee(1)
@@ -214,12 +220,12 @@ class TransactionsControllerTest {
         String pgsId = "XPAY";
 
         /* preconditions */
-        Mockito.when(transactionsService.requestTransactionAuthorization(paymentToken, pgsId, authorizationRequest))
-                .thenReturn(Mono.error(new TransactionNotFoundException(paymentToken)));
+        Mockito.when(transactionsService.requestTransactionAuthorization(transactionId, pgsId, authorizationRequest))
+                .thenReturn(Mono.error(new TransactionNotFoundException(transactionId)));
 
         /* test */
         Mono<ResponseEntity<RequestAuthorizationResponseDto>> mono = transactionsController
-                .requestTransactionAuthorization(paymentToken, Mono.just(authorizationRequest), pgsId, mockExchange);
+                .requestTransactionAuthorization(transactionId, Mono.just(authorizationRequest), pgsId, mockExchange);
         assertThrows(
                 TransactionNotFoundException.class,
                 () -> mono.block()
@@ -228,8 +234,8 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnTransactionInfoOnCorrectAuthorizationAndClosure() {
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
         String paymentToken = "paymentToken";
-
         TransactionInfoDto transactionInfo = new TransactionInfoDto()
                 .addPaymentsItem(
                         new PaymentInfoDto()
@@ -247,12 +253,16 @@ class TransactionsControllerTest {
                 ).timestampOperation(OffsetDateTime.now());
 
         /* preconditions */
-        Mockito.when(transactionsService.updateTransactionAuthorization(paymentToken, updateAuthorizationRequest))
+        Mockito.when(
+                transactionsService.updateTransactionAuthorization(transactionId.uuid(), updateAuthorizationRequest)
+        )
                 .thenReturn(Mono.just(transactionInfo));
-
+        Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
+        Hooks.onOperatorDebug();
         /* test */
         ResponseEntity<TransactionInfoDto> response = transactionsController
-                .updateTransactionAuthorization(paymentToken, Mono.just(updateAuthorizationRequest), null).block();
+                .updateTransactionAuthorization(transactionId.value(), Mono.just(updateAuthorizationRequest), null)
+                .block();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(transactionInfo, response.getBody());
@@ -260,7 +270,7 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnNotFoundForAuthorizingNonExistingRequest() {
-        String paymentToken = "paymentToken";
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
@@ -270,13 +280,19 @@ class TransactionsControllerTest {
                 ).timestampOperation(OffsetDateTime.now());
 
         /* preconditions */
-        Mockito.when(transactionsService.updateTransactionAuthorization(paymentToken, updateAuthorizationRequest))
-                .thenReturn(Mono.error(new TransactionNotFoundException(paymentToken)));
-
+        Mockito.when(
+                transactionsService.updateTransactionAuthorization(transactionId.uuid(), updateAuthorizationRequest)
+        )
+                .thenReturn(Mono.error(new TransactionNotFoundException(transactionId.value())));
+        Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
         /* test */
         StepVerifier.create(
                 transactionsController
-                        .updateTransactionAuthorization(paymentToken, Mono.just(updateAuthorizationRequest), null)
+                        .updateTransactionAuthorization(
+                                transactionId.value(),
+                                Mono.just(updateAuthorizationRequest),
+                                null
+                        )
         )
                 .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
                 .verify();
@@ -284,7 +300,7 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnBadGatewayOnNodoHttpError() {
-        String paymentToken = "paymentToken";
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
@@ -294,14 +310,21 @@ class TransactionsControllerTest {
                 ).timestampOperation(OffsetDateTime.now());
 
         /* preconditions */
-        Mockito.when(transactionsService.updateTransactionAuthorization(paymentToken, updateAuthorizationRequest))
+        Mockito.when(
+                transactionsService.updateTransactionAuthorization(transactionId.uuid(), updateAuthorizationRequest)
+        )
                 .thenReturn(Mono.error(new BadGatewayException("", HttpStatus.BAD_REQUEST)));
 
+        Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
         /* test */
 
         StepVerifier.create(
                 transactionsController
-                        .updateTransactionAuthorization(paymentToken, Mono.just(updateAuthorizationRequest), null)
+                        .updateTransactionAuthorization(
+                                transactionId.value(),
+                                Mono.just(updateAuthorizationRequest),
+                                null
+                        )
         )
                 .expectErrorMatches(error -> error instanceof BadGatewayException)
                 .verify();
@@ -401,7 +424,7 @@ class TransactionsControllerTest {
     @Test
     void shouldReturnTransactionInfoOnCorrectNotify() {
         String paymentToken = UUID.randomUUID().toString();
-        String transactionId = UUID.randomUUID().toString();
+        String transactionId = new TransactionId(UUID.randomUUID()).value();
 
         TransactionInfoDto transactionInfo = new TransactionInfoDto()
                 .transactionId(transactionId)

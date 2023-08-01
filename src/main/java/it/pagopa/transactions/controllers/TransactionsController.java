@@ -2,11 +2,14 @@ package it.pagopa.transactions.controllers;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
+import it.pagopa.transactions.mdcutilities.TracingUtils;
 import it.pagopa.transactions.services.TransactionsService;
 import it.pagopa.transactions.utils.TransactionsUtils;
+import it.pagopa.transactions.utils.UUIDUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,6 +25,8 @@ import reactor.core.publisher.Mono;
 import javax.validation.ConstraintViolationException;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -32,6 +37,9 @@ public class TransactionsController implements TransactionsApi {
 
     @Autowired
     private TransactionsUtils transactionsUtils;
+
+    @Autowired
+    private UUIDUtils uuidUtils;
 
     @ExceptionHandler(
         {
@@ -57,7 +65,7 @@ public class TransactionsController implements TransactionsApi {
                                                                           Mono<NewTransactionRequestDto> newTransactionRequest,
                                                                           ServerWebExchange exchange
     ) {
-
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
         return newTransactionRequest
                 .flatMap(ntr -> {
                     log.info(
@@ -66,10 +74,20 @@ public class TransactionsController implements TransactionsApi {
                                     ",",
                                     ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).toList()
                             )
+
                     );
                     return transactionsService.newTransaction(ntr, xClientId);
                 })
-                .map(ResponseEntity::ok);
+                .map(ResponseEntity::ok)
+                .contextWrite(
+                        context -> TracingUtils.setTransactionInfoIntoReactorContext(
+                                new TracingUtils.TransactionInfo(
+                                        transactionId,
+                                        new HashSet<>()
+                                ),
+                                context
+                        )
+                );
     }
 
     @Override
@@ -79,7 +97,13 @@ public class TransactionsController implements TransactionsApi {
     ) {
         return transactionsService.getTransactionInfo(transactionId)
                 .doOnNext(t -> log.info("getTransactionInfo for transactionId: {} ", transactionId))
-                .map(ResponseEntity::ok);
+                .map(ResponseEntity::ok)
+                .contextWrite(
+                        context -> TracingUtils.setTransactionInfoIntoReactorContext(
+                                new TracingUtils.TransactionInfo(new TransactionId(transactionId), new HashSet<>()),
+                                context
+                        )
+                );
     }
 
     @Override
@@ -95,7 +119,13 @@ public class TransactionsController implements TransactionsApi {
                         requestAuthorizationRequest -> transactionsService
                                 .requestTransactionAuthorization(transactionId, xPgsId, requestAuthorizationRequest)
                 )
-                .map(ResponseEntity::ok);
+                .map(ResponseEntity::ok)
+                .contextWrite(
+                        context -> TracingUtils.setTransactionInfoIntoReactorContext(
+                                new TracingUtils.TransactionInfo(new TransactionId(transactionId), new HashSet<>()),
+                                context
+                        )
+                );
     }
 
     @Override
@@ -104,13 +134,34 @@ public class TransactionsController implements TransactionsApi {
                                                                                    Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto,
                                                                                    ServerWebExchange exchange
     ) {
-        return updateAuthorizationRequestDto
-                .doOnNext(t -> log.info("updateTransactionAuthorization for transactionId: {} ", transactionId))
-                .flatMap(
-                        updateAuthorizationRequest -> transactionsService
-                                .updateTransactionAuthorization(transactionId, updateAuthorizationRequest)
-                )
-                .map(ResponseEntity::ok);
+        return uuidUtils.uuidFromBase64(transactionId).fold(
+                Mono::error,
+                transactionIdDecoded -> updateAuthorizationRequestDto
+                        .doOnNext(
+                                t -> log.info(
+                                        "updateTransactionAuthorization for transactionId: {}, decoded transaction id: {} ",
+                                        transactionId,
+                                        transactionIdDecoded
+                                )
+                        )
+                        .flatMap(
+                                updateAuthorizationRequest -> transactionsService
+                                        .updateTransactionAuthorization(
+                                                transactionIdDecoded,
+                                                updateAuthorizationRequest
+                                        )
+                        )
+                        .map(ResponseEntity::ok)
+                        .contextWrite(
+                                context -> TracingUtils.setTransactionInfoIntoReactorContext(
+                                        new TracingUtils.TransactionInfo(
+                                                new TransactionId(transactionIdDecoded),
+                                                new HashSet<>()
+                                        ),
+                                        context
+                                )
+                        )
+        );
     }
 
     @Override
@@ -134,7 +185,13 @@ public class TransactionsController implements TransactionsApi {
                                                 .outcome(AddUserReceiptResponseDto.OutcomeEnum.KO)
                                 )
                 )
-                .map(ResponseEntity::ok);
+                .map(ResponseEntity::ok)
+                .contextWrite(
+                        context -> TracingUtils.setTransactionInfoIntoReactorContext(
+                                new TracingUtils.TransactionInfo(new TransactionId(transactionId), new HashSet<>()),
+                                context
+                        )
+                );
     }
 
     @Override
@@ -143,6 +200,12 @@ public class TransactionsController implements TransactionsApi {
                                                                          ServerWebExchange exchange
     ) {
         return transactionsService.cancelTransaction(transactionId)
+                .contextWrite(
+                        context -> TracingUtils.setTransactionInfoIntoReactorContext(
+                                new TracingUtils.TransactionInfo(new TransactionId(transactionId), new HashSet<>()),
+                                context
+                        )
+                )
                 .thenReturn(ResponseEntity.accepted().build());
     }
 
