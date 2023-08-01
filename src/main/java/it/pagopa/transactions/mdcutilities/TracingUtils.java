@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 public class TracingUtils {
 
     /**
-     * Tracing keys enumerations that contains both MDC key and default value, set
+     * Tracing keys enumerations that contains both context key and default value, set
      * in case such information are not taken from incoming request
      */
     public enum TracingEntry {
@@ -52,11 +52,11 @@ public class TracingUtils {
     }
 
     /**
-     * Set transaction information into MDC taking information from the input
+     * Set transaction information into context taking information from the input
      * TransactionInfo
      *
      * @param transactionInfo - the transaction information record from which
-     *                        retrieve information to be set into MDC
+     *                        retrieve information to be set into context
      */
     public static Context setTransactionInfoIntoReactorContext(
                                                                TransactionInfo transactionInfo,
@@ -76,21 +76,21 @@ public class TracingUtils {
     }
 
     /**
-     * Put value into MDC if the actual MDC value is not present or set to it's
+     * Put value into context if the actual context value is not present or set to it's
      * default value
      *
-     * @param mdcEntry   - the MDC entry to be value
+     * @param tracingEntry   - the context entry to be value
      * @param valueToSet - the value to set
      */
     private static Context putInReactorContextIfSetToDefault(
-                                                             TracingEntry mdcEntry,
+                                                             TracingEntry tracingEntry,
                                                              String valueToSet,
                                                              Context reactorContext
     ) {
         Context currentContext = reactorContext;
-        if (mdcEntry.getDefaultValue()
-                .equals(reactorContext.getOrDefault(mdcEntry.getKey(), mdcEntry.getDefaultValue()))) {
-            currentContext = reactorContext.put(mdcEntry.getKey(), valueToSet);
+        if (tracingEntry.getDefaultValue()
+                .equals(reactorContext.getOrDefault(tracingEntry.getKey(), tracingEntry.getDefaultValue()))) {
+            currentContext = reactorContext.put(tracingEntry.getKey(), valueToSet);
         }
         return currentContext;
     }
