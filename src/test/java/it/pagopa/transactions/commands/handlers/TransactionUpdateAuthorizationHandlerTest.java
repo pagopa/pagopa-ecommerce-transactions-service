@@ -75,7 +75,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
-                .thenReturn(String.valueOf(transactionId.uuid().toString()));
+                .thenReturn(transactionId.uuid().toString());
         /* test */
         StepVerifier.create(updateAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectNextMatches(authorizationStatusUpdatedEvent -> authorizationStatusUpdatedEvent.equals(event))
