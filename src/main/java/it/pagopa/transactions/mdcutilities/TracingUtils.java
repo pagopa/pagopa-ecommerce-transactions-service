@@ -14,8 +14,8 @@ import java.util.stream.Collectors;
 public class TracingUtils {
 
     /**
-     * Tracing keys enumerations that contains both context key and default value, set
-     * in case such information are not taken from incoming request
+     * Tracing keys enumerations that contains both context key and default value,
+     * set in case such information are not taken from incoming request
      */
     public enum TracingEntry {
         TRANSACTION_ID("transactionId", "{transactionId-not-found}"),
@@ -76,11 +76,11 @@ public class TracingUtils {
     }
 
     /**
-     * Put value into context if the actual context value is not present or set to it's
-     * default value
+     * Put value into context if the actual context value is not present or set to
+     * it's default value
      *
-     * @param tracingEntry   - the context entry to be value
-     * @param valueToSet - the value to set
+     * @param tracingEntry - the context entry to be value
+     * @param valueToSet   - the value to set
      */
     private static Context putInReactorContextIfSetToDefault(
                                                              TracingEntry tracingEntry,
