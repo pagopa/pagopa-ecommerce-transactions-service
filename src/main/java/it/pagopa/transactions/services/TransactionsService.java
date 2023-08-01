@@ -193,7 +193,6 @@ public class TransactionsService {
                 );
     }
 
-    @CircuitBreaker(name = "transactions-backend")
     @Retry(name = "cancelTransaction")
     public Mono<Void> cancelTransaction(String transactionId) {
         return transactionsViewRepository
@@ -433,7 +432,6 @@ public class TransactionsService {
                 );
     }
 
-    @CircuitBreaker(name = "node-backend")
     @Retry(name = "updateTransactionAuthorization")
     public Mono<TransactionInfoDto> updateTransactionAuthorization(
                                                                    String encodedTransactionId,
@@ -623,7 +621,6 @@ public class TransactionsService {
 
     }
 
-    @CircuitBreaker(name = "transactions-backend")
     @Retry(name = "addUserReceipt")
     public Mono<TransactionInfoDto> addUserReceipt(
                                                    String transactionId,
