@@ -76,7 +76,7 @@ public class TransactionsController implements TransactionsApi {
                             )
 
                     );
-                    return transactionsService.newTransaction(ntr, xClientId);
+                    return transactionsService.newTransaction(ntr, xClientId, transactionId);
                 })
                 .map(ResponseEntity::ok)
                 .contextWrite(

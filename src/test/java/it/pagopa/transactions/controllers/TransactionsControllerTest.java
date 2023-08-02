@@ -81,9 +81,9 @@ class TransactionsControllerTest {
 
     @Test
     void shouldGetOk() {
-        UUID transactionId = UUID.fromString("95b278e6-a3ae-4c7b-9ac9-788fec1ceede");
-        try (MockedStatic<UUID> uuidMock = Mockito.mockStatic(UUID.class)) {
-            uuidMock.when(UUID::randomUUID).thenReturn(transactionId);
+        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
+        try (MockedStatic<UUID> uuidMockedStatic = Mockito.mockStatic(UUID.class)) {
+            uuidMockedStatic.when(UUID::randomUUID).thenReturn(transactionId.uuid());
             String RPTID = "77777777777302016723749670035";
             String EMAIL = "mario.rossi@email.com";
             ClientIdDto clientIdDto = ClientIdDto.CHECKOUT;
@@ -107,7 +107,8 @@ class TransactionsControllerTest {
                             transactionsService
                                     .newTransaction(
                                             newTransactionRequestDto,
-                                            clientIdDto
+                                            clientIdDto,
+                                            transactionId
                                     )
                     )
                     .thenReturn(Mono.just(response));
@@ -117,7 +118,7 @@ class TransactionsControllerTest {
 
             // Verify mock
             Mockito.verify(transactionsService, Mockito.times(1))
-                    .newTransaction(newTransactionRequestDto, clientIdDto);
+                    .newTransaction(newTransactionRequestDto, clientIdDto, transactionId);
 
             // Verify status code and response
             assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -692,7 +693,7 @@ class TransactionsControllerTest {
     )
     void shouldHandleTransactionCreatedWithMailCaseInsensitive(String email) {
         Mockito.when(jwtTokenUtils.generateToken(any())).thenReturn(Mono.just(""));
-        Mockito.when(transactionsService.newTransaction(any(), any()))
+        Mockito.when(transactionsService.newTransaction(any(), any(), any()))
                 .thenReturn(Mono.just(new NewTransactionResponseDto()));
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
                 .addPaymentNoticesItem(
@@ -715,7 +716,7 @@ class TransactionsControllerTest {
     @Test
     void shouldReturnBadRequestForInvalidMail() {
         Mockito.when(jwtTokenUtils.generateToken(any())).thenReturn(Mono.just(""));
-        Mockito.when(transactionsService.newTransaction(any(), any()))
+        Mockito.when(transactionsService.newTransaction(any(), any(), any()))
                 .thenReturn(Mono.just(new NewTransactionResponseDto()));
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
                 .addPaymentNoticesItem(

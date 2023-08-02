@@ -116,7 +116,14 @@ class TransactionServiceTest {
         Mockito.when(transactionsUtils.convertEnumeration(any()))
                 .thenCallRealMethod();
 
-        StepVerifier.create(transactionsService.newTransaction(transactionRequestDto, clientIdDto))
+        StepVerifier
+                .create(
+                        transactionsService.newTransaction(
+                                transactionRequestDto,
+                                clientIdDto,
+                                new TransactionId(transactionActivatedEvent.getTransactionId())
+                        )
+                )
                 .expectNextMatches(
                         res -> res.getPayments().get(0).getRptId()
                                 .equals(transactionRequestDto.getPaymentNotices().get(0).getRptId())

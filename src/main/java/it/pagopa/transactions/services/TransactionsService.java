@@ -107,7 +107,8 @@ public class TransactionsService {
     @Retry(name = "newTransaction")
     public Mono<NewTransactionResponseDto> newTransaction(
                                                           NewTransactionRequestDto newTransactionRequestDto,
-                                                          ClientIdDto clientIdDto
+                                                          ClientIdDto clientIdDto,
+                                                          TransactionId transactionId
     ) {
         ClientId clientId = ClientId.fromString(
                 Optional.ofNullable(clientIdDto)
@@ -125,7 +126,6 @@ public class TransactionsService {
                 clientId
         );
 
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
         return Mono.just(transactionId)
                 .flatMap(
                         newTransactionId -> transactionActivateHandler
