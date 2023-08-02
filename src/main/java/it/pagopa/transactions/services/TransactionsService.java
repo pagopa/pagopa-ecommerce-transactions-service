@@ -127,11 +127,7 @@ public class TransactionsService {
                 transactionId
         );
 
-        return Mono.just(transactionId)
-                .flatMap(
-                        newTransactionId -> transactionActivateHandler
-                                .handle(transactionActivateCommand)
-                )
+        return transactionActivateHandler.handle(Tuples.of(transactionActivateCommand, newTransactionId))
                 .doOnNext(
                         args -> log.info(
                                 "Transaction initialized for rptId: {}",
