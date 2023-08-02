@@ -114,42 +114,6 @@ public class AzureStorageConfig {
         com.azure.storage.queue.QueueAsyncClient queueAsyncClient = new QueueClientBuilder()
                 .connectionString(storageConnectionString)
                 .queueName(queueName)
-                .addPolicy(
-                        (
-                         context,
-                         next
-                        ) -> {
-                            HttpHeaders requestHeaders = context.getHttpRequest().getHeaders();
-
-                            Set<String> rebrandedHeaders = Set
-                                    .of("traceparent", "tracestate", "baggage");
-
-                            for (String header : rebrandedHeaders) {
-                                context.getHttpRequest().setHeader("pagopa-" + header, requestHeaders.getValue(header));
-                            }
-
-                            context.getHttpRequest().setHeader("pagopa-foo", "bar");
-
-                            return next.process();
-                        }
-                )
-                .addPolicy(
-                        ((
-                          context,
-                          next
-                        ) -> {
-                            log.info("Request headers: {}", context.getHttpRequest().getHeaders().toMap());
-                            return next.process();
-                        })
-                )
-                .httpLogOptions(
-                        QueueClientBuilder.getDefaultHttpLogOptions()
-                                .setLogLevel(HttpLogDetailLevel.HEADERS)
-                                .addAllowedHeaderName("traceparent")
-                                .addAllowedHeaderName("pagopa-traceparent")
-                                .addAllowedHeaderName("pagopa-tracestate")
-                                .addAllowedHeaderName("pagopa-baggage")
-                )
                 .buildAsyncClient();
         queueAsyncClient.createIfNotExists().block();
         return queueAsyncClient;
