@@ -39,7 +39,7 @@ import java.util.Optional;
 @Component
 public class TransactionActivateHandler
         implements
-        CommandHandler<Tuple2<TransactionActivateCommand, TransactionId>, Mono<Tuple2<Mono<TransactionActivatedEvent>, String>>> {
+        CommandHandler<TransactionActivateCommand, Mono<Tuple2<Mono<TransactionActivatedEvent>, String>>> {
 
     public static final int TRANSFER_LIST_MAX_SIZE = 5;
     private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper;
@@ -92,10 +92,9 @@ public class TransactionActivateHandler
     }
 
     public Mono<Tuple2<Mono<TransactionActivatedEvent>, String>> handle(
-                                                                        Tuple2<TransactionActivateCommand, TransactionId> input
+                                                                        TransactionActivateCommand command
     ) {
-        final TransactionId transactionId = input.getT2();
-        final TransactionActivateCommand command = input.getT1();
+        final TransactionId transactionId = command.getTransactionId();
         final NewTransactionRequestDto newTransactionRequestDto = command.getData();
         final List<PaymentNoticeInfoDto> paymentNotices = newTransactionRequestDto.getPaymentNotices();
         final boolean multiplePaymentNotices = paymentNotices.size() > 1;

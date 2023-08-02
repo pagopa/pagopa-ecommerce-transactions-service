@@ -109,7 +109,7 @@ class TransactionServiceTest {
         /*
          * Preconditions
          */
-        Mockito.when(transactionActivateHandler.handle(Mockito.any(Tuple2.class)))
+        Mockito.when(transactionActivateHandler.handle(any()))
                 .thenReturn(Mono.just(response));
         Mockito.when(transactionsActivationProjectionHandler.handle(transactionActivatedEvent))
                 .thenReturn(Mono.just(transactionActivated));

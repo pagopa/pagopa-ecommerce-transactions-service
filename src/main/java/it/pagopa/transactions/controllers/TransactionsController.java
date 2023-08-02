@@ -6,7 +6,7 @@ import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
-import it.pagopa.transactions.mdcutilities.TracingUtils;
+import it.pagopa.transactions.mdcutilities.TransactionTracingUtils;
 import it.pagopa.transactions.services.TransactionsService;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
@@ -80,8 +80,8 @@ public class TransactionsController implements TransactionsApi {
                 })
                 .map(ResponseEntity::ok)
                 .contextWrite(
-                        context -> TracingUtils.setTransactionInfoIntoReactorContext(
-                                new TracingUtils.TransactionInfo(
+                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
+                                new TransactionTracingUtils.TransactionInfo(
                                         transactionId,
                                         new HashSet<>()
                                 ),
@@ -99,8 +99,11 @@ public class TransactionsController implements TransactionsApi {
                 .doOnNext(t -> log.info("getTransactionInfo for transactionId: {} ", transactionId))
                 .map(ResponseEntity::ok)
                 .contextWrite(
-                        context -> TracingUtils.setTransactionInfoIntoReactorContext(
-                                new TracingUtils.TransactionInfo(new TransactionId(transactionId), new HashSet<>()),
+                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
+                                new TransactionTracingUtils.TransactionInfo(
+                                        new TransactionId(transactionId),
+                                        new HashSet<>()
+                                ),
                                 context
                         )
                 );
@@ -121,8 +124,11 @@ public class TransactionsController implements TransactionsApi {
                 )
                 .map(ResponseEntity::ok)
                 .contextWrite(
-                        context -> TracingUtils.setTransactionInfoIntoReactorContext(
-                                new TracingUtils.TransactionInfo(new TransactionId(transactionId), new HashSet<>()),
+                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
+                                new TransactionTracingUtils.TransactionInfo(
+                                        new TransactionId(transactionId),
+                                        new HashSet<>()
+                                ),
                                 context
                         )
                 );
@@ -153,8 +159,8 @@ public class TransactionsController implements TransactionsApi {
                         )
                         .map(ResponseEntity::ok)
                         .contextWrite(
-                                context -> TracingUtils.setTransactionInfoIntoReactorContext(
-                                        new TracingUtils.TransactionInfo(
+                                context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
+                                        new TransactionTracingUtils.TransactionInfo(
                                                 new TransactionId(transactionIdDecoded),
                                                 new HashSet<>()
                                         ),
@@ -187,8 +193,11 @@ public class TransactionsController implements TransactionsApi {
                 )
                 .map(ResponseEntity::ok)
                 .contextWrite(
-                        context -> TracingUtils.setTransactionInfoIntoReactorContext(
-                                new TracingUtils.TransactionInfo(new TransactionId(transactionId), new HashSet<>()),
+                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
+                                new TransactionTracingUtils.TransactionInfo(
+                                        new TransactionId(transactionId),
+                                        new HashSet<>()
+                                ),
                                 context
                         )
                 );
@@ -201,8 +210,11 @@ public class TransactionsController implements TransactionsApi {
     ) {
         return transactionsService.cancelTransaction(transactionId)
                 .contextWrite(
-                        context -> TracingUtils.setTransactionInfoIntoReactorContext(
-                                new TracingUtils.TransactionInfo(new TransactionId(transactionId), new HashSet<>()),
+                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
+                                new TransactionTracingUtils.TransactionInfo(
+                                        new TransactionId(transactionId),
+                                        new HashSet<>()
+                                ),
                                 context
                         )
                 )

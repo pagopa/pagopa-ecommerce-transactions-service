@@ -29,13 +29,13 @@ public class MDCFilter implements WebFilter {
         final HttpHeaders headers = exchange.getRequest().getHeaders();
         final String transactionId = Optional.ofNullable(headers.get(HEADER_TRANSACTION_ID)).orElse(new ArrayList<>())
                 .stream()
-                .findFirst().orElse(TracingUtils.TracingEntry.TRANSACTION_ID.getDefaultValue());
+                .findFirst().orElse(TransactionTracingUtils.TracingEntry.TRANSACTION_ID.getDefaultValue());
         final String rptId = Optional.ofNullable(headers.get(HEADER_RPT_ID)).orElse(new ArrayList<>()).stream()
-                .findFirst().orElse(TracingUtils.TracingEntry.RPT_IDS.getDefaultValue());
+                .findFirst().orElse(TransactionTracingUtils.TracingEntry.RPT_IDS.getDefaultValue());
 
         return chain.filter(exchange)
                 .contextWrite(Context.of(CONTEXT_KEY, UUID.randomUUID().toString()))
-                .contextWrite(Context.of(TracingUtils.TracingEntry.TRANSACTION_ID.getKey(), transactionId))
-                .contextWrite(Context.of(TracingUtils.TracingEntry.RPT_IDS.getKey(), rptId));
+                .contextWrite(Context.of(TransactionTracingUtils.TracingEntry.TRANSACTION_ID.getKey(), transactionId))
+                .contextWrite(Context.of(TransactionTracingUtils.TracingEntry.RPT_IDS.getKey(), rptId));
     }
 }

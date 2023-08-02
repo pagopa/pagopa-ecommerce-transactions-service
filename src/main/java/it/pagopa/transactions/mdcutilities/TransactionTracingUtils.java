@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
  * Tracing utility class that contains helper methods to set transaction
  * information, such as transactionId and rptId list into reactor context
  */
-public class TracingUtils {
+public class TransactionTracingUtils {
 
     /**
      * Tracing keys enumerations that contains both context key and default value,

@@ -123,13 +123,14 @@ public class TransactionsService {
         TransactionActivateCommand transactionActivateCommand = new TransactionActivateCommand(
                 new RptId(newTransactionRequestDto.getPaymentNotices().get(0).getRptId()),
                 newTransactionRequestDto,
-                clientId
+                clientId,
+                transactionId
         );
 
         return Mono.just(transactionId)
                 .flatMap(
                         newTransactionId -> transactionActivateHandler
-                                .handle(Tuples.of(transactionActivateCommand, newTransactionId))
+                                .handle(transactionActivateCommand)
                 )
                 .doOnNext(
                         args -> log.info(
