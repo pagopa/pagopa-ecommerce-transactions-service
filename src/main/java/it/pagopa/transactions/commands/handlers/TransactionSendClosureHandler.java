@@ -1,13 +1,14 @@
 package it.pagopa.transactions.commands.handlers;
 
-import com.azure.core.util.BinaryData;
-import com.azure.storage.queue.QueueAsyncClient;
 import io.vavr.control.Either;
+import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionAuthorizationCompleted;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.queues.QueueEvent;
+import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.utils.EuroUtils;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.*;
@@ -68,6 +69,8 @@ public class TransactionSendClosureHandler implements
 
     private final int transientQueuesTTLSeconds;
 
+    private final TracingUtils tracingUtils;
+
     @Autowired
     public TransactionSendClosureHandler(
             TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository,
@@ -84,7 +87,8 @@ public class TransactionSendClosureHandler implements
             @Qualifier("transactionRefundQueueAsyncClient") QueueAsyncClient refundQueueAsyncClient,
             TransactionsUtils transactionsUtils,
             AuthRequestDataUtils authRequestDataUtils,
-            @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds
+            @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
+            TracingUtils tracingUtils
     ) {
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionClosureErrorEventStoreRepository = transactionClosureErrorEventStoreRepository;
@@ -99,6 +103,7 @@ public class TransactionSendClosureHandler implements
         this.transactionsUtils = transactionsUtils;
         this.authRequestDataUtils = authRequestDataUtils;
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
+        this.tracingUtils = tracingUtils;
     }
 
     @Override
@@ -294,13 +299,18 @@ public class TransactionSendClosureHandler implements
 
                                         eventSaved = eventSaved
                                                 .flatMap(
-                                                        e -> closureRetryQueueAsyncClient
-                                                                .sendMessageWithResponse(
-                                                                        BinaryData.fromObject(e),
-                                                                        visibilityTimeout,
-                                                                        Duration.ofSeconds(transientQueuesTTLSeconds)
-                                                                )
-                                                                .thenReturn(e)
+                                                        e -> tracingUtils.traceMono(
+                                                                this.getClass().getSimpleName(),
+                                                                tracingInfo -> closureRetryQueueAsyncClient
+                                                                        .sendMessageWithResponse(
+                                                                                new QueueEvent<>(e, tracingInfo),
+                                                                                visibilityTimeout,
+                                                                                Duration.ofSeconds(
+                                                                                        transientQueuesTTLSeconds
+                                                                                )
+                                                                        )
+                                                                        .thenReturn(e)
+                                                        )
                                                 );
                                     } else {
                                         log.info(
@@ -540,12 +550,15 @@ public class TransactionSendClosureHandler implements
 
                     return transactionRefundedEventStoreRepository.save(refundRequestedEvent)
                             .then(
-                                    refundQueueAsyncClient
-                                            .sendMessageWithResponse(
-                                                    BinaryData.fromObject(refundRequestedEvent),
-                                                    Duration.ZERO,
-                                                    Duration.ofSeconds(transientQueuesTTLSeconds)
-                                            )
+                                    tracingUtils.traceMono(
+                                            this.getClass().getSimpleName(),
+                                            tracingInfo -> refundQueueAsyncClient
+                                                    .sendMessageWithResponse(
+                                                            new QueueEvent<>(refundRequestedEvent, tracingInfo),
+                                                            Duration.ZERO,
+                                                            Duration.ofSeconds(transientQueuesTTLSeconds)
+                                                    )
+                                    )
                             )
                             .thenReturn(refundRequestedEvent);
                 });

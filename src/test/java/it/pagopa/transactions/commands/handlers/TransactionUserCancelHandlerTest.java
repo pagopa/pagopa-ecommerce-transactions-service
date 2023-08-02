@@ -3,11 +3,12 @@ package it.pagopa.transactions.commands.handlers;
 import com.azure.core.http.HttpHeaders;
 import com.azure.core.http.HttpRequest;
 import com.azure.core.http.rest.Response;
-import com.azure.core.util.BinaryData;
-import com.azure.storage.queue.QueueAsyncClient;
 import com.azure.storage.queue.models.SendMessageResult;
+import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
+import it.pagopa.ecommerce.commons.queues.TracingUtils;
+import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
@@ -49,6 +50,8 @@ class TransactionUserCancelHandlerTest {
 
     private final int transientQueueEventsTtlSeconds = 30;
 
+    private final TracingUtils tracingUtils = TracingUtilsTests.getMock();
+
     @Captor
     private ArgumentCaptor<Duration> durationCaptor;
 
@@ -58,7 +61,8 @@ class TransactionUserCancelHandlerTest {
                 transactionEventUserCancelStoreRepository,
                 transactionUserCancelQueueClient,
                 transactionsUtils,
-                transientQueueEventsTtlSeconds
+                transientQueueEventsTtlSeconds,
+                tracingUtils
         );
     }
 
@@ -79,7 +83,7 @@ class TransactionUserCancelHandlerTest {
 
         Mockito.when(
                 transactionUserCancelQueueClient
-                        .sendMessageWithResponse(any(BinaryData.class), any(), durationCaptor.capture())
+                        .sendMessageWithResponse(any(), any(), durationCaptor.capture())
         )
                 .thenReturn(queueSuccessfulResponse());
         /*
@@ -94,7 +98,7 @@ class TransactionUserCancelHandlerTest {
                 .verifyComplete();
 
         verify(transactionEventUserCancelStoreRepository, times(1)).save(any());
-        verify(transactionUserCancelQueueClient, times(1)).sendMessageWithResponse(any(BinaryData.class), any(), any());
+        verify(transactionUserCancelQueueClient, times(1)).sendMessageWithResponse(any(), any(), any());
         assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationCaptor.getValue());
     }
 
@@ -119,7 +123,7 @@ class TransactionUserCancelHandlerTest {
                 .verify();
 
         verify(transactionEventUserCancelStoreRepository, times(1)).save(any());
-        verify(transactionUserCancelQueueClient, times(0)).sendMessageWithResponse(any(BinaryData.class), any(), any());
+        verify(transactionUserCancelQueueClient, times(0)).sendMessageWithResponse(any(), any(), any());
     }
 
     @Test
@@ -139,7 +143,7 @@ class TransactionUserCancelHandlerTest {
 
         Mockito.when(
                 transactionUserCancelQueueClient
-                        .sendMessageWithResponse(any(BinaryData.class), any(), durationCaptor.capture())
+                        .sendMessageWithResponse(any(), any(), durationCaptor.capture())
         )
                 .thenReturn(Mono.error(new RuntimeException()));
 
@@ -149,7 +153,7 @@ class TransactionUserCancelHandlerTest {
                 .verify();
 
         verify(transactionEventUserCancelStoreRepository, times(1)).save(any());
-        verify(transactionUserCancelQueueClient, times(1)).sendMessageWithResponse(any(BinaryData.class), any(), any());
+        verify(transactionUserCancelQueueClient, times(1)).sendMessageWithResponse(any(), any(), any());
         assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationCaptor.getValue());
     }
 
@@ -171,7 +175,7 @@ class TransactionUserCancelHandlerTest {
                 .verify();
 
         verify(transactionEventUserCancelStoreRepository, times(0)).save(any());
-        verify(transactionUserCancelQueueClient, times(0)).sendMessageWithResponse(any(BinaryData.class), any(), any());
+        verify(transactionUserCancelQueueClient, times(0)).sendMessageWithResponse(any(), any(), any());
     }
 
     @Test
@@ -197,7 +201,7 @@ class TransactionUserCancelHandlerTest {
                 .verify();
 
         verify(transactionEventUserCancelStoreRepository, times(0)).save(any());
-        verify(transactionUserCancelQueueClient, times(0)).sendMessageWithResponse(any(BinaryData.class), any(), any());
+        verify(transactionUserCancelQueueClient, times(0)).sendMessageWithResponse(any(), any(), any());
     }
 
     private static Mono<Response<SendMessageResult>> queueSuccessfulResponse() {
