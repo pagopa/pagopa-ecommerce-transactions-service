@@ -81,9 +81,8 @@ class TransactionSendClosureHandlerTest {
 
     private final TransactionsUtils transactionsUtils = new TransactionsUtils(eventStoreRepository, "3020");
 
-    private final UUIDUtils mockUuidUtils = Mockito.mock(UUIDUtils.class);
-
-    private final AuthRequestDataUtils authRequestDataUtils = new AuthRequestDataUtils(mockUuidUtils);
+    private final UUIDUtils uuidUtils = new UUIDUtils();
+    private final AuthRequestDataUtils authRequestDataUtils = new AuthRequestDataUtils(uuidUtils);
     private final NodeForPspClient nodeForPspClient = Mockito.mock(NodeForPspClient.class);
 
     private final QueueAsyncClient transactionClosureSentEventQueueClient = Mockito.mock(QueueAsyncClient.class);
@@ -119,8 +118,7 @@ class TransactionSendClosureHandlerTest {
     );
 
     private final TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
-
-    private final String ECOMMERCE_RRN = transactionId.value().substring(0, 7);
+    private final String ECOMMERCE_RRN = uuidUtils.uuidToBase64(transactionId.uuid());
 
     private static MockedStatic<OffsetDateTime> offsetDateTimeMockedStatic;
 
