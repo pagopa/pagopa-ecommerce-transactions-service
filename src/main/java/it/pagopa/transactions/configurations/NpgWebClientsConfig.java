@@ -3,8 +3,8 @@ package it.pagopa.transactions.configurations;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import it.pagopa.ecommerce.commons.client.NpgClient;
-import it.pagopa.generated.ecommerce.npg.v1.ApiClient;
-import it.pagopa.generated.ecommerce.npg.v1.api.HostedFieldsApi;
+import it.pagopa.ecommerce.commons.generated.npg.v1.ApiClient;
+import it.pagopa.ecommerce.commons.generated.npg.v1.api.PaymentServicesApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,14 +23,14 @@ public class NpgWebClientsConfig implements WebFluxConfigurer {
     private int maxMemorySize;
 
     @Bean(name = "npgWebClient")
-    public HostedFieldsApi npgWebClient(
-                                        @Value("${npg.uri}") String afmWebClientUri,
-                                        @Value(
-                                            "${npg.readTimeout}"
-                                        ) int afmWebClientReadTimeout,
-                                        @Value(
-                                            "${npg.connectionTimeout}"
-                                        ) int afmWebClientConnectionTimeout
+    public PaymentServicesApi npgWebClient(
+                                           @Value("${npg.uri}") String afmWebClientUri,
+                                           @Value(
+                                               "${npg.readTimeout}"
+                                           ) int afmWebClientReadTimeout,
+                                           @Value(
+                                               "${npg.connectionTimeout}"
+                                           ) int afmWebClientConnectionTimeout
     ) {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, afmWebClientConnectionTimeout)
@@ -51,12 +51,12 @@ public class NpgWebClientsConfig implements WebFluxConfigurer {
                 new ReactorClientHttpConnector(httpClient)
         ).baseUrl(afmWebClientUri).build();
 
-        return new HostedFieldsApi(new ApiClient(webClient));
+        return new PaymentServicesApi(new ApiClient(webClient));
     }
 
     @Bean
     public NpgClient npgClient(
-                               HostedFieldsApi hostedFieldsApi,
+                               PaymentServicesApi hostedFieldsApi,
                                @Value("${npg.client.key}") String npgKey
     ) {
         return new NpgClient(hostedFieldsApi, npgKey);
