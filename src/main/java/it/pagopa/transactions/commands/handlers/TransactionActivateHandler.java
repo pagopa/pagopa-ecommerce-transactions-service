@@ -8,6 +8,7 @@ import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.v1.RptId;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
+import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
@@ -60,7 +61,7 @@ public class TransactionActivateHandler
 
     private final int nodoParallelRequests;
 
-    private final it.pagopa.ecommerce.commons.queues.TracingUtils tracingUtils;
+    private final TracingUtils tracingUtils;
 
     private final OpenTelemetryUtils openTelemetryUtils;
 
