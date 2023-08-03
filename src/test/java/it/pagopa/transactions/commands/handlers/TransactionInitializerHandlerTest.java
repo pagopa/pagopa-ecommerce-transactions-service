@@ -2,11 +2,10 @@ package it.pagopa.transactions.commands.handlers;
 
 import io.opentelemetry.api.common.AttributeKey;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
+import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.*;
-import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
-import it.pagopa.ecommerce.commons.domain.v1.PaymentTransferInfo;
-import it.pagopa.ecommerce.commons.domain.v1.RptId;
-import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
+import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
@@ -31,6 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -97,11 +97,10 @@ class TransactionInitializerHandlerTest {
         ZonedDateTime transactionActivatedTime = ZonedDateTime.now().minus(elapsedTimeFromActivation);
         RptId rptId = new RptId(RPT_ID);
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
-        String transactionId = UUID.randomUUID().toString();
         String paymentToken = PAYMENT_TOKEN;
         String paName = "paName";
         String paTaxcode = rptId.getFiscalCode();
-
+        TransactionId transactionId = new TransactionId(TRANSACTION_ID);
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
         PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto();
         requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
@@ -111,7 +110,8 @@ class TransactionInitializerHandlerTest {
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
                 requestDto,
-                Transaction.ClientId.CHECKOUT
+                Transaction.ClientId.CHECKOUT,
+                transactionId
         );
 
         PaymentRequestInfo paymentRequestInfoCached = new PaymentRequestInfo(
@@ -129,7 +129,7 @@ class TransactionInitializerHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
-        transactionActivatedEvent.setTransactionId(transactionId);
+        transactionActivatedEvent.setTransactionId(transactionId.value());
         transactionActivatedEvent.setEventCode(TransactionEventCode.TRANSACTION_ACTIVATED_EVENT);
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
         transactionActivatedData.setPaymentNotices(
@@ -209,7 +209,7 @@ class TransactionInitializerHandlerTest {
     void shouldHandleCommandForNM3CachedPaymentRequestWithoutActivationDate() {
         RptId rptId = new RptId(RPT_ID);
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
-        String transactionId = UUID.randomUUID().toString();
+        TransactionId transactionId = new TransactionId(TRANSACTION_ID);
         String paymentToken = PAYMENT_TOKEN;
         String paName = "paName";
         String paTaxcode = rptId.getFiscalCode();
@@ -223,7 +223,8 @@ class TransactionInitializerHandlerTest {
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
                 requestDto,
-                Transaction.ClientId.CHECKOUT
+                Transaction.ClientId.CHECKOUT,
+                transactionId
         );
 
         PaymentRequestInfo paymentRequestInfoCached = new PaymentRequestInfo(
@@ -241,7 +242,7 @@ class TransactionInitializerHandlerTest {
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
-        transactionActivatedEvent.setTransactionId(transactionId);
+        transactionActivatedEvent.setTransactionId(transactionId.value());
         transactionActivatedEvent.setEventCode(TransactionEventCode.TRANSACTION_ACTIVATED_EVENT);
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
         transactionActivatedData.setPaymentNotices(
@@ -304,7 +305,7 @@ class TransactionInitializerHandlerTest {
     @Test
     void shouldFailForTokenGenerationError() {
         RptId rptId = new RptId("77777777777302016723749670035");
-
+        TransactionId transactionId = new TransactionId(TRANSACTION_ID);
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
         PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto();
         requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
@@ -314,7 +315,8 @@ class TransactionInitializerHandlerTest {
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
                 requestDto,
-                Transaction.ClientId.CHECKOUT
+                Transaction.ClientId.CHECKOUT,
+                transactionId
         );
 
         /* preconditions */
@@ -377,7 +379,7 @@ class TransactionInitializerHandlerTest {
         String paTaxcode = "77777777777";
         String description = "Description";
         Integer amount = 1000;
-
+        TransactionId transactionId = new TransactionId(TRANSACTION_ID);
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
         PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto();
         requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
@@ -387,7 +389,8 @@ class TransactionInitializerHandlerTest {
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
                 requestDto,
-                Transaction.ClientId.CHECKOUT
+                Transaction.ClientId.CHECKOUT,
+                transactionId
         );
 
         PaymentRequestInfo paymentRequestInfoCached = new PaymentRequestInfo(
@@ -423,7 +426,7 @@ class TransactionInitializerHandlerTest {
     void shouldHandleCommandForOnlyIdempotencyKeyCachedPaymentRequest() {
         TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
         PaymentNotice paymentNotice = transactionActivatedEvent.getData().getPaymentNotices().get(0);
-
+        TransactionId transactionId = new TransactionId(TRANSACTION_ID);
         RptId rptId = new RptId(paymentNotice.getRptId());
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paName = "paName";
@@ -440,7 +443,8 @@ class TransactionInitializerHandlerTest {
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
                 requestDto,
-                Transaction.ClientId.CHECKOUT
+                Transaction.ClientId.CHECKOUT,
+                transactionId
         );
 
         PaymentRequestInfo paymentRequestInfoBeforeActivation = new PaymentRequestInfo(
@@ -514,7 +518,7 @@ class TransactionInitializerHandlerTest {
     void shouldHandleCommandForOnlyIdempotencyKeyCachedPaymentRequestWithoutDueDate() {
         TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
         PaymentNotice paymentNotice = transactionActivatedEvent.getData().getPaymentNotices().get(0);
-
+        TransactionId transactionId = new TransactionId(TRANSACTION_ID);
         RptId rptId = new RptId(paymentNotice.getRptId());
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paName = "paName";
@@ -531,7 +535,8 @@ class TransactionInitializerHandlerTest {
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
                 requestDto,
-                Transaction.ClientId.CHECKOUT
+                Transaction.ClientId.CHECKOUT,
+                transactionId
         );
 
         PaymentRequestInfo paymentRequestInfoBeforeActivation = new PaymentRequestInfo(
@@ -605,7 +610,7 @@ class TransactionInitializerHandlerTest {
     void shouldHandleCommandWithoutCachedPaymentRequest() {
         TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
         PaymentNotice paymentNotice = transactionActivatedEvent.getData().getPaymentNotices().get(0);
-
+        TransactionId transactionId = new TransactionId(TRANSACTION_ID);
         RptId rptId = new RptId(paymentNotice.getRptId());
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paName = "paName";
@@ -622,7 +627,8 @@ class TransactionInitializerHandlerTest {
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
                 requestDto,
-                Transaction.ClientId.CHECKOUT
+                Transaction.ClientId.CHECKOUT,
+                transactionId
         );
 
         PaymentRequestInfo paymentRequestInfoActivation = new PaymentRequestInfo(
