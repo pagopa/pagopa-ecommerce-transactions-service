@@ -76,7 +76,7 @@ public class TransactionActivateHandler
             ConfidentialMailUtils confidentialMailUtils,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
             @Value("${nodo.parallelRequests}") int nodoParallelRequests,
-            it.pagopa.ecommerce.commons.queues.TracingUtils tracingUtils,
+            TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils
     ) {
         this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
