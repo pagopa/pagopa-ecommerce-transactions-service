@@ -127,7 +127,7 @@ public class TransactionsService {
                 transactionId
         );
 
-        return transactionActivateHandler.handle(Tuples.of(transactionActivateCommand, newTransactionId))
+        return transactionActivateHandler.handle(transactionActivateCommand)
                 .doOnNext(
                         args -> log.info(
                                 "Transaction initialized for rptId: {}",
