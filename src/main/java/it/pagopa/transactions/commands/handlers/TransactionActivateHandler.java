@@ -35,12 +35,12 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Slf4j
 @Component
 public class TransactionActivateHandler
-        implements CommandHandler<TransactionActivateCommand, Mono<Tuple2<Mono<TransactionActivatedEvent>, String>>> {
+        implements
+        CommandHandler<TransactionActivateCommand, Mono<Tuple2<Mono<TransactionActivatedEvent>, String>>> {
 
     public static final int TRANSFER_LIST_MAX_SIZE = 5;
     private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper;
@@ -95,11 +95,10 @@ public class TransactionActivateHandler
     public Mono<Tuple2<Mono<TransactionActivatedEvent>, String>> handle(
                                                                         TransactionActivateCommand command
     ) {
-        final TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        final TransactionId transactionId = command.getTransactionId();
         final NewTransactionRequestDto newTransactionRequestDto = command.getData();
         final List<PaymentNoticeInfoDto> paymentNotices = newTransactionRequestDto.getPaymentNotices();
         final boolean multiplePaymentNotices = paymentNotices.size() > 1;
-
         log.info(
                 "Nodo parallel processed requests : [{}]. Multiple payment notices: [{}]. Id cart: [{}]",
                 nodoParallelRequests,

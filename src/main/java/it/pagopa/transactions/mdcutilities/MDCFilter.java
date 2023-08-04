@@ -18,8 +18,6 @@ import java.util.UUID;
 public class MDCFilter implements WebFilter {
 
     public static final String CONTEXT_KEY = "contextKey";
-    public static final String TRANSACTION_ID = "transactionId";
-    public static final String RPT_IDS = "rptIds";
     public static final String HEADER_TRANSACTION_ID = "x-transaction-id";
     public static final String HEADER_RPT_ID = "x-rpt-id";
 
@@ -31,13 +29,13 @@ public class MDCFilter implements WebFilter {
         final HttpHeaders headers = exchange.getRequest().getHeaders();
         final String transactionId = Optional.ofNullable(headers.get(HEADER_TRANSACTION_ID)).orElse(new ArrayList<>())
                 .stream()
-                .findFirst().orElse("{transactionId-not-found}");
+                .findFirst().orElse(TransactionTracingUtils.TracingEntry.TRANSACTION_ID.getDefaultValue());
         final String rptId = Optional.ofNullable(headers.get(HEADER_RPT_ID)).orElse(new ArrayList<>()).stream()
-                .findFirst().orElse("{rptId-not-found}");
+                .findFirst().orElse(TransactionTracingUtils.TracingEntry.RPT_IDS.getDefaultValue());
 
         return chain.filter(exchange)
                 .contextWrite(Context.of(CONTEXT_KEY, UUID.randomUUID().toString()))
-                .contextWrite(Context.of(TRANSACTION_ID, transactionId))
-                .contextWrite(Context.of(RPT_IDS, rptId));
+                .contextWrite(Context.of(TransactionTracingUtils.TracingEntry.TRANSACTION_ID.getKey(), transactionId))
+                .contextWrite(Context.of(TransactionTracingUtils.TracingEntry.RPT_IDS.getKey(), rptId));
     }
 }
