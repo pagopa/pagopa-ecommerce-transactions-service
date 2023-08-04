@@ -7,20 +7,24 @@ import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestD
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
 class AuthRequestDataUtilsTest {
 
     @InjectMocks
-    AuthRequestDataUtils authRequestDataUtils;
+    private AuthRequestDataUtils authRequestDataUtils;
+    @Mock
+    private UUIDUtils uuidUtils;
+
+    private static final String TRANSACTION_ID_ENCODED = "transactionIdEncoded";
 
     @Test
     void shouldExtractVposInformation() {
@@ -86,10 +90,11 @@ class AuthRequestDataUtilsTest {
                 .timestampOperation(OffsetDateTime.now());
 
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        Mockito.when(uuidUtils.uuidToBase64(transactionId.uuid())).thenReturn(TRANSACTION_ID_ENCODED);
         AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils
                 .from(updateAuthorizationRequest, transactionId);
 
-        assertEquals(data.rrn(), transactionId.value().substring(0, 7));
+        assertEquals(data.rrn(), TRANSACTION_ID_ENCODED);
         assertEquals(
                 data.authorizationCode(),
                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode()
@@ -110,10 +115,11 @@ class AuthRequestDataUtilsTest {
                 )
                 .timestampOperation(OffsetDateTime.now());
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        Mockito.when(uuidUtils.uuidToBase64(transactionId.uuid())).thenReturn(TRANSACTION_ID_ENCODED);
         AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils
                 .from(updateAuthorizationRequest, transactionId);
 
-        assertEquals(data.rrn(), transactionId.value().substring(0, 7));
+        assertEquals(data.rrn(), TRANSACTION_ID_ENCODED);
         assertEquals(
                 data.authorizationCode(),
                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode()
