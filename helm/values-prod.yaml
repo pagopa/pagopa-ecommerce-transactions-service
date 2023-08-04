@@ -65,6 +65,10 @@ microservice-chart:
       OTEL_TRACES_SAMPLER: "always_on"
       ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
       ECS_SERVICE_ENVIRONMENT: "prod"
+      NPG_URI: "https://localhost/npg"
+      NPG_READ_TIMEOUT: 10000
+      NPG_CONNECTION_TIMEOUT: 10000
+      SPRING_MAX_IN_MEM_SIZE: 16777216
     envSecret:
       MONGO_PASSWORD: mongo-ecommerce-password
       REDIS_PASSWORD: redis-ecommerce-password
@@ -74,6 +78,7 @@ microservice-chart:
       PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
       OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
       ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
+      NPG_KEY: npg-key
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
     tag: "0.22.5"
@@ -180,6 +185,10 @@ microservice-chart:
     OTEL_TRACES_SAMPLER: "always_on"
     ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service
     ECS_SERVICE_ENVIRONMENT: "prod"
+    NPG_URI: "https://localhost/npg"
+    NPG_READ_TIMEOUT: 10000
+    NPG_CONNECTION_TIMEOUT: 10000
+    SPRING_MAX_IN_MEM_SIZE: 16777216
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password
@@ -191,6 +200,7 @@ microservice-chart:
     PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
     OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
     ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
+    NPG_KEY: npg-key
   keyvault:
     name: "pagopa-p-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
