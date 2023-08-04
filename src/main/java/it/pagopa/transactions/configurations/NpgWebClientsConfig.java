@@ -24,20 +24,20 @@ public class NpgWebClientsConfig implements WebFluxConfigurer {
 
     @Bean(name = "npgWebClient")
     public PaymentServicesApi npgWebClient(
-                                           @Value("${npg.uri}") String afmWebClientUri,
+                                           @Value("${npg.uri}") String npgWebClientUri,
                                            @Value(
                                                "${npg.readTimeout}"
-                                           ) int afmWebClientReadTimeout,
+                                           ) int npgWebClientReadTimeout,
                                            @Value(
                                                "${npg.connectionTimeout}"
-                                           ) int afmWebClientConnectionTimeout
+                                           ) int npgWebClientConnectionTimeout
     ) {
         HttpClient httpClient = HttpClient.create()
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, afmWebClientConnectionTimeout)
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, npgWebClientConnectionTimeout)
                 .doOnConnected(
                         connection -> connection.addHandlerLast(
                                 new ReadTimeoutHandler(
-                                        afmWebClientReadTimeout,
+                                        npgWebClientReadTimeout,
                                         TimeUnit.MILLISECONDS
                                 )
                         )
@@ -49,7 +49,7 @@ public class NpgWebClientsConfig implements WebFluxConfigurer {
                         .build()
         ).clientConnector(
                 new ReactorClientHttpConnector(httpClient)
-        ).baseUrl(afmWebClientUri).build();
+        ).baseUrl(npgWebClientUri).build();
 
         return new PaymentServicesApi(new ApiClient(webClient));
     }
