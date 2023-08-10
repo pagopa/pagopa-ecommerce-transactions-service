@@ -77,7 +77,7 @@ microservice-chart:
       PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
       OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
       ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
-      NPG_KEY: npg-key
+      NPG_API_KEY: npg-api-key
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
     tag: "0.23.2"
@@ -198,7 +198,7 @@ microservice-chart:
     PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
     OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
     ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
-    NPG_KEY: npg-key
+    NPG_API_KEY: npg-api-key
   keyvault:
     name: "pagopa-u-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
