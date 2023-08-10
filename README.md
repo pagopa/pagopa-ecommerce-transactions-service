@@ -21,7 +21,7 @@ These are all environment variables needed by the application:
 | NODO_URI                                       |     | Nodo connection URI                                                                                                  | string  |         |
 | NODO_READ_TIMEOUT                              |     | Timeout for requests towards Nodo                                                                                    | number  |         |
 | NODO_CONNECTION_TIMEOUT                        |     | Timeout for establishing connections towards Nodo                                                                    | number  |         |
-| NODO_ALL_CCP_ON_TRANSFER_IBAN_ENABLED                  |     | Flag to enable light check for allCCP. If true it checks only all transfers' iban. If false, it checks also metadata | boolean |         |
+| NODO_ALL_CCP_ON_TRANSFER_IBAN_ENABLED          |     | Flag to enable light check for allCCP. If true it checks only all transfers' iban. If false, it checks also metadata | boolean |         |
 | ECOMMERCE_PAYMENT_METHODS_URI                  |     | eCommerce payment methods service connection URI                                                                     | string  |         |
 | ECOMMERCE_PAYMENT_METHODS_READ_TIMEOUT         |     | Timeout for requests towards eCommerce payment methods service                                                       | number  |         |
 | ECOMMERCE_PAYMENT_METHODS_CONNECTION_TIMEOUT   |     | Timeout for establishing connections towards eCommerce payment methods  service                                      | number  |         |
@@ -43,6 +43,10 @@ These are all environment variables needed by the application:
 | PERSONAL_DATA_VAULT_API_KEY                    |     | API Key for Personal Data Vault (PDV is used to safely encrypt PIIs, e.g. the user's email address)                  | string  |         |
 | PERSONAL_DATA_VAULT_API_BASE_PATH              |     | API base path for Personal Data Vault                                                                                | string  |         |
 | LOGO_CARD_BRANDING_MAPPING                     |     | Key-value string map that maps card brand to logo to be used into success mail                                       | string  |         |
+| NPG_API_KEY                                    |     | API Key for Nuovo Payment Gateway (NPG, used for authorizing payments).                                              | string  |         |
+| NPG_URI                                        |     | NPG connection uri                                                                                                   | string  |         |
+| NPG_READ_TIMEOUT                               |     | Timeout for requests towards NPG                                                                                     | string  |         |
+| NPG_CONNECTION_TIMEOUT                         |     | Timeout for establishing connections towards NPG                                                                     | string  |         |
 
 An example configuration of these environment variables is in the `.env.example` file.
 
