@@ -13,7 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class NpgWebClientConfigTest {
 
     @Test
-    public void testNpgWebClientConfigApi() {
+    void testNpgWebClientConfigApi() {
         NpgWebClientsConfig config = new NpgWebClientsConfig();
         PaymentServicesApi api = config.npgWebClient("localhost/test", 10000, 10000);
         Assert.assertNotNull(api);
@@ -21,7 +21,7 @@ class NpgWebClientConfigTest {
     }
 
     @Test
-    public void testNpgWebClientConfigNpgClient() {
+    void testNpgWebClientConfigNpgClient() {
         NpgWebClientsConfig config = new NpgWebClientsConfig();
         PaymentServicesApi api = config.npgWebClient("localhost/test", 10000, 10000);
         NpgClient npgClient = config.npgClient(api, "test-key");
