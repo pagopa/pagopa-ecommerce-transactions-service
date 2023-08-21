@@ -18,9 +18,6 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 public class NpgWebClientsConfig {
 
-    @Value("${npg.client.maxInMemory}")
-    private int maxMemorySize;
-
     @Bean(name = "npgWebClient")
     public PaymentServicesApi npgWebClient(
                                            @Value("${npg.uri}") String npgWebClientUri,
@@ -42,11 +39,7 @@ public class NpgWebClientsConfig {
                         )
                 );
 
-        WebClient webClient = ApiClient.buildWebClientBuilder().exchangeStrategies(
-                ExchangeStrategies.builder()
-                        .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(maxMemorySize))
-                        .build()
-        ).clientConnector(
+        WebClient webClient = ApiClient.buildWebClientBuilder().clientConnector(
                 new ReactorClientHttpConnector(httpClient)
         ).baseUrl(npgWebClientUri).build();
 

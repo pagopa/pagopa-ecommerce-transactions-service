@@ -117,7 +117,6 @@ microservice-chart:
     NPG_URI: "https://localhost/npg"
     NPG_READ_TIMEOUT: 10000
     NPG_CONNECTION_TIMEOUT: 10000
-    SPRING_MAX_IN_MEM_SIZE: 16777216
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password
