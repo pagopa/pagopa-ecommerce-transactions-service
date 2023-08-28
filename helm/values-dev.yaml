@@ -115,8 +115,8 @@ microservice-chart:
     OTEL_LOGS_EXPORTER: none
     OTEL_TRACES_SAMPLER: "always_on"
     NPG_URI: "https://localhost/npg"
-    NPG_READ_TIMEOUT: 10000
-    NPG_CONNECTION_TIMEOUT: 10000
+    NPG_READ_TIMEOUT: "10000"
+    NPG_CONNECTION_TIMEOUT: "10000"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password
