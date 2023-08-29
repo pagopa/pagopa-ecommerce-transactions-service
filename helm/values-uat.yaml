@@ -81,7 +81,7 @@ microservice-chart:
       NPG_PSP_CARDS_KEYS: npg-psp-cards-keys
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.24.0"
+    tag: "0.25.0"
     pullPolicy: Always
   livenessProbe:
     httpGet:
