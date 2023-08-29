@@ -35,8 +35,8 @@ public class NpgPspApiKeysConfig {
     @Qualifier("npgCardsApiKeys")
     @Bean
     public Map<String, String> npgCardsApiKeys(
-                                               @Value("${npg.psp.cards.keys}") String apiKeys,
-                                               @Value("${npg.psp.cards.pspList}") Set<String> pspToHandle
+                                               @Value("${npg.authorization.cards.keys}") String apiKeys,
+                                               @Value("${npg.authorization.cards.pspList}") Set<String> pspToHandle
     ) {
         return readMap(apiKeys, pspToHandle, NpgClient.PaymentMethod.CARDS);
     }

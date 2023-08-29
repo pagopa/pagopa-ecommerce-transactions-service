@@ -47,8 +47,8 @@ These are all environment variables needed by the application:
 | NPG_URI                                        |     | NPG connection uri                                                                                                                    | string  |         |
 | NPG_READ_TIMEOUT                               |     | Timeout for requests towards NPG                                                                                                      | string  |         |
 | NPG_CONNECTION_TIMEOUT                         |     | Timeout for establishing connections towards NPG                                                                                      | string  |         |
-| NPG_PSP_CARDS_KEYS                             |     | Secret structure that holds psp - api keys association for authorization request                                                      | string  |         |
-| NPG_PSP_CARDS_PSP_LIST                         |     | List of all psp ids that are expected to be found into the NPG_PSP_CARDS_KEYS configuration (used for configuration cross validation) | string  |         |
+| NPG_CARDS_PSP_KEYS                             |     | Secret structure that holds psp - api keys association for authorization request                                                      | string  |         |
+| NPG_CARDS_PSP_LIST                             |     | List of all psp ids that are expected to be found into the NPG_CARDS_PSP_KEYS configuration (used for configuration cross validation) | string  |         |
 
 An example configuration of these environment variables is in the `.env.example` file.
 

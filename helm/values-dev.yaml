@@ -117,7 +117,7 @@ microservice-chart:
     NPG_URI: "https://localhost/npg"
     NPG_READ_TIMEOUT: "10000"
     NPG_CONNECTION_TIMEOUT: "10000"
-    NPG_PSP_CARDS_PSP_LIST: "BCITITMM"
+    NPG_CARDS_PSP_LIST: "BCITITMM"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password
@@ -130,7 +130,7 @@ microservice-chart:
     ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
     OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
     NPG_API_KEY: npg-api-key
-    NPG_PSP_CARDS_KEYS: npg-cards-psp-keys
+    NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
   keyvault:
     name: "pagopa-d-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"

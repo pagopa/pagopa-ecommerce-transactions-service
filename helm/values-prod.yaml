@@ -68,7 +68,7 @@ microservice-chart:
       NPG_URI: "https://localhost/npg"
       NPG_READ_TIMEOUT: "10000"
       NPG_CONNECTION_TIMEOUT: "10000"
-      NPG_PSP_CARDS_PSP_LIST: "" #TODO to be filled with psp id list that are expected to be present into psp api keys configuration
+      NPG_CARDS_PSP_LIST: "" #TODO to be filled with psp id list that are expected to be present into psp api keys configuration
     envSecret:
       MONGO_PASSWORD: mongo-ecommerce-password
       REDIS_PASSWORD: redis-ecommerce-password
@@ -79,7 +79,7 @@ microservice-chart:
       OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
       ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
       NPG_API_KEY: npg-api-key
-      NPG_PSP_CARDS_KEYS: npg-cards-psp-keys
+      NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
     tag: "0.25.1"
@@ -189,7 +189,7 @@ microservice-chart:
     NPG_URI: "https://localhost/npg"
     NPG_READ_TIMEOUT: "10000"
     NPG_CONNECTION_TIMEOUT: "10000"
-    NPG_PSP_CARDS_PSP_LIST: "" #TODO to be filled with psp id list that are expected to be present into psp api keys configuration
+    NPG_CARDS_PSP_LIST: "" #TODO to be filled with psp id list that are expected to be present into psp api keys configuration
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password
@@ -202,7 +202,7 @@ microservice-chart:
     OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
     ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
     NPG_API_KEY: npg-api-key
-    NPG_PSP_CARDS_KEYS: npg-cards-psp-keys
+    NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
   keyvault:
     name: "pagopa-p-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
