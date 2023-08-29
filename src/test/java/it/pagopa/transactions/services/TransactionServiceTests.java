@@ -277,13 +277,17 @@ class TransactionServiceTests {
     }
 
     @Test
-    void shouldRedirectToAuthorizationURIForValidRequest() {
+    void shouldRedirectToAuthorizationURIForValidRequestWithCardDetail() {
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
                 .amount(100)
                 .paymentInstrumentId("paymentInstrumentId")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
                 .pspId("PSP_CODE")
-                .isAllCCP(false);
+                .isAllCCP(false)
+                .details(
+                        new CardAuthRequestDetailsDto().cvv("123").pan("123456677").expiryDate("0223")
+                                .brand(CardAuthRequestDetailsDto.BrandEnum.VISA).holderName("Name Surname")
+                );
 
         Transaction transaction = TransactionTestUtils.transactionDocument(
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
