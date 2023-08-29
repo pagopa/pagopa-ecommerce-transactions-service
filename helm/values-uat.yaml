@@ -67,7 +67,7 @@ microservice-chart:
       NPG_URI: "https://localhost/npg"
       NPG_READ_TIMEOUT: "10000"
       NPG_CONNECTION_TIMEOUT: "10000"
-      NPG_PSP_CARDS_PSP_LIST: "" #TODO to be filled with psp id list that are expected to be present into psp api keys configuration
+      NPG_PSP_CARDS_PSP_LIST: "BCITITMM"
     envSecret:
       MONGO_PASSWORD: mongo-ecommerce-password
       REDIS_PASSWORD: redis-ecommerce-password
