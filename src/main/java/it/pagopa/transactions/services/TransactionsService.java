@@ -12,6 +12,7 @@ import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.BundleDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.CalculateFeeRequestDto;
+import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.SessionPaymentMethodResponseDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.TransferListItemDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
@@ -781,7 +782,7 @@ public class TransactionsService {
             case CardAuthRequestDetailsDto cardData ->
                 cardData.getPan().substring(0, 6);
             case CardsAuthRequestDetailsDto cards ->
-                null; // TODO implement logic to retrieve bin by NPG
+                ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(),cards.getSessionId()).map(SessionPaymentMethodResponseDto::getBin).block();
             default -> null;
         };
     }

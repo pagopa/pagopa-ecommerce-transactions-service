@@ -277,13 +277,17 @@ class TransactionServiceTests {
     }
 
     @Test
-    void shouldRedirectToAuthorizationURIForValidRequest() {
+    void shouldRedirectToAuthorizationURIForValidRequestWithCardDetail() {
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
                 .amount(100)
                 .paymentInstrumentId("paymentInstrumentId")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
                 .pspId("PSP_CODE")
-                .isAllCCP(false);
+                .isAllCCP(false)
+                .details(
+                        new CardAuthRequestDetailsDto().cvv("123").pan("123456677").expiryDate("0223")
+                                .brand(CardAuthRequestDetailsDto.BrandEnum.VISA).holderName("Name Surname")
+                );
 
         Transaction transaction = TransactionTestUtils.transactionDocument(
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
@@ -325,6 +329,89 @@ class TransactionServiceTests {
         );
 
         Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
+
+        Mockito.when(repository.findById(TRANSACTION_ID))
+                .thenReturn(Mono.just(transaction));
+
+        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(any()))
+                .thenReturn(Mono.just(postePayAuthResponseEntityDto));
+        Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.empty());
+
+        Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
+
+        Mockito.when(transactionRequestAuthorizationHandler.handle(commandArgumentCaptor.capture()))
+                .thenReturn(Mono.just(requestAuthorizationResponse));
+
+        /* test */
+        RequestAuthorizationResponseDto postePayAuthorizationResponse = transactionsService
+                .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest).block();
+
+        AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
+        assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
+        assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
+        assertNotNull(postePayAuthorizationResponse);
+        assertFalse(postePayAuthorizationResponse.getAuthorizationUrl().isEmpty());
+    }
+
+    @Test
+    void shouldRedirectToAuthorizationURIForValidRequestWithNPGCardsDetailFor() {
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .paymentInstrumentId("paymentInstrumentId")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
+                .pspId("PSP_CODE")
+                .isAllCCP(false)
+                .details(
+                        new CardsAuthRequestDetailsDto().sessionId("sessionId")
+                );
+
+        Transaction transaction = TransactionTestUtils.transactionDocument(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
+                ZonedDateTime.now()
+        );
+
+        /* preconditions */
+        CalculateFeeResponseDto calculateFeeResponseDto = new CalculateFeeResponseDto()
+                .belowThreshold(true)
+                .paymentMethodName("PaymentMethodName")
+                .paymentMethodDescription("PaymentMethodDescription")
+                .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
+                .bundles(
+                        List.of(
+                                new BundleDto()
+                                        .idPsp("PSP_CODE")
+                                        .taxPayerFee(200l)
+                        )
+                );
+
+        PaymentMethodResponseDto paymentMethod = new PaymentMethodResponseDto()
+                .name("paymentMethodName")
+                .description("desc")
+                .status(PaymentMethodStatusDto.ENABLED)
+                .id("id")
+                .paymentTypeCode("PO")
+                .addRangesItem(new RangeDto().min(0L).max(100L));
+
+        PostePayAuthResponseEntityDto postePayAuthResponseEntityDto = new PostePayAuthResponseEntityDto()
+                .channel("channel")
+                .requestId("requestId")
+                .urlRedirect("http://example.com");
+
+        RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
+                .authorizationUrl(postePayAuthResponseEntityDto.getUrlRedirect());
+
+        Mockito.when(ecommercePaymentMethodsClient.calculateFee(any(), any(), any(), any())).thenReturn(
+                Mono.just(calculateFeeResponseDto)
+        );
+
+        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
+
+        Mockito.when(ecommercePaymentMethodsClient.retrieveCardData(any(), any())).thenReturn(
+                Mono.just(
+                        new SessionPaymentMethodResponseDto().bin("bin").brand("VISA").sessionId("sessionId")
+                                .expiringDate("0226").lastFourDigits("1234")
+                )
+        );
 
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
