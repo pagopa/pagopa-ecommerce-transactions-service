@@ -270,36 +270,52 @@ public class TransactionsService {
                                     .mapToInt(
                                             it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount
                                     ).sum();
-                            return ecommercePaymentMethodsClient
-                                    .calculateFee(
-                                            requestAuthorizationRequestDto.getPaymentInstrumentId(),
-                                            transactionId,
-                                            new CalculateFeeRequestDto()
-                                                    .touchpoint(transaction.getClientId().toString())
-                                                    .bin(
-                                                            extractBinFromPan(requestAuthorizationRequestDto)
+                            return extractBinFromPan(requestAuthorizationRequestDto)
+                                    .flatMap(
+                                            bin -> ecommercePaymentMethodsClient
+                                                    .calculateFee(
+                                                            requestAuthorizationRequestDto.getPaymentInstrumentId(),
+                                                            transactionId,
+                                                            new CalculateFeeRequestDto()
+                                                                    .touchpoint(transaction.getClientId().toString())
+                                                                    .bin(
+                                                                            bin
+                                                                    )
+                                                                    .idPspList(
+                                                                            List.of(
+                                                                                    requestAuthorizationRequestDto
+                                                                                            .getPspId()
+                                                                            )
+                                                                    )
+                                                                    .paymentAmount(amountTotal.longValue())
+                                                                    .primaryCreditorInstitution(
+                                                                            transaction.getPaymentNotices().get(0)
+                                                                                    .getRptId()
+                                                                                    .substring(0, 11)
+                                                                    )
+                                                                    .transferList(
+                                                                            transaction.getPaymentNotices().get(0)
+                                                                                    .getTransferList()
+                                                                                    .stream()
+                                                                                    .map(
+                                                                                            t -> new TransferListItemDto()
+                                                                                                    .creditorInstitution(
+                                                                                                            t.getPaFiscalCode()
+                                                                                                    )
+                                                                                                    .digitalStamp(
+                                                                                                            t.getDigitalStamp()
+                                                                                                    )
+                                                                                                    .transferCategory(
+                                                                                                            t.getTransferCategory()
+                                                                                                    )
+                                                                                    ).toList()
+                                                                    )
+                                                                    .isAllCCP(
+                                                                            transaction.getPaymentNotices().get(0)
+                                                                                    .isAllCCP()
+                                                                    ),
+                                                            Integer.MAX_VALUE
                                                     )
-                                                    .idPspList(List.of(requestAuthorizationRequestDto.getPspId()))
-                                                    .paymentAmount(amountTotal.longValue())
-                                                    .primaryCreditorInstitution(
-                                                            transaction.getPaymentNotices().get(0).getRptId()
-                                                                    .substring(0, 11)
-                                                    )
-                                                    .transferList(
-                                                            transaction.getPaymentNotices().get(0).getTransferList()
-                                                                    .stream()
-                                                                    .map(
-                                                                            t -> new TransferListItemDto()
-                                                                                    .creditorInstitution(
-                                                                                            t.getPaFiscalCode()
-                                                                                    ).digitalStamp(t.getDigitalStamp())
-                                                                                    .transferCategory(
-                                                                                            t.getTransferCategory()
-                                                                                    )
-                                                                    ).toList()
-                                                    )
-                                                    .isAllCCP(transaction.getPaymentNotices().get(0).isAllCCP()),
-                                            Integer.MAX_VALUE
                                     )
                                     .map(
                                             calculateFeeResponse -> Tuples.of(
@@ -777,12 +793,12 @@ public class TransactionsService {
                 ).orElseThrow(() -> new InvalidRequestException("Null value as input origin"));
     }
 
-    private String extractBinFromPan(RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
+    private Mono<String> extractBinFromPan(RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
         return switch (requestAuthorizationRequestDto.getDetails()){
             case CardAuthRequestDetailsDto cardData ->
-                cardData.getPan().substring(0, 6);
+                Mono.just(cardData.getPan().substring(0, 6));
             case CardsAuthRequestDetailsDto cards ->
-                ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(),cards.getSessionId()).map(SessionPaymentMethodResponseDto::getBin).block();
+                ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(),cards.getSessionId()).map(SessionPaymentMethodResponseDto::getBin);
             default -> null;
         };
     }
