@@ -41,6 +41,15 @@ public class NpgPspApiKeysConfig {
         return readMap(apiKeys, pspToHandle, NpgClient.PaymentMethod.CARDS);
     }
 
+    /**
+     * Parse secret configuration to map with pspId - apiKey association
+     *
+     * @param jsonRepresentation the configuration json representation
+     * @param expectedKeys       configuration expected keys to be present
+     * @param npgPaymentMethod   payment method for which parsing is performed
+     * @return a {@code Map<String,String>} where keys are pspId and values the
+     *         associated NPG api key
+     */
     private Map<String, String> readMap(
                                         String jsonRepresentation,
                                         Set<String> expectedKeys,
@@ -60,7 +69,7 @@ public class NpgPspApiKeysConfig {
             return apiKeys;
         } catch (JacksonException ignored) {
             // exception here is ignored on purpose in order to avoid secret configuration
-            // values in case of wrong configured json string object
+            // logging in case of wrong configured json string object
             throw new IllegalStateException("Invalid NPG %s PSP json configuration map".formatted(npgPaymentMethod));
         }
     }
