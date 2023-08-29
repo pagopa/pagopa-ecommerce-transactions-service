@@ -1,7 +1,9 @@
 package it.pagopa.transactions.configurations;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
+import io.opentelemetry.api.trace.Tracer;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.generated.npg.v1.ApiClient;
 import it.pagopa.ecommerce.commons.generated.npg.v1.api.PaymentServicesApi;
@@ -48,9 +50,11 @@ public class NpgWebClientsConfig {
     @Bean
     public NpgClient npgClient(
                                PaymentServicesApi hostedFieldsApi,
-                               @Value("${npg.client.key}") String npgKey
+                               @Value("${npg.client.key}") String npgKey,
+                               Tracer tracer,
+                               ObjectMapper objectMapper
     ) {
-        return new NpgClient(hostedFieldsApi, npgKey);
+        return new NpgClient(hostedFieldsApi, npgKey, tracer, objectMapper);
     }
 
 }
