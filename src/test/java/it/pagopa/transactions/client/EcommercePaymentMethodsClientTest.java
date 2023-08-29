@@ -154,7 +154,7 @@ class EcommercePaymentMethodsClientTest {
     }
 
     @Test
-    void shouldReturnErrorFromRetrieveCardData(){
+    void shouldReturnErrorFromRetrieveCardData() {
         String paymentMethodId = UUID.randomUUID().toString();
         String sessionId = "sessionId";
 
@@ -170,15 +170,26 @@ class EcommercePaymentMethodsClientTest {
                                 any()
                         )
         )
-                .thenReturn(Mono.error(new WebClientResponseException(HttpStatus.NOT_FOUND.value(),"SessionId not found",null,null,null)));
+                .thenReturn(
+                        Mono.error(
+                                new WebClientResponseException(
+                                        HttpStatus.NOT_FOUND.value(),
+                                        "SessionId not found",
+                                        null,
+                                        null,
+                                        null
+                                )
+                        )
+                );
 
         /**
          * test
          */
-        StepVerifier.create(ecommercePaymentMethodsClient.retrieveCardData(paymentMethodId,sessionId))
+        StepVerifier.create(ecommercePaymentMethodsClient.retrieveCardData(paymentMethodId, sessionId))
                 .expectErrorMatches(
                         e -> e instanceof InvalidRequestException invalidRequestException
-                                && invalidRequestException.getMessage().equals("Error while invoke method retrieve card data")
+                                && invalidRequestException.getMessage()
+                                        .equals("Error while invoke method retrieve card data")
                 )
                 .verify();
     }
