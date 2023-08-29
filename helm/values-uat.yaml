@@ -78,7 +78,7 @@ microservice-chart:
       OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
       ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
       NPG_API_KEY: npg-api-key
-      NPG_PSP_CARDS_KEYS: npg-psp-cards-keys
+      NPG_PSP_CARDS_KEYS: npg-cards-psp-keys
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
     tag: "0.25.0"
@@ -200,7 +200,7 @@ microservice-chart:
     OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
     ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
     NPG_API_KEY: npg-api-key
-    NPG_PSP_CARDS_KEYS: npg-psp-cards-keys
+    NPG_PSP_CARDS_KEYS: npg-cards-psp-keys
   keyvault:
     name: "pagopa-u-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
