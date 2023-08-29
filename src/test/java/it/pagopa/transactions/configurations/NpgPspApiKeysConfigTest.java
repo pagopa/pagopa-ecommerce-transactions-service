@@ -41,9 +41,10 @@ class NpgPspApiKeysConfigTest {
 
     @Test
     void shouldThrowExceptionForInvalidJsonStructure() {
+        Set<String> psps = new HashSet<>(pspToHandle);
         IllegalStateException exception = assertThrows(
                 IllegalStateException.class,
-                () -> npgPspApiKeysConfig.npgCardsApiKeys("{", new HashSet<>(pspToHandle))
+                () -> npgPspApiKeysConfig.npgCardsApiKeys("{", psps)
         );
         assertEquals("Invalid NPG CARDS PSP json configuration map", exception.getMessage());
     }
