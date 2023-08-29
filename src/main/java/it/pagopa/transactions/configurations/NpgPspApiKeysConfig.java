@@ -43,12 +43,12 @@ public class NpgPspApiKeysConfig {
             Set<String> configuredKeys = apiKeys.keySet();
             expectedKeys.removeAll(configuredKeys);
             if (!expectedKeys.isEmpty()) {
-                throw new IllegalStateException("Misconfigured NPG %s psp api keys. Missing keys: %s".formatted(npgPaymentMethod, expectedKeys));
+                throw new IllegalStateException("Misconfigured NPG %s PSP api keys. Missing keys: %s".formatted(npgPaymentMethod, expectedKeys));
             }
             return apiKeys;
         } catch (JacksonException ignored) {
             //exception here is ignored on purpose in order to avoid secret configuration values in case of wrong configured json string object
-            throw new IllegalStateException("Invalid NPG PSP json configuration map");
+            throw new IllegalStateException("Invalid NPG %s PSP json configuration map".formatted(npgPaymentMethod));
         }
     }
 
