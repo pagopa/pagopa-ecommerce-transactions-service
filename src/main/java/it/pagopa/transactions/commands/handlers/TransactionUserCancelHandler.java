@@ -60,7 +60,7 @@ public class TransactionUserCancelHandler implements
                 .flatMap(
                         t -> {
                             TransactionUserCanceledEvent userCanceledEvent = new TransactionUserCanceledEvent(
-                                    t.getTransactionId().value().toString()
+                                    t.getTransactionId().value()
                             );
                             return transactionEventUserCancelStoreRepository.save(userCanceledEvent)
                                     .flatMap(

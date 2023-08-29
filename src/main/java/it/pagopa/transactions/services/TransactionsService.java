@@ -777,10 +777,13 @@ public class TransactionsService {
     }
 
     private String extractBinFromPan(RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
-        return requestAuthorizationRequestDto
-                .getDetails()instanceof CardAuthRequestDetailsDto cardData
-                        ? cardData.getPan().substring(0, 6)
-                        : null;
+        return switch (requestAuthorizationRequestDto.getDetails()){
+            case CardAuthRequestDetailsDto cardData ->
+                cardData.getPan().substring(0, 6);
+            case CardsAuthRequestDetailsDto cards ->
+                null; // TODO implement logic to retrieve bin by NPG
+            default -> null;
+        };
     }
 
 }
