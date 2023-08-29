@@ -7,6 +7,7 @@ import it.pagopa.ecommerce.commons.client.NpgClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.HashMap;
@@ -32,22 +33,34 @@ public class NpgPspApiKeysConfig {
      * @return the parsed map
      */
     @Qualifier("npgCardsApiKeys")
-    public Map<String, String> npgCardsApiKeys(@Value("npg.psp.cards.keys") String apiKeys, @Value("npg.psp.cards.pspList") Set<String> pspToHandle) {
+    @Bean
+    public Map<String, String> npgCardsApiKeys(
+                                               @Value("${npg.psp.cards.keys}") String apiKeys,
+                                               @Value("${npg.psp.cards.pspList}") Set<String> pspToHandle
+    ) {
         return readMap(apiKeys, pspToHandle, NpgClient.PaymentMethod.CARDS);
     }
 
-    private Map<String, String> readMap(String jsonRepresentation, Set<String> expectedKeys, NpgClient.PaymentMethod npgPaymentMethod) {
+    private Map<String, String> readMap(
+                                        String jsonRepresentation,
+                                        Set<String> expectedKeys,
+                                        NpgClient.PaymentMethod npgPaymentMethod
+    ) {
         try {
-            Map<String, String> apiKeys = objectMapper.readValue(jsonRepresentation, new TypeReference<HashMap<String, String>>() {
-            });
+            Map<String, String> apiKeys = objectMapper
+                    .readValue(jsonRepresentation, new TypeReference<HashMap<String, String>>() {
+                    });
             Set<String> configuredKeys = apiKeys.keySet();
             expectedKeys.removeAll(configuredKeys);
             if (!expectedKeys.isEmpty()) {
-                throw new IllegalStateException("Misconfigured NPG %s PSP api keys. Missing keys: %s".formatted(npgPaymentMethod, expectedKeys));
+                throw new IllegalStateException(
+                        "Misconfigured NPG %s PSP api keys. Missing keys: %s".formatted(npgPaymentMethod, expectedKeys)
+                );
             }
             return apiKeys;
         } catch (JacksonException ignored) {
-            //exception here is ignored on purpose in order to avoid secret configuration values in case of wrong configured json string object
+            // exception here is ignored on purpose in order to avoid secret configuration
+            // values in case of wrong configured json string object
             throw new IllegalStateException("Invalid NPG %s PSP json configuration map".formatted(npgPaymentMethod));
         }
     }

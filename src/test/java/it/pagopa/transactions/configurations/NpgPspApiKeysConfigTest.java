@@ -13,31 +13,38 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class NpgPspApiKeysConfigTest {
 
-
     private final NpgPspApiKeysConfig npgPspApiKeysConfig = new NpgPspApiKeysConfig();
 
-
-    private final String pspConfigurationJson =
-            """
-                    {
-                        "psp1" : "key-psp1",
-                        "psp2" : "key-psp2",
-                        "psp3" : "key-psp3"
-                    }
-                    """;
+    private final String pspConfigurationJson = """
+            {
+                "psp1" : "key-psp1",
+                "psp2" : "key-psp2",
+                "psp3" : "key-psp3"
+            }
+            """;
 
     private final Set<String> pspToHandle = Set.of("psp1", "psp2", "psp3");
 
     @ParameterizedTest
-    @ValueSource(strings = {"psp1", "psp2", "psp3"})
+    @ValueSource(
+            strings = {
+                    "psp1",
+                    "psp2",
+                    "psp3"
+            }
+    )
     void shouldParsePspConfigurationSuccessfully(String pspId) {
-        Map<String, String> pspConfiguration = npgPspApiKeysConfig.npgCardsApiKeys(pspConfigurationJson, new HashSet<>(pspToHandle));
+        Map<String, String> pspConfiguration = npgPspApiKeysConfig
+                .npgCardsApiKeys(pspConfigurationJson, new HashSet<>(pspToHandle));
         assertEquals("key-%s".formatted(pspId), pspConfiguration.get(pspId));
     }
 
     @Test
     void shouldThrowExceptionForInvalidJsonStructure() {
-        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> npgPspApiKeysConfig.npgCardsApiKeys("{", new HashSet<>(pspToHandle)));
+        IllegalStateException exception = assertThrows(
+                IllegalStateException.class,
+                () -> npgPspApiKeysConfig.npgCardsApiKeys("{", new HashSet<>(pspToHandle))
+        );
         assertEquals("Invalid NPG CARDS PSP json configuration map", exception.getMessage());
     }
 
@@ -45,7 +52,10 @@ class NpgPspApiKeysConfigTest {
     void shouldThrowExceptionForMissingPspId() {
         Set<String> psps = new HashSet<>(pspToHandle);
         psps.add("psp4");
-        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> npgPspApiKeysConfig.npgCardsApiKeys(pspConfigurationJson, psps));
+        IllegalStateException exception = assertThrows(
+                IllegalStateException.class,
+                () -> npgPspApiKeysConfig.npgCardsApiKeys(pspConfigurationJson, psps)
+        );
         assertEquals("Misconfigured NPG CARDS PSP api keys. Missing keys: [psp4]", exception.getMessage());
     }
 }
