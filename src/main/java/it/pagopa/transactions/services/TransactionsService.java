@@ -270,7 +270,7 @@ public class TransactionsService {
                                     .mapToInt(
                                             it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount
                                     ).sum();
-                            return extractBinFromPan(requestAuthorizationRequestDto)
+                            return retrieveBinFromAuthorizationRequest(requestAuthorizationRequestDto)
                                     .flatMap(
                                             bin -> ecommercePaymentMethodsClient
                                                     .calculateFee(
@@ -793,7 +793,7 @@ public class TransactionsService {
                 ).orElseThrow(() -> new InvalidRequestException("Null value as input origin"));
     }
 
-    private Mono<Optional<String>> extractBinFromPan(RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
+    private Mono<Optional<String>> retrieveBinFromAuthorizationRequest(RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
         return switch (requestAuthorizationRequestDto.getDetails()){
             case CardAuthRequestDetailsDto cardData ->
                 Mono.just(Optional.of(cardData.getPan().substring(0, 6)));
