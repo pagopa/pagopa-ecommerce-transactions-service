@@ -411,6 +411,8 @@ class TransactionRequestAuthorizizationHandlerTest {
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData)).thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData)).thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData)).thenReturn(Mono.empty());
+        Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData)).thenReturn(Mono.empty());
+
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectErrorMatches(error -> error instanceof BadRequestException)
