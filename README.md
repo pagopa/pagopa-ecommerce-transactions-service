@@ -8,45 +8,47 @@ This is a PagoPA microservice that handles transactions' lifecycle and workflow.
 
 These are all environment variables needed by the application:
 
-| Variable name                                  |     | Description                                                                                                          | type    | default |
-|------------------------------------------------|-----|----------------------------------------------------------------------------------------------------------------------|---------|---------|
-| MONGO_HOST                                     |     | Host where MongoDB instance used to persise events and view resides                                                  | string  |
-| MONGO_USERNAME                                 |     | Username used for connecting to MongoDB instance                                                                     | string  |         |
-| MONGO_PASSWORD                                 |     | Password used for connecting to MongoDB instance                                                                     | string  |         |
-| REDIS_HOST                                     |     | Host where the redis instance used to persist idempotency keys can be found                                          | string  |         |
-| REDIS_PASSWORD                                 |     | Password used for connecting to Redis instance                                                                       | string  |         |
-| PAYMENT_TRANSACTION_GATEWAY_URI                |     | Payment transactions gateway service connection URI                                                                  | string  |         |
-| PAYMENT_TRANSACTION_GATEWAY_READ_TIMEOUT       |     | Timeout for requests towards Payment transactions gateway service                                                    | number  |         |
-| PAYMENT_TRANSACTION_GATEWAY_CONNECTION_TIMEOUT |     | Timeout for establishing connections towards Payment transactions gateway service                                    | number  |         |
-| NODO_URI                                       |     | Nodo connection URI                                                                                                  | string  |         |
-| NODO_READ_TIMEOUT                              |     | Timeout for requests towards Nodo                                                                                    | number  |         |
-| NODO_CONNECTION_TIMEOUT                        |     | Timeout for establishing connections towards Nodo                                                                    | number  |         |
-| NODO_ALL_CCP_ON_TRANSFER_IBAN_ENABLED          |     | Flag to enable light check for allCCP. If true it checks only all transfers' iban. If false, it checks also metadata | boolean |         |
-| ECOMMERCE_PAYMENT_METHODS_URI                  |     | eCommerce payment methods service connection URI                                                                     | string  |         |
-| ECOMMERCE_PAYMENT_METHODS_READ_TIMEOUT         |     | Timeout for requests towards eCommerce payment methods service                                                       | number  |         |
-| ECOMMERCE_PAYMENT_METHODS_CONNECTION_TIMEOUT   |     | Timeout for establishing connections towards eCommerce payment methods  service                                      | number  |         |
-| ECOMMERCE_PAYMENT_METHODS_APY_KEY              |     | Payment methods API key                                                                                              | string  |         |
-| NOTIFICATIONS_SERVICE_URI                      |     | Notifications service connection URI                                                                                 | string  |         |
-| NOTIFICATIONS_SERVICE_READ_TIMEOUT             |     | Timeout for requests towards Notifications service                                                                   | number  |         |
-| NOTIFICATIONS_SERVICE_CONNECTION_TIMEOUT       |     | Timeout for establishing connections towards Notifications service                                                   | number  |         |
-| NOTIFICATIONS_SERVICE_API_KEY                  |     | Notifications service API Key                                                                                        | string  |         |
-| PAYMENT_TOKEN_VALIDITY_TIME                    |     | Validity time in seconds of a payment token                                                                          | number  |         |
-| ECOMMERCE_STORAGE_TRANSIENT_CONNECTION_STRING  |     | Transient queue connection string                                                                                    | string  |         |
-| TRANSACTION_EXPIRATION_QUEUE_NAME              |     | Name of the queue for transaction expiration for activated transactions                                              | string  |         |
-| TRANSACTION_CLOSE_PAYMENT_RETRY_QUEUE_NAME     |     | Name of the retry queue for closure error events                                                                     | string  |         |
-| TRANSACTION_CLOSE_PAYMENT_QUEUE_NAME           |     | Name of the queue for close payment events                                                                           | string  |         |
-| TRANSACTION_NOTIFICATIONS_QUEUE_NAME           |     | Name of the queue for notification requested events                                                                  | string  |         |
-| TRANSACTION_REFUND_QUEUE_NAME                  |     | Name of the refund queue for transactions that receive a closePayment with OK authorization and KO outcome           | string  |         |
-| TRANSIENT_QUEUES_TTL_SECONDS                   |     | TTL to be used when sending events on transient queues                                                               | number  | 7 days  |
-| TRANSACTIONS_RETRY_OFFSET                      |     | Seconds to offset validity end to account for more retries                                                           | number  |         |
-| CLOSURE_RETRY_INTERVAL                         |     | Seconds to wait at closing the transaction before making a retry                                                     | number  |         |
-| PERSONAL_DATA_VAULT_API_KEY                    |     | API Key for Personal Data Vault (PDV is used to safely encrypt PIIs, e.g. the user's email address)                  | string  |         |
-| PERSONAL_DATA_VAULT_API_BASE_PATH              |     | API base path for Personal Data Vault                                                                                | string  |         |
-| LOGO_CARD_BRANDING_MAPPING                     |     | Key-value string map that maps card brand to logo to be used into success mail                                       | string  |         |
-| NPG_API_KEY                                    |     | API Key for Nuovo Payment Gateway (NPG, used for authorizing payments).                                              | string  |         |
-| NPG_URI                                        |     | NPG connection uri                                                                                                   | string  |         |
-| NPG_READ_TIMEOUT                               |     | Timeout for requests towards NPG                                                                                     | string  |         |
-| NPG_CONNECTION_TIMEOUT                         |     | Timeout for establishing connections towards NPG                                                                     | string  |         |
+| Variable name                                  |     | Description                                                                                                                           | type    | default |
+|------------------------------------------------|-----|---------------------------------------------------------------------------------------------------------------------------------------|---------|---------|
+| MONGO_HOST                                     |     | Host where MongoDB instance used to persise events and view resides                                                                   | string  |
+| MONGO_USERNAME                                 |     | Username used for connecting to MongoDB instance                                                                                      | string  |         |
+| MONGO_PASSWORD                                 |     | Password used for connecting to MongoDB instance                                                                                      | string  |         |
+| REDIS_HOST                                     |     | Host where the redis instance used to persist idempotency keys can be found                                                           | string  |         |
+| REDIS_PASSWORD                                 |     | Password used for connecting to Redis instance                                                                                        | string  |         |
+| PAYMENT_TRANSACTION_GATEWAY_URI                |     | Payment transactions gateway service connection URI                                                                                   | string  |         |
+| PAYMENT_TRANSACTION_GATEWAY_READ_TIMEOUT       |     | Timeout for requests towards Payment transactions gateway service                                                                     | number  |         |
+| PAYMENT_TRANSACTION_GATEWAY_CONNECTION_TIMEOUT |     | Timeout for establishing connections towards Payment transactions gateway service                                                     | number  |         |
+| NODO_URI                                       |     | Nodo connection URI                                                                                                                   | string  |         |
+| NODO_READ_TIMEOUT                              |     | Timeout for requests towards Nodo                                                                                                     | number  |         |
+| NODO_CONNECTION_TIMEOUT                        |     | Timeout for establishing connections towards Nodo                                                                                     | number  |         |
+| NODO_ALL_CCP_ON_TRANSFER_IBAN_ENABLED          |     | Flag to enable light check for allCCP. If true it checks only all transfers' iban. If false, it checks also metadata                  | boolean |         |
+| ECOMMERCE_PAYMENT_METHODS_URI                  |     | eCommerce payment methods service connection URI                                                                                      | string  |         |
+| ECOMMERCE_PAYMENT_METHODS_READ_TIMEOUT         |     | Timeout for requests towards eCommerce payment methods service                                                                        | number  |         |
+| ECOMMERCE_PAYMENT_METHODS_CONNECTION_TIMEOUT   |     | Timeout for establishing connections towards eCommerce payment methods  service                                                       | number  |         |
+| ECOMMERCE_PAYMENT_METHODS_APY_KEY              |     | Payment methods API key                                                                                                               | string  |         |
+| NOTIFICATIONS_SERVICE_URI                      |     | Notifications service connection URI                                                                                                  | string  |         |
+| NOTIFICATIONS_SERVICE_READ_TIMEOUT             |     | Timeout for requests towards Notifications service                                                                                    | number  |         |
+| NOTIFICATIONS_SERVICE_CONNECTION_TIMEOUT       |     | Timeout for establishing connections towards Notifications service                                                                    | number  |         |
+| NOTIFICATIONS_SERVICE_API_KEY                  |     | Notifications service API Key                                                                                                         | string  |         |
+| PAYMENT_TOKEN_VALIDITY_TIME                    |     | Validity time in seconds of a payment token                                                                                           | number  |         |
+| ECOMMERCE_STORAGE_TRANSIENT_CONNECTION_STRING  |     | Transient queue connection string                                                                                                     | string  |         |
+| TRANSACTION_EXPIRATION_QUEUE_NAME              |     | Name of the queue for transaction expiration for activated transactions                                                               | string  |         |
+| TRANSACTION_CLOSE_PAYMENT_RETRY_QUEUE_NAME     |     | Name of the retry queue for closure error events                                                                                      | string  |         |
+| TRANSACTION_CLOSE_PAYMENT_QUEUE_NAME           |     | Name of the queue for close payment events                                                                                            | string  |         |
+| TRANSACTION_NOTIFICATIONS_QUEUE_NAME           |     | Name of the queue for notification requested events                                                                                   | string  |         |
+| TRANSACTION_REFUND_QUEUE_NAME                  |     | Name of the refund queue for transactions that receive a closePayment with OK authorization and KO outcome                            | string  |         |
+| TRANSIENT_QUEUES_TTL_SECONDS                   |     | TTL to be used when sending events on transient queues                                                                                | number  | 7 days  |
+| TRANSACTIONS_RETRY_OFFSET                      |     | Seconds to offset validity end to account for more retries                                                                            | number  |         |
+| CLOSURE_RETRY_INTERVAL                         |     | Seconds to wait at closing the transaction before making a retry                                                                      | number  |         |
+| PERSONAL_DATA_VAULT_API_KEY                    |     | API Key for Personal Data Vault (PDV is used to safely encrypt PIIs, e.g. the user's email address)                                   | string  |         |
+| PERSONAL_DATA_VAULT_API_BASE_PATH              |     | API base path for Personal Data Vault                                                                                                 | string  |         |
+| LOGO_CARD_BRANDING_MAPPING                     |     | Key-value string map that maps card brand to logo to be used into success mail                                                        | string  |         |
+| NPG_API_KEY                                    |     | API Key for Nuovo Payment Gateway (NPG, used for authorizing payments).                                                               | string  |         |
+| NPG_URI                                        |     | NPG connection uri                                                                                                                    | string  |         |
+| NPG_READ_TIMEOUT                               |     | Timeout for requests towards NPG                                                                                                      | string  |         |
+| NPG_CONNECTION_TIMEOUT                         |     | Timeout for establishing connections towards NPG                                                                                      | string  |         |
+| NPG_CARDS_PSP_KEYS                             |     | Secret structure that holds psp - api keys association for authorization request                                                      | string  |         |
+| NPG_CARDS_PSP_LIST                             |     | List of all psp ids that are expected to be found into the NPG_CARDS_PSP_KEYS configuration (used for configuration cross validation) | string  |         |
 
 An example configuration of these environment variables is in the `.env.example` file.
 
@@ -59,6 +61,7 @@ cp .env.example .env
 ```
 
 Then from current project directory run :
+
 ```sh
 docker-compose up
 ```
@@ -91,13 +94,16 @@ pagopa-ecommerce-transactions-service-pagopa-ecommerce-transactions-1  | 2022-04
 pagopa-ecommerce-transactions-service-pagopa-ecommerce-transactions-1  | 2022-04-27 13:12:56.296  INFO 1 --- [           main] t.PagopaEcommerceTransactionsApplication : Started PagopaEcommerceTransactionsApplication in 5.104 seconds (JVM running for 6.584)
 ```
 
-When running with the Docker container you can check data persisted to either Mongo or Redis with their respective web interfaces (Mongo express/Redis Insight). To do so, go to:
- * http://localhost:8001 for Redis Insight
- * http://localhost:8081 for Mongo Express
+When running with the Docker container you can check data persisted to either Mongo or Redis with their respective web
+interfaces (Mongo express/Redis Insight). To do so, go to:
+
+* http://localhost:8001 for Redis Insight
+* http://localhost:8081 for Mongo Express
 
 ## Run the application with `springboot-plugin`
 
 Create your environment:
+
 ```sh
 export $(grep -v '^#' .env.local | xargs)
 ```
@@ -139,6 +145,7 @@ Helpful commands:
 mvn spotless:check # --> used to perform format checks
 mvn spotless:apply # --> used to format all misformatted files
 ```
+
 ## CI
 
 Repo has Github workflow and actions that trigger Azure devops deploy pipeline once a PR is merged on main branch.
