@@ -2,6 +2,7 @@ package it.pagopa.transactions.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
@@ -62,6 +63,12 @@ class PaymentGatewayClientTest {
     @Mock
     ConfidentialMailUtils confidentialMailUtils;
 
+    @Mock
+    Map<String, String> npgCardsApiKeys;
+
+    @Mock
+    NpgClient npgClient;
+
     private final TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
     @Spy
@@ -75,7 +82,9 @@ class PaymentGatewayClientTest {
                 creditCardInternalApi,
                 objectMapper,
                 mockUuidUtils,
-                confidentialMailUtils
+                confidentialMailUtils,
+                npgClient,
+                npgCardsApiKeys
         );
 
         Hooks.onOperatorDebug();
