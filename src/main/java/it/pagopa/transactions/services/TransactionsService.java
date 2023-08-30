@@ -279,7 +279,7 @@ public class TransactionsService {
                                                             new CalculateFeeRequestDto()
                                                                     .touchpoint(transaction.getClientId().toString())
                                                                     .bin(
-                                                                            bin
+                                                                            bin.orElse(null)
                                                                     )
                                                                     .idPspList(
                                                                             List.of(
@@ -793,14 +793,13 @@ public class TransactionsService {
                 ).orElseThrow(() -> new InvalidRequestException("Null value as input origin"));
     }
 
-    private Mono<String> extractBinFromPan(RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
+    private Mono<Optional<String>> extractBinFromPan(RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
         return switch (requestAuthorizationRequestDto.getDetails()){
             case CardAuthRequestDetailsDto cardData ->
-                Mono.just(cardData.getPan().substring(0, 6));
+                Mono.just(Optional.of(cardData.getPan().substring(0, 6)));
             case CardsAuthRequestDetailsDto cards ->
-                ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(),cards.getSessionId()).map(SessionPaymentMethodResponseDto::getBin);
-            default -> null;
+                ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(),cards.getSessionId()).map(SessionPaymentMethodResponseDto::getBin).map(Optional::of);
+            default -> Mono.just(Optional.empty());
         };
     }
-
 }
