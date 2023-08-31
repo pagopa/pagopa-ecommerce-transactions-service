@@ -7,7 +7,11 @@ import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequeste
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
-import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
+import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
+import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDetailsDto;
+import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
+import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
@@ -37,17 +41,21 @@ public class TransactionRequestAuthorizationHandler
 
     private final Map<CardAuthRequestDetailsDto.BrandEnum, URI> cardBrandLogoMapping;
 
+    private final EcommercePaymentMethodsClient paymentMethodsClient;
+
     @Autowired
     public TransactionRequestAuthorizationHandler(
             PaymentGatewayClient paymentGatewayClient,
             TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository,
             TransactionsUtils transactionsUtils,
-            @Qualifier("brandConfMap") Map<CardAuthRequestDetailsDto.BrandEnum, URI> cardBrandLogoMapping
+            @Qualifier("brandConfMap") Map<CardAuthRequestDetailsDto.BrandEnum, URI> cardBrandLogoMapping,
+            EcommercePaymentMethodsClient paymentMethodsClient
     ) {
         this.paymentGatewayClient = paymentGatewayClient;
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionsUtils = transactionsUtils;
         this.cardBrandLogoMapping = cardBrandLogoMapping;
+        this.paymentMethodsClient = paymentMethodsClient;
     }
 
     @Override
@@ -175,13 +183,26 @@ public class TransactionRequestAuthorizationHandler
                                             )
                                     );
 
-                                    return transactionEventStoreRepository.save(authorizationEvent)
-                                            .thenReturn(tuple3)
-                                            .map(
-                                                    auth -> new RequestAuthorizationResponseDto()
-                                                            .authorizationUrl(tuple3.getT2())
-                                                            .authorizationRequestId(tuple3.getT1())
+                                    Mono<Void> updateSession = Mono.just(command.getData().authDetails())
+                                            .filter(d -> d instanceof CardsAuthRequestDetailsDto)
+                                            .cast(CardsAuthRequestDetailsDto.class)
+                                            .flatMap(
+                                                    authRequestDetails -> paymentMethodsClient.updateSession(
+                                                            command.getData().paymentInstrumentId(),
+                                                            authRequestDetails.getSessionId(),
+                                                            command.getData().transaction().getTransactionId().value()
+                                                    )
                                             );
+
+                                    return updateSession.then(
+                                            transactionEventStoreRepository.save(authorizationEvent)
+                                                    .thenReturn(tuple3)
+                                                    .map(
+                                                            auth -> new RequestAuthorizationResponseDto()
+                                                                    .authorizationUrl(tuple3.getT2())
+                                                                    .authorizationRequestId(tuple3.getT1())
+                                                    )
+                                    );
                                 })
                                 .doOnError(BadRequestException.class, error -> log.error(error.getMessage()))
                 );

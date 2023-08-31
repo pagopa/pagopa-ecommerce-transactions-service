@@ -1,10 +1,7 @@
 package it.pagopa.transactions.client;
 
 import it.pagopa.generated.ecommerce.paymentmethods.v1.api.PaymentMethodsApi;
-import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.CalculateFeeRequestDto;
-import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.CalculateFeeResponseDto;
-import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.PaymentMethodResponseDto;
-import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.SessionPaymentMethodResponseDto;
+import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.*;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +61,26 @@ public class EcommercePaymentMethodsClient {
                 )
                 .onErrorMap(
                         err -> new InvalidRequestException("Error while invoke method retrieve card data")
+                );
+    }
+
+    public Mono<Void> updateSession(
+                                    String paymentMethodId,
+                                    String sessionId,
+                                    String transactionId
+    ) {
+        return ecommercePaymentInstrumentsWebClient
+                .updateSession(paymentMethodId, sessionId, new PatchSessionRequestDto().transactionId(transactionId))
+                .doOnError(
+                        WebClientResponseException.class,
+                        e -> log.info(
+                                "Got bad response from payment-methods-service [HTTP {}]: {}",
+                                e.getStatusCode(),
+                                e.getResponseBodyAsString()
+                        )
+                )
+                .onErrorMap(
+                        err -> new InvalidRequestException("Error while invoke method update session")
                 );
     }
 }
