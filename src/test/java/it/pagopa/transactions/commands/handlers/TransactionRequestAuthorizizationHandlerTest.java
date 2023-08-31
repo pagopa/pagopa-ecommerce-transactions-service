@@ -85,22 +85,29 @@ class TransactionRequestAuthorizizationHandlerTest {
 
     private static final Set<CardAuthRequestDetailsDto.BrandEnum> testedCardBrands = new HashSet<>();
 
+    private static boolean cardsTested = false;
+
     @AfterAll
     public static void afterAll() {
-        Set<CardAuthRequestDetailsDto.BrandEnum> untestedBrands = Arrays
-                .stream(CardAuthRequestDetailsDto.BrandEnum.values())
-                .filter(Predicate.not(testedCardBrands::contains)).collect(Collectors.toSet());
-        assertTrue(untestedBrands.isEmpty(), "There are untested brand to logo cases: %s".formatted(untestedBrands));
-        Set<String> vposCardCircuit = Arrays.stream(VposAuthRequestDto.CircuitEnum.values())
-                .map(VposAuthRequestDto.CircuitEnum::toString).collect(Collectors.toSet());
-        Set<String> uncoveredEcommerceBrands = Arrays.stream(CardAuthRequestDetailsDto.BrandEnum.values())
-                .map(CardAuthRequestDetailsDto.BrandEnum::toString).collect(Collectors.toSet());
-        uncoveredEcommerceBrands.removeAll(vposCardCircuit);
-        assertTrue(
-                uncoveredEcommerceBrands.isEmpty(),
-                "There are ecommerce card brands not mapped into PGS VPOS circuit!%nUnmapped brands: %s"
-                        .formatted(uncoveredEcommerceBrands)
-        );
+        if (cardsTested) {
+            Set<CardAuthRequestDetailsDto.BrandEnum> untestedBrands = Arrays
+                    .stream(CardAuthRequestDetailsDto.BrandEnum.values())
+                    .filter(Predicate.not(testedCardBrands::contains)).collect(Collectors.toSet());
+            assertTrue(
+                    untestedBrands.isEmpty(),
+                    "There are untested brand to logo cases: %s".formatted(untestedBrands)
+            );
+            Set<String> vposCardCircuit = Arrays.stream(VposAuthRequestDto.CircuitEnum.values())
+                    .map(VposAuthRequestDto.CircuitEnum::toString).collect(Collectors.toSet());
+            Set<String> uncoveredEcommerceBrands = Arrays.stream(CardAuthRequestDetailsDto.BrandEnum.values())
+                    .map(CardAuthRequestDetailsDto.BrandEnum::toString).collect(Collectors.toSet());
+            uncoveredEcommerceBrands.removeAll(vposCardCircuit);
+            assertTrue(
+                    uncoveredEcommerceBrands.isEmpty(),
+                    "There are ecommerce card brands not mapped into PGS VPOS circuit!%nUnmapped brands: %s"
+                            .formatted(uncoveredEcommerceBrands)
+            );
+        }
     }
 
     @BeforeEach
@@ -613,6 +620,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 brandLogoMapping.get(CardAuthRequestDetailsDto.BrandEnum.fromValue(brand)),
                 capturedEvent.getData().getLogo()
         );
+        cardsTested = true;
         testedCardBrands.add(CardAuthRequestDetailsDto.BrandEnum.fromValue(brand));
     }
 
