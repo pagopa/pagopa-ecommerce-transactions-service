@@ -584,8 +584,8 @@ class PaymentGatewayClientTest {
                         Mono.error(
                                 new WebClientResponseException(
                                         "api error",
-                                        HttpStatus.GATEWAY_TIMEOUT.value(),
-                                        "Unauthorized",
+                                        HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                                        "INTERNAL_SERVER_ERROR",
                                         null,
                                         null,
                                         null
@@ -595,7 +595,7 @@ class PaymentGatewayClientTest {
         /* test */
         StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData))
                 .expectErrorMatches(
-                        error -> error instanceof GatewayTimeoutException
+                        error -> error instanceof BadGatewayException
                 )
                 .verify();
     }
@@ -648,7 +648,7 @@ class PaymentGatewayClientTest {
                                 new WebClientResponseException(
                                         "api error",
                                         HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                                        "Unauthorized",
+                                        "INTERNAL SERVER ERROR",
                                         null,
                                         null,
                                         null
