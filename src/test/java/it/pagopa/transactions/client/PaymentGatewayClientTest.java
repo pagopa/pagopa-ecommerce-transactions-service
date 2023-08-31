@@ -4,12 +4,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.*;
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
+import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.PostePayAuthRequestDetailsDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
@@ -417,6 +419,63 @@ class PaymentGatewayClientTest {
         verify(xPayInternalApi, times(0)).authXpay(any(), any());
         verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
         verify(creditCardInternalApi, times(1)).step0VposAuth(any(), any());
+    }
+
+    @Test
+    void shouldReturnAuthorizationResponseForCardsWithNpg() throws Exception {
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                List.of(
+                        new PaymentNotice(
+                                new PaymentToken("paymentToken"),
+                                new RptId("77777777777111111111111111111"),
+                                new TransactionAmount(100),
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                false
+                        )
+                ),
+                TransactionTestUtils.EMAIL,
+                null,
+                null,
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+        );
+        CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
+                .sessionId(UUID.randomUUID().toString());
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction,
+                10,
+                "paymentInstrumentId",
+                "pspId",
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "CARDS",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "VPOS",
+                cardDetails
+        );
+
+        String mdcInfo = objectMapper.writeValueAsString(Map.of("transactionId", transactionId.value()));
+        String encodedMdcFields = Base64.getEncoder().encodeToString(mdcInfo.getBytes(StandardCharsets.UTF_8));
+
+        StateResponseDto ngpStateResponse = new StateResponseDto().url("https://example.com");
+
+        /* preconditions */
+
+        Mockito.when(npgClient.confirmPayment(any(), any(), any(), any())).thenReturn(Mono.just(ngpStateResponse));
+
+        /* test */
+
+        StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData))
+                .expectNext(ngpStateResponse)
+                .verifyComplete();
+
     }
 
     @Test
