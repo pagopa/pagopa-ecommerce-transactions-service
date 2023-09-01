@@ -5,11 +5,14 @@ import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestD
 import it.pagopa.ecommerce.commons.documents.v1.TransactionEvent;
 import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateDto;
+import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
+import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.PostePayAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
 import it.pagopa.transactions.client.PaymentGatewayClient;
@@ -267,6 +270,89 @@ class TransactionRequestAuthorizizationHandlerTest {
     }
 
     @Test
+    void shouldSaveAuthorizationEventNpgCards() {
+        TransactionId transactionId = new TransactionId(transactionIdUUID);
+        PaymentToken paymentToken = new PaymentToken("paymentToken");
+        RptId rptId = new RptId("77777777777111111111111111111");
+        TransactionDescription description = new TransactionDescription("description");
+        TransactionAmount amount = new TransactionAmount(100);
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
+        String idCart = "idCart";
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                List.of(
+                        new PaymentNotice(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description,
+                                nullPaymentContextCode,
+                                new ArrayList<>(),
+                                false
+                        )
+                ), // TODO
+                   // TRANSFER
+                   // LIST
+                email,
+                null,
+                null,
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                idCart,
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+        );
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .fee(200)
+                .paymentInstrumentId("paymentInstrumentId")
+                .pspId("PSP_CODE")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
+
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction,
+                authorizationRequest.getFee(),
+                authorizationRequest.getPaymentInstrumentId(),
+                authorizationRequest.getPspId(),
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "CARDS",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "NPG",
+                new CardsAuthRequestDetailsDto().sessionId(UUID.randomUUID().toString())
+        );
+
+        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
+                transaction.getPaymentNotices().get(0).rptId(),
+                authorizationData
+        );
+
+        StateResponseDto stateResponseDto = new StateResponseDto()
+                .state(StateDto.REDIRECTED_TO_EXTERNAL_DOMAIN).url("http://iframe");
+
+        /* preconditions */
+        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
+                .thenReturn(Mono.empty());
+        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
+                .thenReturn(Mono.empty());
+        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
+                .thenReturn(Mono.empty());
+        Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData))
+                .thenReturn(Mono.just(stateResponseDto));
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
+                .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
+        Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(args -> Mono.just(args.getArguments()[0]));
+
+        /* test */
+        requestAuthorizationHandler.handle(requestAuthorizationCommand).block();
+
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
+    }
+
+    @Test
     void shouldRejectAlreadyProcessedTransaction() {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
@@ -411,6 +497,8 @@ class TransactionRequestAuthorizizationHandlerTest {
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData)).thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData)).thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData)).thenReturn(Mono.empty());
+        Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData)).thenReturn(Mono.empty());
+
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectErrorMatches(error -> error instanceof BadRequestException)

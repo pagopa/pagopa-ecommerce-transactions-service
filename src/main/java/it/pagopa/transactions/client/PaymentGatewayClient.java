@@ -2,11 +2,14 @@ package it.pagopa.transactions.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.pagopa.ecommerce.commons.client.NpgClient;
+import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.*;
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
+import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
@@ -24,6 +27,7 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 public class PaymentGatewayClient {
@@ -40,6 +44,10 @@ public class PaymentGatewayClient {
 
     private final ConfidentialMailUtils confidentialMailUtils;
 
+    private final NpgClient npgClient;
+
+    private final Map<String, String> npgCardsApiKeys;
+
     @Autowired
     public PaymentGatewayClient(
             @Qualifier("paymentTransactionGatewayPostepayWebClient") PostePayInternalApi postePayInternalApi,
@@ -47,7 +55,10 @@ public class PaymentGatewayClient {
             @Qualifier("creditCardInternalApiClient") VposInternalApi creditCardInternalApiClient,
             ObjectMapper objectMapper,
             UUIDUtils uuidUtils,
-            ConfidentialMailUtils confidentialMailUtils
+            ConfidentialMailUtils confidentialMailUtils,
+            NpgClient npgClient,
+            @Qualifier("npgCardsApiKeys") Map<String, String> npgCardsApiKeys
+
     ) {
         this.postePayInternalApi = postePayInternalApi;
         this.paymentTransactionGatewayXPayWebClient = paymentTransactionGatewayXPayWebClient;
@@ -55,6 +66,8 @@ public class PaymentGatewayClient {
         this.objectMapper = objectMapper;
         this.uuidUtils = uuidUtils;
         this.confidentialMailUtils = confidentialMailUtils;
+        this.npgClient = npgClient;
+        this.npgCardsApiKeys = npgCardsApiKeys;
     }
 
     // TODO Handle multiple rptId
@@ -224,6 +237,58 @@ public class PaymentGatewayClient {
                                         }
                                 )
                 );
+    }
+
+    public Mono<StateResponseDto> requestNpgCardsAuthorization(AuthorizationRequestData authorizationData) {
+        return Mono.just(authorizationData)
+                .filter(
+                        authorizationRequestData -> "CP".equals(authorizationRequestData.paymentTypeCode())
+                                && NpgClient.PaymentMethod.CARDS.serviceName
+                                        .equals(authorizationRequestData.paymentMethodName())
+                )
+                .switchIfEmpty(Mono.empty())
+                .filter(
+                        authorizationRequestData -> authorizationData
+                                .authDetails() instanceof CardsAuthRequestDetailsDto
+                )
+                .switchIfEmpty(
+                        Mono.error(
+                                new InvalidRequestException(
+                                        "Cannot perform NPG authorization for invalid input CardsAuthRequestDetailsDto"
+                                )
+                        )
+                )
+                .map(AuthorizationRequestData::authDetails)
+                .cast(CardsAuthRequestDetailsDto.class)
+                .flatMap(authorizationRequestData -> {
+                    final BigDecimal grandTotal = BigDecimal.valueOf(
+                            ((long) authorizationData.transaction().getPaymentNotices().stream()
+                                    .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value()).sum())
+                                    + authorizationData.fee()
+                    );
+                    final String sessionId = authorizationRequestData.getSessionId();
+                    final UUID correlationId = UUID.randomUUID();
+                    final String pspNpgApiKey = npgCardsApiKeys.get(authorizationData.pspId());
+                    return npgClient.confirmPayment(
+                            correlationId,
+                            sessionId,
+                            grandTotal,
+                            pspNpgApiKey
+                    )
+                            .onErrorMap(
+                                    WebClientResponseException.class,
+                                    exception -> switch (exception.getStatusCode()) {
+                        case UNAUTHORIZED -> new AlreadyProcessedException(
+                                authorizationData.transaction().getTransactionId()
+                        ); // 401
+                        case INTERNAL_SERVER_ERROR -> new BadGatewayException(
+                                "",
+                                exception.getStatusCode()
+                        ); // 500
+                        default -> exception;
+                    }
+                            );
+                });
     }
 
     private String encodeMdcFields(AuthorizationRequestData authorizationData) {

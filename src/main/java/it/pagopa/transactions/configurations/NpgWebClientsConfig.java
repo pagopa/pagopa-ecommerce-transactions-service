@@ -50,11 +50,10 @@ public class NpgWebClientsConfig {
     @Bean
     public NpgClient npgClient(
                                PaymentServicesApi hostedFieldsApi,
-                               @Value("${npg.client.key}") String npgKey,
                                Tracer tracer,
                                ObjectMapper objectMapper
     ) {
-        return new NpgClient(hostedFieldsApi, npgKey, tracer, objectMapper);
+        return new NpgClient(hostedFieldsApi, tracer, objectMapper);
     }
 
 }

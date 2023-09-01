@@ -11,9 +11,7 @@ import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
-import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
-import it.pagopa.transactions.utils.AuthRequestDataUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -111,7 +109,21 @@ public class TransactionRequestAuthorizationHandler
                         )
                 );
 
-        List<Mono<Tuple3<String, String, PaymentGateway>>> gatewayRequests = List.of(monoPostePay, monoXPay, monoVPOS);
+        var monoNpgCards = Mono.just(command.getData())
+                .flatMap(
+                        authorizationRequestData -> paymentGatewayClient
+                                .requestNpgCardsAuthorization(authorizationRequestData)
+                )
+                .map(
+                        npgCardsResponseDto -> Tuples.of(
+                                "sessionId",
+                                npgCardsResponseDto.getUrl(),
+                                PaymentGateway.VPOS
+                        )
+                );
+
+        List<Mono<Tuple3<String, String, PaymentGateway>>> gatewayRequests = List
+                .of(monoPostePay, monoXPay, monoVPOS, monoNpgCards);
 
         Mono<Tuple3<String, String, PaymentGateway>> gatewayAttempts = gatewayRequests
                 .stream()
