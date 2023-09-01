@@ -258,14 +258,15 @@ public class PaymentGatewayClient {
                                 )
                         )
                 )
+                .map(AuthorizationRequestData::authDetails)
+                .cast(CardsAuthRequestDetailsDto.class)
                 .flatMap(authorizationRequestData -> {
-                    CardsAuthRequestDetailsDto cardsData = (CardsAuthRequestDetailsDto) authorizationData.authDetails();
                     final BigDecimal grandTotal = BigDecimal.valueOf(
                             ((long) authorizationData.transaction().getPaymentNotices().stream()
                                     .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value()).sum())
                                     + authorizationData.fee()
                     );
-                    final String sessionId = cardsData.getSessionId();
+                    final String sessionId = authorizationRequestData.getSessionId();
                     final UUID correlationId = UUID.randomUUID();
                     final String pspNpgApiKey = npgCardsApiKeys.get(authorizationData.pspId());
                     return npgClient.confirmPayment(
