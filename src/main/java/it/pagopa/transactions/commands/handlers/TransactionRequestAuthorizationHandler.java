@@ -184,7 +184,7 @@ public class TransactionRequestAuthorizationHandler
                                     );
 
                                     Mono<Void> updateSession = Mono.just(command.getData().authDetails())
-                                            .filter(d -> d instanceof CardsAuthRequestDetailsDto)
+                                            .filter(CardsAuthRequestDetailsDto.class::isInstance)
                                             .cast(CardsAuthRequestDetailsDto.class)
                                             .flatMap(
                                                     authRequestDetails -> paymentMethodsClient.updateSession(
