@@ -707,5 +707,7 @@ class TransactionRequestAuthorizizationHandlerTest {
         requestAuthorizationHandler.handle(requestAuthorizationCommand).block();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
+        Mockito.verify(paymentMethodsClient, Mockito.times(1))
+                .updateSession(paymentInstrumentId, sessionId, transactionId.value());
     }
 }
