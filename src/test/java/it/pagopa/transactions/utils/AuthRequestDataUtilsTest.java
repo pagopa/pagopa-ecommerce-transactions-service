@@ -100,7 +100,7 @@ class AuthRequestDataUtilsTest {
         AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils
                 .from(updateAuthorizationRequest, transactionId);
 
-        assertEquals(data.rrn(), TRANSACTION_ID_ENCODED);
+        assertEquals(TRANSACTION_ID_ENCODED, data.rrn());
         assertEquals(
                 data.authorizationCode(),
                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode()
@@ -125,7 +125,7 @@ class AuthRequestDataUtilsTest {
         AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils
                 .from(updateAuthorizationRequest, transactionId);
 
-        assertEquals(data.rrn(), TRANSACTION_ID_ENCODED);
+        assertEquals(TRANSACTION_ID_ENCODED, data.rrn());
         assertEquals(
                 data.authorizationCode(),
                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode()
