@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -40,10 +41,14 @@ class AuthRequestDataUtilsTest {
 
     @AfterAll
     public static void afterAllTests() {
-        Set<OutcomeNpgGatewayDto.OperationResultEnum> allOperationResults = Arrays
-                .stream(OutcomeNpgGatewayDto.OperationResultEnum.values()).collect(Collectors.toSet());
-        allOperationResults.removeAll(testedStatuses);
-        assertTrue(allOperationResults.isEmpty(), "Untested outcome detected! %s".formatted(allOperationResults));
+        Set<OutcomeNpgGatewayDto.OperationResultEnum> untestedOperationResults = Arrays
+                .stream(OutcomeNpgGatewayDto.OperationResultEnum.values())
+                .filter(Predicate.not(testedStatuses::contains))
+                .collect(Collectors.toSet());
+        assertTrue(
+                untestedOperationResults.isEmpty(),
+                "Untested outcome detected! %s".formatted(untestedOperationResults)
+        );
     }
 
     @Test
