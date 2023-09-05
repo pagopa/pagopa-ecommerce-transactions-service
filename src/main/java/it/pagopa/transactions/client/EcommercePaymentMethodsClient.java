@@ -29,11 +29,7 @@ public class EcommercePaymentMethodsClient {
                 .calculateFees(paymentMethodId, transactionId, calculateFeeRequestDto, maxOccurrences)
                 .doOnError(
                         WebClientResponseException.class,
-                        e -> log.info(
-                                "Got bad response from payment-methods-service [HTTP {}]: {}",
-                                e.getStatusCode(),
-                                e.getResponseBodyAsString()
-                        )
+                        EcommercePaymentMethodsClient::logWebClientException
                 )
                 .onErrorMap(
                         err -> new InvalidRequestException("Error while invoke method for read psp list")
@@ -53,11 +49,7 @@ public class EcommercePaymentMethodsClient {
                 .getSessionPaymentMethod(paymentMethodId, sessionId)
                 .doOnError(
                         WebClientResponseException.class,
-                        e -> log.info(
-                                "Got bad response from payment-methods-service [HTTP {}]: {}",
-                                e.getStatusCode(),
-                                e.getResponseBodyAsString()
-                        )
+                        EcommercePaymentMethodsClient::logWebClientException
                 )
                 .onErrorMap(
                         err -> new InvalidRequestException("Error while invoke method retrieve card data")
@@ -73,14 +65,18 @@ public class EcommercePaymentMethodsClient {
                 .updateSession(paymentMethodId, sessionId, new PatchSessionRequestDto().transactionId(transactionId))
                 .doOnError(
                         WebClientResponseException.class,
-                        e -> log.info(
-                                "Got bad response from payment-methods-service [HTTP {}]: {}",
-                                e.getStatusCode(),
-                                e.getResponseBodyAsString()
-                        )
+                        EcommercePaymentMethodsClient::logWebClientException
                 )
                 .onErrorMap(
                         err -> new InvalidRequestException("Error while invoke method update session")
                 );
+    }
+
+    private static void logWebClientException(WebClientResponseException e) {
+        log.info(
+                "Got bad response from payment-methods-service [HTTP {}]: {}",
+                e.getStatusCode(),
+                e.getResponseBodyAsString()
+        );
     }
 }
