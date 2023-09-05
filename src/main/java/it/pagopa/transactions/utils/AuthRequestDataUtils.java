@@ -1,6 +1,7 @@
 package it.pagopa.transactions.utils;
 
 import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
+import it.pagopa.generated.transactions.server.model.OutcomeNpgGatewayDto;
 import it.pagopa.generated.transactions.server.model.OutcomeVposGatewayDto;
 import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
@@ -35,15 +36,28 @@ public class AuthRequestDataUtils {
         AuthRequestData result;
         switch (updateAuthorizationRequest.getOutcomeGateway()) {
             case OutcomeVposGatewayDto t -> {
-                result = new AuthRequestData(t.getAuthorizationCode(),t.getOutcome().toString(),t.getRrn(), t.getErrorCode() != null ? t.getErrorCode().getValue() : null);
+                result = new AuthRequestData(t.getAuthorizationCode(), t.getOutcome().toString(), t.getRrn(), t.getErrorCode() != null ? t.getErrorCode().getValue() : null);
             }
             case OutcomeXpayGatewayDto t -> {
-                result = new AuthRequestData(t.getAuthorizationCode(),t.getOutcome().toString(), uuidUtils.uuidToBase64(transactionId.uuid()), t.getErrorCode() != null ? t.getErrorCode().getValue().toString() : null);
+                result = new AuthRequestData(t.getAuthorizationCode(), t.getOutcome().toString(), uuidUtils.uuidToBase64(transactionId.uuid()), t.getErrorCode() != null ? t.getErrorCode().getValue().toString() : null);
+            }
+            case OutcomeNpgGatewayDto t -> {
+                result = new AuthRequestData(t.getAuthorizationCode(), npgResultToOutcome(t.getOperationResult()), t.getPaymentEndToEndId(), null);
             }
             default ->
                     throw new InvalidRequestException("Unexpected value: " + updateAuthorizationRequest.getOutcomeGateway());
         }
 
         return result;
+    }
+
+    private String npgResultToOutcome(OutcomeNpgGatewayDto.OperationResultEnum result) {
+        String outcome = switch (result) {
+            //TODO which state must be considered OK here?
+            case EXECUTED, AUTHORIZED -> "OK";
+            default -> "KO";
+        };
+        log.info("NPG operation result: {} outcome -> {}", result, outcome);
+        return outcome;
     }
 }
