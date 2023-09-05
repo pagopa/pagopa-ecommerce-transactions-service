@@ -53,7 +53,7 @@ public class AuthRequestDataUtils {
 
     private String npgResultToOutcome(OutcomeNpgGatewayDto.OperationResultEnum result) {
         String outcome = switch (result) {
-            //TODO which state must be considered OK here?
+            // TODO which state must be considered OK here?
             case EXECUTED, AUTHORIZED -> "OK";
             default -> "KO";
         };
