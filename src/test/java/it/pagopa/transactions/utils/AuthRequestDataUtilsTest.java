@@ -5,6 +5,7 @@ import it.pagopa.generated.transactions.server.model.OutcomeNpgGatewayDto;
 import it.pagopa.generated.transactions.server.model.OutcomeVposGatewayDto;
 import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -16,11 +17,14 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.OffsetDateTime;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuthRequestDataUtilsTest {
@@ -31,6 +35,16 @@ class AuthRequestDataUtilsTest {
     private UUIDUtils uuidUtils;
 
     private static final String TRANSACTION_ID_ENCODED = "transactionIdEncoded";
+
+    private static Set<OutcomeNpgGatewayDto.OperationResultEnum> testedStatuses = new HashSet<>();
+
+    @AfterAll
+    public static void afterAllTests() {
+        Set<OutcomeNpgGatewayDto.OperationResultEnum> allOperationResults = Arrays
+                .stream(OutcomeNpgGatewayDto.OperationResultEnum.values()).collect(Collectors.toSet());
+        allOperationResults.removeAll(testedStatuses);
+        assertTrue(allOperationResults.isEmpty(), "Untested outcome detected! %s".formatted(allOperationResults));
+    }
 
     @Test
     void shouldExtractVposInformation() {
@@ -146,6 +160,7 @@ class AuthRequestDataUtilsTest {
                                      OutcomeNpgGatewayDto.OperationResultEnum operationResultEnum,
                                      String expectedOutcome
     ) {
+        testedStatuses.add(operationResultEnum);
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
         String orderId = "orderId";
         String operationId = "operationId";
@@ -170,9 +185,9 @@ class AuthRequestDataUtilsTest {
 
     private static Stream<Arguments> npgOutcomeTestArguments() {
         return Stream.of(
-                // npg operation result - outcome expected mappings
+                // npg operation result - expected outcome mappings
                 Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.AUTHORIZED, "OK"),
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED, "OK"),
+                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED, "KO"),
                 Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.DECLINED, "KO"),
                 Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.DENIED_BY_RISK, "KO"),
                 Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.THREEDS_VALIDATED, "KO"),

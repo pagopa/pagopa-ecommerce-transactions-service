@@ -52,11 +52,10 @@ public class AuthRequestDataUtils {
     }
 
     private String npgResultToOutcome(OutcomeNpgGatewayDto.OperationResultEnum result) {
-        String outcome = switch (result) {
-            // TODO which state must be considered OK here?
-            case EXECUTED, AUTHORIZED -> "OK";
-            default -> "KO";
-        };
+        String outcome = "KO";
+        if (result.equals(OutcomeNpgGatewayDto.OperationResultEnum.AUTHORIZED)) {
+            outcome = "OK";
+        }
         log.info("NPG operation result: {} outcome -> {}", result, outcome);
         return outcome;
     }
