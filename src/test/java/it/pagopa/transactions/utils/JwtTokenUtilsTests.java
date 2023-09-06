@@ -18,9 +18,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class JwtTokenUtilsTests {
     private static final String STRONG_KEY = "ODMzNUZBNTZENDg3NTYyREUyNDhGNDdCRUZDNzI3NDMzMzQwNTFEREZGQ0MyQzA5Mjc1RjY2NTQ1NDk5MDMxNzU5NDc0NUVFMTdDMDhGNzk4Q0Q3RENFMEJBODE1NURDREExNEY2Mzk4QzFEMTU0NTExNjUyMEExMzMwMTdDMDk";
 
-    private static final int TOKEN_VALIDITY_TIME_SECOND = 900;
+    private static final int TOKEN_VALIDITY_TIME_SECONDS = 900;
     private final SecretKey jwtSecretKey = new SecretsConfigurations().jwtSigningKey(STRONG_KEY);
-    private final JwtTokenUtils jwtTokenUtils = new JwtTokenUtils(jwtSecretKey, TOKEN_VALIDITY_TIME_SECOND);
+    private final JwtTokenUtils jwtTokenUtils = new JwtTokenUtils(jwtSecretKey, TOKEN_VALIDITY_TIME_SECONDS);
 
     @Test
     void shouldGenerateValidJwtToken() {
@@ -35,7 +35,7 @@ class JwtTokenUtilsTests {
         assertNotNull(claims.getIssuedAt());
         assertNotNull(claims.getExpiration());
         assertEquals(
-                Duration.ofSeconds(TOKEN_VALIDITY_TIME_SECOND).toMillis(),
+                Duration.ofSeconds(TOKEN_VALIDITY_TIME_SECONDS).toMillis(),
                 claims.getExpiration().getTime() - claims.getIssuedAt().getTime()
         );
     }
