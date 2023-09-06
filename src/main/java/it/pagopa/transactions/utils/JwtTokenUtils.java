@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
+import java.time.Duration;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
@@ -23,26 +24,26 @@ public class JwtTokenUtils {
 
     public static final String TRANSACTION_ID_CLAIM = "transactionId";
 
-    private final int tokenValidityTimeMillis;
+    private final int tokenValidityTimeSeconds;
 
     public JwtTokenUtils(
             @Autowired SecretKey jwtSecretKey,
-            @Value("${jwt.validityMillis}") int tokenValidityMillis
+            @Value("${payment.token.validity}") int tokenValiditySeconds
     ) {
         this.jwtSecretKey = jwtSecretKey;
-        this.tokenValidityTimeMillis = tokenValidityMillis;
+        this.tokenValidityTimeSeconds = tokenValiditySeconds;
     }
 
     public Mono<String> generateToken(TransactionId transactionId) {
         try {
             Calendar calendar = Calendar.getInstance();
             Date issuedAtDate = calendar.getTime();
-            calendar.add(Calendar.MILLISECOND, tokenValidityTimeMillis);
+            calendar.add(Calendar.SECOND, tokenValidityTimeSeconds);
             Date expiryDate = calendar.getTime();
             return Mono.just(
                     Jwts.builder()
-                            .claim(TRANSACTION_ID_CLAIM, transactionId.value().toString())// transactionId (custom
-                                                                                          // claim)
+                            .claim(TRANSACTION_ID_CLAIM, transactionId.value())// transactionId (custom
+                                                                               // claim)
                             .setId(UUID.randomUUID().toString())// jti
                             .setIssuedAt(issuedAtDate)// iat
                             .setExpiration(expiryDate)// exp

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.crypto.SecretKey;
+import java.time.Duration;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -17,9 +18,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class JwtTokenUtilsTests {
     private static final String STRONG_KEY = "ODMzNUZBNTZENDg3NTYyREUyNDhGNDdCRUZDNzI3NDMzMzQwNTFEREZGQ0MyQzA5Mjc1RjY2NTQ1NDk5MDMxNzU5NDc0NUVFMTdDMDhGNzk4Q0Q3RENFMEJBODE1NURDREExNEY2Mzk4QzFEMTU0NTExNjUyMEExMzMwMTdDMDk";
 
-    private static final int TOKEN_VALIDITY_TIME = 10000;
+    private static final int TOKEN_VALIDITY_TIME_SECONDS = 900;
     private final SecretKey jwtSecretKey = new SecretsConfigurations().jwtSigningKey(STRONG_KEY);
-    private final JwtTokenUtils jwtTokenUtils = new JwtTokenUtils(jwtSecretKey, TOKEN_VALIDITY_TIME);
+    private final JwtTokenUtils jwtTokenUtils = new JwtTokenUtils(jwtSecretKey, TOKEN_VALIDITY_TIME_SECONDS);
 
     @Test
     void shouldGenerateValidJwtToken() {
@@ -29,10 +30,13 @@ class JwtTokenUtilsTests {
         Claims claims = assertDoesNotThrow(
                 () -> Jwts.parserBuilder().setSigningKey(jwtSecretKey).build().parseClaimsJws(generatedToken).getBody()
         );
-        assertEquals(transactionId.value().toString(), claims.get(JwtTokenUtils.TRANSACTION_ID_CLAIM, String.class));
+        assertEquals(transactionId.value(), claims.get(JwtTokenUtils.TRANSACTION_ID_CLAIM, String.class));
         assertNotNull(claims.getId());
         assertNotNull(claims.getIssuedAt());
         assertNotNull(claims.getExpiration());
-        assertEquals(TOKEN_VALIDITY_TIME, claims.getExpiration().getTime() - claims.getIssuedAt().getTime());
+        assertEquals(
+                Duration.ofSeconds(TOKEN_VALIDITY_TIME_SECONDS).toMillis(),
+                claims.getExpiration().getTime() - claims.getIssuedAt().getTime()
+        );
     }
 }
