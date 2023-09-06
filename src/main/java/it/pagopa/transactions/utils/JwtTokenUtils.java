@@ -24,21 +24,21 @@ public class JwtTokenUtils {
 
     public static final String TRANSACTION_ID_CLAIM = "transactionId";
 
-    private final int tokenValidityTimeSecond;
+    private final int tokenValidityTimeSeconds;
 
     public JwtTokenUtils(
             @Autowired SecretKey jwtSecretKey,
-            @Value("${payment.token.validity}") int tokenValiditySecond
+            @Value("${payment.token.validity}") int tokenValiditySeconds
     ) {
         this.jwtSecretKey = jwtSecretKey;
-        this.tokenValidityTimeSecond = tokenValiditySecond;
+        this.tokenValidityTimeSeconds = tokenValiditySeconds;
     }
 
     public Mono<String> generateToken(TransactionId transactionId) {
         try {
             Calendar calendar = Calendar.getInstance();
             Date issuedAtDate = calendar.getTime();
-            calendar.add(Calendar.MILLISECOND, (int) Duration.ofSeconds(tokenValidityTimeSecond).toMillis());
+            calendar.add(Calendar.SECOND, tokenValidityTimeSeconds);
             Date expiryDate = calendar.getTime();
             return Mono.just(
                     Jwts.builder()
