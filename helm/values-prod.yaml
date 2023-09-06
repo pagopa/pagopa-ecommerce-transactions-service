@@ -50,7 +50,6 @@ microservice-chart:
       CLOSURE_RETRY_INTERVAL: "30"
       WEB_LOGGING_LEVEL: "off"
       SERVICE_LOGGING_LEVEL: "info"
-      JWT_TOKEN_VALIDITY_TIME_MILLIS: "1800000"
       PERSONAL_DATA_VAULT_API_BASE_PATH: "https://api.tokenizer.pdv.pagopa.it/tokenizer/v1"
       WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3020"
       LOGO_CARD_BRANDING_MAPPING: >
@@ -82,7 +81,7 @@ microservice-chart:
       NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.29.0"
+    tag: "0.29.1"
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -171,7 +170,6 @@ microservice-chart:
     CLOSURE_RETRY_INTERVAL: "30"
     WEB_LOGGING_LEVEL: "off"
     SERVICE_LOGGING_LEVEL: "info"
-    JWT_TOKEN_VALIDITY_TIME_MILLIS: "1800000"
     PERSONAL_DATA_VAULT_API_BASE_PATH: "https://api.tokenizer.pdv.pagopa.it/tokenizer/v1"
     WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3020"
     LOGO_CARD_BRANDING_MAPPING: >
