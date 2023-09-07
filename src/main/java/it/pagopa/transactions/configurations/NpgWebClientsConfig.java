@@ -44,7 +44,7 @@ public class NpgWebClientsConfig {
                 new ReactorClientHttpConnector(httpClient)
         ).baseUrl(npgWebClientUri).build();
 
-        return new PaymentServicesApi(new ApiClient(webClient));
+        return new PaymentServicesApi(new ApiClient(webClient).setBasePath(npgWebClientUri));
     }
 
     @Bean
