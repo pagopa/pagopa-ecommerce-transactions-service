@@ -357,6 +357,13 @@ class TransactionRequestAuthorizizationHandlerTest {
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(args -> Mono.just(args.getArguments()[0]));
+        Mockito.when(
+                paymentMethodsClient.updateSession(
+                        authorizationData.paymentInstrumentId(),
+                        ((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getSessionId(),
+                        transactionId.value()
+                )
+        ).thenReturn(Mono.empty());
 
         /* test */
         requestAuthorizationHandler.handle(requestAuthorizationCommand).block();
