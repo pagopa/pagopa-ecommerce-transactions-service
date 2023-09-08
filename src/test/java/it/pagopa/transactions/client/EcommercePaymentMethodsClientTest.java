@@ -194,4 +194,46 @@ class EcommercePaymentMethodsClientTest {
                 .verify();
     }
 
+    @Test
+    void shouldReturnSuccessfulMonoWhenSuccessfullyUpdatingSession() {
+        String paymentMethodId = UUID.randomUUID().toString();
+        String sessionId = "sessionId";
+        String transactionId = TransactionTestUtils.TRANSACTION_ID;
+
+        /* preconditions */
+        Mockito.when(
+                ecommercePaymentInstrumentsWebClient.updateSession(
+                        paymentMethodId,
+                        sessionId,
+                        new PatchSessionRequestDto().transactionId(transactionId)
+                )
+        )
+                .thenReturn(Mono.empty());
+
+        /* test */
+        StepVerifier.create(ecommercePaymentMethodsClient.updateSession(paymentMethodId, sessionId, transactionId))
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldReturnInvalidRequestExceptionOnClientExceptionWhenUpdatingSession() {
+        String paymentMethodId = UUID.randomUUID().toString();
+        String sessionId = "sessionId";
+        String transactionId = TransactionTestUtils.TRANSACTION_ID;
+
+        /* preconditions */
+        Mockito.when(
+                ecommercePaymentInstrumentsWebClient.updateSession(
+                        paymentMethodId,
+                        sessionId,
+                        new PatchSessionRequestDto().transactionId(transactionId)
+                )
+        )
+                .thenReturn(Mono.error(new WebClientResponseException(500, "Internal Server Error", null, null, null)));
+
+        /* test */
+        StepVerifier.create(ecommercePaymentMethodsClient.updateSession(paymentMethodId, sessionId, transactionId))
+                .expectError(InvalidRequestException.class)
+                .verify();
+    }
 }
