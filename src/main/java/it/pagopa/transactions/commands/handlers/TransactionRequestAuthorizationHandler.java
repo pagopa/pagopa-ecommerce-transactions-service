@@ -43,7 +43,7 @@ import java.util.Map;
 public class TransactionRequestAuthorizationHandler
         implements CommandHandler<TransactionRequestAuthorizationCommand, Mono<RequestAuthorizationResponseDto>> {
 
-    private static final String CHECKOUT_GDI_CHECK_PATH = "/gdi-check#gdiIFrameUrl=";
+    private static final String CHECKOUT_GDI_CHECK_PATH = "/gdi-check#gdiIframeUrl=";
     private static final String CHECKOUT_ESITO_PATH = "/esito";
     private final PaymentGatewayClient paymentGatewayClient;
 
