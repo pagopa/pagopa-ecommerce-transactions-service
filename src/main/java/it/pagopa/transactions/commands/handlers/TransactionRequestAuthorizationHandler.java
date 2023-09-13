@@ -5,6 +5,7 @@ import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestD
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData.PaymentGateway;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestedEvent;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
@@ -20,6 +21,7 @@ import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import net.bytebuddy.implementation.bytecode.Throw;
+import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +32,9 @@ import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -136,9 +141,13 @@ public class TransactionRequestAuthorizationHandler
                         npgCardsResponseDto -> Tuples.of(
                                 "sessionId",
                                 switch (npgCardsResponseDto.getState()) {
-                                case GDI_VERIFICATION -> URI.create(checkoutUri).resolve(CHECKOUT_GDI_CHECK_PATH)
-                                        .resolve(npgCardsResponseDto.getFieldSet().getFields().get(0).getSrc())
-                                        .toString();
+                                case GDI_VERIFICATION -> URI.create(checkoutUri)
+                                        .resolve(
+                                                CHECKOUT_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
+                                                        npgCardsResponseDto.getFieldSet().getFields().get(0).getSrc()
+                                                                .getBytes(StandardCharsets.UTF_8)
+                                                )
+                                        ).toString();
                                 case REDIRECTED_TO_EXTERNAL_DOMAIN -> npgCardsResponseDto.getUrl();
                                 case PAYMENT_COMPLETE -> URI.create(checkoutUri).resolve(CHECKOUT_ESITO_PATH)
                                         .toString();
@@ -149,6 +158,7 @@ public class TransactionRequestAuthorizationHandler
                                 },
                                 PaymentGateway.NPG
                         )
+
                 );
 
         List<Mono<Tuple3<String, String, PaymentGateway>>> gatewayRequests = List
