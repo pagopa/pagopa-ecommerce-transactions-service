@@ -395,7 +395,6 @@ public class TransactionSendClosureHandler implements
                         buildInfoDto(transactionActivatedData, transactionAuthorizationRequestData)
                 )
                 .user(new UserDto().type(UserDto.TypeEnum.GUEST));
-        log.info("[TO DELETE] response value from build close payment body : " + response.toString());
         return response;
     }
 
