@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -100,6 +101,7 @@ class LogMaskTests {
                 "pspBusinessName",
                 false,
                 "XPAY",
+                Optional.empty(),
                 cardDetails
         );
 

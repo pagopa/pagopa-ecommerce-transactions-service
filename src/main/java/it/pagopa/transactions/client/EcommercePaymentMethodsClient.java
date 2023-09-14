@@ -42,11 +42,11 @@ public class EcommercePaymentMethodsClient {
 
     public Mono<SessionPaymentMethodResponseDto> retrieveCardData(
                                                                   String paymentMethodId,
-                                                                  String sessionId
+                                                                  String orderId
 
     ) {
         return ecommercePaymentInstrumentsWebClient
-                .getSessionPaymentMethod(paymentMethodId, sessionId)
+                .getSessionPaymentMethod(paymentMethodId, orderId)
                 .doOnError(
                         WebClientResponseException.class,
                         EcommercePaymentMethodsClient::logWebClientException
@@ -58,11 +58,11 @@ public class EcommercePaymentMethodsClient {
 
     public Mono<Void> updateSession(
                                     String paymentMethodId,
-                                    String sessionId,
+                                    String orderId,
                                     String transactionId
     ) {
         return ecommercePaymentInstrumentsWebClient
-                .updateSession(paymentMethodId, sessionId, new PatchSessionRequestDto().transactionId(transactionId))
+                .updateSession(paymentMethodId, orderId, new PatchSessionRequestDto().transactionId(transactionId))
                 .doOnError(
                         WebClientResponseException.class,
                         EcommercePaymentMethodsClient::logWebClientException

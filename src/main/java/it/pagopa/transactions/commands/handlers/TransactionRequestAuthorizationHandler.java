@@ -220,7 +220,7 @@ public class TransactionRequestAuthorizationHandler
                                             .flatMap(
                                                     authRequestDetails -> paymentMethodsClient.updateSession(
                                                             command.getData().paymentInstrumentId(),
-                                                            authRequestDetails.getSessionId(),
+                                                            authRequestDetails.getOrderId(),
                                                             command.getData().transaction().getTransactionId().value()
                                                     )
                                             );

@@ -10,10 +10,7 @@ import it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent;
 import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken;
-import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.BundleDto;
-import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.CalculateFeeRequestDto;
-import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.SessionPaymentMethodResponseDto;
-import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.TransferListItemDto;
+import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.*;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.commands.*;
@@ -33,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.util.List;
@@ -270,16 +268,17 @@ public class TransactionsService {
                                     .mapToInt(
                                             it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount
                                     ).sum();
-                            return retrieveBinFromAuthorizationRequest(requestAuthorizationRequestDto)
+                            return retrieveInformationFromAuthorizationRequest(requestAuthorizationRequestDto)
                                     .flatMap(
-                                            bin -> ecommercePaymentMethodsClient
+                                            authorizationInfo -> ecommercePaymentMethodsClient
                                                     .calculateFee(
                                                             requestAuthorizationRequestDto.getPaymentInstrumentId(),
                                                             transactionId,
                                                             new CalculateFeeRequestDto()
                                                                     .touchpoint(transaction.getClientId().toString())
                                                                     .bin(
-                                                                            bin.orElse(null)
+                                                                            authorizationInfo.map(Tuple2::getT1)
+                                                                                    .orElse(null)
                                                                     )
                                                                     .idPspList(
                                                                             List.of(
@@ -316,27 +315,37 @@ public class TransactionsService {
                                                                     ),
                                                             Integer.MAX_VALUE
                                                     )
+                                                    .map(
+                                                            calculateFeeResponseDto -> Tuples.of(
+                                                                    calculateFeeResponseDto,
+                                                                    authorizationInfo.flatMap(Tuple2::getT2)
+                                                            )
+                                                    )
                                     )
                                     .map(
-                                            calculateFeeResponse -> Tuples.of(
-                                                    calculateFeeResponse.getPaymentMethodName(),
-                                                    calculateFeeResponse.getPaymentMethodDescription(),
-                                                    calculateFeeResponse.getBundles().stream()
-                                                            .filter(
-                                                                    psp -> psp.getIdPsp()
-                                                                            .equals(
-                                                                                    requestAuthorizationRequestDto
-                                                                                            .getPspId()
-                                                                            )
-                                                                            && psp.getTaxPayerFee()
-                                                                                    .equals(
-                                                                                            Long.valueOf(
-                                                                                                    requestAuthorizationRequestDto
-                                                                                                            .getFee()
-                                                                                            )
-                                                                                    )
-                                                            ).findFirst()
-                                            )
+                                            data -> {
+                                                CalculateFeeResponseDto calculateFeeResponse = data.getT1();
+                                                return Tuples.of(
+                                                        calculateFeeResponse.getPaymentMethodName(),
+                                                        calculateFeeResponse.getPaymentMethodDescription(),
+                                                        calculateFeeResponse.getBundles().stream()
+                                                                .filter(
+                                                                        psp -> psp.getIdPsp()
+                                                                                .equals(
+                                                                                        requestAuthorizationRequestDto
+                                                                                                .getPspId()
+                                                                                )
+                                                                                && psp.getTaxPayerFee()
+                                                                                        .equals(
+                                                                                                Long.valueOf(
+                                                                                                        requestAuthorizationRequestDto
+                                                                                                                .getFee()
+                                                                                                )
+                                                                                        )
+                                                                ).findFirst(),
+                                                        data.getT2()
+                                                );
+                                            }
                                     )
                                     .filter(t -> t.getT3().isPresent())
                                     .switchIfEmpty(
@@ -353,7 +362,8 @@ public class TransactionsService {
                                                     transaction,
                                                     t.getT1(),
                                                     t.getT2(),
-                                                    t.getT3().get()
+                                                    t.getT3().get(),
+                                                    t.getT4()
                                             )
 
                                     );
@@ -366,6 +376,7 @@ public class TransactionsService {
                             String paymentMethodName = args.getT2();
                             String paymentMethodDescription = args.getT3();
                             BundleDto bundle = args.getT4();
+                            Optional<String> sessionId = args.getT5();
 
                             log.info(
                                     "Requesting authorization for transactionId: {}",
@@ -426,6 +437,7 @@ public class TransactionsService {
                                     bundle.getBundleName(),
                                     bundle.getOnUs(),
                                     paymentGatewayId,
+                                    sessionId,
                                     requestAuthorizationRequestDto.getDetails()
                             );
 
@@ -793,12 +805,12 @@ public class TransactionsService {
                 ).orElseThrow(() -> new InvalidRequestException("Null value as input origin"));
     }
 
-    private Mono<Optional<String>> retrieveBinFromAuthorizationRequest(RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
+    private Mono<Optional<Tuple2<String,Optional<String>>>> retrieveInformationFromAuthorizationRequest(RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
         return switch (requestAuthorizationRequestDto.getDetails()){
             case CardAuthRequestDetailsDto cardData ->
-                Mono.just(Optional.of(cardData.getPan().substring(0, 6)));
+                Mono.just(Optional.of(Tuples.of(cardData.getPan().substring(0, 6), Optional.empty())));
             case CardsAuthRequestDetailsDto cards ->
-                ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(),cards.getSessionId()).map(SessionPaymentMethodResponseDto::getBin).map(Optional::of);
+                ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(),cards.getOrderId()).map(response -> Optional.of(Tuples.of(response.getBin(),Optional.of(response.getSessionId()))));
             default -> Mono.just(Optional.empty());
         };
     }
