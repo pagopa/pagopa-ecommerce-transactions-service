@@ -113,7 +113,7 @@ public class TransactionSendClosureHandler implements
         Mono<BaseTransaction> transaction = transactionsUtils.reduceEvents(
                 command.getData().transaction().getTransactionId()
         );
-
+        log.info("[TO DELETE] Into method handle (TransactionSendClosureHandler) with updateAuthorizationRequestDto: ");
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
                 .doOnNext(t -> log.error("Error: requesting closure for transaction in state {}", t.getStatus()))
                 .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
@@ -126,12 +126,22 @@ public class TransactionSendClosureHandler implements
                 .flatMap(tx -> {
                     UpdateAuthorizationRequestDto updateAuthorizationRequestDto = command.getData()
                             .updateAuthorizationRequest();
+                    log.info("[TO DELETE] UpdateAuthorizationRequestDto: " + updateAuthorizationRequestDto.toString());
                     AuthRequestDataUtils.AuthRequestData authRequestData = authRequestDataUtils
                             .from(updateAuthorizationRequestDto, tx.getTransactionId());
+                    log.info("[TO DELETE] After authRequestDataUtils.from: " + authRequestData.toString());
                     TransactionAuthorizationRequestData transactionAuthorizationRequestData = tx
                             .getTransactionAuthorizationRequestData();
+                    log.info(
+                            "[TO DELETE] TransactionAuthorizationRequestData: "
+                                    + transactionAuthorizationRequestData.toString()
+                    );
                     TransactionAuthorizationCompletedData transactionAuthorizationCompletedData = tx
                             .getTransactionAuthorizationCompletedData();
+                    log.info(
+                            "[TO DELETE] TransactionAuthorizationCompletedData: "
+                                    + transactionAuthorizationCompletedData.toString()
+                    );
                     TransactionActivatedData transactionActivatedData = tx
                             .getTransactionActivatedData();
                     BigDecimal amount = EuroUtils.euroCentsToEuro(
@@ -140,11 +150,14 @@ public class TransactionSendClosureHandler implements
                                             paymentNotice -> paymentNotice.transactionAmount().value()
                                     ).sum()
                     );
+                    log.info("[TO DELETE] After amount check: " + amount);
                     BigDecimal fee = EuroUtils.euroCentsToEuro(transactionAuthorizationRequestData.getFee());
+                    log.info("[TO DELETE] After EuroUtils.euroCentsToEuro: " + fee);
                     BigDecimal totalAmount = amount.add(fee);
                     ClosePaymentRequestV2Dto.OutcomeEnum outcome = authorizationResultToOutcomeV2(
                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
                     );
+                    log.info("[TO DELETE] authorizationResultToOutcomeV2: " + outcome.toString());
                     ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                             .paymentTokens(
                                     tx.getTransactionActivatedData().getPaymentNotices().stream()
@@ -167,7 +180,7 @@ public class TransactionSendClosureHandler implements
                                             outcome
                                     )
                             );
-
+                    log.info("[TO DELETE] after closePaymentRequest partial build: " + closePaymentRequest.toString());
                     if (ClosePaymentRequestV2Dto.OutcomeEnum.OK.equals(closePaymentRequest.getOutcome())) {
                         closePaymentRequest.idPSP(transactionAuthorizationRequestData.getPspId())
                                 .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())

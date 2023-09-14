@@ -549,7 +549,10 @@ public class TransactionsService {
                 transaction,
                 updateAuthorizationRequestDto
         );
-
+        log.info(
+                "[TO DELETE] Into method closePayment with updateAuthorizationRequestDto: "
+                        + updateAuthorizationRequestDto.toString()
+        );
         TransactionClosureSendCommand transactionClosureSendCommand = new TransactionClosureSendCommand(
                 transaction.getPaymentNotices().get(0).rptId(),
                 closureSendData
