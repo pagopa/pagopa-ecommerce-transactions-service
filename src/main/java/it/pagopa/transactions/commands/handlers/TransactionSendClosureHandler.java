@@ -378,7 +378,7 @@ public class TransactionSendClosureHandler implements
                                                              BigDecimal totalAmount,
                                                              ClosePaymentRequestV2Dto.OutcomeEnum outcomeEnum
     ) {
-        TransactionDetailsDto response = new TransactionDetailsDto()
+        return new TransactionDetailsDto()
                 .transaction(
                         buildTransactionDto(
                                 authRequestData,
@@ -395,7 +395,7 @@ public class TransactionSendClosureHandler implements
                         buildInfoDto(transactionActivatedData, transactionAuthorizationRequestData)
                 )
                 .user(new UserDto().type(UserDto.TypeEnum.GUEST));
-        return response;
+
     }
 
     private TransactionDto buildTransactionDto(
