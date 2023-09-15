@@ -191,8 +191,8 @@ class AuthRequestDataUtilsTest {
     private static Stream<Arguments> npgOutcomeTestArguments() {
         return Stream.of(
                 // npg operation result - expected outcome mappings
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.AUTHORIZED, "OK"),
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED, "KO"),
+                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.AUTHORIZED, "KO"),
+                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED, "OK"),
                 Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.DECLINED, "KO"),
                 Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.DENIED_BY_RISK, "KO"),
                 Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.THREEDS_VALIDATED, "KO"),

@@ -176,6 +176,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 "pspBusinessName",
                 false,
                 null,
+                Optional.empty(),
                 new PostePayAuthRequestDetailsDto()
         );
 
@@ -255,6 +256,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 "pspBusinessName",
                 false,
                 "XPAY",
+                Optional.empty(),
                 new CardAuthRequestDetailsDto().brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
         );
 
@@ -336,7 +338,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                 "pspBusinessName",
                 false,
                 "NPG",
-                new CardsAuthRequestDetailsDto().sessionId(UUID.randomUUID().toString())
+                Optional.of(UUID.randomUUID().toString()),
+                new CardsAuthRequestDetailsDto().orderId("orderId")
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -362,7 +365,7 @@ class TransactionRequestAuthorizizationHandlerTest {
         Mockito.when(
                 paymentMethodsClient.updateSession(
                         authorizationData.paymentInstrumentId(),
-                        ((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getSessionId(),
+                        ((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId(),
                         transactionId.value()
                 )
         ).thenReturn(Mono.empty());
@@ -428,6 +431,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 "pspBusinessName",
                 false,
                 null,
+                Optional.empty(),
                 null
         );
 
@@ -506,6 +510,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 "pspBusinessName",
                 false,
                 "GPAY",
+                Optional.empty(),
                 new PostePayAuthRequestDetailsDto().detailType("GPAY").accountEmail("test@test.it")
         );
 
@@ -590,6 +595,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 "pspBusinessName",
                 false,
                 "VPOS",
+                Optional.empty(),
                 new CardAuthRequestDetailsDto()
                         .cvv("000")
                         .pan("123")
@@ -675,6 +681,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
         String sessionId = "sessionId";
+        String orderId = "orderId";
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 authorizationRequest.getFee(),
@@ -688,9 +695,10 @@ class TransactionRequestAuthorizizationHandlerTest {
                 "pspBusinessName",
                 false,
                 null,
+                Optional.of(sessionId),
                 new CardsAuthRequestDetailsDto()
                         .detailType("cards")
-                        .sessionId(sessionId)
+                        .orderId(orderId)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -709,7 +717,7 @@ class TransactionRequestAuthorizizationHandlerTest {
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(args -> Mono.just(args.getArguments()[0]));
-        Mockito.when(paymentMethodsClient.updateSession(paymentInstrumentId, sessionId, transactionId.value()))
+        Mockito.when(paymentMethodsClient.updateSession(paymentInstrumentId, orderId, transactionId.value()))
                 .thenReturn(Mono.empty());
 
         /* test */
@@ -717,6 +725,6 @@ class TransactionRequestAuthorizizationHandlerTest {
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
         Mockito.verify(paymentMethodsClient, Mockito.times(1))
-                .updateSession(paymentInstrumentId, sessionId, transactionId.value());
+                .updateSession(paymentInstrumentId, orderId, transactionId.value());
     }
 }

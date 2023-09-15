@@ -113,7 +113,6 @@ public class TransactionSendClosureHandler implements
         Mono<BaseTransaction> transaction = transactionsUtils.reduceEvents(
                 command.getData().transaction().getTransactionId()
         );
-
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
                 .doOnNext(t -> log.error("Error: requesting closure for transaction in state {}", t.getStatus()))
                 .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
@@ -167,7 +166,6 @@ public class TransactionSendClosureHandler implements
                                             outcome
                                     )
                             );
-
                     if (ClosePaymentRequestV2Dto.OutcomeEnum.OK.equals(closePaymentRequest.getOutcome())) {
                         closePaymentRequest.idPSP(transactionAuthorizationRequestData.getPspId())
                                 .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())
@@ -397,6 +395,7 @@ public class TransactionSendClosureHandler implements
                         buildInfoDto(transactionActivatedData, transactionAuthorizationRequestData)
                 )
                 .user(new UserDto().type(UserDto.TypeEnum.GUEST));
+
     }
 
     private TransactionDto buildTransactionDto(
@@ -473,8 +472,7 @@ public class TransactionSendClosureHandler implements
                                 .orElse(null)
                 )
                 .brand(
-                        transactionAuthorizationRequestData.getBrand()
-                                .name()
+                        Optional.ofNullable(transactionAuthorizationRequestData.getBrand()).map(Enum::name).orElse(null)
                 )
                 .type(
                         transactionAuthorizationRequestData
