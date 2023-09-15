@@ -16,7 +16,7 @@
         <java.version>17</java.version>
         <spring-cloud-azure.version>4.0.0</spring-cloud-azure.version>
         <jacoco.version>0.8.8</jacoco.version>
-        <pagopa-ecommerce-commons.version>0.22.2</pagopa-ecommerce-commons.version>
+        <pagopa-ecommerce-commons.version>0.23.0</pagopa-ecommerce-commons.version>
         <spotless.version>2.28.0</spotless.version>
         <ecs-logging-version>1.5.0</ecs-logging-version>
     </properties>
@@ -297,7 +297,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-infra/fix-openapi-payment-method/src/domains/ecommerce-app/api/ecommerce-payment-methods-service/v1/_openapi.json.tpl</inputSpec>
+                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-infra/main/src/domains/ecommerce-app/api/ecommerce-payment-methods-service/v1/_openapi.json.tpl</inputSpec>
                             <generatorName>java</generatorName>
                             <library>webclient</library>
                             <generateApiDocumentation>false</generateApiDocumentation>
@@ -435,8 +435,8 @@
                 <configuration>
                     <skipCheckoutIfExists>false</skipCheckoutIfExists>
                     <connectionUrl>scm:git:https://github.com/pagopa/pagopa-ecommerce-commons.git</connectionUrl>
-                    <scmVersionType>branch</scmVersionType>
-                    <scmVersion>feat-added-paymentGateway</scmVersion>
+                    <scmVersionType>tag</scmVersionType>
+                    <scmVersion>${pagopa-ecommerce-commons.version}</scmVersion>
                     <goals>install -DskipTests</goals>
                 </configuration>
                 <executions>
