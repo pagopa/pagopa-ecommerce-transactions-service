@@ -83,7 +83,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                     )
             );
 
-    private static final String CHECKOUT_URI = "checkoutUri";
+    private static final String CHECKOUT_BASE_PATH = "checkoutUri";
     private static final Set<CardAuthRequestDetailsDto.BrandEnum> testedCardBrands = new HashSet<>();
 
     private static boolean cardsTested = false;
@@ -118,7 +118,7 @@ class TransactionRequestAuthorizizationHandlerTest {
                 transactionEventStoreRepository,
                 transactionsUtils,
                 brandLogoMapping,
-                CHECKOUT_URI,
+                CHECKOUT_BASE_PATH,
                 paymentMethodsClient
         );
     }
