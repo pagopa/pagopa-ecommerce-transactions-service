@@ -50,7 +50,7 @@ public class TransactionRequestAuthorizationHandler
     private final TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository;
     private final TransactionsUtils transactionsUtils;
 
-    private final String checkoutUri;
+    private final String checkoutBasePath;
 
     private final Map<CardAuthRequestDetailsDto.BrandEnum, URI> cardBrandLogoMapping;
 
@@ -62,7 +62,7 @@ public class TransactionRequestAuthorizationHandler
             TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository,
             TransactionsUtils transactionsUtils,
             @Qualifier("brandConfMap") Map<CardAuthRequestDetailsDto.BrandEnum, URI> cardBrandLogoMapping,
-            @Value("${checkout.uri}") String checkoutUri,
+            @Value("${checkout.basePath}") String checkoutBasePath,
             EcommercePaymentMethodsClient paymentMethodsClient
     ) {
         this.paymentGatewayClient = paymentGatewayClient;
@@ -70,7 +70,7 @@ public class TransactionRequestAuthorizationHandler
         this.transactionsUtils = transactionsUtils;
         this.cardBrandLogoMapping = cardBrandLogoMapping;
         this.paymentMethodsClient = paymentMethodsClient;
-        this.checkoutUri = checkoutUri;
+        this.checkoutBasePath = checkoutBasePath;
     }
 
     @Override
@@ -141,7 +141,7 @@ public class TransactionRequestAuthorizationHandler
                         npgCardsResponseDto -> Tuples.of(
                                 "sessionId",
                                 switch (npgCardsResponseDto.getState()) {
-                                case GDI_VERIFICATION -> URI.create(checkoutUri)
+                                case GDI_VERIFICATION -> URI.create(checkoutBasePath)
                                         .resolve(
                                                 CHECKOUT_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
                                                         npgCardsResponseDto.getFieldSet().getFields().get(0).getSrc()
@@ -149,7 +149,7 @@ public class TransactionRequestAuthorizationHandler
                                                 )
                                         ).toString();
                                 case REDIRECTED_TO_EXTERNAL_DOMAIN -> npgCardsResponseDto.getUrl();
-                                case PAYMENT_COMPLETE -> URI.create(checkoutUri).resolve(CHECKOUT_ESITO_PATH)
+                                case PAYMENT_COMPLETE -> URI.create(checkoutBasePath).resolve(CHECKOUT_ESITO_PATH)
                                         .toString();
                                 default -> throw new BadGatewayException(
                                         "Invalid NPG confirm payment state response: " + npgCardsResponseDto.getState(),
