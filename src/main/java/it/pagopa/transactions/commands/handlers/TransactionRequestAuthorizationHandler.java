@@ -15,17 +15,22 @@ import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -34,10 +39,14 @@ import java.util.Map;
 public class TransactionRequestAuthorizationHandler
         implements CommandHandler<TransactionRequestAuthorizationCommand, Mono<RequestAuthorizationResponseDto>> {
 
+    private static final String CHECKOUT_GDI_CHECK_PATH = "/gdi-check#gdiIframeUrl=";
+    private static final String CHECKOUT_ESITO_PATH = "/esito";
     private final PaymentGatewayClient paymentGatewayClient;
 
     private final TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository;
     private final TransactionsUtils transactionsUtils;
+
+    private final String checkoutBasePath;
 
     private final Map<CardAuthRequestDetailsDto.BrandEnum, URI> cardBrandLogoMapping;
 
@@ -49,6 +58,7 @@ public class TransactionRequestAuthorizationHandler
             TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository,
             TransactionsUtils transactionsUtils,
             @Qualifier("brandConfMap") Map<CardAuthRequestDetailsDto.BrandEnum, URI> cardBrandLogoMapping,
+            @Value("${checkout.basePath}") String checkoutBasePath,
             EcommercePaymentMethodsClient paymentMethodsClient
     ) {
         this.paymentGatewayClient = paymentGatewayClient;
@@ -56,6 +66,7 @@ public class TransactionRequestAuthorizationHandler
         this.transactionsUtils = transactionsUtils;
         this.cardBrandLogoMapping = cardBrandLogoMapping;
         this.paymentMethodsClient = paymentMethodsClient;
+        this.checkoutBasePath = checkoutBasePath;
     }
 
     @Override
@@ -125,9 +136,25 @@ public class TransactionRequestAuthorizationHandler
                 .map(
                         npgCardsResponseDto -> Tuples.of(
                                 "sessionId",
-                                npgCardsResponseDto.getUrl(),
-                                PaymentGateway.VPOS
+                                switch (npgCardsResponseDto.getState()) {
+                                case GDI_VERIFICATION -> URI.create(checkoutBasePath)
+                                        .resolve(
+                                                CHECKOUT_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
+                                                        npgCardsResponseDto.getFieldSet().getFields().get(0).getSrc()
+                                                                .getBytes(StandardCharsets.UTF_8)
+                                                )
+                                        ).toString();
+                                case REDIRECTED_TO_EXTERNAL_DOMAIN -> npgCardsResponseDto.getUrl();
+                                case PAYMENT_COMPLETE -> URI.create(checkoutBasePath).resolve(CHECKOUT_ESITO_PATH)
+                                        .toString();
+                                default -> throw new BadGatewayException(
+                                        "Invalid NPG confirm payment state response: " + npgCardsResponseDto.getState(),
+                                        HttpStatus.BAD_GATEWAY
+                                );
+                                },
+                                PaymentGateway.NPG
                         )
+
                 );
 
         List<Mono<Tuple3<String, String, PaymentGateway>>> gatewayRequests = List
@@ -189,7 +216,7 @@ public class TransactionRequestAuthorizationHandler
                                             .flatMap(
                                                     authRequestDetails -> paymentMethodsClient.updateSession(
                                                             command.getData().paymentInstrumentId(),
-                                                            authRequestDetails.getSessionId(),
+                                                            authRequestDetails.getOrderId(),
                                                             command.getData().transaction().getTransactionId().value()
                                                     )
                                             );

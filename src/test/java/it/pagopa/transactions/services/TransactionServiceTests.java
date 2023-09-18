@@ -356,7 +356,7 @@ class TransactionServiceTests {
 
     @Test
     void shouldRedirectToAuthorizationURIForValidRequestWithNPGCardsDetailFor() {
-        String sessionId = "sessionId";
+        String orderId = "orderId";
         String bin = "exampleBin";
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
                 .amount(100)
@@ -365,7 +365,7 @@ class TransactionServiceTests {
                 .pspId("PSP_CODE")
                 .isAllCCP(false)
                 .details(
-                        new CardsAuthRequestDetailsDto().sessionId(sessionId)
+                        new CardsAuthRequestDetailsDto().orderId(orderId)
                 );
 
         Transaction transaction = TransactionTestUtils.transactionDocument(
@@ -418,7 +418,7 @@ class TransactionServiceTests {
                 .thenReturn(Mono.just(paymentMethod));
 
         Mockito.when(
-                ecommercePaymentMethodsClient.retrieveCardData(authorizationRequest.getPaymentInstrumentId(), sessionId)
+                ecommercePaymentMethodsClient.retrieveCardData(authorizationRequest.getPaymentInstrumentId(), orderId)
         ).thenReturn(
                 Mono.just(
                         new SessionPaymentMethodResponseDto().bin("bin").brand("VISA").sessionId("sessionId")

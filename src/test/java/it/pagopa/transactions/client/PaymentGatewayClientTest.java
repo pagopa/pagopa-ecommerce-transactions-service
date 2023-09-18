@@ -35,10 +35,7 @@ import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL;
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL_STRING;
@@ -128,6 +125,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "GID",
+                Optional.empty(),
                 new PostePayAuthRequestDetailsDto().detailType("invalid").accountEmail("test@test.it")
         );
 
@@ -192,6 +190,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "XPAY",
+                Optional.empty(),
                 cardDetails
         );
 
@@ -275,6 +274,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 null,
+                Optional.empty(),
                 null
         );
 
@@ -365,6 +365,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "VPOS",
+                Optional.empty(),
                 cardDetails
         );
 
@@ -444,7 +445,7 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
         CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
-                .sessionId(UUID.randomUUID().toString());
+                .orderId(UUID.randomUUID().toString());
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
@@ -458,6 +459,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "VPOS",
+                Optional.of(UUID.randomUUID().toString()),
                 cardDetails
         );
         StateResponseDto ngpStateResponse = new StateResponseDto().url("https://example.com");
@@ -494,7 +496,7 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
         CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
-                .sessionId(UUID.randomUUID().toString());
+                .orderId(UUID.randomUUID().toString());
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
@@ -508,6 +510,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "VPOS",
+                Optional.of(UUID.randomUUID().toString()),
                 cardDetails
         );
         StateResponseDto ngpStateResponse = new StateResponseDto().url("https://example.com");
@@ -560,7 +563,7 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
         CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
-                .sessionId(UUID.randomUUID().toString());
+                .orderId(UUID.randomUUID().toString());
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
@@ -574,6 +577,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "VPOS",
+                Optional.of(UUID.randomUUID().toString()),
                 cardDetails
         );
         StateResponseDto ngpStateResponse = new StateResponseDto().url("https://example.com");
@@ -623,7 +627,7 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
         CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
-                .sessionId(UUID.randomUUID().toString());
+                .orderId(UUID.randomUUID().toString());
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction,
                 10,
@@ -637,6 +641,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "VPOS",
+                Optional.of(UUID.randomUUID().toString()),
                 cardDetails
         );
         StateResponseDto ngpStateResponse = new StateResponseDto().url("https://example.com");
@@ -705,6 +710,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "XPAY",
+                Optional.empty(),
                 cardDetails
         );
 
@@ -801,6 +807,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 null,
+                Optional.empty(),
                 null
         );
 
@@ -893,6 +900,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 null,
+                Optional.empty(),
                 null
         );
 
@@ -967,6 +975,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 null,
+                Optional.empty(),
                 null
         );
 
@@ -1061,6 +1070,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "XPAY",
+                Optional.empty(),
                 cardDetails
         );
 
@@ -1156,6 +1166,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "VPOS",
+                Optional.empty(),
                 cardDetails
         );
 
@@ -1254,6 +1265,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 null,
+                Optional.empty(),
                 null
         );
 
@@ -1342,6 +1354,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "XPAY",
+                Optional.empty(),
                 cardDetails
         );
 
@@ -1431,6 +1444,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "VPOS",
+                Optional.empty(),
                 cardDetails
         );
 
@@ -1523,6 +1537,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "XPAY",
+                Optional.empty(),
                 null
         );
 
@@ -1580,6 +1595,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "VPOS",
+                Optional.empty(),
                 null
         );
 
