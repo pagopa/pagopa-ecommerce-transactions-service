@@ -53,7 +53,7 @@ public class AuthRequestDataUtils {
 
     private String npgResultToOutcome(OutcomeNpgGatewayDto.OperationResultEnum result) {
         String outcome = "KO";
-        if (result.equals(OutcomeNpgGatewayDto.OperationResultEnum.AUTHORIZED)) {
+        if (result.equals(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)) {
             outcome = "OK";
         }
         log.info("NPG operation result: {} outcome -> {}", result, outcome);

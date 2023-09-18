@@ -19,6 +19,7 @@ import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
@@ -266,12 +267,20 @@ public class PaymentGatewayClient {
                                     .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value()).sum())
                                     + authorizationData.fee()
                     );
-                    final String sessionId = authorizationRequestData.getSessionId();
+                    if (authorizationData.sessionId().isEmpty()) {
+                        return Mono.error(
+                                new BadGatewayException(
+                                        "Missing sessionId for transactionId: "
+                                                + authorizationData.transaction().getTransactionId(),
+                                        HttpStatus.BAD_GATEWAY
+                                )
+                        );
+                    }
                     final UUID correlationId = UUID.randomUUID();
                     final String pspNpgApiKey = npgCardsApiKeys.get(authorizationData.pspId());
                     return npgClient.confirmPayment(
                             correlationId,
-                            sessionId,
+                            authorizationData.sessionId().get(),
                             grandTotal,
                             pspNpgApiKey
                     )
