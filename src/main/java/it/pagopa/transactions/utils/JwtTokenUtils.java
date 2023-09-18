@@ -11,9 +11,9 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
-import java.time.Duration;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -23,6 +23,8 @@ public class JwtTokenUtils {
     private final SecretKey jwtSecretKey;
 
     public static final String TRANSACTION_ID_CLAIM = "transactionId";
+
+    public static final String ORDER_ID_CLAIM = "orderId";
 
     private final int tokenValidityTimeSeconds;
 
@@ -34,7 +36,10 @@ public class JwtTokenUtils {
         this.tokenValidityTimeSeconds = tokenValiditySeconds;
     }
 
-    public Mono<String> generateToken(TransactionId transactionId) {
+    public Mono<String> generateToken(
+                                      TransactionId transactionId,
+                                      String orderId
+    ) {
         try {
             Calendar calendar = Calendar.getInstance();
             Date issuedAtDate = calendar.getTime();
@@ -42,8 +47,7 @@ public class JwtTokenUtils {
             Date expiryDate = calendar.getTime();
             return Mono.just(
                     Jwts.builder()
-                            .claim(TRANSACTION_ID_CLAIM, transactionId.value())// transactionId (custom
-                                                                               // claim)
+                            .addClaims(Map.of(TRANSACTION_ID_CLAIM, transactionId.value(), ORDER_ID_CLAIM, orderId))// claims
                             .setId(UUID.randomUUID().toString())// jti
                             .setIssuedAt(issuedAtDate)// iat
                             .setExpiration(expiryDate)// exp

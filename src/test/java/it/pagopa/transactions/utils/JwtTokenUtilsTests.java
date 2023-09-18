@@ -25,12 +25,14 @@ class JwtTokenUtilsTests {
     @Test
     void shouldGenerateValidJwtToken() {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
-        String generatedToken = jwtTokenUtils.generateToken(transactionId).block();
+        String orderId = UUID.randomUUID().toString();
+        String generatedToken = jwtTokenUtils.generateToken(transactionId, orderId).block();
         assertNotNull(generatedToken);
         Claims claims = assertDoesNotThrow(
                 () -> Jwts.parserBuilder().setSigningKey(jwtSecretKey).build().parseClaimsJws(generatedToken).getBody()
         );
         assertEquals(transactionId.value(), claims.get(JwtTokenUtils.TRANSACTION_ID_CLAIM, String.class));
+        assertEquals(orderId, claims.get(JwtTokenUtils.ORDER_ID_CLAIM, String.class));
         assertNotNull(claims.getId());
         assertNotNull(claims.getIssuedAt());
         assertNotNull(claims.getExpiration());
