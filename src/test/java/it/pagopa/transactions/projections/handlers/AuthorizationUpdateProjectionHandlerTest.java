@@ -1,5 +1,6 @@
 package it.pagopa.transactions.projections.handlers;
 
+import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedEvent;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
@@ -109,7 +110,7 @@ class AuthorizationUpdateProjectionHandlerTest {
          */
         Mockito.verify(viewRepository, Mockito.times(1)).save(
                 argThat(
-                        savedTransaction -> savedTransaction.getStatus()
+                        savedTransaction -> ((Transaction) savedTransaction).getStatus()
                                 .equals(TransactionStatusDto.AUTHORIZATION_COMPLETED)
                 )
         );
@@ -192,7 +193,7 @@ class AuthorizationUpdateProjectionHandlerTest {
          */
         Mockito.verify(viewRepository, Mockito.times(1)).save(
                 argThat(
-                        savedTransaction -> savedTransaction.getStatus()
+                        savedTransaction -> ((Transaction) savedTransaction).getStatus()
                                 .equals(TransactionStatusDto.AUTHORIZATION_COMPLETED)
                 )
         );

@@ -73,7 +73,7 @@ class TransactionUserReceiptProjectionHandlerTest {
         Mockito.verify(viewRepository, Mockito.times(1))
                 .save(
                         argThat(
-                                savedTransaction -> savedTransaction.getStatus()
+                                savedTransaction -> ((Transaction) savedTransaction).getStatus()
                                         .equals(TransactionStatusDto.NOTIFICATION_REQUESTED)
                         )
                 );
@@ -122,7 +122,7 @@ class TransactionUserReceiptProjectionHandlerTest {
         Mockito.verify(viewRepository, Mockito.times(1))
                 .save(
                         argThat(
-                                savedTransaction -> savedTransaction.getStatus()
+                                savedTransaction -> ((Transaction) savedTransaction).getStatus()
                                         .equals(TransactionStatusDto.NOTIFICATION_REQUESTED)
                         )
                 );

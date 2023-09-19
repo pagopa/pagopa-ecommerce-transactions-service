@@ -2,13 +2,14 @@ package it.pagopa.transactions.services;
 
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
-import it.pagopa.ecommerce.commons.documents.v1.Transaction;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.domain.*;
-import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
-import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
+import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
 import it.pagopa.transactions.projections.handlers.TransactionsActivationProjectionHandler;
@@ -28,7 +29,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL_STRING;
+import static it.pagopa.ecommerce.commons.v2.TransactionTestUtils.EMAIL_STRING;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
@@ -106,7 +107,8 @@ class TransactionServiceTest {
                 "faultCodeString",
                 Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                new EmptyTransactionGatewayActivationData()
         );
 
         /*
@@ -133,7 +135,7 @@ class TransactionServiceTest {
                                 && res.getIdCart().equals("idCart")
                                 && res.getStatus().equals(TransactionStatusDto.ACTIVATED)
                                 && res.getClientId()
-                                        .equals(NewTransactionResponseDto.ClientIdEnum.valueOf(clientIdDto.getValue()))
+                                .equals(NewTransactionResponseDto.ClientIdEnum.valueOf(clientIdDto.getValue()))
                                 && !res.getTransactionId().isEmpty()
                                 && !res.getAuthToken().isEmpty()
                 )

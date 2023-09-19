@@ -38,7 +38,8 @@ class TransactionUpdateAuthorizationHandlerTest {
             .mock(TransactionsEventStoreRepository.class);
     private TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
 
-    private final UUIDUtils mockUuidUtils = Mockito.mock(UUIDUtils.class);;
+    private final UUIDUtils mockUuidUtils = Mockito.mock(UUIDUtils.class);
+    ;
 
     private TransactionUpdateAuthorizationHandler updateAuthorizationHandler = new TransactionUpdateAuthorizationHandler(
             transactionEventStoreRepository,
@@ -85,10 +86,10 @@ class TransactionUpdateAuthorizationHandlerTest {
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1))
                 .save(
                         argThat(
-                                eventArg -> TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT
+                                eventArg -> TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
                                         .equals(eventArg.getEventCode())
                                         && eventArg.getData().getAuthorizationResultDto()
-                                                .equals(AuthorizationResultDto.OK)
+                                        .equals(AuthorizationResultDto.OK)
                         )
                 );
     }
@@ -190,7 +191,7 @@ class TransactionUpdateAuthorizationHandlerTest {
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
                 argThat(
-                        eventArg -> TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT
+                        eventArg -> TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                                 && eventArg.getData().getAuthorizationResultDto().equals(AuthorizationResultDto.KO)
                 )

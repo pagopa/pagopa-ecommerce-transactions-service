@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <springProperty name="ECS_SERVICE_VERSION" source="build.version"/>
+    <appender name="ECS_JSON_CONSOLE_MASKED" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="it.pagopa.transactions.utils.EcsEncoderLogMasker">
+            <serviceName>${ECS_SERVICE_NAME:-undefined}</serviceName>
+            <serviceVersion>${ECS_SERVICE_VERSION}</serviceVersion>
+            <serviceEnvironment>${ECS_SERVICE_ENVIRONMENT:-undefined}</serviceEnvironment>
+            <maskPattern>([\d+]{3,20})</maskPattern> <!-- each string of digits from 3 to 20 char -->
+            <maskPattern>([a-z0-9.-]+@[a-z]+\.[a-z]{2,3})</maskPattern> <!-- email -->
+        </encoder>
+    </appender>
+    <root level="INFO">
+        <appender-ref ref="ECS_JSON_CONSOLE_MASKED"/>
+    </root>
+</configuration>

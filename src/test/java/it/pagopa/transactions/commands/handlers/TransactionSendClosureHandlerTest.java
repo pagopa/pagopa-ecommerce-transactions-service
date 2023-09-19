@@ -5,6 +5,7 @@ import com.azure.core.http.HttpRequest;
 import com.azure.core.http.rest.Response;
 import com.azure.storage.queue.models.SendMessageResult;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
+import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData.PaymentGateway;
@@ -164,23 +165,23 @@ class TransactionSendClosureHandlerTest {
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 paymentNotices.stream().map(
-                        paymentNotice -> new PaymentNotice(
-                                new PaymentToken(paymentNotice.getPaymentToken()),
-                                new RptId(paymentNotice.getRptId()),
-                                new TransactionAmount(paymentNotice.getAmount()),
-                                new TransactionDescription(paymentNotice.getDescription()),
-                                new PaymentContextCode(paymentNotice.getPaymentContextCode()),
-                                List.of(
-                                        new PaymentTransferInfo(
-                                                paymentNotice.getRptId().substring(0, 11),
-                                                false,
-                                                100,
-                                                null
-                                        )
-                                ),
-                                paymentNotice.isAllCCP()
+                                paymentNotice -> new PaymentNotice(
+                                        new PaymentToken(paymentNotice.getPaymentToken()),
+                                        new RptId(paymentNotice.getRptId()),
+                                        new TransactionAmount(paymentNotice.getAmount()),
+                                        new TransactionDescription(paymentNotice.getDescription()),
+                                        new PaymentContextCode(paymentNotice.getPaymentContextCode()),
+                                        List.of(
+                                                new PaymentTransferInfo(
+                                                        paymentNotice.getRptId().substring(0, 11),
+                                                        false,
+                                                        100,
+                                                        null
+                                                )
+                                        ),
+                                        paymentNotice.isAllCCP()
+                                )
                         )
-                )
                         .toList(),
                 email,
                 faultCode,
@@ -355,7 +356,7 @@ class TransactionSendClosureHandlerTest {
         BigDecimal feeEuroCent = EuroUtils.euroCentsToEuro(fee.value());
         BigDecimal totalAmountEuroCent = amountEuroCent.add(feeEuroCent);
 
-        Flux<TransactionEvent<Object>> events = ((Flux) Flux
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
         it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
@@ -481,7 +482,7 @@ class TransactionSendClosureHandlerTest {
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
                 argThat(
-                        eventArg -> TransactionEventCode.TRANSACTION_CLOSURE_FAILED_EVENT
+                        eventArg -> TransactionEventCode.TRANSACTION_CLOSURE_FAILED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                 )
         );
@@ -563,7 +564,7 @@ class TransactionSendClosureHandlerTest {
                 )
                 .timestampOperation(OffsetDateTime.now());
 
-        Flux<TransactionEvent<Object>> events = ((Flux) Flux
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
         it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
@@ -698,7 +699,7 @@ class TransactionSendClosureHandlerTest {
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
                 argThat(
-                        eventArg -> TransactionEventCode.TRANSACTION_CLOSURE_FAILED_EVENT
+                        eventArg -> TransactionEventCode.TRANSACTION_CLOSURE_FAILED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                 )
         );
@@ -780,7 +781,7 @@ class TransactionSendClosureHandlerTest {
                 )
                 .timestampOperation(OffsetDateTime.now());
 
-        Flux<TransactionEvent<Object>> events = ((Flux) Flux
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
         it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
@@ -964,7 +965,7 @@ class TransactionSendClosureHandlerTest {
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
                 argThat(
-                        eventArg -> TransactionEventCode.TRANSACTION_CLOSED_EVENT
+                        eventArg -> TransactionEventCode.TRANSACTION_CLOSED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                 )
         );
@@ -1045,7 +1046,7 @@ class TransactionSendClosureHandlerTest {
                 )
                 .timestampOperation(OffsetDateTime.now());
 
-        Flux<TransactionEvent<Object>> events = ((Flux) Flux
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
         it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
@@ -1218,7 +1219,7 @@ class TransactionSendClosureHandlerTest {
                 .verifyComplete();
 
         Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
-                .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT)));
+                .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT.toString())));
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
                 .sendMessageWithResponse(
                         argThat(
@@ -1306,7 +1307,7 @@ class TransactionSendClosureHandlerTest {
                 )
                 .timestampOperation(OffsetDateTime.now());
 
-        Flux<TransactionEvent<Object>> events = ((Flux) Flux
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
         it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
@@ -1498,7 +1499,7 @@ class TransactionSendClosureHandlerTest {
                 .verifyComplete();
 
         Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
-                .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT)));
+                .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT.toString())));
 
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
                 .sendMessageWithResponse(
@@ -1586,7 +1587,7 @@ class TransactionSendClosureHandlerTest {
                 )
                 .timestampOperation(OffsetDateTime.now());
 
-        Flux<TransactionEvent<Object>> events = ((Flux) Flux
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
         it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
@@ -1870,7 +1871,7 @@ class TransactionSendClosureHandlerTest {
                 )
                 .timestampOperation(OffsetDateTime.now());
 
-        Flux<TransactionEvent<Object>> events = ((Flux) Flux
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
         it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
@@ -1969,8 +1970,8 @@ class TransactionSendClosureHandlerTest {
                                                                 .getPaymentTypeCode()
                                                 ).brandLogo(
                                                         Stream.ofNullable(
-                                                                authorizationRequestedEvent.getData().getLogo()
-                                                        )
+                                                                        authorizationRequestedEvent.getData().getLogo()
+                                                                )
                                                                 .filter(logo -> logo != null)
                                                                 .map(l -> l.toString())
                                                                 .findFirst()
@@ -2107,7 +2108,7 @@ class TransactionSendClosureHandlerTest {
                 )
                 .timestampOperation(OffsetDateTime.now());
 
-        Flux<TransactionEvent<Object>> events = ((Flux) Flux
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
         it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
@@ -2209,8 +2210,8 @@ class TransactionSendClosureHandlerTest {
                                                                 .getPaymentTypeCode()
                                                 ).brandLogo(
                                                         Stream.ofNullable(
-                                                                authorizationRequestedEvent.getData().getLogo()
-                                                        )
+                                                                        authorizationRequestedEvent.getData().getLogo()
+                                                                )
                                                                 .filter(logo -> logo != null)
                                                                 .map(l -> l.toString())
                                                                 .findFirst()
@@ -2261,7 +2262,7 @@ class TransactionSendClosureHandlerTest {
 
         // check that no closure error event is saved and sent to event dispatcher
         Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
-                .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT)));
+                .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT.toString())));
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
                 .sendMessageWithResponse(
                         argThat(
@@ -2273,7 +2274,7 @@ class TransactionSendClosureHandlerTest {
         // check that closure event with KO status is not saved
         Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(
                 argThat(
-                        eventArg -> TransactionEventCode.TRANSACTION_CLOSURE_FAILED_EVENT
+                        eventArg -> TransactionEventCode.TRANSACTION_CLOSURE_FAILED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                                 && eventArg.getData().getResponseOutcome().equals(TransactionClosureData.Outcome.KO)
                 )
@@ -2357,7 +2358,7 @@ class TransactionSendClosureHandlerTest {
                 )
                 .timestampOperation(OffsetDateTime.now());
 
-        Flux<TransactionEvent<Object>> events = ((Flux) Flux
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
         it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
@@ -2547,7 +2548,7 @@ class TransactionSendClosureHandlerTest {
                 .verifyComplete();
 
         Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
-                .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT)));
+                .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT.toString())));
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
                 .sendMessageWithResponse(
                         argThat(
@@ -2634,7 +2635,7 @@ class TransactionSendClosureHandlerTest {
                 )
                 .timestampOperation(OffsetDateTime.now());
 
-        Flux<TransactionEvent<Object>> events = ((Flux) Flux
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
         it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
@@ -2732,7 +2733,7 @@ class TransactionSendClosureHandlerTest {
                                                 .authorizationCode(
                                                         ((OutcomeXpayGatewayDto) updateAuthorizationRequest
                                                                 .getOutcomeGateway())
-                                                                        .getAuthorizationCode()
+                                                                .getAuthorizationCode()
                                                 )
                                                 .creationDate(
                                                         ((BaseTransactionWithPaymentToken) transaction)
@@ -2815,7 +2816,7 @@ class TransactionSendClosureHandlerTest {
                 .verifyComplete();
 
         Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
-                .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT)));
+                .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT.toString())));
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
                 .sendMessageWithResponse(
                         argThat(
@@ -2847,7 +2848,7 @@ class TransactionSendClosureHandlerTest {
                 )
                 .timestampOperation(OffsetDateTime.now());
 
-        Flux<TransactionEvent<Object>> events = ((Flux) Flux
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
         it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
@@ -3027,7 +3028,7 @@ class TransactionSendClosureHandlerTest {
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
                 argThat(
-                        eventArg -> TransactionEventCode.TRANSACTION_CLOSED_EVENT
+                        eventArg -> TransactionEventCode.TRANSACTION_CLOSED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                 )
         );
@@ -3035,7 +3036,7 @@ class TransactionSendClosureHandlerTest {
                 .sendMessageWithResponse(
                         argThat(
                                 (
-                                 QueueEvent<TransactionRefundRequestedEvent> e
+                                        QueueEvent<TransactionRefundRequestedEvent> e
                                 ) -> e.event().getTransactionId().equals(transactionId.value()) && e.event().getData()
                                         .getStatusBeforeRefunded().equals(TransactionStatusDto.CLOSED)
                         ),
@@ -3065,7 +3066,7 @@ class TransactionSendClosureHandlerTest {
                 )
                 .timestampOperation(OffsetDateTime.now());
 
-        Flux<TransactionEvent<Object>> events = ((Flux) Flux
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
         it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
@@ -3256,7 +3257,7 @@ class TransactionSendClosureHandlerTest {
                 .sendMessageWithResponse(
                         argThat(
                                 (
-                                 QueueEvent<TransactionRefundRequestedEvent> e
+                                        QueueEvent<TransactionRefundRequestedEvent> e
                                 ) -> e.event().getTransactionId().equals(transactionId.value()) && e.event().getData()
                                         .getStatusBeforeRefunded().equals(TransactionStatusDto.CLOSURE_ERROR)
                         ),
@@ -3293,7 +3294,7 @@ class TransactionSendClosureHandlerTest {
                 )
                 .timestampOperation(OffsetDateTime.now());
 
-        Flux<TransactionEvent<Object>> events = ((Flux) Flux
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
         it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
@@ -3419,7 +3420,7 @@ class TransactionSendClosureHandlerTest {
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
                 argThat(
-                        eventArg -> TransactionEventCode.TRANSACTION_CLOSURE_FAILED_EVENT
+                        eventArg -> TransactionEventCode.TRANSACTION_CLOSURE_FAILED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                 )
         );
@@ -3451,7 +3452,7 @@ class TransactionSendClosureHandlerTest {
                 )
                 .timestampOperation(OffsetDateTime.now());
 
-        Flux<TransactionEvent<Object>> events = ((Flux) Flux
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
         it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
