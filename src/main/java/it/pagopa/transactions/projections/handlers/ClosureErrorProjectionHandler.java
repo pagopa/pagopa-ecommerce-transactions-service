@@ -23,6 +23,7 @@ public class ClosureErrorProjectionHandler
                 .switchIfEmpty(
                         Mono.error(new TransactionNotFoundException(event.getTransactionId()))
                 )
+                .cast(it.pagopa.ecommerce.commons.documents.v1.Transaction.class)
                 .flatMap(transactionDocument -> {
                     transactionDocument.setStatus(TransactionStatusDto.CLOSURE_ERROR);
                     return transactionsViewRepository.save(transactionDocument);

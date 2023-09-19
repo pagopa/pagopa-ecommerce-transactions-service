@@ -38,6 +38,7 @@ public class AuthorizationUpdateProjectionHandler
                 .switchIfEmpty(
                         Mono.error(new TransactionNotFoundException(data.getTransactionId()))
                 )
+                .cast(it.pagopa.ecommerce.commons.documents.v1.Transaction.class)
                 .flatMap(transactionDocument -> {
                     transactionDocument.setRrn(data.getData().getRrn());
                     transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_COMPLETED);

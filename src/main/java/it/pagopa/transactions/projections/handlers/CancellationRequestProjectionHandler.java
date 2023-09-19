@@ -21,6 +21,7 @@ public class CancellationRequestProjectionHandler
     @Override
     public Mono<Transaction> handle(TransactionUserCanceledEvent transactionUserCanceledEvent) {
         return transactionsViewRepository.findById(transactionUserCanceledEvent.getTransactionId())
+                .cast(it.pagopa.ecommerce.commons.documents.v1.Transaction.class)
                 .switchIfEmpty(
                         Mono.error(
                                 new TransactionNotFoundException(

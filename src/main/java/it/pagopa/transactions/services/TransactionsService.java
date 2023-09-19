@@ -3,10 +3,10 @@ package it.pagopa.transactions.services;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.vavr.control.Either;
-import it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent;
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
@@ -114,7 +114,7 @@ public class TransactionsService {
                                                           ClientIdDto clientIdDto,
                                                           TransactionId transactionId
     ) {
-        ClientId clientId = ClientId.fromString(
+        Transaction.ClientId clientId = Transaction.ClientId.fromString(
                 Optional.ofNullable(clientIdDto)
                         .map(ClientIdDto::toString)
                         .orElse(null)
@@ -140,7 +140,8 @@ public class TransactionsService {
                 )
                 .flatMap(
                         es -> {
-                            final Mono<TransactionActivatedEvent> transactionActivatedEvent = es.getT1();
+                            final Mono<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent> transactionActivatedEvent = es
+                                    .getT1();
                             final String authToken = es.getT2();
                             return transactionActivatedEvent
                                     .flatMap(t -> projectActivatedEvent(t, authToken));
@@ -155,6 +156,7 @@ public class TransactionsService {
         return transactionsViewRepository
                 .findById(transactionId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+                .cast(it.pagopa.ecommerce.commons.documents.v1.Transaction.class)
                 .map(
                         transaction -> new TransactionInfoDto()
                                 .transactionId(transaction.getTransactionId())
@@ -204,6 +206,7 @@ public class TransactionsService {
         return transactionsViewRepository
                 .findById(transactionId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+                .cast(it.pagopa.ecommerce.commons.documents.v1.Transaction.class)
                 .flatMap(
                         transaction -> {
                             TransactionUserCancelCommand transactionCancelCommand = new TransactionUserCancelCommand(
@@ -232,6 +235,7 @@ public class TransactionsService {
         return transactionsViewRepository
                 .findById(transactionId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+                .cast(it.pagopa.ecommerce.commons.documents.v1.Transaction.class)
                 .flatMap(
                         transaction -> {
                             Integer amountTotal = transaction.getPaymentNotices().stream()
@@ -646,7 +650,7 @@ public class TransactionsService {
         return eventStoreRepository
                 .findByTransactionIdAndEventCode(
                         transactionId.value(),
-                        TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT
+                        TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
                 )
                 .map(v -> true)
                 .switchIfEmpty(Mono.just(false));
@@ -661,6 +665,7 @@ public class TransactionsService {
         return transactionsViewRepository
                 .findById(transactionId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+                .cast(it.pagopa.ecommerce.commons.documents.v1.Transaction.class)
                 .map(
                         transactionDocument -> {
                             TransactionActivated transaction = new TransactionActivated(
@@ -795,7 +800,7 @@ public class TransactionsService {
     }
 
     NewTransactionResponseDto.ClientIdEnum convertClientId(
-                                                           it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId clientId
+                                                           it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
     ) {
         return Optional.ofNullable(clientId).filter(Objects::nonNull)
                 .map(

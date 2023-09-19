@@ -5,9 +5,10 @@ import io.opentelemetry.api.common.Attributes;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
-import it.pagopa.ecommerce.commons.documents.v1.Transaction;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
@@ -309,13 +310,13 @@ public class TransactionActivateHandler
         return idempotencyKey != null && !idempotencyKey.rawValue().isBlank();
     }
 
-    private Mono<TransactionActivatedEvent> newTransactionActivatedEvent(
-                                                                         List<PaymentRequestInfo> paymentRequestsInfo,
-                                                                         String transactionId,
-                                                                         String email,
-                                                                         Transaction.ClientId clientId,
-                                                                         String idCart,
-                                                                         Integer paymentTokenTimeout
+    private Mono<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent> newTransactionActivatedEvent(
+                                                                                                                  List<PaymentRequestInfo> paymentRequestsInfo,
+                                                                                                                  String transactionId,
+                                                                                                                  String email,
+                                                                                                                  Transaction.ClientId clientId,
+                                                                                                                  String idCart,
+                                                                                                                  Integer paymentTokenTimeout
     ) {
         List<PaymentNotice> paymentNotices = toPaymentNoticeList(paymentRequestsInfo);
         Mono<TransactionActivatedData> data = confidentialMailUtils.toConfidential(email).map(
@@ -326,7 +327,9 @@ public class TransactionActivateHandler
                         null,
                         clientId,
                         idCart,
-                        paymentTokenTimeout
+                        paymentTokenTimeout,
+                        new EmptyTransactionGatewayActivationData() // TODO da valorizzare per NPG
+                        // new NpgTransactionGatewayActivationData()
                 )
         );
 

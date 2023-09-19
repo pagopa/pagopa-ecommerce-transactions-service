@@ -21,6 +21,7 @@ public class TransactionUserReceiptProjectionHandler
     public Mono<Transaction> handle(TransactionUserReceiptRequestedEvent data) {
         return transactionsViewRepository.findById(data.getTransactionId())
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(data.getTransactionId())))
+                .cast(it.pagopa.ecommerce.commons.documents.v1.Transaction.class)
                 .flatMap(transactionDocument -> {
                     TransactionStatusDto newStatus = TransactionStatusDto.NOTIFICATION_REQUESTED;
                     transactionDocument.setStatus(newStatus);

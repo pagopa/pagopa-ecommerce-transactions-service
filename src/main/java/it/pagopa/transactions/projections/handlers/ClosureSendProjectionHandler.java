@@ -24,6 +24,7 @@ public class ClosureSendProjectionHandler
     public Mono<Transaction> handle(TransactionEvent<TransactionClosureData> event) {
         return transactionsViewRepository.findById(event.getTransactionId())
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(event.getTransactionId())))
+                .cast(it.pagopa.ecommerce.commons.documents.v1.Transaction.class)
                 .flatMap(transactionDocument -> {
                     Tuple2<TransactionStatusDto, Optional<TransactionUserReceiptData.Outcome>> viewUpdatedData =
                             switch (event) {

@@ -34,6 +34,7 @@ public class RefundRequestProjectionHandler
                                 )
                         )
                 )
+                .cast(it.pagopa.ecommerce.commons.documents.v1.Transaction.class)
                 .flatMap(transactionDocument -> {
                     transactionDocument.setStatus(TransactionStatusDto.REFUND_REQUESTED);
                     return transactionsViewRepository.save(transactionDocument);
