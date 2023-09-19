@@ -1,5 +1,6 @@
 package it.pagopa.transactions.utils;
 
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import it.pagopa.ecommerce.commons.domain.v1.*;
@@ -13,7 +14,6 @@ import reactor.core.publisher.Mono;
 import javax.crypto.SecretKey;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -45,15 +45,18 @@ public class JwtTokenUtils {
             Date issuedAtDate = calendar.getTime();
             calendar.add(Calendar.SECOND, tokenValidityTimeSeconds);
             Date expiryDate = calendar.getTime();
-            return Mono.just(
-                    Jwts.builder()
-                            .addClaims(Map.of(TRANSACTION_ID_CLAIM, transactionId.value(), ORDER_ID_CLAIM, orderId))// claims
-                            .setId(UUID.randomUUID().toString())// jti
-                            .setIssuedAt(issuedAtDate)// iat
-                            .setExpiration(expiryDate)// exp
-                            .signWith(jwtSecretKey)
-                            .compact()
-            );
+
+            JwtBuilder jwtBuilder = Jwts.builder()
+                    .claim(TRANSACTION_ID_CLAIM, transactionId.value())// claim TransactionId
+                    .setId(UUID.randomUUID().toString())// jti
+                    .setIssuedAt(issuedAtDate)// iat
+                    .setExpiration(expiryDate)// exp
+                    .signWith(jwtSecretKey);
+
+            if (orderId != null) {
+                jwtBuilder.claim(ORDER_ID_CLAIM, orderId); // claim orderId
+            }
+            return Mono.just(jwtBuilder.compact());
         } catch (JwtException e) {
             log.error("Error generating JWT token", e);
             return Mono.error(new JWTTokenGenerationException());
