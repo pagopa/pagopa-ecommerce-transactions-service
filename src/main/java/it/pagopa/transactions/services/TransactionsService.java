@@ -24,6 +24,7 @@ import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.data.ClosureSendData;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
 import it.pagopa.transactions.commands.handlers.*;
+import it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.projections.handlers.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -110,9 +111,9 @@ public class TransactionsService {
     @CircuitBreaker(name = "node-backend")
     @Retry(name = "newTransaction")
     public Mono<NewTransactionResponseDto> newTransaction(
-                                                          NewTransactionRequestDto newTransactionRequestDto,
-                                                          ClientIdDto clientIdDto,
-                                                          TransactionId transactionId
+            NewTransactionRequestDto newTransactionRequestDto,
+            ClientIdDto clientIdDto,
+            TransactionId transactionId
     ) {
         Transaction.ClientId clientId = Transaction.ClientId.fromString(
                 Optional.ofNullable(clientIdDto)
@@ -194,7 +195,7 @@ public class TransactionsService {
                                 .sendPaymentResultOutcome(
                                         transaction.getSendPaymentResultOutcome() == null ? null
                                                 : TransactionInfoDto.SendPaymentResultOutcomeEnum
-                                                        .valueOf(transaction.getSendPaymentResultOutcome().name())
+                                                .valueOf(transaction.getSendPaymentResultOutcome().name())
                                 )
                                 .authorizationCode(transaction.getAuthorizationCode())
                                 .authorizationErrorCode(transaction.getAuthorizationErrorCode())
@@ -228,22 +229,18 @@ public class TransactionsService {
     @CircuitBreaker(name = "transactions-backend")
     @Retry(name = "requestTransactionAuthorization")
     public Mono<RequestAuthorizationResponseDto> requestTransactionAuthorization(
-                                                                                 String transactionId,
-                                                                                 String paymentGatewayId,
-                                                                                 RequestAuthorizationRequestDto requestAuthorizationRequestDto
+            String transactionId,
+            String paymentGatewayId,
+            RequestAuthorizationRequestDto requestAuthorizationRequestDto
     ) {
         return transactionsViewRepository
                 .findById(transactionId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
-                .cast(it.pagopa.ecommerce.commons.documents.v1.Transaction.class)
                 .flatMap(
                         transaction -> {
-                            Integer amountTotal = transaction.getPaymentNotices().stream()
-                                    .mapToInt(
-                                            it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount
-                                    ).sum();
+                            Integer amountTotal = transactionsUtils.getTransactionTotalAmount(transaction);
 
-                            Boolean isAllCCP = transaction.getPaymentNotices().get(0).isAllCCP();
+                            Boolean isAllCCP = transactionsUtils.isAllCcp(transaction, 0);
                             log.info(
                                     "Authorization request amount validation for transactionId: {}",
                                     transactionId
@@ -252,18 +249,18 @@ public class TransactionsService {
                             boolean allCCPMismatch = !isAllCCP.equals(requestAuthorizationRequestDto.getIsAllCCP());
                             return amountMismatch || allCCPMismatch
                                     ? (amountMismatch ? Mono.error(
-                                            new TransactionAmountMismatchException(
-                                                    requestAuthorizationRequestDto.getAmount(),
-                                                    amountTotal
-                                            )
+                                    new TransactionAmountMismatchException(
+                                            requestAuthorizationRequestDto.getAmount(),
+                                            amountTotal
                                     )
-                                            : Mono.error(
-                                                    new PaymentNoticeAllCCPMismatchException(
-                                                            transaction.getPaymentNotices().get(0).getRptId(),
-                                                            requestAuthorizationRequestDto.getIsAllCCP(),
-                                                            isAllCCP
-                                                    )
-                                            ))
+                            )
+                                    : Mono.error(
+                                    new PaymentNoticeAllCCPMismatchException(
+                                            transactionsUtils.getRptId(transaction, 0),
+                                            requestAuthorizationRequestDto.getIsAllCCP(),
+                                            isAllCCP
+                                    )
+                            ))
                                     : Mono.just(transaction);
                         }
                 )
@@ -273,10 +270,7 @@ public class TransactionsService {
                                     "Authorization psp validation for transactionId: {}",
                                     transactionId
                             );
-                            Integer amountTotal = transaction.getPaymentNotices().stream()
-                                    .mapToInt(
-                                            it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount
-                                    ).sum();
+                            Integer amountTotal = transactionsUtils.getTransactionTotalAmount(transaction);
                             return retrieveInformationFromAuthorizationRequest(requestAuthorizationRequestDto)
                                     .flatMap(
                                             authorizationInfo -> ecommercePaymentMethodsClient
@@ -284,7 +278,7 @@ public class TransactionsService {
                                                             requestAuthorizationRequestDto.getPaymentInstrumentId(),
                                                             transactionId,
                                                             new CalculateFeeRequestDto()
-                                                                    .touchpoint(transaction.getClientId().toString())
+                                                                    .touchpoint(transactionsUtils.getClientId(transaction))
                                                                     .bin(
                                                                             authorizationInfo.map(Tuple2::getT1)
                                                                                     .orElse(null)
@@ -297,12 +291,11 @@ public class TransactionsService {
                                                                     )
                                                                     .paymentAmount(amountTotal.longValue())
                                                                     .primaryCreditorInstitution(
-                                                                            transaction.getPaymentNotices().get(0)
-                                                                                    .getRptId()
+                                                                            transactionsUtils.getRptId(transaction, 0)
                                                                                     .substring(0, 11)
                                                                     )
                                                                     .transferList(
-                                                                            transaction.getPaymentNotices().get(0)
+                                                                            transactionsUtils.getPaymentNotices(transaction).get(0)
                                                                                     .getTransferList()
                                                                                     .stream()
                                                                                     .map(
@@ -319,8 +312,7 @@ public class TransactionsService {
                                                                                     ).toList()
                                                                     )
                                                                     .isAllCCP(
-                                                                            transaction.getPaymentNotices().get(0)
-                                                                                    .isAllCCP()
+                                                                            transactionsUtils.isAllCcp(transaction, 0)
                                                                     ),
                                                             Integer.MAX_VALUE
                                                     )
@@ -345,12 +337,12 @@ public class TransactionsService {
                                                                                                 .getPspId()
                                                                                 )
                                                                                 && psp.getTaxPayerFee()
-                                                                                        .equals(
-                                                                                                Long.valueOf(
-                                                                                                        requestAuthorizationRequestDto
-                                                                                                                .getFee()
-                                                                                                )
+                                                                                .equals(
+                                                                                        Long.valueOf(
+                                                                                                requestAuthorizationRequestDto
+                                                                                                        .getFee()
                                                                                         )
+                                                                                )
                                                                 ).findFirst(),
                                                         data.getT2()
                                                 );
@@ -380,7 +372,7 @@ public class TransactionsService {
                 )
                 .flatMap(
                         args -> {
-                            it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument = args
+                            it.pagopa.ecommerce.commons.documents.BaseTransactionView transactionDocument = args
                                     .getT1();
                             String paymentMethodName = args.getT2();
                             String paymentMethodDescription = args.getT3();
@@ -392,49 +384,10 @@ public class TransactionsService {
                                     transactionDocument.getTransactionId()
                             );
 
-                            TransactionActivated transaction = new TransactionActivated(
+                            AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                                     new TransactionId(
                                             transactionDocument.getTransactionId()
                                     ),
-                                    transactionDocument.getPaymentNotices().stream()
-                                            .map(
-                                                    paymentNotice -> new PaymentNotice(
-                                                            new PaymentToken(
-                                                                    paymentNotice.getPaymentToken()
-                                                            ),
-                                                            new RptId(paymentNotice.getRptId()),
-                                                            new TransactionAmount(
-                                                                    paymentNotice.getAmount()
-                                                            ),
-                                                            new TransactionDescription(
-                                                                    paymentNotice.getDescription()
-                                                            ),
-                                                            new PaymentContextCode(
-                                                                    paymentNotice
-                                                                            .getPaymentContextCode()
-                                                            ),
-                                                            paymentNotice.getTransferList().stream()
-                                                                    .map(
-                                                                            transfer -> new PaymentTransferInfo(
-                                                                                    transfer.getPaFiscalCode(),
-                                                                                    transfer.getDigitalStamp(),
-                                                                                    transfer.getTransferAmount(),
-                                                                                    transfer.getTransferCategory()
-                                                                            )
-                                                                    ).toList(),
-                                                            paymentNotice.isAllCCP()
-                                                    )
-                                            ).toList(),
-                                    transactionDocument.getEmail(),
-                                    null,
-                                    null,
-                                    transactionDocument.getClientId(),
-                                    transactionDocument.getIdCart(),
-                                    paymentTokenValidity
-                            );
-
-                            AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                                    transaction,
                                     requestAuthorizationRequestDto.getFee(),
                                     requestAuthorizationRequestDto.getPaymentInstrumentId(),
                                     requestAuthorizationRequestDto.getPspId(),
@@ -452,7 +405,7 @@ public class TransactionsService {
 
                             // FIXME Handle multiple rtpId
                             TransactionRequestAuthorizationCommand transactionRequestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                                    transaction.getPaymentNotices().get(0).rptId(),
+                                    new RptId(transactionsUtils.getRptId(transactionDocument, 0)),
                                     authorizationData
                             );
 
@@ -475,13 +428,13 @@ public class TransactionsService {
 
     @Retry(name = "updateTransactionAuthorization")
     public Mono<TransactionInfoDto> updateTransactionAuthorization(
-                                                                   UUID decodedTransactionId,
-                                                                   UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+            UUID decodedTransactionId,
+            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
 
         TransactionId transactionId = new TransactionId(decodedTransactionId);
         log.info("decoded transaction id: {}", transactionId.value());
-        Mono<BaseTransaction> baseTransaction = transactionsUtils.reduceEvents(transactionId);
+        Mono<BaseTransaction> baseTransaction = transactionsUtils.reduceEventsV1(transactionId);
         return wasTransactionAuthorized(transactionId)
                 .<Either<TransactionInfoDto, Mono<BaseTransaction>>>flatMap(alreadyAuthorized -> {
                     if (Boolean.FALSE.equals(alreadyAuthorized)) {
@@ -522,8 +475,8 @@ public class TransactionsService {
     }
 
     private Mono<TransactionActivated> updateTransactionAuthorizationStatus(
-                                                                            BaseTransaction transaction,
-                                                                            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+            BaseTransaction transaction,
+            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction,
@@ -551,8 +504,8 @@ public class TransactionsService {
     }
 
     private Mono<it.pagopa.ecommerce.commons.documents.v1.Transaction> closePayment(
-                                                                                    BaseTransactionWithPaymentToken transaction,
-                                                                                    UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+            BaseTransactionWithPaymentToken transaction,
+            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
         ClosureSendData closureSendData = new ClosureSendData(
                 transaction,
@@ -567,11 +520,11 @@ public class TransactionsService {
         return transactionSendClosureHandler
                 .handle(transactionClosureSendCommand)
                 .doOnNext(closureSentEvent ->
-                // FIXME Handle multiple rtpId
-                log.info(
-                        "Requested transaction closure for rptId: {}",
-                        transaction.getPaymentNotices().get(0).rptId().value()
-                )
+                        // FIXME Handle multiple rtpId
+                        log.info(
+                                "Requested transaction closure for rptId: {}",
+                                transaction.getPaymentNotices().get(0).rptId().value()
+                        )
                 )
                 .flatMap(
                         el -> el.getT1().map(
@@ -588,7 +541,7 @@ public class TransactionsService {
     }
 
     private TransactionInfoDto buildTransactionInfoDto(
-                                                       it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument
+            it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument
     ) {
         return new TransactionInfoDto()
                 .transactionId(
@@ -630,7 +583,7 @@ public class TransactionsService {
     }
 
     private Mono<Boolean> wasTransactionAuthorized(
-                                                   TransactionId transactionId
+            TransactionId transactionId
     ) {
         /*
          * @formatter:off
@@ -659,8 +612,8 @@ public class TransactionsService {
 
     @Retry(name = "addUserReceipt")
     public Mono<TransactionInfoDto> addUserReceipt(
-                                                   String transactionId,
-                                                   AddUserReceiptRequestDto addUserReceiptRequest
+            String transactionId,
+            AddUserReceiptRequestDto addUserReceiptRequest
     ) {
         return transactionsViewRepository
                 .findById(transactionId)
@@ -752,8 +705,8 @@ public class TransactionsService {
     }
 
     private Mono<NewTransactionResponseDto> projectActivatedEvent(
-                                                                  TransactionActivatedEvent transactionActivatedEvent,
-                                                                  String authToken
+            TransactionActivatedEvent transactionActivatedEvent,
+            String authToken
     ) {
         return transactionsActivationProjectionHandler
                 .handle(transactionActivatedEvent)
@@ -800,7 +753,7 @@ public class TransactionsService {
     }
 
     NewTransactionResponseDto.ClientIdEnum convertClientId(
-                                                           it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
+            it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
     ) {
         return Optional.ofNullable(clientId).filter(Objects::nonNull)
                 .map(

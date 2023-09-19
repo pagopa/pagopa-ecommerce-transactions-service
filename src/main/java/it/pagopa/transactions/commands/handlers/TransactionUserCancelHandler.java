@@ -50,7 +50,7 @@ public class TransactionUserCancelHandler implements
 
     @Override
     public Mono<TransactionUserCanceledEvent> handle(TransactionUserCancelCommand command) {
-        Mono<BaseTransaction> transaction = transactionsUtils.reduceEvents(
+        Mono<BaseTransaction> transaction = transactionsUtils.reduceEventsV1(
                 command.getData()
         );
 

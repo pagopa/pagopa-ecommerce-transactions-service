@@ -43,7 +43,7 @@ public class TransactionRequestUserReceiptHandler
             TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptAddedEventRepository,
             TransactionsUtils transactionsUtils,
             @Qualifier(
-                "transactionNotificationRequestedQueueAsyncClient"
+                    "transactionNotificationRequestedQueueAsyncClient"
             ) QueueAsyncClient transactionNotificationRequestedQueueAsyncClient,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
             TracingUtils tracingUtils
@@ -57,7 +57,7 @@ public class TransactionRequestUserReceiptHandler
 
     @Override
     public Mono<TransactionUserReceiptRequestedEvent> handle(TransactionAddUserReceiptCommand command) {
-        Mono<BaseTransaction> transaction = transactionsUtils.reduceEvents(
+        Mono<BaseTransaction> transaction = transactionsUtils.reduceEventsV1(
                 command.getData().transaction().getTransactionId()
         );
 
@@ -107,21 +107,21 @@ public class TransactionRequestUserReceiptHandler
                     return userReceiptAddedEventRepository.save(event)
                             .flatMap(
                                     userReceiptEvent -> tracingUtils.traceMono(
-                                            this.getClass().getSimpleName(),
-                                            tracingInfo -> transactionNotificationRequestedQueueAsyncClient
-                                                    .sendMessageWithResponse(
-                                                            new QueueEvent<>(userReceiptEvent, tracingInfo),
-                                                            Duration.ZERO,
-                                                            Duration.ofSeconds(transientQueuesTTLSeconds)
+                                                    this.getClass().getSimpleName(),
+                                                    tracingInfo -> transactionNotificationRequestedQueueAsyncClient
+                                                            .sendMessageWithResponse(
+                                                                    new QueueEvent<>(userReceiptEvent, tracingInfo),
+                                                                    Duration.ZERO,
+                                                                    Duration.ofSeconds(transientQueuesTTLSeconds)
+                                                            )
+                                            ).doOnError(
+                                                    exception -> log.error(
+                                                            "Error to generate event {} for transactionId {} - error {}",
+                                                            event.getEventCode(),
+                                                            event.getTransactionId(),
+                                                            exception.getMessage()
                                                     )
-                                    ).doOnError(
-                                            exception -> log.error(
-                                                    "Error to generate event {} for transactionId {} - error {}",
-                                                    event.getEventCode(),
-                                                    event.getTransactionId(),
-                                                    exception.getMessage()
                                             )
-                                    )
                                             .doOnNext(
                                                     queueResponse -> log.info(
                                                             "Generated event {} for transactionId {}",
@@ -135,7 +135,7 @@ public class TransactionRequestUserReceiptHandler
     }
 
     private static TransactionUserReceiptData.Outcome requestOutcomeToReceiptOutcome(
-                                                                                     AddUserReceiptRequestDto.OutcomeEnum requestOutcome
+            AddUserReceiptRequestDto.OutcomeEnum requestOutcome
     ) {
         return switch (requestOutcome) {
             case OK -> TransactionUserReceiptData.Outcome.OK;

@@ -18,6 +18,7 @@ import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
+import it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -79,8 +80,8 @@ class TransactionRequestAuthorizizationHandlerTest {
     private ArgumentCaptor<TransactionEvent<TransactionAuthorizationRequestData>> eventStoreCaptor;
 
     private static final Map<CardAuthRequestDetailsDto.BrandEnum, URI> brandLogoMapping = Arrays.stream(
-            CardAuthRequestDetailsDto.BrandEnum.values()
-    )
+                    CardAuthRequestDetailsDto.BrandEnum.values()
+            )
             .collect(
                     Collectors.toUnmodifiableMap(
                             Function.identity(),
@@ -151,8 +152,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 false
                         )
                 ), // TODO
-                   // TRANSFER
-                   // LIST
+                // TRANSFER
+                // LIST
                 email,
                 null,
                 null,
@@ -231,8 +232,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 false
                         )
                 ), // TODO
-                   // TRANSFER
-                   // LIST
+                // TRANSFER
+                // LIST
                 email,
                 null,
                 null,
@@ -313,8 +314,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 false
                         )
                 ), // TODO
-                   // TRANSFER
-                   // LIST
+                // TRANSFER
+                // LIST
                 email,
                 null,
                 null,
@@ -409,8 +410,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 false
                         )
                 ), // TODO
-                   // TRANSFER
-                   // LIST
+                // TRANSFER
+                // LIST
                 email,
                 null,
                 null,
@@ -505,8 +506,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 false
                         )
                 ), // TODO
-                   // TRANSFER
-                   // LIST
+                // TRANSFER
+                // LIST
                 email,
                 null,
                 null,
@@ -607,8 +608,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 false
                         )
                 ), // TODO
-                   // TRANSFER
-                   // LIST
+                // TRANSFER
+                // LIST
                 email,
                 null,
                 null,
@@ -693,8 +694,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 false
                         )
                 ), // TODO
-                   // TRANSFER
-                   // LIST
+                // TRANSFER
+                // LIST
                 email,
                 faultCode,
                 faultCodeString,
@@ -772,8 +773,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 false
                         )
                 ), // TODO
-                   // TRANSFER
-                   // LIST
+                // TRANSFER
+                // LIST
                 email,
                 faultCode,
                 faultCodeString,
@@ -858,8 +859,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 false
                         )
                 ), // TODO
-                   // TRANSFER
-                   // LIST
+                // TRANSFER
+                // LIST
                 email,
                 null,
                 null,
@@ -954,8 +955,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 false
                         )
                 ), // TODO
-                   // TRANSFER
-                   // LIST
+                // TRANSFER
+                // LIST
                 email,
                 null,
                 null,

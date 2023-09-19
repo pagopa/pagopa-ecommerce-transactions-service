@@ -17,6 +17,7 @@ import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.*;
+import it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException;
 import it.pagopa.transactions.exceptions.TransactionAmountMismatchException;
@@ -584,7 +585,7 @@ class TransactionServiceTests {
                         )
                 )
                 .thenReturn(Mono.empty());
-        Mockito.when(transactionsUtils.reduceEvents(transactionId)).thenReturn(
+        Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
                 Mono.just(
                         TransactionTestUtils.transactionWithRequestedAuthorization(
                                 TransactionTestUtils.transactionAuthorizationRequestedEvent(),
@@ -614,7 +615,7 @@ class TransactionServiceTests {
                 .timestampOperation(OffsetDateTime.now());
 
         /* preconditions */
-        Mockito.when(transactionsUtils.reduceEvents(transactionId))
+        Mockito.when(transactionsUtils.reduceEventsV1(transactionId))
                 .thenReturn(Mono.error(new TransactionNotFoundException("")));
         Mockito.when(
                         eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
@@ -1103,7 +1104,7 @@ class TransactionServiceTests {
                         )
                 )
                 .thenReturn(Mono.just(transactionAuthorizationCompletedEvent));
-        Mockito.when(transactionsUtils.reduceEvents(transactionId)).thenReturn(
+        Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
                 Mono.just(
                         baseTransaction
                 )
@@ -1177,7 +1178,7 @@ class TransactionServiceTests {
                         )
                 )
                 .thenReturn(Mono.just(transactionAuthorizationCompletedEvent));
-        Mockito.when(transactionsUtils.reduceEvents(transactionId)).thenReturn(
+        Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
                 Mono.just(
                         baseTransaction
                 )
@@ -1248,7 +1249,7 @@ class TransactionServiceTests {
                         )
                 )
                 .thenReturn(Mono.just(transactionAuthorizationCompletedEvent));
-        Mockito.when(transactionsUtils.reduceEvents(transactionId)).thenReturn(
+        Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
                 Mono.just(
                         baseTransaction
                 )
@@ -1380,7 +1381,7 @@ class TransactionServiceTests {
                         )
                 )
                 .thenReturn(Mono.empty());
-        Mockito.when(transactionsUtils.reduceEvents(transactionId)).thenReturn(
+        Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
                 Mono.just(
                         TransactionTestUtils.transactionWithRequestedAuthorization(
                                 TransactionTestUtils.transactionAuthorizationRequestedEvent(),
@@ -1508,7 +1509,7 @@ class TransactionServiceTests {
                         )
                 )
                 .thenReturn(Mono.empty());
-        Mockito.when(transactionsUtils.reduceEvents(transactionId)).thenReturn(
+        Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
                 Mono.just(
                         TransactionTestUtils.transactionWithRequestedAuthorization(
                                 TransactionTestUtils.transactionAuthorizationRequestedEvent(),
@@ -1638,7 +1639,7 @@ class TransactionServiceTests {
                         )
                 )
                 .thenReturn(Mono.empty());
-        Mockito.when(transactionsUtils.reduceEvents(transactionId)).thenReturn(
+        Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
                 Mono.just(
                         TransactionTestUtils.transactionWithRequestedAuthorization(
                                 TransactionTestUtils.transactionAuthorizationRequestedEvent(),
@@ -1766,7 +1767,7 @@ class TransactionServiceTests {
                         )
                 )
                 .thenReturn(Mono.empty());
-        Mockito.when(transactionsUtils.reduceEvents(transactionId)).thenReturn(
+        Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
                 Mono.just(
                         TransactionTestUtils.transactionWithRequestedAuthorization(
                                 TransactionTestUtils.transactionAuthorizationRequestedEvent(),

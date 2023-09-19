@@ -1,12 +1,12 @@
 package it.pagopa.transactions.commands.data;
 
-import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDetailsDto;
 
 import java.util.Optional;
 
 public record AuthorizationRequestData(
-        TransactionActivated transaction,
+        TransactionId transactionId,
         int fee,
         String paymentInstrumentId,
         String pspId,
