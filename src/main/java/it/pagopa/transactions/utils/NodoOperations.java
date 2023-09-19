@@ -5,7 +5,7 @@ import io.opentelemetry.api.common.Attributes;
 import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.v1.PaymentTransferInfo;
 import it.pagopa.ecommerce.commons.domain.v1.RptId;
-import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
+import it.pagopa.ecommerce.commons.repositories.v1.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.EuroUtils;
 import it.pagopa.generated.transactions.model.*;
 import it.pagopa.transactions.client.NodeForPspClient;

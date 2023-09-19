@@ -1,7 +1,7 @@
 package it.pagopa.transactions.configurations;
 
-import it.pagopa.ecommerce.commons.redis.RedisTemplateWrapperBuilder;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
+import it.pagopa.ecommerce.commons.redis.templatewrappers.v1.PaymentRequestInfoRedisTemplateWrapper;
+import it.pagopa.ecommerce.commons.redis.templatewrappers.v1.RedisTemplateWrapperBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
