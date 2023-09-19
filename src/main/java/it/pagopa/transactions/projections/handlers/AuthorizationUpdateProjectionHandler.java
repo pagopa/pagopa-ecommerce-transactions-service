@@ -1,7 +1,8 @@
 package it.pagopa.transactions.projections.handlers;
 
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedEvent;
-import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;

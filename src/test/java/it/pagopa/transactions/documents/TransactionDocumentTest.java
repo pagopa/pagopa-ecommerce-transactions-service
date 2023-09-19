@@ -1,10 +1,10 @@
 package it.pagopa.transactions.documents;
 
-import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
-import it.pagopa.ecommerce.commons.documents.v1.PaymentTransferInformation;
+import it.pagopa.ecommerce.commons.documents.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
-import it.pagopa.ecommerce.commons.domain.Confidential;
-import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import org.junit.jupiter.api.Test;
@@ -40,7 +40,7 @@ class TransactionDocumentTest {
          */
         /*
          * String transactionId,
-         * java.util.List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice>
+         * java.util.List<it.pagopa.ecommerce.commons.documents.PaymentNotice>
          * paymentNotices,
          *
          * @Nullable Integer feeTotal, String email,
@@ -113,7 +113,7 @@ class TransactionDocumentTest {
                 TEST_CART,
                 RRN
         );
-        it.pagopa.ecommerce.commons.documents.v1.PaymentNotice paymentNotice = new PaymentNotice(
+        it.pagopa.ecommerce.commons.documents.PaymentNotice paymentNotice = new PaymentNotice(
                 TEST_TOKEN,
                 TEST_RPTID,
                 TEST_DESC,
@@ -156,7 +156,7 @@ class TransactionDocumentTest {
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
-                        new it.pagopa.ecommerce.commons.domain.v1.PaymentNotice(
+                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
                                 paymentToken,
                                 rptId,
                                 amount,

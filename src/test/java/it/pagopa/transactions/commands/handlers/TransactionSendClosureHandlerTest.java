@@ -5,19 +5,20 @@ import com.azure.core.http.HttpRequest;
 import com.azure.core.http.rest.Response;
 import com.azure.storage.queue.models.SendMessageResult;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
-import it.pagopa.ecommerce.commons.documents.v1.Transaction;
+import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData.PaymentGateway;
-import it.pagopa.ecommerce.commons.domain.Confidential;
-import it.pagopa.ecommerce.commons.domain.v1.PaymentNotice;
-import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.v1.PaymentRequestInfoRedisTemplateWrapper;
+import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.utils.EuroUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.*;
@@ -145,8 +146,8 @@ class TransactionSendClosureHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
-        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> paymentNotices = List.of(
-                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
+        List<it.pagopa.ecommerce.commons.documents.PaymentNotice> paymentNotices = List.of(
+                new it.pagopa.ecommerce.commons.documents.PaymentNotice(
                         paymentToken.value(),
                         rptId.value(),
                         description.value(),
@@ -283,8 +284,8 @@ class TransactionSendClosureHandlerTest {
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         String idCart = "idCart";
-        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
-                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
+        List<it.pagopa.ecommerce.commons.documents.PaymentNotice> PaymentNotices = List.of(
+                new it.pagopa.ecommerce.commons.documents.PaymentNotice(
                         paymentToken.value(),
                         rptId.value(),
                         description.value(),
@@ -497,8 +498,8 @@ class TransactionSendClosureHandlerTest {
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         String idCart = "idCart";
-        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
-                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
+        List<it.pagopa.ecommerce.commons.documents.PaymentNotice> PaymentNotices = List.of(
+                new it.pagopa.ecommerce.commons.documents.PaymentNotice(
                         paymentToken.value(),
                         rptId.value(),
                         description.value(),
@@ -713,8 +714,8 @@ class TransactionSendClosureHandlerTest {
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         String idCart = "idCart";
-        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
-                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
+        List<it.pagopa.ecommerce.commons.documents.PaymentNotice> PaymentNotices = List.of(
+                new it.pagopa.ecommerce.commons.documents.PaymentNotice(
                         paymentToken.value(),
                         rptId.value(),
                         description.value(),
@@ -979,8 +980,8 @@ class TransactionSendClosureHandlerTest {
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         String idCart = "idCart";
-        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
-                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
+        List<it.pagopa.ecommerce.commons.documents.PaymentNotice> PaymentNotices = List.of(
+                new it.pagopa.ecommerce.commons.documents.PaymentNotice(
                         paymentToken.value(),
                         rptId.value(),
                         description.value(),
@@ -1067,7 +1068,7 @@ class TransactionSendClosureHandlerTest {
 
         BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
                 (transactionActivatedEvent.getData().getPaymentNotices().stream()
-                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                        .mapToInt(it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount)
                         .sum()
                         + authorizationRequestData.getFee())
         );
@@ -1077,7 +1078,7 @@ class TransactionSendClosureHandlerTest {
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         transactionActivatedEvent.getData().getPaymentNotices().stream()
-                                .map(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getPaymentToken).toList()
+                                .map(it.pagopa.ecommerce.commons.documents.PaymentNotice::getPaymentToken).toList()
                 )
                 .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
                 .idPSP(authorizationRequestData.getPspId())
@@ -1239,8 +1240,8 @@ class TransactionSendClosureHandlerTest {
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         String idCart = "idCart";
-        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
-                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
+        List<it.pagopa.ecommerce.commons.documents.PaymentNotice> PaymentNotices = List.of(
+                new it.pagopa.ecommerce.commons.documents.PaymentNotice(
                         paymentToken.value(),
                         rptId.value(),
                         description.value(),
@@ -1325,7 +1326,7 @@ class TransactionSendClosureHandlerTest {
 
         BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
                 (transactionActivatedEvent.getData().getPaymentNotices().stream()
-                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                        .mapToInt(it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount)
                         .sum()
                         + authorizationRequestData.getFee())
         );
@@ -1520,8 +1521,8 @@ class TransactionSendClosureHandlerTest {
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         String idCart = "idCart";
-        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
-                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
+        List<it.pagopa.ecommerce.commons.documents.PaymentNotice> PaymentNotices = List.of(
+                new it.pagopa.ecommerce.commons.documents.PaymentNotice(
                         paymentToken.value(),
                         rptId.value(),
                         description.value(),
@@ -1605,7 +1606,7 @@ class TransactionSendClosureHandlerTest {
 
         BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
                 (transactionActivatedEvent.getData().getPaymentNotices().stream()
-                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                        .mapToInt(it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount)
                         .sum()
                         + authorizationRequestData.getFee())
         );
@@ -1613,7 +1614,7 @@ class TransactionSendClosureHandlerTest {
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         transactionActivatedEvent.getData().getPaymentNotices().stream()
-                                .map(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getPaymentToken).toList()
+                                .map(it.pagopa.ecommerce.commons.documents.PaymentNotice::getPaymentToken).toList()
                 )
                 .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
                 .idPSP(authorizationRequestData.getPspId())
@@ -1623,7 +1624,7 @@ class TransactionSendClosureHandlerTest {
                 .totalAmount(
                         EuroUtils.euroCentsToEuro(
                                 (transactionActivatedEvent.getData().getPaymentNotices().stream()
-                                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                                        .mapToInt(it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount)
                                         .sum()
                                         + authorizationRequestData.getFee())
                         )
@@ -1805,8 +1806,8 @@ class TransactionSendClosureHandlerTest {
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         String idCart = "idCart";
-        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
-                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
+        List<it.pagopa.ecommerce.commons.documents.PaymentNotice> PaymentNotices = List.of(
+                new it.pagopa.ecommerce.commons.documents.PaymentNotice(
                         paymentToken.value(),
                         rptId.value(),
                         description.value(),
@@ -2042,8 +2043,8 @@ class TransactionSendClosureHandlerTest {
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         String idCart = "idCart";
-        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
-                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
+        List<it.pagopa.ecommerce.commons.documents.PaymentNotice> PaymentNotices = List.of(
+                new it.pagopa.ecommerce.commons.documents.PaymentNotice(
                         paymentToken.value(),
                         rptId.value(),
                         description.value(),
@@ -2290,8 +2291,8 @@ class TransactionSendClosureHandlerTest {
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         String idCart = "idCart";
-        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> PaymentNotices = List.of(
-                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
+        List<it.pagopa.ecommerce.commons.documents.PaymentNotice> PaymentNotices = List.of(
+                new it.pagopa.ecommerce.commons.documents.PaymentNotice(
                         paymentToken.value(),
                         rptId.value(),
                         description.value(),
@@ -2379,7 +2380,7 @@ class TransactionSendClosureHandlerTest {
 
         BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
                 (transactionActivatedEvent.getData().getPaymentNotices().stream()
-                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                        .mapToInt(it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount)
                         .sum()
                         + authorizationRequestData.getFee())
         );
@@ -2387,7 +2388,7 @@ class TransactionSendClosureHandlerTest {
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         transactionActivatedEvent.getData().getPaymentNotices().stream()
-                                .map(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getPaymentToken).toList()
+                                .map(it.pagopa.ecommerce.commons.documents.PaymentNotice::getPaymentToken).toList()
                 )
                 .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
                 .idPSP(authorizationRequestData.getPspId())
@@ -2397,7 +2398,7 @@ class TransactionSendClosureHandlerTest {
                 .totalAmount(
                         EuroUtils.euroCentsToEuro(
                                 (transactionActivatedEvent.getData().getPaymentNotices().stream()
-                                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                                        .mapToInt(it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount)
                                         .sum()
                                         + authorizationRequestData.getFee())
                         )
@@ -2568,8 +2569,8 @@ class TransactionSendClosureHandlerTest {
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         String idCart = "idCart";
-        List<it.pagopa.ecommerce.commons.documents.v1.PaymentNotice> paymentNotices = List.of(
-                new it.pagopa.ecommerce.commons.documents.v1.PaymentNotice(
+        List<it.pagopa.ecommerce.commons.documents.PaymentNotice> paymentNotices = List.of(
+                new it.pagopa.ecommerce.commons.documents.PaymentNotice(
                         paymentToken.value(),
                         rptId.value(),
                         description.value(),
@@ -2656,7 +2657,7 @@ class TransactionSendClosureHandlerTest {
 
         BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
                 (transactionActivatedEvent.getData().getPaymentNotices().stream()
-                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                        .mapToInt(it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount)
                         .sum()
                         + authorizationRequestData.getFee())
         );
@@ -2664,7 +2665,7 @@ class TransactionSendClosureHandlerTest {
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         transactionActivatedEvent.getData().getPaymentNotices().stream()
-                                .map(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getPaymentToken).toList()
+                                .map(it.pagopa.ecommerce.commons.documents.PaymentNotice::getPaymentToken).toList()
                 )
                 .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
                 .idPSP(authorizationRequestData.getPspId())
@@ -2711,7 +2712,7 @@ class TransactionSendClosureHandlerTest {
                                                                 (transactionActivatedEvent.getData().getPaymentNotices()
                                                                         .stream()
                                                                         .mapToInt(
-                                                                                it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount
+                                                                                it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount
                                                                         )
                                                                         .sum())
                                                         )
@@ -2721,7 +2722,7 @@ class TransactionSendClosureHandlerTest {
                                                                 (transactionActivatedEvent.getData().getPaymentNotices()
                                                                         .stream()
                                                                         .mapToInt(
-                                                                                it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount
+                                                                                it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount
                                                                         )
                                                                         .sum()
                                                                         + authorizationRequestData.getFee())
@@ -2873,7 +2874,7 @@ class TransactionSendClosureHandlerTest {
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
         BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
                 (transactionActivatedEvent.getData().getPaymentNotices().stream()
-                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                        .mapToInt(it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount)
                         .sum()
                         + authorizationRequestData.getFee())
         );
@@ -3083,7 +3084,7 @@ class TransactionSendClosureHandlerTest {
         TransactionAuthorizationRequestData authorizationRequestData = authorizationRequestedEvent.getData();
         BigDecimal totalAmount = EuroUtils.euroCentsToEuro(
                 (transactionActivatedEvent.getData().getPaymentNotices().stream()
-                        .mapToInt(it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount)
+                        .mapToInt(it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount)
                         .sum()
                         + authorizationRequestData.getFee())
         );

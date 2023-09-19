@@ -1,9 +1,10 @@
 package it.pagopa.transactions.services;
 
 import io.vavr.control.Either;
-import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.*;
-import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
@@ -489,7 +490,7 @@ class TransactionServiceTests {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionDocument.getTransactionId()),
                 transactionDocument.getPaymentNotices().stream().map(
-                        paymentNotice -> new it.pagopa.ecommerce.commons.domain.v1.PaymentNotice(
+                        paymentNotice -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
                                 new PaymentToken(paymentNotice.getPaymentToken()),
                                 new RptId(paymentNotice.getRptId()),
                                 new TransactionAmount(paymentNotice.getAmount()),
@@ -1282,7 +1283,7 @@ class TransactionServiceTests {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionDocument.getTransactionId()),
                 transactionDocument.getPaymentNotices().stream().map(
-                        paymentNotice -> new it.pagopa.ecommerce.commons.domain.v1.PaymentNotice(
+                        paymentNotice -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
                                 new PaymentToken(paymentNotice.getPaymentToken()),
                                 new RptId(paymentNotice.getRptId()),
                                 new TransactionAmount(paymentNotice.getAmount()),
@@ -1412,7 +1413,7 @@ class TransactionServiceTests {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionDocument.getTransactionId()),
                 transactionDocument.getPaymentNotices().stream().map(
-                        paymentNotice -> new it.pagopa.ecommerce.commons.domain.v1.PaymentNotice(
+                        paymentNotice -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
                                 new PaymentToken(paymentNotice.getPaymentToken()),
                                 new RptId(paymentNotice.getRptId()),
                                 new TransactionAmount(paymentNotice.getAmount()),
@@ -1540,7 +1541,7 @@ class TransactionServiceTests {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionDocument.getTransactionId()),
                 transactionDocument.getPaymentNotices().stream().map(
-                        paymentNotice -> new it.pagopa.ecommerce.commons.domain.v1.PaymentNotice(
+                        paymentNotice -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
                                 new PaymentToken(paymentNotice.getPaymentToken()),
                                 new RptId(paymentNotice.getRptId()),
                                 new TransactionAmount(paymentNotice.getAmount()),
@@ -1670,7 +1671,7 @@ class TransactionServiceTests {
         TransactionActivated transaction = new TransactionActivated(
                 new TransactionId(transactionDocument.getTransactionId()),
                 transactionDocument.getPaymentNotices().stream().map(
-                        paymentNotice -> new it.pagopa.ecommerce.commons.domain.v1.PaymentNotice(
+                        paymentNotice -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
                                 new PaymentToken(paymentNotice.getPaymentToken()),
                                 new RptId(paymentNotice.getRptId()),
                                 new TransactionAmount(paymentNotice.getAmount()),

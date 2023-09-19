@@ -1,7 +1,7 @@
 package it.pagopa.transactions.commands;
 
-import it.pagopa.ecommerce.commons.domain.v1.RptId;
-import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
+import it.pagopa.ecommerce.commons.domain.RptId;
+import it.pagopa.ecommerce.commons.domain.TransactionId;
 
 public final class TransactionUserCancelCommand extends TransactionsCommand<TransactionId> {
     public TransactionUserCancelCommand(

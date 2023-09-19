@@ -7,10 +7,15 @@ import it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent;
-import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken;
-import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.*;
+import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.BundleDto;
+import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.CalculateFeeRequestDto;
+import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.CalculateFeeResponseDto;
+import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.TransferListItemDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.commands.*;
@@ -231,7 +236,7 @@ public class TransactionsService {
                         transaction -> {
                             Integer amountTotal = transaction.getPaymentNotices().stream()
                                     .mapToInt(
-                                            it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount
+                                            it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount
                                     ).sum();
 
                             Boolean isAllCCP = transaction.getPaymentNotices().get(0).isAllCCP();
@@ -266,7 +271,7 @@ public class TransactionsService {
                             );
                             Integer amountTotal = transaction.getPaymentNotices().stream()
                                     .mapToInt(
-                                            it.pagopa.ecommerce.commons.documents.v1.PaymentNotice::getAmount
+                                            it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount
                                     ).sum();
                             return retrieveInformationFromAuthorizationRequest(requestAuthorizationRequestDto)
                                     .flatMap(
@@ -805,12 +810,12 @@ public class TransactionsService {
                 ).orElseThrow(() -> new InvalidRequestException("Null value as input origin"));
     }
 
-    private Mono<Optional<Tuple2<String,Optional<String>>>> retrieveInformationFromAuthorizationRequest(RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
-        return switch (requestAuthorizationRequestDto.getDetails()){
+    private Mono<Optional<Tuple2<String, Optional<String>>>> retrieveInformationFromAuthorizationRequest(RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
+        return switch (requestAuthorizationRequestDto.getDetails()) {
             case CardAuthRequestDetailsDto cardData ->
-                Mono.just(Optional.of(Tuples.of(cardData.getPan().substring(0, 6), Optional.empty())));
+                    Mono.just(Optional.of(Tuples.of(cardData.getPan().substring(0, 6), Optional.empty())));
             case CardsAuthRequestDetailsDto cards ->
-                ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(),cards.getOrderId()).map(response -> Optional.of(Tuples.of(response.getBin(),Optional.of(response.getSessionId()))));
+                    ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId()).map(response -> Optional.of(Tuples.of(response.getBin(), Optional.of(response.getSessionId()))));
             default -> Mono.just(Optional.empty());
         };
     }

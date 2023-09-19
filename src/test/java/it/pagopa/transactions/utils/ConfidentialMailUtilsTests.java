@@ -1,7 +1,7 @@
 package it.pagopa.transactions.utils;
 
 import it.pagopa.ecommerce.commons.domain.Confidential;
-import it.pagopa.ecommerce.commons.domain.v1.Email;
+import it.pagopa.ecommerce.commons.domain.Email;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
