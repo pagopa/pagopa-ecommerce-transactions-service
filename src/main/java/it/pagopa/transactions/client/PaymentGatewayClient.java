@@ -3,6 +3,7 @@ package it.pagopa.transactions.client;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.ecommerce.commons.client.NpgClient;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
@@ -121,7 +122,10 @@ public class PaymentGatewayClient {
         return Mono.just(authorizationData)
                 .filter(
                         authorizationRequestData -> "CP".equals(authorizationRequestData.paymentTypeCode())
-                                && "XPAY".equals(authorizationRequestData.paymentGatewayId())
+                                && TransactionAuthorizationRequestData.PaymentGateway.XPAY.equals(
+                                        TransactionAuthorizationRequestData.PaymentGateway
+                                                .valueOf(authorizationRequestData.paymentGatewayId())
+                                )
                 )
                 .switchIfEmpty(Mono.empty())
                 .flatMap(authorizationRequestData -> {
@@ -176,7 +180,11 @@ public class PaymentGatewayClient {
         return Mono.just(authorizationData)
                 .filter(
                         authorizationRequestData -> "CP".equals(authorizationRequestData.paymentTypeCode())
-                                && "VPOS".equals(authorizationRequestData.paymentGatewayId())
+                                && TransactionAuthorizationRequestData.PaymentGateway.VPOS
+                                        .equals(
+                                                TransactionAuthorizationRequestData.PaymentGateway
+                                                        .valueOf(authorizationRequestData.paymentGatewayId())
+                                        )
                 )
                 .switchIfEmpty(Mono.empty())
                 .flatMap(
@@ -244,7 +252,10 @@ public class PaymentGatewayClient {
         return Mono.just(authorizationData)
                 .filter(
                         authorizationRequestData -> "CP".equals(authorizationRequestData.paymentTypeCode())
-                                && "NPG".equals(authorizationRequestData.paymentGatewayId())
+                                && TransactionAuthorizationRequestData.PaymentGateway.NPG.equals(
+                                        TransactionAuthorizationRequestData.PaymentGateway
+                                                .valueOf(authorizationRequestData.paymentGatewayId())
+                                )
                 )
                 .switchIfEmpty(Mono.empty())
                 .filter(
