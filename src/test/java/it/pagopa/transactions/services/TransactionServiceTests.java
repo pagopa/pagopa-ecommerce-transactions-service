@@ -17,7 +17,6 @@ import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.*;
-import it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException;
 import it.pagopa.transactions.exceptions.TransactionAmountMismatchException;
@@ -58,8 +57,10 @@ import static org.mockito.Mockito.*;
 @Import(
     {
             TransactionsService.class,
-            TransactionRequestAuthorizationHandler.class,
-            AuthorizationRequestProjectionHandler.class,
+            it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler.class,
+            it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler.class,
+            it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler.class,
+            it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler.class,
             TransactionsEventStoreRepository.class,
             TransactionsActivationProjectionHandler.class,
             CancellationRequestProjectionHandler.class,
@@ -91,7 +92,10 @@ class TransactionServiceTests {
     private TransactionUserCancelHandler transactionCancelHandler;
 
     @MockBean
-    private TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandler;
+    private it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandlerV1;
+
+    @MockBean
+    private it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandlerV2;
 
     @MockBean
     private TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandler;
@@ -339,7 +343,7 @@ class TransactionServiceTests {
 
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 
-        Mockito.when(transactionRequestAuthorizationHandler.handle(commandArgumentCaptor.capture()))
+        Mockito.when(transactionRequestAuthorizationHandlerV1.handle(commandArgumentCaptor.capture()))
                 .thenReturn(Mono.just(requestAuthorizationResponse));
 
         Mockito.when(transactionsUtils.getPaymentNotices(any())).thenCallRealMethod();
@@ -441,7 +445,7 @@ class TransactionServiceTests {
         Mockito.when(transactionsUtils.getTransactionTotalAmount(any())).thenCallRealMethod();
         Mockito.when(transactionsUtils.getRptId(any(), anyInt())).thenCallRealMethod();
 
-        Mockito.when(transactionRequestAuthorizationHandler.handle(commandArgumentCaptor.capture()))
+        Mockito.when(transactionRequestAuthorizationHandlerV1.handle(commandArgumentCaptor.capture()))
                 .thenReturn(Mono.just(requestAuthorizationResponse));
 
         /* test */
@@ -849,7 +853,7 @@ class TransactionServiceTests {
 
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 
-        Mockito.when(transactionRequestAuthorizationHandler.handle(commandArgumentCaptor.capture()))
+        Mockito.when(transactionRequestAuthorizationHandlerV1.handle(commandArgumentCaptor.capture()))
                 .thenReturn(Mono.just(requestAuthorizationResponse));
         Mockito.when(transactionsUtils.getPaymentNotices(any())).thenCallRealMethod();
         Mockito.when(transactionsUtils.getTransactionTotalAmount(any())).thenCallRealMethod();
@@ -1006,7 +1010,7 @@ class TransactionServiceTests {
 
         Mockito.when(transactionsUtils.getTransactionTotalAmount(any())).thenCallRealMethod();
 
-        Mockito.when(transactionRequestAuthorizationHandler.handle(any()))
+        Mockito.when(transactionRequestAuthorizationHandlerV1.handle(any()))
                 .thenReturn(Mono.just(requestAuthorizationResponse));
 
         /* test */

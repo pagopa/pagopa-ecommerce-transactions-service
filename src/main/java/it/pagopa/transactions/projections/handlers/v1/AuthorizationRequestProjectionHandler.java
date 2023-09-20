@@ -1,19 +1,22 @@
-package it.pagopa.transactions.projections.handlers;
+package it.pagopa.transactions.projections.handlers.v1;
 
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
+import it.pagopa.transactions.projections.handlers.ProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-@Component
+@Component(AuthorizationRequestProjectionHandler.QUALIFIER_NAME)
 @Slf4j
 public class AuthorizationRequestProjectionHandler
         implements ProjectionHandler<AuthorizationRequestData, Mono<Transaction>> {
+
+    public static final String QUALIFIER_NAME = "AuthorizationRequestProjectionHandlerV1";
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
 

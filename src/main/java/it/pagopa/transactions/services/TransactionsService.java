@@ -24,7 +24,7 @@ import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.data.ClosureSendData;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
 import it.pagopa.transactions.commands.handlers.*;
-import it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler;
+import it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.projections.handlers.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -33,6 +33,7 @@ import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -52,7 +53,9 @@ public class TransactionsService {
     private TransactionActivateHandler transactionActivateHandler;
 
     @Autowired
-    private TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandler;
+    private it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler requestAuthHandlerV1;
+    @Autowired
+    private TransactionRequestAuthorizationHandler requestAuthHandlerV2;
 
     @Autowired
     private TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandler;
@@ -67,7 +70,12 @@ public class TransactionsService {
     private TransactionSendClosureHandler transactionSendClosureHandler;
 
     @Autowired
-    private AuthorizationRequestProjectionHandler authorizationProjectionHandler;
+    @Qualifier(it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler.QUALIFIER_NAME)
+    private it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler authorizationProjectionHandlerV1;
+
+    @Autowired
+    @Qualifier(it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler.QUALIFIER_NAME)
+    private it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler authorizationProjectionHandlerV2;
 
     @Autowired
     private AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandler;
@@ -229,9 +237,9 @@ public class TransactionsService {
     @CircuitBreaker(name = "transactions-backend")
     @Retry(name = "requestTransactionAuthorization")
     public Mono<RequestAuthorizationResponseDto> requestTransactionAuthorization(
-                                                                                 String transactionId,
-                                                                                 String paymentGatewayId,
-                                                                                 RequestAuthorizationRequestDto requestAuthorizationRequestDto
+            String transactionId,
+            String paymentGatewayId,
+            RequestAuthorizationRequestDto requestAuthorizationRequestDto
     ) {
         return transactionsViewRepository
                 .findById(transactionId)
@@ -249,18 +257,18 @@ public class TransactionsService {
                             boolean allCCPMismatch = !isAllCCP.equals(requestAuthorizationRequestDto.getIsAllCCP());
                             return amountMismatch || allCCPMismatch
                                     ? (amountMismatch ? Mono.error(
-                                            new TransactionAmountMismatchException(
-                                                    requestAuthorizationRequestDto.getAmount(),
-                                                    amountTotal
-                                            )
+                                    new TransactionAmountMismatchException(
+                                            requestAuthorizationRequestDto.getAmount(),
+                                            amountTotal
                                     )
-                                            : Mono.error(
-                                                    new PaymentNoticeAllCCPMismatchException(
-                                                            transactionsUtils.getRptId(transaction, 0),
-                                                            requestAuthorizationRequestDto.getIsAllCCP(),
-                                                            isAllCCP
-                                                    )
-                                            ))
+                            )
+                                    : Mono.error(
+                                    new PaymentNoticeAllCCPMismatchException(
+                                            transactionsUtils.getRptId(transaction, 0),
+                                            requestAuthorizationRequestDto.getIsAllCCP(),
+                                            isAllCCP
+                                    )
+                            ))
                                     : Mono.just(transaction);
                         }
                 )
@@ -341,12 +349,12 @@ public class TransactionsService {
                                                                                                 .getPspId()
                                                                                 )
                                                                                 && psp.getTaxPayerFee()
-                                                                                        .equals(
-                                                                                                Long.valueOf(
-                                                                                                        requestAuthorizationRequestDto
-                                                                                                                .getFee()
-                                                                                                )
+                                                                                .equals(
+                                                                                        Long.valueOf(
+                                                                                                requestAuthorizationRequestDto
+                                                                                                        .getFee()
                                                                                         )
+                                                                                )
                                                                 ).findFirst(),
                                                         data.getT2()
                                                 );
@@ -434,9 +442,35 @@ public class TransactionsService {
                                     new RptId(transactionsUtils.getRptId(transactionDocument, 0)),
                                     authorizationData
                             );
-
-                            return transactionRequestAuthorizationHandler
-                                    .handle(transactionRequestAuthorizationCommand)
+                            Mono<RequestAuthorizationResponseDto> authorizationHandler = switch (transactionDocument) {
+                                case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> requestAuthHandlerV1
+                                        .handle(transactionRequestAuthorizationCommand)
+                                        .doOnNext(
+                                                res -> log.info(
+                                                        "Requested authorization for transaction: {}",
+                                                        transactionDocument.getTransactionId()
+                                                )
+                                        )
+                                        .flatMap(
+                                                res -> authorizationProjectionHandlerV1
+                                                        .handle(authorizationData)
+                                                        .thenReturn(res)
+                                        );
+                                case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> requestAuthHandlerV2
+                                        .handle(transactionRequestAuthorizationCommand).doOnNext(
+                                                res -> log.info(
+                                                        "Requested authorization for transaction: {}",
+                                                        transactionDocument.getTransactionId()
+                                                )
+                                        )
+                                        .flatMap(
+                                                res -> authorizationProjectionHandlerV2
+                                                        .handle(authorizationData)
+                                                        .thenReturn(res)
+                                        );
+                                default -> throw new RuntimeException("OPS");
+                            };
+                            return authorizationHandler
                                     .doOnNext(
                                             res -> log.info(
                                                     "Requested authorization for transaction: {}",
@@ -444,7 +478,7 @@ public class TransactionsService {
                                             )
                                     )
                                     .flatMap(
-                                            res -> authorizationProjectionHandler
+                                            res -> authorizationProjectionHandlerV1
                                                     .handle(authorizationData)
                                                     .thenReturn(res)
                                     );

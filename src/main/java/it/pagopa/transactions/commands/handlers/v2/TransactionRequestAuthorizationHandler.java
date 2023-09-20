@@ -14,7 +14,6 @@ import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
-import it.pagopa.transactions.commands.handlers.CommandHandler;
 import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandlerCommon;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -34,8 +33,8 @@ import java.util.Map;
 
 @Component("TransactionRequestAuthorizationHandlerV2")
 @Slf4j
-public class TransactionRequestAuthorizationHandler extends TransactionRequestAuthorizationHandlerCommon
-        implements CommandHandler<TransactionRequestAuthorizationCommand, Mono<RequestAuthorizationResponseDto>> {
+public class TransactionRequestAuthorizationHandler extends TransactionRequestAuthorizationHandlerCommon {
+
     private final TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository;
     private final TransactionsUtils transactionsUtils;
 
@@ -110,10 +109,12 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                     );
 
                                     // TODO remove this after the cancellation of the postepay logic
-                                    TransactionAuthorizationRequestData.CardBrand cardBrand =
-                                            getCardBrand(authorizationRequestData).map(brand ->
-                                                    TransactionAuthorizationRequestData.CardBrand.valueOf(brand.toString())
-                                            ).orElse(null);
+                                    TransactionAuthorizationRequestData.CardBrand cardBrand = getCardBrand(
+                                            authorizationRequestData
+                                    ).map(
+                                            brand -> TransactionAuthorizationRequestData.CardBrand
+                                                    .valueOf(brand.toString())
+                                    ).orElse(null);
                                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                                             t.getTransactionId().value(),
                                             new TransactionAuthorizationRequestData(
