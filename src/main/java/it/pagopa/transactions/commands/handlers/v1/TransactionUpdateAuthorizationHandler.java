@@ -24,12 +24,12 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
     public static final String QUALIFIER_NAME = "TransactionUpdateAuthorizationHandlerV1";
     private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData> transactionEventStoreRepository;
 
-
     @Autowired
     protected TransactionUpdateAuthorizationHandler(
             TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> transactionEventStoreRepository,
             AuthRequestDataUtils extractAuthRequestData,
-            TransactionsUtils transactionsUtils) {
+            TransactionsUtils transactionsUtils
+    ) {
         super(extractAuthRequestData, transactionsUtils);
         this.transactionEventStoreRepository = transactionEventStoreRepository;
     }
@@ -44,21 +44,26 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
         TransactionStatus transactionStatus = TransactionStatus.valueOf(command.getData().transactionStatus());
 
         if (transactionStatus.equals(TransactionStatus.AUTHORIZATION_REQUESTED)) {
-            return Mono.just(AuthorizationResultDto
+            return Mono.just(
+                    AuthorizationResultDto
                             .fromValue(
                                     authRequestDataExtracted.outcome()
-                            ))
-                    .flatMap(authorizationResultDto -> Mono.just(
-                            new it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedEvent(
-                                    transactionId.value(),
-                                    new it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData(
-                                            authRequestDataExtracted.authorizationCode(),
-                                            authRequestDataExtracted.rrn(),
-                                            updateAuthorizationRequest.getTimestampOperation().toString(),
-                                            authRequestDataExtracted.errorCode(),
-                                            authorizationResultDto
+                            )
+            )
+                    .flatMap(
+                            authorizationResultDto -> Mono.just(
+                                    new it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedEvent(
+                                            transactionId.value(),
+                                            new it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData(
+                                                    authRequestDataExtracted.authorizationCode(),
+                                                    authRequestDataExtracted.rrn(),
+                                                    updateAuthorizationRequest.getTimestampOperation().toString(),
+                                                    authRequestDataExtracted.errorCode(),
+                                                    authorizationResultDto
+                                            )
                                     )
-                            )))
+                            )
+                    )
                     .flatMap(transactionEventStoreRepository::save);
         } else {
             return alreadyProcessedError;

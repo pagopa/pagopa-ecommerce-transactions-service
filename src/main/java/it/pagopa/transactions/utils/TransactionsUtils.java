@@ -122,10 +122,10 @@ public class TransactionsUtils {
     }
 
     public <A, T> Mono<T> reduceEvents(
-            Flux<BaseTransactionEvent<Object>> events,
-            A initialValue,
-            BiFunction<A, ? super BaseTransactionEvent<?>, A> accumulator,
-            Class<T> clazz
+                                       Flux<BaseTransactionEvent<Object>> events,
+                                       A initialValue,
+                                       BiFunction<A, ? super BaseTransactionEvent<?>, A> accumulator,
+                                       Class<T> clazz
     ) {
         return events
                 .reduce(initialValue, accumulator)
