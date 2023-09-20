@@ -56,16 +56,16 @@ import static org.mockito.Mockito.*;
 @WebFluxTest
 @TestPropertySource(locations = "classpath:application-tests.properties")
 @Import(
-        {
-                TransactionsService.class,
-                TransactionRequestAuthorizationHandler.class,
-                AuthorizationRequestProjectionHandler.class,
-                TransactionsEventStoreRepository.class,
-                TransactionsActivationProjectionHandler.class,
-                CancellationRequestProjectionHandler.class,
-                TransactionUserCancelHandler.class,
-                UUIDUtils.class
-        }
+    {
+            TransactionsService.class,
+            TransactionRequestAuthorizationHandler.class,
+            AuthorizationRequestProjectionHandler.class,
+            TransactionsEventStoreRepository.class,
+            TransactionsActivationProjectionHandler.class,
+            CancellationRequestProjectionHandler.class,
+            TransactionUserCancelHandler.class,
+            UUIDUtils.class
+    }
 )
 @AutoConfigureDataRedis
 class TransactionServiceTests {
@@ -579,11 +579,11 @@ class TransactionServiceTests {
         Mockito.when(closureSendProjectionHandler.handle(any()))
                 .thenReturn(Mono.just(closedTransactionDocument));
         Mockito.when(
-                        eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
-                                transactionId.value(),
-                                TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
-                        )
+                eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
+                        transactionId.value(),
+                        TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
                 )
+        )
                 .thenReturn(Mono.empty());
         Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
                 Mono.just(
@@ -618,11 +618,11 @@ class TransactionServiceTests {
         Mockito.when(transactionsUtils.reduceEventsV1(transactionId))
                 .thenReturn(Mono.error(new TransactionNotFoundException("")));
         Mockito.when(
-                        eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
-                                transactionId.value(),
-                                TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
-                        )
+                eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
+                        transactionId.value(),
+                        TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
                 )
+        )
                 .thenReturn(Mono.empty());
         Hooks.onOperatorDebug();
         /* test */
@@ -843,6 +843,10 @@ class TransactionServiceTests {
 
         Mockito.when(transactionRequestAuthorizationHandler.handle(commandArgumentCaptor.capture()))
                 .thenReturn(Mono.just(requestAuthorizationResponse));
+        Mockito.when(transactionsUtils.getPaymentNotices(any())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getTransactionTotalAmount(any())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getRptId(any(), anyInt())).thenCallRealMethod();
+
         /* test */
         RequestAuthorizationResponseDto authorizationResponse = transactionsService
                 .requestTransactionAuthorization(TRANSACTION_ID, "XPAY", authorizationRequest).block();
@@ -853,7 +857,7 @@ class TransactionServiceTests {
         assertNotNull(authorizationResponse);
         assertFalse(authorizationResponse.getAuthorizationUrl().isEmpty());
         AuthorizationRequestData authData = commandArgumentCaptor.getValue().getData();
-        if (authData.authDetails() instanceof CardAuthRequestDetailsDto cardDetails) {
+        if (authData.authDetails()instanceof CardAuthRequestDetailsDto cardDetails) {
             assertEquals(cardAuthRequestDetailsDto.getCvv(), cardDetails.getCvv());
             assertEquals(cardAuthRequestDetailsDto.getPan(), cardDetails.getPan());
             assertEquals(cardAuthRequestDetailsDto.getExpiryDate(), cardDetails.getExpiryDate());
@@ -1014,7 +1018,8 @@ class TransactionServiceTests {
 
     @Test
     void shouldThrowsInvalidRequestExceptionForInvalidClientID() {
-        it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId = Mockito.mock(it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.class);
+        it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId = Mockito
+                .mock(it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.class);
         Mockito.when(clientId.toString()).thenReturn("InvalidClientID");
         assertThrows(InvalidRequestException.class, () -> transactionsService.convertClientId(clientId));
     }
@@ -1098,11 +1103,11 @@ class TransactionServiceTests {
         );
         /* preconditions */
         Mockito.when(
-                        eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
-                                transactionId.value(),
-                                TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
-                        )
+                eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
+                        transactionId.value(),
+                        TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
                 )
+        )
                 .thenReturn(Mono.just(transactionAuthorizationCompletedEvent));
         Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
                 Mono.just(
@@ -1172,11 +1177,11 @@ class TransactionServiceTests {
         );
         /* preconditions */
         Mockito.when(
-                        eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
-                                transactionId.value(),
-                                TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
-                        )
+                eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
+                        transactionId.value(),
+                        TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
                 )
+        )
                 .thenReturn(Mono.just(transactionAuthorizationCompletedEvent));
         Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
                 Mono.just(
@@ -1243,11 +1248,11 @@ class TransactionServiceTests {
         );
         /* preconditions */
         Mockito.when(
-                        eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
-                                transactionId.value(),
-                                TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
-                        )
+                eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
+                        transactionId.value(),
+                        TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
                 )
+        )
                 .thenReturn(Mono.just(transactionAuthorizationCompletedEvent));
         Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
                 Mono.just(
@@ -1375,11 +1380,11 @@ class TransactionServiceTests {
         Mockito.when(refundRequestProjectionHandler.handle(any()))
                 .thenReturn(Mono.just(refundedRequestedTransactionDocument));
         Mockito.when(
-                        eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
-                                transactionId.value(),
-                                TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
-                        )
+                eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
+                        transactionId.value(),
+                        TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
                 )
+        )
                 .thenReturn(Mono.empty());
         Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
                 Mono.just(
@@ -1503,11 +1508,11 @@ class TransactionServiceTests {
         Mockito.when(closureErrorProjectionHandler.handle(any()))
                 .thenReturn(Mono.just(refundedRequestedTransactionDocument));
         Mockito.when(
-                        eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
-                                transactionId.value(),
-                                TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
-                        )
+                eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
+                        transactionId.value(),
+                        TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
                 )
+        )
                 .thenReturn(Mono.empty());
         Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
                 Mono.just(
@@ -1633,11 +1638,11 @@ class TransactionServiceTests {
         Mockito.when(refundRequestProjectionHandler.handle(any()))
                 .thenReturn(Mono.just(refundedRequestedTransactionDocument));
         Mockito.when(
-                        eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
-                                transactionId.value(),
-                                TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
-                        )
+                eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
+                        transactionId.value(),
+                        TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
                 )
+        )
                 .thenReturn(Mono.empty());
         Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
                 Mono.just(
@@ -1761,11 +1766,11 @@ class TransactionServiceTests {
         Mockito.when(closureSendProjectionHandler.handle(any()))
                 .thenReturn(Mono.just(requestedTransactionDocument));
         Mockito.when(
-                        eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
-                                transactionId.value(),
-                                TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
-                        )
+                eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
+                        transactionId.value(),
+                        TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
                 )
+        )
                 .thenReturn(Mono.empty());
         Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
                 Mono.just(

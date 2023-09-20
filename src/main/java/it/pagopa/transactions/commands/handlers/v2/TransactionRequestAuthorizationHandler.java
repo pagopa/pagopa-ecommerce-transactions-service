@@ -32,7 +32,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
-@Component
+@Component("TransactionRequestAuthorizationHandlerV2")
 @Slf4j
 public class TransactionRequestAuthorizationHandler extends TransactionRequestAuthorizationHandlerCommon
         implements CommandHandler<TransactionRequestAuthorizationCommand, Mono<RequestAuthorizationResponseDto>> {
@@ -81,18 +81,16 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(TransactionActivated.class);
 
-        Mono<Tuple3<String, String, PaymentGateway>> monoPostePay =
-                postepayAuthRequestPipeline(authorizationRequestData)
-                        .map(tuple -> Tuples.of(tuple.getT1(), tuple.getT2(), PaymentGateway.POSTEPAY));
-        Mono<Tuple3<String, String, PaymentGateway>> monoXPay =
-                xpayAuthRequestPipeline(authorizationRequestData)
-                        .map(tuple -> Tuples.of(tuple.getT1(), tuple.getT2(), PaymentGateway.XPAY));
-        Mono<Tuple3<String, String, PaymentGateway>> monoVPOS =
-                vposAuthRequestPipeline(authorizationRequestData)
-                        .map(tuple -> Tuples.of(tuple.getT1(), tuple.getT2(), PaymentGateway.VPOS));
-        Mono<Tuple3<String, String, PaymentGateway>> monoNpgCards =
-                npgAuthRequestPipeline(authorizationRequestData)
-                        .map(tuple -> Tuples.of(tuple.getT1(), tuple.getT2(), PaymentGateway.NPG));
+        Mono<Tuple3<String, String, PaymentGateway>> monoPostePay = postepayAuthRequestPipeline(
+                authorizationRequestData
+        )
+                .map(tuple -> Tuples.of(tuple.getT1(), tuple.getT2(), PaymentGateway.POSTEPAY));
+        Mono<Tuple3<String, String, PaymentGateway>> monoXPay = xpayAuthRequestPipeline(authorizationRequestData)
+                .map(tuple -> Tuples.of(tuple.getT1(), tuple.getT2(), PaymentGateway.XPAY));
+        Mono<Tuple3<String, String, PaymentGateway>> monoVPOS = vposAuthRequestPipeline(authorizationRequestData)
+                .map(tuple -> Tuples.of(tuple.getT1(), tuple.getT2(), PaymentGateway.VPOS));
+        Mono<Tuple3<String, String, PaymentGateway>> monoNpgCards = npgAuthRequestPipeline(authorizationRequestData)
+                .map(tuple -> Tuples.of(tuple.getT1(), tuple.getT2(), PaymentGateway.NPG));
         List<Mono<Tuple3<String, String, PaymentGateway>>> gatewayRequests = List
                 .of(monoPostePay, monoXPay, monoVPOS, monoNpgCards);
 
@@ -114,7 +112,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                     // TODO remove this after the cancellation of the postepay logic
                                     TransactionAuthorizationRequestData.CardBrand cardBrand = null;
                                     if (command.getData()
-                                            .authDetails() instanceof CardAuthRequestDetailsDto detailType) {
+                                            .authDetails()instanceof CardAuthRequestDetailsDto detailType) {
                                         cardBrand = TransactionAuthorizationRequestData.CardBrand
                                                 .valueOf(detailType.getBrand().getValue());
                                     }
@@ -167,5 +165,5 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                 .doOnError(BadRequestException.class, error -> log.error(error.getMessage()))
                 );
     }
-    
+
 }

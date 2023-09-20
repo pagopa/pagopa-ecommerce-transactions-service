@@ -80,7 +80,7 @@ public class TransactionSendClosureHandler implements
             PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
             NodeForPspClient nodeForPspClient,
             @Qualifier(
-                    "transactionClosureRetryQueueAsyncClient"
+                "transactionClosureRetryQueueAsyncClient"
             ) QueueAsyncClient closureRetryQueueAsyncClient,
             @Value("${payment.token.validity}") Integer paymentTokenValidity,
             @Value("${transactions.ecommerce.retry.offset}") Integer softTimeoutOffset,
@@ -109,7 +109,7 @@ public class TransactionSendClosureHandler implements
 
     @Override
     public Mono<Tuple2<Optional<TransactionRefundRequestedEvent>, Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>>> handle(
-            TransactionClosureSendCommand command
+                                                                                                                                                          TransactionClosureSendCommand command
     ) {
         Mono<BaseTransaction> transaction = transactionsUtils.reduceEventsV1(
                 command.getData().transaction().getTransactionId()
@@ -360,24 +360,24 @@ public class TransactionSendClosureHandler implements
                             })
                             .doFinally(response -> {
                                 tx.getPaymentNotices().forEach(el -> {
-                                            log.info("Invalidate cache for RptId : {}", el.rptId().value());
-                                            paymentRequestInfoRedisTemplateWrapper.deleteById(el.rptId().value());
-                                        }
+                                    log.info("Invalidate cache for RptId : {}", el.rptId().value());
+                                    paymentRequestInfoRedisTemplateWrapper.deleteById(el.rptId().value());
+                                }
                                 );
                             });
                 });
     }
 
     private TransactionDetailsDto buildTransactionDetailsDto(
-            TransactionActivatedData transactionActivatedData,
-            AuthRequestDataUtils.AuthRequestData authRequestData,
-            TransactionAuthorizationRequestData transactionAuthorizationRequestData,
-            TransactionAuthorizationCompletedData transactionAuthorizationCompletedData,
-            TransactionClosureSendCommand command,
-            BigDecimal fee,
-            BigDecimal amount,
-            BigDecimal totalAmount,
-            ClosePaymentRequestV2Dto.OutcomeEnum outcomeEnum
+                                                             TransactionActivatedData transactionActivatedData,
+                                                             AuthRequestDataUtils.AuthRequestData authRequestData,
+                                                             TransactionAuthorizationRequestData transactionAuthorizationRequestData,
+                                                             TransactionAuthorizationCompletedData transactionAuthorizationCompletedData,
+                                                             TransactionClosureSendCommand command,
+                                                             BigDecimal fee,
+                                                             BigDecimal amount,
+                                                             BigDecimal totalAmount,
+                                                             ClosePaymentRequestV2Dto.OutcomeEnum outcomeEnum
     ) {
         return new TransactionDetailsDto()
                 .transaction(
@@ -400,14 +400,14 @@ public class TransactionSendClosureHandler implements
     }
 
     private TransactionDto buildTransactionDto(
-            AuthRequestDataUtils.AuthRequestData authRequestData,
-            TransactionAuthorizationRequestData transactionAuthorizationRequestData,
-            TransactionAuthorizationCompletedData transactionAuthorizationCompletedData,
-            TransactionClosureSendCommand command,
-            BigDecimal fee,
-            BigDecimal amount,
-            BigDecimal totalAmount,
-            ClosePaymentRequestV2Dto.OutcomeEnum outcomeEnum
+                                               AuthRequestDataUtils.AuthRequestData authRequestData,
+                                               TransactionAuthorizationRequestData transactionAuthorizationRequestData,
+                                               TransactionAuthorizationCompletedData transactionAuthorizationCompletedData,
+                                               TransactionClosureSendCommand command,
+                                               BigDecimal fee,
+                                               BigDecimal amount,
+                                               BigDecimal totalAmount,
+                                               ClosePaymentRequestV2Dto.OutcomeEnum outcomeEnum
     ) {
         return new TransactionDto()
                 .transactionStatus(
@@ -460,8 +460,8 @@ public class TransactionSendClosureHandler implements
     }
 
     private InfoDto buildInfoDto(
-            TransactionActivatedData transactionActivatedData,
-            TransactionAuthorizationRequestData transactionAuthorizationRequestData
+                                 TransactionActivatedData transactionActivatedData,
+                                 TransactionAuthorizationRequestData transactionAuthorizationRequestData
     ) {
         InfoDto result = new InfoDto()
                 .clientId(transactionActivatedData.getClientId().name())
@@ -485,7 +485,7 @@ public class TransactionSendClosureHandler implements
     }
 
     private ClosePaymentRequestV2Dto.OutcomeEnum authorizationResultToOutcomeV2(
-            AuthorizationResultDto authorizationResult
+                                                                                AuthorizationResultDto authorizationResult
     ) {
         switch (authorizationResult) {
             case OK -> {
@@ -501,8 +501,8 @@ public class TransactionSendClosureHandler implements
     }
 
     private Mono<TransactionRefundRequestedEvent> sendRefundRequestEvent(
-            Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>> closureOutcomeEvent,
-            AuthorizationResultDto authorizationResult
+                                                                         Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>> closureOutcomeEvent,
+                                                                         AuthorizationResultDto authorizationResult
     ) {
         return Mono.just(closureOutcomeEvent)
                 .filter(
@@ -585,7 +585,7 @@ public class TransactionSendClosureHandler implements
     }
 
     private TransactionClosureData.Outcome outcomeV2ToTransactionClosureDataOutcome(
-            ClosePaymentResponseDto.OutcomeEnum closePaymentOutcome
+                                                                                    ClosePaymentResponseDto.OutcomeEnum closePaymentOutcome
     ) {
         switch (closePaymentOutcome) {
             case OK -> {

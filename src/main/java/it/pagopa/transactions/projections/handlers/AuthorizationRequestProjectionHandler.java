@@ -19,12 +19,12 @@ public class AuthorizationRequestProjectionHandler
 
     @Override
     public Mono<Transaction> handle(AuthorizationRequestData data) {
-        return transactionsViewRepository.findById(data.transaction().getTransactionId().value())
+        return transactionsViewRepository.findById(data.transactionId().value())
                 .cast(it.pagopa.ecommerce.commons.documents.v1.Transaction.class)
                 .switchIfEmpty(
                         Mono.error(
                                 new TransactionNotFoundException(
-                                        data.transaction().getTransactionId().value()
+                                        data.transactionId().value()
                                 )
                         )
                 )

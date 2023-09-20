@@ -80,8 +80,8 @@ class TransactionRequestAuthorizizationHandlerTest {
     private ArgumentCaptor<TransactionEvent<TransactionAuthorizationRequestData>> eventStoreCaptor;
 
     private static final Map<CardAuthRequestDetailsDto.BrandEnum, URI> brandLogoMapping = Arrays.stream(
-                    CardAuthRequestDetailsDto.BrandEnum.values()
-            )
+            CardAuthRequestDetailsDto.BrandEnum.values()
+    )
             .collect(
                     Collectors.toUnmodifiableMap(
                             Function.identity(),
@@ -152,8 +152,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 false
                         )
                 ), // TODO
-                // TRANSFER
-                // LIST
+                   // TRANSFER
+                   // LIST
                 email,
                 null,
                 null,
@@ -170,7 +170,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),
@@ -232,8 +234,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 false
                         )
                 ), // TODO
-                // TRANSFER
-                // LIST
+                   // TRANSFER
+                   // LIST
                 email,
                 null,
                 null,
@@ -250,7 +252,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),
@@ -314,8 +318,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 false
                         )
                 ), // TODO
-                // TRANSFER
-                // LIST
+                   // TRANSFER
+                   // LIST
                 email,
                 null,
                 null,
@@ -332,7 +336,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),
@@ -410,8 +416,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 false
                         )
                 ), // TODO
-                // TRANSFER
-                // LIST
+                   // TRANSFER
+                   // LIST
                 email,
                 null,
                 null,
@@ -428,7 +434,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),
@@ -506,8 +514,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 false
                         )
                 ), // TODO
-                // TRANSFER
-                // LIST
+                   // TRANSFER
+                   // LIST
                 email,
                 null,
                 null,
@@ -524,7 +532,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),
@@ -608,8 +618,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 false
                         )
                 ), // TODO
-                // TRANSFER
-                // LIST
+                   // TRANSFER
+                   // LIST
                 email,
                 null,
                 null,
@@ -626,7 +636,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),
@@ -694,8 +706,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 false
                         )
                 ), // TODO
-                // TRANSFER
-                // LIST
+                   // TRANSFER
+                   // LIST
                 email,
                 faultCode,
                 faultCodeString,
@@ -712,7 +724,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),
@@ -773,8 +787,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 false
                         )
                 ), // TODO
-                // TRANSFER
-                // LIST
+                   // TRANSFER
+                   // LIST
                 email,
                 faultCode,
                 faultCodeString,
@@ -791,7 +805,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),
@@ -859,8 +875,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 false
                         )
                 ), // TODO
-                // TRANSFER
-                // LIST
+                   // TRANSFER
+                   // LIST
                 email,
                 null,
                 null,
@@ -876,7 +892,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .pspId("PSP_CODE")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),
@@ -955,8 +973,8 @@ class TransactionRequestAuthorizizationHandlerTest {
                                 false
                         )
                 ), // TODO
-                // TRANSFER
-                // LIST
+                   // TRANSFER
+                   // LIST
                 email,
                 null,
                 null,
@@ -976,7 +994,9 @@ class TransactionRequestAuthorizizationHandlerTest {
         String sessionId = "sessionId";
         String orderId = "orderId";
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),

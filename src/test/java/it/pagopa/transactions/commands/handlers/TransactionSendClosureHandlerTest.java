@@ -165,23 +165,23 @@ class TransactionSendClosureHandlerTest {
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 paymentNotices.stream().map(
-                                paymentNotice -> new PaymentNotice(
-                                        new PaymentToken(paymentNotice.getPaymentToken()),
-                                        new RptId(paymentNotice.getRptId()),
-                                        new TransactionAmount(paymentNotice.getAmount()),
-                                        new TransactionDescription(paymentNotice.getDescription()),
-                                        new PaymentContextCode(paymentNotice.getPaymentContextCode()),
-                                        List.of(
-                                                new PaymentTransferInfo(
-                                                        paymentNotice.getRptId().substring(0, 11),
-                                                        false,
-                                                        100,
-                                                        null
-                                                )
-                                        ),
-                                        paymentNotice.isAllCCP()
-                                )
+                        paymentNotice -> new PaymentNotice(
+                                new PaymentToken(paymentNotice.getPaymentToken()),
+                                new RptId(paymentNotice.getRptId()),
+                                new TransactionAmount(paymentNotice.getAmount()),
+                                new TransactionDescription(paymentNotice.getDescription()),
+                                new PaymentContextCode(paymentNotice.getPaymentContextCode()),
+                                List.of(
+                                        new PaymentTransferInfo(
+                                                paymentNotice.getRptId().substring(0, 11),
+                                                false,
+                                                100,
+                                                null
+                                        )
+                                ),
+                                paymentNotice.isAllCCP()
                         )
+                )
                         .toList(),
                 email,
                 faultCode,
@@ -1219,7 +1219,12 @@ class TransactionSendClosureHandlerTest {
                 .verifyComplete();
 
         Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
-                .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT.toString())));
+                .save(
+                        argThat(
+                                e -> e.getEventCode()
+                                        .equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT.toString())
+                        )
+                );
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
                 .sendMessageWithResponse(
                         argThat(
@@ -1499,7 +1504,12 @@ class TransactionSendClosureHandlerTest {
                 .verifyComplete();
 
         Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
-                .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT.toString())));
+                .save(
+                        argThat(
+                                e -> e.getEventCode()
+                                        .equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT.toString())
+                        )
+                );
 
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
                 .sendMessageWithResponse(
@@ -1970,8 +1980,8 @@ class TransactionSendClosureHandlerTest {
                                                                 .getPaymentTypeCode()
                                                 ).brandLogo(
                                                         Stream.ofNullable(
-                                                                        authorizationRequestedEvent.getData().getLogo()
-                                                                )
+                                                                authorizationRequestedEvent.getData().getLogo()
+                                                        )
                                                                 .filter(logo -> logo != null)
                                                                 .map(l -> l.toString())
                                                                 .findFirst()
@@ -2210,8 +2220,8 @@ class TransactionSendClosureHandlerTest {
                                                                 .getPaymentTypeCode()
                                                 ).brandLogo(
                                                         Stream.ofNullable(
-                                                                        authorizationRequestedEvent.getData().getLogo()
-                                                                )
+                                                                authorizationRequestedEvent.getData().getLogo()
+                                                        )
                                                                 .filter(logo -> logo != null)
                                                                 .map(l -> l.toString())
                                                                 .findFirst()
@@ -2262,7 +2272,12 @@ class TransactionSendClosureHandlerTest {
 
         // check that no closure error event is saved and sent to event dispatcher
         Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
-                .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT.toString())));
+                .save(
+                        argThat(
+                                e -> e.getEventCode()
+                                        .equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT.toString())
+                        )
+                );
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
                 .sendMessageWithResponse(
                         argThat(
@@ -2548,7 +2563,12 @@ class TransactionSendClosureHandlerTest {
                 .verifyComplete();
 
         Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
-                .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT.toString())));
+                .save(
+                        argThat(
+                                e -> e.getEventCode()
+                                        .equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT.toString())
+                        )
+                );
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
                 .sendMessageWithResponse(
                         argThat(
@@ -2733,7 +2753,7 @@ class TransactionSendClosureHandlerTest {
                                                 .authorizationCode(
                                                         ((OutcomeXpayGatewayDto) updateAuthorizationRequest
                                                                 .getOutcomeGateway())
-                                                                .getAuthorizationCode()
+                                                                        .getAuthorizationCode()
                                                 )
                                                 .creationDate(
                                                         ((BaseTransactionWithPaymentToken) transaction)
@@ -2816,7 +2836,12 @@ class TransactionSendClosureHandlerTest {
                 .verifyComplete();
 
         Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
-                .save(argThat(e -> e.getEventCode().equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT.toString())));
+                .save(
+                        argThat(
+                                e -> e.getEventCode()
+                                        .equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT.toString())
+                        )
+                );
         Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
                 .sendMessageWithResponse(
                         argThat(
@@ -3036,7 +3061,7 @@ class TransactionSendClosureHandlerTest {
                 .sendMessageWithResponse(
                         argThat(
                                 (
-                                        QueueEvent<TransactionRefundRequestedEvent> e
+                                 QueueEvent<TransactionRefundRequestedEvent> e
                                 ) -> e.event().getTransactionId().equals(transactionId.value()) && e.event().getData()
                                         .getStatusBeforeRefunded().equals(TransactionStatusDto.CLOSED)
                         ),
@@ -3257,7 +3282,7 @@ class TransactionSendClosureHandlerTest {
                 .sendMessageWithResponse(
                         argThat(
                                 (
-                                        QueueEvent<TransactionRefundRequestedEvent> e
+                                 QueueEvent<TransactionRefundRequestedEvent> e
                                 ) -> e.event().getTransactionId().equals(transactionId.value()) && e.event().getData()
                                         .getStatusBeforeRefunded().equals(TransactionStatusDto.CLOSURE_ERROR)
                         ),

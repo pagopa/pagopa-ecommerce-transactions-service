@@ -3,6 +3,8 @@ package it.pagopa.transactions.utils;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
+import it.pagopa.ecommerce.commons.domain.Confidential;
+import it.pagopa.ecommerce.commons.domain.Email;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
@@ -95,7 +97,9 @@ public class TransactionsUtils {
         );
     }
 
-    public Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction> reduceEventsV2(TransactionId transactionId) {
+    public Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction> reduceEventsV2(
+                                                                                            TransactionId transactionId
+    ) {
         return reduceEvent(
                 transactionId,
                 new it.pagopa.ecommerce.commons.domain.v2.EmptyTransaction(),
@@ -104,17 +108,20 @@ public class TransactionsUtils {
         );
     }
 
-
-    public <A, T> Mono<T> reduceEvent(TransactionId transactionId, A initialValue, BiFunction<A, ? super BaseTransactionEvent<?>, A> accumulator, Class<T> clazz) {
+    public <A, T> Mono<T> reduceEvent(
+                                      TransactionId transactionId,
+                                      A initialValue,
+                                      BiFunction<A, ? super BaseTransactionEvent<?>, A> accumulator,
+                                      Class<T> clazz
+    ) {
         return eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value())
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())))
                 .reduce(initialValue, accumulator)
                 .cast(clazz);
     }
 
-
     public it.pagopa.generated.transactions.server.model.TransactionStatusDto convertEnumeration(
-            it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status
+                                                                                                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status
     ) {
         return transactionStatusLookupMap.get(status);
     }
@@ -150,12 +157,18 @@ public class TransactionsUtils {
                 ).sum();
     }
 
-    public Boolean isAllCcp(BaseTransactionView baseTransactionView, int idx) {
+    public Boolean isAllCcp(
+                            BaseTransactionView baseTransactionView,
+                            int idx
+    ) {
         List<PaymentNotice> paymentNotices = getPaymentNotices(baseTransactionView);
         return paymentNotices.get(idx).isAllCCP();
     }
 
-    public String getRptId(BaseTransactionView baseTransactionView, int idx) {
+    public String getRptId(
+                           BaseTransactionView baseTransactionView,
+                           int idx
+    ) {
         List<PaymentNotice> paymentNotices = getPaymentNotices(baseTransactionView);
         return paymentNotices.get(idx).getRptId();
     }
@@ -164,7 +177,7 @@ public class TransactionsUtils {
         return switch (baseTransactionView) {
             case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getPaymentNotices();
             case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getPaymentNotices();
-            default -> throw new RuntimeException("OPS");
+            default -> throw new RuntimeException("OPS");//TODO refactoring
         };
     }
 
@@ -172,7 +185,15 @@ public class TransactionsUtils {
         return switch (baseTransactionView) {
             case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getClientId().toString();
             case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getClientId().toString();
-            default -> throw new RuntimeException("OPS");
+            default -> throw new RuntimeException("OPS");//TODO refactoring
+        };
+    }
+
+    public Confidential<Email> getEmail(BaseTransactionView baseTransactionView) {
+        return switch (baseTransactionView) {
+            case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getEmail();
+            case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getEmail();
+            default -> throw new RuntimeException("OPS");//TODO refactoring
         };
     }
 

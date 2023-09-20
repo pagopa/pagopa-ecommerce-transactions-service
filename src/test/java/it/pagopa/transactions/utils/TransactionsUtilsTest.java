@@ -52,7 +52,7 @@ class TransactionsUtilsTest {
                 .expectErrorMatches(
                         ex -> ex instanceof TransactionNotFoundException transactionNotFoundException
                                 && transactionNotFoundException.getPaymentToken()
-                                .equals(transactionId.value().toString())
+                                        .equals(transactionId.value().toString())
                 )
                 .verify();
     }
