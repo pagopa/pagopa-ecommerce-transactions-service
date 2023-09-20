@@ -24,7 +24,6 @@ import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.data.ClosureSendData;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
 import it.pagopa.transactions.commands.handlers.*;
-import it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.projections.handlers.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -55,7 +54,7 @@ public class TransactionsService {
     @Autowired
     private it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler requestAuthHandlerV1;
     @Autowired
-    private TransactionRequestAuthorizationHandler requestAuthHandlerV2;
+    private it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler requestAuthHandlerV2;
 
     @Autowired
     private TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandler;
