@@ -469,18 +469,7 @@ public class TransactionsService {
                                         );
                                 default -> throw new RuntimeException("OPS");
                             };
-                            return authorizationHandler
-                                    .doOnNext(
-                                            res -> log.info(
-                                                    "Requested authorization for transaction: {}",
-                                                    transactionDocument.getTransactionId()
-                                            )
-                                    )
-                                    .flatMap(
-                                            res -> authorizationProjectionHandlerV1
-                                                    .handle(authorizationData)
-                                                    .thenReturn(res)
-                                    );
+                            return authorizationHandler;
                         }
                 );
     }
