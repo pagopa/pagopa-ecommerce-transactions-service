@@ -17,13 +17,11 @@ import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.*;
-import it.pagopa.transactions.commands.handlers.v1.TransactionUpdateAuthorizationHandler;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException;
 import it.pagopa.transactions.exceptions.TransactionAmountMismatchException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.*;
-import it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.JwtTokenUtils;
@@ -39,6 +37,7 @@ import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -63,6 +62,10 @@ import static org.mockito.Mockito.*;
             it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler.class,
             it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler.class,
+            it.pagopa.transactions.commands.handlers.v1.TransactionUpdateAuthorizationHandler.class,
+            it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler.class,
+            it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler.class,
+            it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler.class,
             TransactionsEventStoreRepository.class,
             TransactionsActivationProjectionHandler.class,
             CancellationRequestProjectionHandler.class,
@@ -100,13 +103,19 @@ class TransactionServiceTests {
     private it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandlerV2;
 
     @MockBean
-    private TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandler;
+    private it.pagopa.transactions.commands.handlers.v1.TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV1;
+
+    @MockBean
+    private it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV2;
 
     @MockBean
     private TransactionSendClosureHandler transactionSendClosureHandler;
 
     @MockBean
-    private AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandler;
+    private it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV1;
+
+    @MockBean
+    private it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV2;
 
     @MockBean
     private ClosureSendProjectionHandler closureSendProjectionHandler;
@@ -582,10 +591,10 @@ class TransactionServiceTests {
 
         /* preconditions */
 
-        Mockito.when(transactionUpdateAuthorizationHandler.handle(any()))
+        Mockito.when(transactionUpdateAuthorizationHandlerV1.handle(any()))
                 .thenReturn(Mono.just(event));
 
-        Mockito.when(authorizationUpdateProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
+        Mockito.when(authorizationUpdateProjectionHandlerV1.handle(any())).thenReturn(Mono.just(transaction));
 
         Mockito.when(transactionSendClosureHandler.handle(any()))
                 .thenReturn(Mono.just(Tuples.of(Optional.empty(), Either.right(closureSentEvent))));
@@ -599,7 +608,7 @@ class TransactionServiceTests {
                 )
         )
                 .thenReturn(Mono.empty());
-        Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
+        Mockito.when(transactionsUtils.reduceEvents(any(), any(), any(), any())).thenReturn(
                 Mono.just(
                         TransactionTestUtils.transactionWithRequestedAuthorization(
                                 TransactionTestUtils.transactionAuthorizationRequestedEvent(),
@@ -607,6 +616,8 @@ class TransactionServiceTests {
                         )
                 )
         );
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
+                .thenReturn(Flux.empty());
         when(transactionsUtils.convertEnumeration(any())).thenCallRealMethod();
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsService
@@ -629,8 +640,12 @@ class TransactionServiceTests {
                 .timestampOperation(OffsetDateTime.now());
 
         /* preconditions */
-        Mockito.when(transactionsUtils.reduceEventsV1(transactionId))
+        Mockito.when(transactionsUtils.reduceEvents(any(), any(), any(), any()))
                 .thenReturn(Mono.error(new TransactionNotFoundException("")));
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
+                .thenReturn(Flux.empty());
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
+                        .thenReturn(Flux.empty());
         Mockito.when(
                 eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
                         transactionId.value(),
@@ -1127,11 +1142,13 @@ class TransactionServiceTests {
                 )
         )
                 .thenReturn(Mono.just(transactionAuthorizationCompletedEvent));
-        Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
+        Mockito.when(transactionsUtils.reduceEvents(any(), any(), any(), any())).thenReturn(
                 Mono.just(
                         baseTransaction
                 )
         );
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
+                .thenReturn(Flux.empty());
         when(transactionsUtils.convertEnumeration(any()))
                 .thenCallRealMethod();
         /* test */
@@ -1139,8 +1156,8 @@ class TransactionServiceTests {
                 .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
-        verify(transactionUpdateAuthorizationHandler, times(0)).handle(any());
-        verify(authorizationUpdateProjectionHandler, times(0)).handle(any());
+        verify(transactionUpdateAuthorizationHandlerV1, times(0)).handle(any());
+        verify(authorizationUpdateProjectionHandlerV1, times(0)).handle(any());
         verify(transactionSendClosureHandler, times(0)).handle(any());
         verify(closureSendProjectionHandler, times(0)).handle(any());
 
@@ -1201,11 +1218,13 @@ class TransactionServiceTests {
                 )
         )
                 .thenReturn(Mono.just(transactionAuthorizationCompletedEvent));
-        Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
+        Mockito.when(transactionsUtils.reduceEvents(any(), any(), any(), any())).thenReturn(
                 Mono.just(
                         baseTransaction
                 )
         );
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
+                .thenReturn(Flux.empty());
         when(transactionsUtils.convertEnumeration(any()))
                 .thenCallRealMethod();
         /* test */
@@ -1213,8 +1232,8 @@ class TransactionServiceTests {
                 .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
-        verify(transactionUpdateAuthorizationHandler, times(0)).handle(any());
-        verify(authorizationUpdateProjectionHandler, times(0)).handle(any());
+        verify(transactionUpdateAuthorizationHandlerV1, times(0)).handle(any());
+        verify(authorizationUpdateProjectionHandlerV1, times(0)).handle(any());
         verify(transactionSendClosureHandler, times(0)).handle(any());
         verify(closureSendProjectionHandler, times(0)).handle(any());
 
@@ -1272,11 +1291,13 @@ class TransactionServiceTests {
                 )
         )
                 .thenReturn(Mono.just(transactionAuthorizationCompletedEvent));
-        Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
+        Mockito.when(transactionsUtils.reduceEvents(any(), any(), any(), any())).thenReturn(
                 Mono.just(
                         baseTransaction
                 )
         );
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
+                .thenReturn(Flux.empty());
         when(transactionsUtils.convertEnumeration(any()))
                 .thenCallRealMethod();
         /* test */
@@ -1284,8 +1305,8 @@ class TransactionServiceTests {
                 .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
-        verify(transactionUpdateAuthorizationHandler, times(0)).handle(any());
-        verify(authorizationUpdateProjectionHandler, times(0)).handle(any());
+        verify(transactionUpdateAuthorizationHandlerV1, times(0)).handle(any());
+        verify(authorizationUpdateProjectionHandlerV1, times(0)).handle(any());
         verify(transactionSendClosureHandler, times(0)).handle(any());
         verify(closureSendProjectionHandler, times(0)).handle(any());
 
@@ -1387,10 +1408,10 @@ class TransactionServiceTests {
 
         /* preconditions */
 
-        Mockito.when(transactionUpdateAuthorizationHandler.handle(any()))
+        Mockito.when(transactionUpdateAuthorizationHandlerV1.handle(any()))
                 .thenReturn(Mono.just(event));
 
-        Mockito.when(authorizationUpdateProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
+        Mockito.when(authorizationUpdateProjectionHandlerV1.handle(any())).thenReturn(Mono.just(transaction));
 
         Mockito.when(transactionSendClosureHandler.handle(any()))
                 .thenReturn(Mono.just(Tuples.of(Optional.of(refundRequestedEvent), Either.right(null))));
@@ -1404,7 +1425,7 @@ class TransactionServiceTests {
                 )
         )
                 .thenReturn(Mono.empty());
-        Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
+        Mockito.when(transactionsUtils.reduceEvents(any(), any(), any(), any())).thenReturn(
                 Mono.just(
                         TransactionTestUtils.transactionWithRequestedAuthorization(
                                 TransactionTestUtils.transactionAuthorizationRequestedEvent(),
@@ -1412,6 +1433,8 @@ class TransactionServiceTests {
                         )
                 )
         );
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
+                .thenReturn(Flux.empty());
         when(transactionsUtils.convertEnumeration(any()))
                 .thenCallRealMethod();
         /* test */
@@ -1515,10 +1538,10 @@ class TransactionServiceTests {
 
         /* preconditions */
 
-        Mockito.when(transactionUpdateAuthorizationHandler.handle(any()))
+        Mockito.when(transactionUpdateAuthorizationHandlerV1.handle(any()))
                 .thenReturn(Mono.just(event));
 
-        Mockito.when(authorizationUpdateProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
+        Mockito.when(authorizationUpdateProjectionHandlerV1.handle(any())).thenReturn(Mono.just(transaction));
 
         Mockito.when(transactionSendClosureHandler.handle(any()))
                 .thenReturn(Mono.just(Tuples.of(Optional.empty(), Either.left(closureErrorSentEvent))));
@@ -1532,7 +1555,7 @@ class TransactionServiceTests {
                 )
         )
                 .thenReturn(Mono.empty());
-        Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
+        Mockito.when(transactionsUtils.reduceEvents(any(), any(), any(), any())).thenReturn(
                 Mono.just(
                         TransactionTestUtils.transactionWithRequestedAuthorization(
                                 TransactionTestUtils.transactionAuthorizationRequestedEvent(),
@@ -1540,6 +1563,8 @@ class TransactionServiceTests {
                         )
                 )
         );
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
+                .thenReturn(Flux.empty());
         when(transactionsUtils.convertEnumeration(any()))
                 .thenCallRealMethod();
         /* test */
@@ -1645,10 +1670,10 @@ class TransactionServiceTests {
 
         /* preconditions */
 
-        Mockito.when(transactionUpdateAuthorizationHandler.handle(any()))
+        Mockito.when(transactionUpdateAuthorizationHandlerV1.handle(any()))
                 .thenReturn(Mono.just(event));
 
-        Mockito.when(authorizationUpdateProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
+        Mockito.when(authorizationUpdateProjectionHandlerV1.handle(any())).thenReturn(Mono.just(transaction));
 
         Mockito.when(transactionSendClosureHandler.handle(any()))
                 .thenReturn(Mono.just(Tuples.of(Optional.of(refundRequestedEvent), Either.left(null))));
@@ -1662,7 +1687,7 @@ class TransactionServiceTests {
                 )
         )
                 .thenReturn(Mono.empty());
-        Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
+        Mockito.when(transactionsUtils.reduceEvents(any(), any(), any(), any())).thenReturn(
                 Mono.just(
                         TransactionTestUtils.transactionWithRequestedAuthorization(
                                 TransactionTestUtils.transactionAuthorizationRequestedEvent(),
@@ -1670,6 +1695,10 @@ class TransactionServiceTests {
                         )
                 )
         );
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
+                .thenReturn(Flux.empty());
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
+                .thenReturn(Flux.empty());
         when(transactionsUtils.convertEnumeration(any()))
                 .thenCallRealMethod();
         /* test */
@@ -1773,10 +1802,10 @@ class TransactionServiceTests {
 
         /* preconditions */
 
-        Mockito.when(transactionUpdateAuthorizationHandler.handle(any()))
+        Mockito.when(transactionUpdateAuthorizationHandlerV1.handle(any()))
                 .thenReturn(Mono.just(event));
 
-        Mockito.when(authorizationUpdateProjectionHandler.handle(any())).thenReturn(Mono.just(transaction));
+        Mockito.when(authorizationUpdateProjectionHandlerV1.handle(any())).thenReturn(Mono.just(transaction));
 
         Mockito.when(transactionSendClosureHandler.handle(any()))
                 .thenReturn(Mono.just(Tuples.of(Optional.empty(), Either.right(closureSentEvent))));
@@ -1790,7 +1819,7 @@ class TransactionServiceTests {
                 )
         )
                 .thenReturn(Mono.empty());
-        Mockito.when(transactionsUtils.reduceEventsV1(transactionId)).thenReturn(
+        Mockito.when(transactionsUtils.reduceEvents(any(), any(), any(), any())).thenReturn(
                 Mono.just(
                         TransactionTestUtils.transactionWithRequestedAuthorization(
                                 TransactionTestUtils.transactionAuthorizationRequestedEvent(),
@@ -1798,6 +1827,10 @@ class TransactionServiceTests {
                         )
                 )
         );
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
+                .thenReturn(Flux.empty());
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
+                .thenReturn(Flux.empty());
         when(transactionsUtils.convertEnumeration(any()))
                 .thenCallRealMethod();
         /* test */

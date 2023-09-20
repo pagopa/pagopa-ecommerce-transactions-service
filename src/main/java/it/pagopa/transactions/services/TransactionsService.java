@@ -528,7 +528,9 @@ public class TransactionsService {
                 .cast(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction.class)
                 .flatMap(t -> this.updateTransactionAuthorizationStatusV2(t, updateAuthorizationRequestDto));
 
-        return Mono.firstWithValue(v1Info, v2Info);
+        return v1Info
+                .switchIfEmpty(v2Info)
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())));
     }
 
     private Mono<TransactionInfoDto> updateTransactionAuthorizationStatusV1(
@@ -747,7 +749,6 @@ public class TransactionsService {
                                 ).toList()
                 )
                 .status(transactionsUtils.convertEnumeration(baseTransaction.getStatus()));
-
     }
 
     private TransactionInfoDto buildTransactionInfoDtoV2(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction baseTransaction) {
