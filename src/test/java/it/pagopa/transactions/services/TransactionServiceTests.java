@@ -342,6 +342,10 @@ class TransactionServiceTests {
         Mockito.when(transactionRequestAuthorizationHandler.handle(commandArgumentCaptor.capture()))
                 .thenReturn(Mono.just(requestAuthorizationResponse));
 
+        Mockito.when(transactionsUtils.getPaymentNotices(any())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getTransactionTotalAmount(any())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getRptId(any(), anyInt())).thenCallRealMethod();
+
         /* test */
         RequestAuthorizationResponseDto postePayAuthorizationResponse = transactionsService
                 .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest).block();
@@ -432,6 +436,10 @@ class TransactionServiceTests {
                 .thenReturn(Mono.just(xPayAuthResponseEntityDto));
 
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
+
+        Mockito.when(transactionsUtils.getPaymentNotices(any())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getTransactionTotalAmount(any())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getRptId(any(), anyInt())).thenCallRealMethod();
 
         Mockito.when(transactionRequestAuthorizationHandler.handle(commandArgumentCaptor.capture()))
                 .thenReturn(Mono.just(requestAuthorizationResponse));
@@ -993,6 +1001,10 @@ class TransactionServiceTests {
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.empty());
 
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
+
+        Mockito.when(transactionsUtils.getPaymentNotices(any())).thenCallRealMethod();
+
+        Mockito.when(transactionsUtils.getTransactionTotalAmount(any())).thenCallRealMethod();
 
         Mockito.when(transactionRequestAuthorizationHandler.handle(any()))
                 .thenReturn(Mono.just(requestAuthorizationResponse));
