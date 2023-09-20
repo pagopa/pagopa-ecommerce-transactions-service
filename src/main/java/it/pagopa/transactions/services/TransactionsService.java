@@ -23,7 +23,10 @@ import it.pagopa.transactions.commands.data.AddUserReceiptData;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.data.ClosureSendData;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
-import it.pagopa.transactions.commands.handlers.*;
+import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
+import it.pagopa.transactions.commands.handlers.TransactionRequestUserReceiptHandler;
+import it.pagopa.transactions.commands.handlers.TransactionSendClosureHandler;
+import it.pagopa.transactions.commands.handlers.TransactionUserCancelHandler;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.projections.handlers.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -35,6 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
@@ -57,7 +61,12 @@ public class TransactionsService {
     private it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler requestAuthHandlerV2;
 
     @Autowired
-    private TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandler;
+    @Qualifier(it.pagopa.transactions.commands.handlers.v1.TransactionUpdateAuthorizationHandler.QUALIFIER_NAME)
+    private it.pagopa.transactions.commands.handlers.v1.TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV1;
+
+    @Autowired
+    @Qualifier(it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler.QUALIFIER_NAME)
+    private it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV2;
 
     @Autowired
     private TransactionRequestUserReceiptHandler transactionRequestUserReceiptHandler;
@@ -77,7 +86,12 @@ public class TransactionsService {
     private it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler authorizationProjectionHandlerV2;
 
     @Autowired
-    private AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandler;
+    @Qualifier(it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler.QUALIFIER_NAME)
+    private it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV1;
+
+    @Autowired
+    @Qualifier(it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler.QUALIFIER_NAME)
+    private it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV2;
 
     @Autowired
     private TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandler;
@@ -111,6 +125,9 @@ public class TransactionsService {
 
     @Autowired
     private TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> eventStoreRepository;
+
+    @Autowired
+    private TransactionsEventStoreRepository<Object> eventsRepository;
 
     @Value("${payment.token.validity}")
     private Integer paymentTokenValidity;
@@ -483,8 +500,55 @@ public class TransactionsService {
 
         TransactionId transactionId = new TransactionId(decodedTransactionId);
         log.info("decoded transaction id: {}", transactionId.value());
-        Mono<BaseTransaction> baseTransaction = transactionsUtils.reduceEventsV1(transactionId);
-        return wasTransactionAuthorized(transactionId)
+
+        Flux<BaseTransactionEvent<Object>> events = eventsRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value())
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())));
+
+        Mono<it.pagopa.ecommerce.commons.domain.v1.Transaction> transactionV1 = transactionsUtils.reduceEvents(
+                        events,
+                        new it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction(),
+                        it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent,
+                        it.pagopa.ecommerce.commons.domain.v1.Transaction.class
+                )
+                .filter(t -> !(t instanceof it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction));
+
+        Mono<it.pagopa.ecommerce.commons.domain.v2.Transaction> transactionV2 = transactionsUtils.reduceEvents(
+                        events,
+                        new it.pagopa.ecommerce.commons.domain.v2.EmptyTransaction(),
+                        it.pagopa.ecommerce.commons.domain.v2.Transaction::applyEvent,
+                        it.pagopa.ecommerce.commons.domain.v2.Transaction.class
+                )
+                .filter(t -> !(t instanceof it.pagopa.ecommerce.commons.domain.v2.EmptyTransaction));
+
+        Mono<TransactionInfoDto> v1Info = transactionV1
+                .cast(it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction.class)
+                .flatMap(t -> this.updateTransactionAuthorizationStatusV1(t, updateAuthorizationRequestDto));
+
+        Mono<TransactionInfoDto> v2Info = transactionV2
+                .cast(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction.class)
+                .flatMap(t -> this.updateTransactionAuthorizationStatusV2(t, updateAuthorizationRequestDto));
+
+        return Mono.firstWithValue(v1Info, v2Info);
+    }
+
+    private Mono<TransactionInfoDto> updateTransactionAuthorizationStatusV1(
+            it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction transaction,
+            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+    ) {
+        UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
+                transaction.getTransactionId(),
+                transaction.getStatus().toString(),
+                updateAuthorizationRequestDto
+        );
+
+        // FIXME Handle multiple rtpId
+        TransactionUpdateAuthorizationCommand transactionUpdateAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
+                transaction.getPaymentNotices().get(0).rptId(),
+                updateAuthorizationStatusData
+        );
+
+        Mono<it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction> baseTransaction = Mono.just(transaction);
+        return wasTransactionAuthorized(transaction.getTransactionId())
                 .<Either<TransactionInfoDto, Mono<BaseTransaction>>>flatMap(alreadyAuthorized -> {
                     if (Boolean.FALSE.equals(alreadyAuthorized)) {
                         return Mono.just(baseTransaction).map(Either::right);
@@ -495,7 +559,7 @@ public class TransactionsService {
                                             "Transaction authorization outcome already received. Transaction status: {}",
                                             trx.getStatus()
                                     );
-                                    return buildTransactionInfoDto(trx);
+                                    return buildTransactionInfoDtoV1(trx);
                                 }
                         ).map(Either::left);
                     }
@@ -505,30 +569,46 @@ public class TransactionsService {
                                 Mono::just,
                                 tx -> baseTransaction
                                         .flatMap(
-                                                transaction -> updateTransactionAuthorizationStatus(
-                                                        transaction,
-                                                        updateAuthorizationRequestDto
+                                                t -> transactionUpdateAuthorizationHandlerV1
+                                                        .handle(transactionUpdateAuthorizationCommand)
+                                                        .cast(it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedEvent.class)
+                                                        .doOnNext(
+                                                                authorizationStatusUpdatedEvent -> log.info(
+                                                                        "Requested authorization update for rptId: {}",
+                                                                        transaction.getPaymentNotices().get(0).rptId()
+                                                                )
+                                                        )
+                                                        .flatMap(
+                                                                authorizationStatusUpdatedEvent -> authorizationUpdateProjectionHandlerV1
+                                                                        .handle(authorizationStatusUpdatedEvent)
+                                                        )
+                                        )
+                                        .doOnError(AlreadyProcessedException.class,
+                                                t -> log.error(
+                                                        "Error: requesting authorization update for transaction in state {}",
+                                                        baseTransaction
                                                 )
                                         )
                                         .cast(BaseTransactionWithPaymentToken.class)
                                         .flatMap(
-                                                transaction -> closePayment(
-                                                        transaction,
+                                                t -> closePayment(
+                                                        t,
                                                         updateAuthorizationRequestDto
                                                 )
                                         )
-                                        .map(this::buildTransactionInfoDto)
+                                        .map(this::buildTransactionInfoDtoV1)
                         )
                 );
 
     }
 
-    private Mono<TransactionActivated> updateTransactionAuthorizationStatus(
-            BaseTransaction transaction,
+    private Mono<TransactionInfoDto> updateTransactionAuthorizationStatusV2(
+            it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction,
             UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getStatus().toString(),
                 updateAuthorizationRequestDto
         );
 
@@ -538,17 +618,57 @@ public class TransactionsService {
                 updateAuthorizationStatusData
         );
 
-        return transactionUpdateAuthorizationHandler
-                .handle(transactionUpdateAuthorizationCommand)
-                .doOnNext(
-                        authorizationStatusUpdatedEvent -> log.info(
-                                "Requested authorization update for rptId: {}",
-                                transaction.getPaymentNotices().get(0).rptId()
-                        )
-                )
+        Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction> baseTransaction = Mono.just(transaction);
+        return wasTransactionAuthorized(transaction.getTransactionId())
+                .<Either<TransactionInfoDto, Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction>>>flatMap(alreadyAuthorized -> {
+                    if (Boolean.FALSE.equals(alreadyAuthorized)) {
+                        return Mono.just(baseTransaction).map(Either::right);
+                    } else {
+                        return baseTransaction.map(
+                                trx -> {
+                                    log.info(
+                                            "Transaction authorization outcome already received. Transaction status: {}",
+                                            trx.getStatus()
+                                    );
+                                    return buildTransactionInfoDtoV2(trx);
+                                }
+                        ).map(Either::left);
+                    }
+                })
                 .flatMap(
-                        authorizationStatusUpdatedEvent -> authorizationUpdateProjectionHandler
-                                .handle(authorizationStatusUpdatedEvent)
+                        either -> either.fold(
+                                Mono::just,
+                                tx -> baseTransaction
+                                        .flatMap(
+                                                t -> transactionUpdateAuthorizationHandlerV2
+                                                        .handle(transactionUpdateAuthorizationCommand)
+                                                        .cast(it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent.class)
+                                                        .doOnNext(
+                                                                authorizationStatusUpdatedEvent -> log.info(
+                                                                        "Requested authorization update for rptId: {}",
+                                                                        transaction.getPaymentNotices().get(0).rptId()
+                                                                )
+                                                        )
+                                                        .flatMap(
+                                                                authorizationStatusUpdatedEvent -> authorizationUpdateProjectionHandlerV2
+                                                                        .handle(authorizationStatusUpdatedEvent)
+                                                        )
+                                        )
+                                        .doOnError(AlreadyProcessedException.class,
+                                                t -> log.error(
+                                                        "Error: requesting authorization update for transaction in state {}",
+                                                        baseTransaction
+                                                )
+                                        )
+                                        .cast(BaseTransactionWithPaymentToken.class)
+                                        .flatMap(
+                                                t -> closePayment(
+                                                        t,
+                                                        updateAuthorizationRequestDto
+                                                )
+                                        )
+                                        .map(this::buildTransactionInfoDtoV1)
+                        )
                 );
     }
 
@@ -589,7 +709,7 @@ public class TransactionsService {
                 );
     }
 
-    private TransactionInfoDto buildTransactionInfoDto(
+    private TransactionInfoDto buildTransactionInfoDtoV1(
             it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument
     ) {
         return new TransactionInfoDto()
@@ -614,7 +734,24 @@ public class TransactionsService {
 
     }
 
-    private TransactionInfoDto buildTransactionInfoDto(BaseTransaction baseTransaction) {
+    private TransactionInfoDto buildTransactionInfoDtoV1(it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction baseTransaction) {
+        return new TransactionInfoDto()
+                .transactionId(baseTransaction.getTransactionId().value())
+                .payments(
+                        baseTransaction.getPaymentNotices()
+                                .stream().map(
+                                        paymentNotice -> new PaymentInfoDto()
+                                                .amount(paymentNotice.transactionAmount().value())
+                                                .reason(paymentNotice.transactionDescription().value())
+                                                .paymentToken(paymentNotice.paymentToken().value())
+                                                .rptId(paymentNotice.rptId().value())
+                                ).toList()
+                )
+                .status(transactionsUtils.convertEnumeration(baseTransaction.getStatus()));
+
+    }
+
+    private TransactionInfoDto buildTransactionInfoDtoV2(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction baseTransaction) {
         return new TransactionInfoDto()
                 .transactionId(baseTransaction.getTransactionId().value())
                 .payments(

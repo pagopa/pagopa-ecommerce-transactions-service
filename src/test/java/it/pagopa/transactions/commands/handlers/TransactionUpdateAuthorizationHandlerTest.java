@@ -14,6 +14,7 @@ import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
+import it.pagopa.transactions.commands.handlers.v1.TransactionUpdateAuthorizationHandler;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
@@ -42,8 +43,8 @@ class TransactionUpdateAuthorizationHandlerTest {
 
     private TransactionUpdateAuthorizationHandler updateAuthorizationHandler = new TransactionUpdateAuthorizationHandler(
             transactionEventStoreRepository,
-            new AuthRequestDataUtils(mockUuidUtils)
-    );
+            new AuthRequestDataUtils(mockUuidUtils),
+            transactionsUtils);
 
     @Test
     void shouldSaveSuccessfulUpdate() {

@@ -15,6 +15,7 @@ import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.*;
@@ -117,6 +118,17 @@ public class TransactionsUtils {
     ) {
         return eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value())
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())))
+                .reduce(initialValue, accumulator)
+                .cast(clazz);
+    }
+
+    public <A, T> Mono<T> reduceEvents(
+            Flux<BaseTransactionEvent<Object>> events,
+            A initialValue,
+            BiFunction<A, ? super BaseTransactionEvent<?>, A> accumulator,
+            Class<T> clazz
+    ) {
+        return events
                 .reduce(initialValue, accumulator)
                 .cast(clazz);
     }

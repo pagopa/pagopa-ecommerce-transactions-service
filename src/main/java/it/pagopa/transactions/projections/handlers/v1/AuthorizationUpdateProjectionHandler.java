@@ -1,10 +1,11 @@
-package it.pagopa.transactions.projections.handlers;
+package it.pagopa.transactions.projections.handlers.v1;
 
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedEvent;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
+import it.pagopa.transactions.projections.handlers.ProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,11 +15,14 @@ import reactor.core.publisher.Mono;
 
 import java.time.ZonedDateTime;
 
-@Component
+import static it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler.QUALIFIER_NAME;
+
+@Component(QUALIFIER_NAME)
 @Slf4j
 public class AuthorizationUpdateProjectionHandler
         implements ProjectionHandler<TransactionAuthorizationCompletedEvent, Mono<TransactionActivated>> {
 
+    public static final String QUALIFIER_NAME = "AuthorizationUpdateProjectionHandlerV1";
     private final TransactionsViewRepository transactionsViewRepository;
 
     private final Integer paymentTokenValidity;
