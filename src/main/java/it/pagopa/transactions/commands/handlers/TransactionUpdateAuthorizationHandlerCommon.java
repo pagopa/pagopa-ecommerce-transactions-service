@@ -15,7 +15,10 @@ public abstract class TransactionUpdateAuthorizationHandlerCommon
 
     protected final TransactionsUtils transactionsUtils;
 
-    protected TransactionUpdateAuthorizationHandlerCommon(AuthRequestDataUtils extractAuthRequestData, TransactionsUtils transactionsUtils) {
+    protected TransactionUpdateAuthorizationHandlerCommon(
+            AuthRequestDataUtils extractAuthRequestData,
+            TransactionsUtils transactionsUtils
+    ) {
         this.extractAuthRequestData = extractAuthRequestData;
 
         this.transactionsUtils = transactionsUtils;

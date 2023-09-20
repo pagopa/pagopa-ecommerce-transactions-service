@@ -30,12 +30,12 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
     public static final String QUALIFIER_NAME = "TransactionUpdateAuthorizationHandlerV2";
     private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData> transactionEventStoreRepository;
 
-
     @Autowired
     protected TransactionUpdateAuthorizationHandler(
             TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> transactionEventStoreRepository,
             AuthRequestDataUtils extractAuthRequestData,
-            TransactionsUtils transactionsUtils) {
+            TransactionsUtils transactionsUtils
+    ) {
         super(extractAuthRequestData, transactionsUtils);
         this.transactionEventStoreRepository = transactionEventStoreRepository;
     }
@@ -50,7 +50,8 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
         TransactionStatus transactionStatus = TransactionStatus.valueOf(command.getData().transactionStatus());
 
         if (transactionStatus.equals(TransactionStatus.AUTHORIZATION_REQUESTED)) {
-            UpdateAuthorizationRequestOutcomeGatewayDto outcomeGateway = command.getData().updateAuthorizationRequest().getOutcomeGateway();
+            UpdateAuthorizationRequestOutcomeGatewayDto outcomeGateway = command.getData().updateAuthorizationRequest()
+                    .getOutcomeGateway();
 
             TransactionGatewayAuthorizationData authorizationData;
             if (Objects.requireNonNull(outcomeGateway) instanceof OutcomeNpgGatewayDto) {
@@ -60,7 +61,8 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                         outcomeNpgGateway.getOperationId(),
                         outcomeNpgGateway.getPaymentEndToEndId()
                 );
-            } else if (outcomeGateway instanceof OutcomeXpayGatewayDto || outcomeGateway instanceof OutcomeVposGatewayDto) {
+            } else if (outcomeGateway instanceof OutcomeXpayGatewayDto
+                    || outcomeGateway instanceof OutcomeVposGatewayDto) {
                 authorizationData = new PgsTransactionGatewayAuthorizationData(
                         authRequestDataExtracted.errorCode(),
                         AuthorizationResultDto
@@ -73,14 +75,16 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
             }
 
             return Mono.just(
-                            new it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent(
-                                    transactionId.value(),
-                                    new it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData(
-                                            authRequestDataExtracted.authorizationCode(),
-                                            authRequestDataExtracted.rrn(),
-                                            updateAuthorizationRequest.getTimestampOperation().toString(),
-                                            authorizationData
-                                    )))
+                    new it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent(
+                            transactionId.value(),
+                            new it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData(
+                                    authRequestDataExtracted.authorizationCode(),
+                                    authRequestDataExtracted.rrn(),
+                                    updateAuthorizationRequest.getTimestampOperation().toString(),
+                                    authorizationData
+                            )
+                    )
+            )
                     .flatMap(transactionEventStoreRepository::save);
         } else {
             return alreadyProcessedError;

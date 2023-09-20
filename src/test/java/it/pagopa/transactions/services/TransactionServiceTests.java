@@ -16,7 +16,10 @@ import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
-import it.pagopa.transactions.commands.handlers.*;
+import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
+import it.pagopa.transactions.commands.handlers.TransactionRequestUserReceiptHandler;
+import it.pagopa.transactions.commands.handlers.TransactionSendClosureHandler;
+import it.pagopa.transactions.commands.handlers.TransactionUserCancelHandler;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException;
 import it.pagopa.transactions.exceptions.TransactionAmountMismatchException;
@@ -499,7 +502,7 @@ class TransactionServiceTests {
 
     @Test
     void shouldReturnTransactionInfoForSuccessfulAuthAndClosure() {
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
 
         UUID transactionIdDecoded = transactionId.uuid();
 
@@ -628,7 +631,7 @@ class TransactionServiceTests {
 
     @Test
     void shouldReturnNotFoundExceptionForNonExistingTransactionForTransactionUpdate() {
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
         UUID transactionIdDecoded = transactionId.uuid();
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -645,7 +648,7 @@ class TransactionServiceTests {
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(Flux.empty());
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                        .thenReturn(Flux.empty());
+                .thenReturn(Flux.empty());
         Mockito.when(
                 eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
                         transactionId.value(),
@@ -666,7 +669,7 @@ class TransactionServiceTests {
 
     @Test
     void shouldReturnTransactionInfoForSuccessfulNotifiedOk() {
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
 
         Transaction transactionDocument = TransactionTestUtils.transactionDocument(
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED_OK,
@@ -723,7 +726,7 @@ class TransactionServiceTests {
 
     @Test
     void shouldReturnTransactionInfoForSuccessfulNotifiedKo() {
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
 
         Transaction transactionDocument = TransactionTestUtils.transactionDocument(
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED_KO,
@@ -1089,7 +1092,7 @@ class TransactionServiceTests {
 
     @Test
     void shouldUpdateTransactionAuthOutcomeBeIdempotentForAlreadyAuthorizedTransactionClosed() {
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
 
         UUID transactionIdDecoded = transactionId.uuid();
 
@@ -1165,7 +1168,7 @@ class TransactionServiceTests {
 
     @Test
     void shouldUpdateTransactionAuthOutcomeBeIdempotentForAlreadyAuthorizedTransactionClosureFailed() {
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
 
         UUID transactionIdDecoded = transactionId.uuid();
 
@@ -1241,7 +1244,7 @@ class TransactionServiceTests {
 
     @Test
     void shouldUpdateTransactionAuthOutcomeBeIdempotentForAlreadyAuthorizedTransactionAuthorizationCompleted() {
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
 
         UUID transactionIdDecoded = transactionId.uuid();
 
@@ -1314,7 +1317,7 @@ class TransactionServiceTests {
 
     @Test
     void shouldReturnTransactionInfoForSuccessfulAuthAndClosureHttpStatusKOWithRefund() {
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
 
         UUID transactionIdDecoded = transactionId.uuid();
 
@@ -1446,7 +1449,7 @@ class TransactionServiceTests {
 
     @Test
     void shouldReturnTransactionInfoForSuccessfulAuthAndClosureHttpStatusKOnoRefund() {
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
 
         UUID transactionIdDecoded = transactionId.uuid();
 
@@ -1576,7 +1579,7 @@ class TransactionServiceTests {
 
     @Test
     void shouldReturnTransactionInfoForSuccessfulAuthAndClosureClosePaymentKO() {
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
 
         UUID transactionIdDecoded = transactionId.uuid();
 
@@ -1710,7 +1713,7 @@ class TransactionServiceTests {
 
     @Test
     void shouldReturnTransactionInfoForSuccessfulAuthAndClosureClosePaymentKOnoRefund() {
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
 
         UUID transactionIdDecoded = transactionId.uuid();
 

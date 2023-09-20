@@ -44,12 +44,16 @@ class TransactionUpdateAuthorizationHandlerTest {
 
     private final UUIDUtils mockUuidUtils = Mockito.mock(UUIDUtils.class);
 
-    private final TransactionsUtils transactionsUtils = new TransactionsUtils(eventStoreRepository, "warmUpNoticeCodePrefix");
+    private final TransactionsUtils transactionsUtils = new TransactionsUtils(
+            eventStoreRepository,
+            "warmUpNoticeCodePrefix"
+    );
 
     private TransactionUpdateAuthorizationHandler updateAuthorizationHandler = new TransactionUpdateAuthorizationHandler(
             transactionEventStoreRepository,
             new AuthRequestDataUtils(mockUuidUtils),
-            transactionsUtils);
+            transactionsUtils
+    );
 
     @Test
     void shouldSaveSuccessfulUpdate() {

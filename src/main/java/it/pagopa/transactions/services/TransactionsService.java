@@ -135,9 +135,9 @@ public class TransactionsService {
     @CircuitBreaker(name = "node-backend")
     @Retry(name = "newTransaction")
     public Mono<NewTransactionResponseDto> newTransaction(
-            NewTransactionRequestDto newTransactionRequestDto,
-            ClientIdDto clientIdDto,
-            TransactionId transactionId
+                                                          NewTransactionRequestDto newTransactionRequestDto,
+                                                          ClientIdDto clientIdDto,
+                                                          TransactionId transactionId
     ) {
         Transaction.ClientId clientId = Transaction.ClientId.fromString(
                 Optional.ofNullable(clientIdDto)
@@ -219,7 +219,7 @@ public class TransactionsService {
                                 .sendPaymentResultOutcome(
                                         transaction.getSendPaymentResultOutcome() == null ? null
                                                 : TransactionInfoDto.SendPaymentResultOutcomeEnum
-                                                .valueOf(transaction.getSendPaymentResultOutcome().name())
+                                                        .valueOf(transaction.getSendPaymentResultOutcome().name())
                                 )
                                 .authorizationCode(transaction.getAuthorizationCode())
                                 .authorizationErrorCode(transaction.getAuthorizationErrorCode())
@@ -494,30 +494,31 @@ public class TransactionsService {
 
     @Retry(name = "updateTransactionAuthorization")
     public Mono<TransactionInfoDto> updateTransactionAuthorization(
-            UUID decodedTransactionId,
-            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+                                                                   UUID decodedTransactionId,
+                                                                   UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
 
         TransactionId transactionId = new TransactionId(decodedTransactionId);
         log.info("decoded transaction id: {}", transactionId.value());
 
-        Flux<BaseTransactionEvent<Object>> events = eventsRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value())
+        Flux<BaseTransactionEvent<Object>> events = eventsRepository
+                .findByTransactionIdOrderByCreationDateAsc(transactionId.value())
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())));
 
         Mono<it.pagopa.ecommerce.commons.domain.v1.Transaction> transactionV1 = transactionsUtils.reduceEvents(
-                        events,
-                        new it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction(),
-                        it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent,
-                        it.pagopa.ecommerce.commons.domain.v1.Transaction.class
-                )
+                events,
+                new it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction(),
+                it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent,
+                it.pagopa.ecommerce.commons.domain.v1.Transaction.class
+        )
                 .filter(t -> !(t instanceof it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction));
 
         Mono<it.pagopa.ecommerce.commons.domain.v2.Transaction> transactionV2 = transactionsUtils.reduceEvents(
-                        events,
-                        new it.pagopa.ecommerce.commons.domain.v2.EmptyTransaction(),
-                        it.pagopa.ecommerce.commons.domain.v2.Transaction::applyEvent,
-                        it.pagopa.ecommerce.commons.domain.v2.Transaction.class
-                )
+                events,
+                new it.pagopa.ecommerce.commons.domain.v2.EmptyTransaction(),
+                it.pagopa.ecommerce.commons.domain.v2.Transaction::applyEvent,
+                it.pagopa.ecommerce.commons.domain.v2.Transaction.class
+        )
                 .filter(t -> !(t instanceof it.pagopa.ecommerce.commons.domain.v2.EmptyTransaction));
 
         Mono<TransactionInfoDto> v1Info = transactionV1
@@ -534,8 +535,8 @@ public class TransactionsService {
     }
 
     private Mono<TransactionInfoDto> updateTransactionAuthorizationStatusV1(
-            it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction transaction,
-            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+                                                                            it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction transaction,
+                                                                            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction.getTransactionId(),
@@ -573,7 +574,9 @@ public class TransactionsService {
                                         .flatMap(
                                                 t -> transactionUpdateAuthorizationHandlerV1
                                                         .handle(transactionUpdateAuthorizationCommand)
-                                                        .cast(it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedEvent.class)
+                                                        .cast(
+                                                                it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedEvent.class
+                                                        )
                                                         .doOnNext(
                                                                 authorizationStatusUpdatedEvent -> log.info(
                                                                         "Requested authorization update for rptId: {}",
@@ -585,7 +588,8 @@ public class TransactionsService {
                                                                         .handle(authorizationStatusUpdatedEvent)
                                                         )
                                         )
-                                        .doOnError(AlreadyProcessedException.class,
+                                        .doOnError(
+                                                AlreadyProcessedException.class,
                                                 t -> log.error(
                                                         "Error: requesting authorization update for transaction in state {}",
                                                         baseTransaction
@@ -605,8 +609,8 @@ public class TransactionsService {
     }
 
     private Mono<TransactionInfoDto> updateTransactionAuthorizationStatusV2(
-            it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction,
-            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+                                                                            it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction,
+                                                                            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction.getTransactionId(),
@@ -621,8 +625,10 @@ public class TransactionsService {
         );
 
         Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction> baseTransaction = Mono.just(transaction);
-        return wasTransactionAuthorized(transaction.getTransactionId())
-                .<Either<TransactionInfoDto, Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction>>>flatMap(alreadyAuthorized -> {
+        return wasTransactionAuthorized(
+                transaction.getTransactionId()
+        ).<Either<TransactionInfoDto, Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction>>>flatMap(
+                alreadyAuthorized -> {
                     if (Boolean.FALSE.equals(alreadyAuthorized)) {
                         return Mono.just(baseTransaction).map(Either::right);
                     } else {
@@ -636,7 +642,8 @@ public class TransactionsService {
                                 }
                         ).map(Either::left);
                     }
-                })
+                }
+        )
                 .flatMap(
                         either -> either.fold(
                                 Mono::just,
@@ -644,7 +651,9 @@ public class TransactionsService {
                                         .flatMap(
                                                 t -> transactionUpdateAuthorizationHandlerV2
                                                         .handle(transactionUpdateAuthorizationCommand)
-                                                        .cast(it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent.class)
+                                                        .cast(
+                                                                it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent.class
+                                                        )
                                                         .doOnNext(
                                                                 authorizationStatusUpdatedEvent -> log.info(
                                                                         "Requested authorization update for rptId: {}",
@@ -656,7 +665,8 @@ public class TransactionsService {
                                                                         .handle(authorizationStatusUpdatedEvent)
                                                         )
                                         )
-                                        .doOnError(AlreadyProcessedException.class,
+                                        .doOnError(
+                                                AlreadyProcessedException.class,
                                                 t -> log.error(
                                                         "Error: requesting authorization update for transaction in state {}",
                                                         baseTransaction
@@ -675,8 +685,8 @@ public class TransactionsService {
     }
 
     private Mono<it.pagopa.ecommerce.commons.documents.v1.Transaction> closePayment(
-            BaseTransactionWithPaymentToken transaction,
-            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+                                                                                    BaseTransactionWithPaymentToken transaction,
+                                                                                    UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
         ClosureSendData closureSendData = new ClosureSendData(
                 transaction,
@@ -691,11 +701,11 @@ public class TransactionsService {
         return transactionSendClosureHandler
                 .handle(transactionClosureSendCommand)
                 .doOnNext(closureSentEvent ->
-                        // FIXME Handle multiple rtpId
-                        log.info(
-                                "Requested transaction closure for rptId: {}",
-                                transaction.getPaymentNotices().get(0).rptId().value()
-                        )
+                // FIXME Handle multiple rtpId
+                log.info(
+                        "Requested transaction closure for rptId: {}",
+                        transaction.getPaymentNotices().get(0).rptId().value()
+                )
                 )
                 .flatMap(
                         el -> el.getT1().map(
@@ -712,7 +722,7 @@ public class TransactionsService {
     }
 
     private TransactionInfoDto buildTransactionInfoDtoV1(
-            it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument
+                                                         it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument
     ) {
         return new TransactionInfoDto()
                 .transactionId(
@@ -736,7 +746,9 @@ public class TransactionsService {
 
     }
 
-    private TransactionInfoDto buildTransactionInfoDtoV1(it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction baseTransaction) {
+    private TransactionInfoDto buildTransactionInfoDtoV1(
+                                                         it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction baseTransaction
+    ) {
         return new TransactionInfoDto()
                 .transactionId(baseTransaction.getTransactionId().value())
                 .payments(
@@ -752,7 +764,9 @@ public class TransactionsService {
                 .status(transactionsUtils.convertEnumeration(baseTransaction.getStatus()));
     }
 
-    private TransactionInfoDto buildTransactionInfoDtoV2(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction baseTransaction) {
+    private TransactionInfoDto buildTransactionInfoDtoV2(
+                                                         it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction baseTransaction
+    ) {
         return new TransactionInfoDto()
                 .transactionId(baseTransaction.getTransactionId().value())
                 .payments(
@@ -770,7 +784,7 @@ public class TransactionsService {
     }
 
     private Mono<Boolean> wasTransactionAuthorized(
-            TransactionId transactionId
+                                                   TransactionId transactionId
     ) {
         /*
          * @formatter:off
@@ -799,8 +813,8 @@ public class TransactionsService {
 
     @Retry(name = "addUserReceipt")
     public Mono<TransactionInfoDto> addUserReceipt(
-            String transactionId,
-            AddUserReceiptRequestDto addUserReceiptRequest
+                                                   String transactionId,
+                                                   AddUserReceiptRequestDto addUserReceiptRequest
     ) {
         return transactionsViewRepository
                 .findById(transactionId)
@@ -892,8 +906,8 @@ public class TransactionsService {
     }
 
     private Mono<NewTransactionResponseDto> projectActivatedEvent(
-            TransactionActivatedEvent transactionActivatedEvent,
-            String authToken
+                                                                  TransactionActivatedEvent transactionActivatedEvent,
+                                                                  String authToken
     ) {
         return transactionsActivationProjectionHandler
                 .handle(transactionActivatedEvent)
@@ -940,7 +954,7 @@ public class TransactionsService {
     }
 
     NewTransactionResponseDto.ClientIdEnum convertClientId(
-            it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
+                                                           it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
     ) {
         return Optional.ofNullable(clientId).filter(Objects::nonNull)
                 .map(
