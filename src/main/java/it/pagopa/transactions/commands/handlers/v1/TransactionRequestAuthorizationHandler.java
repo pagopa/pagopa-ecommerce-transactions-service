@@ -104,12 +104,10 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                     );
 
                                     // TODO remove this after the cancellation of the postepay logic
-                                    TransactionAuthorizationRequestData.CardBrand cardBrand = null;
-                                    if (command.getData()
-                                            .authDetails()instanceof CardAuthRequestDetailsDto detailType) {
-                                        cardBrand = TransactionAuthorizationRequestData.CardBrand
-                                                .valueOf(detailType.getBrand().getValue());
-                                    }
+                                    TransactionAuthorizationRequestData.CardBrand cardBrand =
+                                            getCardBrand(authorizationRequestData).map(brand ->
+                                                    TransactionAuthorizationRequestData.CardBrand.valueOf(brand.toString())
+                                            ).orElse(null);
                                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                                             t.getTransactionId().value(),
                                             new it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData(
