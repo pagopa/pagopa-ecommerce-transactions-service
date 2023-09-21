@@ -1,24 +1,24 @@
-package it.pagopa.transactions.projections.handlers;
+package it.pagopa.transactions.projections.handlers.v1;
 
-import it.pagopa.ecommerce.commons.documents.v1.Transaction;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionClosureErrorEvent;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
+import it.pagopa.transactions.projections.handlers.ProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
-
-@Component
+@Component(ClosureErrorProjectionHandler.QUALIFIER_NAME)
 @Slf4j
 public class ClosureErrorProjectionHandler
-        implements ProjectionHandler<TransactionClosureErrorEvent, Mono<Transaction>> {
+        implements ProjectionHandler<it.pagopa.ecommerce.commons.documents.v1.TransactionClosureErrorEvent, Mono<it.pagopa.ecommerce.commons.documents.v1.Transaction>> {
+
+    public static final String QUALIFIER_NAME = "ClosureErrorProjectionHandlerV1";
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
 
     @Override
-    public Mono<Transaction> handle(TransactionClosureErrorEvent event) {
+    public Mono<it.pagopa.ecommerce.commons.documents.v1.Transaction> handle(it.pagopa.ecommerce.commons.documents.v1.TransactionClosureErrorEvent event) {
         return transactionsViewRepository.findById(event.getTransactionId())
                 .switchIfEmpty(
                         Mono.error(new TransactionNotFoundException(event.getTransactionId()))
