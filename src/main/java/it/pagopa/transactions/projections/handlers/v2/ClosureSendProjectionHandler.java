@@ -16,7 +16,8 @@ import java.util.Optional;
 @Component(ClosureSendProjectionHandler.QUALIFIER_NAME)
 @Slf4j
 public class ClosureSendProjectionHandler
-        implements ProjectionHandler<it.pagopa.ecommerce.commons.documents.v2.TransactionEvent<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData>, Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction>> {
+        implements
+        ProjectionHandler<it.pagopa.ecommerce.commons.documents.v2.TransactionEvent<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData>, Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction>> {
 
     public static final String QUALIFIER_NAME = "ClosureSendProjectionHandlerV2";
     @Autowired

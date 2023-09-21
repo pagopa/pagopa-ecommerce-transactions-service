@@ -12,14 +12,17 @@ import reactor.core.publisher.Mono;
 @Component(ClosureErrorProjectionHandler.QUALIFIER_NAME)
 @Slf4j
 public class ClosureErrorProjectionHandler
-        implements ProjectionHandler<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureErrorEvent, Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction>> {
+        implements
+        ProjectionHandler<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureErrorEvent, Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction>> {
 
     public static final String QUALIFIER_NAME = "ClosureErrorProjectionHandlerV2";
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
 
     @Override
-    public Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> handle(it.pagopa.ecommerce.commons.documents.v2.TransactionClosureErrorEvent event) {
+    public Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> handle(
+                                                                             it.pagopa.ecommerce.commons.documents.v2.TransactionClosureErrorEvent event
+    ) {
         return transactionsViewRepository.findById(event.getTransactionId())
                 .switchIfEmpty(
                         Mono.error(new TransactionNotFoundException(event.getTransactionId()))

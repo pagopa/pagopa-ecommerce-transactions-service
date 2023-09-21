@@ -1,4 +1,5 @@
 package it.pagopa.transactions.projections.handlers.v2;
+
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.ProjectionHandler;
@@ -11,7 +12,8 @@ import reactor.core.publisher.Mono;
 @Component(RefundRequestProjectionHandler.QUALIFIER_NAME)
 @Slf4j
 public class RefundRequestProjectionHandler
-        implements ProjectionHandler<it.pagopa.ecommerce.commons.documents.v2.TransactionRefundRequestedEvent, Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction>> {
+        implements
+        ProjectionHandler<it.pagopa.ecommerce.commons.documents.v2.TransactionRefundRequestedEvent, Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction>> {
 
     public static final String QUALIFIER_NAME = "RefundRequestProjectionHandlerV2";
     private final TransactionsViewRepository transactionsViewRepository;
@@ -24,7 +26,9 @@ public class RefundRequestProjectionHandler
     }
 
     @Override
-    public Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> handle(it.pagopa.ecommerce.commons.documents.v2.TransactionRefundRequestedEvent transactionRefundRequestedEvent) {
+    public Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> handle(
+                                                                             it.pagopa.ecommerce.commons.documents.v2.TransactionRefundRequestedEvent transactionRefundRequestedEvent
+    ) {
         return transactionsViewRepository.findById(transactionRefundRequestedEvent.getTransactionId())
                 .switchIfEmpty(
                         Mono.error(

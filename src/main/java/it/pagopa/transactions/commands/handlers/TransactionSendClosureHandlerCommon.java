@@ -23,11 +23,6 @@ public abstract class TransactionSendClosureHandlerCommon
     protected static final String CONFERMATO = "Confermato";
     protected static final String RIFIUTATO = "Rifiutato";
 
-    protected final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper;
-    protected final NodeForPspClient nodeForPspClient;
-    protected final QueueAsyncClient closureRetryQueueAsyncClient;
-    protected final QueueAsyncClient refundQueueAsyncClient;
-
     protected final TransactionsUtils transactionsUtils;
     protected final AuthRequestDataUtils authRequestDataUtils;
 
@@ -44,11 +39,7 @@ public abstract class TransactionSendClosureHandlerCommon
             Integer paymentTokenValidity,
             Integer retryTimeoutInterval,
             Integer softTimeoutOffset,
-            int transientQueuesTTLSeconds,
-            PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
-            NodeForPspClient nodeForPspClient,
-            QueueAsyncClient closureRetryQueueAsyncClient,
-            QueueAsyncClient refundQueueAsyncClient
+            int transientQueuesTTLSeconds
     ) {
 
         this.transactionsUtils = transactionsUtils;
@@ -58,9 +49,5 @@ public abstract class TransactionSendClosureHandlerCommon
         this.retryTimeoutInterval = retryTimeoutInterval;
         this.softTimeoutOffset = softTimeoutOffset;
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
-        this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
-        this.nodeForPspClient = nodeForPspClient;
-        this.closureRetryQueueAsyncClient = closureRetryQueueAsyncClient;
-        this.refundQueueAsyncClient = refundQueueAsyncClient;
     }
 }

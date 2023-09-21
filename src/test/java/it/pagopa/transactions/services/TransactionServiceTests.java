@@ -1,24 +1,28 @@
 package it.pagopa.transactions.services;
 
 import io.vavr.control.Either;
+import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
+import it.pagopa.ecommerce.commons.queues.TracingUtils;
+import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.*;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
+import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
 import it.pagopa.transactions.commands.handlers.TransactionRequestUserReceiptHandler;
-import it.pagopa.transactions.commands.handlers.TransactionSendClosureHandler;
+import it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler;
 import it.pagopa.transactions.commands.handlers.TransactionUserCancelHandler;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException;
@@ -27,6 +31,7 @@ import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
+import it.pagopa.transactions.utils.AuthRequestDataUtils;
 import it.pagopa.transactions.utils.JwtTokenUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
@@ -35,6 +40,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.data.redis.AutoConfigureDataRedis;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -69,6 +75,14 @@ import static org.mockito.Mockito.*;
             it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler.class,
             it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler.class,
+            it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler.class,
+            it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureHandler.class,
+            it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler.class,
+            it.pagopa.transactions.projections.handlers.v2.RefundRequestProjectionHandler.class,
+            it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler.class,
+            it.pagopa.transactions.projections.handlers.v2.ClosureSendProjectionHandler.class,
+            it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler.class,
+            it.pagopa.transactions.projections.handlers.v2.ClosureErrorProjectionHandler.class,
             TransactionsEventStoreRepository.class,
             TransactionsActivationProjectionHandler.class,
             CancellationRequestProjectionHandler.class,
@@ -92,6 +106,17 @@ class TransactionServiceTests {
 
     @MockBean
     private PaymentGatewayClient paymentGatewayClient;
+
+    @MockBean
+    private NodeForPspClient nodeForPspClient;
+
+    @MockBean
+    @Qualifier("transactionClosureRetryQueueAsyncClient")
+    private QueueAsyncClient queueAsyncClientClosureRetry;
+
+    @MockBean
+    @Qualifier("transactionRefundQueueAsyncClient")
+    private QueueAsyncClient queueAsyncClientRefund;
 
     @MockBean
     private TransactionActivateHandler transactionActivateHandler;
@@ -121,16 +146,26 @@ class TransactionServiceTests {
     private it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV2;
 
     @MockBean
-    private ClosureSendProjectionHandler closureSendProjectionHandler;
-
-    @MockBean
     private TransactionRequestUserReceiptHandler transactionUpdateStatusHandler;
 
     @MockBean
     private TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandler;
 
     @MockBean
-    private RefundRequestProjectionHandler refundRequestProjectionHandler;
+    private it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler refundRequestProjectionHandlerV1;
+
+    @MockBean
+    private it.pagopa.transactions.projections.handlers.v2.RefundRequestProjectionHandler refundRequestProjectionHandlerV2;
+    @MockBean
+    private it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler closureSendProjectionHandlerV1;
+
+    @MockBean
+    private it.pagopa.transactions.projections.handlers.v2.ClosureSendProjectionHandler closureSendProjectionHandlerV2;
+    @MockBean
+    private it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler closureErrorProjectionHandlerV1;
+
+    @MockBean
+    private it.pagopa.transactions.projections.handlers.v2.ClosureErrorProjectionHandler closureErrorProjectionHandlerV2;
 
     @MockBean
     private TransactionsEventStoreRepository transactionsEventStoreRepository;
@@ -148,13 +183,19 @@ class TransactionServiceTests {
     private ArgumentCaptor<TransactionRequestAuthorizationCommand> commandArgumentCaptor;
 
     @MockBean
-    private ClosureErrorProjectionHandler closureErrorProjectionHandler;
-
-    @MockBean
     private JwtTokenUtils jwtTokenUtils;
 
     @MockBean
     private TransactionsUtils transactionsUtils;
+
+    @MockBean
+    private AuthRequestDataUtils authRequestDataUtils;
+
+    @MockBean
+    private TracingUtils tracingUtils;
+
+    @MockBean
+    private PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper;
 
     final String TRANSACTION_ID = TransactionTestUtils.TRANSACTION_ID;
 
@@ -602,7 +643,7 @@ class TransactionServiceTests {
         Mockito.when(transactionSendClosureHandler.handle(any()))
                 .thenReturn(Mono.just(Tuples.of(Optional.empty(), Either.right(closureSentEvent))));
 
-        Mockito.when(closureSendProjectionHandler.handle(any()))
+        Mockito.when(closureSendProjectionHandlerV1.handle(any()))
                 .thenReturn(Mono.just(closedTransactionDocument));
         Mockito.when(
                 eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
@@ -1162,7 +1203,7 @@ class TransactionServiceTests {
         verify(transactionUpdateAuthorizationHandlerV1, times(0)).handle(any());
         verify(authorizationUpdateProjectionHandlerV1, times(0)).handle(any());
         verify(transactionSendClosureHandler, times(0)).handle(any());
-        verify(closureSendProjectionHandler, times(0)).handle(any());
+        verify(closureSendProjectionHandlerV1, times(0)).handle(any());
 
     }
 
@@ -1238,7 +1279,7 @@ class TransactionServiceTests {
         verify(transactionUpdateAuthorizationHandlerV1, times(0)).handle(any());
         verify(authorizationUpdateProjectionHandlerV1, times(0)).handle(any());
         verify(transactionSendClosureHandler, times(0)).handle(any());
-        verify(closureSendProjectionHandler, times(0)).handle(any());
+        verify(closureSendProjectionHandlerV1, times(0)).handle(any());
 
     }
 
@@ -1311,7 +1352,7 @@ class TransactionServiceTests {
         verify(transactionUpdateAuthorizationHandlerV1, times(0)).handle(any());
         verify(authorizationUpdateProjectionHandlerV1, times(0)).handle(any());
         verify(transactionSendClosureHandler, times(0)).handle(any());
-        verify(closureSendProjectionHandler, times(0)).handle(any());
+        verify(closureSendProjectionHandlerV1, times(0)).handle(any());
 
     }
 
@@ -1419,7 +1460,7 @@ class TransactionServiceTests {
         Mockito.when(transactionSendClosureHandler.handle(any()))
                 .thenReturn(Mono.just(Tuples.of(Optional.of(refundRequestedEvent), Either.right(null))));
 
-        Mockito.when(refundRequestProjectionHandler.handle(any()))
+        Mockito.when(refundRequestProjectionHandlerV1.handle(any()))
                 .thenReturn(Mono.just(refundedRequestedTransactionDocument));
         Mockito.when(
                 eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
@@ -1549,7 +1590,7 @@ class TransactionServiceTests {
         Mockito.when(transactionSendClosureHandler.handle(any()))
                 .thenReturn(Mono.just(Tuples.of(Optional.empty(), Either.left(closureErrorSentEvent))));
 
-        Mockito.when(closureErrorProjectionHandler.handle(any()))
+        Mockito.when(closureErrorProjectionHandlerV1.handle(any()))
                 .thenReturn(Mono.just(refundedRequestedTransactionDocument));
         Mockito.when(
                 eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
@@ -1681,7 +1722,7 @@ class TransactionServiceTests {
         Mockito.when(transactionSendClosureHandler.handle(any()))
                 .thenReturn(Mono.just(Tuples.of(Optional.of(refundRequestedEvent), Either.left(null))));
 
-        Mockito.when(refundRequestProjectionHandler.handle(any()))
+        Mockito.when(refundRequestProjectionHandlerV1.handle(any()))
                 .thenReturn(Mono.just(refundedRequestedTransactionDocument));
         Mockito.when(
                 eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
@@ -1813,7 +1854,7 @@ class TransactionServiceTests {
         Mockito.when(transactionSendClosureHandler.handle(any()))
                 .thenReturn(Mono.just(Tuples.of(Optional.empty(), Either.right(closureSentEvent))));
 
-        Mockito.when(closureSendProjectionHandler.handle(any()))
+        Mockito.when(closureSendProjectionHandlerV1.handle(any()))
                 .thenReturn(Mono.just(requestedTransactionDocument));
         Mockito.when(
                 eventStoreRepositoryAuthCompletedData.findByTransactionIdAndEventCode(
