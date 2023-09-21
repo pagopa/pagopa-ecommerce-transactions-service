@@ -23,7 +23,6 @@ import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
 import it.pagopa.transactions.commands.handlers.TransactionRequestUserReceiptHandler;
 import it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler;
-import it.pagopa.transactions.commands.handlers.TransactionUserCancelHandler;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException;
 import it.pagopa.transactions.exceptions.TransactionAmountMismatchException;
@@ -83,10 +82,12 @@ import static org.mockito.Mockito.*;
             it.pagopa.transactions.projections.handlers.v2.ClosureSendProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v2.ClosureErrorProjectionHandler.class,
+            it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler.class,
+            it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler.class,
+            it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler.class,
+            it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler.class,
             TransactionsEventStoreRepository.class,
             TransactionsActivationProjectionHandler.class,
-            CancellationRequestProjectionHandler.class,
-            TransactionUserCancelHandler.class,
             UUIDUtils.class
     }
 )
@@ -122,7 +123,10 @@ class TransactionServiceTests {
     private TransactionActivateHandler transactionActivateHandler;
 
     @MockBean
-    private TransactionUserCancelHandler transactionCancelHandler;
+    private it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler transactionCancelHandlerV1;
+
+    @MockBean
+    private it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler transactionCancelHandlerV2;
 
     @MockBean
     private it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandlerV1;
@@ -177,7 +181,10 @@ class TransactionServiceTests {
     private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
 
     @MockBean
-    private CancellationRequestProjectionHandler cancellationRequestProjectionHandler;
+    private it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV1;
+
+    @MockBean
+    private it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV2;
 
     @Captor
     private ArgumentCaptor<TransactionRequestAuthorizationCommand> commandArgumentCaptor;
@@ -1116,8 +1123,8 @@ class TransactionServiceTests {
                 new TransactionId(transactionId)
         );
         when(repository.findById(transactionId)).thenReturn(Mono.just(transaction));
-        when(transactionCancelHandler.handle(transactionCancelCommand)).thenReturn(Mono.just(userCanceledEvent));
-        when(cancellationRequestProjectionHandler.handle(any())).thenReturn(Mono.empty());
+        when(transactionCancelHandlerV1.handle(transactionCancelCommand)).thenReturn(Mono.just(userCanceledEvent));
+        when(cancellationRequestProjectionHandlerV1.handle(any())).thenReturn(Mono.empty());
         StepVerifier.create(transactionsService.cancelTransaction(transactionId)).expectNext().verifyComplete();
 
     }
