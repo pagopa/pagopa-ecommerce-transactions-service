@@ -11,7 +11,6 @@ import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
-import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.BundleDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.CalculateFeeRequestDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.CalculateFeeResponseDto;
@@ -25,8 +24,6 @@ import it.pagopa.transactions.commands.data.ClosureSendData;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
 import it.pagopa.transactions.commands.handlers.TransactionRequestUserReceiptHandler;
-import it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler;
-import it.pagopa.transactions.commands.handlers.TransactionUserCancelHandler;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.projections.handlers.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -37,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -80,7 +78,12 @@ public class TransactionsService {
     private TransactionRequestUserReceiptHandler transactionRequestUserReceiptHandler;
 
     @Autowired
-    private TransactionUserCancelHandler transactionCancelHandler;
+    @Qualifier(it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler.QUALIFIER_NAME)
+    private it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler transactionCancelHandlerV1;
+
+    @Autowired
+    @Qualifier(it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler.QUALIFIER_NAME)
+    private it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler transactionCancelHandlerV2;
 
     @Autowired
     @Qualifier(it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler.QUALIFIER_NAME)
@@ -123,6 +126,14 @@ public class TransactionsService {
     private it.pagopa.transactions.projections.handlers.v2.ClosureErrorProjectionHandler closureErrorProjectionHandlerV2;
 
     @Autowired
+    @Qualifier(it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler.QUALIFIER_NAME)
+    private it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV1;
+
+    @Autowired
+    @Qualifier(it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler.QUALIFIER_NAME)
+    private it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV2;
+
+    @Autowired
     private TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandler;
 
     @Autowired
@@ -133,9 +144,6 @@ public class TransactionsService {
 
     @Autowired
     private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
-
-    @Autowired
-    private CancellationRequestProjectionHandler cancellationRequestProjectionHandler;
 
     @Autowired
     private UUIDUtils uuidUtils;
@@ -251,20 +259,24 @@ public class TransactionsService {
         return transactionsViewRepository
                 .findById(transactionId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
-                .cast(it.pagopa.ecommerce.commons.documents.v1.Transaction.class)
                 .flatMap(
-                        transaction -> {
+                        transactionDocument -> {
                             TransactionUserCancelCommand transactionCancelCommand = new TransactionUserCancelCommand(
                                     null,
                                     new TransactionId(transactionId)
                             );
 
-                            return transactionCancelHandler.handle(transactionCancelCommand);
+                            return switch (transactionDocument) {
+                                case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> transactionCancelHandlerV1
+                                        .handle(transactionCancelCommand).flatMap(event -> cancellationRequestProjectionHandlerV1
+                                                .handle((it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent) event));
+
+                                case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> transactionCancelHandlerV2
+                                        .handle(transactionCancelCommand).flatMap(event -> cancellationRequestProjectionHandlerV2
+                                                .handle((it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent) event));
+                                default -> Mono.error(new BadGatewayException("Error while processing request unexpected transaction version type",HttpStatus.BAD_GATEWAY));
+                            };
                         }
-                )
-                .flatMap(
-                        event -> cancellationRequestProjectionHandler
-                                .handle(new TransactionUserCanceledEvent(transactionId))
                 )
                 .then();
 
