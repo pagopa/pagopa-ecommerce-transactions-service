@@ -6,7 +6,7 @@ import io.vavr.Tuple;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptRequestedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.*;
@@ -24,11 +24,7 @@ import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.data.ClosureSendData;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
-import it.pagopa.transactions.commands.handlers.TransactionRequestUserReceiptHandler;
-import it.pagopa.transactions.commands.handlers.TransactionUserCancelHandler;
 import it.pagopa.transactions.exceptions.*;
-import it.pagopa.transactions.projections.handlers.CancellationRequestProjectionHandler;
-import it.pagopa.transactions.projections.handlers.TransactionUserReceiptProjectionHandler;
 import it.pagopa.transactions.projections.handlers.TransactionsActivationProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
@@ -281,14 +277,17 @@ public class TransactionsService {
                             );
 
                             return switch (transactionDocument) {
-                                case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> transactionCancelHandlerV1
-                                        .handle(transactionCancelCommand).flatMap(event -> cancellationRequestProjectionHandlerV1
-                                                .handle((it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent) event));
+                                case it.pagopa.ecommerce.commons.documents.v1.Transaction t ->
+                                        transactionCancelHandlerV1
+                                                .handle(transactionCancelCommand).flatMap(event -> cancellationRequestProjectionHandlerV1
+                                                        .handle((it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent) event));
 
-                                case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> transactionCancelHandlerV2
-                                        .handle(transactionCancelCommand).flatMap(event -> cancellationRequestProjectionHandlerV2
-                                                .handle((it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent) event));
-                                default -> Mono.error(new BadGatewayException("Error while processing request unexpected transaction version type",HttpStatus.BAD_GATEWAY));
+                                case it.pagopa.ecommerce.commons.documents.v2.Transaction t ->
+                                        transactionCancelHandlerV2
+                                                .handle(transactionCancelCommand).flatMap(event -> cancellationRequestProjectionHandlerV2
+                                                        .handle((it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent) event));
+                                default ->
+                                        Mono.error(new BadGatewayException("Error while processing request unexpected transaction version type", HttpStatus.BAD_GATEWAY));
                             };
                         }
                 )
@@ -936,8 +935,8 @@ public class TransactionsService {
 
     @Retry(name = "addUserReceipt")
     public Mono<TransactionInfoDto> addUserReceipt(
-                                                   String transactionId,
-                                                   AddUserReceiptRequestDto addUserReceiptRequest
+            String transactionId,
+            AddUserReceiptRequestDto addUserReceiptRequest
     ) {
         return transactionsViewRepository
                 .findById(transactionId)
@@ -949,55 +948,57 @@ public class TransactionsService {
                                     addUserReceiptRequest
                             );
                             // FIXME Handle multiple rtpId
-                            return Tuple.of( transactionDocument,new TransactionAddUserReceiptCommand(
+                            return Tuple.of(transactionDocument, new TransactionAddUserReceiptCommand(
                                     null,
                                     addUserReceiptData
                             ));
                         }
                 )
                 .flatMap(
-                         el -> switch (el._1) {
-                             case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> transactionRequestUserReceiptHandlerV1
-                                     .handle(el._2)
-                                     .doOnNext(
-                                             transactionUserReceiptRequestedEvent -> log.info(
-                                                     "{} for transactionId: {}",
-                                                     TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT,
-                                                     transactionUserReceiptRequestedEvent.getTransactionId()
-                                             )
-                                     )
-                                     .flatMap(event -> transactionUserReceiptProjectionHandlerV1
-                                             .handle((TransactionUserReceiptRequestedEvent) event))
-                                     .doOnNext(
-                                             transaction -> log.info(
-                                                     "Transaction status updated {} for transactionId: {}",
-                                                     transaction.getStatus(),
-                                                     transaction.getTransactionId()
-                                             )
-                                     )
-                                     .map(this::buildTransactionInfoDtoV1);
+                        el -> switch (el._1) {
+                            case it.pagopa.ecommerce.commons.documents.v1.Transaction t ->
+                                    transactionRequestUserReceiptHandlerV1
+                                            .handle(el._2)
+                                            .doOnNext(
+                                                    transactionUserReceiptRequestedEvent -> log.info(
+                                                            "{} for transactionId: {}",
+                                                            TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT,
+                                                            transactionUserReceiptRequestedEvent.getTransactionId()
+                                                    )
+                                            )
+                                            .flatMap(event -> transactionUserReceiptProjectionHandlerV1
+                                                    .handle((TransactionUserReceiptRequestedEvent) event))
+                                            .doOnNext(
+                                                    transaction -> log.info(
+                                                            "Transaction status updated {} for transactionId: {}",
+                                                            transaction.getStatus(),
+                                                            transaction.getTransactionId()
+                                                    )
+                                            )
+                                            .map(this::buildTransactionInfoDtoV1);
 
-                             case Transaction t -> transactionRequestUserReceiptHandlerV2
-                                     .handle(el._2)
-                                     .doOnNext(
-                                             transactionUserReceiptRequestedEvent -> log.info(
-                                                     "{} for transactionId: {}",
-                                                     TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT,
-                                                     transactionUserReceiptRequestedEvent.getTransactionId()
-                                             )
-                                     )
-                                     .flatMap(event -> transactionUserReceiptProjectionHandlerV2
-                                             .handle((it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptRequestedEvent) event))
-                                     .doOnNext(
-                                             transaction -> log.info(
-                                                     "Transaction status updated {} for transactionId: {}",
-                                                     transaction.getStatus(),
-                                                     transaction.getTransactionId()
-                                             )
-                                     )
-                                     .map(this::buildTransactionInfoDtoV2);
-                             default -> Mono.error(new BadGatewayException("Error while processing request unexpected transaction version type",HttpStatus.BAD_GATEWAY));
-                         }
+                            case Transaction t -> transactionRequestUserReceiptHandlerV2
+                                    .handle(el._2)
+                                    .doOnNext(
+                                            transactionUserReceiptRequestedEvent -> log.info(
+                                                    "{} for transactionId: {}",
+                                                    TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT,
+                                                    transactionUserReceiptRequestedEvent.getTransactionId()
+                                            )
+                                    )
+                                    .flatMap(event -> transactionUserReceiptProjectionHandlerV2
+                                            .handle((it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptRequestedEvent) event))
+                                    .doOnNext(
+                                            transaction -> log.info(
+                                                    "Transaction status updated {} for transactionId: {}",
+                                                    transaction.getStatus(),
+                                                    transaction.getTransactionId()
+                                            )
+                                    )
+                                    .map(this::buildTransactionInfoDtoV2);
+                            default ->
+                                    Mono.error(new BadGatewayException("Error while processing request unexpected transaction version type", HttpStatus.BAD_GATEWAY));
+                        }
                 );
 
 
