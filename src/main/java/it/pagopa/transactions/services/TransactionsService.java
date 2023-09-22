@@ -27,6 +27,10 @@ import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
 import it.pagopa.transactions.commands.handlers.TransactionRequestUserReceiptHandler;
 import it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler;
 import it.pagopa.transactions.commands.handlers.TransactionUserCancelHandler;
+import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
+import it.pagopa.transactions.commands.handlers.TransactionRequestUserReceiptHandler;
+import it.pagopa.transactions.commands.handlers.TransactionSendClosureHandler;
+import it.pagopa.transactions.commands.handlers.TransactionUserCancelHandler;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.projections.handlers.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -75,6 +79,12 @@ public class TransactionsService {
     @Autowired
     @Qualifier(it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureHandler.QUALIFIER_NAME)
     private it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureHandler transactionSendClosureHandlerV2;
+    @Qualifier(it.pagopa.transactions.commands.handlers.v1.TransactionUpdateAuthorizationHandler.QUALIFIER_NAME)
+    private it.pagopa.transactions.commands.handlers.v1.TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV1;
+
+    @Autowired
+    @Qualifier(it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler.QUALIFIER_NAME)
+    private it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV2;
 
     @Autowired
     private TransactionRequestUserReceiptHandler transactionRequestUserReceiptHandler;
@@ -93,6 +103,12 @@ public class TransactionsService {
     @Autowired
     @Qualifier(it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler.QUALIFIER_NAME)
     private it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV1;
+    @Qualifier(it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler.QUALIFIER_NAME)
+    private it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV1;
+
+    @Autowired
+    @Qualifier(it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler.QUALIFIER_NAME)
+    private it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV2;
 
     @Autowired
     @Qualifier(it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler.QUALIFIER_NAME)
@@ -478,21 +494,22 @@ public class TransactionsService {
                                     new RptId(transactionsUtils.getRptId(transactionDocument, 0)),
                                     authorizationData
                             );
-                            Mono<RequestAuthorizationResponseDto> authorizationHandler = switch (transactionDocument) {
-                                case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> requestAuthHandlerV1
-                                        .handle(transactionRequestAuthorizationCommand)
-                                        .doOnNext(
-                                                res -> log.info(
-                                                        "Requested authorization for transaction: {}",
-                                                        transactionDocument.getTransactionId()
+                            return switch (transactionDocument) {
+                                case it.pagopa.ecommerce.commons.documents.v1.Transaction ignored ->
+                                        requestAuthHandlerV1
+                                                .handle(transactionRequestAuthorizationCommand)
+                                                .doOnNext(
+                                                        res -> log.info(
+                                                                "Requested authorization for transaction: {}",
+                                                                transactionDocument.getTransactionId()
+                                                        )
                                                 )
-                                        )
-                                        .flatMap(
-                                                res -> authorizationProjectionHandlerV1
-                                                        .handle(authorizationData)
-                                                        .thenReturn(res)
-                                        );
-                                case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> requestAuthHandlerV2
+                                                .flatMap(
+                                                        res -> authorizationProjectionHandlerV1
+                                                                .handle(authorizationData)
+                                                                .thenReturn(res)
+                                                );
+                                case Transaction ignored -> requestAuthHandlerV2
                                         .handle(transactionRequestAuthorizationCommand).doOnNext(
                                                 res -> log.info(
                                                         "Requested authorization for transaction: {}",
@@ -504,9 +521,9 @@ public class TransactionsService {
                                                         .handle(authorizationData)
                                                         .thenReturn(res)
                                         );
-                                default -> throw new RuntimeException("OPS");
+                                default ->
+                                        throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(transactionDocument.getClass()));
                             };
-                            return authorizationHandler;
                         }
                 );
     }

@@ -9,6 +9,7 @@ import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
+import it.pagopa.transactions.exceptions.NotImplementedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -189,7 +190,8 @@ public class TransactionsUtils {
         return switch (baseTransactionView) {
             case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getPaymentNotices();
             case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getPaymentNotices();
-            default -> throw new RuntimeException("OPS");//TODO refactoring
+            default ->
+                    throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(baseTransactionView.getClass()));
         };
     }
 
@@ -197,7 +199,8 @@ public class TransactionsUtils {
         return switch (baseTransactionView) {
             case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getClientId().toString();
             case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getClientId().toString();
-            default -> throw new RuntimeException("OPS");//TODO refactoring
+            default ->
+                    throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(baseTransactionView.getClass()));
         };
     }
 
@@ -205,7 +208,8 @@ public class TransactionsUtils {
         return switch (baseTransactionView) {
             case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getEmail();
             case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getEmail();
-            default -> throw new RuntimeException("OPS");//TODO refactoring
+            default ->
+                    throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(baseTransactionView.getClass()));
         };
     }
 
