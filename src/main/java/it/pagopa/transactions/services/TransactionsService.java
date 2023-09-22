@@ -5,7 +5,8 @@ import io.github.resilience4j.retry.annotation.Retry;
 import io.vavr.Tuple;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
-import it.pagopa.ecommerce.commons.documents.v1.*;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.*;
@@ -23,8 +24,12 @@ import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.data.ClosureSendData;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
+import it.pagopa.transactions.commands.handlers.TransactionRequestUserReceiptHandler;
+import it.pagopa.transactions.commands.handlers.TransactionUserCancelHandler;
 import it.pagopa.transactions.exceptions.*;
-import it.pagopa.transactions.projections.handlers.*;
+import it.pagopa.transactions.projections.handlers.CancellationRequestProjectionHandler;
+import it.pagopa.transactions.projections.handlers.TransactionUserReceiptProjectionHandler;
+import it.pagopa.transactions.projections.handlers.TransactionsActivationProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -499,21 +504,22 @@ public class TransactionsService {
                                     new RptId(transactionsUtils.getRptId(transactionDocument, 0)),
                                     authorizationData
                             );
-                            Mono<RequestAuthorizationResponseDto> authorizationHandler = switch (transactionDocument) {
-                                case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> requestAuthHandlerV1
-                                        .handle(transactionRequestAuthorizationCommand)
-                                        .doOnNext(
-                                                res -> log.info(
-                                                        "Requested authorization for transaction: {}",
-                                                        transactionDocument.getTransactionId()
+                            return switch (transactionDocument) {
+                                case it.pagopa.ecommerce.commons.documents.v1.Transaction ignored ->
+                                        requestAuthHandlerV1
+                                                .handle(transactionRequestAuthorizationCommand)
+                                                .doOnNext(
+                                                        res -> log.info(
+                                                                "Requested authorization for transaction: {}",
+                                                                transactionDocument.getTransactionId()
+                                                        )
                                                 )
-                                        )
-                                        .flatMap(
-                                                res -> authorizationProjectionHandlerV1
-                                                        .handle(authorizationData)
-                                                        .thenReturn(res)
-                                        );
-                                case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> requestAuthHandlerV2
+                                                .flatMap(
+                                                        res -> authorizationProjectionHandlerV1
+                                                                .handle(authorizationData)
+                                                                .thenReturn(res)
+                                                );
+                                case Transaction ignored -> requestAuthHandlerV2
                                         .handle(transactionRequestAuthorizationCommand).doOnNext(
                                                 res -> log.info(
                                                         "Requested authorization for transaction: {}",
@@ -525,9 +531,9 @@ public class TransactionsService {
                                                         .handle(authorizationData)
                                                         .thenReturn(res)
                                         );
-                                default -> throw new RuntimeException("OPS");
+                                default ->
+                                        throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(transactionDocument.getClass()));
                             };
-                            return authorizationHandler;
                         }
                 );
     }
