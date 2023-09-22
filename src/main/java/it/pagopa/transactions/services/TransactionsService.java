@@ -313,17 +313,14 @@ public class TransactionsService {
                             );
 
                             return switch (transactionDocument) {
-                                case it.pagopa.ecommerce.commons.documents.v1.Transaction t ->
-                                        transactionCancelHandlerV1
-                                                .handle(transactionCancelCommand).flatMap(event -> cancellationRequestProjectionHandlerV1
-                                                        .handle((it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent) event));
+                                case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> transactionCancelHandlerV1
+                                        .handle(transactionCancelCommand).flatMap(event -> cancellationRequestProjectionHandlerV1
+                                                .handle((it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent) event));
 
-                                case it.pagopa.ecommerce.commons.documents.v2.Transaction t ->
-                                        transactionCancelHandlerV2
-                                                .handle(transactionCancelCommand).flatMap(event -> cancellationRequestProjectionHandlerV2
-                                                        .handle((it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent) event));
-                                default ->
-                                        Mono.error(new BadGatewayException("Error while processing request unexpected transaction version type", HttpStatus.BAD_GATEWAY));
+                                case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> transactionCancelHandlerV2
+                                        .handle(transactionCancelCommand).flatMap(event -> cancellationRequestProjectionHandlerV2
+                                                .handle((it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent) event));
+                                default -> Mono.error(new BadGatewayException("Error while processing request unexpected transaction version type",HttpStatus.BAD_GATEWAY));
                             };
                         }
                 )
@@ -539,21 +536,22 @@ public class TransactionsService {
                                     new RptId(transactionsUtils.getRptId(transactionDocument, 0)),
                                     authorizationData
                             );
-                            Mono<RequestAuthorizationResponseDto> authorizationHandler = switch (transactionDocument) {
-                                case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> requestAuthHandlerV1
-                                        .handle(transactionRequestAuthorizationCommand)
-                                        .doOnNext(
-                                                res -> log.info(
-                                                        "Requested authorization for transaction: {}",
-                                                        transactionDocument.getTransactionId()
+                            return switch (transactionDocument) {
+                                case it.pagopa.ecommerce.commons.documents.v1.Transaction ignored ->
+                                        requestAuthHandlerV1
+                                                .handle(transactionRequestAuthorizationCommand)
+                                                .doOnNext(
+                                                        res -> log.info(
+                                                                "Requested authorization for transaction: {}",
+                                                                transactionDocument.getTransactionId()
+                                                        )
                                                 )
-                                        )
-                                        .flatMap(
-                                                res -> authorizationProjectionHandlerV1
-                                                        .handle(authorizationData)
-                                                        .thenReturn(res)
-                                        );
-                                case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> requestAuthHandlerV2
+                                                .flatMap(
+                                                        res -> authorizationProjectionHandlerV1
+                                                                .handle(authorizationData)
+                                                                .thenReturn(res)
+                                                );
+                                case Transaction ignored -> requestAuthHandlerV2
                                         .handle(transactionRequestAuthorizationCommand).doOnNext(
                                                 res -> log.info(
                                                         "Requested authorization for transaction: {}",
@@ -565,9 +563,9 @@ public class TransactionsService {
                                                         .handle(authorizationData)
                                                         .thenReturn(res)
                                         );
-                                default -> throw new RuntimeException("OPS");
+                                default ->
+                                        throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(transactionDocument.getClass()));
                             };
-                            return authorizationHandler;
                         }
                 );
     }
