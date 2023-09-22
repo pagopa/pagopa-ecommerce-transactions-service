@@ -14,6 +14,7 @@ import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestPaymentsInnerDto;
 import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.data.AddUserReceiptData;
+import it.pagopa.transactions.commands.handlers.v1.TransactionRequestUserReceiptHandler;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -104,7 +105,7 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionActivated transaction = transactionActivated(ZonedDateTime.now().toString());
 
         AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
-                transaction,
+                transaction.getTransactionId(),
                 addUserReceiptRequest
         );
 
@@ -184,7 +185,7 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionActivated transaction = transactionActivated(ZonedDateTime.now().toString());
 
         AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
-                transaction,
+                transaction.getTransactionId(),
                 addUserReceiptRequest
         );
 
@@ -264,7 +265,7 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionActivated transaction = transactionActivated(ZonedDateTime.now().toString());
 
         AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
-                transaction,
+                transaction.getTransactionId(),
                 addUserReceiptRequest
         );
 
@@ -341,7 +342,7 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionActivated transaction = transactionActivated(ZonedDateTime.now().toString());
 
         AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
-                transaction,
+                transaction.getTransactionId(),
                 addUserReceiptRequest
         );
 
@@ -394,7 +395,7 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionActivated transaction = transactionActivated(ZonedDateTime.now().toString());
 
         AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
-                transaction,
+                transaction.getTransactionId(),
                 addUserReceiptRequest
         );
 
