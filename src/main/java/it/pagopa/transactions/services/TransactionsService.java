@@ -118,9 +118,9 @@ public class TransactionsService {
     @CircuitBreaker(name = "node-backend")
     @Retry(name = "newTransaction")
     public Mono<NewTransactionResponseDto> newTransaction(
-                                                          NewTransactionRequestDto newTransactionRequestDto,
-                                                          ClientIdDto clientIdDto,
-                                                          TransactionId transactionId
+            NewTransactionRequestDto newTransactionRequestDto,
+            ClientIdDto clientIdDto,
+            TransactionId transactionId
     ) {
         Transaction.ClientId clientId = Transaction.ClientId.fromString(
                 Optional.ofNullable(clientIdDto)
@@ -202,7 +202,7 @@ public class TransactionsService {
                                 .sendPaymentResultOutcome(
                                         transaction.getSendPaymentResultOutcome() == null ? null
                                                 : TransactionInfoDto.SendPaymentResultOutcomeEnum
-                                                        .valueOf(transaction.getSendPaymentResultOutcome().name())
+                                                .valueOf(transaction.getSendPaymentResultOutcome().name())
                                 )
                                 .authorizationCode(transaction.getAuthorizationCode())
                                 .authorizationErrorCode(transaction.getAuthorizationErrorCode())
@@ -441,21 +441,22 @@ public class TransactionsService {
                                     new RptId(transactionsUtils.getRptId(transactionDocument, 0)),
                                     authorizationData
                             );
-                            Mono<RequestAuthorizationResponseDto> authorizationHandler = switch (transactionDocument) {
-                                case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> requestAuthHandlerV1
-                                        .handle(transactionRequestAuthorizationCommand)
-                                        .doOnNext(
-                                                res -> log.info(
-                                                        "Requested authorization for transaction: {}",
-                                                        transactionDocument.getTransactionId()
+                            return switch (transactionDocument) {
+                                case it.pagopa.ecommerce.commons.documents.v1.Transaction ignored ->
+                                        requestAuthHandlerV1
+                                                .handle(transactionRequestAuthorizationCommand)
+                                                .doOnNext(
+                                                        res -> log.info(
+                                                                "Requested authorization for transaction: {}",
+                                                                transactionDocument.getTransactionId()
+                                                        )
                                                 )
-                                        )
-                                        .flatMap(
-                                                res -> authorizationProjectionHandlerV1
-                                                        .handle(authorizationData)
-                                                        .thenReturn(res)
-                                        );
-                                case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> requestAuthHandlerV2
+                                                .flatMap(
+                                                        res -> authorizationProjectionHandlerV1
+                                                                .handle(authorizationData)
+                                                                .thenReturn(res)
+                                                );
+                                case Transaction ignored -> requestAuthHandlerV2
                                         .handle(transactionRequestAuthorizationCommand).doOnNext(
                                                 res -> log.info(
                                                         "Requested authorization for transaction: {}",
@@ -467,17 +468,17 @@ public class TransactionsService {
                                                         .handle(authorizationData)
                                                         .thenReturn(res)
                                         );
-                                default -> throw new RuntimeException("OPS");
+                                default ->
+                                        throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(transactionDocument.getClass()));
                             };
-                            return authorizationHandler;
                         }
                 );
     }
 
     @Retry(name = "updateTransactionAuthorization")
     public Mono<TransactionInfoDto> updateTransactionAuthorization(
-                                                                   UUID decodedTransactionId,
-                                                                   UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+            UUID decodedTransactionId,
+            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
 
         TransactionId transactionId = new TransactionId(decodedTransactionId);
@@ -523,8 +524,8 @@ public class TransactionsService {
     }
 
     private Mono<TransactionActivated> updateTransactionAuthorizationStatus(
-                                                                            BaseTransaction transaction,
-                                                                            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+            BaseTransaction transaction,
+            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction,
@@ -552,8 +553,8 @@ public class TransactionsService {
     }
 
     private Mono<it.pagopa.ecommerce.commons.documents.v1.Transaction> closePayment(
-                                                                                    BaseTransactionWithPaymentToken transaction,
-                                                                                    UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+            BaseTransactionWithPaymentToken transaction,
+            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
         ClosureSendData closureSendData = new ClosureSendData(
                 transaction,
@@ -568,11 +569,11 @@ public class TransactionsService {
         return transactionSendClosureHandler
                 .handle(transactionClosureSendCommand)
                 .doOnNext(closureSentEvent ->
-                // FIXME Handle multiple rtpId
-                log.info(
-                        "Requested transaction closure for rptId: {}",
-                        transaction.getPaymentNotices().get(0).rptId().value()
-                )
+                        // FIXME Handle multiple rtpId
+                        log.info(
+                                "Requested transaction closure for rptId: {}",
+                                transaction.getPaymentNotices().get(0).rptId().value()
+                        )
                 )
                 .flatMap(
                         el -> el.getT1().map(
@@ -589,7 +590,7 @@ public class TransactionsService {
     }
 
     private TransactionInfoDto buildTransactionInfoDto(
-                                                       it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument
+            it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument
     ) {
         return new TransactionInfoDto()
                 .transactionId(
@@ -631,7 +632,7 @@ public class TransactionsService {
     }
 
     private Mono<Boolean> wasTransactionAuthorized(
-                                                   TransactionId transactionId
+            TransactionId transactionId
     ) {
         /*
          * @formatter:off
@@ -660,8 +661,8 @@ public class TransactionsService {
 
     @Retry(name = "addUserReceipt")
     public Mono<TransactionInfoDto> addUserReceipt(
-                                                   String transactionId,
-                                                   AddUserReceiptRequestDto addUserReceiptRequest
+            String transactionId,
+            AddUserReceiptRequestDto addUserReceiptRequest
     ) {
         return transactionsViewRepository
                 .findById(transactionId)
@@ -753,8 +754,8 @@ public class TransactionsService {
     }
 
     private Mono<NewTransactionResponseDto> projectActivatedEvent(
-                                                                  TransactionActivatedEvent transactionActivatedEvent,
-                                                                  String authToken
+            TransactionActivatedEvent transactionActivatedEvent,
+            String authToken
     ) {
         return transactionsActivationProjectionHandler
                 .handle(transactionActivatedEvent)
@@ -801,7 +802,7 @@ public class TransactionsService {
     }
 
     NewTransactionResponseDto.ClientIdEnum convertClientId(
-                                                           it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
+            it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
     ) {
         return Optional.ofNullable(clientId).filter(Objects::nonNull)
                 .map(

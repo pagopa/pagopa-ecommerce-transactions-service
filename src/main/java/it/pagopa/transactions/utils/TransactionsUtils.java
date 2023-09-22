@@ -9,6 +9,7 @@ import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
+import it.pagopa.transactions.exceptions.NotImplementedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,7 +99,7 @@ public class TransactionsUtils {
     }
 
     public Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction> reduceEventsV2(
-                                                                                            TransactionId transactionId
+            TransactionId transactionId
     ) {
         return reduceEvent(
                 transactionId,
@@ -109,10 +110,10 @@ public class TransactionsUtils {
     }
 
     public <A, T> Mono<T> reduceEvent(
-                                      TransactionId transactionId,
-                                      A initialValue,
-                                      BiFunction<A, ? super BaseTransactionEvent<?>, A> accumulator,
-                                      Class<T> clazz
+            TransactionId transactionId,
+            A initialValue,
+            BiFunction<A, ? super BaseTransactionEvent<?>, A> accumulator,
+            Class<T> clazz
     ) {
         return eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value())
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())))
@@ -121,7 +122,7 @@ public class TransactionsUtils {
     }
 
     public it.pagopa.generated.transactions.server.model.TransactionStatusDto convertEnumeration(
-                                                                                                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status
+            it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status
     ) {
         return transactionStatusLookupMap.get(status);
     }
@@ -158,16 +159,16 @@ public class TransactionsUtils {
     }
 
     public Boolean isAllCcp(
-                            BaseTransactionView baseTransactionView,
-                            int idx
+            BaseTransactionView baseTransactionView,
+            int idx
     ) {
         List<PaymentNotice> paymentNotices = getPaymentNotices(baseTransactionView);
         return paymentNotices.get(idx).isAllCCP();
     }
 
     public String getRptId(
-                           BaseTransactionView baseTransactionView,
-                           int idx
+            BaseTransactionView baseTransactionView,
+            int idx
     ) {
         List<PaymentNotice> paymentNotices = getPaymentNotices(baseTransactionView);
         return paymentNotices.get(idx).getRptId();
@@ -177,7 +178,8 @@ public class TransactionsUtils {
         return switch (baseTransactionView) {
             case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getPaymentNotices();
             case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getPaymentNotices();
-            default -> throw new RuntimeException("OPS");//TODO refactoring
+            default ->
+                    throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(baseTransactionView.getClass()));
         };
     }
 
@@ -185,7 +187,8 @@ public class TransactionsUtils {
         return switch (baseTransactionView) {
             case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getClientId().toString();
             case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getClientId().toString();
-            default -> throw new RuntimeException("OPS");//TODO refactoring
+            default ->
+                    throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(baseTransactionView.getClass()));
         };
     }
 
@@ -193,7 +196,8 @@ public class TransactionsUtils {
         return switch (baseTransactionView) {
             case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getEmail();
             case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getEmail();
-            default -> throw new RuntimeException("OPS");//TODO refactoring
+            default ->
+                    throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(baseTransactionView.getClass()));
         };
     }
 
