@@ -4,7 +4,8 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
-import it.pagopa.ecommerce.commons.documents.v1.*;
+import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.*;
@@ -25,7 +26,8 @@ import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
 import it.pagopa.transactions.commands.handlers.TransactionRequestUserReceiptHandler;
 import it.pagopa.transactions.exceptions.*;
-import it.pagopa.transactions.projections.handlers.*;
+import it.pagopa.transactions.projections.handlers.TransactionUserReceiptProjectionHandler;
+import it.pagopa.transactions.projections.handlers.TransactionsActivationProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -209,49 +211,93 @@ public class TransactionsService {
         return transactionsViewRepository
                 .findById(transactionId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
-                .cast(it.pagopa.ecommerce.commons.documents.v1.Transaction.class)
-                .map(
-                        transaction -> new TransactionInfoDto()
-                                .transactionId(transaction.getTransactionId())
-                                .payments(
-                                        transaction.getPaymentNotices().stream().map(
-                                                paymentNotice -> new PaymentInfoDto()
-                                                        .amount(paymentNotice.getAmount())
-                                                        .reason(paymentNotice.getDescription())
-                                                        .paymentToken(paymentNotice.getPaymentToken())
-                                                        .rptId(paymentNotice.getRptId())
-                                                        .isAllCCP(paymentNotice.isAllCCP())
-                                                        .transferList(
-                                                                paymentNotice.getTransferList().stream().map(
-                                                                        notice -> new TransferDto()
-                                                                                .transferCategory(
-                                                                                        notice.getTransferCategory()
-                                                                                )
-                                                                                .transferAmount(
-                                                                                        notice.getTransferAmount()
-                                                                                ).digitalStamp(notice.getDigitalStamp())
-                                                                                .paFiscalCode(notice.getPaFiscalCode())
-                                                                ).toList()
-                                                        )
-                                        ).toList()
-                                )
-                                .feeTotal(transaction.getFeeTotal())
-                                .clientId(
-                                        TransactionInfoDto.ClientIdEnum.valueOf(
-                                                transaction.getClientId().toString()
-                                        )
-                                )
-                                .status(transactionsUtils.convertEnumeration(transaction.getStatus()))
-                                .idCart(transaction.getIdCart())
-                                .paymentGateway(transaction.getPaymentGateway())
-                                .sendPaymentResultOutcome(
-                                        transaction.getSendPaymentResultOutcome() == null ? null
-                                                : TransactionInfoDto.SendPaymentResultOutcomeEnum
-                                                        .valueOf(transaction.getSendPaymentResultOutcome().name())
-                                )
-                                .authorizationCode(transaction.getAuthorizationCode())
-                                .authorizationErrorCode(transaction.getAuthorizationErrorCode())
-                );
+                .map(this::buildTransactionInfoDtoFromView);
+    }
+
+    private TransactionInfoDto buildTransactionInfoDtoFromView(BaseTransactionView baseTransactionView) {
+        return switch (baseTransactionView) {
+            case it.pagopa.ecommerce.commons.documents.v1.Transaction transaction -> new TransactionInfoDto()
+                    .transactionId(transaction.getTransactionId())
+                    .payments(
+                            transaction.getPaymentNotices().stream().map(
+                                    paymentNotice -> new PaymentInfoDto()
+                                            .amount(paymentNotice.getAmount())
+                                            .reason(paymentNotice.getDescription())
+                                            .paymentToken(paymentNotice.getPaymentToken())
+                                            .rptId(paymentNotice.getRptId())
+                                            .isAllCCP(paymentNotice.isAllCCP())
+                                            .transferList(
+                                                    paymentNotice.getTransferList().stream().map(
+                                                            notice -> new TransferDto()
+                                                                    .transferCategory(
+                                                                            notice.getTransferCategory()
+                                                                    )
+                                                                    .transferAmount(
+                                                                            notice.getTransferAmount()
+                                                                    ).digitalStamp(notice.getDigitalStamp())
+                                                                    .paFiscalCode(notice.getPaFiscalCode())
+                                                    ).toList()
+                                            )
+                            ).toList()
+                    )
+                    .feeTotal(transaction.getFeeTotal())
+                    .clientId(
+                            TransactionInfoDto.ClientIdEnum.valueOf(
+                                    transaction.getClientId().toString()
+                            )
+                    )
+                    .status(transactionsUtils.convertEnumeration(transaction.getStatus()))
+                    .idCart(transaction.getIdCart())
+                    .paymentGateway(transaction.getPaymentGateway())
+                    .sendPaymentResultOutcome(
+                            transaction.getSendPaymentResultOutcome() == null ? null
+                                    : TransactionInfoDto.SendPaymentResultOutcomeEnum
+                                    .valueOf(transaction.getSendPaymentResultOutcome().name())
+                    )
+                    .authorizationCode(transaction.getAuthorizationCode())
+                    .authorizationErrorCode(transaction.getAuthorizationErrorCode());
+            case it.pagopa.ecommerce.commons.documents.v2.Transaction transaction -> new TransactionInfoDto()
+                    .transactionId(transaction.getTransactionId())
+                    .payments(
+                            transaction.getPaymentNotices().stream().map(
+                                    paymentNotice -> new PaymentInfoDto()
+                                            .amount(paymentNotice.getAmount())
+                                            .reason(paymentNotice.getDescription())
+                                            .paymentToken(paymentNotice.getPaymentToken())
+                                            .rptId(paymentNotice.getRptId())
+                                            .isAllCCP(paymentNotice.isAllCCP())
+                                            .transferList(
+                                                    paymentNotice.getTransferList().stream().map(
+                                                            notice -> new TransferDto()
+                                                                    .transferCategory(
+                                                                            notice.getTransferCategory()
+                                                                    )
+                                                                    .transferAmount(
+                                                                            notice.getTransferAmount()
+                                                                    ).digitalStamp(notice.getDigitalStamp())
+                                                                    .paFiscalCode(notice.getPaFiscalCode())
+                                                    ).toList()
+                                            )
+                            ).toList()
+                    )
+                    .feeTotal(transaction.getFeeTotal())
+                    .clientId(
+                            TransactionInfoDto.ClientIdEnum.valueOf(
+                                    transaction.getClientId().toString()
+                            )
+                    )
+                    .status(transactionsUtils.convertEnumeration(transaction.getStatus()))
+                    .idCart(transaction.getIdCart())
+                    .paymentGateway(transaction.getPaymentGateway())
+                    .sendPaymentResultOutcome(
+                            transaction.getSendPaymentResultOutcome() == null ? null
+                                    : TransactionInfoDto.SendPaymentResultOutcomeEnum
+                                    .valueOf(transaction.getSendPaymentResultOutcome().name())
+                    )
+                    .authorizationCode(transaction.getAuthorizationCode())
+                    .authorizationErrorCode(transaction.getAuthorizationErrorCode());
+            default -> throw new IllegalStateException("Unexpected value: " + baseTransactionView);
+        };
     }
 
     @Retry(name = "cancelTransaction")
@@ -267,14 +313,17 @@ public class TransactionsService {
                             );
 
                             return switch (transactionDocument) {
-                                case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> transactionCancelHandlerV1
-                                        .handle(transactionCancelCommand).flatMap(event -> cancellationRequestProjectionHandlerV1
-                                                .handle((it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent) event));
+                                case it.pagopa.ecommerce.commons.documents.v1.Transaction t ->
+                                        transactionCancelHandlerV1
+                                                .handle(transactionCancelCommand).flatMap(event -> cancellationRequestProjectionHandlerV1
+                                                        .handle((it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent) event));
 
-                                case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> transactionCancelHandlerV2
-                                        .handle(transactionCancelCommand).flatMap(event -> cancellationRequestProjectionHandlerV2
-                                                .handle((it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent) event));
-                                default -> Mono.error(new BadGatewayException("Error while processing request unexpected transaction version type",HttpStatus.BAD_GATEWAY));
+                                case it.pagopa.ecommerce.commons.documents.v2.Transaction t ->
+                                        transactionCancelHandlerV2
+                                                .handle(transactionCancelCommand).flatMap(event -> cancellationRequestProjectionHandlerV2
+                                                        .handle((it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent) event));
+                                default ->
+                                        Mono.error(new BadGatewayException("Error while processing request unexpected transaction version type", HttpStatus.BAD_GATEWAY));
                             };
                         }
                 )
