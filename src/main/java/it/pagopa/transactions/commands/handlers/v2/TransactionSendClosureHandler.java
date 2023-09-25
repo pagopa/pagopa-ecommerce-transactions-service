@@ -1,11 +1,14 @@
-package it.pagopa.transactions.commands.handlers;
+package it.pagopa.transactions.commands.handlers.v2;
 
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
+import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
-import it.pagopa.ecommerce.commons.documents.v1.*;
-import it.pagopa.ecommerce.commons.domain.v1.TransactionAuthorizationCompleted;
-import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionRefundedData;
+import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionAuthorizationCompleted;
+import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
@@ -16,6 +19,7 @@ import it.pagopa.generated.ecommerce.nodo.v2.dto.*;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
+import it.pagopa.transactions.commands.handlers.TransactionSendClosureHandlerCommon;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -34,85 +38,67 @@ import reactor.util.function.Tuples;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-@Component
+@Component(TransactionSendClosureHandler.QUALIFIER_NAME)
 @Slf4j
-public class TransactionSendClosureHandler implements
-        CommandHandler<TransactionClosureSendCommand, Mono<Tuple2<Optional<TransactionRefundRequestedEvent>, Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>>>> {
-
-    private static final String CONFERMATO = "Confermato";
-    private static final String RIFIUTATO = "Rifiutato";
-    private final TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository;
-
-    private final TransactionsEventStoreRepository<TransactionRefundedData> transactionRefundedEventStoreRepository;
-
+public class TransactionSendClosureHandler extends TransactionSendClosureHandlerCommon {
+    public static final String QUALIFIER_NAME = "TransactionSendClosureHandlerV2";
+    private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData> transactionEventStoreRepository;
+    private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionRefundedData> transactionRefundedEventStoreRepository;
     private final TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository;
-
     private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper;
-
     private final NodeForPspClient nodeForPspClient;
-
     private final QueueAsyncClient closureRetryQueueAsyncClient;
-
-    private final Integer paymentTokenValidity;
-
-    private final Integer retryTimeoutInterval;
-
-    private final Integer softTimeoutOffset;
-
     private final QueueAsyncClient refundQueueAsyncClient;
-    private final TransactionsUtils transactionsUtils;
-    private final AuthRequestDataUtils authRequestDataUtils;
-
-    private final int transientQueuesTTLSeconds;
-
-    private final TracingUtils tracingUtils;
 
     @Autowired
     public TransactionSendClosureHandler(
             TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository,
             TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository,
             TransactionsEventStoreRepository<TransactionRefundedData> transactionRefundedEventStoreRepository,
-            PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
             NodeForPspClient nodeForPspClient,
             @Qualifier(
-                "transactionClosureRetryQueueAsyncClient"
+                "transactionClosureRetryQueueAsyncClientV2"
             ) QueueAsyncClient closureRetryQueueAsyncClient,
             @Value("${payment.token.validity}") Integer paymentTokenValidity,
             @Value("${transactions.ecommerce.retry.offset}") Integer softTimeoutOffset,
             @Value("${transactions.closure_handler.retry_interval}") Integer retryTimeoutInterval,
-            @Qualifier("transactionRefundQueueAsyncClient") QueueAsyncClient refundQueueAsyncClient,
+            @Qualifier("transactionRefundQueueAsyncClientV2") QueueAsyncClient refundQueueAsyncClient,
             TransactionsUtils transactionsUtils,
             AuthRequestDataUtils authRequestDataUtils,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
-            TracingUtils tracingUtils
+            TracingUtils tracingUtils,
+            PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper
     ) {
+        super(
+                transactionsUtils,
+                authRequestDataUtils,
+                tracingUtils,
+                paymentTokenValidity,
+                retryTimeoutInterval,
+                softTimeoutOffset,
+                transientQueuesTTLSeconds
+        );
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionClosureErrorEventStoreRepository = transactionClosureErrorEventStoreRepository;
         this.transactionRefundedEventStoreRepository = transactionRefundedEventStoreRepository;
         this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
-        this.nodeForPspClient = nodeForPspClient;
         this.closureRetryQueueAsyncClient = closureRetryQueueAsyncClient;
-        this.paymentTokenValidity = paymentTokenValidity;
-        this.softTimeoutOffset = softTimeoutOffset;
-        this.retryTimeoutInterval = retryTimeoutInterval;
         this.refundQueueAsyncClient = refundQueueAsyncClient;
-        this.transactionsUtils = transactionsUtils;
-        this.authRequestDataUtils = authRequestDataUtils;
-        this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
-        this.tracingUtils = tracingUtils;
+        this.nodeForPspClient = nodeForPspClient;
     }
 
     @Override
-    public Mono<Tuple2<Optional<TransactionRefundRequestedEvent>, Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>>> handle(
-                                                                                                                                                          TransactionClosureSendCommand command
+    public Mono<Tuple2<Optional<BaseTransactionEvent<?>>, Either<BaseTransactionEvent<?>, BaseTransactionEvent<?>>>> handle(
+                                                                                                                            TransactionClosureSendCommand command
     ) {
-        Mono<BaseTransaction> transaction = transactionsUtils.reduceEventsV1(
-                command.getData().transaction().getTransactionId()
+        Mono<BaseTransaction> transaction = transactionsUtils.reduceEventsV2(
+                command.getData().transactionId()
         );
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
                 .doOnNext(t -> log.error("Error: requesting closure for transaction in state {}", t.getStatus()))
@@ -126,13 +112,13 @@ public class TransactionSendClosureHandler implements
                 .flatMap(tx -> {
                     UpdateAuthorizationRequestDto updateAuthorizationRequestDto = command.getData()
                             .updateAuthorizationRequest();
-                    AuthRequestDataUtils.AuthRequestData authRequestData = authRequestDataUtils
+                    AuthRequestDataUtils.AuthRequestData authRequestDataExtracted = authRequestDataUtils
                             .from(updateAuthorizationRequestDto, tx.getTransactionId());
-                    TransactionAuthorizationRequestData transactionAuthorizationRequestData = tx
+                    it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData transactionAuthorizationRequestData = tx
                             .getTransactionAuthorizationRequestData();
-                    TransactionAuthorizationCompletedData transactionAuthorizationCompletedData = tx
+                    it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData transactionAuthorizationCompletedData = tx
                             .getTransactionAuthorizationCompletedData();
-                    TransactionActivatedData transactionActivatedData = tx
+                    it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData transactionActivatedData = tx
                             .getTransactionActivatedData();
                     BigDecimal amount = EuroUtils.euroCentsToEuro(
                             tx.getPaymentNotices().stream()
@@ -143,7 +129,7 @@ public class TransactionSendClosureHandler implements
                     BigDecimal fee = EuroUtils.euroCentsToEuro(transactionAuthorizationRequestData.getFee());
                     BigDecimal totalAmount = amount.add(fee);
                     ClosePaymentRequestV2Dto.OutcomeEnum outcome = authorizationResultToOutcomeV2(
-                            transactionAuthorizationCompletedData.getAuthorizationResultDto()
+                            authRequestDataExtracted
                     );
                     ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                             .paymentTokens(
@@ -157,14 +143,15 @@ public class TransactionSendClosureHandler implements
                             .transactionDetails(
                                     buildTransactionDetailsDto(
                                             transactionActivatedData,
-                                            authRequestData,
+                                            authRequestDataExtracted,
                                             transactionAuthorizationRequestData,
                                             transactionAuthorizationCompletedData,
-                                            command,
                                             fee,
                                             amount,
                                             totalAmount,
-                                            outcome
+                                            outcome,
+                                            tx.getTransactionId(),
+                                            tx.getCreationDate()
                                     )
                             );
                     if (ClosePaymentRequestV2Dto.OutcomeEnum.OK.equals(closePaymentRequest.getOutcome())) {
@@ -180,9 +167,9 @@ public class TransactionSendClosureHandler implements
                                         new AdditionalPaymentInformationsDto()
                                                 .outcomePaymentGateway(
                                                         AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum
-                                                                .fromValue(authRequestData.outcome())
+                                                                .fromValue(authRequestDataExtracted.outcome())
                                                 )
-                                                .authorizationCode(authRequestData.authorizationCode())
+                                                .authorizationCode(authRequestDataExtracted.authorizationCode())
                                                 .fee(fee.toString())
                                                 .timestampOperation(
                                                         updateAuthorizationRequestDto
@@ -191,7 +178,7 @@ public class TransactionSendClosureHandler implements
                                                                 .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                                 )
                                                 .totalAmount(totalAmount.toString())
-                                                .rrn(authRequestData.rrn())
+                                                .rrn(authRequestDataExtracted.rrn())
                                 );
                     }
 
@@ -206,20 +193,28 @@ public class TransactionSendClosureHandler implements
                     return nodeForPspClient.closePaymentV2(closePaymentRequest)
                             .flatMap(
                                     response -> buildAndSaveClosureEvent(
-                                            command,
-                                            transactionAuthorizationCompletedData.getAuthorizationResultDto(),
+                                            tx.getTransactionId(),
+                                            AuthorizationResultDto
+                                                    .fromValue(
+                                                            authRequestDataExtracted.outcome()
+                                                    ),
                                             response.getOutcome()
                                     )
                             )
                             .flatMap(
+
                                     closureEvent -> sendRefundRequestEvent(
                                             Either.right(closureEvent),
-                                            transactionAuthorizationCompletedData.getAuthorizationResultDto()
+                                            AuthorizationResultDto
+                                                    .fromValue(
+                                                            authRequestDataExtracted.outcome()
+                                                    ),
+                                            tx.getTransactionId()
                                     )
                                             .map(
                                                     (refundedEvent) -> Tuples.of(
-                                                            Optional.of(refundedEvent),
-                                                            Either.<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>right(
+                                                            Optional.<BaseTransactionEvent<?>>of(refundedEvent),
+                                                            Either.<BaseTransactionEvent<?>, BaseTransactionEvent<?>>right(
                                                                     closureEvent
                                                             )
                                                     )
@@ -244,11 +239,11 @@ public class TransactionSendClosureHandler implements
                                 // the closure error event is build and sent iff the transaction was previously
                                 // authorized
                                 // and the error received from Nodo is a recoverable ones such as http code 500
-                                TransactionClosureErrorEvent errorEvent = new TransactionClosureErrorEvent(
+                                it.pagopa.ecommerce.commons.documents.v2.TransactionClosureErrorEvent errorEvent = new it.pagopa.ecommerce.commons.documents.v2.TransactionClosureErrorEvent(
                                         tx.getTransactionId().value()
                                 );
 
-                                Mono<TransactionClosureErrorEvent> eventSaved = transactionClosureErrorEventStoreRepository
+                                Mono<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureErrorEvent> eventSaved = transactionClosureErrorEventStoreRepository
                                         .save(errorEvent);
 
                                 if (!unrecoverableError) {
@@ -321,8 +316,8 @@ public class TransactionSendClosureHandler implements
 
                                     return eventSaved.map(
                                             (closureErrorEvent) -> Tuples.of(
-                                                    Optional.empty(),
-                                                    Either.<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>left(
+                                                    Optional.<BaseTransactionEvent<?>>empty(),
+                                                    Either.<BaseTransactionEvent<?>, BaseTransactionEvent<?>>left(
                                                             closureErrorEvent
                                                     )
                                             )
@@ -336,12 +331,17 @@ public class TransactionSendClosureHandler implements
 
                                                 closureErrorEvent -> sendRefundRequestEvent(
                                                         Either.left(closureErrorEvent),
-                                                        transactionAuthorizationCompletedData
-                                                                .getAuthorizationResultDto()
+                                                        AuthorizationResultDto
+                                                                .fromValue(
+                                                                        authRequestDataExtracted.outcome()
+                                                                ),
+                                                        tx.getTransactionId()
                                                 ).map(
                                                         (refundRequestedEvent) -> Tuples.of(
-                                                                Optional.of(refundRequestedEvent),
-                                                                Either.<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>>left(
+                                                                Optional.<BaseTransactionEvent<?>>of(
+                                                                        refundRequestedEvent
+                                                                ),
+                                                                Either.<BaseTransactionEvent<?>, BaseTransactionEvent<?>>left(
                                                                         closureErrorEvent
                                                                 )
                                                         )
@@ -369,15 +369,16 @@ public class TransactionSendClosureHandler implements
     }
 
     private TransactionDetailsDto buildTransactionDetailsDto(
-                                                             TransactionActivatedData transactionActivatedData,
+                                                             it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData transactionActivatedData,
                                                              AuthRequestDataUtils.AuthRequestData authRequestData,
-                                                             TransactionAuthorizationRequestData transactionAuthorizationRequestData,
-                                                             TransactionAuthorizationCompletedData transactionAuthorizationCompletedData,
-                                                             TransactionClosureSendCommand command,
+                                                             it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData transactionAuthorizationRequestData,
+                                                             it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData transactionAuthorizationCompletedData,
                                                              BigDecimal fee,
                                                              BigDecimal amount,
                                                              BigDecimal totalAmount,
-                                                             ClosePaymentRequestV2Dto.OutcomeEnum outcomeEnum
+                                                             ClosePaymentRequestV2Dto.OutcomeEnum outcomeEnum,
+                                                             TransactionId transactionId,
+                                                             ZonedDateTime creationDate
     ) {
         return new TransactionDetailsDto()
                 .transaction(
@@ -385,11 +386,12 @@ public class TransactionSendClosureHandler implements
                                 authRequestData,
                                 transactionAuthorizationRequestData,
                                 transactionAuthorizationCompletedData,
-                                command,
                                 fee,
                                 amount,
                                 totalAmount,
-                                outcomeEnum
+                                outcomeEnum,
+                                transactionId,
+                                creationDate
                         )
                 )
                 .info(
@@ -401,13 +403,14 @@ public class TransactionSendClosureHandler implements
 
     private TransactionDto buildTransactionDto(
                                                AuthRequestDataUtils.AuthRequestData authRequestData,
-                                               TransactionAuthorizationRequestData transactionAuthorizationRequestData,
-                                               TransactionAuthorizationCompletedData transactionAuthorizationCompletedData,
-                                               TransactionClosureSendCommand command,
+                                               it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData transactionAuthorizationRequestData,
+                                               it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData transactionAuthorizationCompletedData,
                                                BigDecimal fee,
                                                BigDecimal amount,
                                                BigDecimal totalAmount,
-                                               ClosePaymentRequestV2Dto.OutcomeEnum outcomeEnum
+                                               ClosePaymentRequestV2Dto.OutcomeEnum outcomeEnum,
+                                               TransactionId transationId,
+                                               ZonedDateTime creationDate
     ) {
         return new TransactionDto()
                 .transactionStatus(
@@ -417,12 +420,10 @@ public class TransactionSendClosureHandler implements
                 .amount(amount)
                 .grandTotal(totalAmount)
                 .transactionId(
-                        command.getData().transaction()
-                                .getTransactionId().value()
+                        transationId.value()
                 )
                 .creationDate(
-                        command.getData().transaction()
-                                .getCreationDate().toOffsetDateTime()
+                        creationDate.toOffsetDateTime()
                 )
                 .paymentGateway(
                         transactionAuthorizationRequestData.getPaymentGateway().name()
@@ -433,14 +434,14 @@ public class TransactionSendClosureHandler implements
                         transactionAuthorizationCompletedData.getTimestampOperation()
                 )
                 .errorCode(
-                        ClosePaymentRequestV2Dto.OutcomeEnum.KO.equals(outcomeEnum)
-                                ? transactionAuthorizationCompletedData.getErrorCode()
-                                : null
+                        null // TODO set errorCode
                 )
                 .psp(buildPspDto(transactionAuthorizationRequestData));
     }
 
-    private PspDto buildPspDto(TransactionAuthorizationRequestData transactionAuthorizationRequestData) {
+    private PspDto buildPspDto(
+                               it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData transactionAuthorizationRequestData
+    ) {
 
         return new PspDto()
                 .idPsp(
@@ -460,8 +461,8 @@ public class TransactionSendClosureHandler implements
     }
 
     private InfoDto buildInfoDto(
-                                 TransactionActivatedData transactionActivatedData,
-                                 TransactionAuthorizationRequestData transactionAuthorizationRequestData
+                                 it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData transactionActivatedData,
+                                 it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData transactionAuthorizationRequestData
     ) {
         InfoDto result = new InfoDto()
                 .clientId(transactionActivatedData.getClientId().name())
@@ -485,13 +486,13 @@ public class TransactionSendClosureHandler implements
     }
 
     private ClosePaymentRequestV2Dto.OutcomeEnum authorizationResultToOutcomeV2(
-                                                                                AuthorizationResultDto authorizationResult
+                                                                                AuthRequestDataUtils.AuthRequestData authRequestData
     ) {
-        switch (authorizationResult) {
-            case OK -> {
+        switch (authRequestData.outcome()) {
+            case AuthRequestDataUtils.OUTCOME_OK -> {
                 return ClosePaymentRequestV2Dto.OutcomeEnum.OK;
             }
-            case KO -> {
+            case AuthRequestDataUtils.OUTCOME_KO -> {
                 return ClosePaymentRequestV2Dto.OutcomeEnum.KO;
             }
             default -> throw new IllegalArgumentException(
@@ -500,9 +501,10 @@ public class TransactionSendClosureHandler implements
         }
     }
 
-    private Mono<TransactionRefundRequestedEvent> sendRefundRequestEvent(
-                                                                         Either<TransactionClosureErrorEvent, TransactionEvent<TransactionClosureData>> closureOutcomeEvent,
-                                                                         AuthorizationResultDto authorizationResult
+    private Mono<it.pagopa.ecommerce.commons.documents.v2.TransactionRefundRequestedEvent> sendRefundRequestEvent(
+                                                                                                                  Either<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureErrorEvent, it.pagopa.ecommerce.commons.documents.v2.TransactionEvent<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData>> closureOutcomeEvent,
+                                                                                                                  AuthorizationResultDto authorizationResult,
+                                                                                                                  TransactionId transactionId
     ) {
         return Mono.just(closureOutcomeEvent)
                 .filter(
@@ -511,7 +513,7 @@ public class TransactionSendClosureHandler implements
                                 // Refund requested event sent on the queue only if the transaction was
                                 // previously
                                 // authorized and the Nodo response outcome is KO
-                                closureEvent -> TransactionClosureData.Outcome.KO
+                                closureEvent -> it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData.Outcome.KO
                                         .equals(closureEvent.getData().getResponseOutcome())
                                         && AuthorizationResultDto.OK.equals(authorizationResult)
                         )
@@ -523,10 +525,8 @@ public class TransactionSendClosureHandler implements
                                             "Requesting refund for transaction {} because of bad or no response from Nodo",
                                             closureErrorEvent.getTransactionId()
                                     );
-                                    return Tuples.of(
-                                            closureErrorEvent.getTransactionId(),
-                                            TransactionStatusDto.CLOSURE_ERROR
-                                    );
+                                    return TransactionStatusDto.CLOSURE_ERROR;
+
                                 },
 
                                 closureEvent -> {
@@ -534,17 +534,15 @@ public class TransactionSendClosureHandler implements
                                             "Requesting refund for transaction {} as it was previously authorized but we either received KO response from Nodo",
                                             closureEvent.getTransactionId()
                                     );
-                                    return Tuples.of(closureEvent.getTransactionId(), TransactionStatusDto.CLOSED);
+                                    return TransactionStatusDto.CLOSED;
                                 }
                         )
                 )
-                .flatMap(data -> {
-                    String transactionId = data.getT1();
+                .flatMap(previousStatus -> {
 
-                    TransactionStatusDto previousStatus = data.getT2();
-                    TransactionRefundRequestedEvent refundRequestedEvent = new TransactionRefundRequestedEvent(
-                            transactionId,
-                            new TransactionRefundedData(previousStatus)
+                    it.pagopa.ecommerce.commons.documents.v2.TransactionRefundRequestedEvent refundRequestedEvent = new it.pagopa.ecommerce.commons.documents.v2.TransactionRefundRequestedEvent(
+                            transactionId.value(),
+                            new it.pagopa.ecommerce.commons.documents.v2.TransactionRefundedData(previousStatus)
                     );
 
                     return transactionRefundedEventStoreRepository.save(refundRequestedEvent)
@@ -563,17 +561,18 @@ public class TransactionSendClosureHandler implements
                 });
     }
 
-    private Mono<TransactionEvent<TransactionClosureData>> buildAndSaveClosureEvent(
-            TransactionClosureSendCommand command,
+    private Mono<it.pagopa.ecommerce.commons.documents.v2.TransactionEvent<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData>> buildAndSaveClosureEvent(
+            TransactionId transactionId,
             AuthorizationResultDto authorizationResult,
             ClosePaymentResponseDto.OutcomeEnum nodoOutcome
     ) {
-        String transactionId = command.getData().transaction().getTransactionId().value().toString();
-        TransactionClosureData.Outcome eventNodoOutcome = outcomeV2ToTransactionClosureDataOutcome(nodoOutcome);
-        TransactionClosureData transactionClosureData = new TransactionClosureData(eventNodoOutcome);
-        Mono<TransactionEvent<TransactionClosureData>> closureEvent = switch (authorizationResult) {
-            case OK -> Mono.just(new TransactionClosedEvent(transactionId, transactionClosureData));
-            case KO -> Mono.just(new TransactionClosureFailedEvent(transactionId, transactionClosureData));
+        it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData.Outcome eventNodoOutcome = outcomeV2ToTransactionClosureDataOutcome(nodoOutcome);
+        it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData transactionClosureData = new it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData(eventNodoOutcome);
+        Mono<it.pagopa.ecommerce.commons.documents.v2.TransactionEvent<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData>> closureEvent = switch (authorizationResult) {
+            case OK ->
+                    Mono.just(new it.pagopa.ecommerce.commons.documents.v2.TransactionClosedEvent(transactionId.value(), transactionClosureData));
+            case KO ->
+                    Mono.just(new it.pagopa.ecommerce.commons.documents.v2.TransactionClosureFailedEvent(transactionId.value(), transactionClosureData));
             case null, default -> Mono.error(
                     new IllegalArgumentException(
                             "Unhandled authorization result: %s".formatted(authorizationResult)
@@ -584,15 +583,15 @@ public class TransactionSendClosureHandler implements
                 .flatMap(transactionEventStoreRepository::save);
     }
 
-    private TransactionClosureData.Outcome outcomeV2ToTransactionClosureDataOutcome(
-                                                                                    ClosePaymentResponseDto.OutcomeEnum closePaymentOutcome
+    private it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData.Outcome outcomeV2ToTransactionClosureDataOutcome(
+                                                                                                                             ClosePaymentResponseDto.OutcomeEnum closePaymentOutcome
     ) {
         switch (closePaymentOutcome) {
             case OK -> {
-                return TransactionClosureData.Outcome.OK;
+                return it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData.Outcome.OK;
             }
             case KO -> {
-                return TransactionClosureData.Outcome.KO;
+                return it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData.Outcome.KO;
             }
             default -> throw new IllegalArgumentException(
                     "Missing transaction closure data outcome mapping to Nodo closePaymentV2 outcome"

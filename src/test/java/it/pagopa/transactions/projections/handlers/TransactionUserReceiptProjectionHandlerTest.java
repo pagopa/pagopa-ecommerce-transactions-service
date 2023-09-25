@@ -6,6 +6,7 @@ import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptRequestedE
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
+import it.pagopa.transactions.projections.handlers.v1.TransactionUserReceiptProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
