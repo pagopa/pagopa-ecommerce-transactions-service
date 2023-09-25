@@ -1,16 +1,13 @@
-package it.pagopa.transactions.commands.handlers;
+package it.pagopa.transactions.commands.handlers.v1;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionClosureData;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptData;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptRequestedEvent;
-import it.pagopa.ecommerce.commons.domain.v1.TransactionClosed;
-import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
+import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
 import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
+import it.pagopa.transactions.commands.handlers.TransactionRequestUserReceiptHandlerCommon;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -23,51 +20,47 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 
-@Component
+@Component(TransactionRequestUserReceiptHandler.QUALIFIER_NAME)
 @Slf4j
-public class TransactionRequestUserReceiptHandler
-        implements CommandHandler<TransactionAddUserReceiptCommand, Mono<TransactionUserReceiptRequestedEvent>> {
+public class TransactionRequestUserReceiptHandler extends TransactionRequestUserReceiptHandlerCommon {
 
-    private final TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptAddedEventRepository;
+    public static final String QUALIFIER_NAME = "TransactionRequestUserReceiptHandlerV1";
 
-    private final TransactionsUtils transactionsUtils;
-
-    private final QueueAsyncClient transactionNotificationRequestedQueueAsyncClient;
-
-    private final int transientQueuesTTLSeconds;
-
-    private final TracingUtils tracingUtils;
+    private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptData> userReceiptAddedEventRepository;
 
     @Autowired
     public TransactionRequestUserReceiptHandler(
-            TransactionsEventStoreRepository<TransactionUserReceiptData> userReceiptAddedEventRepository,
+            TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptData> userReceiptAddedEventRepository,
             TransactionsUtils transactionsUtils,
             @Qualifier(
-                "transactionNotificationRequestedQueueAsyncClient"
+                "transactionNotificationRequestedQueueAsyncClientV1"
             ) QueueAsyncClient transactionNotificationRequestedQueueAsyncClient,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
             TracingUtils tracingUtils
     ) {
+        super(
+                tracingUtils,
+                transactionsUtils,
+                transientQueuesTTLSeconds,
+                transactionNotificationRequestedQueueAsyncClient
+        );
         this.userReceiptAddedEventRepository = userReceiptAddedEventRepository;
-        this.transactionsUtils = transactionsUtils;
-        this.transactionNotificationRequestedQueueAsyncClient = transactionNotificationRequestedQueueAsyncClient;
-        this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
-        this.tracingUtils = tracingUtils;
     }
 
     @Override
-    public Mono<TransactionUserReceiptRequestedEvent> handle(TransactionAddUserReceiptCommand command) {
-        Mono<BaseTransaction> transaction = transactionsUtils.reduceEventsV1(
-                command.getData().transaction().getTransactionId()
-        );
+    public Mono<BaseTransactionEvent<?>> handle(TransactionAddUserReceiptCommand command) {
+        Mono<it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction> transaction = transactionsUtils
+                .reduceEventsV1(
+                        command.getData().transactionId()
+                );
 
-        Mono<TransactionClosed> alreadyProcessedError = transaction
-                .cast(BaseTransaction.class)
+        Mono<it.pagopa.ecommerce.commons.domain.v1.TransactionClosed> alreadyProcessedError = transaction
+                .cast(it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction.class)
                 .doOnNext(
                         t -> log.error(
                                 "Error: requesting closure status update for transaction in state {}, Nodo closure outcome {}",
                                 t.getStatus(),
-                                t instanceof TransactionClosed transactionClosed
+                                t instanceof it.pagopa.ecommerce.commons.domain.v1.TransactionClosed transactionClosed
                                         ? transactionClosed.getTransactionClosureData().getResponseOutcome()
                                         : "N/A"
                         )
@@ -76,21 +69,21 @@ public class TransactionRequestUserReceiptHandler
         return transaction
                 .filter(
                         t -> t.getStatus() == TransactionStatusDto.CLOSED &&
-                                t instanceof TransactionClosed transactionClosed &&
-                                TransactionClosureData.Outcome.OK
+                                t instanceof it.pagopa.ecommerce.commons.domain.v1.TransactionClosed transactionClosed
+                                &&
+                                it.pagopa.ecommerce.commons.documents.v1.TransactionClosureData.Outcome.OK
                                         .equals(
                                                 transactionClosed.getTransactionClosureData().getResponseOutcome()
                                         )
                 )
                 .switchIfEmpty(alreadyProcessedError)
-                .cast(TransactionClosed.class)
+                .cast(it.pagopa.ecommerce.commons.domain.v1.TransactionClosed.class)
                 .flatMap(tx -> {
                     AddUserReceiptRequestDto addUserReceiptRequestDto = command.getData().addUserReceiptRequest();
-                    String transactionId = command.getData().transaction().getTransactionId().value();
                     String language = "it-IT"; // FIXME: Add language to AuthorizationRequestData
-                    TransactionUserReceiptRequestedEvent event = new TransactionUserReceiptRequestedEvent(
-                            transactionId,
-                            new TransactionUserReceiptData(
+                    it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptRequestedEvent event = new it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptRequestedEvent(
+                            command.getData().transactionId().value(),
+                            new it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptData(
                                     requestOutcomeToReceiptOutcome(
                                             command.getData().addUserReceiptRequest().getOutcome()
                                     ),
@@ -134,12 +127,12 @@ public class TransactionRequestUserReceiptHandler
                 });
     }
 
-    private static TransactionUserReceiptData.Outcome requestOutcomeToReceiptOutcome(
-                                                                                     AddUserReceiptRequestDto.OutcomeEnum requestOutcome
+    private static it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptData.Outcome requestOutcomeToReceiptOutcome(
+                                                                                                                              AddUserReceiptRequestDto.OutcomeEnum requestOutcome
     ) {
         return switch (requestOutcome) {
-            case OK -> TransactionUserReceiptData.Outcome.OK;
-            case KO -> TransactionUserReceiptData.Outcome.KO;
+            case OK -> it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptData.Outcome.OK;
+            case KO -> it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptData.Outcome.KO;
         };
     }
 }
