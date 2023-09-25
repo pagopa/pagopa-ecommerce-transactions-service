@@ -1,12 +1,13 @@
 package it.pagopa.transactions.commands.handlers;
 
-import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
-import it.pagopa.ecommerce.commons.documents.v1.PaymentTransferInformation;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.domain.Confidential;
-import it.pagopa.ecommerce.commons.domain.v1.*;
-import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
+import it.pagopa.ecommerce.commons.documents.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
+import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
+import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.transactions.projections.handlers.TransactionsActivationProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
@@ -80,7 +81,7 @@ class TransactionsActivationProjectionHandlerTest {
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
-                        new it.pagopa.ecommerce.commons.domain.v1.PaymentNotice(
+                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
                                 paymentToken,
                                 rptId,
                                 amount,
@@ -100,16 +101,17 @@ class TransactionsActivationProjectionHandlerTest {
                 email,
                 faultCode,
                 faultCodeString,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                new EmptyTransactionGatewayActivationData()
         );
 
-        it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.v1.Transaction
+        it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.v2.Transaction
                 .from(transaction);
 
         Mockito.when(
-                transactionsViewRepository.save(Mockito.any(it.pagopa.ecommerce.commons.documents.v1.Transaction.class))
+                transactionsViewRepository.save(Mockito.any(it.pagopa.ecommerce.commons.documents.v2.Transaction.class))
         ).thenReturn(Mono.just(transactionDocument));
 
         /* test */

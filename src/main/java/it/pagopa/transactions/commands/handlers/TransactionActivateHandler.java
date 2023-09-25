@@ -3,14 +3,19 @@ package it.pagopa.transactions.commands.handlers;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
-import it.pagopa.ecommerce.commons.documents.v1.*;
-import it.pagopa.ecommerce.commons.domain.v1.IdempotencyKey;
-import it.pagopa.ecommerce.commons.domain.v1.RptId;
-import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
+import it.pagopa.ecommerce.commons.documents.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
+import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
+import it.pagopa.ecommerce.commons.domain.RptId;
+import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.v1.PaymentRequestInfoRedisTemplateWrapper;
-import it.pagopa.ecommerce.commons.repositories.v1.PaymentRequestInfo;
+import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
+import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
@@ -49,7 +54,7 @@ public class TransactionActivateHandler
 
     private final NodoOperations nodoOperations;
 
-    private final QueueAsyncClient transactionActivatedQueueAsyncClient;
+    private final QueueAsyncClient transactionActivatedQueueAsyncClientV2;
 
     private final Integer paymentTokenTimeout;
 
@@ -71,7 +76,9 @@ public class TransactionActivateHandler
             TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository,
             NodoOperations nodoOperations,
             JwtTokenUtils jwtTokenUtils,
-            @Qualifier("transactionActivatedQueueAsyncClient") QueueAsyncClient transactionActivatedQueueAsyncClient,
+            @Qualifier(
+                "transactionActivatedQueueAsyncClientV2"
+            ) QueueAsyncClient transactionActivatedQueueAsyncClientV2,
             @Value("${payment.token.validity}") Integer paymentTokenTimeout,
             ConfidentialMailUtils confidentialMailUtils,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
@@ -83,7 +90,7 @@ public class TransactionActivateHandler
         this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
         this.nodoOperations = nodoOperations;
         this.paymentTokenTimeout = paymentTokenTimeout;
-        this.transactionActivatedQueueAsyncClient = transactionActivatedQueueAsyncClient;
+        this.transactionActivatedQueueAsyncClientV2 = transactionActivatedQueueAsyncClientV2;
         this.jwtTokenUtils = jwtTokenUtils;
         this.confidentialMailUtils = confidentialMailUtils;
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
@@ -305,13 +312,13 @@ public class TransactionActivateHandler
         return idempotencyKey != null && !idempotencyKey.rawValue().isBlank();
     }
 
-    private Mono<TransactionActivatedEvent> newTransactionActivatedEvent(
-                                                                         List<PaymentRequestInfo> paymentRequestsInfo,
-                                                                         String transactionId,
-                                                                         String email,
-                                                                         Transaction.ClientId clientId,
-                                                                         String idCart,
-                                                                         Integer paymentTokenTimeout
+    private Mono<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent> newTransactionActivatedEvent(
+                                                                                                                  List<PaymentRequestInfo> paymentRequestsInfo,
+                                                                                                                  String transactionId,
+                                                                                                                  String email,
+                                                                                                                  Transaction.ClientId clientId,
+                                                                                                                  String idCart,
+                                                                                                                  Integer paymentTokenTimeout
     ) {
         List<PaymentNotice> paymentNotices = toPaymentNoticeList(paymentRequestsInfo);
         Mono<TransactionActivatedData> data = confidentialMailUtils.toConfidential(email).map(
@@ -322,7 +329,9 @@ public class TransactionActivateHandler
                         null,
                         clientId,
                         idCart,
-                        paymentTokenTimeout
+                        paymentTokenTimeout,
+                        new EmptyTransactionGatewayActivationData() // TODO da valorizzare per NPG
+                        // new NpgTransactionGatewayActivationData()
                 )
         );
 
@@ -337,7 +346,7 @@ public class TransactionActivateHandler
                 .flatMap(
                         e -> tracingUtils.traceMono(
                                 this.getClass().getSimpleName(),
-                                tracingInfo -> transactionActivatedQueueAsyncClient.sendMessageWithResponse(
+                                tracingInfo -> transactionActivatedQueueAsyncClientV2.sendMessageWithResponse(
                                         new QueueEvent<>(e, tracingInfo),
                                         Duration.ofSeconds(paymentTokenTimeout),
                                         Duration.ofSeconds(transientQueuesTTLSeconds)

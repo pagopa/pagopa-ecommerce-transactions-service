@@ -24,7 +24,7 @@ class ClosureSendProjectionHandlerTests {
     private TransactionsViewRepository transactionsViewRepository;
 
     @InjectMocks
-    private ClosureSendProjectionHandler closureSendProjectionHandler;
+    private it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler closureSendProjectionHandler;
 
     @Test
     void shouldHandleProjectionForClosedEventWithResponseOutcomeOK() {

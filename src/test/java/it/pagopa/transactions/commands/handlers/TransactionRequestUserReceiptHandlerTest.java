@@ -1,6 +1,7 @@
 package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
+import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
@@ -13,6 +14,7 @@ import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestPaymentsInnerDto;
 import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.data.AddUserReceiptData;
+import it.pagopa.transactions.commands.handlers.v1.TransactionRequestUserReceiptHandler;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -103,7 +105,7 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionActivated transaction = transactionActivated(ZonedDateTime.now().toString());
 
         AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
-                transaction,
+                transaction.getTransactionId(),
                 addUserReceiptRequest
         );
 
@@ -116,7 +118,7 @@ class TransactionRequestUserReceiptHandlerTest {
                 TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
         );
 
-        Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux.just(
                 transactionActivatedEvent,
                 authorizationRequestedEvent,
                 authorizationCompletedEvent,
@@ -138,14 +140,17 @@ class TransactionRequestUserReceiptHandlerTest {
 
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
                 argThat(
-                        eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT
+                        eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                 )
         );
         Mockito.verify(queueAsyncClient, Mockito.times(1)).sendMessageWithResponse(any(), any(), any());
         TransactionUserReceiptRequestedEvent queueEvent = ((TransactionUserReceiptRequestedEvent) queueArgumentCaptor
                 .getValue().event());
-        assertEquals(TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT, queueEvent.getEventCode());
+        assertEquals(
+                TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT.toString(),
+                queueEvent.getEventCode()
+        );
         assertEquals(event.getData(), queueEvent.getData());
         assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
@@ -180,7 +185,7 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionActivated transaction = transactionActivated(ZonedDateTime.now().toString());
 
         AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
-                transaction,
+                transaction.getTransactionId(),
                 addUserReceiptRequest
         );
 
@@ -193,7 +198,7 @@ class TransactionRequestUserReceiptHandlerTest {
                 TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
         );
 
-        Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux.just(
                 transactionActivatedEvent,
                 authorizationRequestedEvent,
                 authorizationCompletedEvent,
@@ -215,14 +220,17 @@ class TransactionRequestUserReceiptHandlerTest {
 
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
                 argThat(
-                        eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT
+                        eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                 )
         );
         Mockito.verify(queueAsyncClient, Mockito.times(1)).sendMessageWithResponse(any(), any(), any());
         TransactionUserReceiptRequestedEvent queueEvent = ((TransactionUserReceiptRequestedEvent) queueArgumentCaptor
                 .getValue().event());
-        assertEquals(TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT, queueEvent.getEventCode());
+        assertEquals(
+                TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT.toString(),
+                queueEvent.getEventCode()
+        );
         assertEquals(event.getData(), queueEvent.getData());
         assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
@@ -257,7 +265,7 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionActivated transaction = transactionActivated(ZonedDateTime.now().toString());
 
         AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
-                transaction,
+                transaction.getTransactionId(),
                 addUserReceiptRequest
         );
 
@@ -270,7 +278,7 @@ class TransactionRequestUserReceiptHandlerTest {
                 TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
         );
 
-        Flux<TransactionEvent<Object>> events = ((Flux) Flux.just(
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux.just(
                 transactionActivatedEvent,
                 authorizationRequestedEvent,
                 authorizationCompletedEvent,
@@ -292,14 +300,17 @@ class TransactionRequestUserReceiptHandlerTest {
 
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
                 argThat(
-                        eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT
+                        eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                 )
         );
         Mockito.verify(queueAsyncClient, Mockito.times(1)).sendMessageWithResponse(any(), any(), any());
         TransactionUserReceiptRequestedEvent queueEvent = ((TransactionUserReceiptRequestedEvent) queueArgumentCaptor
                 .getValue().event());
-        assertEquals(TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT, queueEvent.getEventCode());
+        assertEquals(
+                TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT.toString(),
+                queueEvent.getEventCode()
+        );
         assertEquals(event.getData(), queueEvent.getData());
         assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
@@ -331,7 +342,7 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionActivated transaction = transactionActivated(ZonedDateTime.now().toString());
 
         AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
-                transaction,
+                transaction.getTransactionId(),
                 addUserReceiptRequest
         );
 
@@ -340,7 +351,7 @@ class TransactionRequestUserReceiptHandlerTest {
                 addUserReceiptData
         );
 
-        Flux<TransactionEvent<Object>> events = ((Flux) Flux
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
         /* preconditions */
@@ -384,7 +395,7 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionActivated transaction = transactionActivated(ZonedDateTime.now().toString());
 
         AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
-                transaction,
+                transaction.getTransactionId(),
                 addUserReceiptRequest
         );
 
@@ -393,7 +404,7 @@ class TransactionRequestUserReceiptHandlerTest {
                 addUserReceiptData
         );
 
-        Flux<TransactionEvent<Object>> events = ((Flux) Flux
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(
                         transactionActivatedEvent,
                         authorizationRequestedEvent,

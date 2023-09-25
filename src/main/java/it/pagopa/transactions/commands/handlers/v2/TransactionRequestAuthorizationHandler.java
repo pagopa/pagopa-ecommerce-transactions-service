@@ -1,54 +1,42 @@
-package it.pagopa.transactions.commands.handlers;
+package it.pagopa.transactions.commands.handlers.v2;
 
 import com.azure.cosmos.implementation.BadRequestException;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData.PaymentGateway;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestedEvent;
-import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
-import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData.PaymentGateway;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestedEvent;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
+import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
-import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
+import it.pagopa.transactions.commands.data.AuthorizationRequestData;
+import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandlerCommon;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
-import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
-@Component
+@Component("TransactionRequestAuthorizationHandlerV2")
 @Slf4j
-public class TransactionRequestAuthorizationHandler
-        implements CommandHandler<TransactionRequestAuthorizationCommand, Mono<RequestAuthorizationResponseDto>> {
-
-    private static final String CHECKOUT_GDI_CHECK_PATH = "/gdi-check#gdiIframeUrl=";
-    private static final String CHECKOUT_ESITO_PATH = "/esito";
-    private final PaymentGatewayClient paymentGatewayClient;
+public class TransactionRequestAuthorizationHandler extends TransactionRequestAuthorizationHandlerCommon {
 
     private final TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository;
     private final TransactionsUtils transactionsUtils;
-
-    private final String checkoutBasePath;
-
-    private final Map<CardAuthRequestDetailsDto.BrandEnum, URI> cardBrandLogoMapping;
 
     private final EcommercePaymentMethodsClient paymentMethodsClient;
 
@@ -61,19 +49,22 @@ public class TransactionRequestAuthorizationHandler
             @Value("${checkout.basePath}") String checkoutBasePath,
             EcommercePaymentMethodsClient paymentMethodsClient
     ) {
-        this.paymentGatewayClient = paymentGatewayClient;
+        super(
+                paymentGatewayClient,
+                cardBrandLogoMapping,
+                checkoutBasePath
+        );
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionsUtils = transactionsUtils;
-        this.cardBrandLogoMapping = cardBrandLogoMapping;
         this.paymentMethodsClient = paymentMethodsClient;
-        this.checkoutBasePath = checkoutBasePath;
     }
 
     @Override
     public Mono<RequestAuthorizationResponseDto> handle(TransactionRequestAuthorizationCommand command) {
+        AuthorizationRequestData authorizationRequestData = command.getData();
         URI logo = getLogo(command.getData().authDetails());
-        Mono<BaseTransaction> transaction = transactionsUtils.reduceEvents(
-                command.getData().transaction().getTransactionId()
+        Mono<BaseTransaction> transaction = transactionsUtils.reduceEventsV2(
+                command.getData().transactionId()
         );
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
                 .cast(BaseTransaction.class)
@@ -89,84 +80,23 @@ public class TransactionRequestAuthorizationHandler
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(TransactionActivated.class);
 
-        var monoPostePay = Mono.just(command.getData())
-                .flatMap(
-                        authorizationRequestData -> paymentGatewayClient
-                                .requestPostepayAuthorization(authorizationRequestData)
-                )
-                .map(
-                        postePayAuthResponseEntityDto -> Tuples.of(
-                                postePayAuthResponseEntityDto.getRequestId(),
-                                postePayAuthResponseEntityDto.getUrlRedirect(),
-                                PaymentGateway.POSTEPAY
-                        )
-                );
-
-        var monoXPay = Mono.just(command.getData())
-                .flatMap(
-                        authorizationRequestData -> paymentGatewayClient
-                                .requestXPayAuthorization(authorizationRequestData)
-                )
-                .map(
-                        xPayAuthResponseEntityDto -> Tuples.of(
-                                xPayAuthResponseEntityDto.getRequestId(),
-                                xPayAuthResponseEntityDto.getUrlRedirect(),
-                                PaymentGateway.XPAY
-                        )
-                );
-
-        var monoVPOS = Mono.just(command.getData())
-                .flatMap(
-                        authorizationRequestData -> paymentGatewayClient
-                                .requestCreditCardAuthorization(authorizationRequestData)
-                )
-                .map(
-                        creditCardAuthResponseDto -> Tuples.of(
-                                creditCardAuthResponseDto.getRequestId(),
-                                creditCardAuthResponseDto.getUrlRedirect(),
-                                PaymentGateway.VPOS
-                        )
-                );
-
-        var monoNpgCards = Mono.just(command.getData())
-                .flatMap(
-                        authorizationRequestData -> paymentGatewayClient
-                                .requestNpgCardsAuthorization(authorizationRequestData)
-                )
-                .map(
-                        npgCardsResponseDto -> Tuples.of(
-                                "sessionId",
-                                switch (npgCardsResponseDto.getState()) {
-                                case GDI_VERIFICATION -> URI.create(checkoutBasePath)
-                                        .resolve(
-                                                CHECKOUT_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
-                                                        npgCardsResponseDto.getFieldSet().getFields().get(0).getSrc()
-                                                                .getBytes(StandardCharsets.UTF_8)
-                                                )
-                                        ).toString();
-                                case REDIRECTED_TO_EXTERNAL_DOMAIN -> npgCardsResponseDto.getUrl();
-                                case PAYMENT_COMPLETE -> URI.create(checkoutBasePath).resolve(CHECKOUT_ESITO_PATH)
-                                        .toString();
-                                default -> throw new BadGatewayException(
-                                        "Invalid NPG confirm payment state response: " + npgCardsResponseDto.getState(),
-                                        HttpStatus.BAD_GATEWAY
-                                );
-                                },
-                                PaymentGateway.NPG
-                        )
-
-                );
-
+        Mono<Tuple3<String, String, PaymentGateway>> monoPostePay = postepayAuthRequestPipeline(
+                authorizationRequestData
+        )
+                .map(tuple -> Tuples.of(tuple.getT1(), tuple.getT2(), PaymentGateway.POSTEPAY));
+        Mono<Tuple3<String, String, PaymentGateway>> monoXPay = xpayAuthRequestPipeline(authorizationRequestData)
+                .map(tuple -> Tuples.of(tuple.getT1(), tuple.getT2(), PaymentGateway.XPAY));
+        Mono<Tuple3<String, String, PaymentGateway>> monoVPOS = vposAuthRequestPipeline(authorizationRequestData)
+                .map(tuple -> Tuples.of(tuple.getT1(), tuple.getT2(), PaymentGateway.VPOS));
+        Mono<Tuple3<String, String, PaymentGateway>> monoNpgCards = npgAuthRequestPipeline(authorizationRequestData)
+                .map(tuple -> Tuples.of(tuple.getT1(), tuple.getT2(), PaymentGateway.NPG));
         List<Mono<Tuple3<String, String, PaymentGateway>>> gatewayRequests = List
                 .of(monoPostePay, monoXPay, monoVPOS, monoNpgCards);
 
         Mono<Tuple3<String, String, PaymentGateway>> gatewayAttempts = gatewayRequests
                 .stream()
                 .reduce(
-                        (
-                         pipeline,
-                         candidateStep
-                        ) -> pipeline.switchIfEmpty(candidateStep)
+                        Mono::switchIfEmpty
                 ).orElse(Mono.empty());
 
         return transactionActivated
@@ -179,16 +109,16 @@ public class TransactionRequestAuthorizationHandler
                                     );
 
                                     // TODO remove this after the cancellation of the postepay logic
-                                    TransactionAuthorizationRequestData.CardBrand cardBrand = null;
-                                    if (command.getData()
-                                            .authDetails()instanceof CardAuthRequestDetailsDto detailType) {
-                                        cardBrand = TransactionAuthorizationRequestData.CardBrand
-                                                .valueOf(detailType.getBrand().getValue());
-                                    }
+                                    TransactionAuthorizationRequestData.CardBrand cardBrand = getCardBrand(
+                                            authorizationRequestData
+                                    ).map(
+                                            brand -> TransactionAuthorizationRequestData.CardBrand
+                                                    .valueOf(brand.toString())
+                                    ).orElse(null);
                                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                                             t.getTransactionId().value(),
                                             new TransactionAuthorizationRequestData(
-                                                    command.getData().transaction().getPaymentNotices().stream()
+                                                    t.getPaymentNotices().stream()
                                                             .mapToInt(
                                                                     paymentNotice -> paymentNotice.transactionAmount()
                                                                             .value()
@@ -217,10 +147,9 @@ public class TransactionRequestAuthorizationHandler
                                                     authRequestDetails -> paymentMethodsClient.updateSession(
                                                             command.getData().paymentInstrumentId(),
                                                             authRequestDetails.getOrderId(),
-                                                            command.getData().transaction().getTransactionId().value()
+                                                            t.getTransactionId().value()
                                                     )
                                             );
-
                                     return updateSession.then(
                                             transactionEventStoreRepository.save(authorizationEvent)
                                                     .thenReturn(tuple3)
@@ -235,13 +164,4 @@ public class TransactionRequestAuthorizationHandler
                 );
     }
 
-    private URI getLogo(RequestAuthorizationRequestDetailsDto authRequestDetails) {
-        URI logoURI = null;
-        if (authRequestDetails instanceof CardAuthRequestDetailsDto cardDetail) {
-            CardAuthRequestDetailsDto.BrandEnum cardBrand = cardDetail.getBrand();
-            logoURI = cardBrandLogoMapping.get(cardBrand);
-        }
-        // TODO handle different methods than cards
-        return logoURI;
-    }
 }

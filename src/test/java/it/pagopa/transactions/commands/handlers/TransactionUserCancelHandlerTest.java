@@ -5,8 +5,8 @@ import com.azure.core.http.HttpRequest;
 import com.azure.core.http.rest.Response;
 import com.azure.storage.queue.models.SendMessageResult;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
+import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
-import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -37,7 +37,7 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class TransactionUserCancelHandlerTest {
 
-    private TransactionUserCancelHandler transactionUserCancelHandler;
+    private it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler transactionUserCancelHandler;
     @Mock
     private TransactionsEventStoreRepository<Void> transactionEventUserCancelStoreRepository;
 
@@ -57,7 +57,7 @@ class TransactionUserCancelHandlerTest {
 
     @BeforeEach
     private void init() {
-        transactionUserCancelHandler = new TransactionUserCancelHandler(
+        transactionUserCancelHandler = new it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler(
                 transactionEventUserCancelStoreRepository,
                 transactionUserCancelQueueClient,
                 transactionsUtils,
@@ -92,7 +92,10 @@ class TransactionUserCancelHandlerTest {
         StepVerifier.create(transactionUserCancelHandler.handle(transactionUserCancelCommand))
                 .consumeNextWith(
                         next -> {
-                            assertEquals(TransactionEventCode.TRANSACTION_USER_CANCELED_EVENT, next.getEventCode());
+                            assertEquals(
+                                    TransactionEventCode.TRANSACTION_USER_CANCELED_EVENT.toString(),
+                                    next.getEventCode()
+                            );
                         }
                 )
                 .verifyComplete();

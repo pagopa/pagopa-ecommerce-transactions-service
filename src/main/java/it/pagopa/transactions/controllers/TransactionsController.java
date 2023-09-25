@@ -2,7 +2,7 @@ package it.pagopa.transactions.controllers;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
-import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
+import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;

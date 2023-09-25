@@ -1,15 +1,15 @@
 package it.pagopa.transactions.projections.handlers;
 
+import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedEvent;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptData;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
-import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.OutcomeVposGatewayDto;
 import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
+import it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -111,7 +111,7 @@ class AuthorizationUpdateProjectionHandlerTest {
          */
         Mockito.verify(viewRepository, Mockito.times(1)).save(
                 argThat(
-                        savedTransaction -> savedTransaction.getStatus()
+                        savedTransaction -> ((Transaction) savedTransaction).getStatus()
                                 .equals(TransactionStatusDto.AUTHORIZATION_COMPLETED)
                 )
         );
@@ -194,7 +194,7 @@ class AuthorizationUpdateProjectionHandlerTest {
          */
         Mockito.verify(viewRepository, Mockito.times(1)).save(
                 argThat(
-                        savedTransaction -> savedTransaction.getStatus()
+                        savedTransaction -> ((Transaction) savedTransaction).getStatus()
                                 .equals(TransactionStatusDto.AUTHORIZATION_COMPLETED)
                 )
         );
