@@ -29,6 +29,7 @@ import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestD
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
 import it.pagopa.transactions.commands.data.ClosureSendData;
+import it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -200,7 +201,7 @@ class TransactionSendClosureHandlerTest {
                 .timestampOperation(OffsetDateTime.now());
 
         ClosureSendData closureSendData = new ClosureSendData(
-                transaction,
+                transaction.getTransactionId(),
                 updateAuthorizationRequest
         );
 
@@ -363,7 +364,7 @@ class TransactionSendClosureHandlerTest {
                 .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
-                (BaseTransactionWithPaymentToken) transaction,
+                transactionId,
                 updateAuthorizationRequest
         );
 
@@ -473,7 +474,7 @@ class TransactionSendClosureHandlerTest {
                     assertNotNull(next.getT2());
                     assertEquals(
                             event.getData().getResponseOutcome(),
-                            next.getT2().get().getData().getResponseOutcome()
+                            ((TransactionClosureData) next.getT2().get().getData()).getResponseOutcome()
                     );
                     assertEquals(event.getEventCode(), next.getT2().get().getEventCode());
                     assertEquals(event.getTransactionId(), next.getT2().get().getTransactionId());
@@ -571,7 +572,7 @@ class TransactionSendClosureHandlerTest {
                 .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
-                (BaseTransactionWithPaymentToken) transaction,
+                transactionId,
                 updateAuthorizationRequest
         );
 
@@ -690,7 +691,7 @@ class TransactionSendClosureHandlerTest {
                     assertNotNull(next.getT2());
                     assertEquals(
                             event.getData().getResponseOutcome(),
-                            next.getT2().get().getData().getResponseOutcome()
+                            ((TransactionClosureData) next.getT2().get().getData()).getResponseOutcome()
                     );
                     assertEquals(event.getEventCode(), next.getT2().get().getEventCode());
                     assertEquals(event.getTransactionId(), next.getT2().get().getTransactionId());
@@ -788,7 +789,7 @@ class TransactionSendClosureHandlerTest {
                 .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
-                (BaseTransactionWithPaymentToken) transaction,
+                transactionId,
                 updateAuthorizationRequest
         );
 
@@ -956,7 +957,7 @@ class TransactionSendClosureHandlerTest {
                     assertNotNull(next.getT2().get());
                     assertEquals(
                             event.getData().getResponseOutcome(),
-                            next.getT2().get().getData().getResponseOutcome()
+                            ((TransactionClosureData) next.getT2().get().getData()).getResponseOutcome()
                     );
                     assertEquals(event.getEventCode(), next.getT2().get().getEventCode());
                     assertEquals(event.getTransactionId(), next.getT2().get().getTransactionId());
@@ -1053,7 +1054,7 @@ class TransactionSendClosureHandlerTest {
                 .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
-                (BaseTransactionWithPaymentToken) transaction,
+                transactionId,
                 updateAuthorizationRequest
         );
 
@@ -1319,7 +1320,7 @@ class TransactionSendClosureHandlerTest {
                 .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
-                (BaseTransactionWithPaymentToken) transaction,
+                transactionId,
                 updateAuthorizationRequest
         );
 
@@ -1604,7 +1605,7 @@ class TransactionSendClosureHandlerTest {
                 .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
-                (BaseTransactionWithPaymentToken) transaction,
+                transactionId,
                 updateAuthorizationRequest
         );
 
@@ -1888,7 +1889,7 @@ class TransactionSendClosureHandlerTest {
                 .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
-                (BaseTransactionWithPaymentToken) transaction,
+                transactionId,
                 updateAuthorizationRequest
         );
 
@@ -2125,7 +2126,7 @@ class TransactionSendClosureHandlerTest {
                 .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
-                (BaseTransactionWithPaymentToken) transaction,
+                transactionId,
                 updateAuthorizationRequest
         );
 
@@ -2380,7 +2381,7 @@ class TransactionSendClosureHandlerTest {
                 .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
-                (BaseTransactionWithPaymentToken) transaction,
+                transactionId,
                 updateAuthorizationRequest
         );
 
@@ -2662,7 +2663,7 @@ class TransactionSendClosureHandlerTest {
                 .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
-                (BaseTransactionWithPaymentToken) transaction,
+                transactionId,
                 updateAuthorizationRequest
         );
 
@@ -2880,7 +2881,7 @@ class TransactionSendClosureHandlerTest {
                 .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
-                (BaseTransactionWithPaymentToken) transaction,
+                transactionId,
                 updateAuthorizationRequest
         );
 
@@ -3098,7 +3099,7 @@ class TransactionSendClosureHandlerTest {
                 .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
-                (BaseTransactionWithPaymentToken) transaction,
+                transactionId,
                 updateAuthorizationRequest
         );
 
@@ -3326,7 +3327,7 @@ class TransactionSendClosureHandlerTest {
                 .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
-                (BaseTransactionWithPaymentToken) transaction,
+                transactionId,
                 updateAuthorizationRequest
         );
 
@@ -3436,7 +3437,7 @@ class TransactionSendClosureHandlerTest {
                     assertNotNull(next.getT2().get());
                     assertEquals(
                             event.getData().getResponseOutcome(),
-                            next.getT2().get().getData().getResponseOutcome()
+                            ((TransactionClosureData) next.getT2().get().getData()).getResponseOutcome()
                     );
                     assertEquals(event.getEventCode(), next.getT2().get().getEventCode());
                     assertEquals(event.getTransactionId(), next.getT2().get().getTransactionId());
@@ -3484,7 +3485,7 @@ class TransactionSendClosureHandlerTest {
                 .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
-                (BaseTransactionWithPaymentToken) transaction,
+                transactionId,
                 updateAuthorizationRequest
         );
 

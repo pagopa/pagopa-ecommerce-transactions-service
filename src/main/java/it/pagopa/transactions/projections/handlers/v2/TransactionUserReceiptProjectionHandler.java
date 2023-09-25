@@ -1,27 +1,31 @@
-package it.pagopa.transactions.projections.handlers;
+package it.pagopa.transactions.projections.handlers.v2;
 
-import it.pagopa.ecommerce.commons.documents.v1.Transaction;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptRequestedEvent;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
+import it.pagopa.transactions.projections.handlers.ProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-@Component
+@Component(TransactionUserReceiptProjectionHandler.QUALIFIER_NAME)
 @Slf4j
 public class TransactionUserReceiptProjectionHandler
-        implements ProjectionHandler<TransactionUserReceiptRequestedEvent, Mono<Transaction>> {
+        implements
+        ProjectionHandler<it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptRequestedEvent, Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction>> {
+
+    public static final String QUALIFIER_NAME = "TransactionUserReceiptProjectionHandlerV2";
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
 
     @Override
-    public Mono<Transaction> handle(TransactionUserReceiptRequestedEvent data) {
+    public Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> handle(
+                                                                             it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptRequestedEvent data
+    ) {
         return transactionsViewRepository.findById(data.getTransactionId())
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(data.getTransactionId())))
-                .cast(it.pagopa.ecommerce.commons.documents.v1.Transaction.class)
+                .cast(it.pagopa.ecommerce.commons.documents.v2.Transaction.class)
                 .flatMap(transactionDocument -> {
                     TransactionStatusDto newStatus = TransactionStatusDto.NOTIFICATION_REQUESTED;
                     transactionDocument.setStatus(newStatus);

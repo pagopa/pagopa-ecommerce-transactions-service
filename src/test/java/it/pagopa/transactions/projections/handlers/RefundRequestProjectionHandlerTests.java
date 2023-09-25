@@ -24,7 +24,7 @@ class RefundRequestProjectionHandlerTests {
     private final TransactionsViewRepository transactionsViewRepository = Mockito
             .mock(TransactionsViewRepository.class);;
 
-    private final RefundRequestProjectionHandler refundRequestProjectionHandler = new RefundRequestProjectionHandler(
+    private final it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler refundRequestProjectionHandler = new it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler(
             transactionsViewRepository
     );
 
