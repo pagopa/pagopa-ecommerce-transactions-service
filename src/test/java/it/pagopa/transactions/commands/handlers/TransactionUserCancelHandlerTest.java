@@ -37,7 +37,7 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class TransactionUserCancelHandlerTest {
 
-    private TransactionUserCancelHandler transactionUserCancelHandler;
+    private it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler transactionUserCancelHandler;
     @Mock
     private TransactionsEventStoreRepository<Void> transactionEventUserCancelStoreRepository;
 
@@ -57,7 +57,7 @@ class TransactionUserCancelHandlerTest {
 
     @BeforeEach
     private void init() {
-        transactionUserCancelHandler = new TransactionUserCancelHandler(
+        transactionUserCancelHandler = new it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler(
                 transactionEventUserCancelStoreRepository,
                 transactionUserCancelQueueClient,
                 transactionsUtils,
@@ -82,9 +82,9 @@ class TransactionUserCancelHandlerTest {
                 .thenAnswer(a -> Mono.just(a.getArgument(0)));
 
         Mockito.when(
-                        transactionUserCancelQueueClient
-                                .sendMessageWithResponse(any(), any(), durationCaptor.capture())
-                )
+                transactionUserCancelQueueClient
+                        .sendMessageWithResponse(any(), any(), durationCaptor.capture())
+        )
                 .thenReturn(queueSuccessfulResponse());
         /*
          * TEST EXECUTION
@@ -92,7 +92,10 @@ class TransactionUserCancelHandlerTest {
         StepVerifier.create(transactionUserCancelHandler.handle(transactionUserCancelCommand))
                 .consumeNextWith(
                         next -> {
-                            assertEquals(TransactionEventCode.TRANSACTION_USER_CANCELED_EVENT.toString(), next.getEventCode());
+                            assertEquals(
+                                    TransactionEventCode.TRANSACTION_USER_CANCELED_EVENT.toString(),
+                                    next.getEventCode()
+                            );
                         }
                 )
                 .verifyComplete();
@@ -142,9 +145,9 @@ class TransactionUserCancelHandlerTest {
                 .thenAnswer(a -> Mono.just(a.getArgument(0)));
 
         Mockito.when(
-                        transactionUserCancelQueueClient
-                                .sendMessageWithResponse(any(), any(), durationCaptor.capture())
-                )
+                transactionUserCancelQueueClient
+                        .sendMessageWithResponse(any(), any(), durationCaptor.capture())
+        )
                 .thenReturn(Mono.error(new RuntimeException()));
 
         /* TEST EXECUTION */

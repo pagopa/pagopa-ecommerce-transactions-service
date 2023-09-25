@@ -16,6 +16,10 @@ public class AuthRequestDataUtils {
 
     private final UUIDUtils uuidUtils;
 
+    public static final String OUTCOME_OK = "OK";
+
+    public static final String OUTCOME_KO = "KO";
+
     @Autowired
     public AuthRequestDataUtils(
             UUIDUtils uuidUtils
@@ -52,9 +56,9 @@ public class AuthRequestDataUtils {
     }
 
     private String npgResultToOutcome(OutcomeNpgGatewayDto.OperationResultEnum result) {
-        String outcome = "KO";
+        String outcome = OUTCOME_KO;
         if (result.equals(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)) {
-            outcome = "OK";
+            outcome = OUTCOME_OK;
         }
         log.info("NPG operation result: {} outcome -> {}", result, outcome);
         return outcome;

@@ -135,7 +135,7 @@ class TransactionServiceTest {
                                 && res.getIdCart().equals("idCart")
                                 && res.getStatus().equals(TransactionStatusDto.ACTIVATED)
                                 && res.getClientId()
-                                .equals(NewTransactionResponseDto.ClientIdEnum.valueOf(clientIdDto.getValue()))
+                                        .equals(NewTransactionResponseDto.ClientIdEnum.valueOf(clientIdDto.getValue()))
                                 && !res.getTransactionId().isEmpty()
                                 && !res.getAuthToken().isEmpty()
                 )

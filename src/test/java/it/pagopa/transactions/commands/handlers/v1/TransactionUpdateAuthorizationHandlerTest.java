@@ -1,4 +1,4 @@
-package it.pagopa.transactions.commands.handlers;
+package it.pagopa.transactions.commands.handlers.v1;
 
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData;
@@ -17,6 +17,7 @@ import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
+import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,14 +37,22 @@ class TransactionUpdateAuthorizationHandlerTest {
 
     private TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> transactionEventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
+
+    private TransactionsEventStoreRepository<Object> eventStoreRepository = Mockito
+            .mock(TransactionsEventStoreRepository.class);
     private TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
 
     private final UUIDUtils mockUuidUtils = Mockito.mock(UUIDUtils.class);
-    ;
+
+    private final TransactionsUtils transactionsUtils = new TransactionsUtils(
+            eventStoreRepository,
+            "warmUpNoticeCodePrefix"
+    );
 
     private TransactionUpdateAuthorizationHandler updateAuthorizationHandler = new TransactionUpdateAuthorizationHandler(
             transactionEventStoreRepository,
-            new AuthRequestDataUtils(mockUuidUtils)
+            new AuthRequestDataUtils(mockUuidUtils),
+            transactionsUtils
     );
 
     @Test
@@ -65,7 +74,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 .timestampOperation(OffsetDateTime.now());
 
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getStatus().toString(),
                 updateAuthorizationRequest
         );
 
@@ -89,7 +99,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                                 eventArg -> TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
                                         .equals(eventArg.getEventCode())
                                         && eventArg.getData().getAuthorizationResultDto()
-                                        .equals(AuthorizationResultDto.OK)
+                                                .equals(AuthorizationResultDto.OK)
                         )
                 );
     }
@@ -136,7 +146,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 .timestampOperation(OffsetDateTime.now());
 
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getStatus().toString(),
                 updateAuthorizationRequest
         );
 
@@ -172,7 +183,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 .timestampOperation(OffsetDateTime.now());
 
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getStatus().toString(),
                 updateAuthorizationRequest
         );
 

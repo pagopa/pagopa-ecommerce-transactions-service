@@ -81,19 +81,19 @@ public class PaymentGatewayClient {
                 .filter(authorizationRequestData -> "PPAY".equals(authorizationRequestData.paymentTypeCode()))
                 .map(authorizationRequestData -> {
                     BigDecimal grandTotal = BigDecimal.valueOf(
-                            ((long) authorizationData.transaction().getPaymentNotices().stream()
+                            ((long) authorizationData.paymentNotices().stream()
                                     .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value()).sum())
                                     + authorizationData.fee()
                     );
                     return new PostePayAuthRequestDto()
                             .grandTotal(grandTotal)
                             .description(
-                                    authorizationData.transaction().getPaymentNotices().get(0).transactionDescription()
+                                    authorizationData.paymentNotices().get(0).transactionDescription()
                                             .value()
                             )
                             .paymentChannel(authorizationData.pspChannelCode())
                             .idTransaction(
-                                    uuidUtils.uuidToBase64(authorizationData.transaction().getTransactionId().uuid())
+                                    uuidUtils.uuidToBase64(authorizationData.transactionId().uuid())
                             );
                 })
                 .flatMap(
@@ -103,7 +103,7 @@ public class PaymentGatewayClient {
                                         WebClientResponseException.class,
                                         exception -> switch (exception.getStatusCode()) {
                                         case UNAUTHORIZED -> new AlreadyProcessedException(
-                                                authorizationData.transaction().getTransactionId()
+                                                authorizationData.transactionId()
                                         );
                                         case GATEWAY_TIMEOUT -> new GatewayTimeoutException();
                                         case INTERNAL_SERVER_ERROR -> new BadGatewayException(
@@ -128,7 +128,7 @@ public class PaymentGatewayClient {
                     final Mono<XPayAuthRequestDto> xPayAuthRequest;
                     if (authorizationData.authDetails()instanceof CardAuthRequestDetailsDto cardData) {
                         BigDecimal grandTotal = BigDecimal.valueOf(
-                                ((long) authorizationData.transaction().getPaymentNotices().stream()
+                                ((long) authorizationData.paymentNotices().stream()
                                         .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value()).sum())
                                         + authorizationData.fee()
                         );
@@ -139,7 +139,7 @@ public class PaymentGatewayClient {
                                         .expiryDate(cardData.getExpiryDate())
                                         .idTransaction(
                                                 uuidUtils.uuidToBase64(
-                                                        authorizationData.transaction().getTransactionId().uuid()
+                                                        authorizationData.transactionId().uuid()
                                                 )
                                         )
                                         .grandTotal(grandTotal)
@@ -160,7 +160,7 @@ public class PaymentGatewayClient {
                                         WebClientResponseException.class,
                                         exception -> switch (exception.getStatusCode()) {
                                         case UNAUTHORIZED -> new AlreadyProcessedException(
-                                                authorizationData.transaction().getTransactionId()
+                                                authorizationData.transactionId()
                                         ); // 401
                                         case INTERNAL_SERVER_ERROR -> new BadGatewayException(
                                                 "",
@@ -181,13 +181,13 @@ public class PaymentGatewayClient {
                 .switchIfEmpty(Mono.empty())
                 .flatMap(
                         authorizationRequestData -> confidentialMailUtils
-                                .toEmail(authorizationRequestData.transaction().getEmail())
+                                .toEmail(authorizationRequestData.email())
                 )
                 .flatMap(email -> {
                     final Mono<VposAuthRequestDto> creditCardAuthRequest;
                     if (authorizationData.authDetails()instanceof CardAuthRequestDetailsDto cardData) {
                         BigDecimal grandTotal = BigDecimal.valueOf(
-                                ((long) authorizationData.transaction().getPaymentNotices().stream()
+                                ((long) authorizationData.paymentNotices().stream()
                                         .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value()).sum())
                                         + authorizationData.fee()
                         );
@@ -197,7 +197,7 @@ public class PaymentGatewayClient {
                                         .expireDate(cardData.getExpiryDate())
                                         .idTransaction(
                                                 uuidUtils.uuidToBase64(
-                                                        authorizationData.transaction().getTransactionId().uuid()
+                                                        authorizationData.transactionId().uuid()
                                                 )
                                         )
                                         .amount(grandTotal)
@@ -228,7 +228,7 @@ public class PaymentGatewayClient {
                                         WebClientResponseException.class,
                                         exception -> switch (exception.getStatusCode()) {
                                         case UNAUTHORIZED -> new AlreadyProcessedException(
-                                                authorizationData.transaction().getTransactionId()
+                                                authorizationData.transactionId()
                                         ); // 401
                                         case INTERNAL_SERVER_ERROR -> new BadGatewayException(
                                                 "",
@@ -263,7 +263,7 @@ public class PaymentGatewayClient {
                 .cast(CardsAuthRequestDetailsDto.class)
                 .flatMap(authorizationRequestData -> {
                     final BigDecimal grandTotal = BigDecimal.valueOf(
-                            ((long) authorizationData.transaction().getPaymentNotices().stream()
+                            ((long) authorizationData.paymentNotices().stream()
                                     .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value()).sum())
                                     + authorizationData.fee()
                     );
@@ -271,7 +271,7 @@ public class PaymentGatewayClient {
                         return Mono.error(
                                 new BadGatewayException(
                                         "Missing sessionId for transactionId: "
-                                                + authorizationData.transaction().getTransactionId(),
+                                                + authorizationData.transactionId(),
                                         HttpStatus.BAD_GATEWAY
                                 )
                         );
@@ -288,7 +288,7 @@ public class PaymentGatewayClient {
                                     WebClientResponseException.class,
                                     exception -> switch (exception.getStatusCode()) {
                         case UNAUTHORIZED -> new AlreadyProcessedException(
-                                authorizationData.transaction().getTransactionId()
+                                authorizationData.transactionId()
                         ); // 401
                         case INTERNAL_SERVER_ERROR -> new BadGatewayException(
                                 "",
@@ -304,7 +304,7 @@ public class PaymentGatewayClient {
         String mdcData;
         try {
             mdcData = objectMapper.writeValueAsString(
-                    Map.of("transactionId", authorizationData.transaction().getTransactionId().value())
+                    Map.of("transactionId", authorizationData.transactionId().value())
             );
         } catch (JsonProcessingException e) {
             mdcData = "";

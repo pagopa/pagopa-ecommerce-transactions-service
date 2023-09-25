@@ -35,7 +35,7 @@ class TransactionsUtilsTest {
         Flux events = Flux.just(transactionActivatedEvent, transactionAuthorizationRequestedEvent);
         given(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .willReturn(events);
-        StepVerifier.create(transactionsUtils.reduceEvents(transactionId))
+        StepVerifier.create(transactionsUtils.reduceEventsV1(transactionId))
                 .expectNextMatches(
                         baseTransaction -> baseTransaction instanceof TransactionWithRequestedAuthorization
                                 && baseTransaction.getStatus() == TransactionStatusDto.AUTHORIZATION_REQUESTED
@@ -48,7 +48,7 @@ class TransactionsUtilsTest {
         TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
         given(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .willReturn(Flux.empty());
-        StepVerifier.create(transactionsUtils.reduceEvents(transactionId))
+        StepVerifier.create(transactionsUtils.reduceEventsV1(transactionId))
                 .expectErrorMatches(
                         ex -> ex instanceof TransactionNotFoundException transactionNotFoundException
                                 && transactionNotFoundException.getPaymentToken()

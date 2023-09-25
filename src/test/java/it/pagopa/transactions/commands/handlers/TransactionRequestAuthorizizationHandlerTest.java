@@ -18,6 +18,7 @@ import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
+import it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -169,7 +170,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),
@@ -249,7 +252,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),
@@ -331,7 +336,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),
@@ -427,7 +434,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),
@@ -523,7 +532,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),
@@ -625,7 +636,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),
@@ -711,7 +724,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),
@@ -790,7 +805,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),
@@ -875,7 +892,9 @@ class TransactionRequestAuthorizizationHandlerTest {
                 .pspId("PSP_CODE")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),
@@ -975,7 +994,9 @@ class TransactionRequestAuthorizizationHandlerTest {
         String sessionId = "sessionId";
         String orderId = "orderId";
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),

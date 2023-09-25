@@ -23,7 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 public class CancellationRequestProjectionHandlerTests {
 
     @InjectMocks
-    private CancellationRequestProjectionHandler cancellationRequestProjectionHandler;
+    private it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler cancellationRequestProjectionHandler;
 
     @Mock
     private TransactionsViewRepository transactionsViewRepository;
