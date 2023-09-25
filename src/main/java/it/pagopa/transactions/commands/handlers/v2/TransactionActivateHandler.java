@@ -56,7 +56,9 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
             TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData> transactionEventActivatedStoreRepository,
             NodoOperations nodoOperations,
             JwtTokenUtils jwtTokenUtils,
-            @Qualifier("transactionActivatedQueueAsyncClientV2") QueueAsyncClient transactionActivatedQueueAsyncClientV2,
+            @Qualifier(
+                "transactionActivatedQueueAsyncClientV2"
+            ) QueueAsyncClient transactionActivatedQueueAsyncClientV2,
             @Value("${payment.token.validity}") Integer paymentTokenTimeout,
             ConfidentialMailUtils confidentialMailUtils,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
