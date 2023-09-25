@@ -64,12 +64,12 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
             PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
             NodeForPspClient nodeForPspClient,
             @Qualifier(
-                "transactionClosureRetryQueueAsyncClient"
+                "transactionClosureRetryQueueAsyncClientV1"
             ) QueueAsyncClient closureRetryQueueAsyncClient,
             @Value("${payment.token.validity}") Integer paymentTokenValidity,
             @Value("${transactions.ecommerce.retry.offset}") Integer softTimeoutOffset,
             @Value("${transactions.closure_handler.retry_interval}") Integer retryTimeoutInterval,
-            @Qualifier("transactionRefundQueueAsyncClient") QueueAsyncClient refundQueueAsyncClient,
+            @Qualifier("transactionRefundQueueAsyncClientV1") QueueAsyncClient refundQueueAsyncClient,
             TransactionsUtils transactionsUtils,
             AuthRequestDataUtils authRequestDataUtils,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,

@@ -118,15 +118,23 @@ class TransactionServiceTests {
     private NodeForPspClient nodeForPspClient;
 
     @MockBean
-    @Qualifier("transactionClosureRetryQueueAsyncClient")
-    private QueueAsyncClient queueAsyncClientClosureRetry;
+    @Qualifier("transactionClosureRetryQueueAsyncClientV1")
+    private QueueAsyncClient queueAsyncClientClosureRetryV1;
 
     @MockBean
-    @Qualifier("transactionRefundQueueAsyncClient")
-    private QueueAsyncClient queueAsyncClientRefund;
+    @Qualifier("transactionRefundQueueAsyncClientV1")
+    private QueueAsyncClient queueAsyncClientRefundV1;
 
     @MockBean
-    private it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler transactionActivateHandlerV1;
+    @Qualifier("transactionClosureRetryQueueAsyncClientV2")
+    private QueueAsyncClient queueAsyncClientClosureRetryV2;
+
+    @MockBean
+    @Qualifier("transactionRefundQueueAsyncClientV2")
+    private QueueAsyncClient queueAsyncClientRefundV2;
+
+    @MockBean
+    private TransactionActivateHandler transactionActivateHandler;
 
     @MockBean
     private it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler transactionActivateHandlerV2;
