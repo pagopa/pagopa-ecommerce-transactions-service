@@ -1,11 +1,12 @@
 package it.pagopa.transactions.configurations;
 
-import com.azure.core.http.HttpHeaders;
-import com.azure.core.http.policy.HttpLogDetailLevel;
 import com.azure.core.util.serializer.JsonSerializer;
 import com.azure.storage.queue.QueueClientBuilder;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
+import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.StrictJsonSerializerProvider;
+import it.pagopa.ecommerce.commons.queues.mixin.serialization.QueueEventMixInClassFieldDiscriminator;
+import it.pagopa.ecommerce.commons.queues.mixin.serialization.QueueEventMixInEventCodeFieldDiscriminator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -13,84 +14,159 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.Set;
-
 @Configuration
 public class AzureStorageConfig {
 
     private static final Logger log = LoggerFactory.getLogger(AzureStorageConfig.class);
 
     @Bean
-    public JsonSerializer jsonSerializer() {
-        return new StrictJsonSerializerProvider().createInstance();
+    public JsonSerializer jsonSerializerV1() {
+        return new StrictJsonSerializerProvider()
+                .addMixIn(QueueEvent.class, QueueEventMixInEventCodeFieldDiscriminator.class)
+                .createInstance();
     }
 
-    @Bean("transactionActivatedQueueAsyncClient")
+    @Bean
+    public JsonSerializer jsonSerializerV2() {
+        return new StrictJsonSerializerProvider()
+                .addMixIn(QueueEvent.class, QueueEventMixInClassFieldDiscriminator.class)
+                .createInstance();
+    }
+
+    @Bean("transactionActivatedQueueAsyncClientV1")
     @Qualifier
-    public QueueAsyncClient transactionActivatedQueueAsyncClient(
+    public QueueAsyncClient transactionActivatedQueueAsyncClientV1(
+                                                                   @Value(
+                                                                       "${azurestorage.connectionstringtransient}"
+
+                                                                   ) String storageConnectionString,
+                                                                   @Value(
+                                                                       "${azurestorage.queues.transactionexpiration.name}"
+                                                                   ) String queueName,
+                                                                   JsonSerializer jsonSerializerV1
+    ) {
+        return buildQueueAsyncClient(storageConnectionString, queueName, jsonSerializerV1);
+    }
+
+    @Bean("transactionActivatedQueueAsyncClientV2")
+    @Qualifier
+    public QueueAsyncClient transactionActivatedQueueAsyncClientV2(
+                                                                   @Value(
+                                                                       "${azurestorage.connectionstringtransient}"
+
+                                                                   ) String storageConnectionString,
+                                                                   @Value(
+                                                                       "${azurestorage.queues.transactionexpiration.name}"
+                                                                   ) String queueName,
+                                                                   JsonSerializer jsonSerializerV2
+    ) {
+        return buildQueueAsyncClient(storageConnectionString, queueName, jsonSerializerV2);
+    }
+
+    @Bean("transactionRefundQueueAsyncClientV1")
+    @Qualifier
+    public QueueAsyncClient transactionRefundQueueAsyncClientV1(
+                                                                @Value(
+                                                                    "${azurestorage.connectionstringtransient}"
+                                                                ) String storageConnectionString,
+                                                                @Value(
+                                                                    "${azurestorage.queues.transactionrefund.name}"
+                                                                ) String queueName,
+                                                                JsonSerializer jsonSerializerV1
+    ) {
+        return buildQueueAsyncClient(storageConnectionString, queueName, jsonSerializerV1);
+    }
+
+    @Bean("transactionRefundQueueAsyncClientV2")
+    @Qualifier
+    public QueueAsyncClient transactionRefundQueueAsyncClientV2(
+                                                                @Value(
+                                                                    "${azurestorage.connectionstringtransient}"
+                                                                ) String storageConnectionString,
+                                                                @Value(
+                                                                    "${azurestorage.queues.transactionrefund.name}"
+                                                                ) String queueName,
+                                                                JsonSerializer jsonSerializerV2
+    ) {
+        return buildQueueAsyncClient(storageConnectionString, queueName, jsonSerializerV2);
+    }
+
+    @Bean("transactionClosureRetryQueueAsyncClientV1")
+    public QueueAsyncClient transactionClosureRetryQueueAsyncClientV1(
+                                                                      @Value(
+                                                                          "${azurestorage.connectionstringtransient}"
+                                                                      ) String storageConnectionString,
+                                                                      @Value(
+                                                                          "${azurestorage.queues.transactionclosepaymentretry.name}"
+                                                                      ) String queueName,
+                                                                      JsonSerializer jsonSerializerV1
+    ) {
+        return buildQueueAsyncClient(storageConnectionString, queueName, jsonSerializerV1);
+    }
+
+    @Bean("transactionClosureRetryQueueAsyncClientV2")
+    public QueueAsyncClient transactionClosureRetryQueueAsyncClientV2(
+                                                                      @Value(
+                                                                          "${azurestorage.connectionstringtransient}"
+                                                                      ) String storageConnectionString,
+                                                                      @Value(
+                                                                          "${azurestorage.queues.transactionclosepaymentretry.name}"
+                                                                      ) String queueName,
+                                                                      JsonSerializer jsonSerializerV2
+    ) {
+        return buildQueueAsyncClient(storageConnectionString, queueName, jsonSerializerV2);
+    }
+
+    @Bean("transactionClosureQueueAsyncClientV1")
+    public QueueAsyncClient transactionClosureQueueAsyncClientV1(
                                                                  @Value(
                                                                      "${azurestorage.connectionstringtransient}"
-
                                                                  ) String storageConnectionString,
                                                                  @Value(
-                                                                     "${azurestorage.queues.transactionexpiration.name}"
+                                                                     "${azurestorage.queues.transactionclosepayment.name}"
                                                                  ) String queueName,
-                                                                 JsonSerializer jsonSerializer
+                                                                 JsonSerializer jsonSerializerV1
     ) {
-        return buildQueueAsyncClient(storageConnectionString, queueName, jsonSerializer);
+        return buildQueueAsyncClient(storageConnectionString, queueName, jsonSerializerV1);
     }
 
-    @Bean("transactionRefundQueueAsyncClient")
-    @Qualifier
-    public QueueAsyncClient transactionRefundQueueAsyncClient(
-                                                              @Value(
-                                                                  "${azurestorage.connectionstringtransient}"
-                                                              ) String storageConnectionString,
-                                                              @Value(
-                                                                  "${azurestorage.queues.transactionrefund.name}"
-                                                              ) String queueName,
-                                                              JsonSerializer jsonSerializer
+    @Bean("transactionClosureQueueAsyncClientV2")
+    public QueueAsyncClient transactionClosureQueueAsyncClientV2(
+                                                                 @Value(
+                                                                     "${azurestorage.connectionstringtransient}"
+                                                                 ) String storageConnectionString,
+                                                                 @Value(
+                                                                     "${azurestorage.queues.transactionclosepayment.name}"
+                                                                 ) String queueName,
+                                                                 JsonSerializer jsonSerializerV2
     ) {
-        return buildQueueAsyncClient(storageConnectionString, queueName, jsonSerializer);
+        return buildQueueAsyncClient(storageConnectionString, queueName, jsonSerializerV2);
     }
 
-    @Bean("transactionClosureRetryQueueAsyncClient")
-    public QueueAsyncClient transactionClosureRetryQueueAsyncClient(
-                                                                    @Value(
-                                                                        "${azurestorage.connectionstringtransient}"
-                                                                    ) String storageConnectionString,
-                                                                    @Value(
-                                                                        "${azurestorage.queues.transactionclosepaymentretry.name}"
-                                                                    ) String queueName,
-                                                                    JsonSerializer jsonSerializer
+    @Bean("transactionNotificationRequestedQueueAsyncClientV1")
+    public QueueAsyncClient transactionNotificationRequestedQueueAsyncClientV1(
+                                                                               @Value(
+                                                                                   "${azurestorage.connectionstringtransient}"
+                                                                               ) String storageConnectionString,
+                                                                               @Value(
+                                                                                   "${azurestorage.queues.transactionnotificationrequested.name}"
+                                                                               ) String queueName,
+                                                                               JsonSerializer jsonSerializerV1
     ) {
-        return buildQueueAsyncClient(storageConnectionString, queueName, jsonSerializer);
+        return buildQueueAsyncClient(storageConnectionString, queueName, jsonSerializerV1);
     }
 
-    @Bean("transactionClosureQueueAsyncClient")
-    public QueueAsyncClient transactionClosureQueueAsyncClient(
-                                                               @Value(
-                                                                   "${azurestorage.connectionstringtransient}"
-                                                               ) String storageConnectionString,
-                                                               @Value(
-                                                                   "${azurestorage.queues.transactionclosepayment.name}"
-                                                               ) String queueName,
-                                                               JsonSerializer jsonSerializer
+    @Bean("transactionNotificationRequestedQueueAsyncClientV2")
+    public QueueAsyncClient transactionNotificationRequestedQueueAsyncClientV2(
+                                                                               @Value(
+                                                                                   "${azurestorage.connectionstringtransient}"
+                                                                               ) String storageConnectionString,
+                                                                               @Value(
+                                                                                   "${azurestorage.queues.transactionnotificationrequested.name}"
+                                                                               ) String queueName,
+                                                                               JsonSerializer jsonSerializerV2
     ) {
-        return buildQueueAsyncClient(storageConnectionString, queueName, jsonSerializer);
-    }
-
-    @Bean("transactionNotificationRequestedQueueAsyncClient")
-    public QueueAsyncClient transactionNotificationRequestedQueueAsyncClient(
-                                                                             @Value(
-                                                                                 "${azurestorage.connectionstringtransient}"
-                                                                             ) String storageConnectionString,
-                                                                             @Value(
-                                                                                 "${azurestorage.queues.transactionnotificationrequested.name}"
-                                                                             ) String queueName,
-                                                                             JsonSerializer jsonSerializer
-    ) {
-        return buildQueueAsyncClient(storageConnectionString, queueName, jsonSerializer);
+        return buildQueueAsyncClient(storageConnectionString, queueName, jsonSerializerV2);
     }
 
     private QueueAsyncClient buildQueueAsyncClient(

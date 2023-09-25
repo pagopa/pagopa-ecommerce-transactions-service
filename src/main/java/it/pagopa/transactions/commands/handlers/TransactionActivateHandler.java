@@ -54,7 +54,7 @@ public class TransactionActivateHandler
 
     private final NodoOperations nodoOperations;
 
-    private final QueueAsyncClient transactionActivatedQueueAsyncClient;
+    private final QueueAsyncClient transactionActivatedQueueAsyncClientV2;
 
     private final Integer paymentTokenTimeout;
 
@@ -76,7 +76,9 @@ public class TransactionActivateHandler
             TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository,
             NodoOperations nodoOperations,
             JwtTokenUtils jwtTokenUtils,
-            @Qualifier("transactionActivatedQueueAsyncClient") QueueAsyncClient transactionActivatedQueueAsyncClient,
+            @Qualifier(
+                "transactionActivatedQueueAsyncClientV2"
+            ) QueueAsyncClient transactionActivatedQueueAsyncClientV2,
             @Value("${payment.token.validity}") Integer paymentTokenTimeout,
             ConfidentialMailUtils confidentialMailUtils,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
@@ -88,7 +90,7 @@ public class TransactionActivateHandler
         this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
         this.nodoOperations = nodoOperations;
         this.paymentTokenTimeout = paymentTokenTimeout;
-        this.transactionActivatedQueueAsyncClient = transactionActivatedQueueAsyncClient;
+        this.transactionActivatedQueueAsyncClientV2 = transactionActivatedQueueAsyncClientV2;
         this.jwtTokenUtils = jwtTokenUtils;
         this.confidentialMailUtils = confidentialMailUtils;
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
@@ -344,7 +346,7 @@ public class TransactionActivateHandler
                 .flatMap(
                         e -> tracingUtils.traceMono(
                                 this.getClass().getSimpleName(),
-                                tracingInfo -> transactionActivatedQueueAsyncClient.sendMessageWithResponse(
+                                tracingInfo -> transactionActivatedQueueAsyncClientV2.sendMessageWithResponse(
                                         new QueueEvent<>(e, tracingInfo),
                                         Duration.ofSeconds(paymentTokenTimeout),
                                         Duration.ofSeconds(transientQueuesTTLSeconds)
