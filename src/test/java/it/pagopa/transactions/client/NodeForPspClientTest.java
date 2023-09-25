@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.RequestBodyUriSpec;
 import org.springframework.web.reactive.function.client.WebClient.RequestHeadersSpec;
@@ -58,6 +59,8 @@ class NodeForPspClientTest {
 
     @Mock
     private ResponseSpec responseSpec;
+
+    private String nodoClosePaymentApiKey = "key";
 
     @Test
     void shouldReturnActivatePaymentResponseGivenValidPaymentNoticeTest() {
@@ -196,6 +199,8 @@ class NodeForPspClientTest {
 
     @Test
     void shouldReturnOKClosePaymentResponse() {
+        ReflectionTestUtils.setField(client, "nodoClosePaymentApiKey", "key");
+
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(List.of("paymentToken"))
                 .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
@@ -214,6 +219,7 @@ class NodeForPspClientTest {
         /* preconditions */
         when(nodoWebClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.header(any(), eq(MediaType.APPLICATION_JSON_VALUE))).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.header(any(), eq(nodoClosePaymentApiKey))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(any(Function.class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(), eq(ClosePaymentRequestV2Dto.class))).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
@@ -228,6 +234,8 @@ class NodeForPspClientTest {
 
     @Test
     void shouldReturnOKClosePaymentResponseAdditionalInfo() {
+        ReflectionTestUtils.setField(client, "nodoClosePaymentApiKey", "key");
+
         AdditionalPaymentInformationsDto additionalPaymentInformationsDto = new AdditionalPaymentInformationsDto()
                 .outcomePaymentGateway(AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum.OK)
                 .totalAmount(new BigDecimal((101)).toString())
@@ -255,6 +263,8 @@ class NodeForPspClientTest {
         /* preconditions */
         when(nodoWebClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.header(any(), eq(MediaType.APPLICATION_JSON_VALUE))).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.header(any(), eq(nodoClosePaymentApiKey))).thenReturn(requestBodyUriSpec);
+
         when(requestBodyUriSpec.uri(any(Function.class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(), eq(ClosePaymentRequestV2Dto.class))).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
@@ -269,6 +279,8 @@ class NodeForPspClientTest {
 
     @Test
     void shouldReturnKOClosePaymentResponse() {
+        ReflectionTestUtils.setField(client, "nodoClosePaymentApiKey", "key");
+
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(List.of("paymentToken"))
                 .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
@@ -287,6 +299,7 @@ class NodeForPspClientTest {
         /* preconditions */
         when(nodoWebClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.header(any(), eq(MediaType.APPLICATION_JSON_VALUE))).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.header(any(), eq(nodoClosePaymentApiKey))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(any(Function.class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(), eq(ClosePaymentRequestV2Dto.class))).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
@@ -301,6 +314,8 @@ class NodeForPspClientTest {
 
     @Test
     void shouldMapClosePaymentErrorToBadGatewayException() {
+        ReflectionTestUtils.setField(client, "nodoClosePaymentApiKey", "key");
+
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(List.of("paymentToken"))
                 .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
@@ -319,6 +334,7 @@ class NodeForPspClientTest {
         /* preconditions */
         when(nodoWebClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.header(any(), eq(MediaType.APPLICATION_JSON_VALUE))).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.header(any(), eq(nodoClosePaymentApiKey))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(any(Function.class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(), eq(ClosePaymentRequestV2Dto.class))).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);

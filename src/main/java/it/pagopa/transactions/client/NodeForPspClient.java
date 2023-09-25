@@ -32,6 +32,12 @@ public class NodeForPspClient {
     @Value("${nodo.nodeforpsp.uri}")
     private String nodoPerPspUri;
 
+    @Value("${nodo.nodeforpsp.apikey}")
+    private String nodoPerPspApiKey;
+
+    @Value("${nodo.closepayment.apikey}")
+    private String nodoClosePaymentApiKey;
+
     public Mono<ActivatePaymentNoticeV2Response> activatePaymentNoticeV2(
                                                                          JAXBElement<ActivatePaymentNoticeV2Request> request
     ) {
@@ -41,6 +47,7 @@ public class NodeForPspClient {
                 .uri(nodoPerPspUri)
                 .header("Content-Type", MediaType.TEXT_XML_VALUE)
                 .header("SOAPAction", "activatePaymentNoticeV2")
+                .header("ocp-apim-subscription-key", nodoPerPspApiKey)
                 .body(Mono.just(new SoapEnvelope("", request)), SoapEnvelope.class)
                 .retrieve()
                 .onStatus(
@@ -85,6 +92,7 @@ public class NodeForPspClient {
                                 .queryParam("clientId", CLOSE_PAYMENT_CLIENT_ID).build()
                 )
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .header("ocp-apim-subscription-key", nodoClosePaymentApiKey)
                 .body(Mono.just(request), ClosePaymentRequestV2Dto.class)
                 .retrieve()
                 .onStatus(
