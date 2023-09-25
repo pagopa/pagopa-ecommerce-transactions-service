@@ -29,7 +29,7 @@ public class TransactionUserCancelHandler extends TransactionUserCancelHandlerCo
     @Autowired
     public TransactionUserCancelHandler(
             TransactionsEventStoreRepository<Void> transactionEventUserCancelStoreRepository,
-            @Qualifier("transactionClosureQueueAsyncClient") QueueAsyncClient transactionClosureQueueAsyncClient,
+            @Qualifier("transactionClosureQueueAsyncClientV1") QueueAsyncClient transactionClosureQueueAsyncClient,
             TransactionsUtils transactionsUtils,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
             TracingUtils tracingUtils
