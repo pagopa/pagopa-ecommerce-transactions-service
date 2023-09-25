@@ -1,11 +1,7 @@
-package it.pagopa.transactions.projections.handlers;
+package it.pagopa.transactions.projections.handlers.v1;
 
-import it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId;
-import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData;
-import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.domain.*;
-import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
+import it.pagopa.transactions.projections.handlers.ProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,17 +10,21 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-@Component
+@Component(it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler.QUALIFIER_NAME)
 @Slf4j
 public class TransactionsActivationProjectionHandler
-        implements ProjectionHandler<TransactionActivatedEvent, Mono<TransactionActivated>> {
+        implements
+        ProjectionHandler<it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent, Mono<it.pagopa.ecommerce.commons.domain.v1.TransactionActivated>> {
 
+    public static final String QUALIFIER_NAME = "TransactionsActivationProjectionHandlerV1";
     @Autowired
     private TransactionsViewRepository viewEventStoreRepository;
 
     @Override
-    public Mono<TransactionActivated> handle(TransactionActivatedEvent event) {
-        TransactionActivatedData data = event.getData();
+    public Mono<it.pagopa.ecommerce.commons.domain.v1.TransactionActivated> handle(
+                                                                                   it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent event
+    ) {
+        it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData data = event.getData();
         TransactionId transactionId = new TransactionId(event.getTransactionId());
         List<PaymentNotice> paymentNoticeList = data.getPaymentNotices().stream().map(
                 paymentNoticeData -> new PaymentNotice(
@@ -47,10 +47,10 @@ public class TransactionsActivationProjectionHandler
         Confidential<Email> email = event.getData().getEmail();
         String faultCode = event.getData().getFaultCode();
         String faultCodeString = event.getData().getFaultCodeString();
-        ClientId clientId = event.getData().getClientId();
+        it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId clientId = event.getData().getClientId();
         String idCart = event.getData().getIdCart();
         int paymentTokenValiditySeconds = event.getData().getPaymentTokenValiditySeconds();
-        TransactionActivated transaction = new TransactionActivated(
+        it.pagopa.ecommerce.commons.domain.v1.TransactionActivated transaction = new it.pagopa.ecommerce.commons.domain.v1.TransactionActivated(
                 transactionId,
                 paymentNoticeList,
                 email,
@@ -58,11 +58,10 @@ public class TransactionsActivationProjectionHandler
                 faultCodeString,
                 clientId,
                 idCart,
-                paymentTokenValiditySeconds,
-                new EmptyTransactionGatewayActivationData()// TODO handle here NGP informations
+                paymentTokenValiditySeconds
         );
 
-        it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.v2.Transaction
+        it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.v1.Transaction
                 .from(transaction);
 
         return viewEventStoreRepository
