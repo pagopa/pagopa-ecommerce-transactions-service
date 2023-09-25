@@ -1,18 +1,20 @@
 package it.pagopa.transactions.services;
 
+import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
+import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
-import it.pagopa.ecommerce.commons.documents.v2.Transaction;
-import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData;
-import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
+import it.pagopa.ecommerce.commons.documents.v1.Transaction;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.*;
-import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
-import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
+import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
-import it.pagopa.transactions.projections.handlers.TransactionsActivationProjectionHandler;
+import it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler;
+import it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler;
+import it.pagopa.transactions.utils.EventVersion;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,7 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-import static it.pagopa.ecommerce.commons.v2.TransactionTestUtils.EMAIL_STRING;
+import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL_STRING;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,6 +39,9 @@ class TransactionServiceTest {
 
     @InjectMocks
     private TransactionsService transactionsService;
+
+    @Mock
+    private EventVersion eventVersion;
 
     @Mock
     private TransactionActivateHandler transactionActivateHandler;
@@ -83,7 +88,7 @@ class TransactionServiceTest {
                 transactionActivatedData
         );
 
-        Tuple2<Mono<TransactionActivatedEvent>, String> response = Tuples
+        Tuple2<Mono<BaseTransactionEvent<?>>, String> response = Tuples
                 .of(
                         Mono.just(transactionActivatedEvent),
                         TEST_SESSION_TOKEN.toString()
@@ -107,8 +112,7 @@ class TransactionServiceTest {
                 "faultCodeString",
                 Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                new EmptyTransactionGatewayActivationData()
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
         /*

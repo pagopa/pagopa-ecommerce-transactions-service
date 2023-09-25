@@ -20,13 +20,13 @@ import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
-import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
+import it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler;
 import it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException;
 import it.pagopa.transactions.exceptions.TransactionAmountMismatchException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
-import it.pagopa.transactions.projections.handlers.*;
+import it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
@@ -65,6 +65,8 @@ import static org.mockito.Mockito.*;
 @Import(
     {
             TransactionsService.class,
+            it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler.class,
+            it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler.class,
             it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler.class,
             it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler.class,
@@ -89,8 +91,9 @@ import static org.mockito.Mockito.*;
             it.pagopa.transactions.commands.handlers.v2.TransactionRequestUserReceiptHandler.class,
             it.pagopa.transactions.projections.handlers.v1.TransactionUserReceiptProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler.class,
+            it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler.class,
+            it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler.class,
             TransactionsEventStoreRepository.class,
-            TransactionsActivationProjectionHandler.class,
             UUIDUtils.class
     }
 )
@@ -123,7 +126,10 @@ class TransactionServiceTests {
     private QueueAsyncClient queueAsyncClientRefund;
 
     @MockBean
-    private TransactionActivateHandler transactionActivateHandler;
+    private it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler transactionActivateHandlerV1;
+
+    @MockBean
+    private it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler transactionActivateHandlerV2;
 
     @MockBean
     private it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler transactionCancelHandlerV1;
@@ -1103,19 +1109,19 @@ class TransactionServiceTests {
 
     @Test
     void shouldConvertClientIdSuccessfully() {
-        for (it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId : it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId
+        for (it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId clientId : it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId
                 .values()) {
-            assertEquals(clientId.toString(), transactionsService.convertClientId(clientId).toString());
+            assertEquals(clientId.toString(), transactionsService.convertClientId(clientId.name()).toString());
         }
         assertThrows(InvalidRequestException.class, () -> transactionsService.convertClientId(null));
     }
 
     @Test
     void shouldThrowsInvalidRequestExceptionForInvalidClientID() {
-        it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId = Mockito
-                .mock(it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.class);
+        it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId clientId = Mockito
+                .mock(it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.class);
         Mockito.when(clientId.toString()).thenReturn("InvalidClientID");
-        assertThrows(InvalidRequestException.class, () -> transactionsService.convertClientId(clientId));
+        assertThrows(InvalidRequestException.class, () -> transactionsService.convertClientId(clientId.name()));
     }
 
     @Test
