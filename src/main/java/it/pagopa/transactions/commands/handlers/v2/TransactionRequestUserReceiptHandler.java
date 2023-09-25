@@ -33,7 +33,7 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
             TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData> userReceiptAddedEventRepository,
             TransactionsUtils transactionsUtils,
             @Qualifier(
-                "transactionNotificationRequestedQueueAsyncClient"
+                "transactionNotificationRequestedQueueAsyncClientV2"
             ) QueueAsyncClient transactionNotificationRequestedQueueAsyncClient,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
             TracingUtils tracingUtils
