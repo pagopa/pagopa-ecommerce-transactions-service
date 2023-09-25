@@ -48,7 +48,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
     private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper;
     private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData> transactionEventActivatedStoreRepository;
     private final NodoOperations nodoOperations;
-    private final QueueAsyncClient transactionActivatedQueueAsyncClient;
+    private final QueueAsyncClient transactionActivatedQueueAsyncClientV2;
 
     @Autowired
     public TransactionActivateHandler(
@@ -56,7 +56,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
             TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData> transactionEventActivatedStoreRepository,
             NodoOperations nodoOperations,
             JwtTokenUtils jwtTokenUtils,
-            @Qualifier("transactionActivatedQueueAsyncClient") QueueAsyncClient transactionActivatedQueueAsyncClient,
+            @Qualifier("transactionActivatedQueueAsyncClientV2") QueueAsyncClient transactionActivatedQueueAsyncClientV2,
             @Value("${payment.token.validity}") Integer paymentTokenTimeout,
             ConfidentialMailUtils confidentialMailUtils,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
@@ -76,7 +76,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
         this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
         this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
         this.nodoOperations = nodoOperations;
-        this.transactionActivatedQueueAsyncClient = transactionActivatedQueueAsyncClient;
+        this.transactionActivatedQueueAsyncClientV2 = transactionActivatedQueueAsyncClientV2;
     }
 
     public Mono<Tuple2<Mono<BaseTransactionEvent<?>>, String>> handle(
@@ -326,7 +326,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                 .flatMap(
                         e -> tracingUtils.traceMono(
                                 this.getClass().getSimpleName(),
-                                tracingInfo -> transactionActivatedQueueAsyncClient.sendMessageWithResponse(
+                                tracingInfo -> transactionActivatedQueueAsyncClientV2.sendMessageWithResponse(
                                         new QueueEvent<>(e, tracingInfo),
                                         Duration.ofSeconds(paymentTokenTimeout),
                                         Duration.ofSeconds(transientQueuesTTLSeconds)
