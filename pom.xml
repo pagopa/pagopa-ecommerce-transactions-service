@@ -438,7 +438,7 @@
                     <scmVersionType>tag</scmVersionType>
                     <scmVersion>${pagopa-ecommerce-commons.version}</scmVersion>
                     <scmVersionType>branch</scmVersionType>
-                    <scmVersion>CHK-1921-domain-object-unversioning</scmVersion>
+                    <scmVersion>CHK-1921-add-mixing-for-queue-event</scmVersion>
                     <goals>install -DskipTests</goals>
                 </configuration>
                 <executions>
