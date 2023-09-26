@@ -11,14 +11,14 @@ import lombok.Getter;
 @EqualsAndHashCode(callSuper = true)
 public final class TransactionActivateCommand extends TransactionsCommand<NewTransactionRequestDto> {
 
-    private final Transaction.ClientId clientId;
+    private final String clientId;
 
     private final TransactionId transactionId;
 
     public TransactionActivateCommand(
             RptId rptId,
             NewTransactionRequestDto data,
-            Transaction.ClientId clientId,
+            String clientId,
             TransactionId transactionId
     ) {
         super(rptId, TransactionsCommandCode.ACTIVATE, data);

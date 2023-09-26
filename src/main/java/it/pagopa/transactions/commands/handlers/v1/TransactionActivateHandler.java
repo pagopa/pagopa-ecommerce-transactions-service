@@ -1,14 +1,11 @@
-package it.pagopa.transactions.commands.handlers;
+package it.pagopa.transactions.commands.handlers.v1;
 
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
+import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
-import it.pagopa.ecommerce.commons.documents.v2.Transaction;
-import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData;
-import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
@@ -19,6 +16,7 @@ import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
+import it.pagopa.transactions.commands.handlers.TransactionActivateHandlerCommon;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.JwtTokenUtils;
@@ -42,43 +40,27 @@ import java.util.List;
 import java.util.Optional;
 
 @Slf4j
-@Component
-public class TransactionActivateHandler
-        implements
-        CommandHandler<TransactionActivateCommand, Mono<Tuple2<Mono<TransactionActivatedEvent>, String>>> {
+@Component(TransactionActivateHandler.QUALIFIER_NAME)
+public class TransactionActivateHandler extends TransactionActivateHandlerCommon {
 
-    public static final int TRANSFER_LIST_MAX_SIZE = 5;
+    public static final String QUALIFIER_NAME = "TransactionActivateHandlerV1";
     private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper;
 
-    private final TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository;
+    private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData> transactionEventActivatedStoreRepository;
 
     private final NodoOperations nodoOperations;
 
-    private final QueueAsyncClient transactionActivatedQueueAsyncClientV2;
-
-    private final Integer paymentTokenTimeout;
-
-    private final JwtTokenUtils jwtTokenUtils;
-
-    private final ConfidentialMailUtils confidentialMailUtils;
-
-    private final int transientQueuesTTLSeconds;
-
-    private final int nodoParallelRequests;
-
-    private final TracingUtils tracingUtils;
-
-    private final OpenTelemetryUtils openTelemetryUtils;
+    private final QueueAsyncClient transactionActivatedQueueAsyncClientV1;
 
     @Autowired
     public TransactionActivateHandler(
             PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
-            TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository,
+            TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData> transactionEventActivatedStoreRepository,
             NodoOperations nodoOperations,
             JwtTokenUtils jwtTokenUtils,
             @Qualifier(
-                "transactionActivatedQueueAsyncClientV2"
-            ) QueueAsyncClient transactionActivatedQueueAsyncClientV2,
+                "transactionActivatedQueueAsyncClientV1"
+            ) QueueAsyncClient transactionActivatedQueueAsyncClientV1,
             @Value("${payment.token.validity}") Integer paymentTokenTimeout,
             ConfidentialMailUtils confidentialMailUtils,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
@@ -86,21 +68,23 @@ public class TransactionActivateHandler
             TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils
     ) {
+        super(
+                paymentTokenTimeout,
+                jwtTokenUtils,
+                confidentialMailUtils,
+                transientQueuesTTLSeconds,
+                nodoParallelRequests,
+                tracingUtils,
+                openTelemetryUtils
+        );
         this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
         this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
         this.nodoOperations = nodoOperations;
-        this.paymentTokenTimeout = paymentTokenTimeout;
-        this.transactionActivatedQueueAsyncClientV2 = transactionActivatedQueueAsyncClientV2;
-        this.jwtTokenUtils = jwtTokenUtils;
-        this.confidentialMailUtils = confidentialMailUtils;
-        this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
-        this.nodoParallelRequests = nodoParallelRequests;
-        this.tracingUtils = tracingUtils;
-        this.openTelemetryUtils = openTelemetryUtils;
+        this.transactionActivatedQueueAsyncClientV1 = transactionActivatedQueueAsyncClientV1;
     }
 
-    public Mono<Tuple2<Mono<TransactionActivatedEvent>, String>> handle(
-                                                                        TransactionActivateCommand command
+    public Mono<Tuple2<Mono<BaseTransactionEvent<?>>, String>> handle(
+                                                                      TransactionActivateCommand command
     ) {
         final TransactionId transactionId = command.getTransactionId();
         final NewTransactionRequestDto newTransactionRequestDto = command.getData();
@@ -312,31 +296,30 @@ public class TransactionActivateHandler
         return idempotencyKey != null && !idempotencyKey.rawValue().isBlank();
     }
 
-    private Mono<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent> newTransactionActivatedEvent(
-                                                                                                                  List<PaymentRequestInfo> paymentRequestsInfo,
-                                                                                                                  String transactionId,
-                                                                                                                  String email,
-                                                                                                                  Transaction.ClientId clientId,
-                                                                                                                  String idCart,
-                                                                                                                  Integer paymentTokenTimeout
+    private Mono<BaseTransactionEvent<?>> newTransactionActivatedEvent(
+                                                                       List<PaymentRequestInfo> paymentRequestsInfo,
+                                                                       String transactionId,
+                                                                       String email,
+                                                                       String clientId,
+                                                                       String idCart,
+                                                                       Integer paymentTokenTimeout
     ) {
         List<PaymentNotice> paymentNotices = toPaymentNoticeList(paymentRequestsInfo);
-        Mono<TransactionActivatedData> data = confidentialMailUtils.toConfidential(email).map(
-                e -> new TransactionActivatedData(
-                        e,
-                        paymentNotices,
-                        null,
-                        null,
-                        clientId,
-                        idCart,
-                        paymentTokenTimeout,
-                        new EmptyTransactionGatewayActivationData() // TODO da valorizzare per NPG
-                        // new NpgTransactionGatewayActivationData()
-                )
-        );
+        Mono<it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData> data = confidentialMailUtils
+                .toConfidential(email).map(
+                        e -> new it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData(
+                                e,
+                                paymentNotices,
+                                null,
+                                null,
+                                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.valueOf(clientId),
+                                idCart,
+                                paymentTokenTimeout
+                        )
+                );
 
-        Mono<TransactionActivatedEvent> transactionActivatedEvent = data.map(
-                d -> new TransactionActivatedEvent(
+        Mono<it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent> transactionActivatedEvent = data.map(
+                d -> new it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent(
                         transactionId,
                         d
                 )
@@ -346,25 +329,25 @@ public class TransactionActivateHandler
                 .flatMap(
                         e -> tracingUtils.traceMono(
                                 this.getClass().getSimpleName(),
-                                tracingInfo -> transactionActivatedQueueAsyncClientV2.sendMessageWithResponse(
+                                tracingInfo -> transactionActivatedQueueAsyncClientV1.sendMessageWithResponse(
                                         new QueueEvent<>(e, tracingInfo),
                                         Duration.ofSeconds(paymentTokenTimeout),
                                         Duration.ofSeconds(transientQueuesTTLSeconds)
+                                )
+                        ).doOnError(
+                                exception -> log.error(
+                                        "Error to generate event TRANSACTION_ACTIVATED_EVENT for transactionId {} - error {}",
+                                        transactionId,
+                                        exception.getMessage()
+                                )
+                        )
+                                .doOnNext(
+                                        event -> log.info(
+                                                "Generated event TRANSACTION_ACTIVATED_EVENT for transactionId {}",
+                                                transactionId
+                                        )
                                 ).thenReturn(e)
-                        )
-                )
-                .doOnError(
-                        exception -> log.error(
-                                "Error to generate event TRANSACTION_ACTIVATED_EVENT for transactionId {} - error {}",
-                                transactionId,
-                                exception.getMessage()
-                        )
-                )
-                .doOnNext(
-                        event -> log.info(
-                                "Generated event TRANSACTION_ACTIVATED_EVENT for transactionId {}",
-                                transactionId
-                        )
+
                 );
     }
 

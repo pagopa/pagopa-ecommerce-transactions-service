@@ -569,10 +569,8 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
         it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData.Outcome eventNodoOutcome = outcomeV2ToTransactionClosureDataOutcome(nodoOutcome);
         it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData transactionClosureData = new it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData(eventNodoOutcome);
         Mono<it.pagopa.ecommerce.commons.documents.v2.TransactionEvent<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData>> closureEvent = switch (authorizationResult) {
-            case OK ->
-                    Mono.just(new it.pagopa.ecommerce.commons.documents.v2.TransactionClosedEvent(transactionId.value(), transactionClosureData));
-            case KO ->
-                    Mono.just(new it.pagopa.ecommerce.commons.documents.v2.TransactionClosureFailedEvent(transactionId.value(), transactionClosureData));
+            case OK -> Mono.just(new it.pagopa.ecommerce.commons.documents.v2.TransactionClosedEvent(transactionId.value(), transactionClosureData));
+            case KO -> Mono.just(new it.pagopa.ecommerce.commons.documents.v2.TransactionClosureFailedEvent(transactionId.value(), transactionClosureData));
             case null, default -> Mono.error(
                     new IllegalArgumentException(
                             "Unhandled authorization result: %s".formatted(authorizationResult)

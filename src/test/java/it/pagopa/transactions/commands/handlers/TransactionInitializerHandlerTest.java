@@ -2,16 +2,17 @@ package it.pagopa.transactions.commands.handlers;
 
 import io.opentelemetry.api.common.AttributeKey;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
+import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
-import it.pagopa.ecommerce.commons.documents.v2.Transaction;
-import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData;
-import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.v1.Transaction;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.PaymentTransferInfo;
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
-import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
@@ -22,6 +23,7 @@ import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.generated.transactions.server.model.PaymentInfoDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
+import it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler;
 import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
 import it.pagopa.transactions.exceptions.JWTTokenGenerationException;
 import it.pagopa.transactions.projections.TransactionsProjection;
@@ -42,7 +44,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static it.pagopa.ecommerce.commons.v2.TransactionTestUtils.*;
+import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 
@@ -114,7 +116,7 @@ class TransactionInitializerHandlerTest {
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
                 requestDto,
-                Transaction.ClientId.CHECKOUT,
+                Transaction.ClientId.CHECKOUT.name(),
                 transactionId
         );
 
@@ -172,7 +174,7 @@ class TransactionInitializerHandlerTest {
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
 
         /* run test */
-        Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
+        Tuple2<Mono<BaseTransactionEvent<?>>, String> response = handler
                 .handle(command).block();
 
         /* asserts */
@@ -198,7 +200,7 @@ class TransactionInitializerHandlerTest {
         );
         Mockito.verify(openTelemetryUtils, Mockito.times(0)).addErrorSpanWithException(any(), any());
         assertNotNull(paymentRequestInfoCached.id());
-        TransactionActivatedEvent event = response.getT1().block();
+        TransactionActivatedEvent event = (TransactionActivatedEvent) response.getT1().block();
 
         assertNotNull(event.getTransactionId());
         assertNotNull(event.getEventCode());
@@ -227,7 +229,7 @@ class TransactionInitializerHandlerTest {
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
                 requestDto,
-                Transaction.ClientId.CHECKOUT,
+                Transaction.ClientId.CHECKOUT.name(),
                 transactionId
         );
 
@@ -283,7 +285,7 @@ class TransactionInitializerHandlerTest {
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
 
         /* run test */
-        Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
+        Tuple2<Mono<BaseTransactionEvent<?>>, String> response = handler
                 .handle(command).block();
 
         /* asserts */
@@ -295,7 +297,7 @@ class TransactionInitializerHandlerTest {
                 argThat(throwable -> throwable.getMessage().contains(rptId.value()))
         );
         assertNotNull(paymentRequestInfoCached.id());
-        TransactionActivatedEvent event = response.getT1().block();
+        TransactionActivatedEvent event = (TransactionActivatedEvent) response.getT1().block();
 
         assertNotNull(event.getTransactionId());
         assertNotNull(event.getEventCode());
@@ -319,7 +321,7 @@ class TransactionInitializerHandlerTest {
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
                 requestDto,
-                Transaction.ClientId.CHECKOUT,
+                Transaction.ClientId.CHECKOUT.name(),
                 transactionId
         );
 
@@ -393,7 +395,7 @@ class TransactionInitializerHandlerTest {
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
                 requestDto,
-                Transaction.ClientId.CHECKOUT,
+                Transaction.ClientId.CHECKOUT.name(),
                 transactionId
         );
 
@@ -418,7 +420,7 @@ class TransactionInitializerHandlerTest {
                 .thenReturn(Mono.error(new InvalidNodoResponseException("Invalid payment token received")));
 
         /* run test */
-        Mono<Tuple2<Mono<TransactionActivatedEvent>, String>> response = handler
+        Mono<Tuple2<Mono<BaseTransactionEvent<?>>, String>> response = handler
                 .handle(command);
         /* Assertions */
         InvalidNodoResponseException exception = assertThrows(InvalidNodoResponseException.class, response::block);
@@ -447,7 +449,7 @@ class TransactionInitializerHandlerTest {
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
                 requestDto,
-                Transaction.ClientId.CHECKOUT,
+                Transaction.ClientId.CHECKOUT.name(),
                 transactionId
         );
 
@@ -503,11 +505,11 @@ class TransactionInitializerHandlerTest {
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
 
         /* run test */
-        Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
+        Tuple2<Mono<BaseTransactionEvent<?>>, String> response = handler
                 .handle(command).block();
 
         /* asserts */
-        TransactionActivatedEvent event = response.getT1().block();
+        TransactionActivatedEvent event = (TransactionActivatedEvent) response.getT1().block();
         Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(1)).findById(rptId.value());
         assertNotNull(event.getTransactionId());
         assertNotNull(event.getEventCode());
@@ -539,7 +541,7 @@ class TransactionInitializerHandlerTest {
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
                 requestDto,
-                Transaction.ClientId.CHECKOUT,
+                Transaction.ClientId.CHECKOUT.name(),
                 transactionId
         );
 
@@ -595,11 +597,11 @@ class TransactionInitializerHandlerTest {
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
 
         /* run test */
-        Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
+        Tuple2<Mono<BaseTransactionEvent<?>>, String> response = handler
                 .handle(command).block();
 
         /* asserts */
-        TransactionActivatedEvent event = response.getT1().block();
+        TransactionActivatedEvent event = (TransactionActivatedEvent) response.getT1().block();
         Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(1)).findById(rptId.value());
         assertNotNull(event.getTransactionId());
         assertNotNull(event.getEventCode());
@@ -631,7 +633,7 @@ class TransactionInitializerHandlerTest {
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
                 requestDto,
-                Transaction.ClientId.CHECKOUT,
+                Transaction.ClientId.CHECKOUT.name(),
                 transactionId
         );
 
@@ -682,11 +684,11 @@ class TransactionInitializerHandlerTest {
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
 
         /* run test */
-        Tuple2<Mono<TransactionActivatedEvent>, String> response = handler
+        Tuple2<Mono<BaseTransactionEvent<?>>, String> response = handler
                 .handle(command).block();
 
         /* asserts */
-        TransactionActivatedEvent event = response.getT1().block();
+        TransactionActivatedEvent event = (TransactionActivatedEvent) response.getT1().block();
         Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(1)).findById(rptId.value());
         assertNotNull(event.getTransactionId());
         assertNotNull(event.getEventCode());
