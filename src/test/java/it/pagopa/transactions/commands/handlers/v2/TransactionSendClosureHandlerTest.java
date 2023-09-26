@@ -1,4 +1,4 @@
-package it.pagopa.transactions.commands.handlers;
+package it.pagopa.transactions.commands.handlers.v2;
 
 import com.azure.core.http.HttpHeaders;
 import com.azure.core.http.HttpRequest;
@@ -7,13 +7,15 @@ import com.azure.storage.queue.models.SendMessageResult;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
-import it.pagopa.ecommerce.commons.documents.v1.*;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData.PaymentGateway;
+import it.pagopa.ecommerce.commons.documents.v2.*;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData.PaymentGateway;
+import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.domain.*;
-import it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction;
-import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
-import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
-import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken;
+import it.pagopa.ecommerce.commons.domain.v2.EmptyTransaction;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
+import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
@@ -21,7 +23,7 @@ import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.utils.EuroUtils;
-import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
+import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.*;
 import it.pagopa.generated.transactions.server.model.OutcomeVposGatewayDto;
 import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
@@ -29,7 +31,6 @@ import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestD
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
 import it.pagopa.transactions.commands.data.ClosureSendData;
-import it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -189,7 +190,8 @@ class TransactionSendClosureHandlerTest {
                 faultCodeString,
                 Transaction.ClientId.CHECKOUT,
                 idCart,
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                new EmptyTransactionGatewayActivationData()
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -217,9 +219,10 @@ class TransactionSendClosureHandlerTest {
                         transaction.getTransactionActivatedData().getPaymentNotices(),
                         faultCode,
                         faultCodeString,
-                        it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                        Transaction.ClientId.CHECKOUT,
                         idCart,
-                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                        new EmptyTransactionGatewayActivationData()
                 )
         );
 
@@ -250,8 +253,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         "rrn",
                         expectedOperationTimestamp,
-                        null,
-                        AuthorizationResultDto.OK
+                        new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
                 )
         );
 
@@ -307,7 +309,8 @@ class TransactionSendClosureHandlerTest {
                         faultCodeString,
                         Transaction.ClientId.CHECKOUT,
                         idCart,
-                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                        new EmptyTransactionGatewayActivationData()
                 )
         );
 
@@ -338,8 +341,7 @@ class TransactionSendClosureHandlerTest {
                         AUTHORIZATION_CODE,
                         ECOMMERCE_RRN,
                         expectedOperationTimestamp,
-                        OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(),
-                        AuthorizationResultDto.KO
+                        new PgsTransactionGatewayAuthorizationData( OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(),AuthorizationResultDto.KO)
                 )
         );
 
@@ -348,6 +350,7 @@ class TransactionSendClosureHandlerTest {
                         new OutcomeXpayGatewayDto()
                                 .outcome(OutcomeXpayGatewayDto.OutcomeEnum.KO)
                                 .authorizationCode(AUTHORIZATION_CODE)
+                                .errorCode(OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1)
                 )
                 .timestampOperation(OffsetDateTime.now());
 
@@ -360,8 +363,8 @@ class TransactionSendClosureHandlerTest {
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
-        it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
-                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
+        it.pagopa.ecommerce.commons.domain.v2.Transaction transaction = events
+                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v2.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
                 transactionId,
@@ -434,7 +437,7 @@ class TransactionSendClosureHandlerTest {
                                                 .timestampOperation(
                                                         authorizationCompletedEvent.getData().getTimestampOperation()
                                                 )
-                                                .errorCode(authorizationCompletedEvent.getData().getErrorCode())
+                                                .errorCode(((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent.getData().getTransactionGatewayAuthorizationData()).getErrorCode())
                                 )
                                 .info(
                                         new InfoDto()
@@ -521,7 +524,8 @@ class TransactionSendClosureHandlerTest {
                         faultCodeString,
                         Transaction.ClientId.CHECKOUT,
                         idCart,
-                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                        new EmptyTransactionGatewayActivationData()
                 )
         );
 
@@ -551,9 +555,8 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         AUTHORIZATION_CODE,
                         ECOMMERCE_RRN,
-                        OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(),
                         expectedOperationTimestamp,
-                        AuthorizationResultDto.KO
+                        new PgsTransactionGatewayAuthorizationData( OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(),AuthorizationResultDto.KO)
                 )
         );
 
@@ -562,14 +565,15 @@ class TransactionSendClosureHandlerTest {
                         new OutcomeXpayGatewayDto()
                                 .outcome(OutcomeXpayGatewayDto.OutcomeEnum.KO)
                                 .authorizationCode("authorizationCode")
+                                .errorCode(OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1)
                 )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
-        it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
-                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
+        it.pagopa.ecommerce.commons.domain.v2.Transaction transaction = events
+                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v2.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
                 transactionId,
@@ -648,7 +652,7 @@ class TransactionSendClosureHandlerTest {
                                                 .timestampOperation(
                                                         authorizationCompletedEvent.getData().getTimestampOperation()
                                                 )
-                                                .errorCode(authorizationCompletedEvent.getData().getErrorCode())
+                                                .errorCode(((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent.getData().getTransactionGatewayAuthorizationData()).getErrorCode())
                                 )
                                 .info(
                                         new InfoDto()
@@ -678,12 +682,13 @@ class TransactionSendClosureHandlerTest {
         ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
                 .outcome(ClosePaymentResponseDto.OutcomeEnum.OK);
 
-        /* preconditions */
+          /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(events);
 
+        Hooks.onOperatorDebug();
         /* test */
         StepVerifier.create(transactionSendClosureHandler.handle(closureSendCommand))
                 .consumeNextWith(next -> {
@@ -737,7 +742,8 @@ class TransactionSendClosureHandlerTest {
                         faultCodeString,
                         Transaction.ClientId.CHECKOUT,
                         idCart,
-                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                        new EmptyTransactionGatewayActivationData()
                 )
         );
 
@@ -768,8 +774,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         ECOMMERCE_RRN,
                         expectedOperationTimestamp,
-                        null,
-                        AuthorizationResultDto.OK
+                        new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK)
                 )
         );
 
@@ -785,8 +790,8 @@ class TransactionSendClosureHandlerTest {
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
-        it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
-                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
+        it.pagopa.ecommerce.commons.domain.v2.Transaction transaction = events
+                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v2.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
                 transactionId,
@@ -913,7 +918,7 @@ class TransactionSendClosureHandlerTest {
                                                 .timestampOperation(
                                                         authorizationCompletedEvent.getData().getTimestampOperation()
                                                 )
-                                                .errorCode(authorizationCompletedEvent.getData().getErrorCode())
+                                                .errorCode(((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent.getData().getTransactionGatewayAuthorizationData()).getErrorCode())
                                                 .paymentGateway(authorizationRequestData.getPaymentGateway().name())
                                 )
                                 .info(
@@ -1003,7 +1008,8 @@ class TransactionSendClosureHandlerTest {
                         faultCodeString,
                         Transaction.ClientId.CHECKOUT,
                         idCart,
-                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                        new EmptyTransactionGatewayActivationData()
                 )
         );
 
@@ -1034,8 +1040,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         ECOMMERCE_RRN,
                         expectedOperationTimestamp,
-                        null,
-                        AuthorizationResultDto.OK
+                        new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
                 )
         );
 
@@ -1050,8 +1055,8 @@ class TransactionSendClosureHandlerTest {
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
-        it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
-                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
+        it.pagopa.ecommerce.commons.domain.v2.Transaction transaction = events
+                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v2.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
                 transactionId,
@@ -1163,7 +1168,7 @@ class TransactionSendClosureHandlerTest {
                                                 .timestampOperation(
                                                         authorizationCompletedEvent.getData().getTimestampOperation()
                                                 )
-                                                .errorCode(authorizationCompletedEvent.getData().getErrorCode())
+                                                .errorCode(((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent.getData().getTransactionGatewayAuthorizationData()).getErrorCode())
                                                 .paymentGateway(authorizationRequestData.getPaymentGateway().name())
                                 )
                                 .info(
@@ -1268,7 +1273,8 @@ class TransactionSendClosureHandlerTest {
                         faultCodeString,
                         Transaction.ClientId.CHECKOUT,
                         idCart,
-                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                        new EmptyTransactionGatewayActivationData()
                 )
         );
 
@@ -1299,8 +1305,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         ECOMMERCE_RRN,
                         expectedOperationTimestamp,
-                        null,
-                        AuthorizationResultDto.OK
+                        new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
                 )
         );
 
@@ -1316,8 +1321,8 @@ class TransactionSendClosureHandlerTest {
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
-        it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
-                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
+        it.pagopa.ecommerce.commons.domain.v2.Transaction transaction = events
+                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v2.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
                 transactionId,
@@ -1440,7 +1445,7 @@ class TransactionSendClosureHandlerTest {
                                                 .timestampOperation(
                                                         authorizationCompletedEvent.getData().getTimestampOperation()
                                                 )
-                                                .errorCode(authorizationCompletedEvent.getData().getErrorCode())
+                                                .errorCode(((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent.getData().getTransactionGatewayAuthorizationData()).getErrorCode())
                                                 .paymentGateway(authorizationRequestData.getPaymentGateway().name())
                                 )
                                 .info(
@@ -1554,7 +1559,8 @@ class TransactionSendClosureHandlerTest {
                         faultCodeString,
                         Transaction.ClientId.CHECKOUT,
                         idCart,
-                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                        new EmptyTransactionGatewayActivationData()
                 )
         );
 
@@ -1585,8 +1591,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         ECOMMERCE_RRN,
                         expectedOperationTimestamp,
-                        null,
-                        AuthorizationResultDto.OK
+                        new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK)
                 )
         );
 
@@ -1601,8 +1606,8 @@ class TransactionSendClosureHandlerTest {
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
-        it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
-                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
+        it.pagopa.ecommerce.commons.domain.v2.Transaction transaction = events
+                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v2.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
                 transactionId,
@@ -1717,7 +1722,7 @@ class TransactionSendClosureHandlerTest {
                                                 .timestampOperation(
                                                         authorizationCompletedEvent.getData().getTimestampOperation()
                                                 )
-                                                .errorCode(authorizationCompletedEvent.getData().getErrorCode())
+                                                .errorCode(((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent.getData().getTransactionGatewayAuthorizationData()).getErrorCode())
                                                 .paymentGateway(authorizationRequestData.getPaymentGateway().name())
                                 )
                                 .info(
@@ -1839,7 +1844,8 @@ class TransactionSendClosureHandlerTest {
                         faultCodeString,
                         Transaction.ClientId.CHECKOUT,
                         idCart,
-                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                        new EmptyTransactionGatewayActivationData()
                 )
         );
 
@@ -1870,8 +1876,7 @@ class TransactionSendClosureHandlerTest {
                         null,
                         null,
                         expectedOperationTimestamp,
-                        OutcomeVposGatewayDto.ErrorCodeEnum._07.toString(),
-                        AuthorizationResultDto.KO
+                        new PgsTransactionGatewayAuthorizationData(OutcomeVposGatewayDto.ErrorCodeEnum._07.toString(),AuthorizationResultDto.KO)
                 )
         );
 
@@ -1879,14 +1884,15 @@ class TransactionSendClosureHandlerTest {
                 .outcomeGateway(
                         new OutcomeVposGatewayDto()
                                 .outcome(OutcomeVposGatewayDto.OutcomeEnum.KO)
+                                .errorCode(OutcomeVposGatewayDto.ErrorCodeEnum._07)
                 )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
-        it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
-                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
+        it.pagopa.ecommerce.commons.domain.v2.Transaction transaction = events
+                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v2.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
                 transactionId,
@@ -1968,7 +1974,7 @@ class TransactionSendClosureHandlerTest {
                                                 .timestampOperation(
                                                         authorizationCompletedEvent.getData().getTimestampOperation()
                                                 )
-                                                .errorCode(authorizationCompletedEvent.getData().getErrorCode())
+                                                .errorCode(((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent.getData().getTransactionGatewayAuthorizationData()).getErrorCode())
                                 )
                                 .info(
                                         new InfoDto()
@@ -2076,7 +2082,8 @@ class TransactionSendClosureHandlerTest {
                         faultCodeString,
                         Transaction.ClientId.CHECKOUT,
                         idCart,
-                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                        new EmptyTransactionGatewayActivationData()
                 )
         );
 
@@ -2107,8 +2114,9 @@ class TransactionSendClosureHandlerTest {
                         null,
                         ECOMMERCE_RRN,
                         expectedOperationTimestamp,
-                        OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(),
-                        AuthorizationResultDto.KO
+                        new PgsTransactionGatewayAuthorizationData( OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(), AuthorizationResultDto.KO)
+
+
                 )
         );
 
@@ -2116,14 +2124,15 @@ class TransactionSendClosureHandlerTest {
                 .outcomeGateway(
                         new OutcomeXpayGatewayDto()
                                 .outcome(OutcomeXpayGatewayDto.OutcomeEnum.KO)
+                                .errorCode(OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1)
                 )
                 .timestampOperation(OffsetDateTime.now());
 
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
-        it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
-                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
+        it.pagopa.ecommerce.commons.domain.v2.Transaction transaction = events
+                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v2.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
                 transactionId,
@@ -2208,7 +2217,7 @@ class TransactionSendClosureHandlerTest {
                                                 .timestampOperation(
                                                         authorizationCompletedEvent.getData().getTimestampOperation()
                                                 )
-                                                .errorCode(authorizationCompletedEvent.getData().getErrorCode())
+                                                .errorCode(((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent.getData().getTransactionGatewayAuthorizationData()).getErrorCode())
                                 )
                                 .info(
                                         new InfoDto()
@@ -2329,7 +2338,8 @@ class TransactionSendClosureHandlerTest {
                         faultCodeString,
                         Transaction.ClientId.CHECKOUT,
                         idCart,
-                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                        new EmptyTransactionGatewayActivationData()
                 )
         );
 
@@ -2360,8 +2370,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         ECOMMERCE_RRN,
                         expectedOperationTimestamp,
-                        null,
-                        AuthorizationResultDto.OK
+                        new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK)
                 )
         );
 
@@ -2377,8 +2386,8 @@ class TransactionSendClosureHandlerTest {
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
-        it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
-                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
+        it.pagopa.ecommerce.commons.domain.v2.Transaction transaction = events
+                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v2.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
                 transactionId,
@@ -2612,7 +2621,8 @@ class TransactionSendClosureHandlerTest {
                         faultCodeString,
                         Transaction.ClientId.CHECKOUT,
                         idCart,
-                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                        TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                        new EmptyTransactionGatewayActivationData()
                 )
         );
 
@@ -2643,8 +2653,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         ECOMMERCE_RRN,
                         expectedOperationTimestamp,
-                        null,
-                        AuthorizationResultDto.OK
+                        new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK)
                 )
         );
 
@@ -2659,8 +2668,8 @@ class TransactionSendClosureHandlerTest {
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
-        it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
-                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
+        it.pagopa.ecommerce.commons.domain.v2.Transaction transaction = events
+                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v2.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
                 transactionId,
@@ -2863,7 +2872,7 @@ class TransactionSendClosureHandlerTest {
                 .transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = TransactionTestUtils
-                .transactionAuthorizationCompletedEvent(AuthorizationResultDto.OK);
+                .transactionAuthorizationCompletedEvent(new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK));
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
@@ -2877,8 +2886,8 @@ class TransactionSendClosureHandlerTest {
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
-        it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
-                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
+        it.pagopa.ecommerce.commons.domain.v2.Transaction transaction = events
+                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v2.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
                 transactionId,
@@ -3082,7 +3091,7 @@ class TransactionSendClosureHandlerTest {
                 .transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = TransactionTestUtils
-                .transactionAuthorizationCompletedEvent(AuthorizationResultDto.OK);
+                .transactionAuthorizationCompletedEvent(new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK));
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
                         new OutcomeVposGatewayDto()
@@ -3095,8 +3104,8 @@ class TransactionSendClosureHandlerTest {
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
-        it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
-                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
+        it.pagopa.ecommerce.commons.domain.v2.Transaction transaction = events
+                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v2.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
                 transactionId,
@@ -3311,7 +3320,7 @@ class TransactionSendClosureHandlerTest {
                 .transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = TransactionTestUtils
-                .transactionAuthorizationCompletedEvent(AuthorizationResultDto.KO);
+                .transactionAuthorizationCompletedEvent(new PgsTransactionGatewayAuthorizationData("",AuthorizationResultDto.KO));
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
@@ -3323,8 +3332,8 @@ class TransactionSendClosureHandlerTest {
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
-        it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
-                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
+        it.pagopa.ecommerce.commons.domain.v2.Transaction transaction = events
+                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v2.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
                 transactionId,
@@ -3468,7 +3477,7 @@ class TransactionSendClosureHandlerTest {
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = TransactionTestUtils
                 .transactionAuthorizationCompletedEvent(
-                        AuthorizationResultDto.KO
+                        new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK)
                 );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -3481,8 +3490,8 @@ class TransactionSendClosureHandlerTest {
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
 
-        it.pagopa.ecommerce.commons.domain.v1.Transaction transaction = events
-                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent).block();
+        it.pagopa.ecommerce.commons.domain.v2.Transaction transaction = events
+                .reduce(new EmptyTransaction(), it.pagopa.ecommerce.commons.domain.v2.Transaction::applyEvent).block();
 
         ClosureSendData closureSendData = new ClosureSendData(
                 transactionId,

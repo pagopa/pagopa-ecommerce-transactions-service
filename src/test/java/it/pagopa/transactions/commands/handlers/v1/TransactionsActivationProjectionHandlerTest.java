@@ -1,4 +1,4 @@
-package it.pagopa.transactions.commands.handlers;
+package it.pagopa.transactions.commands.handlers.v1;
 
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;

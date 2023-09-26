@@ -1,4 +1,4 @@
-package it.pagopa.transactions.commands.handlers;
+package it.pagopa.transactions.commands.handlers.v1;
 
 import com.azure.core.http.HttpHeaders;
 import com.azure.core.http.HttpRequest;

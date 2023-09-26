@@ -1,20 +1,20 @@
-package it.pagopa.transactions.commands.handlers;
+package it.pagopa.transactions.commands.handlers.v2;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
-import it.pagopa.ecommerce.commons.documents.v1.*;
-import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
-import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
+import it.pagopa.ecommerce.commons.documents.v2.*;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
-import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
+import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestPaymentsInnerDto;
 import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.data.AddUserReceiptData;
-import it.pagopa.transactions.commands.handlers.v1.TransactionRequestUserReceiptHandler;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -33,7 +33,7 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 
-import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.*;
+import static it.pagopa.ecommerce.commons.v2.TransactionTestUtils.*;
 import static it.pagopa.transactions.utils.Queues.QUEUE_SUCCESSFUL_RESPONSE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -82,7 +82,7 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
-                AuthorizationResultDto.OK
+                new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK)
         );
 
         TransactionClosedEvent closureSentEvent = TransactionTestUtils
@@ -162,7 +162,7 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
-                AuthorizationResultDto.OK
+                new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK)
         );
 
         TransactionClosedEvent closureSentEvent = TransactionTestUtils
@@ -242,7 +242,7 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
-                AuthorizationResultDto.OK
+               new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK)
         );
 
         TransactionClosedEvent closureSentEvent = TransactionTestUtils
@@ -322,7 +322,7 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
-                AuthorizationResultDto.OK
+                new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK)
         );
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
@@ -372,7 +372,7 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
-                AuthorizationResultDto.OK
+                new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK)
         );
 
         TransactionClosedEvent closureSentEvent = TransactionTestUtils
