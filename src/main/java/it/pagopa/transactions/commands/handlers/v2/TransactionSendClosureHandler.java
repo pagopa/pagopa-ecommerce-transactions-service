@@ -62,7 +62,7 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
             PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
             NodeForPspClient nodeForPspClient,
             @Qualifier(
-                    "transactionClosureRetryQueueAsyncClientV2"
+                "transactionClosureRetryQueueAsyncClientV2"
             ) QueueAsyncClient closureRetryQueueAsyncClient,
             @Value("${payment.token.validity}") Integer paymentTokenValidity,
             @Value("${transactions.ecommerce.retry.offset}") Integer softTimeoutOffset,
@@ -433,7 +433,8 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                 )
                 .errorCode(
                         ClosePaymentRequestV2Dto.OutcomeEnum.KO.equals(outcomeEnum)
-                                ? authRequestData.errorCode() : null
+                                ? authRequestData.errorCode()
+                                : null
 
                 )
                 .psp(buildPspDto(transactionAuthorizationRequestData));

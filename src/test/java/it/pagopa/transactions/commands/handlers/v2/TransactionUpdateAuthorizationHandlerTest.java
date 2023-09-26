@@ -64,7 +64,9 @@ class TransactionUpdateAuthorizationHandlerTest {
                 .transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent event = TransactionTestUtils
-                .transactionAuthorizationCompletedEvent(new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK));
+                .transactionAuthorizationCompletedEvent(
+                        new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
+                );
         BaseTransaction transaction = TransactionTestUtils.reduceEvents(activatedEvent, authorizationRequestedEvent);
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -100,8 +102,9 @@ class TransactionUpdateAuthorizationHandlerTest {
                         argThat(
                                 eventArg -> TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
                                         .equals(eventArg.getEventCode())
-                                        && ((PgsTransactionGatewayAuthorizationData) eventArg.getData().getTransactionGatewayAuthorizationData()).getAuthorizationResultDto()
-                                        .equals(AuthorizationResultDto.OK)
+                                        && ((PgsTransactionGatewayAuthorizationData) eventArg.getData()
+                                                .getTransactionGatewayAuthorizationData()).getAuthorizationResultDto()
+                                                        .equals(AuthorizationResultDto.OK)
                         )
                 );
     }
@@ -174,7 +177,9 @@ class TransactionUpdateAuthorizationHandlerTest {
                 .transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent event = TransactionTestUtils
-                .transactionAuthorizationCompletedEvent(new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK));
+                .transactionAuthorizationCompletedEvent(
+                        new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
+                );
         BaseTransaction transaction = TransactionTestUtils.reduceEvents(activatedEvent, authorizationRequestedEvent);
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -208,7 +213,9 @@ class TransactionUpdateAuthorizationHandlerTest {
                 argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
-                                && ((PgsTransactionGatewayAuthorizationData) eventArg.getData().getTransactionGatewayAuthorizationData()).getAuthorizationResultDto().equals(AuthorizationResultDto.KO)
+                                && ((PgsTransactionGatewayAuthorizationData) eventArg.getData()
+                                        .getTransactionGatewayAuthorizationData()).getAuthorizationResultDto()
+                                                .equals(AuthorizationResultDto.KO)
                 )
         );
     }

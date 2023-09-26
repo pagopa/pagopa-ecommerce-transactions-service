@@ -1,4 +1,4 @@
-package it.pagopa.transactions.projections.handlers;
+package it.pagopa.transactions.projections.handlers.v1;
 
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptData;
@@ -6,7 +6,6 @@ import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptRequestedE
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
-import it.pagopa.transactions.projections.handlers.v1.TransactionUserReceiptProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,13 +34,13 @@ class TransactionUserReceiptProjectionHandlerTest {
         Transaction transaction = TransactionTestUtils
                 .transactionDocument(TransactionStatusDto.AUTHORIZATION_COMPLETED, ZonedDateTime.now());
 
-        it.pagopa.ecommerce.commons.documents.v1.Transaction expectedDocument = new it.pagopa.ecommerce.commons.documents.v1.Transaction(
+        Transaction expectedDocument = new Transaction(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
                 null,
                 transaction.getEmail(),
                 TransactionStatusDto.NOTIFICATION_REQUESTED,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                Transaction.ClientId.CHECKOUT,
                 transaction.getCreationDate(),
                 transaction.getIdCart(),
                 "rrn"
@@ -84,7 +83,7 @@ class TransactionUserReceiptProjectionHandlerTest {
     void shouldHandleTransactionWithKOOutcome() {
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
 
-        it.pagopa.ecommerce.commons.documents.v1.Transaction expectedDocument = new it.pagopa.ecommerce.commons.documents.v1.Transaction(
+        Transaction expectedDocument = new Transaction(
                 transaction.getTransactionId().value(),
                 transaction.getTransactionActivatedData().getPaymentNotices(),
                 null,
@@ -106,7 +105,7 @@ class TransactionUserReceiptProjectionHandlerTest {
          * Preconditions
          */
         Mockito.when(viewRepository.findById(transaction.getTransactionId().value()))
-                .thenReturn(Mono.just(it.pagopa.ecommerce.commons.documents.v1.Transaction.from(transaction)));
+                .thenReturn(Mono.just(Transaction.from(transaction)));
 
         Mockito.when(viewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
 

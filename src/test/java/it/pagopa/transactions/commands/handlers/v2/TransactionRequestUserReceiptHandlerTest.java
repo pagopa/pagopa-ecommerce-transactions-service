@@ -82,7 +82,7 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
-                new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK)
+                new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
         );
 
         TransactionClosedEvent closureSentEvent = TransactionTestUtils
@@ -162,7 +162,7 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
-                new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK)
+                new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
         );
 
         TransactionClosedEvent closureSentEvent = TransactionTestUtils
@@ -242,7 +242,7 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
-               new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK)
+                new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
         );
 
         TransactionClosedEvent closureSentEvent = TransactionTestUtils
@@ -322,7 +322,7 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
-                new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK)
+                new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
         );
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
@@ -372,7 +372,7 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
-                new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK)
+                new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
         );
 
         TransactionClosedEvent closureSentEvent = TransactionTestUtils

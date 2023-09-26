@@ -341,7 +341,10 @@ class TransactionSendClosureHandlerTest {
                         AUTHORIZATION_CODE,
                         ECOMMERCE_RRN,
                         expectedOperationTimestamp,
-                        new PgsTransactionGatewayAuthorizationData( OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(),AuthorizationResultDto.KO)
+                        new PgsTransactionGatewayAuthorizationData(
+                                OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(),
+                                AuthorizationResultDto.KO
+                        )
                 )
         );
 
@@ -437,7 +440,11 @@ class TransactionSendClosureHandlerTest {
                                                 .timestampOperation(
                                                         authorizationCompletedEvent.getData().getTimestampOperation()
                                                 )
-                                                .errorCode(((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent.getData().getTransactionGatewayAuthorizationData()).getErrorCode())
+                                                .errorCode(
+                                                        ((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent
+                                                                .getData().getTransactionGatewayAuthorizationData())
+                                                                        .getErrorCode()
+                                                )
                                 )
                                 .info(
                                         new InfoDto()
@@ -556,7 +563,10 @@ class TransactionSendClosureHandlerTest {
                         AUTHORIZATION_CODE,
                         ECOMMERCE_RRN,
                         expectedOperationTimestamp,
-                        new PgsTransactionGatewayAuthorizationData( OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(),AuthorizationResultDto.KO)
+                        new PgsTransactionGatewayAuthorizationData(
+                                OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(),
+                                AuthorizationResultDto.KO
+                        )
                 )
         );
 
@@ -652,7 +662,11 @@ class TransactionSendClosureHandlerTest {
                                                 .timestampOperation(
                                                         authorizationCompletedEvent.getData().getTimestampOperation()
                                                 )
-                                                .errorCode(((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent.getData().getTransactionGatewayAuthorizationData()).getErrorCode())
+                                                .errorCode(
+                                                        ((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent
+                                                                .getData().getTransactionGatewayAuthorizationData())
+                                                                        .getErrorCode()
+                                                )
                                 )
                                 .info(
                                         new InfoDto()
@@ -682,7 +696,7 @@ class TransactionSendClosureHandlerTest {
         ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
                 .outcome(ClosePaymentResponseDto.OutcomeEnum.OK);
 
-          /* preconditions */
+        /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
@@ -774,7 +788,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         ECOMMERCE_RRN,
                         expectedOperationTimestamp,
-                        new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK)
+                        new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
                 )
         );
 
@@ -918,7 +932,11 @@ class TransactionSendClosureHandlerTest {
                                                 .timestampOperation(
                                                         authorizationCompletedEvent.getData().getTimestampOperation()
                                                 )
-                                                .errorCode(((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent.getData().getTransactionGatewayAuthorizationData()).getErrorCode())
+                                                .errorCode(
+                                                        ((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent
+                                                                .getData().getTransactionGatewayAuthorizationData())
+                                                                        .getErrorCode()
+                                                )
                                                 .paymentGateway(authorizationRequestData.getPaymentGateway().name())
                                 )
                                 .info(
@@ -1168,7 +1186,11 @@ class TransactionSendClosureHandlerTest {
                                                 .timestampOperation(
                                                         authorizationCompletedEvent.getData().getTimestampOperation()
                                                 )
-                                                .errorCode(((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent.getData().getTransactionGatewayAuthorizationData()).getErrorCode())
+                                                .errorCode(
+                                                        ((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent
+                                                                .getData().getTransactionGatewayAuthorizationData())
+                                                                        .getErrorCode()
+                                                )
                                                 .paymentGateway(authorizationRequestData.getPaymentGateway().name())
                                 )
                                 .info(
@@ -1445,7 +1467,11 @@ class TransactionSendClosureHandlerTest {
                                                 .timestampOperation(
                                                         authorizationCompletedEvent.getData().getTimestampOperation()
                                                 )
-                                                .errorCode(((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent.getData().getTransactionGatewayAuthorizationData()).getErrorCode())
+                                                .errorCode(
+                                                        ((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent
+                                                                .getData().getTransactionGatewayAuthorizationData())
+                                                                        .getErrorCode()
+                                                )
                                                 .paymentGateway(authorizationRequestData.getPaymentGateway().name())
                                 )
                                 .info(
@@ -1591,7 +1617,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         ECOMMERCE_RRN,
                         expectedOperationTimestamp,
-                        new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK)
+                        new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
                 )
         );
 
@@ -1722,7 +1748,11 @@ class TransactionSendClosureHandlerTest {
                                                 .timestampOperation(
                                                         authorizationCompletedEvent.getData().getTimestampOperation()
                                                 )
-                                                .errorCode(((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent.getData().getTransactionGatewayAuthorizationData()).getErrorCode())
+                                                .errorCode(
+                                                        ((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent
+                                                                .getData().getTransactionGatewayAuthorizationData())
+                                                                        .getErrorCode()
+                                                )
                                                 .paymentGateway(authorizationRequestData.getPaymentGateway().name())
                                 )
                                 .info(
@@ -1876,7 +1906,10 @@ class TransactionSendClosureHandlerTest {
                         null,
                         null,
                         expectedOperationTimestamp,
-                        new PgsTransactionGatewayAuthorizationData(OutcomeVposGatewayDto.ErrorCodeEnum._07.toString(),AuthorizationResultDto.KO)
+                        new PgsTransactionGatewayAuthorizationData(
+                                OutcomeVposGatewayDto.ErrorCodeEnum._07.toString(),
+                                AuthorizationResultDto.KO
+                        )
                 )
         );
 
@@ -1974,7 +2007,11 @@ class TransactionSendClosureHandlerTest {
                                                 .timestampOperation(
                                                         authorizationCompletedEvent.getData().getTimestampOperation()
                                                 )
-                                                .errorCode(((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent.getData().getTransactionGatewayAuthorizationData()).getErrorCode())
+                                                .errorCode(
+                                                        ((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent
+                                                                .getData().getTransactionGatewayAuthorizationData())
+                                                                        .getErrorCode()
+                                                )
                                 )
                                 .info(
                                         new InfoDto()
@@ -2114,8 +2151,10 @@ class TransactionSendClosureHandlerTest {
                         null,
                         ECOMMERCE_RRN,
                         expectedOperationTimestamp,
-                        new PgsTransactionGatewayAuthorizationData( OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(), AuthorizationResultDto.KO)
-
+                        new PgsTransactionGatewayAuthorizationData(
+                                OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(),
+                                AuthorizationResultDto.KO
+                        )
 
                 )
         );
@@ -2217,7 +2256,11 @@ class TransactionSendClosureHandlerTest {
                                                 .timestampOperation(
                                                         authorizationCompletedEvent.getData().getTimestampOperation()
                                                 )
-                                                .errorCode(((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent.getData().getTransactionGatewayAuthorizationData()).getErrorCode())
+                                                .errorCode(
+                                                        ((PgsTransactionGatewayAuthorizationData) authorizationCompletedEvent
+                                                                .getData().getTransactionGatewayAuthorizationData())
+                                                                        .getErrorCode()
+                                                )
                                 )
                                 .info(
                                         new InfoDto()
@@ -2370,7 +2413,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         ECOMMERCE_RRN,
                         expectedOperationTimestamp,
-                        new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK)
+                        new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
                 )
         );
 
@@ -2653,7 +2696,7 @@ class TransactionSendClosureHandlerTest {
                         "authorizationCode",
                         ECOMMERCE_RRN,
                         expectedOperationTimestamp,
-                        new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK)
+                        new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
                 )
         );
 
@@ -2872,7 +2915,9 @@ class TransactionSendClosureHandlerTest {
                 .transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = TransactionTestUtils
-                .transactionAuthorizationCompletedEvent(new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK));
+                .transactionAuthorizationCompletedEvent(
+                        new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
+                );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
@@ -3091,7 +3136,9 @@ class TransactionSendClosureHandlerTest {
                 .transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = TransactionTestUtils
-                .transactionAuthorizationCompletedEvent(new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK));
+                .transactionAuthorizationCompletedEvent(
+                        new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
+                );
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
                         new OutcomeVposGatewayDto()
@@ -3320,7 +3367,9 @@ class TransactionSendClosureHandlerTest {
                 .transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = TransactionTestUtils
-                .transactionAuthorizationCompletedEvent(new PgsTransactionGatewayAuthorizationData("",AuthorizationResultDto.KO));
+                .transactionAuthorizationCompletedEvent(
+                        new PgsTransactionGatewayAuthorizationData("", AuthorizationResultDto.KO)
+                );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
@@ -3477,7 +3526,7 @@ class TransactionSendClosureHandlerTest {
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = TransactionTestUtils
                 .transactionAuthorizationCompletedEvent(
-                        new PgsTransactionGatewayAuthorizationData(null,AuthorizationResultDto.OK)
+                        new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
                 );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()

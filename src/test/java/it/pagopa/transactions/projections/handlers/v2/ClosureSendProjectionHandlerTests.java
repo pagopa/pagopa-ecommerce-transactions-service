@@ -1,8 +1,8 @@
-package it.pagopa.transactions.projections.handlers;
+package it.pagopa.transactions.projections.handlers.v2;
 
-import it.pagopa.ecommerce.commons.documents.v1.*;
+import it.pagopa.ecommerce.commons.documents.v2.*;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
-import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
+import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
@@ -24,7 +24,7 @@ class ClosureSendProjectionHandlerTests {
     private TransactionsViewRepository transactionsViewRepository;
 
     @InjectMocks
-    private it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler closureSendProjectionHandler;
+    private ClosureSendProjectionHandler closureSendProjectionHandler;
 
     @Test
     void shouldHandleProjectionForClosedEventWithResponseOutcomeOK() {
