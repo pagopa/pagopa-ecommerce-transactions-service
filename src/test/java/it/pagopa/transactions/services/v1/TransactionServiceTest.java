@@ -40,66 +40,98 @@ import static org.mockito.ArgumentMatchers.any;
 @AutoConfigureDataRedis
 class TransactionServiceTest {
 
-    private final TransactionsViewRepository transactionsViewRepository=Mockito.mock(TransactionsViewRepository.class);
+    private final TransactionsViewRepository transactionsViewRepository = Mockito
+            .mock(TransactionsViewRepository.class);
     @Autowired
     private UUIDUtils uuidUtils;
-    private final EcommercePaymentMethodsClient ecommercePaymentMethodsClient=Mockito.mock(EcommercePaymentMethodsClient.class);
+    private final EcommercePaymentMethodsClient ecommercePaymentMethodsClient = Mockito
+            .mock(EcommercePaymentMethodsClient.class);
 
-    private final PaymentGatewayClient paymentGatewayClient=Mockito.mock(PaymentGatewayClient.class);
+    private final PaymentGatewayClient paymentGatewayClient = Mockito.mock(PaymentGatewayClient.class);
 
-    private final NodeForPspClient nodeForPspClient=Mockito.mock(NodeForPspClient.class);
+    private final NodeForPspClient nodeForPspClient = Mockito.mock(NodeForPspClient.class);
 
     private final AzureStorageConfig azureStorageConfig = new AzureStorageConfig();
 
-    private final QueueAsyncClient queueAsyncClientClosureRetryV1=Mockito.mock(QueueAsyncClient.class);
+    private final QueueAsyncClient queueAsyncClientClosureRetryV1 = Mockito.mock(QueueAsyncClient.class);
 
-    private final QueueAsyncClient queueAsyncClientRefundV1=Mockito.mock(QueueAsyncClient.class);
+    private final QueueAsyncClient queueAsyncClientRefundV1 = Mockito.mock(QueueAsyncClient.class);
 
-    private final QueueAsyncClient queueAsyncClientClosureRetryV2=Mockito.mock(QueueAsyncClient.class);
+    private final QueueAsyncClient queueAsyncClientClosureRetryV2 = Mockito.mock(QueueAsyncClient.class);
 
-    private final QueueAsyncClient queueAsyncClientRefundV2=Mockito.mock(QueueAsyncClient.class);
-    private final it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler transactionActivateHandlerV1 = Mockito.mock(it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler.class);
-    private final it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler transactionActivateHandlerV2=Mockito.mock(it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler.class);
-    private final it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler transactionCancelHandlerV1=Mockito.mock(it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler.class);
-    private final it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler transactionCancelHandlerV2=Mockito.mock(it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler.class);
-    private final it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandlerV1=Mockito.mock(it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler.class);
-    private final it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandlerV2=Mockito.mock(it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler.class);
-    private final it.pagopa.transactions.commands.handlers.v1.TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV1=Mockito.mock(it.pagopa.transactions.commands.handlers.v1.TransactionUpdateAuthorizationHandler.class);
-    private final it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV2=Mockito.mock(it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler.class);
-    private final it.pagopa.transactions.commands.handlers.v1.TransactionRequestUserReceiptHandler transactionUpdateStatusHandlerV1=Mockito.mock(it.pagopa.transactions.commands.handlers.v1.TransactionRequestUserReceiptHandler.class);
-    private final it.pagopa.transactions.commands.handlers.v2.TransactionRequestUserReceiptHandler transactionUpdateStatusHandlerV2=Mockito.mock(it.pagopa.transactions.commands.handlers.v2.TransactionRequestUserReceiptHandler.class);
-    private final it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler transactionSendClosureHandlerV1=Mockito.mock(it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler.class);
-    private final it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureHandler transactionSendClosureHandlerV2=Mockito.mock(it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureHandler.class);
+    private final QueueAsyncClient queueAsyncClientRefundV2 = Mockito.mock(QueueAsyncClient.class);
+    private final it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler transactionActivateHandlerV1 = Mockito
+            .mock(it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler.class);
+    private final it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler transactionActivateHandlerV2 = Mockito
+            .mock(it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler.class);
+    private final it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler transactionCancelHandlerV1 = Mockito
+            .mock(it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler.class);
+    private final it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler transactionCancelHandlerV2 = Mockito
+            .mock(it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler.class);
+    private final it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandlerV1 = Mockito
+            .mock(it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler.class);
+    private final it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandlerV2 = Mockito
+            .mock(it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler.class);
+    private final it.pagopa.transactions.commands.handlers.v1.TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV1 = Mockito
+            .mock(it.pagopa.transactions.commands.handlers.v1.TransactionUpdateAuthorizationHandler.class);
+    private final it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV2 = Mockito
+            .mock(it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler.class);
+    private final it.pagopa.transactions.commands.handlers.v1.TransactionRequestUserReceiptHandler transactionUpdateStatusHandlerV1 = Mockito
+            .mock(it.pagopa.transactions.commands.handlers.v1.TransactionRequestUserReceiptHandler.class);
+    private final it.pagopa.transactions.commands.handlers.v2.TransactionRequestUserReceiptHandler transactionUpdateStatusHandlerV2 = Mockito
+            .mock(it.pagopa.transactions.commands.handlers.v2.TransactionRequestUserReceiptHandler.class);
+    private final it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler transactionSendClosureHandlerV1 = Mockito
+            .mock(it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler.class);
+    private final it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureHandler transactionSendClosureHandlerV2 = Mockito
+            .mock(it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureHandler.class);
 
-    private final it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler authorizationProjectionHandlerV1=Mockito.mock(it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler.class);
-    private final it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler authorizationProjectionHandlerV2=Mockito.mock(it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler.class);
-    private final it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV1=Mockito.mock(it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler.class);
-    private final it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV2=Mockito.mock(it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler.class);
-    private final it.pagopa.transactions.projections.handlers.v1.TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV1=Mockito.mock(it.pagopa.transactions.projections.handlers.v1.TransactionUserReceiptProjectionHandler.class);
-    private final it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV2=Mockito.mock(it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler.class);
-    private final it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler refundRequestProjectionHandlerV1=Mockito.mock(it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler.class);
-    private final it.pagopa.transactions.projections.handlers.v2.RefundRequestProjectionHandler refundRequestProjectionHandlerV2=Mockito.mock(it.pagopa.transactions.projections.handlers.v2.RefundRequestProjectionHandler.class);
-    private final it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler closureSendProjectionHandlerV1=Mockito.mock(it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler.class);
-    private final it.pagopa.transactions.projections.handlers.v2.ClosureSendProjectionHandler closureSendProjectionHandlerV2=Mockito.mock(it.pagopa.transactions.projections.handlers.v2.ClosureSendProjectionHandler.class);
-    private final it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler closureErrorProjectionHandlerV1=Mockito.mock(it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler.class);
-    private final it.pagopa.transactions.projections.handlers.v2.ClosureErrorProjectionHandler closureErrorProjectionHandlerV2=Mockito.mock(it.pagopa.transactions.projections.handlers.v2.ClosureErrorProjectionHandler.class);
-    private final it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV1=Mockito.mock(it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler.class);
-    private final it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2=Mockito.mock(it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler.class);
-    private final it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV1=Mockito.mock(it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler.class);
-    private final it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV2=Mockito.mock(it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler.class);
-    private final TransactionsEventStoreRepository transactionsEventStoreRepository=Mockito.mock(TransactionsEventStoreRepository.class);
+    private final it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler authorizationProjectionHandlerV1 = Mockito
+            .mock(it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler.class);
+    private final it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler authorizationProjectionHandlerV2 = Mockito
+            .mock(it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler.class);
+    private final it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV1 = Mockito
+            .mock(it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler.class);
+    private final it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV2 = Mockito
+            .mock(it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler.class);
+    private final it.pagopa.transactions.projections.handlers.v1.TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV1 = Mockito
+            .mock(it.pagopa.transactions.projections.handlers.v1.TransactionUserReceiptProjectionHandler.class);
+    private final it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV2 = Mockito
+            .mock(it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler.class);
+    private final it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler refundRequestProjectionHandlerV1 = Mockito
+            .mock(it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler.class);
+    private final it.pagopa.transactions.projections.handlers.v2.RefundRequestProjectionHandler refundRequestProjectionHandlerV2 = Mockito
+            .mock(it.pagopa.transactions.projections.handlers.v2.RefundRequestProjectionHandler.class);
+    private final it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler closureSendProjectionHandlerV1 = Mockito
+            .mock(it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler.class);
+    private final it.pagopa.transactions.projections.handlers.v2.ClosureSendProjectionHandler closureSendProjectionHandlerV2 = Mockito
+            .mock(it.pagopa.transactions.projections.handlers.v2.ClosureSendProjectionHandler.class);
+    private final it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler closureErrorProjectionHandlerV1 = Mockito
+            .mock(it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler.class);
+    private final it.pagopa.transactions.projections.handlers.v2.ClosureErrorProjectionHandler closureErrorProjectionHandlerV2 = Mockito
+            .mock(it.pagopa.transactions.projections.handlers.v2.ClosureErrorProjectionHandler.class);
+    private final it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV1 = Mockito
+            .mock(it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler.class);
+    private final it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2 = Mockito
+            .mock(it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler.class);
+    private final it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV1 = Mockito
+            .mock(it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler.class);
+    private final it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV2 = Mockito
+            .mock(it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler.class);
+    private final TransactionsEventStoreRepository transactionsEventStoreRepository = Mockito
+            .mock(TransactionsEventStoreRepository.class);
 
     @Captor
     private ArgumentCaptor<TransactionRequestAuthorizationCommand> commandArgumentCaptor;
 
-    private final JwtTokenUtils jwtTokenUtils=Mockito.mock(JwtTokenUtils.class);
-    private final TransactionsUtils transactionsUtils=Mockito.mock(TransactionsUtils.class);
+    private final JwtTokenUtils jwtTokenUtils = Mockito.mock(JwtTokenUtils.class);
+    private final TransactionsUtils transactionsUtils = Mockito.mock(TransactionsUtils.class);
 
-    private final AuthRequestDataUtils authRequestDataUtils=Mockito.mock(AuthRequestDataUtils.class);
+    private final AuthRequestDataUtils authRequestDataUtils = Mockito.mock(AuthRequestDataUtils.class);
 
-    private final TracingUtils tracingUtils=Mockito.mock(TracingUtils.class);
+    private final TracingUtils tracingUtils = Mockito.mock(TracingUtils.class);
 
-    private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper=Mockito.mock(PaymentRequestInfoRedisTemplateWrapper.class);
+    private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper = Mockito
+            .mock(PaymentRequestInfoRedisTemplateWrapper.class);
 
     @Autowired
     private final TransactionsService transactionsService = new TransactionsService(
