@@ -88,7 +88,7 @@ public class NodeForPspClient {
         );
         return nodoWebClient.post()
                 .uri(
-                        uriBuilder -> uriBuilder.path("/nodo/nodo-per-pm/v2/closepayment")
+                        uriBuilder -> uriBuilder.path("/nodo-auth/nodo-per-pm/v2/closepayment")
                                 .queryParam("clientId", CLOSE_PAYMENT_CLIENT_ID).build()
                 )
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
