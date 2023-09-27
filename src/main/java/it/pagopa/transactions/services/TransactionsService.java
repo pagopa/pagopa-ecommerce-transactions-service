@@ -1249,8 +1249,8 @@ public class TransactionsService {
                 );
     }
 
-    NewTransactionResponseDto.ClientIdEnum convertClientId(
-                                                           String clientId
+    public NewTransactionResponseDto.ClientIdEnum convertClientId(
+                                                                  String clientId
     ) {
         return Optional.ofNullable(clientId).filter(Objects::nonNull)
                 .map(
