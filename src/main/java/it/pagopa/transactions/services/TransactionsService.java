@@ -108,8 +108,6 @@ public class TransactionsService {
 
     private final TransactionsUtils transactionsUtils;
 
-    private final TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> eventStoreRepository;
-
     private final TransactionsEventStoreRepository<Object> eventsRepository;
 
     private final Integer paymentTokenValidity;
@@ -202,7 +200,6 @@ public class TransactionsService {
             EcommercePaymentMethodsClient ecommercePaymentMethodsClient,
             UUIDUtils uuidUtils,
             TransactionsUtils transactionsUtils,
-            TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> eventStoreRepository,
             TransactionsEventStoreRepository<Object> eventsRepository,
             @Value("${payment.token.validity}") Integer paymentTokenValidity,
             @Value("${ecommerce.event.version}") EventVersion eventVersion
@@ -239,7 +236,6 @@ public class TransactionsService {
         this.ecommercePaymentMethodsClient = ecommercePaymentMethodsClient;
         this.uuidUtils = uuidUtils;
         this.transactionsUtils = transactionsUtils;
-        this.eventStoreRepository = eventStoreRepository;
         this.eventsRepository = eventsRepository;
         this.paymentTokenValidity = paymentTokenValidity;
         this.eventVersion = eventVersion;
@@ -1072,7 +1068,8 @@ public class TransactionsService {
          *
          * @formatter:on
          */
-        return eventStoreRepository
+        System.out.println("DENTRO IL SERVICE " + transactionId.value());
+        return eventsRepository
                 .findByTransactionIdAndEventCode(
                         transactionId.value(),
                         TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()

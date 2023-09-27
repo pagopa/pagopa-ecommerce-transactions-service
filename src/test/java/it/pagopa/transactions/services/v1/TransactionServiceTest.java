@@ -168,7 +168,6 @@ class TransactionServiceTest {
             uuidUtils,
             transactionsUtils,
             transactionsEventStoreRepository,
-            transactionsEventStoreRepository,
             10,
             EventVersion.V1
     );
