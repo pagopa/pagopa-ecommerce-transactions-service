@@ -1068,7 +1068,6 @@ public class TransactionsService {
          *
          * @formatter:on
          */
-        System.out.println("DENTRO IL SERVICE " + transactionId.value());
         return eventsRepository
                 .findByTransactionIdAndEventCode(
                         transactionId.value(),

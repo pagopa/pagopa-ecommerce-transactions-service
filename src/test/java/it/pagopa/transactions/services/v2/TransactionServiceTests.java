@@ -1794,7 +1794,6 @@ class TransactionServiceTests {
 
         Mockito.when(refundRequestProjectionHandlerV2.handle(any()))
                 .thenReturn(Mono.just(refundedRequestedTransactionDocument));
-        System.out.println("TEST " + transactionId.value());
         Mockito.when(
                 transactionsEventStoreRepository.findByTransactionIdAndEventCode(
                         transactionId.value(),
