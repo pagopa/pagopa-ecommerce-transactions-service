@@ -1,5 +1,6 @@
 package it.pagopa.transactions.utils;
 
+import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestedEvent;
@@ -12,9 +13,12 @@ import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
+import it.pagopa.transactions.exceptions.NotImplementedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
@@ -127,6 +131,15 @@ class TransactionsUtilsTest {
     }
 
     @Test
+    void shouldGetPaymentNoticesFromTransactionInvalidClass() {
+        TransactionsUtils utils = new TransactionsUtils(null, null);
+        assertThrows(
+                NotImplementedException.class,
+                () -> utils.getPaymentNotices(Mockito.mock(BaseTransactionView.class))
+        );
+    }
+
+    @Test
     void shouldGetClientIdFromTransactionV1() {
         it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId clientId = Transaction.ClientId.CHECKOUT;
         TransactionsUtils utils = new TransactionsUtils(null, null);
@@ -151,6 +164,12 @@ class TransactionsUtilsTest {
     }
 
     @Test
+    void shouldGetClientIdFromTransactionInvalidClass() {
+        TransactionsUtils utils = new TransactionsUtils(null, null);
+        assertThrows(NotImplementedException.class, () -> utils.getClientId(Mockito.mock(BaseTransactionView.class)));
+    }
+
+    @Test
     void shouldGetEmailFromTransactionV1() {
         TransactionsUtils utils = new TransactionsUtils(null, null);
         it.pagopa.ecommerce.commons.documents.v1.Transaction transaction = it.pagopa.ecommerce.commons.v1.TransactionTestUtils
@@ -166,6 +185,12 @@ class TransactionsUtilsTest {
                 .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
         Confidential<Email> email = utils.getEmail(transaction);
         assertNotNull(email);
+    }
+
+    @Test
+    void shouldGetEmailFromTransactionInvalidClass() {
+        TransactionsUtils utils = new TransactionsUtils(null, null);
+        assertThrows(NotImplementedException.class, () -> utils.getEmail(Mockito.mock(BaseTransactionView.class)));
     }
 
     @Test
