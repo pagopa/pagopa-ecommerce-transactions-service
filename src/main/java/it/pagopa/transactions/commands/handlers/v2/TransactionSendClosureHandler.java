@@ -4,8 +4,6 @@ import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
-import it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData;
-import it.pagopa.ecommerce.commons.documents.v2.TransactionRefundedData;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionAuthorizationCompleted;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
@@ -58,9 +56,10 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
 
     @Autowired
     public TransactionSendClosureHandler(
-            TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository,
+            TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData> transactionEventStoreRepository,
             TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository,
-            TransactionsEventStoreRepository<TransactionRefundedData> transactionRefundedEventStoreRepository,
+            TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionRefundedData> transactionRefundedEventStoreRepository,
+            PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
             NodeForPspClient nodeForPspClient,
             @Qualifier(
                 "transactionClosureRetryQueueAsyncClientV2"
@@ -72,8 +71,7 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
             TransactionsUtils transactionsUtils,
             AuthRequestDataUtils authRequestDataUtils,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
-            TracingUtils tracingUtils,
-            PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper
+            TracingUtils tracingUtils
     ) {
         super(
                 transactionsUtils,
@@ -434,7 +432,10 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                         transactionAuthorizationCompletedData.getTimestampOperation()
                 )
                 .errorCode(
-                        null // TODO set errorCode
+                        ClosePaymentRequestV2Dto.OutcomeEnum.KO.equals(outcomeEnum)
+                                ? authRequestData.errorCode()
+                                : null
+
                 )
                 .psp(buildPspDto(transactionAuthorizationRequestData));
     }

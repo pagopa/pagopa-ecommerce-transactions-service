@@ -1,15 +1,14 @@
-package it.pagopa.transactions.projections.handlers;
+package it.pagopa.transactions.projections.handlers.v1;
 
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionRefundRequestedEvent;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionRefundedData;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
@@ -20,21 +19,23 @@ import java.time.ZonedDateTime;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
-public class CancellationRequestProjectionHandlerTests {
+class RefundRequestProjectionHandlerTests {
 
-    @InjectMocks
-    private it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler cancellationRequestProjectionHandler;
+    private final TransactionsViewRepository transactionsViewRepository = Mockito
+            .mock(TransactionsViewRepository.class);;
 
-    @Mock
-    private TransactionsViewRepository transactionsViewRepository;
+    private final RefundRequestProjectionHandler refundRequestProjectionHandler = new RefundRequestProjectionHandler(
+            transactionsViewRepository
+    );
 
     @Test
     void shouldHandleProjection() {
         Transaction transaction = TransactionTestUtils
-                .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
+                .transactionDocument(TransactionStatusDto.AUTHORIZATION_COMPLETED, ZonedDateTime.now());
 
-        TransactionUserCanceledEvent transactionUserCanceledEvent = new TransactionUserCanceledEvent(
-                transaction.getTransactionId()
+        TransactionRefundRequestedEvent transactionRefundRequestedEvent = new TransactionRefundRequestedEvent(
+                transaction.getTransactionId(),
+                new TransactionRefundedData()
         );
 
         Transaction expected = new Transaction(
@@ -42,7 +43,7 @@ public class CancellationRequestProjectionHandlerTests {
                 transaction.getPaymentNotices(),
                 transaction.getFeeTotal(),
                 transaction.getEmail(),
-                TransactionStatusDto.CANCELLATION_REQUESTED,
+                TransactionStatusDto.REFUND_REQUESTED,
                 Transaction.ClientId.CHECKOUT,
                 transaction.getCreationDate(),
                 transaction.getIdCart(),
@@ -54,7 +55,7 @@ public class CancellationRequestProjectionHandlerTests {
         Mockito.when(transactionsViewRepository.save(any()))
                 .thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
 
-        StepVerifier.create(cancellationRequestProjectionHandler.handle(transactionUserCanceledEvent))
+        StepVerifier.create(refundRequestProjectionHandler.handle(transactionRefundRequestedEvent))
                 .expectNext(expected)
                 .verifyComplete();
     }
@@ -62,15 +63,16 @@ public class CancellationRequestProjectionHandlerTests {
     @Test
     void shouldReturnTransactionNotFoundExceptionOnTransactionNotFound() {
         Transaction transaction = TransactionTestUtils
-                .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
+                .transactionDocument(TransactionStatusDto.AUTHORIZATION_COMPLETED, ZonedDateTime.now());
 
-        TransactionUserCanceledEvent transactionUserCanceledEvent = new TransactionUserCanceledEvent(
-                transaction.getTransactionId()
+        TransactionRefundRequestedEvent transactionRefundRequestedEvent = new TransactionRefundRequestedEvent(
+                transaction.getTransactionId(),
+                new TransactionRefundedData()
         );
 
         Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId())).thenReturn(Mono.empty());
 
-        StepVerifier.create(cancellationRequestProjectionHandler.handle(transactionUserCanceledEvent))
+        StepVerifier.create(refundRequestProjectionHandler.handle(transactionRefundRequestedEvent))
                 .expectError(TransactionNotFoundException.class)
                 .verify();
     }

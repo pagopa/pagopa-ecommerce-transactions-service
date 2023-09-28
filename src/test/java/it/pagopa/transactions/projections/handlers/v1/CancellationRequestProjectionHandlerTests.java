@@ -1,7 +1,7 @@
-package it.pagopa.transactions.projections.handlers;
+package it.pagopa.transactions.projections.handlers.v1;
 
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionClosureErrorEvent;
+import it.pagopa.ecommerce.commons.documents.v1.TransactionUserCanceledEvent;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
@@ -20,19 +20,20 @@ import java.time.ZonedDateTime;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
-class ClosureErrorProjectionHandlerTest {
-    @Mock
-    private TransactionsViewRepository transactionsViewRepository;
+class CancellationRequestProjectionHandlerTests {
 
     @InjectMocks
-    private it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler closureErrorProjectionHandler;
+    private CancellationRequestProjectionHandler cancellationRequestProjectionHandler;
+
+    @Mock
+    private TransactionsViewRepository transactionsViewRepository;
 
     @Test
     void shouldHandleProjection() {
         Transaction transaction = TransactionTestUtils
-                .transactionDocument(TransactionStatusDto.AUTHORIZATION_COMPLETED, ZonedDateTime.now());
+                .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
 
-        TransactionClosureErrorEvent closureErrorEvent = new TransactionClosureErrorEvent(
+        TransactionUserCanceledEvent transactionUserCanceledEvent = new TransactionUserCanceledEvent(
                 transaction.getTransactionId()
         );
 
@@ -41,7 +42,7 @@ class ClosureErrorProjectionHandlerTest {
                 transaction.getPaymentNotices(),
                 transaction.getFeeTotal(),
                 transaction.getEmail(),
-                TransactionStatusDto.CLOSURE_ERROR,
+                TransactionStatusDto.CANCELLATION_REQUESTED,
                 Transaction.ClientId.CHECKOUT,
                 transaction.getCreationDate(),
                 transaction.getIdCart(),
@@ -53,7 +54,7 @@ class ClosureErrorProjectionHandlerTest {
         Mockito.when(transactionsViewRepository.save(any()))
                 .thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
 
-        StepVerifier.create(closureErrorProjectionHandler.handle(closureErrorEvent))
+        StepVerifier.create(cancellationRequestProjectionHandler.handle(transactionUserCanceledEvent))
                 .expectNext(expected)
                 .verifyComplete();
     }
@@ -61,17 +62,16 @@ class ClosureErrorProjectionHandlerTest {
     @Test
     void shouldReturnTransactionNotFoundExceptionOnTransactionNotFound() {
         Transaction transaction = TransactionTestUtils
-                .transactionDocument(TransactionStatusDto.AUTHORIZATION_COMPLETED, ZonedDateTime.now());
+                .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
 
-        TransactionClosureErrorEvent closureErrorEvent = new TransactionClosureErrorEvent(
+        TransactionUserCanceledEvent transactionUserCanceledEvent = new TransactionUserCanceledEvent(
                 transaction.getTransactionId()
         );
 
         Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId())).thenReturn(Mono.empty());
 
-        StepVerifier.create(closureErrorProjectionHandler.handle(closureErrorEvent))
+        StepVerifier.create(cancellationRequestProjectionHandler.handle(transactionUserCanceledEvent))
                 .expectError(TransactionNotFoundException.class)
                 .verify();
     }
-
 }

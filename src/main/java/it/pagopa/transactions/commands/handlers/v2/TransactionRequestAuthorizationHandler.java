@@ -147,7 +147,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                     authRequestDetails -> paymentMethodsClient.updateSession(
                                                             command.getData().paymentInstrumentId(),
                                                             authRequestDetails.getOrderId(),
-                                                            t.getTransactionId().value()
+                                                            command.getData().transactionId().value()
                                                     )
                                             );
                                     return updateSession.then(

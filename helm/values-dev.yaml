@@ -118,7 +118,7 @@ microservice-chart:
     NPG_CONNECTION_TIMEOUT: "10000"
     NPG_CARDS_PSP_LIST: "BCITITMM"
     CHECKOUT_BASE_PATH: "https://dev.checkout.pagopa.it"
-    ECOMMERCE_EVENT_VERSION: "V2"
+    ECOMMERCE_EVENT_VERSION: "V1"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password
