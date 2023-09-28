@@ -5,13 +5,16 @@ import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationComplete
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
+import it.pagopa.ecommerce.commons.generated.npg.v1.dto.OperationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
+import it.pagopa.generated.transactions.server.model.OutcomeNpgGatewayDto;
 import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
@@ -58,7 +61,7 @@ class TransactionUpdateAuthorizationHandlerTest {
     );
 
     @Test
-    void shouldSaveSuccessfulUpdate() {
+    void shouldSaveSuccessfulUpdateXpay() {
         TransactionActivatedEvent activatedEvent = TransactionTestUtils.transactionActivateEvent();
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
                 .transactionAuthorizationRequestedEvent();
@@ -105,6 +108,71 @@ class TransactionUpdateAuthorizationHandlerTest {
                                         && ((PgsTransactionGatewayAuthorizationData) eventArg.getData()
                                                 .getTransactionGatewayAuthorizationData()).getAuthorizationResultDto()
                                                         .equals(AuthorizationResultDto.OK)
+                        )
+                );
+    }
+
+    @Test
+    void shouldSaveSuccessfulUpdateNpg() {
+        TransactionActivatedEvent activatedEvent = TransactionTestUtils.transactionActivateEvent();
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
+                .transactionAuthorizationRequestedEvent();
+
+        TransactionAuthorizationCompletedEvent event = TransactionTestUtils
+                .transactionAuthorizationCompletedEvent(
+                        new NpgTransactionGatewayAuthorizationData(
+                                OperationResultDto.EXECUTED,
+                                "operationId",
+                                "paymentEndToEndId"
+                        )
+
+                );
+        BaseTransaction transaction = TransactionTestUtils.reduceEvents(activatedEvent, authorizationRequestedEvent);
+
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .outcomeGateway(
+                        new OutcomeNpgGatewayDto()
+                                .paymentGatewayType("NPG")
+                                .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
+                                .authorizationCode("1234")
+                                .paymentEndToEndId("paymentEndToEndId")
+                )
+                .timestampOperation(OffsetDateTime.now());
+
+        UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
+                transaction.getTransactionId(),
+                transaction.getStatus().toString(),
+                updateAuthorizationRequest
+        );
+
+        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
+                transaction.getPaymentNotices().get(0).rptId(),
+                updateAuthorizationStatusData
+        );
+
+        /* preconditions */
+        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
+                .thenReturn(transactionId.uuid().toString());
+        /* test */
+        StepVerifier.create(updateAuthorizationHandler.handle(requestAuthorizationCommand))
+                .expectNextMatches(authorizationStatusUpdatedEvent -> authorizationStatusUpdatedEvent.equals(event))
+                .verifyComplete();
+
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1))
+                .save(
+                        argThat(
+                                eventArg -> TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
+                                        .equals(eventArg.getEventCode())
+                                        && ((NpgTransactionGatewayAuthorizationData) eventArg.getData()
+                                                .getTransactionGatewayAuthorizationData()).getOperationResult()
+                                                        .equals(
+                                                                OperationResultDto.valueOf(
+                                                                        ((OutcomeNpgGatewayDto) updateAuthorizationRequest
+                                                                                .getOutcomeGateway())
+                                                                                        .getOperationResult().getValue()
+                                                                )
+                                                        )
                         )
                 );
     }
