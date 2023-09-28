@@ -1,6 +1,4 @@
 package it.pagopa.transactions.commands;
-
-import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;

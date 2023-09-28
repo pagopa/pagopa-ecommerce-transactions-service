@@ -20,7 +20,7 @@ import java.time.ZonedDateTime;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
-public class CancellationRequestProjectionHandlerTests {
+class CancellationRequestProjectionHandlerTests {
 
     @InjectMocks
     private CancellationRequestProjectionHandler cancellationRequestProjectionHandler;
