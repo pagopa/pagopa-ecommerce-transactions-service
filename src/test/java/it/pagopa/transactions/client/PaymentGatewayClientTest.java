@@ -458,7 +458,7 @@ class PaymentGatewayClientTest {
                 "paymentMethodDescription",
                 "pspBusinessName",
                 false,
-                "VPOS",
+                "NPG",
                 Optional.of(UUID.randomUUID().toString()),
                 cardDetails
         );
@@ -509,7 +509,7 @@ class PaymentGatewayClientTest {
                 "paymentMethodDescription",
                 "pspBusinessName",
                 false,
-                "VPOS",
+                "NPG",
                 Optional.of(UUID.randomUUID().toString()),
                 cardDetails
         );
@@ -576,7 +576,7 @@ class PaymentGatewayClientTest {
                 "paymentMethodDescription",
                 "pspBusinessName",
                 false,
-                "VPOS",
+                "NPG",
                 Optional.of(UUID.randomUUID().toString()),
                 cardDetails
         );
@@ -640,7 +640,7 @@ class PaymentGatewayClientTest {
                 "paymentMethodDescription",
                 "pspBusinessName",
                 false,
-                "VPOS",
+                "NPG",
                 Optional.of(UUID.randomUUID().toString()),
                 cardDetails
         );
