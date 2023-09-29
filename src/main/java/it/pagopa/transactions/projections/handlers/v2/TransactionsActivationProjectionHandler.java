@@ -1,6 +1,5 @@
 package it.pagopa.transactions.projections.handlers.v2;
 
-import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.transactions.projections.handlers.ProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
@@ -60,12 +59,7 @@ public class TransactionsActivationProjectionHandler
                 clientId,
                 idCart,
                 paymentTokenValiditySeconds,
-                new NpgTransactionGatewayActivationData(
-                        ((NpgTransactionGatewayActivationData) event.getData().getTransactionGatewayActivationData())
-                                .getOrderId(),
-                        null,
-                        null
-                )
+                event.getData().getTransactionGatewayActivationData()
         );
 
         it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.v2.Transaction
