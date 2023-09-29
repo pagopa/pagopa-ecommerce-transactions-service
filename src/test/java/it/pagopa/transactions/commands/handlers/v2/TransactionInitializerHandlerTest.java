@@ -216,9 +216,9 @@ class TransactionInitializerHandlerTest {
                         .getOrderId()
         );
         assertEquals(
+                ORDER_ID,
                 ((NpgTransactionGatewayActivationData) event.getData().getTransactionGatewayActivationData())
-                        .getOrderId(),
-                ORDER_ID
+                        .getOrderId()
         );
         assertNotNull(event.getEventCode());
         assertNotNull(event.getCreationDate());
