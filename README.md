@@ -52,6 +52,7 @@ These are all environment variables needed by the application:
 | NPG_CARDS_PSP_KEYS                             |     | Secret structure that holds psp - api keys association for authorization request                                                      | string  |         |
 | NPG_CARDS_PSP_LIST                             |     | List of all psp ids that are expected to be found into the NPG_CARDS_PSP_KEYS configuration (used for configuration cross validation) | string  |         |
 | CHECKOUT_BASE_PATH                             |     | Checkout basepath where the user will be brought to after the authorization process is completed                                      | string  |         |
+| ECOMMERCE_EVENT_VERSION                        |     | Ecommerce event version used during transaction activated value accepted V1 and v2                                                    | string  |         |
 
 An example configuration of these environment variables is in the `.env.example` file.
 
