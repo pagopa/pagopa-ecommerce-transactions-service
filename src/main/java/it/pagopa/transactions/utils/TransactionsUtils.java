@@ -1,22 +1,25 @@
 package it.pagopa.transactions.utils;
 
-import it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction;
-import it.pagopa.ecommerce.commons.domain.v1.Transaction;
-import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
+import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
+import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
+import it.pagopa.ecommerce.commons.documents.PaymentNotice;
+import it.pagopa.ecommerce.commons.domain.Confidential;
+import it.pagopa.ecommerce.commons.domain.Email;
+import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
+import it.pagopa.transactions.exceptions.NotImplementedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -87,11 +90,47 @@ public class TransactionsUtils {
         }
     }
 
-    public Mono<BaseTransaction> reduceEvents(TransactionId transactionId) {
+    public Mono<BaseTransaction> reduceEventsV1(TransactionId transactionId) {
+        return reduceEvent(
+                transactionId,
+                new it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction(),
+                it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent,
+                it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction.class
+        );
+    }
+
+    public Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction> reduceEventsV2(
+                                                                                            TransactionId transactionId
+    ) {
+        return reduceEvent(
+                transactionId,
+                new it.pagopa.ecommerce.commons.domain.v2.EmptyTransaction(),
+                it.pagopa.ecommerce.commons.domain.v2.Transaction::applyEvent,
+                it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction.class
+        );
+    }
+
+    public <A, T> Mono<T> reduceEvent(
+                                      TransactionId transactionId,
+                                      A initialValue,
+                                      BiFunction<A, ? super BaseTransactionEvent<?>, A> accumulator,
+                                      Class<T> clazz
+    ) {
         return eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value())
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())))
-                .reduce(new EmptyTransaction(), Transaction::applyEvent)
-                .cast(BaseTransaction.class);
+                .reduce(initialValue, accumulator)
+                .cast(clazz);
+    }
+
+    public <A, T> Mono<T> reduceEvents(
+                                       Flux<BaseTransactionEvent<Object>> events,
+                                       A initialValue,
+                                       BiFunction<A, ? super BaseTransactionEvent<?>, A> accumulator,
+                                       Class<T> clazz
+    ) {
+        return events
+                .reduce(initialValue, accumulator)
+                .cast(clazz);
     }
 
     public it.pagopa.generated.transactions.server.model.TransactionStatusDto convertEnumeration(
@@ -121,6 +160,57 @@ public class TransactionsUtils {
                                         .amount(100)
                         )
                 );
+    }
+
+    public Integer getTransactionTotalAmount(BaseTransactionView baseTransactionView) {
+        List<PaymentNotice> paymentNotices = getPaymentNotices(baseTransactionView);
+        return paymentNotices.stream()
+                .mapToInt(
+                        it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount
+                ).sum();
+    }
+
+    public Boolean isAllCcp(
+                            BaseTransactionView baseTransactionView,
+                            int idx
+    ) {
+        List<PaymentNotice> paymentNotices = getPaymentNotices(baseTransactionView);
+        return paymentNotices.get(idx).isAllCCP();
+    }
+
+    public String getRptId(
+                           BaseTransactionView baseTransactionView,
+                           int idx
+    ) {
+        List<PaymentNotice> paymentNotices = getPaymentNotices(baseTransactionView);
+        return paymentNotices.get(idx).getRptId();
+    }
+
+    public List<it.pagopa.ecommerce.commons.documents.PaymentNotice> getPaymentNotices(BaseTransactionView baseTransactionView) {
+        return switch (baseTransactionView) {
+            case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getPaymentNotices();
+            case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getPaymentNotices();
+            default ->
+                    throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(baseTransactionView.getClass()));
+        };
+    }
+
+    public String getClientId(BaseTransactionView baseTransactionView) {
+        return switch (baseTransactionView) {
+            case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getClientId().toString();
+            case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getClientId().toString();
+            default ->
+                    throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(baseTransactionView.getClass()));
+        };
+    }
+
+    public Confidential<Email> getEmail(BaseTransactionView baseTransactionView) {
+        return switch (baseTransactionView) {
+            case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getEmail();
+            case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getEmail();
+            default ->
+                    throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(baseTransactionView.getClass()));
+        };
     }
 
 }

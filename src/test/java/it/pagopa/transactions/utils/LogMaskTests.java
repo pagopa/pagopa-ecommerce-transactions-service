@@ -1,11 +1,10 @@
 package it.pagopa.transactions.utils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -20,7 +19,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 @SpringBootTest
@@ -87,9 +87,12 @@ class LogMaskTests {
                         "{\"acctID\":\"ACCT_eac3c21b-78fa-4ae7-a553-84ba9e1945ca\",\"deliveryEmailAddress\":\""
                                 + email3ds + "\",\"mobilePhone\":null}"
                 );
-
+        TransactionActivated transactionActivated = TransactionTestUtils
+                .transactionActivated(ZonedDateTime.now().toString());
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString()),
+                transactionActivated.getTransactionId(),
+                transactionActivated.getPaymentNotices(),
+                transactionActivated.getEmail(),
                 10,
                 "paymentInstrumentId",
                 "pspId",
