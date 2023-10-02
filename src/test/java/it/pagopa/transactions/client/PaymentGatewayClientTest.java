@@ -3,7 +3,8 @@ package it.pagopa.transactions.client;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.ecommerce.commons.client.NpgClient;
-import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
@@ -35,10 +36,7 @@ import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL;
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL_STRING;
@@ -116,7 +114,9 @@ class PaymentGatewayClientTest {
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
                 "pspId",
@@ -128,6 +128,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "GID",
+                Optional.empty(),
                 new PostePayAuthRequestDetailsDto().detailType("invalid").accountEmail("test@test.it")
         );
 
@@ -180,7 +181,9 @@ class PaymentGatewayClientTest {
                 .threeDsData("threeDsData");
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
                 "pspId",
@@ -192,6 +195,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "XPAY",
+                Optional.empty(),
                 cardDetails
         );
 
@@ -263,7 +267,9 @@ class PaymentGatewayClientTest {
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
                 "pspId",
@@ -275,6 +281,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 null,
+                Optional.empty(),
                 null
         );
 
@@ -353,7 +360,9 @@ class PaymentGatewayClientTest {
                 .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
                 "pspId",
@@ -365,6 +374,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "VPOS",
+                Optional.empty(),
                 cardDetails
         );
 
@@ -444,9 +454,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
         CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
-                .sessionId(UUID.randomUUID().toString());
+                .orderId(UUID.randomUUID().toString());
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
                 "pspId",
@@ -457,7 +469,8 @@ class PaymentGatewayClientTest {
                 "paymentMethodDescription",
                 "pspBusinessName",
                 false,
-                "VPOS",
+                "NPG",
+                Optional.of(UUID.randomUUID().toString()),
                 cardDetails
         );
         StateResponseDto ngpStateResponse = new StateResponseDto().url("https://example.com");
@@ -494,9 +507,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
         CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
-                .sessionId(UUID.randomUUID().toString());
+                .orderId(UUID.randomUUID().toString());
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
                 "pspId",
@@ -507,7 +522,8 @@ class PaymentGatewayClientTest {
                 "paymentMethodDescription",
                 "pspBusinessName",
                 false,
-                "VPOS",
+                "NPG",
+                Optional.of(UUID.randomUUID().toString()),
                 cardDetails
         );
         StateResponseDto ngpStateResponse = new StateResponseDto().url("https://example.com");
@@ -560,9 +576,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
         CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
-                .sessionId(UUID.randomUUID().toString());
+                .orderId(UUID.randomUUID().toString());
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
                 "pspId",
@@ -573,7 +591,8 @@ class PaymentGatewayClientTest {
                 "paymentMethodDescription",
                 "pspBusinessName",
                 false,
-                "VPOS",
+                "NPG",
+                Optional.of(UUID.randomUUID().toString()),
                 cardDetails
         );
         StateResponseDto ngpStateResponse = new StateResponseDto().url("https://example.com");
@@ -623,9 +642,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
         CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
-                .sessionId(UUID.randomUUID().toString());
+                .orderId(UUID.randomUUID().toString());
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
                 "pspId",
@@ -636,7 +657,8 @@ class PaymentGatewayClientTest {
                 "paymentMethodDescription",
                 "pspBusinessName",
                 false,
-                "VPOS",
+                "NPG",
+                Optional.of(UUID.randomUUID().toString()),
                 cardDetails
         );
         StateResponseDto ngpStateResponse = new StateResponseDto().url("https://example.com");
@@ -693,7 +715,9 @@ class PaymentGatewayClientTest {
                 .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
                 "pspId",
@@ -705,6 +729,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "XPAY",
+                Optional.empty(),
                 cardDetails
         );
 
@@ -789,7 +814,9 @@ class PaymentGatewayClientTest {
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
                 "pspId",
@@ -801,6 +828,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 null,
+                Optional.empty(),
                 null
         );
 
@@ -881,7 +909,9 @@ class PaymentGatewayClientTest {
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
                 "pspId",
@@ -893,6 +923,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 null,
+                Optional.empty(),
                 null
         );
 
@@ -955,7 +986,9 @@ class PaymentGatewayClientTest {
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
                 "pspId",
@@ -967,6 +1000,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 null,
+                Optional.empty(),
                 null
         );
 
@@ -1049,7 +1083,9 @@ class PaymentGatewayClientTest {
                 .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
                 "pspId",
@@ -1061,6 +1097,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "XPAY",
+                Optional.empty(),
                 cardDetails
         );
 
@@ -1144,7 +1181,9 @@ class PaymentGatewayClientTest {
                 .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
                 "pspId",
@@ -1156,6 +1195,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "VPOS",
+                Optional.empty(),
                 cardDetails
         );
 
@@ -1242,7 +1282,9 @@ class PaymentGatewayClientTest {
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
                 "pspId",
@@ -1254,6 +1296,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 null,
+                Optional.empty(),
                 null
         );
 
@@ -1330,7 +1373,9 @@ class PaymentGatewayClientTest {
                 .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
                 "pspId",
@@ -1342,6 +1387,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "XPAY",
+                Optional.empty(),
                 cardDetails
         );
 
@@ -1419,7 +1465,9 @@ class PaymentGatewayClientTest {
                 .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
                 "pspId",
@@ -1431,6 +1479,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "VPOS",
+                Optional.empty(),
                 cardDetails
         );
 
@@ -1511,7 +1560,9 @@ class PaymentGatewayClientTest {
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
                 "pspId",
@@ -1523,6 +1574,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "XPAY",
+                Optional.empty(),
                 null
         );
 
@@ -1568,7 +1620,9 @@ class PaymentGatewayClientTest {
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction,
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
                 "pspId",
@@ -1580,6 +1634,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "VPOS",
+                Optional.empty(),
                 null
         );
 

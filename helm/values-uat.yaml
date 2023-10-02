@@ -63,10 +63,12 @@ microservice-chart:
       OTEL_TRACES_SAMPLER: "always_on"
       ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
       ECS_SERVICE_ENVIRONMENT: "uat"
-      NPG_URI: "https://localhost/npg"
+      NPG_URI: "https://stg-ta.nexigroup.com/api/phoenix-0.0"
       NPG_READ_TIMEOUT: "10000"
       NPG_CONNECTION_TIMEOUT: "10000"
       NPG_CARDS_PSP_LIST: "BCITITMM"
+      CHECKOUT_BASE_PATH: "https://uat.checkout.pagopa.it"
+      ECOMMERCE_EVENT_VERSION: "V1"
     envSecret:
       MONGO_PASSWORD: mongo-ecommerce-password
       REDIS_PASSWORD: redis-ecommerce-password
@@ -80,7 +82,7 @@ microservice-chart:
       NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.31.2"
+    tag: "0.31.3"
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -182,10 +184,12 @@ microservice-chart:
     OTEL_TRACES_SAMPLER: "always_on"
     ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service
     ECS_SERVICE_ENVIRONMENT: "uat"
-    NPG_URI: "https://localhost/npg"
+    NPG_URI: "https://stg-ta.nexigroup.com/api/phoenix-0.0"
     NPG_READ_TIMEOUT: "10000"
     NPG_CONNECTION_TIMEOUT: "10000"
     NPG_CARDS_PSP_LIST: "" #TODO to be filled with psp id list that are expected to be present into psp api keys configuration
+    CHECKOUT_BASE_PATH: "https://uat.checkout.pagopa.it"
+    ECOMMERCE_EVENT_VERSION: "V1"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password

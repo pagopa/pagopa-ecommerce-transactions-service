@@ -4,7 +4,7 @@ microservice-chart:
   fullnameOverride: ""
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.31.2" #improve
+    tag: "0.31.3" #improve
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -113,10 +113,12 @@ microservice-chart:
     OTEL_METRICS_EXPORTER: otlp
     OTEL_LOGS_EXPORTER: none
     OTEL_TRACES_SAMPLER: "always_on"
-    NPG_URI: "https://localhost/npg"
+    NPG_URI: "https://stg-ta.nexigroup.com/api/phoenix-0.0"
     NPG_READ_TIMEOUT: "10000"
     NPG_CONNECTION_TIMEOUT: "10000"
     NPG_CARDS_PSP_LIST: "BCITITMM"
+    CHECKOUT_BASE_PATH: "https://dev.checkout.pagopa.it"
+    ECOMMERCE_EVENT_VERSION: "V1"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password

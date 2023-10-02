@@ -1,6 +1,6 @@
 package it.pagopa.transactions.commands;
 
-import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 
 public final class TransactionRequestAuthorizationCommand extends TransactionsCommand<AuthorizationRequestData> {

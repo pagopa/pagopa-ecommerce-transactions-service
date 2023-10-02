@@ -2,7 +2,7 @@ package it.pagopa.transactions.utils;
 
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import it.pagopa.ecommerce.commons.domain.v1.*;
+import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.transactions.exceptions.JWTTokenGenerationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
-import java.time.Duration;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
@@ -43,7 +42,7 @@ public class JwtTokenUtils {
             return Mono.just(
                     Jwts.builder()
                             .claim(TRANSACTION_ID_CLAIM, transactionId.value())// transactionId (custom
-                                                                               // claim)
+                            // claim)
                             .setId(UUID.randomUUID().toString())// jti
                             .setIssuedAt(issuedAtDate)// iat
                             .setExpiration(expiryDate)// exp
