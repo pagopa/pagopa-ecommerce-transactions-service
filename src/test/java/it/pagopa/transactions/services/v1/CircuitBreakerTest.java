@@ -1,22 +1,23 @@
-package it.pagopa.transactions.services;
+package it.pagopa.transactions.services.v1;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
-import it.pagopa.ecommerce.commons.documents.v1.PaymentNotice;
-import it.pagopa.ecommerce.commons.documents.v1.PaymentTransferInformation;
+import it.pagopa.ecommerce.commons.documents.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.domain.v1.TransactionId;
+import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.generated.transactions.server.model.ClientIdDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.PartyConfigurationFaultDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
-import it.pagopa.transactions.commands.handlers.TransactionActivateHandler;
+import it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler;
 import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
 import it.pagopa.transactions.exceptions.NodoErrorException;
+import it.pagopa.transactions.services.TransactionsService;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -39,7 +40,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 
 @SpringBootTest
-@TestPropertySource(locations = "classpath:application-tests.properties")
+@TestPropertySource(
+        locations = "classpath:application-tests.properties", properties = {
+                "ecommerce.event.version=V1"
+        }
+
+)
 @Execution(ExecutionMode.SAME_THREAD)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class CircuitBreakerTest {
@@ -47,7 +53,7 @@ class CircuitBreakerTest {
     private TransactionsService transactionsService;
 
     @MockBean
-    private TransactionActivateHandler transactionActivateHandler;
+    private TransactionActivateHandler transactionActivateHandlerV1;
 
     @Autowired
     private CircuitBreakerRegistry circuitBreakerRegistry;
@@ -91,7 +97,7 @@ class CircuitBreakerTest {
         CtFaultBean ctFaultBean = faultBeanWithCode(
                 PartyConfigurationFaultDto.PPT_STAZIONE_INT_PA_ERRORE_RESPONSE.getValue()
         );
-        Mockito.when(transactionActivateHandler.handle(any()))
+        Mockito.when(transactionActivateHandlerV1.handle(any()))
                 .thenReturn(Mono.error(new NodoErrorException(ctFaultBean)));
 
         StepVerifier
@@ -145,7 +151,7 @@ class CircuitBreakerTest {
         /*
          * Preconditions
          */
-        Mockito.when(transactionActivateHandler.handle(any()))
+        Mockito.when(transactionActivateHandlerV1.handle(any()))
                 .thenReturn(Mono.error(new InvalidNodoResponseException("Invalid response received")));
 
         StepVerifier
