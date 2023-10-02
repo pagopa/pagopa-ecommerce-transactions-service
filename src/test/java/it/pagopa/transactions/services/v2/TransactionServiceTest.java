@@ -21,7 +21,7 @@ import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.configurations.AzureStorageConfig;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import it.pagopa.transactions.services.TransactionsService;
+import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.*;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;

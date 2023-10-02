@@ -29,7 +29,7 @@ import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import it.pagopa.transactions.services.TransactionsService;
+import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
 import it.pagopa.transactions.utils.JwtTokenUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;

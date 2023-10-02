@@ -1,4 +1,4 @@
-package it.pagopa.transactions.services;
+package it.pagopa.transactions.services.v1;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
@@ -6,7 +6,6 @@ import io.vavr.Tuple;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptRequestedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.*;
@@ -42,14 +41,11 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 import java.util.*;
 
-@Service
+@Service("TransactionsServiceV1")
 @Slf4j
 public class TransactionsService {
 
     private final it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler transactionActivateHandlerV1;
-
-    private final it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler transactionActivateHandlerV2;
-
     private final it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler requestAuthHandlerV1;
     private final it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler requestAuthHandlerV2;
 
@@ -98,8 +94,6 @@ public class TransactionsService {
     private final it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV2;
 
     private final it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV1;
-
-    private final it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2;
 
     private final TransactionsViewRepository transactionsViewRepository;
 
@@ -194,9 +188,6 @@ public class TransactionsService {
             @Qualifier(
                 it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV1,
-            @Qualifier(
-                it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler.QUALIFIER_NAME
-            ) it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2,
             TransactionsViewRepository transactionsViewRepository,
             EcommercePaymentMethodsClient ecommercePaymentMethodsClient,
             UUIDUtils uuidUtils,
@@ -206,7 +197,6 @@ public class TransactionsService {
             @Value("${ecommerce.event.version}") EventVersion eventVersion
     ) {
         this.transactionActivateHandlerV1 = transactionActivateHandlerV1;
-        this.transactionActivateHandlerV2 = transactionActivateHandlerV2;
         this.requestAuthHandlerV1 = requestAuthHandlerV1;
         this.requestAuthHandlerV2 = requestAuthHandlerV2;
         this.transactionUpdateAuthorizationHandlerV1 = transactionUpdateAuthorizationHandlerV1;
@@ -232,7 +222,6 @@ public class TransactionsService {
         this.transactionUserReceiptProjectionHandlerV1 = transactionUserReceiptProjectionHandlerV1;
         this.transactionUserReceiptProjectionHandlerV2 = transactionUserReceiptProjectionHandlerV2;
         this.transactionsActivationProjectionHandlerV1 = transactionsActivationProjectionHandlerV1;
-        this.transactionsActivationProjectionHandlerV2 = transactionsActivationProjectionHandlerV2;
         this.transactionsViewRepository = transactionsViewRepository;
         this.ecommercePaymentMethodsClient = ecommercePaymentMethodsClient;
         this.uuidUtils = uuidUtils;
@@ -281,52 +270,28 @@ public class TransactionsService {
                 transactionId
         );
 
-        return switch (eventVersion) {
-            case V1 -> transactionActivateHandlerV1.handle(transactionActivateCommand)
-                    .doOnNext(
-                            args -> log.info(
-                                    "Transaction initialized for rptId: {}",
-                                    newTransactionRequestDto.getPaymentNotices().get(0).getRptId()
-                            )
-                    )
-                    .flatMap(
-                            es -> {
-                                final Mono<BaseTransactionEvent<?>> transactionActivatedEvent = es
-                                        .getT1();
-                                final String authToken = es.getT2();
-                                return transactionActivatedEvent
-                                        .flatMap(
-                                                t -> projectActivatedEventV1(
-                                                        (it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent) t,
-                                                        authToken
-                                                )
-                                        );
-                            }
-                    );
+        return transactionActivateHandlerV1.handle(transactionActivateCommand)
+                .doOnNext(
+                        args -> log.info(
+                                "Transaction initialized for rptId: {}",
+                                newTransactionRequestDto.getPaymentNotices().get(0).getRptId()
+                        )
+                )
+                .flatMap(
+                        es -> {
+                            final Mono<BaseTransactionEvent<?>> transactionActivatedEvent = es
+                                    .getT1();
+                            final String authToken = es.getT2();
+                            return transactionActivatedEvent
+                                    .flatMap(
+                                            t -> projectActivatedEventV1(
+                                                    (it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent) t,
+                                                    authToken
+                                            )
+                                    );
+                        }
+                );
 
-            case V2 -> transactionActivateHandlerV2.handle(transactionActivateCommand)
-                    .doOnNext(
-                            args -> log.info(
-                                    "Transaction initialized for rptId: {}",
-                                    newTransactionRequestDto.getPaymentNotices().get(0).getRptId()
-                            )
-                    )
-                    .flatMap(
-                            es -> {
-                                final Mono<BaseTransactionEvent<?>> transactionActivatedEvent = es
-                                        .getT1();
-                                final String authToken = es.getT2();
-                                return transactionActivatedEvent
-                                        .flatMap(
-                                                t -> projectActivatedEventV2(
-                                                        (it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent) t,
-                                                        authToken
-                                                )
-                                        );
-                            }
-                    );
-
-        };
     }
 
     @CircuitBreaker(name = "ecommerce-db")
@@ -371,7 +336,7 @@ public class TransactionsService {
                                     transaction.getClientId().toString()
                             )
                     )
-                    .status(transactionsUtils.convertEnumeration(transaction.getStatus()))
+                    .status(transactionsUtils.convertEnumerationV1(transaction.getStatus()))
                     .idCart(transaction.getIdCart())
                     .paymentGateway(transaction.getPaymentGateway())
                     .sendPaymentResultOutcome(
@@ -411,7 +376,7 @@ public class TransactionsService {
                                     transaction.getClientId().toString()
                             )
                     )
-                    .status(transactionsUtils.convertEnumeration(transaction.getStatus()))
+                    .status(transactionsUtils.convertEnumerationV1(transaction.getStatus()))
                     .idCart(transaction.getIdCart())
                     .paymentGateway(transaction.getPaymentGateway())
                     .sendPaymentResultOutcome(
@@ -1000,7 +965,7 @@ public class TransactionsService {
                                 )
                                 .toList()
                 )
-                .status(transactionsUtils.convertEnumeration(transactionDocument.getStatus()));
+                .status(transactionsUtils.convertEnumerationV1(transactionDocument.getStatus()));
 
     }
 
@@ -1025,7 +990,7 @@ public class TransactionsService {
                                 )
                                 .toList()
                 )
-                .status(transactionsUtils.convertEnumeration(transactionDocument.getStatus()));
+                .status(transactionsUtils.convertEnumerationV1(transactionDocument.getStatus()));
 
     }
 
@@ -1044,7 +1009,7 @@ public class TransactionsService {
                                                 .rptId(paymentNotice.rptId().value())
                                 ).toList()
                 )
-                .status(transactionsUtils.convertEnumeration(baseTransaction.getStatus()));
+                .status(transactionsUtils.convertEnumerationV1(baseTransaction.getStatus()));
     }
 
     private TransactionInfoDto buildTransactionInfoDtoV2(
@@ -1062,7 +1027,7 @@ public class TransactionsService {
                                                 .rptId(paymentNotice.rptId().value())
                                 ).toList()
                 )
-                .status(transactionsUtils.convertEnumeration(baseTransaction.getStatus()));
+                .status(transactionsUtils.convertEnumerationV1(baseTransaction.getStatus()));
 
     }
 
@@ -1206,55 +1171,7 @@ public class TransactionsService {
                                         ).toList()
                                 )
                                 .authToken(authToken)
-                                .status(transactionsUtils.convertEnumeration(transaction.getStatus()))
-                                // .feeTotal()//TODO da dove prendere le fees?
-                                .clientId(convertClientId(transaction.getClientId().name()))
-                                .idCart(transaction.getTransactionActivatedData().getIdCart())
-                );
-    }
-
-    private Mono<NewTransactionResponseDto> projectActivatedEventV2(
-                                                                    it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent transactionActivatedEvent,
-                                                                    String authToken
-    ) {
-        return transactionsActivationProjectionHandlerV2
-                .handle(transactionActivatedEvent)
-                .map(
-                        transaction -> new NewTransactionResponseDto()
-                                .transactionId(transaction.getTransactionId().value())
-                                .payments(
-                                        transaction.getPaymentNotices().stream().map(
-                                                paymentNotice -> new PaymentInfoDto()
-                                                        .amount(paymentNotice.transactionAmount().value())
-                                                        .reason(paymentNotice.transactionDescription().value())
-                                                        .rptId(paymentNotice.rptId().value())
-                                                        .paymentToken(paymentNotice.paymentToken().value())
-                                                        .isAllCCP(paymentNotice.isAllCCP())
-                                                        .transferList(
-                                                                paymentNotice.transferList().stream().map(
-                                                                        paymentTransferInfo -> new TransferDto()
-                                                                                .digitalStamp(
-                                                                                        paymentTransferInfo
-                                                                                                .digitalStamp()
-                                                                                )
-                                                                                .paFiscalCode(
-                                                                                        paymentTransferInfo
-                                                                                                .paFiscalCode()
-                                                                                )
-                                                                                .transferAmount(
-                                                                                        paymentTransferInfo
-                                                                                                .transferAmount()
-                                                                                )
-                                                                                .transferCategory(
-                                                                                        paymentTransferInfo
-                                                                                                .transferCategory()
-                                                                                )
-                                                                ).toList()
-                                                        )
-                                        ).toList()
-                                )
-                                .authToken(authToken)
-                                .status(transactionsUtils.convertEnumeration(transaction.getStatus()))
+                                .status(transactionsUtils.convertEnumerationV1(transaction.getStatus()))
                                 // .feeTotal()//TODO da dove prendere le fees?
                                 .clientId(convertClientId(transaction.getClientId().name()))
                                 .idCart(transaction.getTransactionActivatedData().getIdCart())

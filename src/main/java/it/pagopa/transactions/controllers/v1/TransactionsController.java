@@ -1,4 +1,4 @@
-package it.pagopa.transactions.controllers;
+package it.pagopa.transactions.controllers.v1;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
@@ -7,7 +7,7 @@ import it.pagopa.generated.transactions.server.api.TransactionsApi;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.mdcutilities.TransactionTracingUtils;
-import it.pagopa.transactions.services.TransactionsService;
+import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import lombok.extern.slf4j.Slf4j;

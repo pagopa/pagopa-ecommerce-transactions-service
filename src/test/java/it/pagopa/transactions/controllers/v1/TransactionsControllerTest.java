@@ -1,4 +1,4 @@
-package it.pagopa.transactions.controllers;
+package it.pagopa.transactions.controllers.v1;
 
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.domain.PaymentToken;
@@ -6,8 +6,9 @@ import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.transactions.controllers.v1.TransactionsController;
 import it.pagopa.transactions.exceptions.*;
-import it.pagopa.transactions.services.TransactionsService;
+import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.JwtTokenUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;

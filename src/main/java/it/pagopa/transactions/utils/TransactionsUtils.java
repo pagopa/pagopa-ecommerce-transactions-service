@@ -30,7 +30,11 @@ public class TransactionsUtils {
 
     private final String warmUpNoticeCodePrefix;
 
-    private static final Map<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto, it.pagopa.generated.transactions.server.model.TransactionStatusDto> transactionStatusLookupMap = new EnumMap<>(
+    private static final Map<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto, it.pagopa.generated.transactions.server.model.TransactionStatusDto> transactionStatusLookupMapV1 = new EnumMap<>(
+            it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.class
+    );
+
+    private static final Map<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto, it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto> transactionStatusLookupMapV2 = new EnumMap<>(
             it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.class
     );
 
@@ -83,7 +87,7 @@ public class TransactionsUtils {
              *
              * @formatter:on
              */
-            transactionStatusLookupMap.put(
+            transactionStatusLookupMapV1.put(
                     enumValue,
                     it.pagopa.generated.transactions.server.model.TransactionStatusDto.fromValue(enumValue.toString())
             );
@@ -133,10 +137,16 @@ public class TransactionsUtils {
                 .cast(clazz);
     }
 
-    public it.pagopa.generated.transactions.server.model.TransactionStatusDto convertEnumeration(
-                                                                                                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status
+    public it.pagopa.generated.transactions.server.model.TransactionStatusDto convertEnumerationV1(
+                                                                                                   it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status
     ) {
-        return transactionStatusLookupMap.get(status);
+        return transactionStatusLookupMapV1.get(status);
+    }
+
+    public it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto convertEnumerationV2(
+                                                                                                      it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status
+    ) {
+        return transactionStatusLookupMapV2.get(status);
     }
 
     public NewTransactionRequestDto buildWarmupRequest() {
