@@ -19,6 +19,7 @@ import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.TransferListItemDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.commands.*;
+import it.pagopa.transactions.commands.bean.NewTransactionRequestData;
 import it.pagopa.transactions.commands.data.AddUserReceiptData;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.data.ClosureSendData;
@@ -260,7 +261,22 @@ public class TransactionsService {
         );
         TransactionActivateCommand transactionActivateCommand = new TransactionActivateCommand(
                 new RptId(newTransactionRequestDto.getPaymentNotices().get(0).getRptId()),
-                newTransactionRequestDto,
+                new NewTransactionRequestData(
+                        newTransactionRequestDto.getIdCart(),
+                        newTransactionRequestDto.getEmail(),
+                        null,
+                        newTransactionRequestDto.getPaymentNotices().stream().map(
+                                el -> new PaymentNotice(
+                                        null,
+                                        new RptId(el.getRptId()),
+                                        new TransactionAmount(el.getAmount()),
+                                        null,
+                                        null,
+                                        null,
+                                        false
+                                )
+                        ).toList()
+                ),
                 clientId.name(),
                 transactionId
         );
