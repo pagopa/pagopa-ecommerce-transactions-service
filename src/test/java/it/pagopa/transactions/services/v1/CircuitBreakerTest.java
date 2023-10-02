@@ -62,7 +62,7 @@ class CircuitBreakerTest {
     @Order(1)
     void shouldNotOpenCircuitBreakerForNodoErrorException() {
         ClientIdDto clientIdDto = ClientIdDto.CHECKOUT;
-        UUID TEST_CPP = UUID.randomUUID();
+        UUID TEST_CCP = UUID.randomUUID();
         UUID TRANSACTION_ID = UUID.randomUUID();
 
         NewTransactionRequestDto transactionRequestDto = new NewTransactionRequestDto()
@@ -79,7 +79,7 @@ class CircuitBreakerTest {
                                         null,
                                         "dest",
                                         0,
-                                        TEST_CPP.toString(),
+                                        TEST_CCP.toString(),
                                         List.of(new PaymentTransferInformation("77777777777", false, 0, null)),
                                         false
                                 )
@@ -119,7 +119,7 @@ class CircuitBreakerTest {
     @Order(2)
     void shouldOpenCircuitBreakerForNotExcludedException() {
         ClientIdDto clientIdDto = ClientIdDto.CHECKOUT;
-        UUID TEST_CPP = UUID.randomUUID();
+        UUID TEST_CCP = UUID.randomUUID();
         UUID TRANSACTION_ID = UUID.randomUUID();
 
         NewTransactionRequestDto transactionRequestDto = new NewTransactionRequestDto()
@@ -136,7 +136,7 @@ class CircuitBreakerTest {
                                         null,
                                         "dest",
                                         0,
-                                        TEST_CPP.toString(),
+                                        TEST_CCP.toString(),
                                         List.of(new PaymentTransferInformation("77777777777", false, 0, null)),
                                         false
                                 )
