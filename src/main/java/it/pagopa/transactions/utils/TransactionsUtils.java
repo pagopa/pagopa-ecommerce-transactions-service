@@ -48,13 +48,24 @@ public class TransactionsUtils {
     }
 
     static {
-        Set<String> commonsStatuses = Set
+        Set<String> commonsStatusesV1 = Set
                 .of(it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.values())
                 .stream()
                 .map(Enum::toString)
                 .collect(Collectors.toSet());
-        Set<String> transactionsStatuses = Set
+        Set<String> transactionsStatusesV1 = Set
                 .of(it.pagopa.generated.transactions.server.model.TransactionStatusDto.values())
+                .stream()
+                .map(Enum::toString)
+                .collect(Collectors.toSet());
+
+        Set<String> commonsStatusesV2 = Set
+                .of(it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.values())
+                .stream()
+                .map(Enum::toString)
+                .collect(Collectors.toSet());
+        Set<String> transactionsStatusesV2 = Set
+                .of(it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto.values())
                 .stream()
                 .map(Enum::toString)
                 .collect(Collectors.toSet());
@@ -68,11 +79,21 @@ public class TransactionsUtils {
          *
          * @formatter:on
          */
-        if (!commonsStatuses.equals(transactionsStatuses)) {
-            Set<String> unknownTransactionsStatuses = transactionsStatuses.stream()
-                    .filter(Predicate.not(commonsStatuses::contains)).collect(Collectors.toSet());
-            Set<String> unknownCommonStatuses = commonsStatuses.stream()
-                    .filter(Predicate.not(transactionsStatuses::contains)).collect(Collectors.toSet());
+        if (!commonsStatusesV1.equals(transactionsStatusesV1)) {
+            Set<String> unknownTransactionsStatuses = transactionsStatusesV1.stream()
+                    .filter(Predicate.not(commonsStatusesV1::contains)).collect(Collectors.toSet());
+            Set<String> unknownCommonStatuses = commonsStatusesV1.stream()
+                    .filter(Predicate.not(transactionsStatusesV1::contains)).collect(Collectors.toSet());
+            throw new IllegalArgumentException(
+                    "Mismatched transaction status enumerations%nUnhandled commons statuses: %s%nUnhandled transaction statuses: %s"
+                            .formatted(unknownCommonStatuses, unknownTransactionsStatuses)
+            );
+        }
+        if (!commonsStatusesV2.equals(transactionsStatusesV2)) {
+            Set<String> unknownTransactionsStatuses = transactionsStatusesV2.stream()
+                    .filter(Predicate.not(commonsStatusesV2::contains)).collect(Collectors.toSet());
+            Set<String> unknownCommonStatuses = commonsStatusesV2.stream()
+                    .filter(Predicate.not(transactionsStatusesV2::contains)).collect(Collectors.toSet());
             throw new IllegalArgumentException(
                     "Mismatched transaction status enumerations%nUnhandled commons statuses: %s%nUnhandled transaction statuses: %s"
                             .formatted(unknownCommonStatuses, unknownTransactionsStatuses)
@@ -90,6 +111,22 @@ public class TransactionsUtils {
             transactionStatusLookupMapV1.put(
                     enumValue,
                     it.pagopa.generated.transactions.server.model.TransactionStatusDto.fromValue(enumValue.toString())
+            );
+        }
+
+        for (it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto enumValue : it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto
+                .values()) {
+            /*
+             * @formatter:off
+             *
+             * This lookup map handles enumeration conversion from commons and transactions-service for the `TransactionStatusDto` enumeration
+             *
+             * @formatter:on
+             */
+            transactionStatusLookupMapV2.put(
+                    enumValue,
+                    it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto
+                            .fromValue(enumValue.toString())
             );
         }
     }

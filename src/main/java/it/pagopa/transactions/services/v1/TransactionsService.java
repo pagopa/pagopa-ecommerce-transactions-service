@@ -41,10 +41,10 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 import java.util.*;
 
-@Service("TransactionsServiceV1")
+@Service(TransactionsService.QUALIFIER_NAME)
 @Slf4j
 public class TransactionsService {
-
+    public static final String QUALIFIER_NAME = "TransactionsServiceV1";
     private final it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler transactionActivateHandlerV1;
     private final it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler requestAuthHandlerV1;
     private final it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler requestAuthHandlerV2;
@@ -113,9 +113,6 @@ public class TransactionsService {
             @Qualifier(
                 it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler transactionActivateHandlerV1,
-            @Qualifier(
-                it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler.QUALIFIER_NAME
-            ) it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler transactionActivateHandlerV2,
             it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler requestAuthHandlerV1,
             it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler requestAuthHandlerV2,
             @Qualifier(

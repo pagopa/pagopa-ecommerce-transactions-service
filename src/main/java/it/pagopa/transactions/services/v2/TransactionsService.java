@@ -22,10 +22,11 @@ import reactor.core.publisher.Mono;
 
 import java.util.*;
 
-@Service("TransactionsServiceV2")
+@Service(TransactionsService.QUALIFIER_NAME)
 @Slf4j
 public class TransactionsService {
 
+    public static final String QUALIFIER_NAME = "TransactionsServiceV2";
     private final it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler transactionActivateHandlerV2;
 
     private final it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2;

@@ -135,7 +135,6 @@ class TransactionServiceTest {
     @Autowired
     private final TransactionsService transactionsService = new TransactionsService(
             transactionActivateHandlerV1,
-            transactionActivateHandlerV2,
             transactionRequestAuthorizationHandlerV1,
             transactionRequestAuthorizationHandlerV2,
             transactionUpdateAuthorizationHandlerV1,
@@ -161,7 +160,6 @@ class TransactionServiceTest {
             transactionUserReceiptProjectionHandlerV1,
             transactionUserReceiptProjectionHandlerV2,
             transactionsActivationProjectionHandlerV1,
-            transactionsActivationProjectionHandlerV2,
             transactionsViewRepository,
             ecommercePaymentMethodsClient,
             uuidUtils,
@@ -238,7 +236,7 @@ class TransactionServiceTest {
                 .thenReturn(Mono.just(response));
         Mockito.when(transactionsActivationProjectionHandlerV1.handle(transactionActivatedEvent))
                 .thenReturn(Mono.just(transactionActivated));
-        Mockito.when(transactionsUtils.convertEnumeration(any()))
+        Mockito.when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         StepVerifier
                 .create(

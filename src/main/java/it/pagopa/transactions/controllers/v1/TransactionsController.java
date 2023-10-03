@@ -29,9 +29,10 @@ import java.util.HashSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@RestController
+@RestController("TransactionsControllerV1")
 @Slf4j
 public class TransactionsController implements TransactionsApi {
+
     @Autowired
     private TransactionsService transactionsService;
 

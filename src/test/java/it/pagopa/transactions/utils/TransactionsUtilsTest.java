@@ -69,7 +69,7 @@ class TransactionsUtilsTest {
     @Test
     void shouldConvertAllCommonsStatusCorrectly() {
         for (TransactionStatusDto status : TransactionStatusDto.values()) {
-            assertEquals(status.toString(), transactionsUtils.convertEnumeration(status).toString());
+            assertEquals(status.toString(), transactionsUtils.convertEnumerationV1(status).toString());
         }
     }
 

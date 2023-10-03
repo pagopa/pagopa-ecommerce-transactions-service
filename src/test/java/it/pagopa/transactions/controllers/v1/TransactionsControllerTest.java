@@ -6,7 +6,6 @@ import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.transactions.controllers.v1.TransactionsController;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.JwtTokenUtils;
@@ -22,6 +21,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.data.redis.AutoConfigureDataRedis;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -57,6 +57,7 @@ class TransactionsControllerTest {
     private TransactionsController transactionsController = new TransactionsController();
 
     @MockBean
+    @Qualifier(TransactionsService.QUALIFIER_NAME)
     private TransactionsService transactionsService;
 
     @MockBean
