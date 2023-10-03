@@ -1,6 +1,5 @@
 package it.pagopa.transactions.services.v2;
 
-import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
@@ -46,8 +45,7 @@ class TransactionServiceTest {
     private final TransactionsService transactionsService = new TransactionsService(
             transactionActivateHandlerV2,
             transactionsActivationProjectionHandlerV2,
-            transactionsUtils,
-            EventVersion.V2
+            transactionsUtils
     );
 
     @Test

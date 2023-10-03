@@ -11,12 +11,10 @@ import it.pagopa.transactions.commands.bean.NewTransactionRequestData;
 import it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler;
-import it.pagopa.transactions.utils.EventVersion;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -33,23 +31,19 @@ public class TransactionsService {
 
     private final TransactionsUtils transactionsUtils;
 
-    private final EventVersion eventVersion;
-
     @Autowired
     public TransactionsService(
             @Qualifier(
                 TransactionActivateHandler.QUALIFIER_NAME
             ) TransactionActivateHandler transactionActivateHandlerV2,
             @Qualifier(
-                it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler.QUALIFIER_NAME
+                TransactionsActivationProjectionHandler.QUALIFIER_NAME
             ) TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2,
-            TransactionsUtils transactionsUtils,
-            @Value("${ecommerce.event.version}") EventVersion eventVersion
+            TransactionsUtils transactionsUtils
     ) {
         this.transactionActivateHandlerV2 = transactionActivateHandlerV2;
         this.transactionsActivationProjectionHandlerV2 = transactionsActivationProjectionHandlerV2;
         this.transactionsUtils = transactionsUtils;
-        this.eventVersion = eventVersion;
     }
 
     @CircuitBreaker(name = "node-backend")

@@ -135,6 +135,7 @@ class TransactionServiceTest {
     @Autowired
     private final TransactionsService transactionsService = new TransactionsService(
             transactionActivateHandlerV1,
+            transactionActivateHandlerV2,
             transactionRequestAuthorizationHandlerV1,
             transactionRequestAuthorizationHandlerV2,
             transactionUpdateAuthorizationHandlerV1,
@@ -160,6 +161,7 @@ class TransactionServiceTest {
             transactionUserReceiptProjectionHandlerV1,
             transactionUserReceiptProjectionHandlerV2,
             transactionsActivationProjectionHandlerV1,
+            transactionsActivationProjectionHandlerV2,
             transactionsViewRepository,
             ecommercePaymentMethodsClient,
             uuidUtils,
