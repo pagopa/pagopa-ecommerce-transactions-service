@@ -103,7 +103,7 @@ class TransactionInitializerHandlerTest {
     );
 
     @Test
-    void shouldHandleCommandForNM3CachedPaymentRequestWithNpg() {
+    void shouldHandleCommandForNM3CachedPaymentRequestWithNpgWithV2Api() {
         Duration elapsedTimeFromActivation = Duration.ofSeconds(paymentTokenTimeout);
         ZonedDateTime transactionActivatedTime = ZonedDateTime.now().minus(elapsedTimeFromActivation);
         RptId rptId = new RptId(RPT_ID);
@@ -112,8 +112,8 @@ class TransactionInitializerHandlerTest {
         String paName = "paName";
         String paTaxcode = rptId.getFiscalCode();
         TransactionId transactionId = new TransactionId(TRANSACTION_ID);
-        NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
-        PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto();
+        it.pagopa.generated.transactions.v2.server.model.NewTransactionRequestDto requestDto = new it.pagopa.generated.transactions.v2.server.model.NewTransactionRequestDto();
+        it.pagopa.generated.transactions.v2.server.model.PaymentNoticeInfoDto paymentNoticeInfoDto = new it.pagopa.generated.transactions.v2.server.model.PaymentNoticeInfoDto();
         requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
         paymentNoticeInfoDto.setRptId(rptId.value());
         requestDto.setEmail(EMAIL_STRING);
