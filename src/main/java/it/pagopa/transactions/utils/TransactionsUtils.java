@@ -186,7 +186,7 @@ public class TransactionsUtils {
         return transactionStatusLookupMapV2.get(status);
     }
 
-    public NewTransactionRequestDto buildWarmupRequest() {
+    public NewTransactionRequestDto buildWarmupRequestV1() {
         String noticeCode = warmUpNoticeCodePrefix.concat(String.valueOf(System.currentTimeMillis()));
         int neededPadLength = 18 - noticeCode.length();
         if (neededPadLength < 0) {
@@ -203,6 +203,30 @@ public class TransactionsUtils {
                 .paymentNotices(
                         Collections.singletonList(
                                 new PaymentNoticeInfoDto()
+                                        .rptId("77777777777%s".formatted(noticeCode))
+                                        .amount(100)
+                        )
+                );
+    }
+
+    public  it.pagopa.generated.transactions.v2.server.model.NewTransactionRequestDto buildWarmupRequestV2() {
+        String noticeCode = warmUpNoticeCodePrefix.concat(String.valueOf(System.currentTimeMillis()));
+        int neededPadLength = 18 - noticeCode.length();
+        if (neededPadLength < 0) {
+            noticeCode = noticeCode.substring(0, noticeCode.length() + neededPadLength);
+        } else {
+            StringBuilder padBuilder = new StringBuilder();
+            noticeCode = padBuilder
+                    .append(noticeCode)
+                    .append("0".repeat(neededPadLength))
+                    .toString();
+        }
+        return new it.pagopa.generated.transactions.v2.server.model.NewTransactionRequestDto()
+                .email("test@test.it")
+                .orderId("orderId")
+                .paymentNotices(
+                        Collections.singletonList(
+                                new it.pagopa.generated.transactions.v2.server.model.PaymentNoticeInfoDto()
                                         .rptId("77777777777%s".formatted(noticeCode))
                                         .amount(100)
                         )

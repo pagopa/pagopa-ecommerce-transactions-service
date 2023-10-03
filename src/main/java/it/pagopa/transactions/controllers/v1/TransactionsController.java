@@ -452,7 +452,7 @@ public class TransactionsController implements TransactionsApi {
                 .post()
                 .uri("http://localhost:8080/transactions")
                 .header("X-Client-Id", TransactionInfoDto.ClientIdEnum.CHECKOUT.toString())
-                .bodyValue(transactionsUtils.buildWarmupRequest())
+                .bodyValue(transactionsUtils.buildWarmupRequestV1())
                 .retrieve()
                 .toBodilessEntity()
                 .block(Duration.ofSeconds(30));

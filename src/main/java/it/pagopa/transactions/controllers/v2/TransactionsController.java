@@ -249,7 +249,7 @@ public class TransactionsController implements V2Api {
                 .post()
                 .uri("http://localhost:8080/v2/transactions")
                 .header("X-Client-Id", NewTransactionResponseDto.ClientIdEnum.CHECKOUT.toString())
-                .bodyValue(transactionsUtils.buildWarmupRequest())
+                .bodyValue(transactionsUtils.buildWarmupRequestV2())
                 .retrieve()
                 .toBodilessEntity()
                 .block(Duration.ofSeconds(30));

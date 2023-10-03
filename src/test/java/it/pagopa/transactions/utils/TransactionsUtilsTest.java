@@ -17,8 +17,6 @@ import it.pagopa.transactions.exceptions.NotImplementedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
@@ -76,7 +74,7 @@ class TransactionsUtilsTest {
     @Test
     void shouldCreateWarmupRequestCorrectlyForEmptyNoticeCodePrefix() {
         TransactionsUtils utils = new TransactionsUtils(null, "");
-        NewTransactionRequestDto warmupRequest = utils.buildWarmupRequest();
+        NewTransactionRequestDto warmupRequest = utils.buildWarmupRequestV1();
         for (PaymentNoticeInfoDto p : warmupRequest.getPaymentNotices()) {
             assertNotNull(p.getRptId());
             assertDoesNotThrow(() -> new RptId(p.getRptId()));
@@ -86,7 +84,7 @@ class TransactionsUtilsTest {
     @Test
     void shouldCreateWarmupRequestCorrectlyForValuedNoticeCodePrefix() {
         TransactionsUtils utils = new TransactionsUtils(null, "3020");
-        NewTransactionRequestDto warmupRequest = utils.buildWarmupRequest();
+        NewTransactionRequestDto warmupRequest = utils.buildWarmupRequestV1();
         for (PaymentNoticeInfoDto p : warmupRequest.getPaymentNotices()) {
             assertNotNull(p.getRptId());
             assertDoesNotThrow(() -> new RptId(p.getRptId()));
@@ -99,7 +97,7 @@ class TransactionsUtilsTest {
     void shouldCreateWarmupRequestCorrectlyForValuedNoticeCodePrefixLongerThanNoticeCodeLength() {
         String noticeCode = new RptId(TransactionTestUtils.RPT_ID).getNoticeId();
         TransactionsUtils utils = new TransactionsUtils(null, noticeCode.concat("BBB"));
-        NewTransactionRequestDto warmupRequest = utils.buildWarmupRequest();
+        NewTransactionRequestDto warmupRequest = utils.buildWarmupRequestV1();
         for (PaymentNoticeInfoDto p : warmupRequest.getPaymentNotices()) {
             assertNotNull(p.getRptId());
             assertDoesNotThrow(() -> new RptId(p.getRptId()));
