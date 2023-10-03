@@ -30,7 +30,11 @@ public class TransactionsUtils {
 
     private final String warmUpNoticeCodePrefix;
 
-    private static final Map<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto, it.pagopa.generated.transactions.server.model.TransactionStatusDto> transactionStatusLookupMap = new EnumMap<>(
+    private static final Map<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto, it.pagopa.generated.transactions.server.model.TransactionStatusDto> transactionStatusLookupMapV1 = new EnumMap<>(
+            it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.class
+    );
+
+    private static final Map<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto, it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto> transactionStatusLookupMapV2 = new EnumMap<>(
             it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.class
     );
 
@@ -44,13 +48,24 @@ public class TransactionsUtils {
     }
 
     static {
-        Set<String> commonsStatuses = Set
+        Set<String> commonsStatusesV1 = Set
                 .of(it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.values())
                 .stream()
                 .map(Enum::toString)
                 .collect(Collectors.toSet());
-        Set<String> transactionsStatuses = Set
+        Set<String> transactionsStatusesV1 = Set
                 .of(it.pagopa.generated.transactions.server.model.TransactionStatusDto.values())
+                .stream()
+                .map(Enum::toString)
+                .collect(Collectors.toSet());
+
+        Set<String> commonsStatusesV2 = Set
+                .of(it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.values())
+                .stream()
+                .map(Enum::toString)
+                .collect(Collectors.toSet());
+        Set<String> transactionsStatusesV2 = Set
+                .of(it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto.values())
                 .stream()
                 .map(Enum::toString)
                 .collect(Collectors.toSet());
@@ -64,11 +79,21 @@ public class TransactionsUtils {
          *
          * @formatter:on
          */
-        if (!commonsStatuses.equals(transactionsStatuses)) {
-            Set<String> unknownTransactionsStatuses = transactionsStatuses.stream()
-                    .filter(Predicate.not(commonsStatuses::contains)).collect(Collectors.toSet());
-            Set<String> unknownCommonStatuses = commonsStatuses.stream()
-                    .filter(Predicate.not(transactionsStatuses::contains)).collect(Collectors.toSet());
+        if (!commonsStatusesV1.equals(transactionsStatusesV1)) {
+            Set<String> unknownTransactionsStatuses = transactionsStatusesV1.stream()
+                    .filter(Predicate.not(commonsStatusesV1::contains)).collect(Collectors.toSet());
+            Set<String> unknownCommonStatuses = commonsStatusesV1.stream()
+                    .filter(Predicate.not(transactionsStatusesV1::contains)).collect(Collectors.toSet());
+            throw new IllegalArgumentException(
+                    "Mismatched transaction status enumerations%nUnhandled commons statuses: %s%nUnhandled transaction statuses: %s"
+                            .formatted(unknownCommonStatuses, unknownTransactionsStatuses)
+            );
+        }
+        if (!commonsStatusesV2.equals(transactionsStatusesV2)) {
+            Set<String> unknownTransactionsStatuses = transactionsStatusesV2.stream()
+                    .filter(Predicate.not(commonsStatusesV2::contains)).collect(Collectors.toSet());
+            Set<String> unknownCommonStatuses = commonsStatusesV2.stream()
+                    .filter(Predicate.not(transactionsStatusesV2::contains)).collect(Collectors.toSet());
             throw new IllegalArgumentException(
                     "Mismatched transaction status enumerations%nUnhandled commons statuses: %s%nUnhandled transaction statuses: %s"
                             .formatted(unknownCommonStatuses, unknownTransactionsStatuses)
@@ -83,9 +108,25 @@ public class TransactionsUtils {
              *
              * @formatter:on
              */
-            transactionStatusLookupMap.put(
+            transactionStatusLookupMapV1.put(
                     enumValue,
                     it.pagopa.generated.transactions.server.model.TransactionStatusDto.fromValue(enumValue.toString())
+            );
+        }
+
+        for (it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto enumValue : it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto
+                .values()) {
+            /*
+             * @formatter:off
+             *
+             * This lookup map handles enumeration conversion from commons and transactions-service for the `TransactionStatusDto` enumeration
+             *
+             * @formatter:on
+             */
+            transactionStatusLookupMapV2.put(
+                    enumValue,
+                    it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto
+                            .fromValue(enumValue.toString())
             );
         }
     }
@@ -133,13 +174,19 @@ public class TransactionsUtils {
                 .cast(clazz);
     }
 
-    public it.pagopa.generated.transactions.server.model.TransactionStatusDto convertEnumeration(
-                                                                                                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status
+    public it.pagopa.generated.transactions.server.model.TransactionStatusDto convertEnumerationV1(
+                                                                                                   it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status
     ) {
-        return transactionStatusLookupMap.get(status);
+        return transactionStatusLookupMapV1.get(status);
     }
 
-    public NewTransactionRequestDto buildWarmupRequest() {
+    public it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto convertEnumerationV2(
+                                                                                                      it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status
+    ) {
+        return transactionStatusLookupMapV2.get(status);
+    }
+
+    public NewTransactionRequestDto buildWarmupRequestV1() {
         String noticeCode = warmUpNoticeCodePrefix.concat(String.valueOf(System.currentTimeMillis()));
         int neededPadLength = 18 - noticeCode.length();
         if (neededPadLength < 0) {
@@ -156,6 +203,30 @@ public class TransactionsUtils {
                 .paymentNotices(
                         Collections.singletonList(
                                 new PaymentNoticeInfoDto()
+                                        .rptId("77777777777%s".formatted(noticeCode))
+                                        .amount(100)
+                        )
+                );
+    }
+
+    public it.pagopa.generated.transactions.v2.server.model.NewTransactionRequestDto buildWarmupRequestV2() {
+        String noticeCode = warmUpNoticeCodePrefix.concat(String.valueOf(System.currentTimeMillis()));
+        int neededPadLength = 18 - noticeCode.length();
+        if (neededPadLength < 0) {
+            noticeCode = noticeCode.substring(0, noticeCode.length() + neededPadLength);
+        } else {
+            StringBuilder padBuilder = new StringBuilder();
+            noticeCode = padBuilder
+                    .append(noticeCode)
+                    .append("0".repeat(neededPadLength))
+                    .toString();
+        }
+        return new it.pagopa.generated.transactions.v2.server.model.NewTransactionRequestDto()
+                .email("test@test.it")
+                .orderId("orderId")
+                .paymentNotices(
+                        Collections.singletonList(
+                                new it.pagopa.generated.transactions.v2.server.model.PaymentNoticeInfoDto()
                                         .rptId("77777777777%s".formatted(noticeCode))
                                         .amount(100)
                         )

@@ -14,6 +14,7 @@ import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.PaymentTransferInfo;
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
@@ -25,6 +26,7 @@ import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.generated.transactions.server.model.PaymentInfoDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
+import it.pagopa.transactions.commands.bean.NewTransactionRequestData;
 import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
 import it.pagopa.transactions.exceptions.JWTTokenGenerationException;
 import it.pagopa.transactions.projections.TransactionsProjection;
@@ -119,7 +121,22 @@ class TransactionInitializerHandlerTest {
         paymentNoticeInfoDto.setAmount(1200);
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
-                requestDto,
+                new NewTransactionRequestData(
+                        requestDto.getIdCart(),
+                        requestDto.getEmail(),
+                        null,
+                        requestDto.getPaymentNotices().stream().map(
+                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                        null,
+                                        new RptId(el.getRptId()),
+                                        new TransactionAmount(el.getAmount()),
+                                        null,
+                                        null,
+                                        null,
+                                        false
+                                )
+                        ).toList()
+                ),
                 Transaction.ClientId.CHECKOUT.name(),
                 transactionId
         );
@@ -363,7 +380,22 @@ class TransactionInitializerHandlerTest {
         paymentNoticeInfoDto.setAmount(1200);
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
-                requestDto,
+                new NewTransactionRequestData(
+                        requestDto.getIdCart(),
+                        requestDto.getEmail(),
+                        null,
+                        requestDto.getPaymentNotices().stream().map(
+                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                        null,
+                                        new RptId(el.getRptId()),
+                                        new TransactionAmount(el.getAmount()),
+                                        null,
+                                        null,
+                                        null,
+                                        false
+                                )
+                        ).toList()
+                ),
                 Transaction.ClientId.CHECKOUT.name(),
                 transactionId
         );
@@ -455,7 +487,22 @@ class TransactionInitializerHandlerTest {
         paymentNoticeInfoDto.setAmount(1200);
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
-                requestDto,
+                new NewTransactionRequestData(
+                        requestDto.getIdCart(),
+                        requestDto.getEmail(),
+                        null,
+                        requestDto.getPaymentNotices().stream().map(
+                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                        null,
+                                        new RptId(el.getRptId()),
+                                        new TransactionAmount(el.getAmount()),
+                                        null,
+                                        null,
+                                        null,
+                                        false
+                                )
+                        ).toList()
+                ),
                 Transaction.ClientId.CHECKOUT.name(),
                 transactionId
         );
@@ -529,7 +576,22 @@ class TransactionInitializerHandlerTest {
         paymentNoticeInfoDto.setAmount(1200);
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
-                requestDto,
+                new NewTransactionRequestData(
+                        requestDto.getIdCart(),
+                        requestDto.getEmail(),
+                        null,
+                        requestDto.getPaymentNotices().stream().map(
+                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                        null,
+                                        new RptId(el.getRptId()),
+                                        new TransactionAmount(el.getAmount()),
+                                        null,
+                                        null,
+                                        null,
+                                        false
+                                )
+                        ).toList()
+                ),
                 Transaction.ClientId.CHECKOUT.name(),
                 transactionId
         );
@@ -583,7 +645,22 @@ class TransactionInitializerHandlerTest {
 
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
-                requestDto,
+                new NewTransactionRequestData(
+                        requestDto.getIdCart(),
+                        requestDto.getEmail(),
+                        null,
+                        requestDto.getPaymentNotices().stream().map(
+                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                        null,
+                                        new RptId(el.getRptId()),
+                                        new TransactionAmount(el.getAmount()),
+                                        null,
+                                        null,
+                                        null,
+                                        false
+                                )
+                        ).toList()
+                ),
                 Transaction.ClientId.CHECKOUT.name(),
                 transactionId
         );
@@ -675,7 +752,22 @@ class TransactionInitializerHandlerTest {
 
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
-                requestDto,
+                new NewTransactionRequestData(
+                        requestDto.getIdCart(),
+                        requestDto.getEmail(),
+                        null,
+                        requestDto.getPaymentNotices().stream().map(
+                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                        null,
+                                        new RptId(el.getRptId()),
+                                        new TransactionAmount(el.getAmount()),
+                                        null,
+                                        null,
+                                        null,
+                                        false
+                                )
+                        ).toList()
+                ),
                 Transaction.ClientId.CHECKOUT.name(),
                 transactionId
         );
@@ -767,7 +859,22 @@ class TransactionInitializerHandlerTest {
 
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
-                requestDto,
+                new NewTransactionRequestData(
+                        requestDto.getIdCart(),
+                        requestDto.getEmail(),
+                        null,
+                        requestDto.getPaymentNotices().stream().map(
+                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                        null,
+                                        new RptId(el.getRptId()),
+                                        new TransactionAmount(el.getAmount()),
+                                        null,
+                                        null,
+                                        null,
+                                        false
+                                )
+                        ).toList()
+                ),
                 Transaction.ClientId.CHECKOUT.name(),
                 transactionId
         );
