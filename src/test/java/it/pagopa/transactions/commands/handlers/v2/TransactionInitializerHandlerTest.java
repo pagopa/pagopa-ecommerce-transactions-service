@@ -124,7 +124,7 @@ class TransactionInitializerHandlerTest {
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
                         requestDto.getEmail(),
-                        null,
+                        requestDto.getOrderId(),
                         requestDto.getPaymentNotices().stream().map(
                                 el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
                                         null,
@@ -263,7 +263,22 @@ class TransactionInitializerHandlerTest {
         paymentNoticeInfoDto.setAmount(1200);
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
-                requestDto,
+                new NewTransactionRequestData(
+                        requestDto.getIdCart(),
+                        requestDto.getEmail(),
+                        null,
+                        requestDto.getPaymentNotices().stream().map(
+                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                        null,
+                                        new RptId(el.getRptId()),
+                                        new TransactionAmount(el.getAmount()),
+                                        null,
+                                        null,
+                                        null,
+                                        false
+                                )
+                        ).toList()
+                ),
                 Transaction.ClientId.CHECKOUT.name(),
                 transactionId
         );

@@ -209,7 +209,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                         .collectList()
                         .flatMap(
                                 paymentRequestInfos -> jwtTokenUtils
-                                        .generateToken(transactionId, command.getData().getOrderId())
+                                        .generateToken(transactionId, command.getData().orderId())
                                         .map(generatedToken -> Tuples.of(generatedToken, paymentRequestInfos))
                         ).flatMap(
                                 args -> {
@@ -224,7 +224,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                             command.getClientId(),
                                                             newTransactionRequestDto.idCard(),
                                                             paymentTokenTimeout,
-                                                            command.getData().getOrderId()
+                                                            command.getData().orderId()
                                                     ),
                                                     authToken
                                             )
