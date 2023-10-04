@@ -1,4 +1,4 @@
-package it.pagopa.transactions.commands.bean;
+package it.pagopa.transactions.commands.data;
 
 import it.pagopa.ecommerce.commons.annotations.ValueObject;
 import it.pagopa.ecommerce.commons.domain.PaymentNotice;

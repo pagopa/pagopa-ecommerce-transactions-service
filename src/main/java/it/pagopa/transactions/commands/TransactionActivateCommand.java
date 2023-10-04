@@ -2,7 +2,7 @@ package it.pagopa.transactions.commands;
 
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
-import it.pagopa.transactions.commands.bean.NewTransactionRequestData;
+import it.pagopa.transactions.commands.data.NewTransactionRequestData;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
