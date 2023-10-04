@@ -7,6 +7,7 @@ import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.BadGatewayException;
+import it.pagopa.transactions.utils.LogoMappingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.http.HttpStatus;
@@ -16,7 +17,6 @@ import reactor.util.function.Tuples;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
@@ -29,16 +29,16 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
 
     private final String checkoutBasePath;
 
-    private final Map<CardAuthRequestDetailsDto.BrandEnum, URI> cardBrandLogoMapping;
+    private final LogoMappingUtils logoMappingUtils;
+
 
     protected TransactionRequestAuthorizationHandlerCommon(
             PaymentGatewayClient paymentGatewayClient,
-            Map<CardAuthRequestDetailsDto.BrandEnum, URI> cardBrandLogoMapping,
-            String checkoutBasePath
-    ) {
+            String checkoutBasePath,
+            LogoMappingUtils logoMappingUtils) {
         this.paymentGatewayClient = paymentGatewayClient;
-        this.cardBrandLogoMapping = cardBrandLogoMapping;
         this.checkoutBasePath = checkoutBasePath;
+        this.logoMappingUtils = logoMappingUtils;
     }
 
     protected Mono<Tuple2<String, String>> postepayAuthRequestPipeline(AuthorizationRequestData authorizationData) {
@@ -90,20 +90,20 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                         npgCardsResponseDto -> Tuples.of(
                                 "sessionId",
                                 switch (npgCardsResponseDto.getState()) {
-                                case GDI_VERIFICATION -> URI.create(checkoutBasePath)
-                                        .resolve(
-                                                CHECKOUT_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
-                                                        npgCardsResponseDto.getFieldSet().getFields().get(0).getSrc()
-                                                                .getBytes(StandardCharsets.UTF_8)
-                                                )
-                                        ).toString();
-                                case REDIRECTED_TO_EXTERNAL_DOMAIN -> npgCardsResponseDto.getUrl();
-                                case PAYMENT_COMPLETE -> URI.create(checkoutBasePath).resolve(CHECKOUT_ESITO_PATH)
-                                        .toString();
-                                default -> throw new BadGatewayException(
-                                        "Invalid NPG confirm payment state response: " + npgCardsResponseDto.getState(),
-                                        HttpStatus.BAD_GATEWAY
-                                );
+                                    case GDI_VERIFICATION -> URI.create(checkoutBasePath)
+                                            .resolve(
+                                                    CHECKOUT_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
+                                                            npgCardsResponseDto.getFieldSet().getFields().get(0).getSrc()
+                                                                    .getBytes(StandardCharsets.UTF_8)
+                                                    )
+                                            ).toString();
+                                    case REDIRECTED_TO_EXTERNAL_DOMAIN -> npgCardsResponseDto.getUrl();
+                                    case PAYMENT_COMPLETE -> URI.create(checkoutBasePath).resolve(CHECKOUT_ESITO_PATH)
+                                            .toString();
+                                    default -> throw new BadGatewayException(
+                                            "Invalid NPG confirm payment state response: " + npgCardsResponseDto.getState(),
+                                            HttpStatus.BAD_GATEWAY
+                                    );
                                 }
                         )
 
@@ -111,19 +111,13 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     }
 
     protected Optional<CardAuthRequestDetailsDto.BrandEnum> getCardBrand(AuthorizationRequestData authorizationData) {
-        if (authorizationData.authDetails()instanceof CardAuthRequestDetailsDto detailType) {
+        if (authorizationData.authDetails() instanceof CardAuthRequestDetailsDto detailType) {
             return Optional.ofNullable(detailType.getBrand());
         }
         return Optional.empty();
     }
 
     protected URI getLogo(RequestAuthorizationRequestDetailsDto authRequestDetails) {
-        URI logoURI = null;
-        if (authRequestDetails instanceof CardAuthRequestDetailsDto cardDetail) {
-            CardAuthRequestDetailsDto.BrandEnum cardBrand = cardDetail.getBrand();
-            logoURI = cardBrandLogoMapping.get(cardBrand);
-        }
-        // TODO handle different methods than cards
-        return logoURI;
+        return logoMappingUtils.getLogo(authRequestDetails);
     }
 }

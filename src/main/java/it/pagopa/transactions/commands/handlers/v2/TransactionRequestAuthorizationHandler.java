@@ -4,7 +4,7 @@ import com.azure.cosmos.implementation.BadRequestException;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData.PaymentGateway;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestedEvent;
-import it.pagopa.ecommerce.commons.documents.v2.authorization.EmptyTransactionGatewayAuthorizationRequestedData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.TransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
@@ -20,6 +20,7 @@ import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandlerCommon;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import it.pagopa.transactions.utils.LogoMappingUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,14 +49,14 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             PaymentGatewayClient paymentGatewayClient,
             TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository,
             TransactionsUtils transactionsUtils,
-            @Qualifier("brandConfMap") Map<CardAuthRequestDetailsDto.BrandEnum, URI> cardBrandLogoMapping,
             @Value("${checkout.basePath}") String checkoutBasePath,
-            EcommercePaymentMethodsClient paymentMethodsClient
+            EcommercePaymentMethodsClient paymentMethodsClient,
+            LogoMappingUtils logoMappingUtils
     ) {
         super(
                 paymentGatewayClient,
-                cardBrandLogoMapping,
-                checkoutBasePath
+                checkoutBasePath,
+                logoMappingUtils
         );
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionsUtils = transactionsUtils;
@@ -124,7 +125,14 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                 logo,
                                                 cardBrand
                                         );
-                                        case POSTEPAY, NPG -> new EmptyTransactionGatewayAuthorizationRequestedData();
+                                        case NPG -> new NpgTransactionGatewayAuthorizationRequestedData(
+                                                logo,z
+                                                "" //TODO continua da qui, brand in questo caso è quello preso da risposta payment methods.
+                                                //TODO forse conviene centralizzare il tutto lato service e prenderlo da una sola parte
+
+                                        );
+                                        // TODO remove this after the cancellation of the postepay logic
+                                        case POSTEPAY -> null;
                                     };
                                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                                             t.getTransactionId().value(),

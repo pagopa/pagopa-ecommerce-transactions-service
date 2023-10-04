@@ -38,7 +38,7 @@ class BrandLogoConfigTest {
 
     @Test
     void shouldBuildCardBrandMapSuccessfully() {
-        Map<CardAuthRequestDetailsDto.BrandEnum, URI> brandMap = brandLogoConfig.brandConfMap(cardBrandMap);
+        Map<CardAuthRequestDetailsDto.BrandEnum, URI> brandMap = brandLogoConfig.pgsBrandConfMap(cardBrandMap);
         for (CardAuthRequestDetailsDto.BrandEnum brand : CardAuthRequestDetailsDto.BrandEnum.values()) {
             URI brandUri = brandMap.get(brand);
             assertEquals("http://%s.cdn.uri".formatted(brand), brandUri.toString());
@@ -48,21 +48,21 @@ class BrandLogoConfigTest {
     @Test
     void shouldThrowExceptionForMissingBrandKey() {
         Map<String, String> confMap = new HashMap<>();
-        assertThrows(IllegalStateException.class, () -> brandLogoConfig.brandConfMap(confMap));
+        assertThrows(IllegalStateException.class, () -> brandLogoConfig.pgsBrandConfMap(confMap));
 
     }
 
     @Test
     void shouldThrowExceptionForMisconfiguredURI() {
         Map<String, String> confMap = Map.of(CardAuthRequestDetailsDto.BrandEnum.VISA.toString(), INVALID_URI);
-        assertThrows(IllegalArgumentException.class, () -> brandLogoConfig.brandConfMap(confMap));
+        assertThrows(IllegalArgumentException.class, () -> brandLogoConfig.pgsBrandConfMap(confMap));
 
     }
 
     @Test
     void shouldThrowExceptionForMisconfiguredBrand() {
         Map<String, String> confMap = Map.of(INVALID_BRAND, "http://validUri");
-        assertThrows(IllegalArgumentException.class, () -> brandLogoConfig.brandConfMap(confMap));
+        assertThrows(IllegalArgumentException.class, () -> brandLogoConfig.pgsBrandConfMap(confMap));
     }
 
     @Test
@@ -70,8 +70,8 @@ class BrandLogoConfigTest {
         Map<String, URI> npgLogoMap = brandLogoConfig.npgPaymentCircuitLogoMap(npgPaymentCircuitLogoMap);
         npgPaymentCircuitLogoMap.forEach(
                 (
-                 k,
-                 v
+                        k,
+                        v
                 ) -> assertEquals(v, npgLogoMap.get(k).toString())
         );
     }
