@@ -60,7 +60,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                     .getOutcomeGateway();
 
             TransactionGatewayAuthorizationData authorizationData;
-            String paymentCircuit = "paymentCircuit";//TODO change with request payment circuit
+            String paymentCircuit = "paymentCircuit";// TODO change with request payment circuit
             if (outcomeGateway instanceof OutcomeNpgGatewayDto outcomeNpgGateway) {
                 authorizationData = new NpgTransactionGatewayAuthorizationData(
                         OperationResultDto.valueOf(outcomeNpgGateway.getOperationResult().toString()),
@@ -83,16 +83,16 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
             }
 
             return Mono.just(
-                            new it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent(
-                                    transactionId.value(),
-                                    new it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData(
-                                            authRequestDataExtracted.authorizationCode(),
-                                            authRequestDataExtracted.rrn(),
-                                            updateAuthorizationRequest.getTimestampOperation().toString(),
-                                            authorizationData
-                                    )
+                    new it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent(
+                            transactionId.value(),
+                            new it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData(
+                                    authRequestDataExtracted.authorizationCode(),
+                                    authRequestDataExtracted.rrn(),
+                                    updateAuthorizationRequest.getTimestampOperation().toString(),
+                                    authorizationData
                             )
                     )
+            )
                     .flatMap(transactionEventStoreRepository::save);
         } else {
             return alreadyProcessedError;

@@ -118,13 +118,14 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                             brand -> PgsTransactionGatewayAuthorizationRequestedData.CardBrand
                                                     .valueOf(brand.toString())
                                     ).orElse(null);
-                                    TransactionGatewayAuthorizationRequestedData transactionGatewayAuthorizationRequestedData =
-                                            switch (tuple3.getT3()) {
-                                                case VPOS, XPAY ->
-                                                        new PgsTransactionGatewayAuthorizationRequestedData(logo, cardBrand);
-                                                case POSTEPAY, NPG ->
-                                                        new EmptyTransactionGatewayAuthorizationRequestedData();
-                                            };
+                                    TransactionGatewayAuthorizationRequestedData transactionGatewayAuthorizationRequestedData = switch (tuple3
+                                            .getT3()) {
+                                        case VPOS, XPAY -> new PgsTransactionGatewayAuthorizationRequestedData(
+                                                logo,
+                                                cardBrand
+                                        );
+                                        case POSTEPAY, NPG -> new EmptyTransactionGatewayAuthorizationRequestedData();
+                                    };
                                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                                             t.getTransactionId().value(),
                                             new TransactionAuthorizationRequestData(

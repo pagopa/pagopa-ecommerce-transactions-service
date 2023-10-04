@@ -64,7 +64,7 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
             PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
             NodeForPspClient nodeForPspClient,
             @Qualifier(
-                    "transactionClosureRetryQueueAsyncClientV2"
+                "transactionClosureRetryQueueAsyncClientV2"
             ) QueueAsyncClient closureRetryQueueAsyncClient,
             @Value("${payment.token.validity}") Integer paymentTokenValidity,
             @Value("${transactions.ecommerce.retry.offset}") Integer softTimeoutOffset,
@@ -95,7 +95,7 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
 
     @Override
     public Mono<Tuple2<Optional<BaseTransactionEvent<?>>, Either<BaseTransactionEvent<?>, BaseTransactionEvent<?>>>> handle(
-            TransactionClosureSendCommand command
+                                                                                                                            TransactionClosureSendCommand command
     ) {
         Mono<BaseTransaction> transaction = transactionsUtils.reduceEventsV2(
                 command.getData().transactionId()
@@ -360,25 +360,25 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                             })
                             .doFinally(response -> {
                                 tx.getPaymentNotices().forEach(el -> {
-                                            log.info("Invalidate cache for RptId : {}", el.rptId().value());
-                                            paymentRequestInfoRedisTemplateWrapper.deleteById(el.rptId().value());
-                                        }
+                                    log.info("Invalidate cache for RptId : {}", el.rptId().value());
+                                    paymentRequestInfoRedisTemplateWrapper.deleteById(el.rptId().value());
+                                }
                                 );
                             });
                 });
     }
 
     private TransactionDetailsDto buildTransactionDetailsDto(
-            it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData transactionActivatedData,
-            AuthRequestDataUtils.AuthRequestData authRequestData,
-            it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData transactionAuthorizationRequestData,
-            it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData transactionAuthorizationCompletedData,
-            BigDecimal fee,
-            BigDecimal amount,
-            BigDecimal totalAmount,
-            ClosePaymentRequestV2Dto.OutcomeEnum outcomeEnum,
-            TransactionId transactionId,
-            ZonedDateTime creationDate
+                                                             it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData transactionActivatedData,
+                                                             AuthRequestDataUtils.AuthRequestData authRequestData,
+                                                             it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData transactionAuthorizationRequestData,
+                                                             it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData transactionAuthorizationCompletedData,
+                                                             BigDecimal fee,
+                                                             BigDecimal amount,
+                                                             BigDecimal totalAmount,
+                                                             ClosePaymentRequestV2Dto.OutcomeEnum outcomeEnum,
+                                                             TransactionId transactionId,
+                                                             ZonedDateTime creationDate
     ) {
         return new TransactionDetailsDto()
                 .transaction(
@@ -395,22 +395,26 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                         )
                 )
                 .info(
-                        buildInfoDto(transactionActivatedData, transactionAuthorizationRequestData, transactionAuthorizationCompletedData)
+                        buildInfoDto(
+                                transactionActivatedData,
+                                transactionAuthorizationRequestData,
+                                transactionAuthorizationCompletedData
+                        )
                 )
                 .user(new UserDto().type(UserDto.TypeEnum.GUEST));
 
     }
 
     private TransactionDto buildTransactionDto(
-            AuthRequestDataUtils.AuthRequestData authRequestData,
-            it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData transactionAuthorizationRequestData,
-            it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData transactionAuthorizationCompletedData,
-            BigDecimal fee,
-            BigDecimal amount,
-            BigDecimal totalAmount,
-            ClosePaymentRequestV2Dto.OutcomeEnum outcomeEnum,
-            TransactionId transationId,
-            ZonedDateTime creationDate
+                                               AuthRequestDataUtils.AuthRequestData authRequestData,
+                                               it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData transactionAuthorizationRequestData,
+                                               it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData transactionAuthorizationCompletedData,
+                                               BigDecimal fee,
+                                               BigDecimal amount,
+                                               BigDecimal totalAmount,
+                                               ClosePaymentRequestV2Dto.OutcomeEnum outcomeEnum,
+                                               TransactionId transationId,
+                                               ZonedDateTime creationDate
     ) {
         return new TransactionDto()
                 .transactionStatus(
@@ -443,7 +447,7 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
     }
 
     private PspDto buildPspDto(
-            it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData transactionAuthorizationRequestData
+                               it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData transactionAuthorizationRequestData
     ) {
 
         return new PspDto()
@@ -464,17 +468,20 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
     }
 
     private InfoDto buildInfoDto(
-            it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData transactionActivatedData,
-            it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData transactionAuthorizationRequestData,
-            it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData transactionAuthorizationCompletedData
+                                 it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData transactionActivatedData,
+                                 it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData transactionAuthorizationRequestData,
+                                 it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData transactionAuthorizationCompletedData
     ) {
         Optional<String> logoUri = Optional.empty();
         Optional<String> brand = Optional.empty();
-        if (transactionAuthorizationRequestData.getTransactionGatewayAuthorizationRequestedData() instanceof PgsTransactionGatewayAuthorizationRequestedData pgsData) {
+        if (transactionAuthorizationRequestData
+                .getTransactionGatewayAuthorizationRequestedData()instanceof PgsTransactionGatewayAuthorizationRequestedData pgsData) {
             logoUri = Optional.ofNullable(pgsData.getLogo()).map(URI::toString);
-            brand = Optional.ofNullable(pgsData.getBrand()).map(PgsTransactionGatewayAuthorizationRequestedData.CardBrand::toString);
+            brand = Optional.ofNullable(pgsData.getBrand())
+                    .map(PgsTransactionGatewayAuthorizationRequestedData.CardBrand::toString);
         }
-        if (transactionAuthorizationCompletedData.getTransactionGatewayAuthorizationData() instanceof NpgTransactionGatewayAuthorizationData npgData) {
+        if (transactionAuthorizationCompletedData
+                .getTransactionGatewayAuthorizationData()instanceof NpgTransactionGatewayAuthorizationData npgData) {
             logoUri = Optional.ofNullable(npgData.getLogo()).map(URI::toString);
             brand = Optional.ofNullable(npgData.getPaymentCircuit());
         }
@@ -497,7 +504,7 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
     }
 
     private ClosePaymentRequestV2Dto.OutcomeEnum authorizationResultToOutcomeV2(
-            AuthRequestDataUtils.AuthRequestData authRequestData
+                                                                                AuthRequestDataUtils.AuthRequestData authRequestData
     ) {
         switch (authRequestData.outcome()) {
             case AuthRequestDataUtils.OUTCOME_OK -> {
@@ -513,9 +520,9 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
     }
 
     private Mono<it.pagopa.ecommerce.commons.documents.v2.TransactionRefundRequestedEvent> sendRefundRequestEvent(
-            Either<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureErrorEvent, it.pagopa.ecommerce.commons.documents.v2.TransactionEvent<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData>> closureOutcomeEvent,
-            AuthorizationResultDto authorizationResult,
-            TransactionId transactionId
+                                                                                                                  Either<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureErrorEvent, it.pagopa.ecommerce.commons.documents.v2.TransactionEvent<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData>> closureOutcomeEvent,
+                                                                                                                  AuthorizationResultDto authorizationResult,
+                                                                                                                  TransactionId transactionId
     ) {
         return Mono.just(closureOutcomeEvent)
                 .filter(
@@ -595,7 +602,7 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
     }
 
     private it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData.Outcome outcomeV2ToTransactionClosureDataOutcome(
-            ClosePaymentResponseDto.OutcomeEnum closePaymentOutcome
+                                                                                                                             ClosePaymentResponseDto.OutcomeEnum closePaymentOutcome
     ) {
         switch (closePaymentOutcome) {
             case OK -> {
@@ -609,6 +616,5 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
             );
         }
     }
-
 
 }
