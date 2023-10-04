@@ -18,6 +18,8 @@ import java.util.stream.Stream;
 @Configuration
 public class BrandLogoConfig {
 
+    public static final String UNKNOWN_LOGO_KEY = "UNKNOWN";
+
     @Bean
     @Qualifier("brandConfMap")
     public Map<CardAuthRequestDetailsDto.BrandEnum, URI> brandConfMap(
@@ -57,6 +59,9 @@ public class BrandLogoConfig {
         Map<String, URI> logoMap = new HashMap<>();
         for (Map.Entry<String, String> entry : npgPaymentCircuitMapping.entrySet()) {
             logoMap.put(entry.getKey(), URI.create(entry.getValue()));
+        }
+        if (!logoMap.containsKey(UNKNOWN_LOGO_KEY)) {
+            throw new IllegalStateException("Misconfigured logo map, logo for UNKNOWN key not found!");
         }
         return logoMap;
     }

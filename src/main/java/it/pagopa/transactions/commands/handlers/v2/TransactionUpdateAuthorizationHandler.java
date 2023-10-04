@@ -60,8 +60,9 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                     .getOutcomeGateway();
 
             TransactionGatewayAuthorizationData authorizationData;
-            String paymentCircuit = "paymentCircuit";// TODO change with request payment circuit
+
             if (outcomeGateway instanceof OutcomeNpgGatewayDto outcomeNpgGateway) {
+                String paymentCircuit = outcomeNpgGateway.getPaymentCircuit();
                 authorizationData = new NpgTransactionGatewayAuthorizationData(
                         OperationResultDto.valueOf(outcomeNpgGateway.getOperationResult().toString()),
                         outcomeNpgGateway.getOperationId(),

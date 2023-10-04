@@ -127,17 +127,11 @@ class TransactionUpdateAuthorizationHandlerTest {
         TransactionActivatedEvent activatedEvent = TransactionTestUtils.transactionActivateEvent();
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
                 .transactionAuthorizationRequestedEvent();
-        String paymentCircuit = "VISA";
+        NpgTransactionGatewayAuthorizationData npgTransactionGatewayAuthorizationData = (NpgTransactionGatewayAuthorizationData) TransactionTestUtils
+                .npgTransactionGatewayAuthorizationData(OperationResultDto.EXECUTED);
         TransactionAuthorizationCompletedEvent event = TransactionTestUtils
                 .transactionAuthorizationCompletedEvent(
-                        new NpgTransactionGatewayAuthorizationData(
-                                OperationResultDto.EXECUTED,
-                                "operationId",
-                                "paymentEndToEndId",
-                                paymentCircuit,
-                                npgPaymentCircuitLogoMap.get(paymentCircuit)
-                        )
-
+                        npgTransactionGatewayAuthorizationData
                 );
         BaseTransaction transaction = TransactionTestUtils.reduceEvents(activatedEvent, authorizationRequestedEvent);
 
@@ -148,6 +142,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                                 .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
                                 .authorizationCode("1234")
                                 .paymentEndToEndId("paymentEndToEndId")
+                                .paymentCircuit("VISA")
                 )
                 .timestampOperation(OffsetDateTime.now());
 
@@ -174,17 +169,29 @@ class TransactionUpdateAuthorizationHandlerTest {
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1))
                 .save(
                         argThat(
-                                eventArg -> TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
-                                        .equals(eventArg.getEventCode())
-                                        && ((NpgTransactionGatewayAuthorizationData) eventArg.getData()
-                                                .getTransactionGatewayAuthorizationData()).getOperationResult()
-                                                        .equals(
-                                                                OperationResultDto.valueOf(
-                                                                        ((OutcomeNpgGatewayDto) updateAuthorizationRequest
-                                                                                .getOutcomeGateway())
-                                                                                        .getOperationResult().getValue()
-                                                                )
-                                                        )
+                                eventArg -> {
+                                    NpgTransactionGatewayAuthorizationData npgData = (NpgTransactionGatewayAuthorizationData) eventArg
+                                            .getData().getTransactionGatewayAuthorizationData();
+                                    return TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
+                                            .equals(eventArg.getEventCode())
+                                            && npgData.getOperationResult()
+                                                    .equals(
+                                                            OperationResultDto.valueOf(
+                                                                    ((OutcomeNpgGatewayDto) updateAuthorizationRequest
+                                                                            .getOutcomeGateway())
+                                                                                    .getOperationResult().getValue()
+                                                            )
+                                                    )
+                                            && npgData.getLogo()
+                                                    .equals(
+                                                            npgPaymentCircuitLogoMap.get(
+                                                                    npgTransactionGatewayAuthorizationData
+                                                                            .getPaymentCircuit()
+                                                            )
+                                                    )
+                                            && npgData.getPaymentCircuit()
+                                                    .equals(npgTransactionGatewayAuthorizationData.getPaymentCircuit());
+                                }
                         )
                 );
     }
