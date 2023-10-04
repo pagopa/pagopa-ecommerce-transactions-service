@@ -39,6 +39,8 @@ resilience4j.circuitbreaker:
       baseConfig: default
     node-backend:
       baseConfig: default
+      ignoreExceptions:
+        - it.pagopa.transactions.exceptions.NodoErrorException
     ecommerce-db:
       baseConfig: default
 
