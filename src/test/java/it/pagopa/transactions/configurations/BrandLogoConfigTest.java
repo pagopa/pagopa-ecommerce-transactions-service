@@ -23,6 +23,11 @@ class BrandLogoConfigTest {
                     )
             );
 
+    private final Map<String, String> npgPaymentCircuitLogoMap = Map.of(
+            "VISA", "http://logoUri",
+            "UNKNOWN", "http://logoUri"
+    );
+
     private final BrandLogoConfig brandLogoConfig = new BrandLogoConfig();
 
     private static final String INVALID_URI = "http:\\invalidUri";
@@ -56,5 +61,24 @@ class BrandLogoConfigTest {
     void shouldThrowExceptionForMisconfiguredBrand() {
         Map<String, String> confMap = Map.of(INVALID_BRAND, "http://validUri");
         assertThrows(IllegalArgumentException.class, () -> brandLogoConfig.brandConfMap(confMap));
+    }
+
+    @Test
+    void shouldBuildNpgMapCorrectly() {
+        Map<String, URI> npgLogoMap = brandLogoConfig.npgPaymentCircuitLogoMap(npgPaymentCircuitLogoMap);
+        npgPaymentCircuitLogoMap.forEach((k, v) -> assertEquals(v, npgLogoMap.get(k).toString()));
+    }
+
+    @Test
+    void shouldThrowExceptionForInvalidURIBuildingNpgMap() {
+        Map<String, String> confMap = Map.of("VISA", INVALID_URI);
+        assertThrows(IllegalArgumentException.class, () -> brandLogoConfig.npgPaymentCircuitLogoMap(confMap));
+    }
+
+    @Test
+    void shouldThrowExceptionForMissingUnknownKeyBuildingNpgMap() {
+        Map<String, String> confMap = Map.of("VISA", "http://validUri");
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> brandLogoConfig.npgPaymentCircuitLogoMap(confMap));
+        assertEquals("Misconfigured logo map, logo for UNKNOWN key not found!", exception.getMessage());
     }
 }
