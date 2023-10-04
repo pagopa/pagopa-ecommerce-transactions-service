@@ -18,7 +18,7 @@ import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.TransferListItemDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.commands.*;
-import it.pagopa.transactions.commands.bean.NewTransactionRequestData;
+import it.pagopa.transactions.commands.data.NewTransactionRequestData;
 import it.pagopa.transactions.commands.data.AddUserReceiptData;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.data.ClosureSendData;

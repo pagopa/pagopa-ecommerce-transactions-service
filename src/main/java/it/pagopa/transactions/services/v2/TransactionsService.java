@@ -7,7 +7,7 @@ import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.generated.transactions.v2.server.model.*;
 import it.pagopa.transactions.commands.*;
-import it.pagopa.transactions.commands.bean.NewTransactionRequestData;
+import it.pagopa.transactions.commands.data.NewTransactionRequestData;
 import it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler;

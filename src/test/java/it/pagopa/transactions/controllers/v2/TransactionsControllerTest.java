@@ -83,15 +83,13 @@ class TransactionsControllerTest {
             NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
             newTransactionRequestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(RPTID));
             newTransactionRequestDto.setEmail(EMAIL);
-
+            newTransactionRequestDto.orderId("orderId");
             NewTransactionResponseDto response = new NewTransactionResponseDto();
-
             PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
             paymentInfoDto.setAmount(10);
             paymentInfoDto.setReason("Reason");
             paymentInfoDto.setPaymentToken("payment_token");
             paymentInfoDto.setRptId(RPTID);
-
             response.addPaymentsItem(paymentInfoDto);
             response.setAuthToken("token");
             Mockito.when(jwtTokenUtils.generateToken(any(), any())).thenReturn(Mono.just(""));
