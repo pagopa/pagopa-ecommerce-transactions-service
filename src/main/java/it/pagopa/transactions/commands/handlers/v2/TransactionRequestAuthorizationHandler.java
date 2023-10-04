@@ -4,6 +4,9 @@ import com.azure.cosmos.implementation.BadRequestException;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData.PaymentGateway;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestedEvent;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.EmptyTransactionGatewayAuthorizationRequestedData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationRequestedData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.TransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
@@ -109,12 +112,19 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                     );
 
                                     // TODO remove this after the cancellation of the postepay logic
-                                    TransactionAuthorizationRequestData.CardBrand cardBrand = getCardBrand(
+                                    PgsTransactionGatewayAuthorizationRequestedData.CardBrand cardBrand = getCardBrand(
                                             authorizationRequestData
                                     ).map(
-                                            brand -> TransactionAuthorizationRequestData.CardBrand
+                                            brand -> PgsTransactionGatewayAuthorizationRequestedData.CardBrand
                                                     .valueOf(brand.toString())
                                     ).orElse(null);
+                                    TransactionGatewayAuthorizationRequestedData transactionGatewayAuthorizationRequestedData =
+                                            switch (tuple3.getT3()) {
+                                                case VPOS, XPAY ->
+                                                        new PgsTransactionGatewayAuthorizationRequestedData(logo, cardBrand);
+                                                case POSTEPAY, NPG ->
+                                                        new EmptyTransactionGatewayAuthorizationRequestedData();
+                                            };
                                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                                             t.getTransactionId().value(),
                                             new TransactionAuthorizationRequestData(
@@ -134,9 +144,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                     command.getData().pspOnUs(),
                                                     tuple3.getT1(),
                                                     tuple3.getT3(),
-                                                    logo,
-                                                    cardBrand,
-                                                    command.getData().paymentMethodDescription()
+                                                    command.getData().paymentMethodDescription(),
+                                                    transactionGatewayAuthorizationRequestedData
                                             )
                                     );
 

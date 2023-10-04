@@ -11,6 +11,7 @@ import it.pagopa.ecommerce.commons.documents.v2.*;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData.PaymentGateway;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v2.EmptyTransaction;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
@@ -60,7 +61,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -241,9 +241,11 @@ class TransactionSendClosureHandlerTest {
                         false,
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
-                        null,
-                        TransactionAuthorizationRequestData.CardBrand.VISA,
-                        "paymentMethodDescription"
+                        "paymentMethodDescription",
+                        new PgsTransactionGatewayAuthorizationRequestedData(
+                                TransactionTestUtils.LOGO_URI,
+                                PgsTransactionGatewayAuthorizationRequestedData.CardBrand.VISA
+                        )
                 )
         );
 
@@ -329,9 +331,12 @@ class TransactionSendClosureHandlerTest {
                         false,
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
-                        URI.create("localhost/logo"),
-                        TransactionAuthorizationRequestData.CardBrand.VISA,
-                        "paymentMethodDescription"
+
+                        "paymentMethodDescription",
+                        new PgsTransactionGatewayAuthorizationRequestedData(
+                                URI.create("localhost/logo"),
+                                PgsTransactionGatewayAuthorizationRequestedData.CardBrand.VISA
+                        )
                 )
         );
 
@@ -456,12 +461,16 @@ class TransactionSendClosureHandlerTest {
                                                         authorizationRequestData
                                                                 .getPaymentTypeCode()
                                                 ).brandLogo(
-                                                        authorizationRequestData.getLogo()
-                                                                .toString()
+                                                        ((PgsTransactionGatewayAuthorizationRequestedData) authorizationRequestData
+                                                                .getTransactionGatewayAuthorizationRequestedData())
+                                                                        .getLogo()
+                                                                        .toString()
                                                 )
                                                 .brand(
-                                                        authorizationRequestData.getBrand()
-                                                                .name()
+                                                        ((PgsTransactionGatewayAuthorizationRequestedData) authorizationRequestData
+                                                                .getTransactionGatewayAuthorizationRequestedData())
+                                                                        .getBrand()
+                                                                        .name()
                                                 )
                                                 .paymentMethodName(authorizationRequestData.getPaymentMethodName())
                                 )
@@ -510,6 +519,8 @@ class TransactionSendClosureHandlerTest {
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         String idCart = "idCart";
+        String logoURI = "localhost/logo";
+        PgsTransactionGatewayAuthorizationRequestedData.CardBrand brand = PgsTransactionGatewayAuthorizationRequestedData.CardBrand.VISA;
         List<it.pagopa.ecommerce.commons.documents.PaymentNotice> PaymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.PaymentNotice(
                         paymentToken.value(),
@@ -551,9 +562,11 @@ class TransactionSendClosureHandlerTest {
                         false,
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
-                        URI.create("localhost/logo"),
-                        TransactionAuthorizationRequestData.CardBrand.VISA,
-                        "paymentMethodDescription"
+                        "paymentMethodDescription",
+                        new PgsTransactionGatewayAuthorizationRequestedData(
+                                URI.create("localhost/logo"),
+                                brand
+                        )
                 )
         );
 
@@ -678,15 +691,10 @@ class TransactionSendClosureHandlerTest {
                                                         authorizationRequestData
                                                                 .getPaymentTypeCode()
                                                 ).brandLogo(
-                                                        Stream.ofNullable(authorizationRequestData.getLogo())
-                                                                .filter(logo -> logo != null)
-                                                                .map(l -> l.toString())
-                                                                .findFirst()
-                                                                .orElse(null)
+                                                        logoURI
                                                 )
                                                 .brand(
-                                                        authorizationRequestData.getBrand()
-                                                                .name()
+                                                        brand.toString()
                                                 )
                                                 .paymentMethodName(authorizationRequestData.getPaymentMethodName())
                                 )
@@ -735,6 +743,8 @@ class TransactionSendClosureHandlerTest {
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         String idCart = "idCart";
+        String logoUri = "localhost/logo";
+        PgsTransactionGatewayAuthorizationRequestedData.CardBrand brand = PgsTransactionGatewayAuthorizationRequestedData.CardBrand.VISA;
         List<it.pagopa.ecommerce.commons.documents.PaymentNotice> PaymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.PaymentNotice(
                         paymentToken.value(),
@@ -776,9 +786,8 @@ class TransactionSendClosureHandlerTest {
                         false,
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
-                        URI.create("test/logo"),
-                        TransactionAuthorizationRequestData.CardBrand.VISA,
-                        "paymentMethodDescription"
+                        "paymentMethodDescription",
+                        new PgsTransactionGatewayAuthorizationRequestedData(URI.create(logoUri), brand)
                 )
         );
 
@@ -949,15 +958,10 @@ class TransactionSendClosureHandlerTest {
                                                         authorizationRequestData
                                                                 .getPaymentTypeCode()
                                                 ).brandLogo(
-                                                        Stream.ofNullable(authorizationRequestData.getLogo())
-                                                                .filter(logo -> logo != null)
-                                                                .map(l -> l.toString())
-                                                                .findFirst()
-                                                                .orElse(null)
+                                                        logoUri
                                                 )
                                                 .brand(
-                                                        authorizationRequestData.getBrand()
-                                                                .name()
+                                                        brand.toString()
                                                 )
                                                 .paymentMethodName(authorizationRequestData.getPaymentMethodName())
                                 )
@@ -1005,6 +1009,8 @@ class TransactionSendClosureHandlerTest {
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
         String idCart = "idCart";
+        String logoUri = "localhost/logo";
+        PgsTransactionGatewayAuthorizationRequestedData.CardBrand brand = PgsTransactionGatewayAuthorizationRequestedData.CardBrand.VISA;
         List<it.pagopa.ecommerce.commons.documents.PaymentNotice> PaymentNotices = List.of(
                 new it.pagopa.ecommerce.commons.documents.PaymentNotice(
                         paymentToken.value(),
@@ -1046,9 +1052,8 @@ class TransactionSendClosureHandlerTest {
                         false,
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
-                        URI.create("test/logo"),
-                        TransactionAuthorizationRequestData.CardBrand.VISA,
-                        "paymentMethodDescription"
+                        "paymentMethodDescription",
+                        new PgsTransactionGatewayAuthorizationRequestedData(URI.create(logoUri), brand)
                 )
         );
 
@@ -1203,15 +1208,10 @@ class TransactionSendClosureHandlerTest {
                                                         authorizationRequestData
                                                                 .getPaymentTypeCode()
                                                 ).brandLogo(
-                                                        Stream.ofNullable(authorizationRequestData.getLogo())
-                                                                .filter(logo -> logo != null)
-                                                                .map(l -> l.toString())
-                                                                .findFirst()
-                                                                .orElse(null)
+                                                        logoUri
                                                 )
                                                 .brand(
-                                                        authorizationRequestData.getBrand()
-                                                                .name()
+                                                        brand.toString()
                                                 )
                                                 .paymentMethodName(authorizationRequestData.getPaymentMethodName())
                                 )
@@ -1300,6 +1300,8 @@ class TransactionSendClosureHandlerTest {
                 )
         );
 
+        String logoUri = "localhost/logo";
+        PgsTransactionGatewayAuthorizationRequestedData.CardBrand brand = PgsTransactionGatewayAuthorizationRequestedData.CardBrand.VISA;
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
                 transactionId.value(),
                 new TransactionAuthorizationRequestData(
@@ -1315,9 +1317,9 @@ class TransactionSendClosureHandlerTest {
                         false,
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
-                        URI.create("logo/test"),
-                        TransactionAuthorizationRequestData.CardBrand.VISA,
-                        "paymentMethodDescription"
+
+                        "paymentMethodDescription",
+                        new PgsTransactionGatewayAuthorizationRequestedData(URI.create(logoUri), brand)
                 )
         );
 
@@ -1484,15 +1486,10 @@ class TransactionSendClosureHandlerTest {
                                                         authorizationRequestData
                                                                 .getPaymentTypeCode()
                                                 ).brandLogo(
-                                                        Stream.ofNullable(authorizationRequestData.getLogo())
-                                                                .filter(logo -> logo != null)
-                                                                .map(l -> l.toString())
-                                                                .findFirst()
-                                                                .orElse(null)
+                                                        logoUri
                                                 )
                                                 .brand(
-                                                        authorizationRequestData.getBrand()
-                                                                .name()
+                                                        brand.toString()
                                                 )
                                                 .paymentMethodName(authorizationRequestData.getPaymentMethodName())
                                 )
@@ -1589,6 +1586,8 @@ class TransactionSendClosureHandlerTest {
                         new EmptyTransactionGatewayActivationData()
                 )
         );
+        String logoUri = "localhost/logo";
+        PgsTransactionGatewayAuthorizationRequestedData.CardBrand brand = PgsTransactionGatewayAuthorizationRequestedData.CardBrand.VISA;
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
                 transactionId.value(),
@@ -1605,9 +1604,8 @@ class TransactionSendClosureHandlerTest {
                         false,
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
-                        URI.create("logo/test"),
-                        TransactionAuthorizationRequestData.CardBrand.VISA,
-                        "paymentMethodDescription"
+                        "paymentMethodDescription",
+                        new PgsTransactionGatewayAuthorizationRequestedData(URI.create(logoUri), brand)
                 )
         );
 
@@ -1762,10 +1760,9 @@ class TransactionSendClosureHandlerTest {
                                                                 .getPaymentTypeCode()
                                                 )
                                                 .brandLogo(
-                                                        authorizationRequestData.getLogo()
-                                                                .getPath()
+                                                        logoUri
                                                 )
-                                                .brand(authorizationRequestData.getBrand().name())
+                                                .brand(brand.toString())
                                                 .paymentMethodName(authorizationRequestData.getPaymentMethodName())
                                                 .clientId(
                                                         ((BaseTransactionWithPaymentToken) transaction).getClientId()
@@ -1878,7 +1875,8 @@ class TransactionSendClosureHandlerTest {
                         new EmptyTransactionGatewayActivationData()
                 )
         );
-
+        String logoUri = "localhost/logo";
+        PgsTransactionGatewayAuthorizationRequestedData.CardBrand brand = PgsTransactionGatewayAuthorizationRequestedData.CardBrand.VISA;
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
                 transactionId.value(),
                 new TransactionAuthorizationRequestData(
@@ -1894,9 +1892,8 @@ class TransactionSendClosureHandlerTest {
                         false,
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
-                        null,
-                        TransactionAuthorizationRequestData.CardBrand.VISA,
-                        "paymentMethodDescription"
+                        "paymentMethodDescription",
+                        new PgsTransactionGatewayAuthorizationRequestedData(URI.create(logoUri), brand)
                 )
         );
 
@@ -2023,17 +2020,10 @@ class TransactionSendClosureHandlerTest {
                                                         authorizationRequestedEvent.getData()
                                                                 .getPaymentTypeCode()
                                                 ).brandLogo(
-                                                        Stream.ofNullable(
-                                                                authorizationRequestedEvent.getData().getLogo()
-                                                        )
-                                                                .filter(logo -> logo != null)
-                                                                .map(l -> l.toString())
-                                                                .findFirst()
-                                                                .orElse(null)
+                                                        logoUri
                                                 )
                                                 .brand(
-                                                        authorizationRequestedEvent.getData().getBrand()
-                                                                .name()
+                                                        brand.toString()
                                                 )
                                                 .paymentMethodName(
                                                         authorizationRequestedEvent.getData().getPaymentMethodName()
@@ -2123,7 +2113,8 @@ class TransactionSendClosureHandlerTest {
                         new EmptyTransactionGatewayActivationData()
                 )
         );
-
+        String logoUri = "localhost/logo";
+        PgsTransactionGatewayAuthorizationRequestedData.CardBrand brand = PgsTransactionGatewayAuthorizationRequestedData.CardBrand.VISA;
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
                 transactionId.value(),
                 new TransactionAuthorizationRequestData(
@@ -2139,9 +2130,8 @@ class TransactionSendClosureHandlerTest {
                         false,
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
-                        URI.create("logo/test"),
-                        TransactionAuthorizationRequestData.CardBrand.VISA,
-                        "paymentMethodDescription"
+                        "paymentMethodDescription",
+                        new PgsTransactionGatewayAuthorizationRequestedData(URI.create(logoUri), brand)
                 )
         );
 
@@ -2272,17 +2262,10 @@ class TransactionSendClosureHandlerTest {
                                                         authorizationRequestedEvent.getData()
                                                                 .getPaymentTypeCode()
                                                 ).brandLogo(
-                                                        Stream.ofNullable(
-                                                                authorizationRequestedEvent.getData().getLogo()
-                                                        )
-                                                                .filter(logo -> logo != null)
-                                                                .map(l -> l.toString())
-                                                                .findFirst()
-                                                                .orElse(null)
+                                                        logoUri
                                                 )
                                                 .brand(
-                                                        authorizationRequestedEvent.getData().getBrand()
-                                                                .name()
+                                                        brand.toString()
                                                 )
                                                 .paymentMethodName(
                                                         authorizationRequestedEvent.getData().getPaymentMethodName()
@@ -2385,7 +2368,8 @@ class TransactionSendClosureHandlerTest {
                         new EmptyTransactionGatewayActivationData()
                 )
         );
-
+        String logoUri = "localhost/logo";
+        PgsTransactionGatewayAuthorizationRequestedData.CardBrand brand = PgsTransactionGatewayAuthorizationRequestedData.CardBrand.VISA;
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
                 transactionId.value(),
                 new TransactionAuthorizationRequestData(
@@ -2401,9 +2385,8 @@ class TransactionSendClosureHandlerTest {
                         false,
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
-                        URI.create("logo/test"),
-                        TransactionAuthorizationRequestData.CardBrand.VISA,
-                        "paymentMethodDescription"
+                        "paymentMethodDescription",
+                        new PgsTransactionGatewayAuthorizationRequestedData(URI.create(logoUri), brand)
                 )
         );
 
@@ -2569,14 +2552,13 @@ class TransactionSendClosureHandlerTest {
                                                                 .getPaymentTypeCode()
                                                 )
                                                 .brandLogo(
-                                                        authorizationRequestData.getLogo()
-                                                                .getPath()
+                                                        logoUri
                                                 )
                                                 .clientId(
                                                         ((BaseTransactionWithPaymentToken) transaction).getClientId()
                                                                 .name()
                                                 )
-                                                .brand(authorizationRequestData.getBrand().name())
+                                                .brand(brand.toString())
                                                 .paymentMethodName(authorizationRequestData.getPaymentMethodName())
                                 )
                                 .user(new UserDto().type(UserDto.TypeEnum.GUEST))
@@ -2668,7 +2650,8 @@ class TransactionSendClosureHandlerTest {
                         new EmptyTransactionGatewayActivationData()
                 )
         );
-
+        String logoUri = "localhost/logo";
+        PgsTransactionGatewayAuthorizationRequestedData.CardBrand brand = PgsTransactionGatewayAuthorizationRequestedData.CardBrand.VISA;
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
                 transactionId.value(),
                 new TransactionAuthorizationRequestData(
@@ -2684,9 +2667,8 @@ class TransactionSendClosureHandlerTest {
                         false,
                         "authorizationRequestId",
                         PaymentGateway.XPAY,
-                        URI.create("logo/test"),
-                        TransactionAuthorizationRequestData.CardBrand.VISA,
-                        "paymentMethodDescription"
+                        "paymentMethodDescription",
+                        new PgsTransactionGatewayAuthorizationRequestedData(URI.create(logoUri), brand)
                 )
         );
 
@@ -2842,10 +2824,9 @@ class TransactionSendClosureHandlerTest {
                                                                 .getPaymentTypeCode()
                                                 )
                                                 .brandLogo(
-                                                        authorizationRequestData.getLogo()
-                                                                .getPath()
+                                                        logoUri
                                                 )
-                                                .brand(authorizationRequestData.getBrand().name())
+                                                .brand(brand.toString())
                                                 .clientId(
                                                         ((BaseTransactionWithPaymentToken) transaction).getClientId()
                                                                 .name()
@@ -3063,11 +3044,17 @@ class TransactionSendClosureHandlerTest {
                                                                 .getPaymentTypeCode()
                                                 )
                                                 .brandLogo(
-                                                        authorizationRequestData.getLogo()
-                                                                .toString()
+                                                        ((PgsTransactionGatewayAuthorizationRequestedData) authorizationRequestData
+                                                                .getTransactionGatewayAuthorizationRequestedData())
+                                                                        .getLogo()
+                                                                        .toString()
                                                 )
                                                 .paymentMethodName(authorizationRequestData.getPaymentMethodName())
-                                                .brand(authorizationRequestData.getBrand().name())
+                                                .brand(
+                                                        ((PgsTransactionGatewayAuthorizationRequestedData) authorizationRequestData
+                                                                .getTransactionGatewayAuthorizationRequestedData())
+                                                                        .getBrand().name()
+                                                )
                                                 .clientId(
                                                         ((BaseTransactionWithPaymentToken) transaction).getClientId()
                                                                 .name()
@@ -3283,10 +3270,16 @@ class TransactionSendClosureHandlerTest {
                                                                 .getPaymentTypeCode()
                                                 )
                                                 .brandLogo(
-                                                        authorizationRequestData.getLogo()
-                                                                .toString()
+                                                        ((PgsTransactionGatewayAuthorizationRequestedData) authorizationRequestData
+                                                                .getTransactionGatewayAuthorizationRequestedData())
+                                                                        .getLogo()
+                                                                        .toString()
                                                 )
-                                                .brand(authorizationRequestData.getBrand().name())
+                                                .brand(
+                                                        ((PgsTransactionGatewayAuthorizationRequestedData) authorizationRequestData
+                                                                .getTransactionGatewayAuthorizationRequestedData())
+                                                                        .getBrand().name()
+                                                )
                                                 .paymentMethodName(authorizationRequestData.getPaymentMethodName())
                                                 .clientId(
                                                         ((BaseTransactionWithPaymentToken) transaction).getClientId()
@@ -3468,8 +3461,16 @@ class TransactionSendClosureHandlerTest {
                                                         ((BaseTransactionWithPaymentToken) transaction).getClientId()
                                                                 .name()
                                                 )
-                                                .brand(authorizationRequestData.getBrand().name())
-                                                .brandLogo(authorizationRequestData.getLogo().toString())
+                                                .brand(
+                                                        ((PgsTransactionGatewayAuthorizationRequestedData) authorizationRequestData
+                                                                .getTransactionGatewayAuthorizationRequestedData())
+                                                                        .getBrand().name()
+                                                )
+                                                .brandLogo(
+                                                        ((PgsTransactionGatewayAuthorizationRequestedData) authorizationRequestData
+                                                                .getTransactionGatewayAuthorizationRequestedData())
+                                                                        .getLogo().toString()
+                                                )
                                                 .paymentMethodName(authorizationRequestData.getPaymentMethodName())
                                 )
                                 .user(new UserDto().type(UserDto.TypeEnum.GUEST))
@@ -3623,8 +3624,16 @@ class TransactionSendClosureHandlerTest {
                                                         ((BaseTransactionWithPaymentToken) transaction).getClientId()
                                                                 .name()
                                                 )
-                                                .brand(authorizationRequestData.getBrand().name())
-                                                .brandLogo(authorizationRequestData.getLogo().toString())
+                                                .brand(
+                                                        ((PgsTransactionGatewayAuthorizationRequestedData) authorizationRequestData
+                                                                .getTransactionGatewayAuthorizationRequestedData())
+                                                                        .getBrand().name()
+                                                )
+                                                .brandLogo(
+                                                        ((PgsTransactionGatewayAuthorizationRequestedData) authorizationRequestData
+                                                                .getTransactionGatewayAuthorizationRequestedData())
+                                                                        .getLogo().toString()
+                                                )
                                                 .paymentMethodName(authorizationRequestData.getPaymentMethodName())
                                 )
                                 .user(new UserDto().type(UserDto.TypeEnum.GUEST))

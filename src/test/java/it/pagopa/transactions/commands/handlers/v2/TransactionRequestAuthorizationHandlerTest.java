@@ -4,6 +4,7 @@ import com.azure.cosmos.implementation.BadRequestException;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldDto;
@@ -954,7 +955,8 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionEvent<TransactionAuthorizationRequestData> capturedEvent = eventStoreCaptor.getValue();
         assertEquals(
                 brandLogoMapping.get(CardAuthRequestDetailsDto.BrandEnum.fromValue(brand)),
-                capturedEvent.getData().getLogo()
+                ((PgsTransactionGatewayAuthorizationRequestedData) capturedEvent.getData()
+                        .getTransactionGatewayAuthorizationRequestedData()).getLogo()
         );
         cardsTested = true;
         testedCardBrands.add(CardAuthRequestDetailsDto.BrandEnum.fromValue(brand));

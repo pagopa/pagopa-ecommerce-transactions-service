@@ -54,7 +54,8 @@ microservice-chart:
       WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3020"
       LOGO_CARD_BRANDING_MAPPING: >
         { VISA:'https://checkout.pagopa.it/assets/creditcard/visa.png',  MASTERCARD:'https://checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://checkout.pagopa.it/assets/creditcard/diners.png', MAESTRO:'https://checkout.pagopa.it/assets/creditcard/maestro.png', AMEX:'https://checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://checkout.pagopa.it/assets/creditcard/generic.png' }
-
+      LOGO_NPG_PAYMENT_CIRCUIT_MAPPING: >
+        { VISA:'https://checkout.pagopa.it/assets/creditcard/visa.png', MC:'https://checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://checkout.pagopa.it/assets/creditcard/diners.png', AMEX:'https://checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://checkout.pagopa.it/assets/creditcard/generic.png' }
       SERVER_ERROR_INCLUDE_STACKTRACE: "never"
       OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-blue,deployment.environment=prod"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.elastic-system.svc:4317"
@@ -176,7 +177,8 @@ microservice-chart:
     WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3020"
     LOGO_CARD_BRANDING_MAPPING: >
       { VISA:'https://checkout.pagopa.it/assets/creditcard/visa.png',  MASTERCARD:'https://checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://checkout.pagopa.it/assets/creditcard/diners.png', MAESTRO:'https://checkout.pagopa.it/assets/creditcard/maestro.png', AMEX:'https://checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://checkout.pagopa.it/assets/creditcard/generic.png' }
-
+    LOGO_NPG_PAYMENT_CIRCUIT_MAPPING: >
+      { VISA:'https://checkout.pagopa.it/assets/creditcard/visa.png', MC:'https://checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://checkout.pagopa.it/assets/creditcard/diners.png', AMEX:'https://checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://checkout.pagopa.it/assets/creditcard/generic.png' }
     SERVER_ERROR_INCLUDE_STACKTRACE: "never"
     OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service,deployment.environment=prod"
     OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.elastic-system.svc:4317"

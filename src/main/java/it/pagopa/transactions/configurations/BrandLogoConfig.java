@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 
 import java.net.URI;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -20,9 +21,9 @@ public class BrandLogoConfig {
     @Bean
     @Qualifier("brandConfMap")
     public Map<CardAuthRequestDetailsDto.BrandEnum, URI> brandConfMap(
-                                                                      @Value(
-                                                                          "#{${logo.cardBrandMapping}}"
-                                                                      ) Map<String, String> cardBrandLogoMapping
+            @Value(
+                    "#{${logo.cardBrandMapping}}"
+            ) Map<String, String> cardBrandLogoMapping
     ) {
         Map<CardAuthRequestDetailsDto.BrandEnum, URI> logoMap = new EnumMap<>(
                 CardAuthRequestDetailsDto.BrandEnum.class
@@ -42,6 +43,20 @@ public class BrandLogoConfig {
                     "Misconfigured logo.cardBrandMapping, the following brands are not configured: %s"
                             .formatted(missingConfKey)
             );
+        }
+        return logoMap;
+    }
+
+    @Bean
+    @Qualifier("npgPaymentCircuitLogoMap")
+    public Map<String, URI> npgPaymentCircuitLogoMap(
+            @Value(
+                    "#{${logo.npgPaymentCircuitMapping}}"
+            ) Map<String, String> npgPaymentCircuitMapping
+    ) {
+        Map<String, URI> logoMap = new HashMap<>();
+        for (Map.Entry<String, String> entry : npgPaymentCircuitMapping.entrySet()) {
+            logoMap.put(entry.getKey(), URI.create(entry.getValue()));
         }
         return logoMap;
     }

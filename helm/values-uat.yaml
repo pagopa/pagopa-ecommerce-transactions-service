@@ -52,8 +52,9 @@ microservice-chart:
       PERSONAL_DATA_VAULT_API_BASE_PATH: "https://api.uat.tokenizer.pdv.pagopa.it/tokenizer/v1"
       WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3020"
       LOGO_CARD_BRANDING_MAPPING: >
-        { VISA:'https://dev.checkout.pagopa.it/assets/creditcard/visa.png',  MASTERCARD:'https://dev.checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://dev.checkout.pagopa.it/assets/creditcard/diners.png', MAESTRO:'https://dev.checkout.pagopa.it/assets/creditcard/maestro.png', AMEX:'https://dev.checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://dev.checkout.pagopa.it/assets/creditcard/generic.png' }
-
+        { VISA:'https://uat.checkout.pagopa.it/assets/creditcard/visa.png',  MASTERCARD:'https://uat.checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://uat.checkout.pagopa.it/assets/creditcard/diners.png', MAESTRO:'https://uat.checkout.pagopa.it/assets/creditcard/maestro.png', AMEX:'https://uat.checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://uat.checkout.pagopa.it/assets/creditcard/generic.png' }
+      LOGO_NPG_PAYMENT_CIRCUIT_MAPPING: >
+        { VISA:'https://uat.checkout.pagopa.it/assets/creditcard/visa.png', MC:'https://uat.checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://uat.checkout.pagopa.it/assets/creditcard/diners.png', AMEX:'https://uat.checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://uat.checkout.pagopa.it/assets/creditcard/generic.png' }
       SERVER_ERROR_INCLUDE_STACKTRACE: "never"
       OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-blue,deployment.environment=uat"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.elastic-system.svc:4317"
@@ -173,8 +174,9 @@ microservice-chart:
     PERSONAL_DATA_VAULT_API_BASE_PATH: "https://api.uat.tokenizer.pdv.pagopa.it/tokenizer/v1"
     WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3020"
     LOGO_CARD_BRANDING_MAPPING: >
-      { VISA:'https://dev.checkout.pagopa.it/assets/creditcard/visa.png',  MASTERCARD:'https://dev.checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://dev.checkout.pagopa.it/assets/creditcard/diners.png', MAESTRO:'https://dev.checkout.pagopa.it/assets/creditcard/maestro.png', AMEX:'https://dev.checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://dev.checkout.pagopa.it/assets/creditcard/generic.png' }
-
+      { VISA:'https://uat.checkout.pagopa.it/assets/creditcard/visa.png',  MASTERCARD:'https://uat.checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://uat.checkout.pagopa.it/assets/creditcard/diners.png', MAESTRO:'https://uat.checkout.pagopa.it/assets/creditcard/maestro.png', AMEX:'https://uat.checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://uat.checkout.pagopa.it/assets/creditcard/generic.png' }
+    LOGO_NPG_PAYMENT_CIRCUIT_MAPPING: >
+      { VISA:'https://uat.checkout.pagopa.it/assets/creditcard/visa.png', MC:'https://uat.checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://uat.checkout.pagopa.it/assets/creditcard/diners.png', AMEX:'https://uat.checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://uat.checkout.pagopa.it/assets/creditcard/generic.png' }
     SERVER_ERROR_INCLUDE_STACKTRACE: "never"
     OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service,deployment.environment=uat"
     OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.elastic-system.svc:4317"
