@@ -12,6 +12,7 @@ import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHandlerCommon;
+import it.pagopa.transactions.configurations.BrandLogoConfig;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
@@ -102,7 +103,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
     }
 
     private URI getPaymentCircuitLogo(String paymentCircuit) {
-        URI unknownLogo = npgPaymentCircuitLogoMap.get("UNKNOWN");
+        URI unknownLogo = npgPaymentCircuitLogoMap.get(BrandLogoConfig.UNKNOWN_LOGO_KEY);
         return npgPaymentCircuitLogoMap.getOrDefault(paymentCircuit, unknownLogo);
     }
 }
