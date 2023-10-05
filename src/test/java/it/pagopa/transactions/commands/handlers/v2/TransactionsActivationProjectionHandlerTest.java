@@ -4,7 +4,7 @@ import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
+import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
@@ -42,9 +42,12 @@ class TransactionsActivationProjectionHandlerTest {
         String rptIdString = paFiscalCode + "111111111111111111";
         String paymentTokenString = UUID.randomUUID().toString();
         String transactionDescription = "transaction description";
+        String orderId = "orderId";
         int amountInt = 100;
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
         transactionActivatedData.setEmail(TransactionTestUtils.EMAIL);
+        transactionActivatedData
+                .setTransactionGatewayActivationData(new NpgTransactionGatewayActivationData(orderId, null, null));
         transactionActivatedData.setPaymentNotices(
                 List.of(
                         new PaymentNotice(
@@ -104,7 +107,7 @@ class TransactionsActivationProjectionHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                new EmptyTransactionGatewayActivationData()
+                new NpgTransactionGatewayActivationData(orderId, null, null)
         );
 
         it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.v2.Transaction
@@ -136,6 +139,12 @@ class TransactionsActivationProjectionHandlerTest {
         assertEquals(
                 transactionResult.getTransactionActivatedData().getPaymentNotices().get(0).getPaymentToken(),
                 transaction.getTransactionActivatedData().getPaymentNotices().get(0).getPaymentToken()
+        );
+        assertEquals(
+                ((NpgTransactionGatewayActivationData) transactionResult.getTransactionActivatedData()
+                        .getTransactionGatewayActivationData()).getOrderId(),
+                ((NpgTransactionGatewayActivationData) transaction.getTransactionActivatedData()
+                        .getTransactionGatewayActivationData()).getOrderId()
         );
 
     }
