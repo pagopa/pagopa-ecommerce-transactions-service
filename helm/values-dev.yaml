@@ -10,14 +10,14 @@ microservice-chart:
     httpGet:
       path: /actuator/health/liveness
       port: 8080
-    initialDelaySeconds: 120
+    initialDelaySeconds: 150
     failureThreshold: 6
     periodSeconds: 10
   readinessProbe:
     httpGet:
       path: /actuator/health/readiness
       port: 8080
-    initialDelaySeconds: 120
+    initialDelaySeconds: 150
     failureThreshold: 6
     periodSeconds: 10
   deployment:
@@ -81,6 +81,7 @@ microservice-chart:
     NODO_CONNECTION_TIMEOUT: "10000"
     NODO_PARALLEL_REQUESTS: "5"
     NODO_ALL_CCP_ON_TRANSFER_IBAN_ENABLED: "true"
+    NODO_ECOMMERCE_CLIENT_ID: ecommdev
     ECOMMERCE_PAYMENT_METHODS_URI: https://api.dev.platform.pagopa.it/ecommerce/payment-methods-service/v1
     ECOMMERCE_PAYMENT_METHODS_READ_TIMEOUT: "10000"
     ECOMMERCE_PAYMENT_METHODS_CONNECTION_TIMEOUT: "10000"

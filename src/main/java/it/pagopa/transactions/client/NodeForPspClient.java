@@ -1,10 +1,17 @@
 package it.pagopa.transactions.client;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import it.pagopa.ecommerce.commons.client.NpgClient;
+import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
+import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
+import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Request;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Response;
 import it.pagopa.transactions.exceptions.BadGatewayException;
+import it.pagopa.transactions.utils.ConfidentialMailUtils;
+import it.pagopa.transactions.utils.UUIDUtils;
 import it.pagopa.transactions.utils.soap.SoapEnvelope;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,18 +26,26 @@ import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
 import javax.xml.bind.JAXBElement;
+import java.util.Map;
 
 @Component
 @Slf4j
 public class NodeForPspClient {
 
-    private static final String CLOSE_PAYMENT_CLIENT_ID = "ecomm";
-    @Autowired
-    @Qualifier("nodoWebClient")
     private WebClient nodoWebClient;
-
-    @Value("${nodo.nodeforpsp.uri}")
     private String nodoPerPspUri;
+    private String ecommerceClientId;
+
+    @Autowired
+    public NodeForPspClient(
+            @Qualifier("nodoWebClient") WebClient nodoWebClient,
+            @Value("${nodo.nodeforpsp.uri}") String nodoPerPspUri,
+            @Value("${nodo.ecommerce.clientId}") String ecommerceClientId
+    ) {
+        this.nodoWebClient = nodoWebClient;
+        this.nodoPerPspUri = nodoPerPspUri;
+        this.ecommerceClientId = ecommerceClientId;
+    }
 
     public Mono<ActivatePaymentNoticeV2Response> activatePaymentNoticeV2(
                                                                          JAXBElement<ActivatePaymentNoticeV2Request> request
@@ -82,7 +97,7 @@ public class NodeForPspClient {
         return nodoWebClient.post()
                 .uri(
                         uriBuilder -> uriBuilder.path("/nodo/nodo-per-pm/v2/closepayment")
-                                .queryParam("clientId", CLOSE_PAYMENT_CLIENT_ID).build()
+                                .queryParam("clientId", ecommerceClientId).build()
                 )
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(Mono.just(request), ClosePaymentRequestV2Dto.class)
