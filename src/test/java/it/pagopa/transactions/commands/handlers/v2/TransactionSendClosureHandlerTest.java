@@ -10,8 +10,7 @@ import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v2.*;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData.PaymentGateway;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
-import it.pagopa.ecommerce.commons.documents.v2.authorization.EmptyTransactionGatewayAuthorizationRequestedData;
-import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.*;
@@ -3717,6 +3716,8 @@ class TransactionSendClosureHandlerTest {
                 )
         );
 
+        NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationData = (NpgTransactionGatewayAuthorizationRequestedData) TransactionTestUtils
+                .npgTransactionGatewayAuthorizationRequestedData();
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = new TransactionAuthorizationRequestedEvent(
                 transactionId.value(),
                 new TransactionAuthorizationRequestData(
@@ -3733,20 +3734,18 @@ class TransactionSendClosureHandlerTest {
                         "authorizationRequestId",
                         PaymentGateway.VPOS,
                         "paymentMethodDescription",
-                        new EmptyTransactionGatewayAuthorizationRequestedData()
+                        npgTransactionGatewayAuthorizationData
                 )
         );
-        NpgTransactionGatewayAuthorizationData npgTransactionGatewayAuthorizationData = (NpgTransactionGatewayAuthorizationData) TransactionTestUtils
-                .npgTransactionGatewayAuthorizationData(OperationResultDto.EXECUTED);
         String logoUri = npgTransactionGatewayAuthorizationData.getLogo().toString();
-        String brand = npgTransactionGatewayAuthorizationData.getPaymentCircuit();
+        String brand = npgTransactionGatewayAuthorizationData.getBrand();
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = new TransactionAuthorizationCompletedEvent(
                 transactionId.value(),
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         ECOMMERCE_RRN,
                         expectedOperationTimestamp,
-                        npgTransactionGatewayAuthorizationData
+                        TransactionTestUtils.npgTransactionGatewayAuthorizationData(OperationResultDto.EXECUTED)
                 )
         );
 

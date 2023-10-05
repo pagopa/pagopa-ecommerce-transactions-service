@@ -895,7 +895,8 @@ class TransactionServiceTests {
                 .expiryDate("203012")
                 .cvv("000")
                 .pan("0123456789012345")
-                .holderName("Name Surname");
+                .holderName("Name Surname")
+                .brand(CardAuthRequestDetailsDto.BrandEnum.VISA);
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
                 .amount(100)
                 .paymentInstrumentId("paymentInstrumentId")

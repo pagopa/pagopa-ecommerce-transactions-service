@@ -10,7 +10,6 @@ import it.pagopa.ecommerce.commons.documents.v2.authorization.TransactionGateway
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
-import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
@@ -24,7 +23,6 @@ import it.pagopa.transactions.utils.LogoMappingUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -33,7 +31,6 @@ import reactor.util.function.Tuples;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 
 @Component("TransactionRequestAuthorizationHandlerV2")
 @Slf4j
@@ -66,7 +63,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
     @Override
     public Mono<RequestAuthorizationResponseDto> handle(TransactionRequestAuthorizationCommand command) {
         AuthorizationRequestData authorizationRequestData = command.getData();
-        URI logo = getLogo(command.getData().authDetails());
+        URI logo = getLogo(command.getData());
         Mono<BaseTransaction> transaction = transactionsUtils.reduceEventsV2(
                 command.getData().transactionId()
         );
@@ -113,23 +110,16 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                     );
 
                                     // TODO remove this after the cancellation of the postepay logic
-                                    PgsTransactionGatewayAuthorizationRequestedData.CardBrand cardBrand = getCardBrand(
-                                            authorizationRequestData
-                                    ).map(
-                                            brand -> PgsTransactionGatewayAuthorizationRequestedData.CardBrand
-                                                    .valueOf(brand.toString())
-                                    ).orElse(null);
+                                    String brand = authorizationRequestData.brand();
                                     TransactionGatewayAuthorizationRequestedData transactionGatewayAuthorizationRequestedData = switch (tuple3
                                             .getT3()) {
                                         case VPOS, XPAY -> new PgsTransactionGatewayAuthorizationRequestedData(
                                                 logo,
-                                                cardBrand
+                                                PgsTransactionGatewayAuthorizationRequestedData.CardBrand.valueOf(brand)
                                         );
                                         case NPG -> new NpgTransactionGatewayAuthorizationRequestedData(
-                                                logo,z
-                                                "" //TODO continua da qui, brand in questo caso è quello preso da risposta payment methods.
-                                                //TODO forse conviene centralizzare il tutto lato service e prenderlo da una sola parte
-
+                                                logo,
+                                                brand
                                         );
                                         // TODO remove this after the cancellation of the postepay logic
                                         case POSTEPAY -> null;

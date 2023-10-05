@@ -4,7 +4,6 @@ import com.azure.cosmos.implementation.BadRequestException;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
-import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldDto;
@@ -24,6 +23,7 @@ import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import it.pagopa.transactions.utils.LogoMappingUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.apache.commons.codec.binary.Base64;
 import org.junit.jupiter.api.AfterAll;
@@ -41,14 +41,11 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 
@@ -78,18 +75,11 @@ class TransactionRequestAuthorizationHandlerTest {
     @Mock
     private EcommercePaymentMethodsClient paymentMethodsClient;
 
+    @Mock
+    private LogoMappingUtils logoMappingUtils;
+
     @Captor
     private ArgumentCaptor<TransactionEvent<TransactionAuthorizationRequestData>> eventStoreCaptor;
-
-    private static final Map<CardAuthRequestDetailsDto.BrandEnum, URI> brandLogoMapping = Arrays.stream(
-            CardAuthRequestDetailsDto.BrandEnum.values()
-    )
-            .collect(
-                    Collectors.toUnmodifiableMap(
-                            Function.identity(),
-                            brand -> URI.create("http://%s.cdn.uri".formatted(brand))
-                    )
-            );
 
     private static final String CHECKOUT_BASE_PATH = "checkoutUri";
     private static final Set<CardAuthRequestDetailsDto.BrandEnum> testedCardBrands = new HashSet<>();
@@ -125,9 +115,9 @@ class TransactionRequestAuthorizationHandlerTest {
                 paymentGatewayClient,
                 transactionEventStoreRepository,
                 transactionsUtils,
-                brandLogoMapping,
                 CHECKOUT_BASE_PATH,
-                paymentMethodsClient
+                paymentMethodsClient,
+                logoMappingUtils
         );
     }
 
@@ -189,6 +179,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 null,
                 Optional.empty(),
+                "VISA",
                 new PostePayAuthRequestDetailsDto()
         );
 
@@ -272,6 +263,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 "XPAY",
                 Optional.empty(),
+                "VISA",
                 new CardAuthRequestDetailsDto().brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
         );
 
@@ -357,6 +349,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 "VPOS",
                 Optional.empty(),
+                "VISA",
                 new CardAuthRequestDetailsDto().brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
         );
 
@@ -443,6 +436,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                "VISA",
                 new CardsAuthRequestDetailsDto().orderId("orderId")
         );
 
@@ -542,6 +536,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                "VISA",
                 new CardsAuthRequestDetailsDto().orderId("orderId")
         );
 
@@ -641,6 +636,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                "VISA",
                 new CardsAuthRequestDetailsDto().orderId("orderId")
         );
 
@@ -746,6 +742,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                "VISA",
                 new CardsAuthRequestDetailsDto().orderId("orderId")
         );
 
@@ -835,6 +832,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 null,
                 Optional.empty(),
+                "VISA",
                 null
         );
 
@@ -917,6 +915,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 "GPAY",
                 Optional.empty(),
+                "VISA",
                 new PostePayAuthRequestDetailsDto().detailType("GPAY").accountEmail("test@test.it")
         );
 
@@ -1005,6 +1004,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 "VPOS",
                 Optional.empty(),
+                "VISA",
                 new CardAuthRequestDetailsDto()
                         .cvv("000")
                         .pan("123")
@@ -1040,11 +1040,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
         TransactionEvent<TransactionAuthorizationRequestData> capturedEvent = eventStoreCaptor.getValue();
-        assertEquals(
-                brandLogoMapping.get(CardAuthRequestDetailsDto.BrandEnum.fromValue(brand)),
-                ((PgsTransactionGatewayAuthorizationRequestedData) capturedEvent.getData()
-                        .getTransactionGatewayAuthorizationRequestedData()).getLogo()
-        );
+
         cardsTested = true;
         testedCardBrands.add(CardAuthRequestDetailsDto.BrandEnum.fromValue(brand));
     }
@@ -1109,6 +1105,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 null,
                 Optional.of(sessionId),
+                "VISA",
                 new CardsAuthRequestDetailsDto()
                         .detailType("cards")
                         .orderId(orderId)

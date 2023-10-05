@@ -70,8 +70,8 @@ class BrandLogoConfigTest {
         Map<String, URI> npgLogoMap = brandLogoConfig.npgPaymentCircuitLogoMap(npgPaymentCircuitLogoMap);
         npgPaymentCircuitLogoMap.forEach(
                 (
-                        k,
-                        v
+                 k,
+                 v
                 ) -> assertEquals(v, npgLogoMap.get(k).toString())
         );
     }

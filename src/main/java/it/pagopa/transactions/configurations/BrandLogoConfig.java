@@ -23,9 +23,9 @@ public class BrandLogoConfig {
     @Bean
     @Qualifier("pgsBrandConfMap")
     public Map<CardAuthRequestDetailsDto.BrandEnum, URI> pgsBrandConfMap(
-            @Value(
-                    "#{${logo.cardBrandMapping}}"
-            ) Map<String, String> cardBrandLogoMapping
+                                                                         @Value(
+                                                                             "#{${logo.cardBrandMapping}}"
+                                                                         ) Map<String, String> cardBrandLogoMapping
     ) {
         Map<CardAuthRequestDetailsDto.BrandEnum, URI> logoMap = new EnumMap<>(
                 CardAuthRequestDetailsDto.BrandEnum.class
@@ -52,9 +52,9 @@ public class BrandLogoConfig {
     @Bean
     @Qualifier("npgPaymentCircuitLogoMap")
     public Map<String, URI> npgPaymentCircuitLogoMap(
-            @Value(
-                    "#{${logo.npgPaymentCircuitMapping}}"
-            ) Map<String, String> npgPaymentCircuitMapping
+                                                     @Value(
+                                                         "#{${logo.npgPaymentCircuitMapping}}"
+                                                     ) Map<String, String> npgPaymentCircuitMapping
     ) {
         Map<String, URI> logoMap = new HashMap<>();
         for (Map.Entry<String, String> entry : npgPaymentCircuitMapping.entrySet()) {

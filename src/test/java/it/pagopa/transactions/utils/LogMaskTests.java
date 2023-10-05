@@ -105,6 +105,7 @@ class LogMaskTests {
                 false,
                 "XPAY",
                 Optional.empty(),
+                "VISA",
                 cardDetails
         );
 

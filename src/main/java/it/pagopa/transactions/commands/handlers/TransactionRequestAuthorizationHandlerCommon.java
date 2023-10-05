@@ -1,7 +1,5 @@
 package it.pagopa.transactions.commands.handlers;
 
-import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
-import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
@@ -17,7 +15,6 @@ import reactor.util.function.Tuples;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.Optional;
 
 @Slf4j
 public abstract class TransactionRequestAuthorizationHandlerCommon
@@ -31,11 +28,11 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
 
     private final LogoMappingUtils logoMappingUtils;
 
-
     protected TransactionRequestAuthorizationHandlerCommon(
             PaymentGatewayClient paymentGatewayClient,
             String checkoutBasePath,
-            LogoMappingUtils logoMappingUtils) {
+            LogoMappingUtils logoMappingUtils
+    ) {
         this.paymentGatewayClient = paymentGatewayClient;
         this.checkoutBasePath = checkoutBasePath;
         this.logoMappingUtils = logoMappingUtils;
@@ -90,34 +87,27 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                         npgCardsResponseDto -> Tuples.of(
                                 "sessionId",
                                 switch (npgCardsResponseDto.getState()) {
-                                    case GDI_VERIFICATION -> URI.create(checkoutBasePath)
-                                            .resolve(
-                                                    CHECKOUT_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
-                                                            npgCardsResponseDto.getFieldSet().getFields().get(0).getSrc()
-                                                                    .getBytes(StandardCharsets.UTF_8)
-                                                    )
-                                            ).toString();
-                                    case REDIRECTED_TO_EXTERNAL_DOMAIN -> npgCardsResponseDto.getUrl();
-                                    case PAYMENT_COMPLETE -> URI.create(checkoutBasePath).resolve(CHECKOUT_ESITO_PATH)
-                                            .toString();
-                                    default -> throw new BadGatewayException(
-                                            "Invalid NPG confirm payment state response: " + npgCardsResponseDto.getState(),
-                                            HttpStatus.BAD_GATEWAY
-                                    );
+                                case GDI_VERIFICATION -> URI.create(checkoutBasePath)
+                                        .resolve(
+                                                CHECKOUT_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
+                                                        npgCardsResponseDto.getFieldSet().getFields().get(0).getSrc()
+                                                                .getBytes(StandardCharsets.UTF_8)
+                                                )
+                                        ).toString();
+                                case REDIRECTED_TO_EXTERNAL_DOMAIN -> npgCardsResponseDto.getUrl();
+                                case PAYMENT_COMPLETE -> URI.create(checkoutBasePath).resolve(CHECKOUT_ESITO_PATH)
+                                        .toString();
+                                default -> throw new BadGatewayException(
+                                        "Invalid NPG confirm payment state response: " + npgCardsResponseDto.getState(),
+                                        HttpStatus.BAD_GATEWAY
+                                );
                                 }
                         )
 
                 );
     }
 
-    protected Optional<CardAuthRequestDetailsDto.BrandEnum> getCardBrand(AuthorizationRequestData authorizationData) {
-        if (authorizationData.authDetails() instanceof CardAuthRequestDetailsDto detailType) {
-            return Optional.ofNullable(detailType.getBrand());
-        }
-        return Optional.empty();
-    }
-
-    protected URI getLogo(RequestAuthorizationRequestDetailsDto authRequestDetails) {
-        return logoMappingUtils.getLogo(authRequestDetails);
+    protected URI getLogo(AuthorizationRequestData authorizationRequestData) {
+        return logoMappingUtils.getLogo(authorizationRequestData);
     }
 }

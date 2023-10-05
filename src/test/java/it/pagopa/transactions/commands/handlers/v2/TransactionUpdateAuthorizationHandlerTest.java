@@ -181,16 +181,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                                                                             .getOutcomeGateway())
                                                                                     .getOperationResult().getValue()
                                                             )
-                                                    )
-                                            && npgData.getLogo()
-                                                    .equals(
-                                                            npgPaymentCircuitLogoMap.get(
-                                                                    npgTransactionGatewayAuthorizationData
-                                                                            .getPaymentCircuit()
-                                                            )
-                                                    )
-                                            && npgData.getPaymentCircuit()
-                                                    .equals(npgTransactionGatewayAuthorizationData.getPaymentCircuit());
+                                                    );
                                 }
                         )
                 );

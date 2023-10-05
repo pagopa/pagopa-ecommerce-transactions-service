@@ -6,7 +6,6 @@ import io.vavr.Tuple;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptRequestedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.*;
@@ -37,9 +36,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
+import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
-import java.util.*;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -496,7 +499,7 @@ public class TransactionsService {
                                                                             transactionsUtils.getClientId(transaction)
                                                                     )
                                                                     .bin(
-                                                                            authorizationInfo.map(Tuple2::getT1)
+                                                                            authorizationInfo.map(Tuple3::getT1)
                                                                                     .orElse(null)
                                                                     )
                                                                     .idPspList(
@@ -537,7 +540,8 @@ public class TransactionsService {
                                                     .map(
                                                             calculateFeeResponseDto -> Tuples.of(
                                                                     calculateFeeResponseDto,
-                                                                    authorizationInfo.flatMap(Tuple2::getT2)
+                                                                    authorizationInfo.flatMap(Tuple3::getT2),
+                                                                    authorizationInfo.map(Tuple3::getT3)
                                                             )
                                                     )
                                     )
@@ -562,7 +566,8 @@ public class TransactionsService {
                                                                                         )
                                                                                 )
                                                                 ).findFirst(),
-                                                        data.getT2()
+                                                        data.getT2(),
+                                                        data.getT3()
                                                 );
                                             }
                                     )
@@ -582,7 +587,8 @@ public class TransactionsService {
                                                     t.getT1(),
                                                     t.getT2(),
                                                     t.getT3().get(),
-                                                    t.getT4()
+                                                    t.getT4(),
+                                                    t.getT5()
                                             )
 
                                     );
@@ -596,7 +602,7 @@ public class TransactionsService {
                             String paymentMethodDescription = args.getT3();
                             BundleDto bundle = args.getT4();
                             Optional<String> sessionId = args.getT5();
-
+                            Optional<String> brand = args.getT6();
                             log.info(
                                     "Requesting authorization for transactionId: {}",
                                     transactionDocument.getTransactionId()
@@ -640,6 +646,7 @@ public class TransactionsService {
                                     bundle.getOnUs(),
                                     paymentGatewayId,
                                     sessionId,
+                                    brand.orElse(null),
                                     requestAuthorizationRequestDto.getDetails()
                             );
 
@@ -1261,12 +1268,12 @@ public class TransactionsService {
                 ).orElseThrow(() -> new InvalidRequestException("Null value as input origin"));
     }
 
-    private Mono<Optional<Tuple2<String, Optional<String>>>> retrieveInformationFromAuthorizationRequest(RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
+    private Mono<Optional<Tuple3<String, Optional<String>, String>>> retrieveInformationFromAuthorizationRequest(RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
         return switch (requestAuthorizationRequestDto.getDetails()) {
             case CardAuthRequestDetailsDto cardData ->
-                    Mono.just(Optional.of(Tuples.of(cardData.getPan().substring(0, 6), Optional.empty())));
+                    Mono.just(Optional.of(Tuples.of(cardData.getPan().substring(0, 6), Optional.empty(), Optional.of(cardData.getBrand()).map(Enum::toString).orElse(null))));
             case CardsAuthRequestDetailsDto cards ->
-                    ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId()).map(response -> Optional.of(Tuples.of(response.getBin(), Optional.of(response.getSessionId()))));
+                    ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId()).map(response -> Optional.of(Tuples.of(response.getBin(), Optional.of(response.getSessionId()), response.getBrand())));
             default -> Mono.just(Optional.empty());
         };
     }

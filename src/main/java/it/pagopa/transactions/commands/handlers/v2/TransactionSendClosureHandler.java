@@ -4,7 +4,7 @@ import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
-import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionAuthorizationCompleted;
@@ -468,27 +468,30 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
     }
 
     private InfoDto buildInfoDto(
-                                 it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData transactionActivatedData,
-                                 it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData transactionAuthorizationRequestData,
-                                 it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData transactionAuthorizationCompletedData
+            it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData transactionActivatedData,
+            it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData transactionAuthorizationRequestData,
+            it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData transactionAuthorizationCompletedData
     ) {
-        Optional<String> logoUri = Optional.empty();
+        Optional<URI> logoUri = Optional.empty();
         Optional<String> brand = Optional.empty();
-        if (transactionAuthorizationRequestData
-                .getTransactionGatewayAuthorizationRequestedData()instanceof PgsTransactionGatewayAuthorizationRequestedData pgsData) {
-            logoUri = Optional.ofNullable(pgsData.getLogo()).map(URI::toString);
-            brand = Optional.ofNullable(pgsData.getBrand())
-                    .map(PgsTransactionGatewayAuthorizationRequestedData.CardBrand::toString);
+        switch (transactionAuthorizationRequestData
+                .getTransactionGatewayAuthorizationRequestedData()) {
+            case PgsTransactionGatewayAuthorizationRequestedData pgsData -> {
+                logoUri = Optional.ofNullable(pgsData.getLogo());
+                brand = Optional.ofNullable(pgsData.getBrand()).map(PgsTransactionGatewayAuthorizationRequestedData.CardBrand::toString);
+            }
+            case NpgTransactionGatewayAuthorizationRequestedData npgData -> {
+                logoUri = Optional.ofNullable(npgData.getLogo());
+                brand = Optional.ofNullable(npgData.getBrand());
+            }
+
         }
-        if (transactionAuthorizationCompletedData
-                .getTransactionGatewayAuthorizationData()instanceof NpgTransactionGatewayAuthorizationData npgData) {
-            logoUri = Optional.ofNullable(npgData.getLogo()).map(URI::toString);
-            brand = Optional.ofNullable(npgData.getPaymentCircuit());
-        }
+
         InfoDto result = new InfoDto()
                 .clientId(transactionActivatedData.getClientId().name())
                 .brandLogo(
                         logoUri
+                                .map(URI::toString)
                                 .orElse(null)
                 )
                 .brand(
