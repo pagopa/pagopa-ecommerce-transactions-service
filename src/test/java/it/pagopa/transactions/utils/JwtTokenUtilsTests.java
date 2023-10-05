@@ -23,14 +23,35 @@ class JwtTokenUtilsTests {
     private final JwtTokenUtils jwtTokenUtils = new JwtTokenUtils(jwtSecretKey, TOKEN_VALIDITY_TIME_SECONDS);
 
     @Test
-    void shouldGenerateValidJwtToken() {
+    void shouldGenerateValidJwtTokenWithOrderIdAndTransactionId() {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
-        String generatedToken = jwtTokenUtils.generateToken(transactionId).block();
+        String orderId = UUID.randomUUID().toString();
+        String generatedToken = jwtTokenUtils.generateToken(transactionId, orderId).block();
         assertNotNull(generatedToken);
         Claims claims = assertDoesNotThrow(
                 () -> Jwts.parserBuilder().setSigningKey(jwtSecretKey).build().parseClaimsJws(generatedToken).getBody()
         );
         assertEquals(transactionId.value(), claims.get(JwtTokenUtils.TRANSACTION_ID_CLAIM, String.class));
+        assertEquals(orderId, claims.get(JwtTokenUtils.ORDER_ID_CLAIM, String.class));
+        assertNotNull(claims.getId());
+        assertNotNull(claims.getIssuedAt());
+        assertNotNull(claims.getExpiration());
+        assertEquals(
+                Duration.ofSeconds(TOKEN_VALIDITY_TIME_SECONDS).toMillis(),
+                claims.getExpiration().getTime() - claims.getIssuedAt().getTime()
+        );
+    }
+
+    @Test
+    void shouldGenerateValidJwtTokenWithOnlyTransactionId() {
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        String generatedToken = jwtTokenUtils.generateToken(transactionId, null).block();
+        assertNotNull(generatedToken);
+        Claims claims = assertDoesNotThrow(
+                () -> Jwts.parserBuilder().setSigningKey(jwtSecretKey).build().parseClaimsJws(generatedToken).getBody()
+        );
+        assertEquals(transactionId.value(), claims.get(JwtTokenUtils.TRANSACTION_ID_CLAIM, String.class));
+        assertNull(claims.get(JwtTokenUtils.ORDER_ID_CLAIM, String.class));
         assertNotNull(claims.getId());
         assertNotNull(claims.getIssuedAt());
         assertNotNull(claims.getExpiration());

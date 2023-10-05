@@ -7,6 +7,7 @@ import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
+import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
@@ -208,7 +209,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                         .collectList()
                         .flatMap(
                                 paymentRequestInfos -> jwtTokenUtils
-                                        .generateToken(transactionId)
+                                        .generateToken(transactionId, command.getData().orderId())
                                         .map(generatedToken -> Tuples.of(generatedToken, paymentRequestInfos))
                         ).flatMap(
                                 args -> {
@@ -222,7 +223,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                             newTransactionRequestDto.email(),
                                                             command.getClientId(),
                                                             newTransactionRequestDto.idCard(),
-                                                            paymentTokenTimeout
+                                                            paymentTokenTimeout,
+                                                            command.getData().orderId()
                                                     ),
                                                     authToken
                                             )
@@ -302,7 +304,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                                        String email,
                                                                        String clientId,
                                                                        String idCart,
-                                                                       Integer paymentTokenTimeout
+                                                                       Integer paymentTokenTimeout,
+                                                                       String orderId
     ) {
         List<PaymentNotice> paymentNotices = toPaymentNoticeList(paymentRequestsInfo);
         Mono<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData> data = confidentialMailUtils
@@ -315,7 +318,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.valueOf(clientId),
                                 idCart,
                                 paymentTokenTimeout,
-                                new EmptyTransactionGatewayActivationData()
+                                orderId != null ? new NpgTransactionGatewayActivationData(orderId, null, null)
+                                        : new EmptyTransactionGatewayActivationData()
                         )
                 );
 

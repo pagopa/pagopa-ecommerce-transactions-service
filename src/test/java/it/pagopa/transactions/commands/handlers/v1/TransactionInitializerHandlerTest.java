@@ -180,7 +180,7 @@ class TransactionInitializerHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        Mockito.when(jwtTokenUtils.generateToken(any()))
+        Mockito.when(jwtTokenUtils.generateToken(any(), any()))
                 .thenReturn(Mono.just("authToken"));
 
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
@@ -306,7 +306,7 @@ class TransactionInitializerHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        Mockito.when(jwtTokenUtils.generateToken(any()))
+        Mockito.when(jwtTokenUtils.generateToken(any(), any()))
                 .thenReturn(Mono.just("authToken"));
 
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
@@ -369,7 +369,7 @@ class TransactionInitializerHandlerTest {
 
         /* preconditions */
 
-        Mockito.when(jwtTokenUtils.generateToken(any()))
+        Mockito.when(jwtTokenUtils.generateToken(any(), any()))
                 .thenReturn(Mono.error(new JWTTokenGenerationException()));
 
         /* run test */
@@ -564,7 +564,7 @@ class TransactionInitializerHandlerTest {
                 nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(dueDate))
         )
                 .thenReturn(Mono.just(paymentRequestInfoAfterActivation));
-        Mockito.when(jwtTokenUtils.generateToken(any()))
+        Mockito.when(jwtTokenUtils.generateToken(any(), any()))
                 .thenReturn(Mono.just("authToken"));
         Mockito.when(
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(
@@ -671,7 +671,7 @@ class TransactionInitializerHandlerTest {
                 nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(null))
         )
                 .thenReturn(Mono.just(paymentRequestInfoAfterActivation));
-        Mockito.when(jwtTokenUtils.generateToken(any()))
+        Mockito.when(jwtTokenUtils.generateToken(any(), any()))
                 .thenReturn(Mono.just("authToken"));
         Mockito.when(
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(
@@ -772,7 +772,7 @@ class TransactionInitializerHandlerTest {
                 nodoOperations.generateRandomStringToIdempotencyKey()
         )
                 .thenReturn("aabbccddee");
-        Mockito.when(jwtTokenUtils.generateToken(any()))
+        Mockito.when(jwtTokenUtils.generateToken(any(), any()))
                 .thenReturn(Mono.just("authToken"));
         Mockito.when(
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(

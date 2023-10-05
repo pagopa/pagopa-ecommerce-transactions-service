@@ -92,7 +92,7 @@ class TransactionsControllerTest {
             paymentInfoDto.setRptId(RPTID);
             response.addPaymentsItem(paymentInfoDto);
             response.setAuthToken("token");
-            Mockito.when(jwtTokenUtils.generateToken(any())).thenReturn(Mono.just(""));
+            Mockito.when(jwtTokenUtils.generateToken(any(), any())).thenReturn(Mono.just(""));
             Mockito.lenient()
                     .when(
                             transactionsService
@@ -168,7 +168,7 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnProblemJsonWith400OnBadInput() {
-        Mockito.when(jwtTokenUtils.generateToken(any())).thenReturn(Mono.just(""));
+        Mockito.when(jwtTokenUtils.generateToken(any(), any())).thenReturn(Mono.just(""));
         webTestClient.post()
                 .uri("/v2/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -339,7 +339,7 @@ class TransactionsControllerTest {
             }
     )
     void shouldHandleTransactionCreatedWithMailCaseInsensitive(String email) {
-        Mockito.when(jwtTokenUtils.generateToken(any())).thenReturn(Mono.just(""));
+        Mockito.when(jwtTokenUtils.generateToken(any(), any())).thenReturn(Mono.just(""));
         Mockito.when(transactionsService.newTransaction(any(), any(), any()))
                 .thenReturn(Mono.just(new NewTransactionResponseDto()));
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
@@ -363,7 +363,7 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnBadRequestForInvalidMail() {
-        Mockito.when(jwtTokenUtils.generateToken(any())).thenReturn(Mono.just(""));
+        Mockito.when(jwtTokenUtils.generateToken(any(), any())).thenReturn(Mono.just(""));
         Mockito.when(transactionsService.newTransaction(any(), any(), any()))
                 .thenReturn(Mono.just(new NewTransactionResponseDto()));
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
