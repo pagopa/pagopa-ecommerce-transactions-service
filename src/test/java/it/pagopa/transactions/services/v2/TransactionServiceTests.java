@@ -29,7 +29,7 @@ import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import it.pagopa.transactions.services.TransactionsService;
+import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
 import it.pagopa.transactions.utils.JwtTokenUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -65,7 +65,8 @@ import static org.mockito.Mockito.*;
 @TestPropertySource(locations = "classpath:application-tests.properties")
 @Import(
     {
-            TransactionsService.class,
+            it.pagopa.transactions.services.v1.TransactionsService.class,
+            it.pagopa.transactions.services.v2.TransactionsService.class,
             it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler.class,
             it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler.class,
@@ -104,7 +105,8 @@ class TransactionServiceTests {
     private TransactionsViewRepository repository;
 
     @Autowired
-    private TransactionsService transactionsService;
+    @Qualifier(it.pagopa.transactions.services.v1.TransactionsService.QUALIFIER_NAME)
+    private it.pagopa.transactions.services.v1.TransactionsService transactionsServiceV1;
 
     @Autowired
     private UUIDUtils uuidUtils;
@@ -277,13 +279,13 @@ class TransactionServiceTests {
                 .authorizationErrorCode(null);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
-        when(transactionsUtils.convertEnumeration(any())).thenCallRealMethod();
+        when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
         assertEquals(
-                transactionsService.getTransactionInfo(TRANSACTION_ID).block(),
+                transactionsServiceV1.getTransactionInfo(TRANSACTION_ID).block(),
                 expected
         );
 
-        StepVerifier.create(transactionsService.getTransactionInfo(TRANSACTION_ID))
+        StepVerifier.create(transactionsServiceV1.getTransactionInfo(TRANSACTION_ID))
                 .expectNext(expected)
                 .verifyComplete();
     }
@@ -332,13 +334,13 @@ class TransactionServiceTests {
                 .authorizationErrorCode(null);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
-        when(transactionsUtils.convertEnumeration(any())).thenCallRealMethod();
+        when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
         assertEquals(
-                transactionsService.getTransactionInfo(TRANSACTION_ID).block(),
+                transactionsServiceV1.getTransactionInfo(TRANSACTION_ID).block(),
                 expected
         );
 
-        StepVerifier.create(transactionsService.getTransactionInfo(TRANSACTION_ID))
+        StepVerifier.create(transactionsServiceV1.getTransactionInfo(TRANSACTION_ID))
                 .expectNext(expected)
                 .verifyComplete();
     }
@@ -349,7 +351,7 @@ class TransactionServiceTests {
 
         assertThrows(
                 TransactionNotFoundException.class,
-                () -> transactionsService.getTransactionInfo(TRANSACTION_ID).block(),
+                () -> transactionsServiceV1.getTransactionInfo(TRANSACTION_ID).block(),
                 TRANSACTION_ID
         );
     }
@@ -436,7 +438,7 @@ class TransactionServiceTests {
         Mockito.when(transactionsUtils.getRptId(any(), anyInt())).thenCallRealMethod();
 
         /* test */
-        RequestAuthorizationResponseDto postePayAuthorizationResponse = transactionsService
+        RequestAuthorizationResponseDto postePayAuthorizationResponse = transactionsServiceV1
                 .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest).block();
 
         AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
@@ -536,7 +538,7 @@ class TransactionServiceTests {
         /* test */
         StepVerifier
                 .create(
-                        transactionsService
+                        transactionsServiceV1
                                 .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest)
                 )
                 .expectNext(requestAuthorizationResponse)
@@ -561,7 +563,7 @@ class TransactionServiceTests {
                 .thenReturn(Mono.empty());
 
         /* test */
-        Mono<RequestAuthorizationResponseDto> requestAuthorizationResponseDtoMono = transactionsService
+        Mono<RequestAuthorizationResponseDto> requestAuthorizationResponseDtoMono = transactionsServiceV1
                 .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest);
         assertThrows(
                 TransactionNotFoundException.class,
@@ -697,9 +699,9 @@ class TransactionServiceTests {
                 );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(Flux.empty());
-        when(transactionsUtils.convertEnumeration(any())).thenCallRealMethod();
+        when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
         /* test */
-        TransactionInfoDto transactionInfoResponse = transactionsService
+        TransactionInfoDto transactionInfoResponse = transactionsServiceV1
                 .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
@@ -737,7 +739,7 @@ class TransactionServiceTests {
         /* test */
         StepVerifier
                 .create(
-                        transactionsService
+                        transactionsServiceV1
                                 .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest)
                 )
                 .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
@@ -794,9 +796,9 @@ class TransactionServiceTests {
 
         Mockito.when(transactionUserReceiptProjectionHandlerV2.handle(any()))
                 .thenReturn(Mono.just(transactionDocument));
-        when(transactionsUtils.convertEnumeration(any())).thenCallRealMethod();
+        when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
         /* test */
-        TransactionInfoDto transactionInfoResponse = transactionsService
+        TransactionInfoDto transactionInfoResponse = transactionsServiceV1
                 .addUserReceipt(transactionId.value().toString(), addUserReceiptRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
@@ -854,10 +856,10 @@ class TransactionServiceTests {
 
         Mockito.when(transactionUserReceiptProjectionHandlerV2.handle(any()))
                 .thenReturn(Mono.just(transactionDocument));
-        when(transactionsUtils.convertEnumeration(any()))
+        when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
-        TransactionInfoDto transactionInfoResponse = transactionsService
+        TransactionInfoDto transactionInfoResponse = transactionsServiceV1
                 .addUserReceipt(transactionId.value(), addUserReceiptRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
@@ -884,7 +886,7 @@ class TransactionServiceTests {
                 .thenReturn(Mono.empty());
 
         /* test */
-        StepVerifier.create(transactionsService.addUserReceipt(TRANSACTION_ID, addUserReceiptRequest))
+        StepVerifier.create(transactionsServiceV1.addUserReceipt(TRANSACTION_ID, addUserReceiptRequest))
                 .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
                 .verify();
     }
@@ -959,7 +961,7 @@ class TransactionServiceTests {
         Mockito.when(transactionsUtils.getRptId(any(), anyInt())).thenCallRealMethod();
 
         /* test */
-        RequestAuthorizationResponseDto authorizationResponse = transactionsService
+        RequestAuthorizationResponseDto authorizationResponse = transactionsServiceV1
                 .requestTransactionAuthorization(TRANSACTION_ID, "XPAY", authorizationRequest).block();
 
         AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
@@ -1039,7 +1041,7 @@ class TransactionServiceTests {
         /* test */
         StepVerifier
                 .create(
-                        transactionsService
+                        transactionsServiceV1
                                 .requestTransactionAuthorization(TRANSACTION_ID, "XPAY", authorizationRequest)
                 )
                 .expectErrorMatches(exception -> exception instanceof TransactionAmountMismatchException)
@@ -1115,7 +1117,7 @@ class TransactionServiceTests {
         /* test */
         StepVerifier
                 .create(
-                        transactionsService
+                        transactionsServiceV1
                                 .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest)
                 )
                 .expectErrorMatches(exception -> exception instanceof PaymentNoticeAllCCPMismatchException)
@@ -1126,9 +1128,9 @@ class TransactionServiceTests {
     void shouldConvertClientIdSuccessfully() {
         for (Transaction.ClientId clientId : Transaction.ClientId
                 .values()) {
-            assertEquals(clientId.toString(), transactionsService.convertClientId(clientId.name()).toString());
+            assertEquals(clientId.toString(), transactionsServiceV1.convertClientId(clientId.name()).toString());
         }
-        assertThrows(InvalidRequestException.class, () -> transactionsService.convertClientId(null));
+        assertThrows(InvalidRequestException.class, () -> transactionsServiceV1.convertClientId(null));
     }
 
     @Test
@@ -1136,7 +1138,7 @@ class TransactionServiceTests {
         Transaction.ClientId clientId = Mockito
                 .mock(Transaction.ClientId.class);
         Mockito.when(clientId.toString()).thenReturn("InvalidClientID");
-        assertThrows(InvalidRequestException.class, () -> transactionsService.convertClientId(clientId.name()));
+        assertThrows(InvalidRequestException.class, () -> transactionsServiceV1.convertClientId(clientId.name()));
     }
 
     @Test
@@ -1156,7 +1158,7 @@ class TransactionServiceTests {
         when(repository.findById(transactionId)).thenReturn(Mono.just(transaction));
         when(transactionCancelHandlerV2.handle(transactionCancelCommand)).thenReturn(Mono.just(userCanceledEvent));
         when(cancellationRequestProjectionHandlerV2.handle(any())).thenReturn(Mono.empty());
-        StepVerifier.create(transactionsService.cancelTransaction(transactionId)).expectNext().verifyComplete();
+        StepVerifier.create(transactionsServiceV1.cancelTransaction(transactionId)).expectNext().verifyComplete();
 
     }
 
@@ -1164,7 +1166,7 @@ class TransactionServiceTests {
     void shouldExecuteTransactionUserCancelKONotFound() {
         String transactionId = UUID.randomUUID().toString();
         when(repository.findById(transactionId)).thenReturn(Mono.empty());
-        StepVerifier.create(transactionsService.cancelTransaction(transactionId))
+        StepVerifier.create(transactionsServiceV1.cancelTransaction(transactionId))
                 .expectError(TransactionNotFoundException.class).verify();
 
     }
@@ -1236,10 +1238,10 @@ class TransactionServiceTests {
                 );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(Flux.empty());
-        when(transactionsUtils.convertEnumeration(any()))
+        when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
-        TransactionInfoDto transactionInfoResponse = transactionsService
+        TransactionInfoDto transactionInfoResponse = transactionsServiceV1
                 .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
@@ -1317,10 +1319,10 @@ class TransactionServiceTests {
                 );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(Flux.empty());
-        when(transactionsUtils.convertEnumeration(any()))
+        when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
-        TransactionInfoDto transactionInfoResponse = transactionsService
+        TransactionInfoDto transactionInfoResponse = transactionsServiceV1
                 .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
@@ -1394,10 +1396,10 @@ class TransactionServiceTests {
                 );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(Flux.empty());
-        when(transactionsUtils.convertEnumeration(any()))
+        when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
-        TransactionInfoDto transactionInfoResponse = transactionsService
+        TransactionInfoDto transactionInfoResponse = transactionsServiceV1
                 .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
@@ -1537,10 +1539,10 @@ class TransactionServiceTests {
                 );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(Flux.empty());
-        when(transactionsUtils.convertEnumeration(any()))
+        when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
-        TransactionInfoDto transactionInfoResponse = transactionsService
+        TransactionInfoDto transactionInfoResponse = transactionsServiceV1
                 .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
@@ -1673,10 +1675,10 @@ class TransactionServiceTests {
                 );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(Flux.empty());
-        when(transactionsUtils.convertEnumeration(any()))
+        when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
-        TransactionInfoDto transactionInfoResponse = transactionsService
+        TransactionInfoDto transactionInfoResponse = transactionsServiceV1
                 .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
@@ -1812,11 +1814,11 @@ class TransactionServiceTests {
                         )
                 );
 
-        when(transactionsUtils.convertEnumeration(any()))
+        when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
         Hooks.onOperatorDebug();
-        TransactionInfoDto transactionInfoResponse = transactionsService
+        TransactionInfoDto transactionInfoResponse = transactionsServiceV1
                 .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
@@ -1950,10 +1952,10 @@ class TransactionServiceTests {
                 .thenReturn(Flux.empty());
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(Flux.empty());
-        when(transactionsUtils.convertEnumeration(any()))
+        when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
-        TransactionInfoDto transactionInfoResponse = transactionsService
+        TransactionInfoDto transactionInfoResponse = transactionsServiceV1
                 .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
