@@ -3754,7 +3754,6 @@ class TransactionSendClosureHandlerTest {
                         new OutcomeNpgGatewayDto()
                                 .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
                                 .authorizationCode("authorizationCode")
-                                .paymentCircuit("VISA")
                                 .orderId("orderId")
                                 .paymentEndToEndId("paymentEndToEndId")
                                 .operationId("operationId")

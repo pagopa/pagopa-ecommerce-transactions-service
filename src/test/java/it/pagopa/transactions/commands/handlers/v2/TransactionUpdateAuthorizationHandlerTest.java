@@ -142,7 +142,6 @@ class TransactionUpdateAuthorizationHandlerTest {
                                 .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
                                 .authorizationCode("1234")
                                 .paymentEndToEndId("paymentEndToEndId")
-                                .paymentCircuit("VISA")
                 )
                 .timestampOperation(OffsetDateTime.now());
 
