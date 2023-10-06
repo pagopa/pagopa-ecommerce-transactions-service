@@ -8,10 +8,13 @@ import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
+import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.PaymentTransferInfo;
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
@@ -23,6 +26,7 @@ import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.generated.transactions.server.model.PaymentInfoDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
+import it.pagopa.transactions.commands.data.NewTransactionRequestData;
 import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
 import it.pagopa.transactions.exceptions.JWTTokenGenerationException;
 import it.pagopa.transactions.projections.TransactionsProjection;
@@ -82,6 +86,8 @@ class TransactionInitializerHandlerTest {
 
     private final OpenTelemetryUtils openTelemetryUtils = Mockito.mock(OpenTelemetryUtils.class);
 
+    private static final String ORDER_ID = "orderId";
+
     private final TransactionActivateHandler handler = new TransactionActivateHandler(
             paymentRequestInfoRedisTemplateWrapper,
             transactionEventActivatedStoreRepository,
@@ -97,7 +103,7 @@ class TransactionInitializerHandlerTest {
     );
 
     @Test
-    void shouldHandleCommandForNM3CachedPaymentRequest() {
+    void shouldHandleCommandForNM3CachedPaymentRequestWithNpgWithV2Api() {
         Duration elapsedTimeFromActivation = Duration.ofSeconds(paymentTokenTimeout);
         ZonedDateTime transactionActivatedTime = ZonedDateTime.now().minus(elapsedTimeFromActivation);
         RptId rptId = new RptId(RPT_ID);
@@ -106,15 +112,31 @@ class TransactionInitializerHandlerTest {
         String paName = "paName";
         String paTaxcode = rptId.getFiscalCode();
         TransactionId transactionId = new TransactionId(TRANSACTION_ID);
-        NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
-        PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto();
+        it.pagopa.generated.transactions.v2.server.model.NewTransactionRequestDto requestDto = new it.pagopa.generated.transactions.v2.server.model.NewTransactionRequestDto();
+        it.pagopa.generated.transactions.v2.server.model.PaymentNoticeInfoDto paymentNoticeInfoDto = new it.pagopa.generated.transactions.v2.server.model.PaymentNoticeInfoDto();
         requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
         paymentNoticeInfoDto.setRptId(rptId.value());
         requestDto.setEmail(EMAIL_STRING);
+        requestDto.setOrderId(ORDER_ID);
         paymentNoticeInfoDto.setAmount(1200);
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
-                requestDto,
+                new NewTransactionRequestData(
+                        requestDto.getIdCart(),
+                        requestDto.getEmail(),
+                        requestDto.getOrderId(),
+                        requestDto.getPaymentNotices().stream().map(
+                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                        null,
+                                        new RptId(el.getRptId()),
+                                        new TransactionAmount(el.getAmount()),
+                                        null,
+                                        null,
+                                        null,
+                                        false
+                                )
+                        ).toList()
+                ),
                 Transaction.ClientId.CHECKOUT.name(),
                 transactionId
         );
@@ -167,7 +189,7 @@ class TransactionInitializerHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        Mockito.when(jwtTokenUtils.generateToken(any()))
+        Mockito.when(jwtTokenUtils.generateToken(any(), any()))
                 .thenReturn(Mono.just("authToken"));
 
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
@@ -202,6 +224,152 @@ class TransactionInitializerHandlerTest {
         TransactionActivatedEvent event = (TransactionActivatedEvent) response.getT1().block();
 
         assertNotNull(event.getTransactionId());
+        assertInstanceOf(
+                NpgTransactionGatewayActivationData.class,
+                event.getData().getTransactionGatewayActivationData()
+        );
+        assertNotNull(
+                ((NpgTransactionGatewayActivationData) event.getData().getTransactionGatewayActivationData())
+                        .getOrderId()
+        );
+        assertEquals(
+                ORDER_ID,
+                ((NpgTransactionGatewayActivationData) event.getData().getTransactionGatewayActivationData())
+                        .getOrderId()
+        );
+        assertNotNull(event.getEventCode());
+        assertNotNull(event.getCreationDate());
+        assertNotNull(event.getId());
+        assertEquals(paymentTokenTimeout, event.getData().getPaymentTokenValiditySeconds());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
+
+    }
+
+    @Test
+    void shouldHandleCommandForNM3CachedPaymentRequestWithPGS() {
+        Duration elapsedTimeFromActivation = Duration.ofSeconds(paymentTokenTimeout);
+        ZonedDateTime transactionActivatedTime = ZonedDateTime.now().minus(elapsedTimeFromActivation);
+        RptId rptId = new RptId(RPT_ID);
+        IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
+        String paymentToken = PAYMENT_TOKEN;
+        String paName = "paName";
+        String paTaxcode = rptId.getFiscalCode();
+        TransactionId transactionId = new TransactionId(TRANSACTION_ID);
+        NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
+        PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto();
+        requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
+        paymentNoticeInfoDto.setRptId(rptId.value());
+        requestDto.setEmail(EMAIL_STRING);
+        paymentNoticeInfoDto.setAmount(1200);
+        TransactionActivateCommand command = new TransactionActivateCommand(
+                rptId,
+                new NewTransactionRequestData(
+                        requestDto.getIdCart(),
+                        requestDto.getEmail(),
+                        null,
+                        requestDto.getPaymentNotices().stream().map(
+                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                        null,
+                                        new RptId(el.getRptId()),
+                                        new TransactionAmount(el.getAmount()),
+                                        null,
+                                        null,
+                                        null,
+                                        false
+                                )
+                        ).toList()
+                ),
+                Transaction.ClientId.CHECKOUT.name(),
+                transactionId
+        );
+
+        PaymentRequestInfo paymentRequestInfoCached = new PaymentRequestInfo(
+                rptId,
+                paTaxcode,
+                paName,
+                DESCRIPTION,
+                AMOUNT,
+                dueDate,
+                paymentToken,
+                transactionActivatedTime.toString(),
+                idempotencyKey,
+                List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, AMOUNT, null)),
+                false
+        );
+
+        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
+        transactionActivatedEvent.setTransactionId(transactionId.value());
+        transactionActivatedEvent.setEventCode(TransactionEventCode.TRANSACTION_ACTIVATED_EVENT.toString());
+        TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
+        transactionActivatedData.setPaymentNotices(
+                List.of(
+                        new PaymentNotice(
+                                paymentToken,
+                                rptId.value(),
+                                null,
+                                null,
+                                null,
+                                List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, null, null)),
+                                false
+                        )
+                )
+        );
+        transactionActivatedEvent.setData(transactionActivatedData);
+
+        /* preconditions */
+        Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
+                .thenReturn(Optional.of(paymentRequestInfoCached));
+        Mockito.when(transactionEventActivatedStoreRepository.save(any()))
+                .thenAnswer(args -> Mono.just(args.getArguments()[0]));
+        Mockito.doNothing().when(paymentRequestInfoRedisTemplateWrapper)
+                .save(paymentRequestInfoArgumentCaptor.capture());
+        Mockito.when(
+                transactionActivatedQueueAsyncClient.sendMessageWithResponse(
+                        any(QueueEvent.class),
+                        any(),
+                        durationArgumentCaptor.capture()
+                )
+        )
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
+        Mockito.when(jwtTokenUtils.generateToken(any(), any()))
+                .thenReturn(Mono.just("authToken"));
+
+        Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
+
+        /* run test */
+        Tuple2<Mono<BaseTransactionEvent<?>>, String> response = handler
+                .handle(command).block();
+
+        /* asserts */
+        Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(1)).findById(rptId.value());
+        Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(0)).save(any());
+        Mockito.verify(openTelemetryUtils, Mockito.times(1)).addSpanWithAttributes(
+                eq(OpenTelemetryUtils.REPEATED_ACTIVATION_SPAN_NAME),
+                argThat(
+                        arguments -> {
+                            String spanPaymentToken = arguments.get(
+                                    AttributeKey.stringKey(
+                                            OpenTelemetryUtils.REPEATED_ACTIVATION_PAYMENT_TOKEN_ATTRIBUTE_KEY
+                                    )
+                            );
+                            Long spanLeftTime = arguments.get(
+                                    AttributeKey.longKey(
+                                            OpenTelemetryUtils.REPEATED_ACTIVATION_PAYMENT_TOKEN_LEFT_TIME_ATTRIBUTE_KEY
+                                    )
+                            );
+                            return paymentToken.equals(spanPaymentToken) && spanLeftTime != null;
+                        }
+                )
+        );
+        Mockito.verify(openTelemetryUtils, Mockito.times(0)).addErrorSpanWithException(any(), any());
+        assertNotNull(paymentRequestInfoCached.id());
+        TransactionActivatedEvent event = (TransactionActivatedEvent) response.getT1().block();
+
+        assertNotNull(event.getTransactionId());
+        assertInstanceOf(
+                EmptyTransactionGatewayActivationData.class,
+                event.getData().getTransactionGatewayActivationData()
+        );
         assertNotNull(event.getEventCode());
         assertNotNull(event.getCreationDate());
         assertNotNull(event.getId());
@@ -227,7 +395,22 @@ class TransactionInitializerHandlerTest {
         paymentNoticeInfoDto.setAmount(1200);
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
-                requestDto,
+                new NewTransactionRequestData(
+                        requestDto.getIdCart(),
+                        requestDto.getEmail(),
+                        null,
+                        requestDto.getPaymentNotices().stream().map(
+                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                        null,
+                                        new RptId(el.getRptId()),
+                                        new TransactionAmount(el.getAmount()),
+                                        null,
+                                        null,
+                                        null,
+                                        false
+                                )
+                        ).toList()
+                ),
                 Transaction.ClientId.CHECKOUT.name(),
                 transactionId
         );
@@ -278,7 +461,7 @@ class TransactionInitializerHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        Mockito.when(jwtTokenUtils.generateToken(any()))
+        Mockito.when(jwtTokenUtils.generateToken(any(), any()))
                 .thenReturn(Mono.just("authToken"));
 
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
@@ -319,14 +502,29 @@ class TransactionInitializerHandlerTest {
         paymentNoticeInfoDto.setAmount(1200);
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
-                requestDto,
+                new NewTransactionRequestData(
+                        requestDto.getIdCart(),
+                        requestDto.getEmail(),
+                        null,
+                        requestDto.getPaymentNotices().stream().map(
+                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                        null,
+                                        new RptId(el.getRptId()),
+                                        new TransactionAmount(el.getAmount()),
+                                        null,
+                                        null,
+                                        null,
+                                        false
+                                )
+                        ).toList()
+                ),
                 Transaction.ClientId.CHECKOUT.name(),
                 transactionId
         );
 
         /* preconditions */
 
-        Mockito.when(jwtTokenUtils.generateToken(any()))
+        Mockito.when(jwtTokenUtils.generateToken(any(), any()))
                 .thenReturn(Mono.error(new JWTTokenGenerationException()));
 
         /* run test */
@@ -393,7 +591,22 @@ class TransactionInitializerHandlerTest {
         paymentNoticeInfoDto.setAmount(1200);
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
-                requestDto,
+                new NewTransactionRequestData(
+                        requestDto.getIdCart(),
+                        requestDto.getEmail(),
+                        null,
+                        requestDto.getPaymentNotices().stream().map(
+                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                        null,
+                                        new RptId(el.getRptId()),
+                                        new TransactionAmount(el.getAmount()),
+                                        null,
+                                        null,
+                                        null,
+                                        false
+                                )
+                        ).toList()
+                ),
                 Transaction.ClientId.CHECKOUT.name(),
                 transactionId
         );
@@ -447,7 +660,22 @@ class TransactionInitializerHandlerTest {
 
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
-                requestDto,
+                new NewTransactionRequestData(
+                        requestDto.getIdCart(),
+                        requestDto.getEmail(),
+                        null,
+                        requestDto.getPaymentNotices().stream().map(
+                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                        null,
+                                        new RptId(el.getRptId()),
+                                        new TransactionAmount(el.getAmount()),
+                                        null,
+                                        null,
+                                        null,
+                                        false
+                                )
+                        ).toList()
+                ),
                 Transaction.ClientId.CHECKOUT.name(),
                 transactionId
         );
@@ -491,7 +719,7 @@ class TransactionInitializerHandlerTest {
                 nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(dueDate))
         )
                 .thenReturn(Mono.just(paymentRequestInfoAfterActivation));
-        Mockito.when(jwtTokenUtils.generateToken(any()))
+        Mockito.when(jwtTokenUtils.generateToken(any(), any()))
                 .thenReturn(Mono.just("authToken"));
         Mockito.when(
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(
@@ -539,7 +767,22 @@ class TransactionInitializerHandlerTest {
 
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
-                requestDto,
+                new NewTransactionRequestData(
+                        requestDto.getIdCart(),
+                        requestDto.getEmail(),
+                        null,
+                        requestDto.getPaymentNotices().stream().map(
+                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                        null,
+                                        new RptId(el.getRptId()),
+                                        new TransactionAmount(el.getAmount()),
+                                        null,
+                                        null,
+                                        null,
+                                        false
+                                )
+                        ).toList()
+                ),
                 Transaction.ClientId.CHECKOUT.name(),
                 transactionId
         );
@@ -583,7 +826,7 @@ class TransactionInitializerHandlerTest {
                 nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(null))
         )
                 .thenReturn(Mono.just(paymentRequestInfoAfterActivation));
-        Mockito.when(jwtTokenUtils.generateToken(any()))
+        Mockito.when(jwtTokenUtils.generateToken(any(), any()))
                 .thenReturn(Mono.just("authToken"));
         Mockito.when(
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(
@@ -631,7 +874,22 @@ class TransactionInitializerHandlerTest {
 
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
-                requestDto,
+                new NewTransactionRequestData(
+                        requestDto.getIdCart(),
+                        requestDto.getEmail(),
+                        null,
+                        requestDto.getPaymentNotices().stream().map(
+                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                        null,
+                                        new RptId(el.getRptId()),
+                                        new TransactionAmount(el.getAmount()),
+                                        null,
+                                        null,
+                                        null,
+                                        false
+                                )
+                        ).toList()
+                ),
                 Transaction.ClientId.CHECKOUT.name(),
                 transactionId
         );
@@ -669,7 +927,7 @@ class TransactionInitializerHandlerTest {
                 nodoOperations.generateRandomStringToIdempotencyKey()
         )
                 .thenReturn("aabbccddee");
-        Mockito.when(jwtTokenUtils.generateToken(any()))
+        Mockito.when(jwtTokenUtils.generateToken(any(), any()))
                 .thenReturn(Mono.just("authToken"));
         Mockito.when(
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(

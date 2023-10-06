@@ -7,6 +7,7 @@ import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
+import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
@@ -14,9 +15,8 @@ import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
-import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
-import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
+import it.pagopa.transactions.commands.data.NewTransactionRequestData;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandlerCommon;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
@@ -85,14 +85,15 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                                       TransactionActivateCommand command
     ) {
         final TransactionId transactionId = command.getTransactionId();
-        final NewTransactionRequestDto newTransactionRequestDto = command.getData();
-        final List<PaymentNoticeInfoDto> paymentNotices = newTransactionRequestDto.getPaymentNotices();
+        final NewTransactionRequestData newTransactionRequestDto = command.getData();
+        final List<it.pagopa.ecommerce.commons.domain.PaymentNotice> paymentNotices = newTransactionRequestDto
+                .paymentNoticeList();
         final boolean multiplePaymentNotices = paymentNotices.size() > 1;
         log.info(
                 "Nodo parallel processed requests : [{}]. Multiple payment notices: [{}]. Id cart: [{}]",
                 nodoParallelRequests,
                 multiplePaymentNotices,
-                Optional.ofNullable(newTransactionRequestDto.getIdCart()).orElse("id cart not found")
+                Optional.ofNullable(newTransactionRequestDto.idCard()).orElse("id cart not found")
         );
         return Mono.defer(
                 () -> Flux.fromIterable(paymentNotices)
@@ -102,12 +103,13 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                 paymentNotice -> Mono.just(
                                         Tuples.of(
                                                 paymentNotice,
-                                                getPaymentRequestInfoFromCache(new RptId(paymentNotice.getRptId()))
+                                                getPaymentRequestInfoFromCache(paymentNotice.rptId())
                                         )
                                 )
                         ).flatMap(
                                 paymentRequest -> {
-                                    final PaymentNoticeInfoDto paymentNotice = paymentRequest.getT1();
+                                    final it.pagopa.ecommerce.commons.domain.PaymentNotice paymentNotice = paymentRequest
+                                            .getT1();
                                     final Optional<PaymentRequestInfo> maybePaymentRequestInfo = paymentRequest
                                             .getT2();
                                     final String dueDate = maybePaymentRequestInfo.map(PaymentRequestInfo::dueDate)
@@ -124,9 +126,9 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                             .orElseGet(
                                                                     () -> {
                                                                         PaymentRequestInfo paymentRequestWithOnlyIdempotencyKey = new PaymentRequestInfo(
-                                                                                new RptId(
-                                                                                        paymentNotice.getRptId()
-                                                                                ),
+
+                                                                                paymentNotice.rptId(),
+
                                                                                 null,
                                                                                 null,
                                                                                 null,
@@ -165,10 +167,11 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                      * @formatter:on
                                      */
 
-                                    final PaymentNoticeInfoDto paymentNotice = cacheResult.getT1();
+                                    final it.pagopa.ecommerce.commons.domain.PaymentNotice paymentNotice = cacheResult
+                                            .getT1();
                                     final PaymentRequestInfo partialPaymentRequestInfo = cacheResult.getT2();
                                     final IdempotencyKey idempotencyKey = partialPaymentRequestInfo.idempotencyKey();
-                                    final RptId rptId = new RptId(paymentNotice.getRptId());
+                                    final RptId rptId = paymentNotice.rptId();
 
                                     return Optional.of(partialPaymentRequestInfo)
                                             .filter(requestInfo -> isValidPaymentToken(requestInfo.paymentToken()))
@@ -183,10 +186,10 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                             .activatePaymentRequest(
                                                                     rptId,
                                                                     idempotencyKey,
-                                                                    paymentNotice.getAmount(),
+                                                                    paymentNotice.transactionAmount().value(),
                                                                     transactionId.value(),
                                                                     paymentTokenTimeout,
-                                                                    newTransactionRequestDto.getIdCart(),
+                                                                    newTransactionRequestDto.idCard(),
                                                                     partialPaymentRequestInfo.dueDate()
                                                             )
                                                             .doOnSuccess(
@@ -206,7 +209,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                         .collectList()
                         .flatMap(
                                 paymentRequestInfos -> jwtTokenUtils
-                                        .generateToken(transactionId)
+                                        .generateToken(transactionId, command.getData().orderId())
                                         .map(generatedToken -> Tuples.of(generatedToken, paymentRequestInfos))
                         ).flatMap(
                                 args -> {
@@ -217,10 +220,11 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                     newTransactionActivatedEvent(
                                                             paymentRequestsInfo,
                                                             transactionId.value(),
-                                                            newTransactionRequestDto.getEmail(),
+                                                            newTransactionRequestDto.email(),
                                                             command.getClientId(),
-                                                            newTransactionRequestDto.getIdCart(),
-                                                            paymentTokenTimeout
+                                                            newTransactionRequestDto.idCard(),
+                                                            paymentTokenTimeout,
+                                                            command.getData().orderId()
                                                     ),
                                                     authToken
                                             )
@@ -300,7 +304,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                                        String email,
                                                                        String clientId,
                                                                        String idCart,
-                                                                       Integer paymentTokenTimeout
+                                                                       Integer paymentTokenTimeout,
+                                                                       String orderId
     ) {
         List<PaymentNotice> paymentNotices = toPaymentNoticeList(paymentRequestsInfo);
         Mono<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData> data = confidentialMailUtils
@@ -313,7 +318,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.valueOf(clientId),
                                 idCart,
                                 paymentTokenTimeout,
-                                new EmptyTransactionGatewayActivationData()
+                                orderId != null ? new NpgTransactionGatewayActivationData(orderId, null, null)
+                                        : new EmptyTransactionGatewayActivationData()
                         )
                 );
 
