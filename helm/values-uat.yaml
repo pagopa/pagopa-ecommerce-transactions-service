@@ -54,8 +54,10 @@ microservice-chart:
       WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3020"
       LOGO_CARD_BRANDING_MAPPING: >
         { VISA:'https://uat.checkout.pagopa.it/assets/creditcard/visa.png',  MASTERCARD:'https://uat.checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://uat.checkout.pagopa.it/assets/creditcard/diners.png', MAESTRO:'https://uat.checkout.pagopa.it/assets/creditcard/maestro.png', AMEX:'https://uat.checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://uat.checkout.pagopa.it/assets/creditcard/generic.png' }
+
       LOGO_NPG_PAYMENT_CIRCUIT_MAPPING: >
         { VISA:'https://uat.checkout.pagopa.it/assets/creditcard/visa.png', MC:'https://uat.checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://uat.checkout.pagopa.it/assets/creditcard/diners.png', AMEX:'https://uat.checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://uat.checkout.pagopa.it/assets/creditcard/generic.png' }
+
       SERVER_ERROR_INCLUDE_STACKTRACE: "never"
       OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-blue,deployment.environment=uat"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.elastic-system.svc:4317"
@@ -84,7 +86,7 @@ microservice-chart:
       NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.32.2"
+    tag: "0.33.0"
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -177,8 +179,10 @@ microservice-chart:
     WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3020"
     LOGO_CARD_BRANDING_MAPPING: >
       { VISA:'https://uat.checkout.pagopa.it/assets/creditcard/visa.png',  MASTERCARD:'https://uat.checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://uat.checkout.pagopa.it/assets/creditcard/diners.png', MAESTRO:'https://uat.checkout.pagopa.it/assets/creditcard/maestro.png', AMEX:'https://uat.checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://uat.checkout.pagopa.it/assets/creditcard/generic.png' }
+
     LOGO_NPG_PAYMENT_CIRCUIT_MAPPING: >
       { VISA:'https://uat.checkout.pagopa.it/assets/creditcard/visa.png', MC:'https://uat.checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://uat.checkout.pagopa.it/assets/creditcard/diners.png', AMEX:'https://uat.checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://uat.checkout.pagopa.it/assets/creditcard/generic.png' }
+
     SERVER_ERROR_INCLUDE_STACKTRACE: "never"
     OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service,deployment.environment=uat"
     OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.elastic-system.svc:4317"

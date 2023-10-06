@@ -4,7 +4,7 @@ microservice-chart:
   fullnameOverride: ""
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.32.2" #improve
+    tag: "0.33.0" #improve
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -105,8 +105,10 @@ microservice-chart:
     WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3020"
     LOGO_CARD_BRANDING_MAPPING: >
       { VISA:'https://dev.checkout.pagopa.it/assets/creditcard/visa.png', MASTERCARD:'https://dev.checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://dev.checkout.pagopa.it/assets/creditcard/diners.png', MAESTRO:'https://dev.checkout.pagopa.it/assets/creditcard/maestro.png', AMEX:'https://dev.checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://dev.checkout.pagopa.it/assets/creditcard/generic.png' }
+
     LOGO_NPG_PAYMENT_CIRCUIT_MAPPING: >
       { VISA:'https://dev.checkout.pagopa.it/assets/creditcard/visa.png', MC:'https://dev.checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://dev.checkout.pagopa.it/assets/creditcard/diners.png', AMEX:'https://dev.checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://dev.checkout.pagopa.it/assets/creditcard/generic.png' }
+
     ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service
     ECS_SERVICE_ENVIRONMENT: "dev"
     OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service,deployment.environment=dev"
