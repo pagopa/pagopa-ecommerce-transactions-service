@@ -29,6 +29,8 @@ public record AuthorizationRequestData(
         String paymentGatewayId,
 
         Optional<String> sessionId,
+
+        String brand,
         RequestAuthorizationRequestDetailsDto authDetails
 ) {
 }

@@ -129,6 +129,7 @@ class PaymentGatewayClientTest {
                 false,
                 "GID",
                 Optional.empty(),
+                "VISA",
                 new PostePayAuthRequestDetailsDto().detailType("invalid").accountEmail("test@test.it")
         );
 
@@ -196,6 +197,7 @@ class PaymentGatewayClientTest {
                 false,
                 "XPAY",
                 Optional.empty(),
+                "VISA",
                 cardDetails
         );
 
@@ -282,6 +284,7 @@ class PaymentGatewayClientTest {
                 false,
                 null,
                 Optional.empty(),
+                "VISA",
                 null
         );
 
@@ -375,6 +378,7 @@ class PaymentGatewayClientTest {
                 false,
                 "VPOS",
                 Optional.empty(),
+                "VISA",
                 cardDetails
         );
 
@@ -471,6 +475,7 @@ class PaymentGatewayClientTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                "VISA",
                 cardDetails
         );
         StateResponseDto ngpStateResponse = new StateResponseDto().url("https://example.com");
@@ -524,6 +529,7 @@ class PaymentGatewayClientTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                "VISA",
                 cardDetails
         );
         StateResponseDto ngpStateResponse = new StateResponseDto().url("https://example.com");
@@ -593,6 +599,7 @@ class PaymentGatewayClientTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                "VISA",
                 cardDetails
         );
         StateResponseDto ngpStateResponse = new StateResponseDto().url("https://example.com");
@@ -659,6 +666,7 @@ class PaymentGatewayClientTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                "VISA",
                 cardDetails
         );
         StateResponseDto ngpStateResponse = new StateResponseDto().url("https://example.com");
@@ -730,6 +738,7 @@ class PaymentGatewayClientTest {
                 false,
                 "XPAY",
                 Optional.empty(),
+                "VISA",
                 cardDetails
         );
 
@@ -829,6 +838,7 @@ class PaymentGatewayClientTest {
                 false,
                 null,
                 Optional.empty(),
+                "VISA",
                 null
         );
 
@@ -924,6 +934,7 @@ class PaymentGatewayClientTest {
                 false,
                 null,
                 Optional.empty(),
+                "VISA",
                 null
         );
 
@@ -1001,6 +1012,7 @@ class PaymentGatewayClientTest {
                 false,
                 null,
                 Optional.empty(),
+                "VISA",
                 null
         );
 
@@ -1098,6 +1110,7 @@ class PaymentGatewayClientTest {
                 false,
                 "XPAY",
                 Optional.empty(),
+                "VISA",
                 cardDetails
         );
 
@@ -1196,6 +1209,7 @@ class PaymentGatewayClientTest {
                 false,
                 "VPOS",
                 Optional.empty(),
+                "VISA",
                 cardDetails
         );
 
@@ -1297,6 +1311,7 @@ class PaymentGatewayClientTest {
                 false,
                 null,
                 Optional.empty(),
+                "VISA",
                 null
         );
 
@@ -1388,6 +1403,7 @@ class PaymentGatewayClientTest {
                 false,
                 "XPAY",
                 Optional.empty(),
+                "VISA",
                 cardDetails
         );
 
@@ -1480,6 +1496,7 @@ class PaymentGatewayClientTest {
                 false,
                 "VPOS",
                 Optional.empty(),
+                "VISA",
                 cardDetails
         );
 
@@ -1575,6 +1592,7 @@ class PaymentGatewayClientTest {
                 false,
                 "XPAY",
                 Optional.empty(),
+                "VISA",
                 null
         );
 
@@ -1635,6 +1653,7 @@ class PaymentGatewayClientTest {
                 false,
                 "VPOS",
                 Optional.empty(),
+                "VISA",
                 null
         );
 

@@ -4,10 +4,12 @@ import com.azure.cosmos.implementation.BadRequestException;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData.PaymentGateway;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestedEvent;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationRequestedData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.TransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
-import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
@@ -17,10 +19,10 @@ import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandlerCommon;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import it.pagopa.transactions.utils.LogoMappingUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -29,7 +31,6 @@ import reactor.util.function.Tuples;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 
 @Component("TransactionRequestAuthorizationHandlerV2")
 @Slf4j
@@ -45,14 +46,14 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             PaymentGatewayClient paymentGatewayClient,
             TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository,
             TransactionsUtils transactionsUtils,
-            @Qualifier("brandConfMap") Map<CardAuthRequestDetailsDto.BrandEnum, URI> cardBrandLogoMapping,
             @Value("${checkout.basePath}") String checkoutBasePath,
-            EcommercePaymentMethodsClient paymentMethodsClient
+            EcommercePaymentMethodsClient paymentMethodsClient,
+            LogoMappingUtils logoMappingUtils
     ) {
         super(
                 paymentGatewayClient,
-                cardBrandLogoMapping,
-                checkoutBasePath
+                checkoutBasePath,
+                logoMappingUtils
         );
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionsUtils = transactionsUtils;
@@ -62,7 +63,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
     @Override
     public Mono<RequestAuthorizationResponseDto> handle(TransactionRequestAuthorizationCommand command) {
         AuthorizationRequestData authorizationRequestData = command.getData();
-        URI logo = getLogo(command.getData().authDetails());
+        URI logo = getLogo(command.getData());
         Mono<BaseTransaction> transaction = transactionsUtils.reduceEventsV2(
                 command.getData().transactionId()
         );
@@ -109,12 +110,20 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                     );
 
                                     // TODO remove this after the cancellation of the postepay logic
-                                    TransactionAuthorizationRequestData.CardBrand cardBrand = getCardBrand(
-                                            authorizationRequestData
-                                    ).map(
-                                            brand -> TransactionAuthorizationRequestData.CardBrand
-                                                    .valueOf(brand.toString())
-                                    ).orElse(null);
+                                    String brand = authorizationRequestData.brand();
+                                    TransactionGatewayAuthorizationRequestedData transactionGatewayAuthorizationRequestedData = switch (tuple3
+                                            .getT3()) {
+                                        case VPOS, XPAY -> new PgsTransactionGatewayAuthorizationRequestedData(
+                                                logo,
+                                                PgsTransactionGatewayAuthorizationRequestedData.CardBrand.valueOf(brand)
+                                        );
+                                        case NPG -> new NpgTransactionGatewayAuthorizationRequestedData(
+                                                logo,
+                                                brand
+                                        );
+                                        // TODO remove this after the cancellation of the postepay logic
+                                        case POSTEPAY -> null;
+                                    };
                                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                                             t.getTransactionId().value(),
                                             new TransactionAuthorizationRequestData(
@@ -134,9 +143,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                     command.getData().pspOnUs(),
                                                     tuple3.getT1(),
                                                     tuple3.getT3(),
-                                                    logo,
-                                                    cardBrand,
-                                                    command.getData().paymentMethodDescription()
+                                                    command.getData().paymentMethodDescription(),
+                                                    transactionGatewayAuthorizationRequestedData
                                             )
                                     );
 

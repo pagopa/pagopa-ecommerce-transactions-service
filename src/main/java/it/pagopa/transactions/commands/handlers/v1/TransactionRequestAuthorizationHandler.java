@@ -7,7 +7,6 @@ import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequeste
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
-import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
@@ -17,10 +16,10 @@ import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandlerCommon;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import it.pagopa.transactions.utils.LogoMappingUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -29,7 +28,6 @@ import reactor.util.function.Tuples;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 
 @Component("TransactionRequestAuthorizationHandlerV1")
 @Slf4j
@@ -46,11 +44,15 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             PaymentGatewayClient paymentGatewayClient,
             TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository,
             TransactionsUtils transactionsUtils,
-            @Qualifier("brandConfMap") Map<CardAuthRequestDetailsDto.BrandEnum, URI> cardBrandLogoMapping,
             @Value("${checkout.basePath}") String checkoutBasePath,
-            EcommercePaymentMethodsClient paymentMethodsClient
+            EcommercePaymentMethodsClient paymentMethodsClient,
+            LogoMappingUtils logoMappingUtils
     ) {
-        super(paymentGatewayClient, cardBrandLogoMapping, checkoutBasePath);
+        super(
+                paymentGatewayClient,
+                checkoutBasePath,
+                logoMappingUtils
+        );
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionsUtils = transactionsUtils;
         this.paymentMethodsClient = paymentMethodsClient;
@@ -58,7 +60,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
 
     public Mono<RequestAuthorizationResponseDto> handle(TransactionRequestAuthorizationCommand command) {
         AuthorizationRequestData authorizationRequestData = command.getData();
-        URI logo = getLogo(command.getData().authDetails());
+        URI logo = getLogo(command.getData());
         Mono<BaseTransaction> transaction = transactionsUtils.reduceEventsV1(
                 command.getData().transactionId()
         );
@@ -103,13 +105,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                             t.getTransactionId().value()
                                     );
 
-                                    // TODO remove this after the cancellation of the postepay logic
-                                    TransactionAuthorizationRequestData.CardBrand cardBrand = getCardBrand(
-                                            authorizationRequestData
-                                    ).map(
-                                            brand -> TransactionAuthorizationRequestData.CardBrand
-                                                    .valueOf(brand.toString())
-                                    ).orElse(null);
+                                    TransactionAuthorizationRequestData.CardBrand cardBrand = TransactionAuthorizationRequestData.CardBrand
+                                            .valueOf(authorizationRequestData.brand());
                                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                                             t.getTransactionId().value(),
                                             new it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData(
