@@ -1,4 +1,4 @@
-package it.pagopa.transactions.services;
+package it.pagopa.transactions.services.v1;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
@@ -18,6 +18,7 @@ import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.TransferListItemDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.commands.*;
+import it.pagopa.transactions.commands.data.NewTransactionRequestData;
 import it.pagopa.transactions.commands.data.AddUserReceiptData;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.data.ClosureSendData;
@@ -44,10 +45,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-@Service
+@Service(TransactionsService.QUALIFIER_NAME)
 @Slf4j
 public class TransactionsService {
 
+    public static final String QUALIFIER_NAME = "TransactionsServiceV1";
     private final it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler transactionActivateHandlerV1;
 
     private final it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler transactionActivateHandlerV2;
@@ -263,7 +265,22 @@ public class TransactionsService {
         );
         TransactionActivateCommand transactionActivateCommand = new TransactionActivateCommand(
                 new RptId(newTransactionRequestDto.getPaymentNotices().get(0).getRptId()),
-                newTransactionRequestDto,
+                new NewTransactionRequestData(
+                        newTransactionRequestDto.getIdCart(),
+                        newTransactionRequestDto.getEmail(),
+                        null,
+                        newTransactionRequestDto.getPaymentNotices().stream().map(
+                                el -> new PaymentNotice(
+                                        null,
+                                        new RptId(el.getRptId()),
+                                        new TransactionAmount(el.getAmount()),
+                                        null,
+                                        null,
+                                        null,
+                                        false
+                                )
+                        ).toList()
+                ),
                 clientId.name(),
                 transactionId
         );
@@ -358,7 +375,7 @@ public class TransactionsService {
                                     transaction.getClientId().toString()
                             )
                     )
-                    .status(transactionsUtils.convertEnumeration(transaction.getStatus()))
+                    .status(transactionsUtils.convertEnumerationV1(transaction.getStatus()))
                     .idCart(transaction.getIdCart())
                     .paymentGateway(transaction.getPaymentGateway())
                     .sendPaymentResultOutcome(
@@ -398,7 +415,7 @@ public class TransactionsService {
                                     transaction.getClientId().toString()
                             )
                     )
-                    .status(transactionsUtils.convertEnumeration(transaction.getStatus()))
+                    .status(transactionsUtils.convertEnumerationV1(transaction.getStatus()))
                     .idCart(transaction.getIdCart())
                     .paymentGateway(transaction.getPaymentGateway())
                     .sendPaymentResultOutcome(
@@ -991,7 +1008,7 @@ public class TransactionsService {
                                 )
                                 .toList()
                 )
-                .status(transactionsUtils.convertEnumeration(transactionDocument.getStatus()));
+                .status(transactionsUtils.convertEnumerationV1(transactionDocument.getStatus()));
 
     }
 
@@ -1016,7 +1033,7 @@ public class TransactionsService {
                                 )
                                 .toList()
                 )
-                .status(transactionsUtils.convertEnumeration(transactionDocument.getStatus()));
+                .status(transactionsUtils.convertEnumerationV1(transactionDocument.getStatus()));
 
     }
 
@@ -1035,7 +1052,7 @@ public class TransactionsService {
                                                 .rptId(paymentNotice.rptId().value())
                                 ).toList()
                 )
-                .status(transactionsUtils.convertEnumeration(baseTransaction.getStatus()));
+                .status(transactionsUtils.convertEnumerationV1(baseTransaction.getStatus()));
     }
 
     private TransactionInfoDto buildTransactionInfoDtoV2(
@@ -1053,7 +1070,7 @@ public class TransactionsService {
                                                 .rptId(paymentNotice.rptId().value())
                                 ).toList()
                 )
-                .status(transactionsUtils.convertEnumeration(baseTransaction.getStatus()));
+                .status(transactionsUtils.convertEnumerationV1(baseTransaction.getStatus()));
 
     }
 
@@ -1197,7 +1214,7 @@ public class TransactionsService {
                                         ).toList()
                                 )
                                 .authToken(authToken)
-                                .status(transactionsUtils.convertEnumeration(transaction.getStatus()))
+                                .status(transactionsUtils.convertEnumerationV1(transaction.getStatus()))
                                 // .feeTotal()//TODO da dove prendere le fees?
                                 .clientId(convertClientId(transaction.getClientId().name()))
                                 .idCart(transaction.getTransactionActivatedData().getIdCart())
@@ -1245,7 +1262,7 @@ public class TransactionsService {
                                         ).toList()
                                 )
                                 .authToken(authToken)
-                                .status(transactionsUtils.convertEnumeration(transaction.getStatus()))
+                                .status(transactionsUtils.convertEnumerationV1(transaction.getStatus()))
                                 // .feeTotal()//TODO da dove prendere le fees?
                                 .clientId(convertClientId(transaction.getClientId().name()))
                                 .idCart(transaction.getTransactionActivatedData().getIdCart())
