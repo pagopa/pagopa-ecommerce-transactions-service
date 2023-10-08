@@ -376,7 +376,7 @@ class TransactionRequestAuthorizationHandlerTest {
         ).thenReturn(Mono.empty());
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
-                .authorizationRequestId("sessionId")
+                .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
                 .authorizationUrl(NPG_URL_IFRAME);
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -475,7 +475,7 @@ class TransactionRequestAuthorizationHandlerTest {
         ).thenReturn(Mono.empty());
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
-                .authorizationRequestId("sessionId")
+                .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
                 .authorizationUrl(NPG_CHECKOUT_ESITO_PATH);
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -575,7 +575,7 @@ class TransactionRequestAuthorizationHandlerTest {
         ).thenReturn(Mono.empty());
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
-                .authorizationRequestId("sessionId")
+                .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
                 .authorizationUrl(
                         NPG_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
                                 NPG_URL_IFRAME

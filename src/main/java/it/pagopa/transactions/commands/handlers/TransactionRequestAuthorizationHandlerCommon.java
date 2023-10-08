@@ -1,5 +1,6 @@
 package it.pagopa.transactions.commands.handlers;
 
+import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
@@ -85,7 +86,9 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                 )
                 .map(
                         npgCardsResponseDto -> Tuples.of(
-                                "sessionId",
+                                // safe cast here, filter against authDetails performed into
+                                // requestNpgCardsAuthorization method
+                                ((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId(),
                                 switch (npgCardsResponseDto.getState()) {
                                 case GDI_VERIFICATION -> URI.create(checkoutBasePath)
                                         .resolve(
