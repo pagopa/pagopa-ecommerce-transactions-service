@@ -148,13 +148,13 @@ stages:
               ENV_FILE: "api-tests/dev.envs.json"
               TEST_FILE_PREFIX: "dev"
 
-  - stage: "E2E_DEV_test"
+  - stage: "E2E_Tests_Checkout_DEV_environment"
     displayName: 'Running E2E test on dev app'
     dependsOn: Deploy_for_DEV
     jobs:
       - job: e2e_tests
         steps:
-          - template: azure-templates/e2e-tests.yaml@pagopaCheckoutTests
+          - template: .devops/azure-templates/e2e-tests.yaml@pagopaCheckoutTests
             parameters:
               ENVIRONMENT: DEV
               CHECKOUT_RESOURCE_REPO_NAME: pagopaCheckoutTests
@@ -372,14 +372,14 @@ stages:
               ENV_FILE: "api-tests/uat.envs.json"
               TEST_FILE_PREFIX: "green-uat"
 
-  - stage: "E2E_UAT_green_test"
+  - stage: "E2E_Tests_Checkout_UAT_environment"
     displayName: 'Running E2E test on uat app'
     dependsOn: Deploy_UAT_Green
     condition: eq(dependencies.Deploy_UAT_Green.result, 'Succeeded')
     jobs:
       - job: e2e_tests
         steps:
-          - template: azure-templates/e2e-tests.yaml@pagopaCheckoutTests
+          - template: .devops/azure-templates/e2e-tests.yaml@pagopaCheckoutTests
             parameters:
               ENVIRONMENT: UAT
               CHECKOUT_RESOURCE_REPO_NAME: pagopaCheckoutTests
