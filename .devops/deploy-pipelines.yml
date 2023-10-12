@@ -154,11 +154,10 @@ stages:
     jobs:
       - job: e2e_tests
         steps:
-          - checkout: pagopaCheckoutTests
-          - template: azure-templates/e2e-tests.yaml@checkoutTests
+          - template: azure-templates/e2e-tests.yaml@pagopaCheckoutTests
             parameters:
               ENVIRONMENT: DEV
-              CHECKOUT_RESOURCE_REPO_NAME: checkoutTests
+              CHECKOUT_RESOURCE_REPO_NAME: pagopaCheckoutTests
   # --- END Deploy DEV --- #
 
   # --- START Deploy UAT --- #
@@ -378,10 +377,10 @@ stages:
     jobs:
       - job: e2e_tests
         steps:
-          - template: azure-templates/e2e-tests.yaml@checkoutTests
+          - template: azure-templates/e2e-tests.yaml@pagopaCheckoutTests
             parameters:
               ENVIRONMENT: UAT
-              CHECKOUT_RESOURCE_REPO_NAME: checkoutTests
+              CHECKOUT_RESOURCE_REPO_NAME: pagopaCheckoutTests
   # --- END Deploy UAT --- #
 
   # --- START Deploy PROD --- #
