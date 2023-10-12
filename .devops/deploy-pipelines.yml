@@ -236,7 +236,6 @@ stages:
     jobs:
       - job: newman_api_test
         steps:
-          - checkout: pagopaCheckoutTests
           - template: azure-templates/api-tests.yml
             parameters:
               ENV_FILE: "api-tests/uat.transactions.blue.envs.json"
@@ -379,7 +378,6 @@ stages:
     jobs:
       - job: e2e_tests
         steps:
-          - checkout: pagopaCheckoutTests
           - template: azure-templates/e2e-tests.yaml@checkoutTests
             parameters:
               ENVIRONMENT: UAT
