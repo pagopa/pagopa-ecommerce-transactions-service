@@ -81,7 +81,7 @@ resources:
     - repository: pagopaCheckoutTests
       type: github
       name: pagopa/pagopa-checkout-tests
-      ref: CHK-1870-NPG-for-ecommerce
+      ref: main
       endpoint: 'io-azure-devops-github-ro'
 
 pool:
