@@ -18,12 +18,14 @@ import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandlerCommon;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.LogoMappingUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple4;
@@ -127,7 +129,12 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                         case NPG -> new NpgTransactionGatewayAuthorizationRequestedData(
                                                 logo,
                                                 brand,
-                                                authorizationRequestData.sessionId().orElse(null),
+                                                authorizationRequestData.sessionId().orElseThrow(
+                                                        () -> new BadGatewayException(
+                                                                "Cannot retrieve session id for transaction",
+                                                                HttpStatus.INTERNAL_SERVER_ERROR
+                                                        )
+                                                ),
                                                 tuple4.getT3().orElse(null)
                                         );
                                         // TODO remove this after the cancellation of the postepay logic
