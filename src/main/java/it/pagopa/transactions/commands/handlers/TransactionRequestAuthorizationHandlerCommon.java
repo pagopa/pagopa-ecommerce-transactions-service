@@ -111,7 +111,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                     || npgResponse.getFieldSet().getFields() == null
                                                     || npgResponse.getFieldSet().getFields().isEmpty()) {
                                                 throw new BadGatewayException(
-                                                        "Invalid NPG response for state %s, no fieldSet.field received, excepted 1"
+                                                        "Invalid NPG response for state %s, no fieldSet.field received, expected 1"
                                                                 .formatted(npgResponse.getState()),
                                                         HttpStatus.BAD_GATEWAY
                                                 );

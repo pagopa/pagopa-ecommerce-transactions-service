@@ -1353,7 +1353,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         exception -> exception instanceof BadGatewayException bge &&
                                 bge.getHttpStatus() == HttpStatus.BAD_GATEWAY &&
                                 bge.getDetail().equals(
-                                        "Invalid NPG response for state GDI_VERIFICATION, no fieldSet.field received, excepted 1"
+                                        "Invalid NPG response for state GDI_VERIFICATION, no fieldSet.field received, expected 1"
                                 )
                 )
                 .verify();
@@ -1449,7 +1449,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         exception -> exception instanceof BadGatewayException bge &&
                                 bge.getHttpStatus() == HttpStatus.BAD_GATEWAY &&
                                 bge.getDetail().equals(
-                                        "Invalid NPG response for state GDI_VERIFICATION, no fieldSet.field received, excepted 1"
+                                        "Invalid NPG response for state GDI_VERIFICATION, no fieldSet.field received, expected 1"
                                 )
                 )
                 .verify();
