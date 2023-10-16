@@ -161,8 +161,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
 
     /**
      * Perform NPG confirm payment api call. This method performs basic response
-     * validation checking mandatory response fields such as state and sessionId
-     * (used for getState api call)
+     * validation checking mandatory response fields such as state
      *
      * @param authorizationData - the authorization requested data
      * @return Either valued with response, if valid, or exception for invalid
