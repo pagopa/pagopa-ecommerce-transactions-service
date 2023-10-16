@@ -95,10 +95,10 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                         npgCardsResponseDto -> npgCardsResponseDto.fold(
                                 Mono::error,
                                 npgResponse -> {
-                                    Optional<String> authReceivedSessionId = Optional
+                                    Optional<String> confirmPaymentSessionId = Optional
                                             .ofNullable(npgResponse.getFieldSet())
                                             .map(FieldsDto::getSessionId);
-                                    log.info("NGP auth completed session id: {}", authReceivedSessionId);
+                                    log.info("NGP auth completed session id: {}", confirmPaymentSessionId);
                                     return Mono.just(
                                             Tuples.of(
                                                     // safe cast here, filter against authDetails performed into
@@ -151,7 +151,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                 HttpStatus.BAD_GATEWAY
                                         );
                                     },
-                                                    authReceivedSessionId
+                                                    confirmPaymentSessionId
                                             )
                                     );
                                 }
