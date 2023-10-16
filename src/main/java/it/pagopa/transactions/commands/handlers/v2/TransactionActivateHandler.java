@@ -318,7 +318,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.valueOf(clientId),
                                 idCart,
                                 paymentTokenTimeout,
-                                orderId != null ? new NpgTransactionGatewayActivationData(orderId, null, null)
+                                orderId != null ? new NpgTransactionGatewayActivationData(orderId, null)
                                         : new EmptyTransactionGatewayActivationData()
                         )
                 );

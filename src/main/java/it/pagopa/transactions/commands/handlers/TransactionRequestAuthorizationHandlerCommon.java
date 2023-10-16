@@ -1,7 +1,9 @@
 package it.pagopa.transactions.commands.handlers;
 
 import io.vavr.control.Either;
+import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
+import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
@@ -13,10 +15,12 @@ import org.apache.commons.codec.binary.Base64;
 import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
+import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 
 @Slf4j
 public abstract class TransactionRequestAuthorizationHandlerCommon
@@ -80,86 +84,110 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                 );
     }
 
-    protected Mono<Tuple2<String, String>> npgAuthRequestPipeline(AuthorizationRequestData authorizationData) {
+    protected Mono<Tuple3<String, String, Optional<String>>> npgAuthRequestPipeline(
+                                                                                    AuthorizationRequestData authorizationData
+    ) {
         return Mono.just(authorizationData)
                 .flatMap(
                         this::confirmPayment
                 )
                 .flatMap(
-                        npgCardsResponseDto ->
-                                npgCardsResponseDto.fold(
-                                        Mono::error,
-                                        npgResponse -> Mono.just(
-                                                Tuples.of(
-                                                        npgResponse.getFieldSet().getSessionId(),
-                                                        switch (npgResponse.getState()) {
-                                                            case GDI_VERIFICATION -> {
-                                                                if (npgResponse.getFieldSet().getFields() == null || npgResponse.getFieldSet().getFields().get(0) == null) {
-                                                                    throw new BadGatewayException(
-                                                                            "Invalid NPG response for state %s, no fieldSet.field received, excepted 1: ".formatted(npgResponse.getState()),
-                                                                            HttpStatus.BAD_GATEWAY
-                                                                    );
-                                                                }
-                                                                String redirectionUrl = npgResponse.getFieldSet().getFields().get(0).getSrc();
-                                                                if (redirectionUrl == null) {
-                                                                    throw new BadGatewayException(
-                                                                            "Invalid NPG response for state %s, fieldSet.field[0].src is null: ".formatted(npgResponse.getState()),
-                                                                            HttpStatus.BAD_GATEWAY
-                                                                    );
-                                                                }
-                                                                yield URI.create(checkoutBasePath)
-                                                                        .resolve(
-                                                                                CHECKOUT_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
-                                                                                        redirectionUrl
-                                                                                                .getBytes(StandardCharsets.UTF_8)
-                                                                                )
-                                                                        ).toString();
-                                                            }
-                                                            case REDIRECTED_TO_EXTERNAL_DOMAIN -> {
-                                                                if (npgResponse.getUrl() == null) {
-                                                                    throw new BadGatewayException(
-                                                                            "Invalid NPG response for state %s, response.url is null: ".formatted(npgResponse.getState()),
-                                                                            HttpStatus.BAD_GATEWAY
-                                                                    );
-                                                                }
-                                                                yield npgResponse.getUrl();
-                                                            }
-                                                            case PAYMENT_COMPLETE ->
-                                                                    URI.create(checkoutBasePath).resolve(CHECKOUT_ESITO_PATH)
-                                                                            .toString();
-                                                            default -> throw new BadGatewayException(
-                                                                    "Invalid NPG confirm payment state response: " + npgResponse.getState(),
-                                                                    HttpStatus.BAD_GATEWAY
-                                                            );
-                                                        }
-                                                )
-                                        )
-                                )
+                        npgCardsResponseDto -> npgCardsResponseDto.fold(
+                                Mono::error,
+                                npgResponse -> {
+                                    Optional<String> authReceivedSessionId = Optional
+                                            .ofNullable(npgResponse.getFieldSet())
+                                            .map(FieldsDto::getSessionId);
+                                    log.info("NGP auth completed session id: {}", authReceivedSessionId);
+                                    return Mono.just(
+                                            Tuples.of(
+                                                    // safe cast here, filter against authDetails performed into
+                                                    // requestNpgCardsAuthorization method
+                                                    ((CardsAuthRequestDetailsDto) authorizationData.authDetails())
+                                                            .getOrderId(),
+                                                    switch (npgResponse.getState()) {
+                                        case GDI_VERIFICATION -> {
+                                            if (npgResponse.getFieldSet().getFields() == null
+                                                    || npgResponse.getFieldSet().getFields().get(0) == null) {
+                                                throw new BadGatewayException(
+                                                        "Invalid NPG response for state %s, no fieldSet.field received, excepted 1: "
+                                                                .formatted(npgResponse.getState()),
+                                                        HttpStatus.BAD_GATEWAY
+                                                );
+                                            }
+                                            String redirectionUrl = npgResponse.getFieldSet().getFields().get(0)
+                                                    .getSrc();
+                                            if (redirectionUrl == null) {
+                                                throw new BadGatewayException(
+                                                        "Invalid NPG response for state %s, fieldSet.field[0].src is null: "
+                                                                .formatted(npgResponse.getState()),
+                                                        HttpStatus.BAD_GATEWAY
+                                                );
+                                            }
+                                            yield URI.create(checkoutBasePath)
+                                                    .resolve(
+                                                            CHECKOUT_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
+                                                                    redirectionUrl
+                                                                            .getBytes(StandardCharsets.UTF_8)
+                                                            )
+                                                    ).toString();
+                                        }
+                                        case REDIRECTED_TO_EXTERNAL_DOMAIN -> {
+                                            if (npgResponse.getUrl() == null) {
+                                                throw new BadGatewayException(
+                                                        "Invalid NPG response for state %s, response.url is null: "
+                                                                .formatted(npgResponse.getState()),
+                                                        HttpStatus.BAD_GATEWAY
+                                                );
+                                            }
+                                            yield npgResponse.getUrl();
+                                        }
+                                        case PAYMENT_COMPLETE -> URI.create(checkoutBasePath)
+                                                .resolve(CHECKOUT_ESITO_PATH)
+                                                .toString();
+                                        default -> throw new BadGatewayException(
+                                                "Invalid NPG confirm payment state response: " + npgResponse.getState(),
+                                                HttpStatus.BAD_GATEWAY
+                                        );
+                                    },
+                                                    authReceivedSessionId
+                                            )
+                                    );
+                                }
+                        )
                 );
     }
 
     /**
-     * Perform NPG confirm payment api call.
-     * This method performs basic response validation checking mandatory response fields such as state and sessionId (used for getState api call)
+     * Perform NPG confirm payment api call. This method performs basic response
+     * validation checking mandatory response fields such as state and sessionId
+     * (used for getState api call)
      *
      * @param authorizationData - the authorization requested data
-     * @return Either valued with response, if valid, or exception for invalid response received
+     * @return Either valued with response, if valid, or exception for invalid
+     *         response received
      */
-    private Mono<Either<BadGatewayException, StateResponseDto>> confirmPayment(AuthorizationRequestData authorizationData) {
+    private Mono<Either<BadGatewayException, StateResponseDto>> confirmPayment(
+                                                                               AuthorizationRequestData authorizationData
+    ) {
         return Mono.just(authorizationData)
                 .flatMap(paymentGatewayClient::requestNpgCardsAuthorization)
                 .map(npgStateResponse -> {
                     if (npgStateResponse == null) {
-                        return Either.left(new BadGatewayException("Invalid NPG confirm payment, no body response received!", HttpStatus.BAD_GATEWAY));
+                        return Either.left(
+                                new BadGatewayException(
+                                        "Invalid NPG confirm payment, no body response received!",
+                                        HttpStatus.BAD_GATEWAY
+                                )
+                        );
                     }
                     if (npgStateResponse.getState() == null) {
-                        return Either.left(new BadGatewayException("Invalid NPG confirm payment, state response null!", HttpStatus.BAD_GATEWAY));
-                    }
-                    if (npgStateResponse.getFieldSet() == null) {
-                        return Either.left(new BadGatewayException("Invalid NPG confirm payment, fieldSet null! ", HttpStatus.BAD_GATEWAY));
-                    }
-                    if (npgStateResponse.getFieldSet().getSessionId() == null) {
-                        return Either.left(new BadGatewayException("Invalid NPG confirm payment, sessionId null! ", HttpStatus.BAD_GATEWAY));
+                        return Either.left(
+                                new BadGatewayException(
+                                        "Invalid NPG confirm payment, state response null!",
+                                        HttpStatus.BAD_GATEWAY
+                                )
+                        );
                     }
                     return Either.right(npgStateResponse);
                 });
