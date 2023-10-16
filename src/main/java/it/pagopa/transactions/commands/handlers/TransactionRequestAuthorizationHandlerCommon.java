@@ -107,10 +107,11 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                             .getOrderId(),
                                                     switch (npgResponse.getState()) {
                                         case GDI_VERIFICATION -> {
-                                            if (npgResponse.getFieldSet().getFields() == null
-                                                    || npgResponse.getFieldSet().getFields().get(0) == null) {
+                                            if (npgResponse.getFieldSet() == null
+                                                    || npgResponse.getFieldSet().getFields() == null
+                                                    || npgResponse.getFieldSet().getFields().isEmpty()) {
                                                 throw new BadGatewayException(
-                                                        "Invalid NPG response for state %s, no fieldSet.field received, excepted 1: "
+                                                        "Invalid NPG response for state %s, no fieldSet.field received, excepted 1"
                                                                 .formatted(npgResponse.getState()),
                                                         HttpStatus.BAD_GATEWAY
                                                 );
@@ -119,7 +120,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                     .getSrc();
                                             if (redirectionUrl == null) {
                                                 throw new BadGatewayException(
-                                                        "Invalid NPG response for state %s, fieldSet.field[0].src is null: "
+                                                        "Invalid NPG response for state %s, fieldSet.field[0].src is null"
                                                                 .formatted(npgResponse.getState()),
                                                         HttpStatus.BAD_GATEWAY
                                                 );
@@ -135,7 +136,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                         case REDIRECTED_TO_EXTERNAL_DOMAIN -> {
                                             if (npgResponse.getUrl() == null) {
                                                 throw new BadGatewayException(
-                                                        "Invalid NPG response for state %s, response.url is null: "
+                                                        "Invalid NPG response for state %s, response.url is null"
                                                                 .formatted(npgResponse.getState()),
                                                         HttpStatus.BAD_GATEWAY
                                                 );
@@ -173,14 +174,6 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
         return Mono.just(authorizationData)
                 .flatMap(paymentGatewayClient::requestNpgCardsAuthorization)
                 .map(npgStateResponse -> {
-                    if (npgStateResponse == null) {
-                        return Either.left(
-                                new BadGatewayException(
-                                        "Invalid NPG confirm payment, no body response received!",
-                                        HttpStatus.BAD_GATEWAY
-                                )
-                        );
-                    }
                     if (npgStateResponse.getState() == null) {
                         return Either.left(
                                 new BadGatewayException(
