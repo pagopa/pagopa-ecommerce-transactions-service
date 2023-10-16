@@ -119,7 +119,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                         );
                                         case NPG -> new NpgTransactionGatewayAuthorizationRequestedData(
                                                 logo,
-                                                brand
+                                                brand,
+                                                tuple3.getT1()
                                         );
                                         // TODO remove this after the cancellation of the postepay logic
                                         case POSTEPAY -> null;
