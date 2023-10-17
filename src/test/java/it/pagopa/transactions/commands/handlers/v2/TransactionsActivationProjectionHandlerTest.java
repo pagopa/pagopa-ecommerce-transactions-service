@@ -47,7 +47,7 @@ class TransactionsActivationProjectionHandlerTest {
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
         transactionActivatedData.setEmail(TransactionTestUtils.EMAIL);
         transactionActivatedData
-                .setTransactionGatewayActivationData(new NpgTransactionGatewayActivationData(orderId, null, null));
+                .setTransactionGatewayActivationData(new NpgTransactionGatewayActivationData(orderId, null));
         transactionActivatedData.setPaymentNotices(
                 List.of(
                         new PaymentNotice(
@@ -107,7 +107,7 @@ class TransactionsActivationProjectionHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                new NpgTransactionGatewayActivationData(orderId, null, null)
+                new NpgTransactionGatewayActivationData(orderId, null)
         );
 
         it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.v2.Transaction

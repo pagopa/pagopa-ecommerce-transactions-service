@@ -102,6 +102,7 @@ public class NodoOperations {
         // in seconds
         request.setExpirationTime(BigInteger.valueOf(paymentTokenTimeout).multiply(BigInteger.valueOf(1000)));
         request.setPaymentNote(idCart);
+        //
         // TODO Maybe here more values (all optional) can be passed such as Touchpoint
         // and PaymentMethod
         return nodeForPspClient

@@ -353,7 +353,11 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
-                .state(StateDto.REDIRECTED_TO_EXTERNAL_DOMAIN).url(NPG_URL_IFRAME);
+                .state(StateDto.REDIRECTED_TO_EXTERNAL_DOMAIN).url(NPG_URL_IFRAME)
+                .fieldSet(
+                        new FieldsDto().sessionId("authorizationSessionId")
+                                .addFieldsItem(new FieldDto().src(NPG_URL_IFRAME))
+                );
 
         /* preconditions */
         Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
@@ -452,7 +456,11 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
-                .state(StateDto.PAYMENT_COMPLETE);
+                .state(StateDto.PAYMENT_COMPLETE)
+                .fieldSet(
+                        new FieldsDto().sessionId("authorizationSessionId")
+                                .addFieldsItem(new FieldDto().src(NPG_URL_IFRAME))
+                );
 
         /* preconditions */
         Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
@@ -552,7 +560,10 @@ class TransactionRequestAuthorizationHandlerTest {
 
         StateResponseDto stateResponseDto = new StateResponseDto()
                 .state(StateDto.GDI_VERIFICATION)
-                .fieldSet(new FieldsDto().addFieldsItem(new FieldDto().src(NPG_URL_IFRAME)));
+                .fieldSet(
+                        new FieldsDto().sessionId("authorizationSessionId")
+                                .addFieldsItem(new FieldDto().src(NPG_URL_IFRAME))
+                );
 
         /* preconditions */
         Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
