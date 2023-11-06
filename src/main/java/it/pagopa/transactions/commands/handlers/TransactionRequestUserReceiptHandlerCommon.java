@@ -18,16 +18,19 @@ public abstract class TransactionRequestUserReceiptHandlerCommon
     protected final TransactionsUtils transactionsUtils;
     protected final int transientQueuesTTLSeconds;
     protected final QueueAsyncClient transactionNotificationRequestedQueueAsyncClient;
+    protected final boolean sendPaymentResultForTxExpiredEnabled;
 
     protected TransactionRequestUserReceiptHandlerCommon(
             TracingUtils tracingUtils,
             TransactionsUtils transactionsUtils,
             int transientQueuesTTLSeconds,
-            QueueAsyncClient transactionNotificationRequestedQueueAsyncClient
+            QueueAsyncClient transactionNotificationRequestedQueueAsyncClient,
+            boolean sendPaymentResultForTxExpiredEnabled
     ) {
         this.tracingUtils = tracingUtils;
         this.transactionsUtils = transactionsUtils;
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
         this.transactionNotificationRequestedQueueAsyncClient = transactionNotificationRequestedQueueAsyncClient;
+        this.sendPaymentResultForTxExpiredEnabled = sendPaymentResultForTxExpiredEnabled;
     }
 }

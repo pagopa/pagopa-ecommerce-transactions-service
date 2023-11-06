@@ -36,13 +36,17 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                 "transactionNotificationRequestedQueueAsyncClientV1"
             ) QueueAsyncClient transactionNotificationRequestedQueueAsyncClient,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
-            TracingUtils tracingUtils
+            TracingUtils tracingUtils,
+            @Value(
+                "${ecommerce.send-payment-result-for-tx-expired.enabled}"
+            ) boolean sendPaymentResultForTxExpiredEnabled
     ) {
         super(
                 tracingUtils,
                 transactionsUtils,
                 transientQueuesTTLSeconds,
-                transactionNotificationRequestedQueueAsyncClient
+                transactionNotificationRequestedQueueAsyncClient,
+                sendPaymentResultForTxExpiredEnabled
         );
         this.userReceiptAddedEventRepository = userReceiptAddedEventRepository;
     }
@@ -75,6 +79,7 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                         .equals(
                                                 transactionClosed.getTransactionClosureData().getResponseOutcome()
                                         )
+                                || t.getStatus() == TransactionStatusDto.EXPIRED && sendPaymentResultForTxExpiredEnabled
                 )
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(it.pagopa.ecommerce.commons.domain.v1.TransactionClosed.class)

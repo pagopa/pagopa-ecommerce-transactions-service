@@ -64,6 +64,8 @@ class TransactionRequestUserReceiptHandlerTest {
     @Captor
     private ArgumentCaptor<Duration> durationArgumentCaptor;
 
+    private final boolean sendPaymentResultForTxExpiredEnabled = true;
+
     @BeforeEach
     public void initTest() {
         updateStatusHandler = new TransactionRequestUserReceiptHandler(
@@ -71,7 +73,8 @@ class TransactionRequestUserReceiptHandlerTest {
                 transactionsUtils,
                 queueAsyncClient,
                 transientQueueEventsTtlSeconds,
-                tracingUtils
+                tracingUtils,
+                sendPaymentResultForTxExpiredEnabled
         );
     }
 
