@@ -36,13 +36,17 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                 "transactionNotificationRequestedQueueAsyncClientV2"
             ) QueueAsyncClient transactionNotificationRequestedQueueAsyncClient,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
-            TracingUtils tracingUtils
+            TracingUtils tracingUtils,
+            @Value(
+                "${ecommerce.send-payment-result-for-tx-expired.enabled}"
+            ) boolean sendPaymentResultForTxExpiredEnabled
     ) {
         super(
                 tracingUtils,
                 transactionsUtils,
                 transientQueuesTTLSeconds,
-                transactionNotificationRequestedQueueAsyncClient
+                transactionNotificationRequestedQueueAsyncClient,
+                sendPaymentResultForTxExpiredEnabled
         );
         this.userReceiptAddedEventRepository = userReceiptAddedEventRepository;
     }
@@ -75,9 +79,14 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                         .equals(
                                                 transactionClosed.getTransactionClosureData().getResponseOutcome()
                                         )
+                                || t.getStatus() == TransactionStatusDto.EXPIRED && sendPaymentResultForTxExpiredEnabled
                 )
                 .switchIfEmpty(alreadyProcessedError)
-                .cast(it.pagopa.ecommerce.commons.domain.v2.TransactionClosed.class)
+                .flatMap(
+                        tx -> tx.getStatus() == TransactionStatusDto.CLOSED
+                                ? Mono.just(tx).cast(it.pagopa.ecommerce.commons.domain.v2.TransactionClosed.class)
+                                : Mono.just(tx).cast(it.pagopa.ecommerce.commons.domain.v2.TransactionExpired.class)
+                )
                 .flatMap(tx -> {
                     AddUserReceiptRequestDto addUserReceiptRequestDto = command.getData().addUserReceiptRequest();
                     String language = "it-IT"; // FIXME: Add language to AuthorizationRequestData
