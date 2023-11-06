@@ -82,7 +82,11 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                 || t.getStatus() == TransactionStatusDto.EXPIRED && sendPaymentResultForTxExpiredEnabled
                 )
                 .switchIfEmpty(alreadyProcessedError)
-                .cast(it.pagopa.ecommerce.commons.domain.v1.TransactionClosed.class)
+                .flatMap(
+                        tx -> tx.getStatus() == TransactionStatusDto.CLOSED
+                                ? Mono.just(tx).cast(it.pagopa.ecommerce.commons.domain.v1.TransactionClosed.class)
+                                : Mono.just(tx).cast(it.pagopa.ecommerce.commons.domain.v1.TransactionExpired.class)
+                )
                 .flatMap(tx -> {
                     AddUserReceiptRequestDto addUserReceiptRequestDto = command.getData().addUserReceiptRequest();
                     String language = "it-IT"; // FIXME: Add language to AuthorizationRequestData

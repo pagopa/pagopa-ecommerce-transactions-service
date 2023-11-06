@@ -34,6 +34,7 @@ import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.*;
+import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.transactionAuthorizationCompletedEvent;
 import static it.pagopa.transactions.utils.Queues.QUEUE_SUCCESSFUL_RESPONSE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -424,5 +425,88 @@ class TransactionRequestUserReceiptHandlerTest {
                 .verify();
 
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(any());
+    }
+
+    @Test
+    void shouldSendEventForSendPaymentOutcomeOkForTxExpired() {
+        TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
+
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
+
+        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
+                AuthorizationResultDto.OK
+        );
+
+        TransactionClosedEvent closureSentEvent = TransactionTestUtils
+                .transactionClosedEvent(TransactionClosureData.Outcome.OK);
+
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(
+                        new AddUserReceiptRequestPaymentsInnerDto()
+                                .paymentToken("paymentToken")
+                                .companyName("companyName")
+                                .creditorReferenceId("creditorReferenceId")
+                                .description("description")
+                                .debtor("debtor")
+                                .fiscalCode("fiscalCode")
+                                .officeName("officeName")
+                );
+
+        TransactionActivated transaction = transactionActivated(ZonedDateTime.now().toString());
+
+        TransactionExpiredEvent transactionExpiredEvent = TransactionTestUtils.transactionExpiredEvent(transaction);
+
+        AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
+                transaction.getTransactionId(),
+                addUserReceiptRequest
+        );
+
+        TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
+                transaction.getPaymentNotices().get(0).rptId(),
+                addUserReceiptData
+        );
+
+        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
+                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
+        );
+
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux.just(
+                transactionActivatedEvent,
+                authorizationRequestedEvent,
+                authorizationCompletedEvent,
+                closureSentEvent,
+                transactionExpiredEvent
+        ));
+
+        /* preconditions */
+        Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
+        Mockito.when(
+                queueAsyncClient
+                        .sendMessageWithResponse(queueArgumentCaptor.capture(), any(), durationArgumentCaptor.capture())
+        )
+                .thenReturn(QUEUE_SUCCESSFUL_RESPONSE);
+        /* test */
+        StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
+                .expectNext(event)
+                .verifyComplete();
+
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
+                argThat(
+                        eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT.toString()
+                                .equals(eventArg.getEventCode())
+                )
+        );
+        Mockito.verify(queueAsyncClient, Mockito.times(1)).sendMessageWithResponse(any(), any(), any());
+        TransactionUserReceiptRequestedEvent queueEvent = ((TransactionUserReceiptRequestedEvent) queueArgumentCaptor
+                .getValue().event());
+        assertEquals(
+                TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT.toString(),
+                queueEvent.getEventCode()
+        );
+        assertEquals(event.getData(), queueEvent.getData());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
 }
