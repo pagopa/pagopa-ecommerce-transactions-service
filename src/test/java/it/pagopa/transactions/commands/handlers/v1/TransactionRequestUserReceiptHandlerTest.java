@@ -509,4 +509,53 @@ class TransactionRequestUserReceiptHandlerTest {
         assertEquals(event.getData(), queueEvent.getData());
         assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
+
+    @Test
+    void shouldRejectTransactionForInvalidStatus() {
+        TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
+
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
+
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(
+                        new AddUserReceiptRequestPaymentsInnerDto()
+                                .paymentToken("paymentToken")
+                                .companyName("companyName")
+                                .creditorReferenceId("creditorReferenceId")
+                                .description("description")
+                                .debtor("debtor")
+                                .fiscalCode("fiscalCode")
+                                .officeName("officeName")
+                );
+
+        TransactionActivated transaction = transactionActivated(ZonedDateTime.now().toString());
+
+        AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
+                transaction.getTransactionId(),
+                addUserReceiptRequest
+        );
+
+        TransactionAddUserReceiptCommand requestStatusCommand = new TransactionAddUserReceiptCommand(
+                transaction.getPaymentNotices().get(0).rptId(),
+                addUserReceiptData
+        );
+
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
+                .just(
+                        transactionActivatedEvent,
+                        authorizationRequestedEvent
+                ));
+
+        /* preconditions */
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
+
+        /* test */
+        StepVerifier.create(updateStatusHandler.handle(requestStatusCommand))
+                .expectErrorMatches(error -> error instanceof AlreadyProcessedException)
+                .verify();
+
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(any());
+    }
 }
