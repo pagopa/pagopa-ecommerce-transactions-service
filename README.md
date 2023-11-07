@@ -22,6 +22,7 @@ These are all environment variables needed by the application:
 | NODO_READ_TIMEOUT                              |     | Timeout for requests towards Nodo                                                                                                     | number  |         |
 | NODO_CONNECTION_TIMEOUT                        |     | Timeout for establishing connections towards Nodo                                                                                     | number  |         |
 | NODO_ALL_CCP_ON_TRANSFER_IBAN_ENABLED          |     | Flag to enable light check for allCCP. If true it checks only all transfers' iban. If false, it checks also metadata                  | boolean |         |
+| NODO_ECOMMERCE_CLIENT_ID                       |     | ecommerce client id used for node closePayment                                                                                        | string  |         |
 | ECOMMERCE_PAYMENT_METHODS_URI                  |     | eCommerce payment methods service connection URI                                                                                      | string  |         |
 | ECOMMERCE_PAYMENT_METHODS_READ_TIMEOUT         |     | Timeout for requests towards eCommerce payment methods service                                                                        | number  |         |
 | ECOMMERCE_PAYMENT_METHODS_CONNECTION_TIMEOUT   |     | Timeout for establishing connections towards eCommerce payment methods  service                                                       | number  |         |
@@ -51,6 +52,7 @@ These are all environment variables needed by the application:
 | NPG_CARDS_PSP_LIST                             |     | List of all psp ids that are expected to be found into the NPG_CARDS_PSP_KEYS configuration (used for configuration cross validation) | string  |         |
 | CHECKOUT_BASE_PATH                             |     | Checkout basepath where the user will be brought to after the authorization process is completed                                      | string  |         |
 | ECOMMERCE_EVENT_VERSION                        |     | Ecommerce event version used during transaction activated value accepted V1 and v2                                                    | string  |         |
+| LOGO_NPG_PAYMENT_CIRCUIT_MAPPING               |     | Key-value string map that maps NPG operationCircuit to logo to be used into success mail                                              | string  |         |
 
 An example configuration of these environment variables is in the `.env.example` file.
 

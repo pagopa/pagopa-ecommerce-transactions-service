@@ -3,8 +3,8 @@ package it.pagopa.transactions.commands.handlers.v1;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedData;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
-import it.pagopa.ecommerce.commons.generated.events.v1.TransactionStatus;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
+import it.pagopa.generated.transactions.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHandlerCommon;
@@ -41,9 +41,9 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
         UpdateAuthorizationRequestDto updateAuthorizationRequest = command.getData().updateAuthorizationRequest();
         AuthRequestDataUtils.AuthRequestData authRequestDataExtracted = extractAuthRequestData
                 .from(updateAuthorizationRequest, transactionId);
-        TransactionStatus transactionStatus = TransactionStatus.valueOf(command.getData().transactionStatus());
+        TransactionStatusDto transactionStatus = TransactionStatusDto.valueOf(command.getData().transactionStatus());
 
-        if (transactionStatus.equals(TransactionStatus.AUTHORIZATION_REQUESTED)) {
+        if (transactionStatus.equals(TransactionStatusDto.AUTHORIZATION_REQUESTED)) {
             return Mono.just(
                     AuthorizationResultDto
                             .fromValue(

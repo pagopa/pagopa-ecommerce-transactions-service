@@ -31,8 +31,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -54,10 +56,18 @@ class TransactionUpdateAuthorizationHandlerTest {
             "warmUpNoticeCodePrefix"
     );
 
+    private final Map<String, URI> npgPaymentCircuitLogoMap = Map.of(
+            "VISA",
+            URI.create("logo/visa"),
+            "UNKNOWN",
+            URI.create("logo/unknown")
+    );
+
     private it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler updateAuthorizationHandler = new TransactionUpdateAuthorizationHandler(
             transactionEventStoreRepository,
             new AuthRequestDataUtils(mockUuidUtils),
-            transactionsUtils
+            transactionsUtils,
+            npgPaymentCircuitLogoMap
     );
 
     @Test
@@ -117,15 +127,11 @@ class TransactionUpdateAuthorizationHandlerTest {
         TransactionActivatedEvent activatedEvent = TransactionTestUtils.transactionActivateEvent();
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
                 .transactionAuthorizationRequestedEvent();
-
+        NpgTransactionGatewayAuthorizationData npgTransactionGatewayAuthorizationData = (NpgTransactionGatewayAuthorizationData) TransactionTestUtils
+                .npgTransactionGatewayAuthorizationData(OperationResultDto.EXECUTED);
         TransactionAuthorizationCompletedEvent event = TransactionTestUtils
                 .transactionAuthorizationCompletedEvent(
-                        new NpgTransactionGatewayAuthorizationData(
-                                OperationResultDto.EXECUTED,
-                                "operationId",
-                                "paymentEndToEndId"
-                        )
-
+                        npgTransactionGatewayAuthorizationData
                 );
         BaseTransaction transaction = TransactionTestUtils.reduceEvents(activatedEvent, authorizationRequestedEvent);
 
@@ -162,17 +168,20 @@ class TransactionUpdateAuthorizationHandlerTest {
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1))
                 .save(
                         argThat(
-                                eventArg -> TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
-                                        .equals(eventArg.getEventCode())
-                                        && ((NpgTransactionGatewayAuthorizationData) eventArg.getData()
-                                                .getTransactionGatewayAuthorizationData()).getOperationResult()
-                                                        .equals(
-                                                                OperationResultDto.valueOf(
-                                                                        ((OutcomeNpgGatewayDto) updateAuthorizationRequest
-                                                                                .getOutcomeGateway())
-                                                                                        .getOperationResult().getValue()
-                                                                )
-                                                        )
+                                eventArg -> {
+                                    NpgTransactionGatewayAuthorizationData npgData = (NpgTransactionGatewayAuthorizationData) eventArg
+                                            .getData().getTransactionGatewayAuthorizationData();
+                                    return TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
+                                            .equals(eventArg.getEventCode())
+                                            && npgData.getOperationResult()
+                                                    .equals(
+                                                            OperationResultDto.valueOf(
+                                                                    ((OutcomeNpgGatewayDto) updateAuthorizationRequest
+                                                                            .getOutcomeGateway())
+                                                                                    .getOperationResult().getValue()
+                                                            )
+                                                    );
+                                }
                         )
                 );
     }

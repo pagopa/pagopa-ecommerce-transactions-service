@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 
 import java.net.URI;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -17,12 +18,14 @@ import java.util.stream.Stream;
 @Configuration
 public class BrandLogoConfig {
 
+    public static final String UNKNOWN_LOGO_KEY = "UNKNOWN";
+
     @Bean
-    @Qualifier("brandConfMap")
-    public Map<CardAuthRequestDetailsDto.BrandEnum, URI> brandConfMap(
-                                                                      @Value(
-                                                                          "#{${logo.cardBrandMapping}}"
-                                                                      ) Map<String, String> cardBrandLogoMapping
+    @Qualifier("pgsBrandConfMap")
+    public Map<CardAuthRequestDetailsDto.BrandEnum, URI> pgsBrandConfMap(
+                                                                         @Value(
+                                                                             "#{${logo.cardBrandMapping}}"
+                                                                         ) Map<String, String> cardBrandLogoMapping
     ) {
         Map<CardAuthRequestDetailsDto.BrandEnum, URI> logoMap = new EnumMap<>(
                 CardAuthRequestDetailsDto.BrandEnum.class
@@ -42,6 +45,23 @@ public class BrandLogoConfig {
                     "Misconfigured logo.cardBrandMapping, the following brands are not configured: %s"
                             .formatted(missingConfKey)
             );
+        }
+        return logoMap;
+    }
+
+    @Bean
+    @Qualifier("npgPaymentCircuitLogoMap")
+    public Map<String, URI> npgPaymentCircuitLogoMap(
+                                                     @Value(
+                                                         "#{${logo.npgPaymentCircuitMapping}}"
+                                                     ) Map<String, String> npgPaymentCircuitMapping
+    ) {
+        Map<String, URI> logoMap = new HashMap<>();
+        for (Map.Entry<String, String> entry : npgPaymentCircuitMapping.entrySet()) {
+            logoMap.put(entry.getKey(), URI.create(entry.getValue()));
+        }
+        if (!logoMap.containsKey(UNKNOWN_LOGO_KEY)) {
+            throw new IllegalStateException("Misconfigured logo map, logo for UNKNOWN key not found!");
         }
         return logoMap;
     }

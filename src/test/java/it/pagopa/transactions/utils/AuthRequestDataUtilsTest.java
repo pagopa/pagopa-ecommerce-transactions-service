@@ -171,20 +171,22 @@ class AuthRequestDataUtilsTest {
         String operationId = "operationId";
         String paymentEndToEndId = "paymentEndToEndId";
         String authorizationCode = "authorizationCode";
+        String rrn = "rrn";
         OutcomeNpgGatewayDto outcomeNpgGatewayDto = new OutcomeNpgGatewayDto()
                 .paymentGatewayType("NPG")
                 .orderId(orderId)
                 .operationId(operationId)
                 .paymentEndToEndId(paymentEndToEndId)
                 .operationResult(operationResultEnum)
-                .authorizationCode(authorizationCode);
+                .authorizationCode(authorizationCode)
+                .rrn(rrn);
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(outcomeNpgGatewayDto);
         AuthRequestDataUtils.AuthRequestData authRequestData = authRequestDataUtils
                 .from(updateAuthorizationRequest, transactionId);
         assertEquals(authorizationCode, authRequestData.authorizationCode());
         assertEquals(expectedOutcome, authRequestData.outcome());
-        assertEquals(paymentEndToEndId, authRequestData.rrn());
+        assertEquals(rrn, authRequestData.rrn());
         assertNull(authRequestData.errorCode());
     }
 

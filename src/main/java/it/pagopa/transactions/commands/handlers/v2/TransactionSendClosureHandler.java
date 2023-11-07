@@ -4,6 +4,8 @@ import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionAuthorizationCompleted;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
@@ -34,13 +36,13 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
+import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 @Component(TransactionSendClosureHandler.QUALIFIER_NAME)
 @Slf4j
@@ -393,7 +395,11 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                         )
                 )
                 .info(
-                        buildInfoDto(transactionActivatedData, transactionAuthorizationRequestData)
+                        buildInfoDto(
+                                transactionActivatedData,
+                                transactionAuthorizationRequestData,
+                                transactionAuthorizationCompletedData
+                        )
                 )
                 .user(new UserDto().type(UserDto.TypeEnum.GUEST));
 
@@ -462,20 +468,34 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
     }
 
     private InfoDto buildInfoDto(
-                                 it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData transactionActivatedData,
-                                 it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData transactionAuthorizationRequestData
+            it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData transactionActivatedData,
+            it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData transactionAuthorizationRequestData,
+            it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData transactionAuthorizationCompletedData
     ) {
+        Optional<URI> logoUri = Optional.empty();
+        Optional<String> brand = Optional.empty();
+        switch (transactionAuthorizationRequestData
+                .getTransactionGatewayAuthorizationRequestedData()) {
+            case PgsTransactionGatewayAuthorizationRequestedData pgsData -> {
+                logoUri = Optional.ofNullable(pgsData.getLogo());
+                brand = Optional.ofNullable(pgsData.getBrand()).map(PgsTransactionGatewayAuthorizationRequestedData.CardBrand::toString);
+            }
+            case NpgTransactionGatewayAuthorizationRequestedData npgData -> {
+                logoUri = Optional.ofNullable(npgData.getLogo());
+                brand = Optional.ofNullable(npgData.getBrand());
+            }
+
+        }
+
         InfoDto result = new InfoDto()
                 .clientId(transactionActivatedData.getClientId().name())
                 .brandLogo(
-                        Stream.ofNullable(transactionAuthorizationRequestData.getLogo())
-                                .filter(logo -> logo != null)
-                                .map(l -> l.toString())
-                                .findFirst()
+                        logoUri
+                                .map(URI::toString)
                                 .orElse(null)
                 )
                 .brand(
-                        Optional.ofNullable(transactionAuthorizationRequestData.getBrand()).map(Enum::name).orElse(null)
+                        brand.orElse(null)
                 )
                 .type(
                         transactionAuthorizationRequestData
@@ -570,8 +590,10 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
         it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData.Outcome eventNodoOutcome = outcomeV2ToTransactionClosureDataOutcome(nodoOutcome);
         it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData transactionClosureData = new it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData(eventNodoOutcome);
         Mono<it.pagopa.ecommerce.commons.documents.v2.TransactionEvent<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData>> closureEvent = switch (authorizationResult) {
-            case OK -> Mono.just(new it.pagopa.ecommerce.commons.documents.v2.TransactionClosedEvent(transactionId.value(), transactionClosureData));
-            case KO -> Mono.just(new it.pagopa.ecommerce.commons.documents.v2.TransactionClosureFailedEvent(transactionId.value(), transactionClosureData));
+            case OK ->
+                    Mono.just(new it.pagopa.ecommerce.commons.documents.v2.TransactionClosedEvent(transactionId.value(), transactionClosureData));
+            case KO ->
+                    Mono.just(new it.pagopa.ecommerce.commons.documents.v2.TransactionClosureFailedEvent(transactionId.value(), transactionClosureData));
             case null, default -> Mono.error(
                     new IllegalArgumentException(
                             "Unhandled authorization result: %s".formatted(authorizationResult)

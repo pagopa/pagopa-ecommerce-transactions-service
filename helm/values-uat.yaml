@@ -30,6 +30,7 @@ microservice-chart:
       NODO_CONNECTION_TIMEOUT: "10000"
       NODO_PARALLEL_REQUESTS: "5"
       NODO_ALL_CCP_ON_TRANSFER_IBAN_ENABLED: "true"
+      NODO_ECOMMERCE_CLIENT_ID: ecomm
       ECOMMERCE_PAYMENT_METHODS_URI: https://api.uat.platform.pagopa.it/ecommerce/payment-methods-service/v1
       ECOMMERCE_PAYMENT_METHODS_READ_TIMEOUT: "10000"
       ECOMMERCE_PAYMENT_METHODS_CONNECTION_TIMEOUT: "10000"
@@ -52,7 +53,10 @@ microservice-chart:
       PERSONAL_DATA_VAULT_API_BASE_PATH: "https://api.uat.tokenizer.pdv.pagopa.it/tokenizer/v1"
       WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3020"
       LOGO_CARD_BRANDING_MAPPING: >
-        { VISA:'https://dev.checkout.pagopa.it/assets/creditcard/visa.png',  MASTERCARD:'https://dev.checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://dev.checkout.pagopa.it/assets/creditcard/diners.png', MAESTRO:'https://dev.checkout.pagopa.it/assets/creditcard/maestro.png', AMEX:'https://dev.checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://dev.checkout.pagopa.it/assets/creditcard/generic.png' }
+        { VISA:'https://uat.checkout.pagopa.it/assets/creditcard/visa.png',  MASTERCARD:'https://uat.checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://uat.checkout.pagopa.it/assets/creditcard/diners.png', MAESTRO:'https://uat.checkout.pagopa.it/assets/creditcard/maestro.png', AMEX:'https://uat.checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://uat.checkout.pagopa.it/assets/creditcard/generic.png' }
+
+      LOGO_NPG_PAYMENT_CIRCUIT_MAPPING: >
+        { VISA:'https://uat.checkout.pagopa.it/assets/creditcard/visa.png', MC:'https://uat.checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://uat.checkout.pagopa.it/assets/creditcard/diners.png', AMEX:'https://uat.checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://uat.checkout.pagopa.it/assets/creditcard/generic.png' }
 
       SERVER_ERROR_INCLUDE_STACKTRACE: "never"
       OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-blue,deployment.environment=uat"
@@ -69,6 +73,7 @@ microservice-chart:
       NPG_CARDS_PSP_LIST: "BCITITMM"
       CHECKOUT_BASE_PATH: "https://uat.checkout.pagopa.it"
       ECOMMERCE_EVENT_VERSION: "V1"
+      SEND_PAYMENT_RESULT_FOR_TX_EXPIRED_ENABLED: "true"
     envSecret:
       MONGO_PASSWORD: mongo-ecommerce-password
       REDIS_PASSWORD: redis-ecommerce-password
@@ -82,7 +87,7 @@ microservice-chart:
       NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.31.3"
+    tag: "0.35.0"
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -151,6 +156,7 @@ microservice-chart:
     NODO_CONNECTION_TIMEOUT: "10000"
     NODO_PARALLEL_REQUESTS: "5"
     NODO_ALL_CCP_ON_TRANSFER_IBAN_ENABLED: "true"
+    NODO_ECOMMERCE_CLIENT_ID: ecomm
     ECOMMERCE_PAYMENT_METHODS_URI: https://api.uat.platform.pagopa.it/ecommerce/payment-methods-service/v1
     ECOMMERCE_PAYMENT_METHODS_READ_TIMEOUT: "10000"
     ECOMMERCE_PAYMENT_METHODS_CONNECTION_TIMEOUT: "10000"
@@ -173,7 +179,10 @@ microservice-chart:
     PERSONAL_DATA_VAULT_API_BASE_PATH: "https://api.uat.tokenizer.pdv.pagopa.it/tokenizer/v1"
     WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3020"
     LOGO_CARD_BRANDING_MAPPING: >
-      { VISA:'https://dev.checkout.pagopa.it/assets/creditcard/visa.png',  MASTERCARD:'https://dev.checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://dev.checkout.pagopa.it/assets/creditcard/diners.png', MAESTRO:'https://dev.checkout.pagopa.it/assets/creditcard/maestro.png', AMEX:'https://dev.checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://dev.checkout.pagopa.it/assets/creditcard/generic.png' }
+      { VISA:'https://uat.checkout.pagopa.it/assets/creditcard/visa.png',  MASTERCARD:'https://uat.checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://uat.checkout.pagopa.it/assets/creditcard/diners.png', MAESTRO:'https://uat.checkout.pagopa.it/assets/creditcard/maestro.png', AMEX:'https://uat.checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://uat.checkout.pagopa.it/assets/creditcard/generic.png' }
+
+    LOGO_NPG_PAYMENT_CIRCUIT_MAPPING: >
+      { VISA:'https://uat.checkout.pagopa.it/assets/creditcard/visa.png', MC:'https://uat.checkout.pagopa.it/assets/creditcard/mastercard.png', DINERS:'https://uat.checkout.pagopa.it/assets/creditcard/diners.png', AMEX:'https://uat.checkout.pagopa.it/assets/creditcard/amex.png', UNKNOWN:'https://uat.checkout.pagopa.it/assets/creditcard/generic.png' }
 
     SERVER_ERROR_INCLUDE_STACKTRACE: "never"
     OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service,deployment.environment=uat"
@@ -190,6 +199,7 @@ microservice-chart:
     NPG_CARDS_PSP_LIST: "" #TODO to be filled with psp id list that are expected to be present into psp api keys configuration
     CHECKOUT_BASE_PATH: "https://uat.checkout.pagopa.it"
     ECOMMERCE_EVENT_VERSION: "V1"
+    SEND_PAYMENT_RESULT_FOR_TX_EXPIRED_ENABLED: "true"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password

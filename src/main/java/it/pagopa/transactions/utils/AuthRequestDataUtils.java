@@ -46,7 +46,7 @@ public class AuthRequestDataUtils {
                 result = new AuthRequestData(t.getAuthorizationCode(), t.getOutcome().toString(), uuidUtils.uuidToBase64(transactionId.uuid()), t.getErrorCode() != null ? t.getErrorCode().getValue().toString() : null);
             }
             case OutcomeNpgGatewayDto t -> {
-                result = new AuthRequestData(t.getAuthorizationCode(), npgResultToOutcome(t.getOperationResult()), t.getPaymentEndToEndId(), null);
+                result = new AuthRequestData(t.getAuthorizationCode(), npgResultToOutcome(t.getOperationResult()), t.getRrn(), null);
             }
             default ->
                     throw new InvalidRequestException("Unexpected value: " + updateAuthorizationRequest.getOutcomeGateway());

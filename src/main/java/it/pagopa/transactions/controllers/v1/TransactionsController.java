@@ -1,4 +1,4 @@
-package it.pagopa.transactions.controllers;
+package it.pagopa.transactions.controllers.v1;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
@@ -7,7 +7,7 @@ import it.pagopa.generated.transactions.server.api.TransactionsApi;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.mdcutilities.TransactionTracingUtils;
-import it.pagopa.transactions.services.TransactionsService;
+import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -29,9 +29,10 @@ import java.util.HashSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@RestController
+@RestController("TransactionsControllerV1")
 @Slf4j
 public class TransactionsController implements TransactionsApi {
+
     @Autowired
     private TransactionsService transactionsService;
 
@@ -451,7 +452,7 @@ public class TransactionsController implements TransactionsApi {
                 .post()
                 .uri("http://localhost:8080/transactions")
                 .header("X-Client-Id", TransactionInfoDto.ClientIdEnum.CHECKOUT.toString())
-                .bodyValue(transactionsUtils.buildWarmupRequest())
+                .bodyValue(transactionsUtils.buildWarmupRequestV1())
                 .retrieve()
                 .toBodilessEntity()
                 .block(Duration.ofSeconds(30));

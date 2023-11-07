@@ -6,7 +6,6 @@ import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGate
 import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.TransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
-import it.pagopa.ecommerce.commons.generated.events.v1.TransactionStatus;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.OperationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.generated.transactions.server.model.*;
@@ -18,10 +17,12 @@ import it.pagopa.transactions.utils.AuthRequestDataUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-import java.util.Objects;
+import java.net.URI;
+import java.util.Map;
 
 @Component(TransactionUpdateAuthorizationHandler.QUALIFIER_NAME)
 @Slf4j
@@ -30,14 +31,18 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
     public static final String QUALIFIER_NAME = "TransactionUpdateAuthorizationHandlerV2";
     private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData> transactionEventStoreRepository;
 
+    private final Map<String, URI> npgPaymentCircuitLogoMap;
+
     @Autowired
     protected TransactionUpdateAuthorizationHandler(
             TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> transactionEventStoreRepository,
             AuthRequestDataUtils extractAuthRequestData,
-            TransactionsUtils transactionsUtils
+            TransactionsUtils transactionsUtils,
+            @Qualifier("npgPaymentCircuitLogoMap") Map<String, URI> npgPaymentCircuitLogoMap
     ) {
         super(extractAuthRequestData, transactionsUtils);
         this.transactionEventStoreRepository = transactionEventStoreRepository;
+        this.npgPaymentCircuitLogoMap = npgPaymentCircuitLogoMap;
     }
 
     @Override
@@ -47,15 +52,15 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
         UpdateAuthorizationRequestDto updateAuthorizationRequest = command.getData().updateAuthorizationRequest();
         AuthRequestDataUtils.AuthRequestData authRequestDataExtracted = extractAuthRequestData
                 .from(updateAuthorizationRequest, transactionId);
-        TransactionStatus transactionStatus = TransactionStatus.valueOf(command.getData().transactionStatus());
+        TransactionStatusDto transactionStatus = TransactionStatusDto.valueOf(command.getData().transactionStatus());
 
-        if (transactionStatus.equals(TransactionStatus.AUTHORIZATION_REQUESTED)) {
+        if (transactionStatus.equals(TransactionStatusDto.AUTHORIZATION_REQUESTED)) {
             UpdateAuthorizationRequestOutcomeGatewayDto outcomeGateway = command.getData().updateAuthorizationRequest()
                     .getOutcomeGateway();
 
             TransactionGatewayAuthorizationData authorizationData;
-            if (Objects.requireNonNull(outcomeGateway) instanceof OutcomeNpgGatewayDto) {
-                OutcomeNpgGatewayDto outcomeNpgGateway = ((OutcomeNpgGatewayDto) outcomeGateway);
+
+            if (outcomeGateway instanceof OutcomeNpgGatewayDto outcomeNpgGateway) {
                 authorizationData = new NpgTransactionGatewayAuthorizationData(
                         OperationResultDto.valueOf(outcomeNpgGateway.getOperationResult().toString()),
                         outcomeNpgGateway.getOperationId(),
@@ -89,5 +94,6 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
         } else {
             return alreadyProcessedError;
         }
+
     }
 }
