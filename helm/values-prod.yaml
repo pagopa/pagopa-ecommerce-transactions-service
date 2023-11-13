@@ -133,7 +133,7 @@ microservice-chart:
       cpu: "500m"
   autoscaling:
     enable: true
-    minReplica: 2
+    minReplica: 3
     maxReplica: 10
     pollingInterval: 30 # seconds
     cooldownPeriod: 300 # seconds
@@ -229,3 +229,13 @@ microservice-chart:
                 operator: In
                 values:
                   - user
+    nodeAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node_type
+                operator: In
+                values:
+                  - user
+        topologyKey: failure-domain.beta.kubernetes.io/zone
+
