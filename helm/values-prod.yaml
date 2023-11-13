@@ -237,5 +237,5 @@ microservice-chart:
                 operator: In
                 values:
                   - user
-        topologyKey: failure-domain.beta.kubernetes.io/zone
+        topologyKey: topology.kubernetes.io/zone
 
