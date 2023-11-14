@@ -1,5 +1,6 @@
 package it.pagopa.transactions.configurations;
 
+import it.pagopa.ecommerce.commons.exceptions.NpgApiKeyConfigurationException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -42,21 +43,27 @@ class NpgPspApiKeysConfigTest {
     @Test
     void shouldThrowExceptionForInvalidJsonStructure() {
         Set<String> psps = new HashSet<>(pspToHandle);
-        IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
+        NpgApiKeyConfigurationException exception = assertThrows(
+                NpgApiKeyConfigurationException.class,
                 () -> npgPspApiKeysConfig.npgCardsApiKeys("{", psps)
         );
-        assertEquals("Invalid NPG CARDS PSP json configuration map", exception.getMessage());
+        assertEquals(
+                "Error parsing NPG PSP api keys configuration for payment method: [CARDS], cause: Invalid json configuration map",
+                exception.getMessage()
+        );
     }
 
     @Test
     void shouldThrowExceptionForMissingPspId() {
         Set<String> psps = new HashSet<>(pspToHandle);
         psps.add("psp4");
-        IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
+        NpgApiKeyConfigurationException exception = assertThrows(
+                NpgApiKeyConfigurationException.class,
                 () -> npgPspApiKeysConfig.npgCardsApiKeys(pspConfigurationJson, psps)
         );
-        assertEquals("Misconfigured NPG CARDS PSP api keys. Missing keys: [psp4]", exception.getMessage());
+        assertEquals(
+                "Error parsing NPG PSP api keys configuration for payment method: [CARDS], cause: Misconfigured api keys. Missing keys: [psp4]",
+                exception.getMessage()
+        );
     }
 }
