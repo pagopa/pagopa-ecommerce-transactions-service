@@ -1,6 +1,5 @@
 package it.pagopa.transactions.configurations;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -18,11 +17,6 @@ import java.util.function.Function;
 @Configuration
 @Slf4j
 public class NpgPspApiKeysConfig {
-
-    /**
-     * Object mapper instance used to parse Json api keys representation
-     */
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * Return a map where valued with each psp id - api keys entries
