@@ -63,8 +63,14 @@ class PaymentGatewayClientTest {
     @Mock
     ConfidentialMailUtils confidentialMailUtils;
 
-    @Mock
-    Map<String, String> npgCardsApiKeys;
+    Map<String, String> npgCardsApiKeys = Map.of(
+            "pspId1",
+            "pspKey1",
+            "pspId2",
+            "pspKey2",
+            "pspId3",
+            "pspKey3"
+    );
 
     @Mock
     NpgClient npgClient;
@@ -465,7 +471,7 @@ class PaymentGatewayClientTest {
                 transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
-                "pspId",
+                "pspId1",
                 "CP",
                 "brokerName",
                 "pspChannelCode",
@@ -479,7 +485,6 @@ class PaymentGatewayClientTest {
                 cardDetails
         );
         StateResponseDto ngpStateResponse = new StateResponseDto().url("https://example.com");
-
         /* preconditions */
         Mockito.when(npgClient.confirmPayment(any(), any(), any(), any())).thenReturn(Mono.just(ngpStateResponse));
 
@@ -487,6 +492,17 @@ class PaymentGatewayClientTest {
         StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData))
                 .expectNext(ngpStateResponse)
                 .verifyComplete();
+        String expectedApiKey = npgCardsApiKeys.get(authorizationData.pspId());
+        String expectedSessionId = authorizationData.sessionId().get();
+        BigDecimal expectedGranTotalAmount = BigDecimal.valueOf(
+                transaction
+                        .getPaymentNotices()
+                        .stream()
+                        .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value())
+                        .sum() + authorizationData.fee()
+        );
+        verify(npgClient, times(1))
+                .confirmPayment(any(), eq(expectedSessionId), eq(expectedGranTotalAmount), eq(expectedApiKey));
     }
 
     @Test
