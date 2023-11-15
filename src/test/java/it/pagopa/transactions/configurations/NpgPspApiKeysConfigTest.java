@@ -6,15 +6,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class NpgPspApiKeysConfigTest {
 
-    private final NpgPspApiKeysConfig npgPspApiKeysConfig = new NpgPspApiKeysConfig();
+    private final NpgPspApiKeysConfigBuilder npgPspApiKeysConfig = new NpgPspApiKeysConfigBuilder();
 
     private final String pspConfigurationJson = """
             {
@@ -35,9 +33,20 @@ class NpgPspApiKeysConfigTest {
             }
     )
     void shouldParsePspConfigurationSuccessfully(String pspId) {
-        Map<String, String> pspConfiguration = npgPspApiKeysConfig
+        it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig pspConfiguration = npgPspApiKeysConfig
                 .npgCardsApiKeys(pspConfigurationJson, new HashSet<>(pspToHandle));
-        assertEquals("key-%s".formatted(pspId), pspConfiguration.get(pspId));
+        var apiKey = pspConfiguration.get(pspId);
+        assertTrue(apiKey.isRight());
+        assertEquals("key-%s".formatted(pspId), apiKey.get());
+    }
+
+    @Test
+    void shouldThrowErrorWhenRetrievingUnknownPspApiKey() {
+        it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig pspConfiguration = npgPspApiKeysConfig
+                .npgCardsApiKeys(pspConfigurationJson, new HashSet<>(pspToHandle));
+        var apiKey = pspConfiguration.get("unknown");
+        assertTrue(apiKey.isLeft());
+        assertEquals("Requested API key for PSP unknown. Available PSPs: [psp1, psp2, psp3]", apiKey.getLeft().getMessage());
     }
 
     @Test

@@ -6,6 +6,7 @@ import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
+import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
@@ -63,14 +64,16 @@ class PaymentGatewayClientTest {
     @Mock
     ConfidentialMailUtils confidentialMailUtils;
 
-    Map<String, String> npgCardsApiKeys = Map.of(
-            "pspId1",
-            "pspKey1",
-            "pspId2",
-            "pspKey2",
-            "pspId3",
-            "pspKey3"
-    );
+    NpgPspApiKeysConfig npgPspApiKeysConfig = NpgPspApiKeysConfig.parseApiKeyConfiguration(
+            """
+                    {
+                        "pspId1": "pspKey1"
+                    }
+                    """,
+            Set.of("pspId1"),
+            NpgClient.PaymentMethod.CARDS,
+            new ObjectMapper()
+    ).get();
 
     @Mock
     NpgClient npgClient;
@@ -90,7 +93,7 @@ class PaymentGatewayClientTest {
                 mockUuidUtils,
                 confidentialMailUtils,
                 npgClient,
-                npgCardsApiKeys
+                npgPspApiKeysConfig
         );
 
         Hooks.onOperatorDebug();
@@ -492,7 +495,7 @@ class PaymentGatewayClientTest {
         StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData))
                 .expectNext(ngpStateResponse)
                 .verifyComplete();
-        String expectedApiKey = npgCardsApiKeys.get(authorizationData.pspId());
+        String expectedApiKey = npgPspApiKeysConfig.get(authorizationData.pspId()).get();
         String expectedSessionId = authorizationData.sessionId().get();
         BigDecimal expectedGranTotalAmount = BigDecimal.valueOf(
                 transaction
@@ -535,7 +538,7 @@ class PaymentGatewayClientTest {
                 transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
-                "pspId",
+                "pspId1",
                 "CP",
                 "brokerName",
                 "pspChannelCode",
@@ -548,7 +551,6 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails
         );
-        StateResponseDto ngpStateResponse = new StateResponseDto().url("https://example.com");
 
         /* preconditions */
         Mockito.when(npgClient.confirmPayment(any(), any(), any(), any()))
@@ -605,7 +607,7 @@ class PaymentGatewayClientTest {
                 transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
-                "pspId",
+                "pspId1",
                 "CP",
                 "brokerName",
                 "pspChannelCode",
@@ -618,7 +620,6 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails
         );
-        StateResponseDto ngpStateResponse = new StateResponseDto().url("https://example.com");
 
         /* preconditions */
         Mockito.when(npgClient.confirmPayment(any(), any(), any(), any()))
@@ -672,7 +673,7 @@ class PaymentGatewayClientTest {
                 transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
-                "pspId",
+                "pspId1",
                 "CP",
                 "brokerName",
                 "pspChannelCode",
@@ -685,7 +686,6 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails
         );
-        StateResponseDto ngpStateResponse = new StateResponseDto().url("https://example.com");
 
         /* preconditions */
         Mockito.when(npgClient.confirmPayment(any(), any(), any(), any()))

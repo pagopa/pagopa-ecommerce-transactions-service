@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
+import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
@@ -48,7 +49,7 @@ public class PaymentGatewayClient {
 
     private final NpgClient npgClient;
 
-    private final Map<String, String> npgCardsApiKeys;
+    private final NpgPspApiKeysConfig npgCardsApiKeys;
 
     @Autowired
     public PaymentGatewayClient(
@@ -59,7 +60,7 @@ public class PaymentGatewayClient {
             UUIDUtils uuidUtils,
             ConfidentialMailUtils confidentialMailUtils,
             NpgClient npgClient,
-            @Qualifier("npgCardsApiKeys") Map<String, String> npgCardsApiKeys
+            NpgPspApiKeysConfig npgCardsApiKeys
 
     ) {
         this.postePayInternalApi = postePayInternalApi;
@@ -287,16 +288,18 @@ public class PaymentGatewayClient {
                         );
                     }
                     final UUID correlationId = UUID.randomUUID();
-                    final String pspNpgApiKey = npgCardsApiKeys.get(authorizationData.pspId());
-                    return npgClient.confirmPayment(
-                            correlationId,
-                            authorizationData.sessionId().get(),
-                            grandTotal,
-                            pspNpgApiKey
-                    )
-                            .onErrorMap(
-                                    WebClientResponseException.class,
-                                    exception -> switch (exception.getStatusCode()) {
+                    final var pspNpgApiKey = npgCardsApiKeys.get(authorizationData.pspId());
+                    return pspNpgApiKey.fold(
+                            Mono::error,
+                            apiKey -> npgClient.confirmPayment(
+                                    correlationId,
+                                    authorizationData.sessionId().get(),
+                                    grandTotal,
+                                    apiKey
+                            )
+                                    .onErrorMap(
+                                            WebClientResponseException.class,
+                                            exception -> switch (exception.getStatusCode()) {
                         case UNAUTHORIZED -> new AlreadyProcessedException(
                                 authorizationData.transactionId()
                         ); // 401
@@ -306,7 +309,9 @@ public class PaymentGatewayClient {
                         ); // 500
                         default -> exception;
                     }
-                            );
+                                    )
+                    );
+
                 });
     }
 
