@@ -4,7 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData;
+import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
+import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
@@ -48,7 +50,7 @@ public class PaymentGatewayClient {
 
     private final NpgClient npgClient;
 
-    private final Map<String, String> npgCardsApiKeys;
+    private final NpgPspApiKeysConfig npgCardsApiKeys;
 
     @Autowired
     public PaymentGatewayClient(
@@ -59,7 +61,7 @@ public class PaymentGatewayClient {
             UUIDUtils uuidUtils,
             ConfidentialMailUtils confidentialMailUtils,
             NpgClient npgClient,
-            @Qualifier("npgCardsApiKeys") Map<String, String> npgCardsApiKeys
+            NpgPspApiKeysConfig npgCardsApiKeys
 
     ) {
         this.postePayInternalApi = postePayInternalApi;
@@ -287,26 +289,40 @@ public class PaymentGatewayClient {
                         );
                     }
                     final UUID correlationId = UUID.randomUUID();
-                    final String pspNpgApiKey = npgCardsApiKeys.get(authorizationData.pspId());
-                    return npgClient.confirmPayment(
-                            correlationId,
-                            authorizationData.sessionId().get(),
-                            grandTotal,
-                            pspNpgApiKey
-                    )
-                            .onErrorMap(
-                                    WebClientResponseException.class,
-                                    exception -> switch (exception.getStatusCode()) {
+                    final var pspNpgApiKey = npgCardsApiKeys.get(authorizationData.pspId());
+                    return pspNpgApiKey.fold(
+                            Mono::error,
+                            apiKey -> npgClient.confirmPayment(
+                                    correlationId,
+                                    authorizationData.sessionId().get(),
+                                    grandTotal,
+                                    apiKey
+                            )
+                                    .onErrorMap(
+                                            NpgResponseException.class,
+                                            exception -> exception
+                                                    .getStatusCode()
+                                                    .map(statusCode -> switch (statusCode) {
                         case UNAUTHORIZED -> new AlreadyProcessedException(
                                 authorizationData.transactionId()
                         ); // 401
                         case INTERNAL_SERVER_ERROR -> new BadGatewayException(
-                                "",
-                                exception.getStatusCode()
+                                "NPG internal server error response received",
+                                statusCode
                         ); // 500
-                        default -> exception;
-                    }
-                            );
+                        default -> new BadGatewayException(
+                                "Received NPG error response with unmanaged HTTP response status code",
+                                statusCode
+                        );
+                    })
+                                                    .orElse(
+                                                            new BadGatewayException(
+                                                                    "Received NPG error response with unknown HTTP response status code",
+                                                                    null
+                                                            )
+                                                    )
+                                    )
+                    );
                 });
     }
 
