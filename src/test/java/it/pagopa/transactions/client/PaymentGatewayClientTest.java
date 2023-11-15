@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
+import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -556,13 +557,18 @@ class PaymentGatewayClientTest {
         Mockito.when(npgClient.confirmPayment(any(), any(), any(), any()))
                 .thenReturn(
                         Mono.error(
-                                new WebClientResponseException(
-                                        "api error",
-                                        HttpStatus.UNAUTHORIZED.value(),
-                                        "Unauthorized",
-                                        null,
-                                        null,
-                                        null
+                                new NpgResponseException(
+                                        "NPG error",
+                                        List.of(),
+                                        Optional.of(HttpStatus.UNAUTHORIZED),
+                                        new WebClientResponseException(
+                                                "api error",
+                                                HttpStatus.UNAUTHORIZED.value(),
+                                                "Unauthorized",
+                                                null,
+                                                null,
+                                                null
+                                        )
                                 )
                         )
                 );
@@ -625,13 +631,18 @@ class PaymentGatewayClientTest {
         Mockito.when(npgClient.confirmPayment(any(), any(), any(), any()))
                 .thenReturn(
                         Mono.error(
-                                new WebClientResponseException(
-                                        "api error",
-                                        HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                                        "INTERNAL_SERVER_ERROR",
-                                        null,
-                                        null,
-                                        null
+                                new NpgResponseException(
+                                        "NPG error",
+                                        List.of(),
+                                        Optional.of(HttpStatus.GATEWAY_TIMEOUT),
+                                        new WebClientResponseException(
+                                                "api error",
+                                                HttpStatus.GATEWAY_TIMEOUT.value(),
+                                                "INTERNAL_SERVER_ERROR",
+                                                null,
+                                                null,
+                                                null
+                                        )
                                 )
                         )
                 );
@@ -691,13 +702,18 @@ class PaymentGatewayClientTest {
         Mockito.when(npgClient.confirmPayment(any(), any(), any(), any()))
                 .thenReturn(
                         Mono.error(
-                                new WebClientResponseException(
-                                        "api error",
-                                        HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                                        "INTERNAL SERVER ERROR",
-                                        null,
-                                        null,
-                                        null
+                                new NpgResponseException(
+                                        "NPG error",
+                                        List.of(),
+                                        Optional.of(HttpStatus.INTERNAL_SERVER_ERROR),
+                                        new WebClientResponseException(
+                                                "api error",
+                                                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                                                "INTERNAL SERVER ERROR",
+                                                null,
+                                                null,
+                                                null
+                                        )
                                 )
                         )
                 );

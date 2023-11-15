@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData;
+import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
@@ -298,20 +299,30 @@ public class PaymentGatewayClient {
                                     apiKey
                             )
                                     .onErrorMap(
-                                            WebClientResponseException.class,
-                                            exception -> switch (exception.getStatusCode()) {
+                                            NpgResponseException.class,
+                                            exception -> exception
+                                                    .getStatusCode()
+                                                    .map(statusCode -> switch (statusCode) {
                         case UNAUTHORIZED -> new AlreadyProcessedException(
                                 authorizationData.transactionId()
                         ); // 401
                         case INTERNAL_SERVER_ERROR -> new BadGatewayException(
-                                "",
-                                exception.getStatusCode()
+                                "NPG internal server error response received",
+                                statusCode
                         ); // 500
-                        default -> exception;
-                    }
+                        default -> new BadGatewayException(
+                                "Received NPG error response with unmanaged HTTP response status code",
+                                statusCode
+                        );
+                    })
+                                                    .orElse(
+                                                            new BadGatewayException(
+                                                                    "Received NPG error response with unknown HTTP response status code",
+                                                                    null
+                                                            )
+                                                    )
                                     )
                     );
-
                 });
     }
 

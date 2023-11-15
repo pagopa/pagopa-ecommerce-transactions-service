@@ -46,7 +46,10 @@ class NpgPspApiKeysConfigTest {
                 .npgCardsApiKeys(pspConfigurationJson, new HashSet<>(pspToHandle));
         var apiKey = pspConfiguration.get("unknown");
         assertTrue(apiKey.isLeft());
-        assertEquals("Requested API key for PSP unknown. Available PSPs: [psp1, psp2, psp3]", apiKey.getLeft().getMessage());
+        assertEquals(
+                "Requested API key for PSP unknown. Available PSPs: [psp1, psp2, psp3]",
+                apiKey.getLeft().getMessage()
+        );
     }
 
     @Test
