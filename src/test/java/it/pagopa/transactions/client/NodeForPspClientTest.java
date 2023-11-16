@@ -41,7 +41,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -404,10 +403,51 @@ class NodeForPspClientTest {
                 ecommerceClientId,
                 nodoPerPmUri
         );
-        ClosePaymentResponseDto clientResponse = nodeForPspClient.closePaymentV2(closePaymentRequest).block();
+        StepVerifier
+                .create(nodeForPspClient.closePaymentV2(closePaymentRequest))
+                .expectNext(closePaymentResponse)
+                .verifyComplete();
+    }
 
-        /* test */
-        assertNotNull(clientResponse);
-        assertThat(clientResponse.getOutcome()).isEqualTo(closePaymentResponse.getOutcome());
+    @Test
+    void shouldHandleClosePaymentWithHttpErrorCodeResponse() {
+        ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
+                .paymentTokens(List.of("paymentToken"))
+                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
+                .idPSP("identificativoPsp")
+                .idBrokerPSP("identificativoIntermediario")
+                .idChannel("identificativoCanale")
+                .transactionId("transactionId")
+                .fee(new BigDecimal(1))
+                .timestampOperation(OffsetDateTime.now())
+                .totalAmount(new BigDecimal(101))
+                .additionalPaymentInformations(null);
+
+        /* preconditions */
+        String nodoPerPmUri = "/nodo-per-pm/v2";
+        String ecommerceClientId = "ecomm";
+        Dispatcher dispatcher = new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest request) {
+                return new MockResponse()
+                        .setResponseCode(500);
+            }
+        };
+
+        mockWebServer.setDispatcher(dispatcher);
+        NodeForPspClient nodeForPspClient = new NodeForPspClient(
+                new WebClientsConfig().nodoWebClient(
+                        "http://localhost:9000",
+                        10000,
+                        10000
+                ),
+                "/",
+                ecommerceClientId,
+                nodoPerPmUri
+        );
+        StepVerifier
+                .create(nodeForPspClient.closePaymentV2(closePaymentRequest))
+                .expectErrorMatches(ex -> ex instanceof BadGatewayException)
+                .verify();
     }
 }

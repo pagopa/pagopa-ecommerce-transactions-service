@@ -103,6 +103,7 @@ public class NodeForPspClient {
                         HttpStatus::isError,
                         clientResponse -> clientResponse
                                 .bodyToMono(String.class)
+                                .switchIfEmpty(Mono.just("N/A"))
                                 .flatMap(
                                         errorResponseBody -> Mono.error(
                                                 new ResponseStatusException(
