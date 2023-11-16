@@ -77,6 +77,7 @@ microservice-chart:
     REDIS_SSL_ENABLED: "true"
     NODO_HOSTNAME: https://api.uat.platform.pagopa.it
     NODE_FOR_PSP_URI: /nodo/node-for-psp/v1
+    NODO_PER_PM_URI: /nodo/nodo-per-pm/v2
     NODO_READ_TIMEOUT: "10000"
     NODO_CONNECTION_TIMEOUT: "10000"
     NODO_PARALLEL_REQUESTS: "5"
