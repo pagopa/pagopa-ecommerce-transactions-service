@@ -1,17 +1,10 @@
 package it.pagopa.transactions.client;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import it.pagopa.ecommerce.commons.client.NpgClient;
-import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
-import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
-import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Request;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Response;
 import it.pagopa.transactions.exceptions.BadGatewayException;
-import it.pagopa.transactions.utils.ConfidentialMailUtils;
-import it.pagopa.transactions.utils.UUIDUtils;
 import it.pagopa.transactions.utils.soap.SoapEnvelope;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +19,6 @@ import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
 import javax.xml.bind.JAXBElement;
-import java.util.Map;
 
 @Component
 @Slf4j
@@ -118,7 +110,11 @@ public class NodeForPspClient {
                 .bodyToMono(ClosePaymentResponseDto.class)
                 .doOnSuccess(
                         closePaymentResponse -> log
-                                .info("Requested closePayment for paymentTokens {}", request.getPaymentTokens())
+                                .info(
+                                        "Received closePayment response for paymentTokens [{}], outcome: [{}]",
+                                        request.getPaymentTokens(),
+                                        closePaymentResponse.getOutcome()
+                                )
                 )
                 .onErrorMap(
                         ResponseStatusException.class,
