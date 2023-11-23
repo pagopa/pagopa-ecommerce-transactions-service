@@ -235,7 +235,7 @@ microservice-chart:
           podAffinityTerm:
             labelSelector:
               matchLabels:
-                aadpodidbinding: ecommerce-pod-identity
+                app.kubernetes.io/instance: pagopaecommercetransactionsservice
             namespaces: [ "ecommerce" ]
             topologyKey: topology.kubernetes.io/zone
 
