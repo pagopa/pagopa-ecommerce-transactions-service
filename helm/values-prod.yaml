@@ -89,7 +89,7 @@ microservice-chart:
       NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.36.0"
+    tag: "0.38.0"
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -134,7 +134,7 @@ microservice-chart:
       cpu: "500m"
   autoscaling:
     enable: true
-    minReplica: 2
+    minReplica: 3
     maxReplica: 10
     pollingInterval: 30 # seconds
     cooldownPeriod: 300 # seconds
@@ -231,3 +231,12 @@ microservice-chart:
                 operator: In
                 values:
                   - user
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/instance: pagopaecommercetransactionsservice
+            namespaces: ["ecommerce"]
+            topologyKey: topology.kubernetes.io/zone

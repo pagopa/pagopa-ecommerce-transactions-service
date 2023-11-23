@@ -86,7 +86,8 @@ public class NodeForPspClient {
 
     public Mono<ClosePaymentResponseDto> closePaymentV2(ClosePaymentRequestV2Dto request) {
         log.info(
-                "Requested closePaymentV2 for paymentTokens {} - outcome: {}",
+                "Requested closePaymentV2 for transactionId [{}]: paymentTokens {} - outcome: {}",
+                request.getTransactionId(),
                 request.getPaymentTokens(),
                 request.getOutcome().getValue()
         );
@@ -116,7 +117,12 @@ public class NodeForPspClient {
                 .bodyToMono(ClosePaymentResponseDto.class)
                 .doOnSuccess(
                         closePaymentResponse -> log
-                                .info("Requested closePayment for paymentTokens {}", request.getPaymentTokens())
+                                .info(
+                                        "Received closePaymentV2 response for transactionId [{}]: paymentTokens {} - outcome: {}",
+                                        request.getTransactionId(),
+                                        request.getPaymentTokens(),
+                                        closePaymentResponse.getOutcome()
+                                )
                 )
                 .onErrorMap(
                         ResponseStatusException.class,
