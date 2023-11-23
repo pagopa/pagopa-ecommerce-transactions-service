@@ -229,13 +229,14 @@ microservice-chart:
                 operator: In
                 values:
                   - user
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                aadpodidbinding: ecommerce-pod-identity
+            namespaces: [ "ecommerce" ]
+            topologyKey: topology.kubernetes.io/zone
     nodeAntiAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
-              - key: node_type
-                operator: In
-                values:
-                  - user
-        topologyKey: topology.kubernetes.io/zone
 
