@@ -238,5 +238,4 @@ microservice-chart:
                 aadpodidbinding: ecommerce-pod-identity
             namespaces: [ "ecommerce" ]
             topologyKey: topology.kubernetes.io/zone
-    nodeAntiAffinity:
 
