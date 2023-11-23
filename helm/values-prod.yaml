@@ -88,7 +88,7 @@ microservice-chart:
       NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.37.1"
+    tag: "0.38.0"
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -236,6 +236,5 @@ microservice-chart:
             labelSelector:
               matchLabels:
                 app.kubernetes.io/instance: pagopaecommercetransactionsservice
-            namespaces: [ "ecommerce" ]
+            namespaces: ["ecommerce"]
             topologyKey: topology.kubernetes.io/zone
-
