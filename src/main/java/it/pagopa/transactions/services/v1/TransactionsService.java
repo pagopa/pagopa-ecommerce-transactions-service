@@ -18,11 +18,7 @@ import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.TransferListItemDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.commands.*;
-import it.pagopa.transactions.commands.data.NewTransactionRequestData;
-import it.pagopa.transactions.commands.data.AddUserReceiptData;
-import it.pagopa.transactions.commands.data.AuthorizationRequestData;
-import it.pagopa.transactions.commands.data.ClosureSendData;
-import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
+import it.pagopa.transactions.commands.data.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
@@ -788,26 +784,26 @@ public class TransactionsService {
                                         .flatMap(
                                                 t -> transactionUpdateAuthorizationHandlerV1
                                                         .handle(transactionUpdateAuthorizationCommand)
-                                                        .cast(
-                                                                it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedEvent.class
-                                                        )
                                                         .doOnNext(
                                                                 authorizationStatusUpdatedEvent -> log.info(
                                                                         "Requested authorization update for rptId: {}",
                                                                         transaction.getPaymentNotices().get(0).rptId()
                                                                 )
                                                         )
+                                                        .doOnError(
+                                                                AlreadyProcessedException.class,
+                                                                exception -> log.error(
+                                                                        "Error: requesting authorization update for transaction in state {}",
+                                                                        t.getStatus()
+                                                                )
+                                                        )
+                                                        .cast(
+                                                                it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationCompletedEvent.class
+                                                        )
                                                         .flatMap(
                                                                 authorizationStatusUpdatedEvent -> authorizationUpdateProjectionHandlerV1
                                                                         .handle(authorizationStatusUpdatedEvent)
                                                         )
-                                        )
-                                        .doOnError(
-                                                AlreadyProcessedException.class,
-                                                t -> log.error(
-                                                        "Error: requesting authorization update for transaction in state {}",
-                                                        baseTransaction
-                                                )
                                         )
                                         .cast(
                                                 it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken.class
@@ -866,27 +862,28 @@ public class TransactionsService {
                                         .flatMap(
                                                 t -> transactionUpdateAuthorizationHandlerV2
                                                         .handle(transactionUpdateAuthorizationCommand)
-                                                        .cast(
-                                                                it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent.class
-                                                        )
                                                         .doOnNext(
                                                                 authorizationStatusUpdatedEvent -> log.info(
                                                                         "Requested authorization update for rptId: {}",
                                                                         transaction.getPaymentNotices().get(0).rptId()
                                                                 )
                                                         )
+                                                        .doOnError(
+                                                                AlreadyProcessedException.class,
+                                                                exception -> log.error(
+                                                                        "Error: requesting authorization update for transaction in state {}",
+                                                                        t.getStatus()
+                                                                )
+                                                        )
+                                                        .cast(
+                                                                it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent.class
+                                                        )
                                                         .flatMap(
                                                                 authorizationStatusUpdatedEvent -> authorizationUpdateProjectionHandlerV2
                                                                         .handle(authorizationStatusUpdatedEvent)
                                                         )
                                         )
-                                        .doOnError(
-                                                AlreadyProcessedException.class,
-                                                t -> log.error(
-                                                        "Error: requesting authorization update for transaction in state {}",
-                                                        baseTransaction
-                                                )
-                                        )
+
                                         .cast(
                                                 it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithPaymentToken.class
                                         )
