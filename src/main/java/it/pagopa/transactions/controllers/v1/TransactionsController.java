@@ -3,6 +3,7 @@ package it.pagopa.transactions.controllers.v1;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
@@ -272,6 +273,17 @@ public class TransactionsController implements TransactionsApi {
                         .status(502)
                         .title("Bad gateway")
                         .detail(exception.getDetail()),
+                HttpStatus.BAD_GATEWAY
+        );
+    }
+
+    @ExceptionHandler(NpgResponseException.class)
+    ResponseEntity<ProblemJsonDto> npgExceptionHandler(NpgResponseException ignoredException) {
+        return new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(502)
+                        .title("Bad gateway")
+                        .detail("Error while contacting payment gateway"),
                 HttpStatus.BAD_GATEWAY
         );
     }
