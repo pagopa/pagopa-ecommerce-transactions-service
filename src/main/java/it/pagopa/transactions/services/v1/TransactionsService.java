@@ -23,6 +23,7 @@ import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.EventVersion;
+import it.pagopa.transactions.utils.PaymentSessionData;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +34,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
 import java.util.List;
@@ -503,7 +503,7 @@ public class TransactionsService {
                             Integer amountTotal = transactionsUtils.getTransactionTotalAmount(transaction);
                             return retrieveInformationFromAuthorizationRequest(requestAuthorizationRequestDto)
                                     .flatMap(
-                                            authorizationInfo -> ecommercePaymentMethodsClient
+                                            paymentSessionData -> ecommercePaymentMethodsClient
                                                     .calculateFee(
                                                             requestAuthorizationRequestDto.getPaymentInstrumentId(),
                                                             transactionId,
@@ -512,8 +512,7 @@ public class TransactionsService {
                                                                             transactionsUtils.getClientId(transaction)
                                                                     )
                                                                     .bin(
-                                                                            authorizationInfo.map(Tuple3::getT1)
-                                                                                    .orElse(null)
+                                                                            paymentSessionData.cardBin()
                                                                     )
                                                                     .idPspList(
                                                                             List.of(
@@ -553,8 +552,8 @@ public class TransactionsService {
                                                     .map(
                                                             calculateFeeResponseDto -> Tuples.of(
                                                                     calculateFeeResponseDto,
-                                                                    authorizationInfo.flatMap(Tuple3::getT2),
-                                                                    authorizationInfo.map(Tuple3::getT3)
+                                                                    Optional.ofNullable(paymentSessionData.sessionId()),
+                                                                    paymentSessionData.brand()
                                                             )
                                                     )
                                     )
@@ -615,7 +614,7 @@ public class TransactionsService {
                             String paymentMethodDescription = args.getT3();
                             BundleDto bundle = args.getT4();
                             Optional<String> sessionId = args.getT5();
-                            Optional<String> brand = args.getT6();
+                            String brand = args.getT6();
                             log.info(
                                     "Requesting authorization for transactionId: {}",
                                     transactionDocument.getTransactionId()
@@ -659,7 +658,7 @@ public class TransactionsService {
                                     bundle.getOnUs(),
                                     paymentGatewayId,
                                     sessionId,
-                                    brand.orElse(null),
+                                    brand,
                                     requestAuthorizationRequestDto.getDetails()
                             );
 
@@ -1282,13 +1281,17 @@ public class TransactionsService {
                 ).orElseThrow(() -> new InvalidRequestException("Null value as input origin"));
     }
 
-    private Mono<Optional<Tuple3<String, Optional<String>, String>>> retrieveInformationFromAuthorizationRequest(RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
+    private Mono<PaymentSessionData> retrieveInformationFromAuthorizationRequest(RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
         return switch (requestAuthorizationRequestDto.getDetails()) {
             case CardAuthRequestDetailsDto cardData ->
-                    Mono.just(Optional.of(Tuples.of(cardData.getPan().substring(0, 6), Optional.empty(), Optional.of(cardData.getBrand()).map(Enum::toString).orElse(null))));
+                    Mono.just(new PaymentSessionData(cardData.getPan().substring(0, 6),null,Optional.of(cardData.getBrand()).map(Enum::toString).orElse(null),null));
             case CardsAuthRequestDetailsDto cards ->
-                    ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId()).map(response -> Optional.of(Tuples.of(response.getBin(), Optional.of(response.getSessionId()), response.getBrand())));
-            default -> Mono.just(Optional.empty());
+                    ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId()).map(response -> new PaymentSessionData(response.getBin(),response.getSessionId(),response.getBrand(),null));
+            case WalletAuthRequestDetailsDto wallet ->
+                // call walletById for retrieve bin and contractId
+                 Mono.just(new PaymentSessionData("bin",null,null,"contractId"));
+
+            default -> Mono.just(new PaymentSessionData(null,null,null,null));
         };
     }
 }
