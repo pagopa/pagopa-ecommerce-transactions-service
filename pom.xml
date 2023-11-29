@@ -339,6 +339,28 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>wallet-api</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-infra/CHK-2194-get-wallet-for-ecommerce/src/domains/wallet-app/api/payment-wallet-for-ecommerce/v1/_openapi.json.tpl</inputSpec>
+                            <generatorName>java</generatorName>
+                            <library>webclient</library>
+                            <generateApiDocumentation>false</generateApiDocumentation>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <generateSupportingFiles>true</generateSupportingFiles>
+                            <configOptions>
+                                <swaggerAnnotations>false</swaggerAnnotations>
+                                <openApiNullable>false</openApiNullable>
+                            </configOptions>
+                            <modelPackage>it.pagopa.generated.wallet.v1.dto</modelPackage>
+                            <apiPackage>it.pagopa.generated.wallet.v1.api</apiPackage>
+                            <modelNameSuffix>dto</modelNameSuffix>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>transactions-gateway-api</id>
                         <goals>
                             <goal>generate</goal>
