@@ -57,6 +57,7 @@ class LogoMappingUtilsTest {
                 false,
                 "PGS",
                 Optional.empty(),
+                Optional.empty(),
                 "VISA",
                 new CardAuthRequestDetailsDto()
                         .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
@@ -85,6 +86,7 @@ class LogoMappingUtilsTest {
                 "pspBusinessName",
                 false,
                 "PGS",
+                Optional.empty(),
                 Optional.empty(),
                 "VISA",
                 new CardsAuthRequestDetailsDto()
@@ -115,6 +117,7 @@ class LogoMappingUtilsTest {
                 false,
                 "PGS",
                 Optional.empty(),
+                Optional.empty(),
                 "UnhandledBrand",
                 new CardsAuthRequestDetailsDto()
                         .orderId("orderId")
@@ -143,6 +146,7 @@ class LogoMappingUtilsTest {
                 "pspBusinessName",
                 false,
                 "PGS",
+                Optional.empty(),
                 Optional.empty(),
                 "UnhandledBrand",
                 new PostePayAuthRequestDetailsDto()

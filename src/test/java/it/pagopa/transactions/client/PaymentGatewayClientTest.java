@@ -139,6 +139,7 @@ class PaymentGatewayClientTest {
                 false,
                 "GID",
                 Optional.empty(),
+                Optional.empty(),
                 "VISA",
                 new PostePayAuthRequestDetailsDto().detailType("invalid").accountEmail("test@test.it")
         );
@@ -206,6 +207,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "XPAY",
+                Optional.empty(),
                 Optional.empty(),
                 "VISA",
                 cardDetails
@@ -293,6 +295,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 null,
+                Optional.empty(),
                 Optional.empty(),
                 "VISA",
                 null
@@ -387,6 +390,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "VPOS",
+                Optional.empty(),
                 Optional.empty(),
                 "VISA",
                 cardDetails
@@ -485,6 +489,7 @@ class PaymentGatewayClientTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                Optional.empty(),
                 "VISA",
                 cardDetails
         );
@@ -549,6 +554,7 @@ class PaymentGatewayClientTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                Optional.empty(),
                 "VISA",
                 cardDetails
         );
@@ -623,6 +629,7 @@ class PaymentGatewayClientTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                Optional.empty(),
                 "VISA",
                 cardDetails
         );
@@ -694,6 +701,7 @@ class PaymentGatewayClientTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                Optional.empty(),
                 "VISA",
                 cardDetails
         );
@@ -769,6 +777,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "XPAY",
+                Optional.empty(),
                 Optional.empty(),
                 "VISA",
                 cardDetails
@@ -870,6 +879,7 @@ class PaymentGatewayClientTest {
                 false,
                 null,
                 Optional.empty(),
+                Optional.empty(),
                 "VISA",
                 null
         );
@@ -966,6 +976,7 @@ class PaymentGatewayClientTest {
                 false,
                 null,
                 Optional.empty(),
+                Optional.empty(),
                 "VISA",
                 null
         );
@@ -1043,6 +1054,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 null,
+                Optional.empty(),
                 Optional.empty(),
                 "VISA",
                 null
@@ -1142,6 +1154,7 @@ class PaymentGatewayClientTest {
                 false,
                 "XPAY",
                 Optional.empty(),
+                Optional.empty(),
                 "VISA",
                 cardDetails
         );
@@ -1240,6 +1253,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "VPOS",
+                Optional.empty(),
                 Optional.empty(),
                 "VISA",
                 cardDetails
@@ -1343,6 +1357,7 @@ class PaymentGatewayClientTest {
                 false,
                 null,
                 Optional.empty(),
+                Optional.empty(),
                 "VISA",
                 null
         );
@@ -1434,6 +1449,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "XPAY",
+                Optional.empty(),
                 Optional.empty(),
                 "VISA",
                 cardDetails
@@ -1527,6 +1543,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "VPOS",
+                Optional.empty(),
                 Optional.empty(),
                 "VISA",
                 cardDetails
@@ -1624,6 +1641,7 @@ class PaymentGatewayClientTest {
                 false,
                 "XPAY",
                 Optional.empty(),
+                Optional.empty(),
                 "VISA",
                 null
         );
@@ -1684,6 +1702,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "VPOS",
+                Optional.empty(),
                 Optional.empty(),
                 "VISA",
                 null

@@ -558,7 +558,8 @@ public class TransactionsService {
                                                             calculateFeeResponseDto -> Tuples.of(
                                                                     calculateFeeResponseDto,
                                                                     Optional.ofNullable(paymentSessionData.sessionId()),
-                                                                    paymentSessionData.brand()
+                                                                    paymentSessionData.brand(),
+                                                                    Optional.ofNullable(paymentSessionData.contractId())
                                                             )
                                                     )
                                     )
@@ -584,7 +585,8 @@ public class TransactionsService {
                                                                                 )
                                                                 ).findFirst(),
                                                         data.getT2(),
-                                                        data.getT3()
+                                                        data.getT3(),
+                                                        data.getT4()
                                                 );
                                             }
                                     )
@@ -605,7 +607,8 @@ public class TransactionsService {
                                                     t.getT2(),
                                                     t.getT3().get(),
                                                     t.getT4(),
-                                                    t.getT5()
+                                                    t.getT5(),
+                                                    t.getT6()
                                             )
 
                                     );
@@ -620,6 +623,7 @@ public class TransactionsService {
                             BundleDto bundle = args.getT4();
                             Optional<String> sessionId = args.getT5();
                             String brand = args.getT6();
+                            Optional<String> contractId = args.getT7();
                             log.info(
                                     "Requesting authorization for transactionId: {}",
                                     transactionDocument.getTransactionId()
@@ -663,6 +667,7 @@ public class TransactionsService {
                                     bundle.getOnUs(),
                                     paymentGatewayId,
                                     sessionId,
+                                    contractId,
                                     brand,
                                     requestAuthorizationRequestDto.getDetails()
                             );

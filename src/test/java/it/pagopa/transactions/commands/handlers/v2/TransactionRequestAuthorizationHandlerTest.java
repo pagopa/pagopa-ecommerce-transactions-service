@@ -181,6 +181,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 null,
                 Optional.empty(),
+                Optional.empty(),
                 "VISA",
                 new PostePayAuthRequestDetailsDto()
         );
@@ -264,6 +265,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 "pspBusinessName",
                 false,
                 "XPAY",
+                Optional.empty(),
                 Optional.empty(),
                 "VISA",
                 new CardAuthRequestDetailsDto().brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
@@ -350,6 +352,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 "pspBusinessName",
                 false,
                 "VPOS",
+                Optional.empty(),
                 Optional.empty(),
                 "VISA",
                 new CardAuthRequestDetailsDto().brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
@@ -438,6 +441,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                Optional.empty(),
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId("orderId")
         );
@@ -547,6 +551,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                Optional.empty(),
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId("orderId")
         );
@@ -660,6 +665,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                Optional.empty(),
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId("orderId")
         );
@@ -778,6 +784,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                Optional.empty(),
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId("orderId")
         );
@@ -868,6 +875,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 null,
                 Optional.empty(),
+                Optional.empty(),
                 "VISA",
                 null
         );
@@ -950,6 +958,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 "pspBusinessName",
                 false,
                 "GPAY",
+                Optional.empty(),
                 Optional.empty(),
                 "VISA",
                 new PostePayAuthRequestDetailsDto().detailType("GPAY").accountEmail("test@test.it")
@@ -1040,6 +1049,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 "VPOS",
                 Optional.empty(),
+                Optional.empty(),
+
                 "VISA",
                 new CardAuthRequestDetailsDto()
                         .cvv("000")
@@ -1141,6 +1152,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 null,
                 Optional.of(sessionId),
+                Optional.empty(),
                 "VISA",
                 new CardsAuthRequestDetailsDto()
                         .detailType("cards")
@@ -1231,6 +1243,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                Optional.empty(),
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId("orderId")
         );
@@ -1323,6 +1336,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                Optional.empty(),
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId("orderId")
         );
@@ -1418,6 +1432,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                Optional.empty(),
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId("orderId")
         );
@@ -1514,6 +1529,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                Optional.empty(),
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId("orderId")
         );
@@ -1610,6 +1626,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                Optional.empty(),
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId("orderId")
         );
@@ -1705,6 +1722,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                Optional.empty(),
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId("orderId")
         );
@@ -1818,6 +1836,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                Optional.empty(),
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId("orderId")
         );
@@ -1935,6 +1954,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 false,
                 "NPG",
                 Optional.of(UUID.randomUUID().toString()),
+                Optional.empty(),
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId("orderId")
         );
