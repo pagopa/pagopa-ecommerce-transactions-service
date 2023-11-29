@@ -231,6 +231,11 @@
             <artifactId>opentelemetry-semconv</artifactId>
             <version>1.27.0-alpha</version>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>
