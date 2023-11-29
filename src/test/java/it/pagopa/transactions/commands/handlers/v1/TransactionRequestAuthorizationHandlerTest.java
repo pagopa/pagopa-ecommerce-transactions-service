@@ -7,8 +7,8 @@ import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
-import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
+import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthRequestDto;
@@ -353,7 +353,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
-                .state(StateDto.REDIRECTED_TO_EXTERNAL_DOMAIN).url(NPG_URL_IFRAME)
+                .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN).url(NPG_URL_IFRAME)
                 .fieldSet(
                         new FieldsDto().sessionId("authorizationSessionId")
                                 .addFieldsItem(new FieldDto().src(NPG_URL_IFRAME))
@@ -456,7 +456,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
-                .state(StateDto.PAYMENT_COMPLETE)
+                .state(WorkflowStateDto.PAYMENT_COMPLETE)
                 .fieldSet(
                         new FieldsDto().sessionId("authorizationSessionId")
                                 .addFieldsItem(new FieldDto().src(NPG_URL_IFRAME))
@@ -559,7 +559,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
-                .state(StateDto.GDI_VERIFICATION)
+                .state(WorkflowStateDto.GDI_VERIFICATION)
                 .fieldSet(
                         new FieldsDto().sessionId("authorizationSessionId")
                                 .addFieldsItem(new FieldDto().src(NPG_URL_IFRAME))
@@ -667,7 +667,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
-                .state(StateDto.CARD_DATA_COLLECTION);
+                .state(WorkflowStateDto.CARD_DATA_COLLECTION);
 
         /* preconditions */
         Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
