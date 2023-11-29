@@ -452,12 +452,14 @@ components:
             - $ref: "#/components/schemas/PostePayAuthRequestDetails"
             - $ref: "#/components/schemas/CardAuthRequestDetails"
             - $ref: "#/components/schemas/CardsAuthRequestDetails"
+            - $ref: "#/components/schemas/WalletAuthRequestDetails"
           discriminator:
             propertyName: detailType
             mapping:
               postepay: "#/components/schemas/PostePayAuthRequestDetails"
               card: "#/components/schemas/CardAuthRequestDetails"
               cards: "#/components/schemas/CardsAuthRequestDetails"
+              wallet: "#/components/schemas/WalletAuthRequestDetails"
 
       required:
         - amount
@@ -548,6 +550,22 @@ components:
       required:
         - detailType
         - orderId
+      example:
+        detailType: "cards"
+        orderId: "orderId"
+    WalletAuthRequestDetails:
+      type: object
+      description: Additional payment authorization details for wallet NPG authorization
+      properties:
+        detailType:
+          description: property discriminator, used to discriminate the authorization request detail. Fixed value 'wallet'
+          type: string
+        walletId:
+          type: string
+          description: walletId
+      required:
+        - detailType
+        - walletId
       example:
         detailType: "cards"
         orderId: "orderId"
