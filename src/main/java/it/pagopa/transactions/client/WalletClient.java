@@ -1,0 +1,45 @@
+package it.pagopa.transactions.client;
+
+import it.pagopa.generated.wallet.v1.api.WalletsApi;
+import it.pagopa.generated.wallet.v1.dto.WalletInfoDto;
+import it.pagopa.transactions.exceptions.InvalidRequestException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Mono;
+
+import java.util.UUID;
+
+@Component
+@Slf4j
+public class WalletClient {
+
+    @Autowired
+    @Qualifier("walletWebClient")
+    private WalletsApi walletWebClient;
+
+    public Mono<WalletInfoDto> getWalletInfo(
+                                             String walletId
+
+    ) {
+        return walletWebClient
+                .getWalletAuthDataById(UUID.fromString(walletId))
+                .doOnError(
+                        WebClientResponseException.class,
+                        WalletClient::logWebClientException
+                )
+                .onErrorMap(
+                        err -> new InvalidRequestException("Error while invoke method for retrieve wallet info")
+                );
+    }
+
+    private static void logWebClientException(WebClientResponseException e) {
+        log.info(
+                "Got bad response from wallet-service [HTTP {}]: {}",
+                e.getStatusCode(),
+                e.getResponseBodyAsString()
+        );
+    }
+}
