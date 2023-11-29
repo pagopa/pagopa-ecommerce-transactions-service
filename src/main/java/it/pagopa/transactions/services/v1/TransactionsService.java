@@ -17,6 +17,7 @@ import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.CalculateFeeResponseD
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.TransferListItemDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
+import it.pagopa.transactions.client.WalletClient;
 import it.pagopa.transactions.commands.*;
 import it.pagopa.transactions.commands.data.*;
 import it.pagopa.transactions.exceptions.*;
@@ -104,6 +105,8 @@ public class TransactionsService {
     private final TransactionsViewRepository transactionsViewRepository;
 
     private final EcommercePaymentMethodsClient ecommercePaymentMethodsClient;
+
+    private final WalletClient walletClient;
 
     private final UUIDUtils uuidUtils;
 
@@ -199,6 +202,7 @@ public class TransactionsService {
             ) it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2,
             TransactionsViewRepository transactionsViewRepository,
             EcommercePaymentMethodsClient ecommercePaymentMethodsClient,
+            WalletClient walletClient,
             UUIDUtils uuidUtils,
             TransactionsUtils transactionsUtils,
             TransactionsEventStoreRepository<Object> eventsRepository,
@@ -235,6 +239,7 @@ public class TransactionsService {
         this.transactionsActivationProjectionHandlerV2 = transactionsActivationProjectionHandlerV2;
         this.transactionsViewRepository = transactionsViewRepository;
         this.ecommercePaymentMethodsClient = ecommercePaymentMethodsClient;
+        this.walletClient = walletClient;
         this.uuidUtils = uuidUtils;
         this.transactionsUtils = transactionsUtils;
         this.eventsRepository = eventsRepository;
@@ -1288,9 +1293,7 @@ public class TransactionsService {
             case CardsAuthRequestDetailsDto cards ->
                     ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId()).map(response -> new PaymentSessionData(response.getBin(),response.getSessionId(),response.getBrand(),null));
             case WalletAuthRequestDetailsDto wallet ->
-                // call walletById for retrieve bin and contractId
-                 Mono.just(new PaymentSessionData("bin",null,null,"contractId"));
-
+                 walletClient.getWalletInfo(wallet.getWalletId()).map(walletInfoDto -> new PaymentSessionData(walletInfoDto.getBin(),null,walletInfoDto.getBrand(),walletInfoDto.getContractId()));
             default -> Mono.just(new PaymentSessionData(null,null,null,null));
         };
     }

@@ -19,6 +19,7 @@ import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
+import it.pagopa.transactions.client.WalletClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
@@ -113,6 +114,9 @@ class TransactionServiceTests {
 
     @MockBean
     private EcommercePaymentMethodsClient ecommercePaymentMethodsClient;
+
+    @MockBean
+    private WalletClient walletClient;
 
     @MockBean
     private PaymentGatewayClient paymentGatewayClient;
