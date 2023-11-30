@@ -1094,7 +1094,7 @@ class TransactionRequestAuthorizationHandlerTest {
     }
 
     @Test
-    void shouldUpdateSessionsIfPayingWithNpg() {
+    void shouldSaveEventIfPayingWithPostepay() {
         TransactionId transactionId = new TransactionId(transactionIdUUID);
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         String orderId = "orderId";
@@ -1155,9 +1155,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 Optional.of(sessionId),
                 Optional.empty(),
                 "VISA",
-                new CardsAuthRequestDetailsDto()
-                        .detailType("cards")
-                        .orderId(orderId)
+                new PostePayAuthRequestDetailsDto()
+                        .detailType("postepay")
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -1176,15 +1175,12 @@ class TransactionRequestAuthorizationHandlerTest {
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(args -> Mono.just(args.getArguments()[0]));
-        Mockito.when(paymentMethodsClient.updateSession(paymentInstrumentId, orderId, transactionId.value()))
-                .thenReturn(Mono.empty());
 
         /* test */
         requestAuthorizationHandler.handle(requestAuthorizationCommand).block();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
-        Mockito.verify(paymentMethodsClient, Mockito.times(1))
-                .updateSession(paymentInstrumentId, orderId, transactionId.value());
+
     }
 
     @Test
