@@ -25,6 +25,7 @@ import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -59,6 +60,7 @@ public class PaymentGatewayClient {
 
     private final NpgPspApiKeysConfig npgCardsApiKeys;
     private final UniqueIdUtils uniqueIdUtils;
+    private final String npgDefaultApiKey;
 
     @Autowired
     public PaymentGatewayClient(
@@ -71,7 +73,8 @@ public class PaymentGatewayClient {
             NpgClient npgClient,
             NpgPspApiKeysConfig npgCardsApiKeys,
             NpgSessionUrlConfig npgSessionUrlConfig,
-            UniqueIdUtils uniqueIdUtils
+            UniqueIdUtils uniqueIdUtils,
+            @Value("${npg.client.apiKey}") String npgDefaultApiKey
 
     ) {
         this.postePayInternalApi = postePayInternalApi;
@@ -84,6 +87,7 @@ public class PaymentGatewayClient {
         this.npgCardsApiKeys = npgCardsApiKeys;
         this.npgSessionUrlConfig = npgSessionUrlConfig;
         this.uniqueIdUtils = uniqueIdUtils;
+        this.npgDefaultApiKey = npgDefaultApiKey;
     }
 
     // TODO Handle multiple rptId
@@ -290,7 +294,7 @@ public class PaymentGatewayClient {
                                     orderId,
                                     null,
                                     NpgClient.PaymentMethod.fromServiceName(authorizationData.paymentMethodName()),
-                                    "defaultApiKey",
+                                    npgDefaultApiKey,
                                     authorizationData.contractId().get()
                             );
                         }

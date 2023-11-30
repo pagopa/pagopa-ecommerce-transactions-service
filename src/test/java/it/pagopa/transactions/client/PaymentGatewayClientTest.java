@@ -71,6 +71,8 @@ class PaymentGatewayClientTest {
     @Mock
     UniqueIdUtils uniqueIdUtils;
 
+    private final String npgDefaultApiKey = UUID.randomUUID().toString();
+
     private final NpgSessionUrlConfig sessionUrlConfig = new NpgSessionUrlConfig(
             "http://localhost:1234",
             "/esito",
@@ -109,7 +111,8 @@ class PaymentGatewayClientTest {
                 npgClient,
                 npgPspApiKeysConfig,
                 sessionUrlConfig,
-                uniqueIdUtils
+                uniqueIdUtils,
+                npgDefaultApiKey
         );
 
         Hooks.onOperatorDebug();
