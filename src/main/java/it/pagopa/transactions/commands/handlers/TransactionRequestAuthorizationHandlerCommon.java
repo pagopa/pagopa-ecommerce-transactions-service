@@ -15,6 +15,7 @@ import it.pagopa.transactions.utils.LogoMappingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuple3;
@@ -169,23 +170,26 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                         HttpStatus.BAD_GATEWAY
                                                 );
                                             }
-                                            yield new StringBuilder(
-                                                    URI.create(checkoutBasePath)
-                                                            .resolve(
-                                                                    CHECKOUT_GDI_CHECK_PATH
-                                                                            + Base64.encodeBase64URLSafeString(
-                                                                                    redirectionUrl
-                                                                                            .getBytes(
-                                                                                                    StandardCharsets.UTF_8
-                                                                                            )
-                                                                            )//
-                                                            ).toString()
-                                            ).append(
-                                                    isWalletPayment
-                                                            ? "?clientId=IO?transactionId=" +
-                                                                    authorizationData.transactionId().value()
-                                                            : ""
-                                            ).toString();
+
+                                            URI authorizationUrl = URI.create(checkoutBasePath)
+                                                    .resolve(
+                                                            CHECKOUT_GDI_CHECK_PATH
+                                                                    + Base64.encodeBase64URLSafeString(
+                                                                            redirectionUrl
+                                                                                    .getBytes(
+                                                                                            StandardCharsets.UTF_8
+                                                                                    )
+                                                                    )//
+                                                    );
+                                            yield isWalletPayment ? UriComponentsBuilder
+                                                    .fromUriString(
+                                                            authorizationUrl.toString()
+                                                    ).queryParam(
+                                                            "clientId",
+                                                            "IO"
+                                                    ).queryParam("transactionId", authorizationData.transactionId())
+                                                    .build().toUri().toString() : authorizationUrl.toString();
+
                                         }
                                         case REDIRECTED_TO_EXTERNAL_DOMAIN -> {
                                             if (npgResponse.getUrl() == null) {

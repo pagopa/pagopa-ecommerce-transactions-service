@@ -6,7 +6,9 @@ import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
+import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
+import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -17,6 +19,7 @@ import it.pagopa.generated.ecommerce.gateway.v1.dto.*;
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.PostePayAuthRequestDetailsDto;
+import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.configurations.NpgSessionUrlConfig;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
@@ -1745,5 +1748,348 @@ class PaymentGatewayClientTest {
         verify(xPayInternalApi, times(0)).authXpay(any(), any());
         verify(postePayInternalApi, times(0)).authRequest(any(), any(), any());
         verify(creditCardInternalApi, times(0)).step0VposAuth(any(), any());
+    }
+
+    @Test
+    void shouldReturnBuildSessionResponseForWalletWithNpg() {
+        String walletId = UUID.randomUUID().toString();
+        String orderId = "orderIdGenerated";
+        String sessionId = "sessionId";
+        String contractId = "contractId";
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                List.of(
+                        new PaymentNotice(
+                                new PaymentToken("paymentToken"),
+                                new RptId("77777777777111111111111111111"),
+                                new TransactionAmount(100),
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                false
+                        )
+                ),
+                TransactionTestUtils.EMAIL,
+                null,
+                null,
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+        );
+        WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
+                .walletId(walletId);
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                10,
+                "paymentInstrumentId",
+                "pspId1",
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "CARDS",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "NPG",
+                Optional.empty(),
+                Optional.of(contractId),
+                "VISA",
+                walletDetails
+        );
+        Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
+        FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
+                .state(WorkflowStateDto.READY_FOR_PAYMENT);
+        /* preconditions */
+        Mockito.when(
+                npgClient.buildForm(
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        eq(orderId),
+                        eq(null),
+                        any(),
+                        any(),
+                        eq(contractId)
+                )
+        ).thenReturn(Mono.just(npgBuildSessionResponse));
+
+        /* test */
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData))
+                .expectNext(npgBuildSessionResponse)
+                .verifyComplete();
+
+        verify(npgClient, times(1))
+                .buildForm(any(), any(), any(), any(), any(), eq(orderId), eq(null), any(), any(), eq(contractId));
+    }
+
+    @Test
+    void shouldThrowAlreadyProcessedOn401ForWalletWithNpg() {
+        String walletId = UUID.randomUUID().toString();
+        String orderId = "orderIdGenerated";
+        String contractId = "contractId";
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                List.of(
+                        new PaymentNotice(
+                                new PaymentToken("paymentToken"),
+                                new RptId("77777777777111111111111111111"),
+                                new TransactionAmount(100),
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                false
+                        )
+                ),
+                TransactionTestUtils.EMAIL,
+                null,
+                null,
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+        );
+        WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
+                .walletId(walletId);
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                10,
+                "paymentInstrumentId",
+                "pspId1",
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "CARDS",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "NPG",
+                Optional.empty(),
+                Optional.of(contractId),
+                "VISA",
+                walletDetails
+        );
+        Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
+        /* preconditions */
+        Mockito.when(
+                npgClient.buildForm(
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        eq(orderId),
+                        eq(null),
+                        any(),
+                        any(),
+                        eq(contractId)
+                )
+        )
+                .thenReturn(
+                        Mono.error(
+                                new NpgResponseException(
+                                        "NPG error",
+                                        List.of(),
+                                        Optional.of(HttpStatus.UNAUTHORIZED),
+                                        new WebClientResponseException(
+                                                "api error",
+                                                HttpStatus.UNAUTHORIZED.value(),
+                                                "Unauthorized",
+                                                null,
+                                                null,
+                                                null
+                                        )
+                                )
+                        )
+                );
+        /* test */
+
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData))
+                .expectErrorMatches(
+                        error -> error instanceof AlreadyProcessedException &&
+                                ((AlreadyProcessedException) error).getTransactionId()
+                                        .equals(transaction.getTransactionId())
+                )
+                .verify();
+    }
+
+    @Test
+    void shouldThrowGatewayTimeoutExceptionForWalletWithNpg() {
+        String walletId = UUID.randomUUID().toString();
+        String orderId = "orderIdGenerated";
+        String contractId = "contractId";
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                List.of(
+                        new PaymentNotice(
+                                new PaymentToken("paymentToken"),
+                                new RptId("77777777777111111111111111111"),
+                                new TransactionAmount(100),
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                false
+                        )
+                ),
+                TransactionTestUtils.EMAIL,
+                null,
+                null,
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+        );
+        WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
+                .walletId(walletId);
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                10,
+                "paymentInstrumentId",
+                "pspId1",
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "CARDS",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "NPG",
+                Optional.empty(),
+                Optional.of(contractId),
+                "VISA",
+                walletDetails
+        );
+        Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
+        /* preconditions */
+        Mockito.when(
+                npgClient.buildForm(
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        eq(orderId),
+                        eq(null),
+                        any(),
+                        any(),
+                        eq(contractId)
+                )
+        )
+                .thenReturn(
+                        Mono.error(
+                                new NpgResponseException(
+                                        "NPG error",
+                                        List.of(),
+                                        Optional.of(HttpStatus.GATEWAY_TIMEOUT),
+                                        new WebClientResponseException(
+                                                "api error",
+                                                HttpStatus.GATEWAY_TIMEOUT.value(),
+                                                "INTERNAL_SERVER_ERROR",
+                                                null,
+                                                null,
+                                                null
+                                        )
+                                )
+                        )
+                );
+        /* test */
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData))
+                .expectErrorMatches(
+                        error -> error instanceof BadGatewayException
+                )
+                .verify();
+    }
+
+    @Test
+    void shouldThrowInternalServerErrorExceptionForWalletWithNpg() {
+        String walletId = UUID.randomUUID().toString();
+        String orderId = "orderIdGenerated";
+        String contractId = "contractId";
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                List.of(
+                        new PaymentNotice(
+                                new PaymentToken("paymentToken"),
+                                new RptId("77777777777111111111111111111"),
+                                new TransactionAmount(100),
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                false
+                        )
+                ),
+                TransactionTestUtils.EMAIL,
+                null,
+                null,
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+        );
+        WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
+                .walletId(walletId);
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                10,
+                "paymentInstrumentId",
+                "pspId1",
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "CARDS",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "NPG",
+                Optional.empty(),
+                Optional.of(contractId),
+                "VISA",
+                walletDetails
+        );
+        Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
+        /* preconditions */
+        Mockito.when(
+                npgClient.buildForm(
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        eq(orderId),
+                        eq(null),
+                        any(),
+                        any(),
+                        eq(contractId)
+                )
+        )
+                .thenReturn(
+                        Mono.error(
+                                new NpgResponseException(
+                                        "NPG error",
+                                        List.of(),
+                                        Optional.of(HttpStatus.INTERNAL_SERVER_ERROR),
+                                        new WebClientResponseException(
+                                                "api error",
+                                                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                                                "INTERNAL SERVER ERROR",
+                                                null,
+                                                null,
+                                                null
+                                        )
+                                )
+                        )
+                );
+        /* test */
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData))
+                .expectErrorMatches(
+                        error -> error instanceof BadGatewayException
+                )
+                .verify();
     }
 }

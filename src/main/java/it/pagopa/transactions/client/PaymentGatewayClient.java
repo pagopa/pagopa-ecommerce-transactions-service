@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
@@ -273,16 +274,12 @@ public class PaymentGatewayClient {
                         orderId -> {
                             UUID correlationId = UUID.randomUUID();
                             URI returnUrlBasePath = URI.create(npgSessionUrlConfig.basePath());
-                            String resultUrl = returnUrlBasePath.resolve(npgSessionUrlConfig.outcomeSuffix())
-                                    .toString();
-                            URI outcomeResultUrl = UriComponentsBuilder
-                                    .fromHttpUrl(resultUrl)
-                                    .build(
-                                            Map.of(
-                                                    "transactionId",
-                                                    authorizationData.transactionId().value()
-                                            )
-                                    );
+                            URI outcomeResultUrl = UriComponentsBuilder.fromUriString(
+                                    returnUrlBasePath.resolve(npgSessionUrlConfig.outcomeSuffix()).toString()
+                            ).queryParam(
+                                    "clientId",
+                                    "IO"
+                            ).queryParam("transactionId", authorizationData.transactionId()).build().toUri();
                             URI merchantUrl = returnUrlBasePath;
                             URI cancelUrl = returnUrlBasePath.resolve(npgSessionUrlConfig.cancelSuffix());
                             URI notificationUrl = UriComponentsBuilder
