@@ -118,8 +118,8 @@ class CircuitBreakerTest {
                 ),
                 false
         )
-                .map(json -> {
-                    String exceptionName = json.asText();
+                .map(ignoredException -> {
+                    String exceptionName = ignoredException.asText();
                     return Arguments.of(
                             Optional
                                     .ofNullable(exceptionMapper.get(exceptionName))

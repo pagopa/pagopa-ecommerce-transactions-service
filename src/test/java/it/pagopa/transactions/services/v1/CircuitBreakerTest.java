@@ -124,14 +124,15 @@ class CircuitBreakerTest {
                 ),
                 false
         )
-                .map(json -> {
-                    String exceptionName = json.asText();
+                .map(ignoredException -> {
+                    String exceptionName = ignoredException.asText();
                     return Arguments.of(
                             Optional
                                     .ofNullable(exceptionMapper.get(exceptionName))
                                     .orElseThrow(
                                             () -> new RuntimeException(
-                                                    "Missing exception instance in test suite inside map `exceptionMapper` for class: %s".formatted(exceptionName)
+                                                    "Missing exception instance in test suite inside map `exceptionMapper` for class: %s"
+                                                            .formatted(exceptionName)
                                             )
                                     ),
                             retryInstanceName
