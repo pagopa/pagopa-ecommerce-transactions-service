@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
+import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
@@ -14,6 +15,7 @@ import it.pagopa.generated.ecommerce.gateway.v1.dto.*;
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
+import it.pagopa.transactions.configurations.NpgSessionUrlConfig;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.GatewayTimeoutException;
@@ -25,9 +27,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
@@ -50,6 +54,8 @@ public class PaymentGatewayClient {
 
     private final NpgClient npgClient;
 
+    private final NpgSessionUrlConfig npgSessionUrlConfig;
+
     private final NpgPspApiKeysConfig npgCardsApiKeys;
 
     @Autowired
@@ -61,7 +67,8 @@ public class PaymentGatewayClient {
             UUIDUtils uuidUtils,
             ConfidentialMailUtils confidentialMailUtils,
             NpgClient npgClient,
-            NpgPspApiKeysConfig npgCardsApiKeys
+            NpgPspApiKeysConfig npgCardsApiKeys,
+            NpgSessionUrlConfig npgSessionUrlConfig
 
     ) {
         this.postePayInternalApi = postePayInternalApi;
@@ -72,6 +79,7 @@ public class PaymentGatewayClient {
         this.confidentialMailUtils = confidentialMailUtils;
         this.npgClient = npgClient;
         this.npgCardsApiKeys = npgCardsApiKeys;
+        this.npgSessionUrlConfig = npgSessionUrlConfig;
     }
 
     // TODO Handle multiple rptId
@@ -246,6 +254,64 @@ public class PaymentGatewayClient {
                                         ); // 500
                                         default -> exception;
                                         }
+                                )
+                );
+    }
+
+    public Mono<FieldsDto> requestNpgBuildSession(AuthorizationRequestData authorizationData) {
+        return Mono.just(authorizationData)
+                .flatMap(
+                        el -> {
+                            UUID correlationId = UUID.randomUUID();
+                            URI returnUrlBasePath = URI.create(npgSessionUrlConfig.basePath());
+                            URI resultUrl = returnUrlBasePath.resolve(npgSessionUrlConfig.outcomeSuffix());
+                            URI merchantUrl = returnUrlBasePath;
+                            URI cancelUrl = returnUrlBasePath.resolve(npgSessionUrlConfig.cancelSuffix());
+                            URI notificationUrl = UriComponentsBuilder
+                                    .fromHttpUrl(npgSessionUrlConfig.notificationUrl())
+                                    .build(
+                                            Map.of(
+                                                    "orderId",
+                                                    "orderIdToGenerate",
+                                                    "paymentMethodId",
+                                                    authorizationData.paymentInstrumentId()
+                                            )
+                                    );
+                            return npgClient.buildForm(
+                                    correlationId,
+                                    merchantUrl,
+                                    resultUrl,
+                                    notificationUrl,
+                                    cancelUrl,
+                                    "orderId",
+                                    null,
+                                    NpgClient.PaymentMethod.fromServiceName(authorizationData.paymentMethodName()),
+                                    "defaultApiKey",
+                                    authorizationData.contractId().get()
+                            );
+                        }
+                ).onErrorMap(
+                        NpgResponseException.class,
+                        exception -> exception
+                                .getStatusCode()
+                                .map(statusCode -> switch (statusCode) {
+                                case UNAUTHORIZED -> new AlreadyProcessedException(
+                                        authorizationData.transactionId()
+                                ); // 401
+                                case INTERNAL_SERVER_ERROR -> new BadGatewayException(
+                                        "NPG internal server error response received",
+                                        statusCode
+                                ); // 500
+                                default -> new BadGatewayException(
+                                        "Received NPG error response with unmanaged HTTP response status code",
+                                        statusCode
+                                );
+                                })
+                                .orElse(
+                                        new BadGatewayException(
+                                                "Received NPG error response with unknown HTTP response status code",
+                                                null
+                                        )
                                 )
                 );
     }

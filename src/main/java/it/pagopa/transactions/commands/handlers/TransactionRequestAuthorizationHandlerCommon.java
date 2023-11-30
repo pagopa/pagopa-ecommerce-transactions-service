@@ -22,6 +22,7 @@ import reactor.util.function.Tuples;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.Optional;
 
 @Slf4j
@@ -93,8 +94,8 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
             case CardsAuthRequestDetailsDto ignored ->
                     invokeNpgConfirmPayment(authorizationData);
             case WalletAuthRequestDetailsDto ignored ->
-                    invokeNpgBuildSession(authorizationData.contractId().get())
-                            .filter(fieldsDto -> fieldsDto.getState().equals(WorkflowStateDto.READY_FOR_PAYMENT))
+                    paymentGatewayClient.requestNpgBuildSession(authorizationData)
+                            .filter(fieldsDto -> Objects.equals(fieldsDto.getState(), WorkflowStateDto.READY_FOR_PAYMENT))
                             .switchIfEmpty(Mono.error(new BadGatewayException("Error while invoke NPG build session",HttpStatus.BAD_GATEWAY)))
                             .flatMap(fieldsDto-> invokeNpgConfirmPayment(authorizationData));
 
@@ -102,12 +103,6 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
             default -> Mono.empty();
         });
 
-    }
-
-    private Mono<FieldsDto> invokeNpgBuildSession(String contractId) {
-        // invoke method for execute build session
-        return Mono.just(new FieldsDto().sessionId("sessionId").state(WorkflowStateDto.READY_FOR_PAYMENT)); // happy
-                                                                                                            // flow
     }
 
     private Mono<Tuple3<String, String, Optional<String>>> invokeNpgConfirmPayment(

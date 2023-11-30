@@ -17,6 +17,7 @@ import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.PostePayAuthRequestDetailsDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
+import it.pagopa.transactions.configurations.NpgSessionUrlConfig;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.GatewayTimeoutException;
@@ -37,6 +38,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -64,6 +66,13 @@ class PaymentGatewayClientTest {
 
     @Mock
     ConfidentialMailUtils confidentialMailUtils;
+
+    private final NpgSessionUrlConfig sessionUrlConfig = new NpgSessionUrlConfig(
+            "http://localhost:1234",
+            "/esito",
+            "/annulla",
+            "https://localhost/ecommerce/{orderId}/outcomes?paymentMethodId={paymentMethodId}"
+    );
 
     NpgPspApiKeysConfig npgPspApiKeysConfig = NpgPspApiKeysConfig.parseApiKeyConfiguration(
             """
@@ -94,7 +103,8 @@ class PaymentGatewayClientTest {
                 mockUuidUtils,
                 confidentialMailUtils,
                 npgClient,
-                npgPspApiKeysConfig
+                npgPspApiKeysConfig,
+                sessionUrlConfig
         );
 
         Hooks.onOperatorDebug();
