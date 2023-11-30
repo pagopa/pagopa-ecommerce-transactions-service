@@ -12,6 +12,7 @@ import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
+import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
@@ -129,12 +130,15 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                         case NPG -> new NpgTransactionGatewayAuthorizationRequestedData(
                                                 logo,
                                                 brand,
-                                                authorizationRequestData.sessionId().orElseThrow(
-                                                        () -> new BadGatewayException(
-                                                                "Cannot retrieve session id for transaction",
-                                                                HttpStatus.INTERNAL_SERVER_ERROR
-                                                        )
-                                                ),
+                                                authorizationRequestData
+                                                        .authDetails() instanceof WalletAuthRequestDetailsDto
+                                                                ? "sessionId"
+                                                                : authorizationRequestData.sessionId().orElseThrow(
+                                                                        () -> new BadGatewayException(
+                                                                                "Cannot retrieve session id for transaction",
+                                                                                HttpStatus.INTERNAL_SERVER_ERROR
+                                                                        )
+                                                                ),
                                                 tuple4.getT3().orElse(null)
                                         );
                                         // TODO remove this after the cancellation of the postepay logic
@@ -165,12 +169,14 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                     );
 
                                     Mono<Void> updateSession = Mono.just(command.getData().authDetails())
-                                            .filter(CardsAuthRequestDetailsDto.class::isInstance)
-                                            .cast(CardsAuthRequestDetailsDto.class)
+                                            .filter(
+                                                    el -> el instanceof CardsAuthRequestDetailsDto
+                                                            || el instanceof WalletAuthRequestDetailsDto
+                                            )
                                             .flatMap(
                                                     authRequestDetails -> paymentMethodsClient.updateSession(
                                                             command.getData().paymentInstrumentId(),
-                                                            authRequestDetails.getOrderId(),
+                                                            tuple4.getT1(),
                                                             command.getData().transactionId().value()
                                                     )
                                             );

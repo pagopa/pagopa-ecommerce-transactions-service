@@ -28,14 +28,14 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
@@ -268,7 +268,7 @@ public class PaymentGatewayClient {
                 );
     }
 
-    public Mono<FieldsDto> requestNpgBuildSession(AuthorizationRequestData authorizationData) {
+    public Mono<Tuple2<String, FieldsDto>> requestNpgBuildSession(AuthorizationRequestData authorizationData) {
         return uniqueIdUtils.generateUniqueId()
                 .flatMap(
                         orderId -> {
@@ -304,7 +304,7 @@ public class PaymentGatewayClient {
                                     NpgClient.PaymentMethod.fromServiceName(authorizationData.paymentMethodName()),
                                     npgDefaultApiKey,
                                     authorizationData.contractId().get()
-                            );
+                            ).map(fieldsDto -> Tuples.of(orderId, fieldsDto));
                         }
                 ).onErrorMap(
                         NpgResponseException.class,

@@ -9,6 +9,7 @@ import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
+import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
@@ -133,12 +134,14 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                     );
 
                                     Mono<Void> updateSession = Mono.just(command.getData().authDetails())
-                                            .filter(CardsAuthRequestDetailsDto.class::isInstance)
-                                            .cast(CardsAuthRequestDetailsDto.class)
+                                            .filter(
+                                                    el -> el instanceof CardsAuthRequestDetailsDto
+                                                            || el instanceof WalletAuthRequestDetailsDto
+                                            )
                                             .flatMap(
                                                     authRequestDetails -> paymentMethodsClient.updateSession(
                                                             command.getData().paymentInstrumentId(),
-                                                            authRequestDetails.getOrderId(),
+                                                            tuple3.getT1(),
                                                             command.getData().transactionId().value()
                                                     )
                                             );

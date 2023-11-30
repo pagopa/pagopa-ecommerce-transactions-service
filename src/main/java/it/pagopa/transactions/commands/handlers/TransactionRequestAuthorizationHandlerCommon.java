@@ -15,7 +15,6 @@ import it.pagopa.transactions.utils.LogoMappingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuple3;
@@ -92,13 +91,14 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                                                     AuthorizationRequestData authorizationData
     ) {
         return Mono.just(authorizationData).flatMap( authData -> switch (authData.authDetails()){
-            case CardsAuthRequestDetailsDto ignored ->
-                    invokeNpgConfirmPayment(authorizationData,false);
+            case CardsAuthRequestDetailsDto cards ->
+                    invokeNpgConfirmPayment(authorizationData,cards
+                            .getOrderId(),false);
             case WalletAuthRequestDetailsDto ignored ->
                     paymentGatewayClient.requestNpgBuildSession(authorizationData)
-                            .filter(fieldsDto -> Objects.equals(fieldsDto.getState(), WorkflowStateDto.READY_FOR_PAYMENT))
+                            .filter(orderIdAndFieldsDto -> Objects.equals(orderIdAndFieldsDto.getT2().getState(), WorkflowStateDto.READY_FOR_PAYMENT) || orderIdAndFieldsDto.getT2().getSessionId() != null)
                             .switchIfEmpty(Mono.error(new BadGatewayException("Error while invoke NPG build session",HttpStatus.BAD_GATEWAY)))
-                            .flatMap(fieldsDto->
+                            .flatMap(orderIdAndFieldsDto->
                                   invokeNpgConfirmPayment(
                                           new AuthorizationRequestData(
                                                   authorizationData.transactionId(),
@@ -115,10 +115,11 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                   authorizationData.pspBusinessName(),
                                                   authorizationData.pspOnUs(),
                                                   authorizationData.paymentGatewayId(),
-                                                  Optional.ofNullable(fieldsDto.getSessionId()),
+                                                  Optional.ofNullable(orderIdAndFieldsDto.getT2().getSessionId()),
                                                   authorizationData.contractId(),
                                                   authorizationData.brand(),
-                                                  authorizationData.authDetails())
+                                                  authorizationData.authDetails()),
+                                          orderIdAndFieldsDto.getT1()
                                           ,true)
                             );
 
@@ -130,7 +131,9 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
 
     private Mono<Tuple3<String, String, Optional<String>>> invokeNpgConfirmPayment(
                                                                                    AuthorizationRequestData authorizationData,
+                                                                                   String orderId,
                                                                                    boolean isWalletPayment
+
     ) {
         return Mono.just(authorizationData)
                 .flatMap(
@@ -146,10 +149,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                     log.info("NGP auth completed session id: {}", confirmPaymentSessionId);
                                     return Mono.just(
                                             Tuples.of(
-                                                    // safe cast here, filter against authDetails performed into
-                                                    // requestNpgCardsAuthorization method
-                                                    ((CardsAuthRequestDetailsDto) authorizationData.authDetails())
-                                                            .getOrderId(),
+                                                    orderId,
                                                     switch (npgResponse.getState()) {
                                         case GDI_VERIFICATION -> {
                                             if (npgResponse.getFieldSet() == null
@@ -170,26 +170,17 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                         HttpStatus.BAD_GATEWAY
                                                 );
                                             }
-
-                                            URI authorizationUrl = URI.create(checkoutBasePath)
+                                            String authorizationUrl = URI.create(checkoutBasePath)
                                                     .resolve(
-                                                            CHECKOUT_GDI_CHECK_PATH
-                                                                    + Base64.encodeBase64URLSafeString(
-                                                                            redirectionUrl
-                                                                                    .getBytes(
-                                                                                            StandardCharsets.UTF_8
-                                                                                    )
-                                                                    )//
-                                                    );
-                                            yield isWalletPayment ? UriComponentsBuilder
-                                                    .fromUriString(
-                                                            authorizationUrl.toString()
-                                                    ).queryParam(
-                                                            "clientId",
-                                                            "IO"
-                                                    ).queryParam("transactionId", authorizationData.transactionId())
-                                                    .build().toUri().toString() : authorizationUrl.toString();
-
+                                                            CHECKOUT_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
+                                                                    redirectionUrl
+                                                                            .getBytes(StandardCharsets.UTF_8)
+                                                            )
+                                                    ).toString();
+                                            yield isWalletPayment
+                                                    ? authorizationUrl.concat("?clientId=IO").concat("&transactionId=")
+                                                            .concat(authorizationData.transactionId().value())
+                                                    : authorizationUrl;
                                         }
                                         case REDIRECTED_TO_EXTERNAL_DOMAIN -> {
                                             if (npgResponse.getUrl() == null) {

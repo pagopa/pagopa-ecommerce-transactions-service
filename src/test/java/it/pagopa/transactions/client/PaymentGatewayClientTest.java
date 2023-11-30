@@ -40,9 +40,10 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -1817,9 +1818,10 @@ class PaymentGatewayClientTest {
                 )
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
+        Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
         StepVerifier.create(client.requestNpgBuildSession(authorizationData))
-                .expectNext(npgBuildSessionResponse)
+                .expectNext(responseRequestNpgBuildSession)
                 .verifyComplete();
 
         verify(npgClient, times(1))
