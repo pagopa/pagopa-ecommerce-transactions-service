@@ -24,19 +24,23 @@ import javax.xml.bind.JAXBElement;
 @Slf4j
 public class NodeForPspClient {
 
-    private WebClient nodoWebClient;
-    private String nodoPerPspUri;
-    private String ecommerceClientId;
+    private final WebClient nodoWebClient;
+    private final String nodoPerPspUri;
+    private final String ecommerceClientId;
+
+    private final String nodoPerPmUri;
 
     @Autowired
     public NodeForPspClient(
             @Qualifier("nodoWebClient") WebClient nodoWebClient,
             @Value("${nodo.nodeforpsp.uri}") String nodoPerPspUri,
-            @Value("${nodo.ecommerce.clientId}") String ecommerceClientId
+            @Value("${nodo.ecommerce.clientId}") String ecommerceClientId,
+            @Value("${nodo.nodoperpm.uri}") String nodoPerPmUri
     ) {
         this.nodoWebClient = nodoWebClient;
         this.nodoPerPspUri = nodoPerPspUri;
         this.ecommerceClientId = ecommerceClientId;
+        this.nodoPerPmUri = nodoPerPmUri;
     }
 
     public Mono<ActivatePaymentNoticeV2Response> activatePaymentNoticeV2(
@@ -89,7 +93,8 @@ public class NodeForPspClient {
         );
         return nodoWebClient.post()
                 .uri(
-                        uriBuilder -> uriBuilder.path("/nodo/nodo-per-pm/v2/closepayment")
+                        uriBuilder -> uriBuilder.path(nodoPerPmUri)
+                                .path("/closepayment")
                                 .queryParam("clientId", ecommerceClientId).build()
                 )
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
@@ -99,6 +104,7 @@ public class NodeForPspClient {
                         HttpStatus::isError,
                         clientResponse -> clientResponse
                                 .bodyToMono(String.class)
+                                .switchIfEmpty(Mono.just("N/A"))
                                 .flatMap(
                                         errorResponseBody -> Mono.error(
                                                 new ResponseStatusException(
