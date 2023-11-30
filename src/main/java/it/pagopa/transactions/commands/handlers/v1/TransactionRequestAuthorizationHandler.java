@@ -97,7 +97,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 ).orElse(Mono.empty());
 
         return transactionActivated
-                .doOnSuccess(el -> log.info("transaction: " + el.getTransactionId()))
                 .flatMap(
                         t -> gatewayAttempts.switchIfEmpty(Mono.error(new BadRequestException("No gateway matched")))
                                 .flatMap(tuple3 -> {
