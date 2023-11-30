@@ -92,12 +92,12 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     ) {
         return Mono.just(authorizationData).flatMap( authData -> switch (authData.authDetails()){
             case CardsAuthRequestDetailsDto ignored ->
-                    invokeNpgConfirmPayment(authorizationData);
+                    invokeNpgConfirmPayment(authorizationData,false);
             case WalletAuthRequestDetailsDto ignored ->
                     paymentGatewayClient.requestNpgBuildSession(authorizationData)
                             .filter(fieldsDto -> Objects.equals(fieldsDto.getState(), WorkflowStateDto.READY_FOR_PAYMENT))
                             .switchIfEmpty(Mono.error(new BadGatewayException("Error while invoke NPG build session",HttpStatus.BAD_GATEWAY)))
-                            .flatMap(fieldsDto-> invokeNpgConfirmPayment(authorizationData));
+                            .flatMap(fieldsDto-> invokeNpgConfirmPayment(authorizationData,true));
 
 
             default -> Mono.empty();
@@ -106,7 +106,8 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     }
 
     private Mono<Tuple3<String, String, Optional<String>>> invokeNpgConfirmPayment(
-                                                                                   AuthorizationRequestData authorizationData
+                                                                                   AuthorizationRequestData authorizationData,
+                                                                                   boolean isWalletPayment
     ) {
         return Mono.just(authorizationData)
                 .flatMap(
@@ -151,8 +152,8 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                             CHECKOUT_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
                                                                     redirectionUrl
                                                                             .getBytes(StandardCharsets.UTF_8)
-                                                            )
-                                                    ).toString();
+                                                            )//
+                                                    ).toString().concat(isWalletPayment ? "&clientId=IO" : "");
                                         }
                                         case REDIRECTED_TO_EXTERNAL_DOMAIN -> {
                                             if (npgResponse.getUrl() == null) {
