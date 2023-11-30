@@ -41,6 +41,8 @@ import reactor.test.StepVerifier;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -77,30 +79,21 @@ class CircuitBreakerTest {
 
     private static final JsonNode resilience4jConfiguration;
 
-    private static final Map<String, Exception> exceptionMapper = Map.of(
-            "it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException",
+    private static final Map<String, Exception> exceptionMapper = Stream.of(
             new UnsatisfiablePspRequestException(
                     new PaymentToken(""),
                     RequestAuthorizationRequestDto.LanguageEnum.IT,
                     0
             ),
-            "it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException",
             new PaymentNoticeAllCCPMismatchException("rptId", true, true),
-            "it.pagopa.transactions.exceptions.TransactionNotFoundException",
             new TransactionNotFoundException(""),
-            "it.pagopa.transactions.exceptions.AlreadyProcessedException",
             new AlreadyProcessedException(new TransactionId(TransactionTestUtils.TRANSACTION_ID)),
-            "it.pagopa.transactions.exceptions.NotImplementedException",
             new NotImplementedException(""),
-            "it.pagopa.transactions.exceptions.InvalidRequestException",
             new InvalidRequestException(""),
-            "it.pagopa.transactions.exceptions.TransactionAmountMismatchException",
             new TransactionAmountMismatchException(10, 11),
-            "it.pagopa.transactions.exceptions.NodoErrorException",
             new NodoErrorException(new CtFaultBean()),
-            "it.pagopa.transactions.exceptions.InvalidNodoResponseException",
             new InvalidNodoResponseException("")
-    );
+    ).collect(Collectors.toMap(exception -> exception.getClass().getCanonicalName(), Function.identity()));
 
     static {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
