@@ -147,13 +147,18 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                         HttpStatus.BAD_GATEWAY
                                                 );
                                             }
-                                            yield URI.create(checkoutBasePath)
-                                                    .resolve(
-                                                            CHECKOUT_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
-                                                                    redirectionUrl
-                                                                            .getBytes(StandardCharsets.UTF_8)
-                                                            )//
-                                                    ).toString().concat(isWalletPayment ? "&clientId=IO" : "");
+                                            yield new StringBuilder(
+                                                    URI.create(checkoutBasePath)
+                                                            .resolve(
+                                                                    CHECKOUT_GDI_CHECK_PATH
+                                                                            + Base64.encodeBase64URLSafeString(
+                                                                                    redirectionUrl
+                                                                                            .getBytes(
+                                                                                                    StandardCharsets.UTF_8
+                                                                                            )
+                                                                            )//
+                                                            ).toString()
+                                            ).append(isWalletPayment ? "&clientId=IO" : "").toString();
                                         }
                                         case REDIRECTED_TO_EXTERNAL_DOMAIN -> {
                                             if (npgResponse.getUrl() == null) {
