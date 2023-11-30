@@ -97,7 +97,10 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                     paymentGatewayClient.requestNpgBuildSession(authorizationData)
                             .filter(fieldsDto -> Objects.equals(fieldsDto.getState(), WorkflowStateDto.READY_FOR_PAYMENT))
                             .switchIfEmpty(Mono.error(new BadGatewayException("Error while invoke NPG build session",HttpStatus.BAD_GATEWAY)))
-                            .flatMap(fieldsDto-> invokeNpgConfirmPayment(authorizationData,true));
+                            .flatMap(fieldsDto-> {
+                                AuthorizationRequestData newAuthorizationData = new AuthorizationRequestData(authorizationData.transactionId(),authorizationData.paymentNotices(),authorizationData.email(),authorizationData.fee(),authorizationData.paymentInstrumentId(),authorizationData.pspId(),authorizationData.paymentTypeCode(),authorizationData.brokerName(),authorizationData.pspChannelCode(),authorizationData.paymentMethodName(),authorizationData.paymentMethodDescription(),authorizationData.pspBusinessName(),authorizationData.pspOnUs(),authorizationData.paymentGatewayId(),Optional.ofNullable(fieldsDto.getSessionId()),authorizationData.contractId(),authorizationData.brand(),authorizationData.authDetails());
+                                 return invokeNpgConfirmPayment(newAuthorizationData,true);
+                            });
 
 
             default -> Mono.empty();
@@ -158,7 +161,12 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                                                             )
                                                                             )//
                                                             ).toString()
-                                            ).append(isWalletPayment ? "&clientId=IO" : "").toString();
+                                            ).append(
+                                                    isWalletPayment
+                                                            ? "?clientId=IO?transactionId=" +
+                                                                    authorizationData.transactionId().value()
+                                                            : ""
+                                            ).toString();
                                         }
                                         case REDIRECTED_TO_EXTERNAL_DOMAIN -> {
                                             if (npgResponse.getUrl() == null) {

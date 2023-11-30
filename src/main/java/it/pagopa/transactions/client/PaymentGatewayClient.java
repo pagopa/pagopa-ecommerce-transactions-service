@@ -34,6 +34,7 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
@@ -272,7 +273,16 @@ public class PaymentGatewayClient {
                         orderId -> {
                             UUID correlationId = UUID.randomUUID();
                             URI returnUrlBasePath = URI.create(npgSessionUrlConfig.basePath());
-                            URI resultUrl = returnUrlBasePath.resolve(npgSessionUrlConfig.outcomeSuffix());
+                            String resultUrl = returnUrlBasePath.resolve(npgSessionUrlConfig.outcomeSuffix())
+                                    .toString();
+                            URI outcomeResultUrl = UriComponentsBuilder
+                                    .fromHttpUrl(resultUrl)
+                                    .build(
+                                            Map.of(
+                                                    "transactionId",
+                                                    authorizationData.transactionId().value()
+                                            )
+                                    );
                             URI merchantUrl = returnUrlBasePath;
                             URI cancelUrl = returnUrlBasePath.resolve(npgSessionUrlConfig.cancelSuffix());
                             URI notificationUrl = UriComponentsBuilder
@@ -285,10 +295,11 @@ public class PaymentGatewayClient {
                                                     authorizationData.paymentInstrumentId()
                                             )
                                     );
+
                             return npgClient.buildForm(
                                     correlationId,
                                     merchantUrl,
-                                    resultUrl,
+                                    outcomeResultUrl,
                                     notificationUrl,
                                     cancelUrl,
                                     orderId,
