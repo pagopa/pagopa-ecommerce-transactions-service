@@ -8,6 +8,7 @@ import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
+import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
@@ -67,6 +68,9 @@ class PaymentGatewayClientTest {
     @Mock
     ConfidentialMailUtils confidentialMailUtils;
 
+    @Mock
+    UniqueIdUtils uniqueIdUtils;
+
     private final NpgSessionUrlConfig sessionUrlConfig = new NpgSessionUrlConfig(
             "http://localhost:1234",
             "/esito",
@@ -104,7 +108,8 @@ class PaymentGatewayClientTest {
                 confidentialMailUtils,
                 npgClient,
                 npgPspApiKeysConfig,
-                sessionUrlConfig
+                sessionUrlConfig,
+                uniqueIdUtils
         );
 
         Hooks.onOperatorDebug();

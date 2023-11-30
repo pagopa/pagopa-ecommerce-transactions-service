@@ -8,6 +8,7 @@ import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
+import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
@@ -57,6 +58,7 @@ public class PaymentGatewayClient {
     private final NpgSessionUrlConfig npgSessionUrlConfig;
 
     private final NpgPspApiKeysConfig npgCardsApiKeys;
+    private final UniqueIdUtils uniqueIdUtils;
 
     @Autowired
     public PaymentGatewayClient(
@@ -68,7 +70,8 @@ public class PaymentGatewayClient {
             ConfidentialMailUtils confidentialMailUtils,
             NpgClient npgClient,
             NpgPspApiKeysConfig npgCardsApiKeys,
-            NpgSessionUrlConfig npgSessionUrlConfig
+            NpgSessionUrlConfig npgSessionUrlConfig,
+            UniqueIdUtils uniqueIdUtils
 
     ) {
         this.postePayInternalApi = postePayInternalApi;
@@ -80,6 +83,7 @@ public class PaymentGatewayClient {
         this.npgClient = npgClient;
         this.npgCardsApiKeys = npgCardsApiKeys;
         this.npgSessionUrlConfig = npgSessionUrlConfig;
+        this.uniqueIdUtils = uniqueIdUtils;
     }
 
     // TODO Handle multiple rptId
@@ -259,9 +263,9 @@ public class PaymentGatewayClient {
     }
 
     public Mono<FieldsDto> requestNpgBuildSession(AuthorizationRequestData authorizationData) {
-        return Mono.just(authorizationData)
+        return uniqueIdUtils.generateUniqueId()
                 .flatMap(
-                        el -> {
+                        orderId -> {
                             UUID correlationId = UUID.randomUUID();
                             URI returnUrlBasePath = URI.create(npgSessionUrlConfig.basePath());
                             URI resultUrl = returnUrlBasePath.resolve(npgSessionUrlConfig.outcomeSuffix());
@@ -272,7 +276,7 @@ public class PaymentGatewayClient {
                                     .build(
                                             Map.of(
                                                     "orderId",
-                                                    "orderIdToGenerate",
+                                                    orderId,
                                                     "paymentMethodId",
                                                     authorizationData.paymentInstrumentId()
                                             )
@@ -283,7 +287,7 @@ public class PaymentGatewayClient {
                                     resultUrl,
                                     notificationUrl,
                                     cancelUrl,
-                                    "orderId",
+                                    orderId,
                                     null,
                                     NpgClient.PaymentMethod.fromServiceName(authorizationData.paymentMethodName()),
                                     "defaultApiKey",
