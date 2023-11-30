@@ -3,8 +3,10 @@ package it.pagopa.transactions.commands.handlers;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
+import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
+import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
@@ -86,6 +88,30 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
 
     protected Mono<Tuple3<String, String, Optional<String>>> npgAuthRequestPipeline(
                                                                                     AuthorizationRequestData authorizationData
+    ) {
+        return Mono.just(authorizationData).flatMap( authData -> switch (authData.authDetails()){
+            case CardsAuthRequestDetailsDto ignored ->
+                    invokeNpgConfirmPayment(authorizationData);
+            case WalletAuthRequestDetailsDto ignored ->
+                    invokeNpgBuildSession(authorizationData.contractId().get())
+                            .filter(fieldsDto -> fieldsDto.getState().equals(WorkflowStateDto.READY_FOR_PAYMENT))
+                            .switchIfEmpty(Mono.error(new BadGatewayException("Error while invoke NPG build session",HttpStatus.BAD_GATEWAY)))
+                            .flatMap(fieldsDto-> invokeNpgConfirmPayment(authorizationData));
+
+
+            default -> Mono.empty();
+        });
+
+    }
+
+    private Mono<FieldsDto> invokeNpgBuildSession(String contractId) {
+        // invoke method for execute build session
+        return Mono.just(new FieldsDto().sessionId("sessionId").state(WorkflowStateDto.READY_FOR_PAYMENT)); // happy
+                                                                                                            // flow
+    }
+
+    private Mono<Tuple3<String, String, Optional<String>>> invokeNpgConfirmPayment(
+                                                                                   AuthorizationRequestData authorizationData
     ) {
         return Mono.just(authorizationData)
                 .flatMap(
