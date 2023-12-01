@@ -4,6 +4,8 @@ import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedi
 import it.pagopa.ecommerce.commons.redis.templatewrappers.RedisTemplateWrapperBuilder;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.UniqueIdTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.UniqueIdDocument;
+import it.pagopa.transactions.repositories.TransactionDocument;
+import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -52,4 +54,29 @@ public class RedisConfig {
                 Duration.ofSeconds(60)
         );
     }
+
+    @Bean
+    public TransactionTemplateWrapper transactionTemplateWrapper(
+                                                                 RedisConnectionFactory redisConnectionFactory,
+                                                                 @Value(
+                                                                     "${transactionDocument.ttl}"
+                                                                 ) int transactionDocumentTtl
+    ) {
+        RedisTemplate<String, TransactionDocument> redisTemplate = new RedisTemplate<>();
+        Jackson2JsonRedisSerializer<TransactionDocument> jacksonRedisSerializer = new Jackson2JsonRedisSerializer<>(
+                TransactionDocument.class
+        );
+
+        redisTemplate.setConnectionFactory(redisConnectionFactory);
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.setValueSerializer(jacksonRedisSerializer);
+        redisTemplate.afterPropertiesSet();
+
+        return new TransactionTemplateWrapper(
+                redisTemplate,
+                "transaction",
+                Duration.ofSeconds(transactionDocumentTtl)
+        );
+    }
+
 }

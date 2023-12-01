@@ -20,6 +20,7 @@ import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandlerCommon;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
+import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.LogoMappingUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -52,12 +53,14 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             TransactionsUtils transactionsUtils,
             @Value("${checkout.basePath}") String checkoutBasePath,
             EcommercePaymentMethodsClient paymentMethodsClient,
-            LogoMappingUtils logoMappingUtils
+            LogoMappingUtils logoMappingUtils,
+            TransactionTemplateWrapper transactionTemplateWrapper
     ) {
         super(
                 paymentGatewayClient,
                 checkoutBasePath,
-                logoMappingUtils
+                logoMappingUtils,
+                transactionTemplateWrapper
         );
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionsUtils = transactionsUtils;
@@ -200,14 +203,12 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                     );
 
                                     Mono<Void> updateSession = Mono.just(command.getData().authDetails())
-                                            .filter(
-                                                    el -> el instanceof CardsAuthRequestDetailsDto
-                                                            || el instanceof WalletAuthRequestDetailsDto
-                                            )
+                                            .filter(CardsAuthRequestDetailsDto.class::isInstance)
+                                            .cast(CardsAuthRequestDetailsDto.class)
                                             .flatMap(
                                                     authRequestDetails -> paymentMethodsClient.updateSession(
                                                             command.getData().paymentInstrumentId(),
-                                                            tuple5.getT1(),
+                                                            authRequestDetails.getOrderId(),
                                                             command.getData().transactionId().value()
                                                     )
                                             );

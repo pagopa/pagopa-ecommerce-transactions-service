@@ -75,6 +75,7 @@ microservice-chart:
       NPG_READ_TIMEOUT: "10000"
       NPG_CONNECTION_TIMEOUT: "10000"
       NPG_CARDS_PSP_LIST: "BCITITMM"
+      TRANSACTION_DOCUMENT_TTL: "600"
       CHECKOUT_BASE_PATH: "https://uat.checkout.pagopa.it"
       ECOMMERCE_EVENT_VERSION: "V1"
       SEND_PAYMENT_RESULT_FOR_TX_EXPIRED_ENABLED: "true"
@@ -210,6 +211,7 @@ microservice-chart:
     NPG_READ_TIMEOUT: "10000"
     NPG_CONNECTION_TIMEOUT: "10000"
     NPG_CARDS_PSP_LIST: "" #TODO to be filled with psp id list that are expected to be present into psp api keys configuration
+    TRANSACTION_DOCUMENT_TTL: "600"
     CHECKOUT_BASE_PATH: "https://uat.checkout.pagopa.it"
     ECOMMERCE_EVENT_VERSION: "V1"
     SEND_PAYMENT_RESULT_FOR_TX_EXPIRED_ENABLED: "true"

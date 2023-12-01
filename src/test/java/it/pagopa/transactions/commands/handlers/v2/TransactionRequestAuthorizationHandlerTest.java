@@ -23,6 +23,7 @@ import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
+import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.LogoMappingUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -82,6 +83,9 @@ class TransactionRequestAuthorizationHandlerTest {
     @Mock
     private LogoMappingUtils logoMappingUtils;
 
+    @Mock
+    private TransactionTemplateWrapper transactionTemplateWrapper;
+
     @Captor
     private ArgumentCaptor<TransactionEvent<TransactionAuthorizationRequestData>> eventStoreCaptor;
 
@@ -121,7 +125,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 transactionsUtils,
                 CHECKOUT_BASE_PATH,
                 paymentMethodsClient,
-                logoMappingUtils
+                logoMappingUtils,
+                transactionTemplateWrapper
         );
     }
 
@@ -2110,7 +2115,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
-                .state(WorkflowStateDto.READY_FOR_PAYMENT);
+                .state(WorkflowStateDto.READY_FOR_PAYMENT).securityToken("securityToken");
 
         StateResponseDto stateResponseDto = new StateResponseDto()
                 .state(WorkflowStateDto.GDI_VERIFICATION)
@@ -2135,13 +2140,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         Mockito.when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
-        Mockito.when(
-                paymentMethodsClient.updateSession(
-                        authorizationData.paymentInstrumentId(),
-                        orderId,
-                        transactionId.value()
-                )
-        ).thenReturn(Mono.empty());
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(orderId)
@@ -2165,6 +2163,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 npgTransactionGatewayAuthorizationRequestedData.getSessionId()
         );
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
+        Mockito.verify(transactionTemplateWrapper, Mockito.times(1)).save(any());
+
     }
 
 }

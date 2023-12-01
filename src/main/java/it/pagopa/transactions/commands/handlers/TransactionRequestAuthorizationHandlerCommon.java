@@ -11,6 +11,9 @@ import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.BadGatewayException;
+import it.pagopa.transactions.repositories.TransactionDocument;
+import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
+import it.pagopa.transactions.repositories.WalletPaymentInfo;
 import it.pagopa.transactions.utils.LogoMappingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
@@ -38,14 +41,18 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
 
     private final LogoMappingUtils logoMappingUtils;
 
+    private final TransactionTemplateWrapper transactionTemplateWrapper;
+
     protected TransactionRequestAuthorizationHandlerCommon(
             PaymentGatewayClient paymentGatewayClient,
             String checkoutBasePath,
-            LogoMappingUtils logoMappingUtils
+            LogoMappingUtils logoMappingUtils,
+            TransactionTemplateWrapper transactionTemplateWrapper
     ) {
         this.paymentGatewayClient = paymentGatewayClient;
         this.checkoutBasePath = checkoutBasePath;
         this.logoMappingUtils = logoMappingUtils;
+        this.transactionTemplateWrapper = transactionTemplateWrapper;
     }
 
     protected Mono<Tuple2<String, String>> postepayAuthRequestPipeline(AuthorizationRequestData authorizationData) {
@@ -97,8 +104,13 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                             .getOrderId(),false).map(confirmPaymentResponse -> Tuples.of(confirmPaymentResponse.getT1(),confirmPaymentResponse.getT2(),confirmPaymentResponse.getT3(),Optional.empty()));
             case WalletAuthRequestDetailsDto ignored ->
                     paymentGatewayClient.requestNpgBuildSession(authorizationData)
-                            .filter(orderIdAndFieldsDto -> Objects.equals(orderIdAndFieldsDto.getT2().getState(), WorkflowStateDto.READY_FOR_PAYMENT) && orderIdAndFieldsDto.getT2().getSessionId() != null)
+                            .filter(orderIdAndFieldsDto -> Objects.equals(orderIdAndFieldsDto.getT2().getState(), WorkflowStateDto.READY_FOR_PAYMENT) && orderIdAndFieldsDto.getT2().getSessionId() != null && orderIdAndFieldsDto.getT2().getSecurityToken() != null)
                             .switchIfEmpty(Mono.error(new BadGatewayException("Error while invoke NPG build session",HttpStatus.BAD_GATEWAY)))
+                            .map( orderIdAndFieldsDto -> {
+                                        transactionTemplateWrapper.save(new TransactionDocument(authorizationData.transactionId(), new WalletPaymentInfo(orderIdAndFieldsDto.getT2().getSessionId(), orderIdAndFieldsDto.getT2().getSecurityToken(), orderIdAndFieldsDto.getT1())));
+                                        return orderIdAndFieldsDto;
+                            }
+                            )
                             .flatMap(orderIdAndFieldsDto->
                                   invokeNpgConfirmPayment(
                                           new AuthorizationRequestData(
