@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuple3;
+import reactor.util.function.Tuple4;
 import reactor.util.function.Tuples;
 
 import java.net.URI;
@@ -87,13 +88,13 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                 );
     }
 
-    protected Mono<Tuple3<String, String, Optional<String>>> npgAuthRequestPipeline(
+    protected Mono<Tuple4<String, String, Optional<String>,Optional<String>>> npgAuthRequestPipeline(
                                                                                     AuthorizationRequestData authorizationData
     ) {
         return Mono.just(authorizationData).flatMap( authData -> switch (authData.authDetails()){
             case CardsAuthRequestDetailsDto cards ->
                     invokeNpgConfirmPayment(authorizationData,cards
-                            .getOrderId(),false);
+                            .getOrderId(),false).map(confirmPaymentResponse -> Tuples.of(confirmPaymentResponse.getT1(),confirmPaymentResponse.getT2(),confirmPaymentResponse.getT3(),Optional.empty()));
             case WalletAuthRequestDetailsDto ignored ->
                     paymentGatewayClient.requestNpgBuildSession(authorizationData)
                             .filter(orderIdAndFieldsDto -> Objects.equals(orderIdAndFieldsDto.getT2().getState(), WorkflowStateDto.READY_FOR_PAYMENT) || orderIdAndFieldsDto.getT2().getSessionId() != null)
@@ -115,12 +116,13 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                   authorizationData.pspBusinessName(),
                                                   authorizationData.pspOnUs(),
                                                   authorizationData.paymentGatewayId(),
-                                                  Optional.ofNullable(orderIdAndFieldsDto.getT2().getSessionId()),
+                                                  Optional.of(orderIdAndFieldsDto.getT2().getSessionId()),
                                                   authorizationData.contractId(),
                                                   authorizationData.brand(),
                                                   authorizationData.authDetails()),
                                           orderIdAndFieldsDto.getT1()
                                           ,true)
+                                          .map(confirmPaymentResponse -> Tuples.of(confirmPaymentResponse.getT1(),confirmPaymentResponse.getT2(),confirmPaymentResponse.getT3(),Optional.of(orderIdAndFieldsDto.getT2().getSessionId())))
                             );
 
 
