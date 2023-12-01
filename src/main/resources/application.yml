@@ -1,29 +1,89 @@
 resilience4j.retry:
   instances:
-    getPaymentRequestInfo:
-      maxAttempts: 3
-      waitDuration: 2s
-      enableExponentialBackoff: false
     newTransaction:
       maxAttempts: 3
       waitDuration: 2s
       enableExponentialBackoff: false
+      ignoreExceptions:
+        - it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException
+        - it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException
+        - it.pagopa.transactions.exceptions.TransactionNotFoundException
+        - it.pagopa.transactions.exceptions.AlreadyProcessedException
+        - it.pagopa.transactions.exceptions.NotImplementedException
+        - it.pagopa.transactions.exceptions.InvalidRequestException
+        - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
+        - it.pagopa.transactions.exceptions.NodoErrorException
+        - it.pagopa.transactions.exceptions.InvalidNodoResponseException
     getTransactionInfo:
       maxAttempts: 3
       waitDuration: 2s
       enableExponentialBackoff: false
+      ignoreExceptions:
+        - it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException
+        - it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException
+        - it.pagopa.transactions.exceptions.TransactionNotFoundException
+        - it.pagopa.transactions.exceptions.AlreadyProcessedException
+        - it.pagopa.transactions.exceptions.NotImplementedException
+        - it.pagopa.transactions.exceptions.InvalidRequestException
+        - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
+        - it.pagopa.transactions.exceptions.NodoErrorException
+        - it.pagopa.transactions.exceptions.InvalidNodoResponseException
     requestTransactionAuthorization:
       maxAttempts: 3
       waitDuration: 2s
       enableExponentialBackoff: false
+      ignoreExceptions:
+        - it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException
+        - it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException
+        - it.pagopa.transactions.exceptions.TransactionNotFoundException
+        - it.pagopa.transactions.exceptions.AlreadyProcessedException
+        - it.pagopa.transactions.exceptions.NotImplementedException
+        - it.pagopa.transactions.exceptions.InvalidRequestException
+        - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
+        - it.pagopa.transactions.exceptions.NodoErrorException
+        - it.pagopa.transactions.exceptions.InvalidNodoResponseException
     updateTransactionAuthorization:
       maxAttempts: 3
       waitDuration: 2s
       enableExponentialBackoff: false
-    activateTransaction:
+      ignoreExceptions:
+        - it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException
+        - it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException
+        - it.pagopa.transactions.exceptions.TransactionNotFoundException
+        - it.pagopa.transactions.exceptions.AlreadyProcessedException
+        - it.pagopa.transactions.exceptions.NotImplementedException
+        - it.pagopa.transactions.exceptions.InvalidRequestException
+        - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
+        - it.pagopa.transactions.exceptions.NodoErrorException
+        - it.pagopa.transactions.exceptions.InvalidNodoResponseException
+    cancelTransaction:
       maxAttempts: 3
       waitDuration: 2s
       enableExponentialBackoff: false
+      ignoreExceptions:
+        - it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException
+        - it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException
+        - it.pagopa.transactions.exceptions.TransactionNotFoundException
+        - it.pagopa.transactions.exceptions.AlreadyProcessedException
+        - it.pagopa.transactions.exceptions.NotImplementedException
+        - it.pagopa.transactions.exceptions.InvalidRequestException
+        - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
+        - it.pagopa.transactions.exceptions.NodoErrorException
+        - it.pagopa.transactions.exceptions.InvalidNodoResponseException
+    addUserReceipt:
+      maxAttempts: 3
+      waitDuration: 2s
+      enableExponentialBackoff: false
+      ignoreExceptions:
+        - it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException
+        - it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException
+        - it.pagopa.transactions.exceptions.TransactionNotFoundException
+        - it.pagopa.transactions.exceptions.AlreadyProcessedException
+        - it.pagopa.transactions.exceptions.NotImplementedException
+        - it.pagopa.transactions.exceptions.InvalidRequestException
+        - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
+        - it.pagopa.transactions.exceptions.NodoErrorException
+        - it.pagopa.transactions.exceptions.InvalidNodoResponseException
 
 resilience4j.circuitbreaker:
   configs:
@@ -37,10 +97,38 @@ resilience4j.circuitbreaker:
   instances:
     transactions-backend:
       baseConfig: default
+      ignoreExceptions:
+        - it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException
+        - it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException
+        - it.pagopa.transactions.exceptions.TransactionNotFoundException
+        - it.pagopa.transactions.exceptions.AlreadyProcessedException
+        - it.pagopa.transactions.exceptions.NotImplementedException
+        - it.pagopa.transactions.exceptions.InvalidRequestException
+        - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
+        - it.pagopa.transactions.exceptions.NodoErrorException
+        - it.pagopa.transactions.exceptions.InvalidNodoResponseException
     node-backend:
       baseConfig: default
       ignoreExceptions:
+        - it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException
+        - it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException
+        - it.pagopa.transactions.exceptions.TransactionNotFoundException
+        - it.pagopa.transactions.exceptions.AlreadyProcessedException
+        - it.pagopa.transactions.exceptions.NotImplementedException
+        - it.pagopa.transactions.exceptions.InvalidRequestException
+        - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
         - it.pagopa.transactions.exceptions.NodoErrorException
+        - it.pagopa.transactions.exceptions.InvalidNodoResponseException
     ecommerce-db:
       baseConfig: default
+      ignoreExceptions:
+        - it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException
+        - it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException
+        - it.pagopa.transactions.exceptions.TransactionNotFoundException
+        - it.pagopa.transactions.exceptions.AlreadyProcessedException
+        - it.pagopa.transactions.exceptions.NotImplementedException
+        - it.pagopa.transactions.exceptions.InvalidRequestException
+        - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
+        - it.pagopa.transactions.exceptions.NodoErrorException
+        - it.pagopa.transactions.exceptions.InvalidNodoResponseException
 
