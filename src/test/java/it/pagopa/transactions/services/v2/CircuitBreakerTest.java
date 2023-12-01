@@ -118,7 +118,7 @@ class CircuitBreakerTest {
                                     .ofNullable(exceptionMapper.get(exceptionName))
                                     .orElseThrow(
                                             () -> new RuntimeException(
-                                                    "No mapping found for exception: %s".formatted(exceptionName)
+                                                    "Missing exception instance in test suite inside map `exceptionMapper` for class: %s"
                                             )
                                     ),
                             retryInstanceName
