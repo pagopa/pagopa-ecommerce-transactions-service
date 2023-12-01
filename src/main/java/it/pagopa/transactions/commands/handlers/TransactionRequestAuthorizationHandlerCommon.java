@@ -97,7 +97,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                             .getOrderId(),false).map(confirmPaymentResponse -> Tuples.of(confirmPaymentResponse.getT1(),confirmPaymentResponse.getT2(),confirmPaymentResponse.getT3(),Optional.empty()));
             case WalletAuthRequestDetailsDto ignored ->
                     paymentGatewayClient.requestNpgBuildSession(authorizationData)
-                            .filter(orderIdAndFieldsDto -> Objects.equals(orderIdAndFieldsDto.getT2().getState(), WorkflowStateDto.READY_FOR_PAYMENT) || orderIdAndFieldsDto.getT2().getSessionId() != null)
+                            .filter(orderIdAndFieldsDto -> Objects.equals(orderIdAndFieldsDto.getT2().getState(), WorkflowStateDto.READY_FOR_PAYMENT) && orderIdAndFieldsDto.getT2().getSessionId() != null)
                             .switchIfEmpty(Mono.error(new BadGatewayException("Error while invoke NPG build session",HttpStatus.BAD_GATEWAY)))
                             .flatMap(orderIdAndFieldsDto->
                                   invokeNpgConfirmPayment(

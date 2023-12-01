@@ -15,6 +15,7 @@ import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.*;
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
+import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.configurations.NpgSessionUrlConfig;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
@@ -279,7 +280,7 @@ public class PaymentGatewayClient {
                             ).queryParam(
                                     "clientId",
                                     "IO"
-                            ).queryParam("transactionId", authorizationData.transactionId()).build().toUri();
+                            ).queryParam("transactionId", authorizationData.transactionId().value()).build().toUri();
                             URI merchantUrl = returnUrlBasePath;
                             URI cancelUrl = returnUrlBasePath.resolve(npgSessionUrlConfig.cancelSuffix());
                             URI notificationUrl = UriComponentsBuilder
@@ -345,16 +346,16 @@ public class PaymentGatewayClient {
                 .filter(
                         authorizationRequestData -> authorizationData
                                 .authDetails() instanceof CardsAuthRequestDetailsDto
+                                || authorizationData
+                                        .authDetails() instanceof WalletAuthRequestDetailsDto
                 )
                 .switchIfEmpty(
                         Mono.error(
                                 new InvalidRequestException(
-                                        "Cannot perform NPG authorization for invalid input CardsAuthRequestDetailsDto"
+                                        "Cannot perform NPG authorization for invalid input CardsAuthRequestDetailsDto or WalletAuthRequestDetailsDto"
                                 )
                         )
                 )
-                .map(AuthorizationRequestData::authDetails)
-                .cast(CardsAuthRequestDetailsDto.class)
                 .flatMap(authorizationRequestData -> {
                     final BigDecimal grandTotal = BigDecimal.valueOf(
                             ((long) authorizationData.paymentNotices().stream()
