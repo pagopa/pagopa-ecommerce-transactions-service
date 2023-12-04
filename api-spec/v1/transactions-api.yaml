@@ -562,13 +562,13 @@ components:
           type: string
         walletId:
           type: string
-          description: walletId
+          description: The user wallet id
       required:
         - detailType
         - walletId
       example:
-        detailType: "cards"
-        orderId: "orderId"
+        detailType: "wallet"
+        walletId: "walletId"
     RequestAuthorizationResponse:
       type: object
       description: Response body for requesting an authorization for a transaction
