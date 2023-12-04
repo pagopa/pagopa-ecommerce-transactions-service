@@ -3,14 +3,16 @@ package it.pagopa.transactions.client;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.AdditionalPaymentInformationsDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
-import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Request;
-import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Response;
-import it.pagopa.generated.transactions.model.CtFaultBean;
-import it.pagopa.generated.transactions.model.CtQrCode;
-import it.pagopa.generated.transactions.model.CtTransferListPSPV2;
-import it.pagopa.generated.transactions.model.ObjectFactory;
+import it.pagopa.generated.transactions.model.*;
+import it.pagopa.transactions.configurations.WebClientsConfig;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.utils.soap.SoapEnvelope;
+import okhttp3.mockwebserver.Dispatcher;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -23,6 +25,8 @@ import org.springframework.web.reactive.function.client.WebClient.RequestBodyUri
 import org.springframework.web.reactive.function.client.WebClient.RequestHeadersSpec;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 import org.springframework.web.server.ResponseStatusException;
+import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -58,6 +62,20 @@ class NodeForPspClientTest {
 
     @Mock
     private ResponseSpec responseSpec;
+
+    private static MockWebServer mockWebServer;
+
+    @BeforeAll
+    public static void beforeTests() throws Exception {
+        mockWebServer = new MockWebServer();
+        mockWebServer.start(9000);
+        System.out.printf("Mock web server started on %s:%s%n", mockWebServer.getHostName(), mockWebServer.getPort());
+    }
+
+    @AfterAll
+    public static void afterAll() throws Exception {
+        mockWebServer.close();
+    }
 
     @Test
     void shouldReturnActivatePaymentResponseGivenValidPaymentNoticeTest() {
@@ -335,6 +353,101 @@ class NodeForPspClientTest {
                                 && badGatewayException.getHttpStatus().equals(exception.getStatus())
                                 && badGatewayException.getDetail().equals(exception.getReason())
                 )
+                .verify();
+    }
+
+    @Test
+    void shouldCallNodoClosePaymentOnConfiguredPath() throws JsonProcessingException {
+        ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
+                .paymentTokens(List.of("paymentToken"))
+                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
+                .idPSP("identificativoPsp")
+                .idBrokerPSP("identificativoIntermediario")
+                .idChannel("identificativoCanale")
+                .transactionId("transactionId")
+                .fee(new BigDecimal(1))
+                .timestampOperation(OffsetDateTime.now())
+                .totalAmount(new BigDecimal(101))
+                .additionalPaymentInformations(null);
+
+        ClosePaymentResponseDto closePaymentResponse = new ClosePaymentResponseDto()
+                .outcome(ClosePaymentResponseDto.OutcomeEnum.OK);
+
+        /* preconditions */
+        String closePaymentResponseBody = new ObjectMapper().writeValueAsString(closePaymentResponse);
+        String nodoPerPmUri = "/nodo-per-pm/v2";
+        String ecommerceClientId = "ecomm";
+        String expectedQueryPath = nodoPerPmUri.concat("/closepayment").concat("?clientId=").concat(ecommerceClientId);
+        Dispatcher dispatcher = new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest request) {
+                if (request.getPath().equals(expectedQueryPath)) {
+
+                    return new MockResponse()
+                            .setResponseCode(200)
+                            .setBody(closePaymentResponseBody)
+                            .setHeader("Content-Type", "application/json");
+                }
+                return new MockResponse().setResponseCode(404);
+            }
+        };
+
+        mockWebServer.setDispatcher(dispatcher);
+        NodeForPspClient nodeForPspClient = new NodeForPspClient(
+                new WebClientsConfig().nodoWebClient(
+                        "http://localhost:9000",
+                        10000,
+                        10000
+                ),
+                "/",
+                ecommerceClientId,
+                nodoPerPmUri
+        );
+        StepVerifier
+                .create(nodeForPspClient.closePaymentV2(closePaymentRequest))
+                .expectNext(closePaymentResponse)
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldHandleClosePaymentWithHttpErrorCodeResponse() {
+        ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
+                .paymentTokens(List.of("paymentToken"))
+                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
+                .idPSP("identificativoPsp")
+                .idBrokerPSP("identificativoIntermediario")
+                .idChannel("identificativoCanale")
+                .transactionId("transactionId")
+                .fee(new BigDecimal(1))
+                .timestampOperation(OffsetDateTime.now())
+                .totalAmount(new BigDecimal(101))
+                .additionalPaymentInformations(null);
+
+        /* preconditions */
+        String nodoPerPmUri = "/nodo-per-pm/v2";
+        String ecommerceClientId = "ecomm";
+        Dispatcher dispatcher = new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest request) {
+                return new MockResponse()
+                        .setResponseCode(500);
+            }
+        };
+
+        mockWebServer.setDispatcher(dispatcher);
+        NodeForPspClient nodeForPspClient = new NodeForPspClient(
+                new WebClientsConfig().nodoWebClient(
+                        "http://localhost:9000",
+                        10000,
+                        10000
+                ),
+                "/",
+                ecommerceClientId,
+                nodoPerPmUri
+        );
+        StepVerifier
+                .create(nodeForPspClient.closePaymentV2(closePaymentRequest))
+                .expectErrorMatches(ex -> ex instanceof BadGatewayException)
                 .verify();
     }
 }
