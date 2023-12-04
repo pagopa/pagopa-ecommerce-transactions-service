@@ -7,6 +7,7 @@ import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestD
 import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
+import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
@@ -40,6 +41,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 @Component
@@ -330,7 +332,20 @@ public class PaymentGatewayClient {
                                                 null
                                         )
                                 )
-                );
+                )
+                .filter(
+                        orderIdAndFieldsDto -> Objects
+                                .equals(orderIdAndFieldsDto.getT2().getState(), WorkflowStateDto.READY_FOR_PAYMENT)
+                                && orderIdAndFieldsDto.getT2().getSessionId() != null
+                                && orderIdAndFieldsDto.getT2().getSecurityToken() != null
+                )
+                .switchIfEmpty(
+                        Mono.error(
+                                new BadGatewayException("Error while invoke NPG build session", HttpStatus.BAD_GATEWAY)
+                        )
+                )
+
+        ;
     }
 
     public Mono<StateResponseDto> requestNpgCardsAuthorization(AuthorizationRequestData authorizationData) {

@@ -2,7 +2,7 @@ package it.pagopa.transactions.client;
 
 import it.pagopa.generated.wallet.v1.api.WalletsApi;
 import it.pagopa.generated.wallet.v1.dto.WalletInfoDto;
-import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.exceptions.BadGatewayException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -73,9 +73,7 @@ public class WalletClientTest {
          */
         StepVerifier.create(walletClient.getWalletInfo(WALLET_ID.toString()))
                 .expectErrorMatches(
-                        e -> e instanceof InvalidRequestException invalidRequestException
-                                && invalidRequestException.getMessage()
-                                        .equals("Error while invoke method for retrieve wallet info")
+                        e -> e instanceof BadGatewayException
                 )
                 .verify();
     }

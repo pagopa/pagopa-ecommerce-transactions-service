@@ -2167,103 +2167,6 @@ class TransactionRequestAuthorizationHandlerTest {
 
     }
 
-    @ParameterizedTest
-    @MethodSource("buildSessionInvalidBodyResponse")
-    void shouldThrowExceptionForInvalidBuildSessionResponsesDuringAuthorizationForWallet(
-                                                                                         FieldsDto npgBuildSessionResponse
-    ) {
-        String walletId = UUID.randomUUID().toString();
-        String contractId = "contractId";
-        String sessionId = "sessionId";
-        String orderId = "oderId";
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
-        PaymentToken paymentToken = new PaymentToken("paymentToken");
-        RptId rptId = new RptId("77777777777111111111111111111");
-        TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
-        Confidential<Email> email = TransactionTestUtils.EMAIL;
-        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
-        String idCart = "idCart";
-        TransactionActivated transaction = new TransactionActivated(
-                transactionId,
-                List.of(
-                        new PaymentNotice(
-                                paymentToken,
-                                rptId,
-                                amount,
-                                description,
-                                nullPaymentContextCode,
-                                new ArrayList<>(),
-                                false
-                        )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
-                email,
-                null,
-                null,
-                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
-                idCart,
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
-        );
-
-        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
-                .fee(200)
-                .paymentInstrumentId("paymentInstrumentId")
-                .pspId("PSP_CODE")
-                .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
-
-        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction.getTransactionId(),
-                transaction.getPaymentNotices(),
-                transaction.getEmail(),
-                authorizationRequest.getFee(),
-                authorizationRequest.getPaymentInstrumentId(),
-                authorizationRequest.getPspId(),
-                "CP",
-                "brokerName",
-                "pspChannelCode",
-                "CARDS",
-                "paymentMethodDescription",
-                "pspBusinessName",
-                false,
-                "NPG",
-                Optional.empty(),
-                Optional.of(contractId),
-                "VISA",
-                new WalletAuthRequestDetailsDto().detailType("wallet").walletId(walletId)
-        );
-
-        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
-                authorizationData
-        );
-
-        Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
-        /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestNpgBuildSession(authorizationData))
-                .thenReturn(Mono.just(responseRequestNpgBuildSession));
-        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
-        /* test */
-        StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
-                .expectErrorMatches(error -> error instanceof BadGatewayException)
-                .verify();
-
-        Mockito.verify(paymentGatewayClient, Mockito.times(0)).requestNpgCardsAuthorization(any());
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(any());
-        Mockito.verify(transactionTemplateWrapper, Mockito.times(0)).save(any());
-
-    }
-
     @Test
     void shouldThrowExceptionNoGatewayMatchesDuringAuthorizationForWallet() {
         String contractId = "contractId";
@@ -2356,28 +2259,6 @@ class TransactionRequestAuthorizationHandlerTest {
         Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(any());
         Mockito.verify(transactionTemplateWrapper, Mockito.times(0)).save(any());
 
-    }
-
-    private static Stream<Arguments> buildSessionInvalidBodyResponse() {
-        return Stream.of(
-                // npg operation result - expected outcome mappings
-                Arguments.arguments(
-                        new FieldsDto().sessionId("sessionId")
-                                .state(WorkflowStateDto.READY_FOR_PAYMENT)
-                ),
-                Arguments.arguments(
-                        new FieldsDto().securityToken("securityToken")
-                                .state(WorkflowStateDto.READY_FOR_PAYMENT),
-                        Arguments.arguments(
-                                new FieldsDto().sessionId("sessionId")
-                                        .securityToken("securityToken")
-                        )
-                ),
-                Arguments.arguments(
-                        new FieldsDto().sessionId("sessionId")
-                                .securityToken("securityToken").state(WorkflowStateDto.CARD_DATA_COLLECTION)
-                )
-        );
     }
 
 }
