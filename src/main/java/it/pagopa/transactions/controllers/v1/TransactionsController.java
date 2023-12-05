@@ -187,10 +187,7 @@ public class TransactionsController implements TransactionsApi {
                                                 .outcome(AddUserReceiptResponseDto.OutcomeEnum.OK)
                                 )
                                 .doOnError(e -> log.error("Got error while trying to add user receipt", e))
-                                .onErrorReturn(
-                                        new AddUserReceiptResponseDto()
-                                                .outcome(AddUserReceiptResponseDto.OutcomeEnum.KO)
-                                )
+                                .onErrorMap(SendPaymentResultException::new)
                 )
                 .map(ResponseEntity::ok)
                 .contextWrite(
@@ -311,6 +308,35 @@ public class TransactionsController implements TransactionsApi {
                         .title("Bad request")
                         .detail("Invalid request: %s".formatted(errorMessage)),
                 HttpStatus.BAD_REQUEST
+        );
+    }
+
+    @ExceptionHandler(SendPaymentResultException.class)
+    ResponseEntity<ProblemJsonDto> sendPaymentResultExceptionHandler(SendPaymentResultException exception) {
+        log.warn("Got error during sendPaymentResult", exception);
+
+        ProblemJsonDto responseBody = switch (exception.cause) {
+            case TransactionNotFoundException e -> new ProblemJsonDto()
+                    .status(404)
+                    .title("Transaction not found")
+                    .detail(e.getMessage());
+            case AlreadyProcessedException e -> new ProblemJsonDto()
+                    .status(422)
+                    .title("Operation conflict")
+                    .detail(e.getMessage());
+            case BadGatewayException e -> new ProblemJsonDto()
+                    .status(422)
+                    .title("Bad gateway")
+                    .detail(e.getMessage());
+            default -> new ProblemJsonDto()
+                    .status(422)
+                    .title("Unprocessable entity")
+                    .detail(exception.cause.getMessage());
+        };
+
+        return new ResponseEntity<>(
+                responseBody,
+                HttpStatus.valueOf(responseBody.getStatus())
         );
     }
 
