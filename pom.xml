@@ -9,7 +9,7 @@
     </parent>
     <groupId>it.pagopa</groupId>
     <artifactId>pagopa-ecommerce-transactions-service</artifactId>
-    <version>0.38.3</version>
+    <version>1.0.2</version>
     <name>pagopa-ecommerce-transactions-service</name>
     <description>pagopa-ecommerce-transactions-service</description>
     <properties>
@@ -350,7 +350,7 @@
                             <configOptions>
                                 <swaggerAnnotations>false</swaggerAnnotations>
                                 <openApiNullable>false</openApiNullable>
-                            </configOptions>c
+                            </configOptions>
                             <modelPackage>it.pagopa.generated.ecommerce.paymentmethods.v1.dto</modelPackage>
                             <apiPackage>it.pagopa.generated.ecommerce.paymentmethods.v1.api</apiPackage>
                             <modelNameSuffix>dto</modelNameSuffix>

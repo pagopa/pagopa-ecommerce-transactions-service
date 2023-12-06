@@ -47,6 +47,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 
 @ExtendWith(MockitoExtension.class)
 @WebFluxTest(TransactionsController.class)
@@ -751,6 +752,151 @@ class TransactionsControllerTest {
                             );
                         }
                 );
+    }
+
+    @Test
+    void shouldReturnUnprocessableEntityForBadGatewayInSendPaymentResult() {
+        Mockito.when(transactionsService.addUserReceipt(eq(TransactionTestUtils.TRANSACTION_ID), any()))
+                .thenReturn(Mono.error(new BadGatewayException("Bad gateway", HttpStatus.BAD_GATEWAY)));
+
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(
+                        new AddUserReceiptRequestPaymentsInnerDto()
+                                .paymentToken("paymentToken")
+                                .companyName("companyName")
+                                .creditorReferenceId("creditorReferenceId")
+                                .description("description")
+                                .debtor("debtor")
+                                .fiscalCode("fiscalCode")
+                                .officeName("officeName")
+                );
+
+        webTestClient.post()
+                .uri(
+                        builder -> builder
+                                .pathSegment("transactions", TransactionTestUtils.TRANSACTION_ID, "user-receipts")
+                                .build()
+                )
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("X-Client-Id", "CHECKOUT")
+                .body(BodyInserters.fromValue(addUserReceiptRequest))
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY)
+                .expectBody(ProblemJsonDto.class)
+                .value(p -> assertEquals(422, p.getStatus()));
+
+    }
+
+    @Test
+    void shouldReturnNotFoundInSendPaymentResultForNonExistingTransaction() {
+        Mockito.when(transactionsService.addUserReceipt(eq(TransactionTestUtils.TRANSACTION_ID), any()))
+                .thenReturn(Mono.error(new TransactionNotFoundException(UUID.randomUUID().toString())));
+
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(
+                        new AddUserReceiptRequestPaymentsInnerDto()
+                                .paymentToken("paymentToken")
+                                .companyName("companyName")
+                                .creditorReferenceId("creditorReferenceId")
+                                .description("description")
+                                .debtor("debtor")
+                                .fiscalCode("fiscalCode")
+                                .officeName("officeName")
+                );
+
+        webTestClient.post()
+                .uri(
+                        builder -> builder
+                                .pathSegment("transactions", TransactionTestUtils.TRANSACTION_ID, "user-receipts")
+                                .build()
+                )
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("X-Client-Id", "CHECKOUT")
+                .body(BodyInserters.fromValue(addUserReceiptRequest))
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.NOT_FOUND)
+                .expectBody(ProblemJsonDto.class)
+                .value(p -> assertEquals(404, p.getStatus()));
+    }
+
+    @Test
+    void shouldReturnUnprocessableEntityInSendPaymentResultForTransactionAlreadyProcessed() {
+        Mockito.when(transactionsService.addUserReceipt(eq(TransactionTestUtils.TRANSACTION_ID), any()))
+                .thenReturn(
+                        Mono.error(
+                                new AlreadyProcessedException(new TransactionId(TransactionTestUtils.TRANSACTION_ID))
+                        )
+                );
+
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(
+                        new AddUserReceiptRequestPaymentsInnerDto()
+                                .paymentToken("paymentToken")
+                                .companyName("companyName")
+                                .creditorReferenceId("creditorReferenceId")
+                                .description("description")
+                                .debtor("debtor")
+                                .fiscalCode("fiscalCode")
+                                .officeName("officeName")
+                );
+
+        webTestClient.post()
+                .uri(
+                        builder -> builder
+                                .pathSegment("transactions", TransactionTestUtils.TRANSACTION_ID, "user-receipts")
+                                .build()
+                )
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("X-Client-Id", "CHECKOUT")
+                .body(BodyInserters.fromValue(addUserReceiptRequest))
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY)
+                .expectBody(ProblemJsonDto.class)
+                .value(p -> assertEquals(422, p.getStatus()));
+    }
+
+    @Test
+    void shouldReturnUnprocessableEntityInSendPaymentResultForUncaughtError() {
+        Mockito.when(transactionsService.addUserReceipt(eq(TransactionTestUtils.TRANSACTION_ID), any()))
+                .thenReturn(Mono.error(new RuntimeException("Spooky!")));
+
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(
+                        new AddUserReceiptRequestPaymentsInnerDto()
+                                .paymentToken("paymentToken")
+                                .companyName("companyName")
+                                .creditorReferenceId("creditorReferenceId")
+                                .description("description")
+                                .debtor("debtor")
+                                .fiscalCode("fiscalCode")
+                                .officeName("officeName")
+                );
+
+        webTestClient.post()
+                .uri(
+                        builder -> builder
+                                .pathSegment("transactions", TransactionTestUtils.TRANSACTION_ID, "user-receipts")
+                                .build()
+                )
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("X-Client-Id", "CHECKOUT")
+                .body(BodyInserters.fromValue(addUserReceiptRequest))
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY)
+                .expectBody(ProblemJsonDto.class)
+                .value(p -> assertEquals(422, p.getStatus()));
     }
 
     private static CtFaultBean faultBeanWithCode(String faultCode) {

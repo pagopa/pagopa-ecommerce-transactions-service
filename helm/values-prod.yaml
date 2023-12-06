@@ -68,7 +68,7 @@ microservice-chart:
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.elastic-system.svc:4317"
       OTEL_TRACES_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: otlp
-      OTEL_LOGS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: otlp
       OTEL_TRACES_SAMPLER: "always_on"
       ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
       ECS_SERVICE_ENVIRONMENT: "prod"
@@ -79,7 +79,7 @@ microservice-chart:
       NPG_CARDS_PSP_LIST: "" #TODO to be filled with psp id list that are expected to be present into psp api keys configuration
       CHECKOUT_BASE_PATH: "https://checkout.pagopa.it"
       ECOMMERCE_EVENT_VERSION: "V1"
-      SEND_PAYMENT_RESULT_FOR_TX_EXPIRED_ENABLED: "true"
+      SEND_PAYMENT_RESULT_FOR_TX_EXPIRED_ENABLED: "false"
       SESSION_URL_BASEPATH: "https://checkout.pagopa.it"
       SESSION_URL_OUTCOME_SUFFIX: "/esito"
       SESSION_URL_CANCEL_SUFFIX: "/cancel"
@@ -98,7 +98,7 @@ microservice-chart:
       NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "0.38.3"
+    tag: "1.0.2"
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -205,7 +205,7 @@ microservice-chart:
     OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.elastic-system.svc:4317"
     OTEL_TRACES_EXPORTER: otlp
     OTEL_METRICS_EXPORTER: otlp
-    OTEL_LOGS_EXPORTER: none
+    OTEL_LOGS_EXPORTER: otlp
     OTEL_TRACES_SAMPLER: "always_on"
     ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service
     ECS_SERVICE_ENVIRONMENT: "prod"
@@ -216,7 +216,7 @@ microservice-chart:
     TRANSACTION_DOCUMENT_TTL: "600"
     CHECKOUT_BASE_PATH: "https://checkout.pagopa.it"
     ECOMMERCE_EVENT_VERSION: "V1"
-    SEND_PAYMENT_RESULT_FOR_TX_EXPIRED_ENABLED: "true"
+    SEND_PAYMENT_RESULT_FOR_TX_EXPIRED_ENABLED: "false"
     SESSION_URL_BASEPATH: "https://checkout.pagopa.it"
     SESSION_URL_OUTCOME_SUFFIX: "/esito"
     SESSION_URL_CANCEL_SUFFIX: "/cancel"
