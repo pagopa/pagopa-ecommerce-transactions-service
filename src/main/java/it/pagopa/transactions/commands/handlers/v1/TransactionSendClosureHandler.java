@@ -38,6 +38,7 @@ import reactor.util.function.Tuples;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -174,6 +175,7 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                                                 .timestampOperation(
                                                         updateAuthorizationRequestDto
                                                                 .getTimestampOperation()
+                                                                .atZoneSameInstant(ZoneId.of("Europe/Paris"))
                                                                 .truncatedTo(ChronoUnit.SECONDS)
                                                                 .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                                 )
@@ -563,8 +565,10 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
         it.pagopa.ecommerce.commons.documents.v1.TransactionClosureData.Outcome eventNodoOutcome = outcomeV2ToTransactionClosureDataOutcome(nodoOutcome);
         it.pagopa.ecommerce.commons.documents.v1.TransactionClosureData transactionClosureData = new it.pagopa.ecommerce.commons.documents.v1.TransactionClosureData(eventNodoOutcome);
         Mono<it.pagopa.ecommerce.commons.documents.v1.TransactionEvent<it.pagopa.ecommerce.commons.documents.v1.TransactionClosureData>> closureEvent = switch (authorizationResult) {
-            case OK -> Mono.just(new it.pagopa.ecommerce.commons.documents.v1.TransactionClosedEvent(transactionId.value(), transactionClosureData));
-            case KO -> Mono.just(new it.pagopa.ecommerce.commons.documents.v1.TransactionClosureFailedEvent(transactionId.value(), transactionClosureData));
+            case OK ->
+                    Mono.just(new it.pagopa.ecommerce.commons.documents.v1.TransactionClosedEvent(transactionId.value(), transactionClosureData));
+            case KO ->
+                    Mono.just(new it.pagopa.ecommerce.commons.documents.v1.TransactionClosureFailedEvent(transactionId.value(), transactionClosureData));
             case null, default -> Mono.error(
                     new IllegalArgumentException(
                             "Unhandled authorization result: %s".formatted(authorizationResult)
