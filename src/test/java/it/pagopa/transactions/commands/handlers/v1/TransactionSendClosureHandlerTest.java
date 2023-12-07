@@ -55,8 +55,6 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -123,6 +121,10 @@ class TransactionSendClosureHandlerTest {
     private final TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
     private final String ECOMMERCE_RRN = uuidUtils.uuidToBase64(transactionId.uuid());
 
+    private static final String expectedOperationTimestamp = "2023-01-01T01:02:03";
+    private static final OffsetDateTime operationTimestamp = OffsetDateTime
+            .parse(expectedOperationTimestamp.concat("+01:00"));
+
     @Test
     void shouldRejectTransactionInWrongState() {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
@@ -181,7 +183,7 @@ class TransactionSendClosureHandlerTest {
                                 .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
                                 .authorizationCode("authorizationCode")
                 )
-                .timestampOperation(OffsetDateTime.now());
+                .timestampOperation(operationTimestamp);
 
         ClosureSendData closureSendData = new ClosureSendData(
                 transaction.getTransactionId(),
@@ -332,7 +334,7 @@ class TransactionSendClosureHandlerTest {
                                 .outcome(OutcomeXpayGatewayDto.OutcomeEnum.KO)
                                 .authorizationCode(AUTHORIZATION_CODE)
                 )
-                .timestampOperation(OffsetDateTime.now());
+                .timestampOperation(operationTimestamp);
 
         BigDecimal amountEuroCent = EuroUtils.euroCentsToEuro(
                 amount.value()
@@ -447,7 +449,7 @@ class TransactionSendClosureHandlerTest {
 
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
-        Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
+        Mockito.when(nodeForPspClient.closePaymentV2(any())).thenReturn(Mono.just(closePaymentResponse));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(events);
         /* test */
@@ -463,8 +465,8 @@ class TransactionSendClosureHandlerTest {
                     assertEquals(event.getTransactionId(), next.getT2().get().getTransactionId());
                 })
                 .verifyComplete();
-
-        Mockito.verify(transactionEventStoreRepository, times(1)).save(
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).closePaymentV2(closePaymentRequest);
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
                 argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_CLOSURE_FAILED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
@@ -546,7 +548,7 @@ class TransactionSendClosureHandlerTest {
                                 .outcome(OutcomeXpayGatewayDto.OutcomeEnum.KO)
                                 .authorizationCode("authorizationCode")
                 )
-                .timestampOperation(OffsetDateTime.now());
+                .timestampOperation(operationTimestamp);
 
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
@@ -663,7 +665,7 @@ class TransactionSendClosureHandlerTest {
 
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
-        Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
+        Mockito.when(nodeForPspClient.closePaymentV2(any())).thenReturn(Mono.just(closePaymentResponse));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(events);
 
@@ -680,8 +682,8 @@ class TransactionSendClosureHandlerTest {
                     assertEquals(event.getTransactionId(), next.getT2().get().getTransactionId());
                 })
                 .verifyComplete();
-
-        Mockito.verify(transactionEventStoreRepository, times(1)).save(
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).closePaymentV2(closePaymentRequest);
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
                 argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_CLOSURE_FAILED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
@@ -956,8 +958,8 @@ class TransactionSendClosureHandlerTest {
                     assertEquals(event.getTransactionId(), next.getT2().get().getTransactionId());
                 })
                 .verifyComplete();
-        Mockito.verify(nodeForPspClient, times(1)).closePaymentV2(closePaymentRequest);
-        Mockito.verify(transactionEventStoreRepository, times(1)).save(
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).closePaymentV2(closePaymentRequest);
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
                 argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_CLOSED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
@@ -1038,7 +1040,7 @@ class TransactionSendClosureHandlerTest {
                                 .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
                                 .authorizationCode("authorizationCode")
                 )
-                .timestampOperation(OffsetDateTime.now());
+                .timestampOperation(operationTimestamp);
 
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
@@ -1098,8 +1100,7 @@ class TransactionSendClosureHandlerTest {
                                 )
                                 .fee(fee.toString())
                                 .timestampOperation(
-                                        OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS)
-                                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                                        expectedOperationTimestamp
                                 )
                                 .rrn(authorizationCompletedEvent.getData().getRrn())
                                 .totalAmount(totalAmount.toString())
@@ -1304,7 +1305,7 @@ class TransactionSendClosureHandlerTest {
                                 .authorizationCode("authorizationCode")
                                 .rrn(ECOMMERCE_RRN)
                 )
-                .timestampOperation(OffsetDateTime.now());
+                .timestampOperation(operationTimestamp);
 
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
@@ -1363,8 +1364,7 @@ class TransactionSendClosureHandlerTest {
                                 )
                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString())
                                 .timestampOperation(
-                                        OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS)
-                                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                                        expectedOperationTimestamp
                                 )
                                 .rrn(ECOMMERCE_RRN)
                                 .totalAmount(totalAmount.toString())
@@ -1472,7 +1472,7 @@ class TransactionSendClosureHandlerTest {
         RuntimeException redisError = new RuntimeException("Network error");
 
         /* preconditions */
-        Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
+        Mockito.when(nodeForPspClient.closePaymentV2(any())).thenReturn(Mono.just(closePaymentResponse));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(events);
         // first call to redis is ko, second one is ok
@@ -1496,8 +1496,8 @@ class TransactionSendClosureHandlerTest {
                     assertEquals(errorEvent.getTransactionId(), next.getT2().getLeft().getTransactionId());
                 })
                 .verifyComplete();
-
-        Mockito.verify(transactionClosureErrorEventStoreRepository, times(1))
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).closePaymentV2(closePaymentRequest);
+        Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
                 .save(
                         argThat(
                                 e -> e.getEventCode()
@@ -1589,7 +1589,7 @@ class TransactionSendClosureHandlerTest {
                                 .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
                                 .authorizationCode("authorizationCode")
                 )
-                .timestampOperation(OffsetDateTime.now());
+                .timestampOperation(operationTimestamp);
 
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
@@ -1651,8 +1651,7 @@ class TransactionSendClosureHandlerTest {
                                 )
                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString())
                                 .timestampOperation(
-                                        OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS)
-                                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                                        expectedOperationTimestamp
                                 )
                                 .totalAmount(totalAmount.toString())
                                 .rrn(ECOMMERCE_RRN)
@@ -1873,7 +1872,7 @@ class TransactionSendClosureHandlerTest {
                         new OutcomeVposGatewayDto()
                                 .outcome(OutcomeVposGatewayDto.OutcomeEnum.KO)
                 )
-                .timestampOperation(OffsetDateTime.now());
+                .timestampOperation(operationTimestamp);
 
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
@@ -2110,7 +2109,7 @@ class TransactionSendClosureHandlerTest {
                         new OutcomeXpayGatewayDto()
                                 .outcome(OutcomeXpayGatewayDto.OutcomeEnum.KO)
                 )
-                .timestampOperation(OffsetDateTime.now());
+                .timestampOperation(operationTimestamp);
 
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
@@ -2365,7 +2364,7 @@ class TransactionSendClosureHandlerTest {
                                 .authorizationCode("authorizationCode")
                                 .rrn(ECOMMERCE_RRN)
                 )
-                .timestampOperation(OffsetDateTime.now());
+                .timestampOperation(operationTimestamp);
 
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
@@ -2430,8 +2429,7 @@ class TransactionSendClosureHandlerTest {
                                 )
                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString())
                                 .timestampOperation(
-                                        OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS)
-                                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                                        expectedOperationTimestamp
                                 )
                                 .rrn(ECOMMERCE_RRN)
                                 .totalAmount(totalAmount.toString())
@@ -2647,7 +2645,7 @@ class TransactionSendClosureHandlerTest {
                                 .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
                                 .authorizationCode("authorizationCode")
                 )
-                .timestampOperation(OffsetDateTime.now());
+                .timestampOperation(operationTimestamp);
 
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
@@ -2707,8 +2705,7 @@ class TransactionSendClosureHandlerTest {
                                 )
                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString())
                                 .timestampOperation(
-                                        OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS)
-                                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                                        expectedOperationTimestamp
                                 ).rrn(ECOMMERCE_RRN)
                                 .totalAmount(totalAmount.toString())
                 )
@@ -2865,7 +2862,7 @@ class TransactionSendClosureHandlerTest {
                                 .authorizationCode("authorizationCode")
                                 .rrn(ECOMMERCE_RRN)
                 )
-                .timestampOperation(OffsetDateTime.now());
+                .timestampOperation(operationTimestamp);
 
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
@@ -2930,9 +2927,7 @@ class TransactionSendClosureHandlerTest {
                                 )
                                 .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()).toString())
                                 .timestampOperation(
-                                        OffsetDateTime.now()
-                                                .truncatedTo(ChronoUnit.SECONDS)
-                                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                                        expectedOperationTimestamp
                                 )
                                 .rrn(ECOMMERCE_RRN)
                                 .totalAmount(totalAmount.toString())
@@ -3021,7 +3016,7 @@ class TransactionSendClosureHandlerTest {
 
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
-        Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
+        Mockito.when(nodeForPspClient.closePaymentV2(any())).thenReturn(Mono.just(closePaymentResponse));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(events);
         Mockito.when(
@@ -3044,8 +3039,8 @@ class TransactionSendClosureHandlerTest {
                     assertEquals(refundRequestedEvent.getTransactionId(), next.getT1().get().getTransactionId());
                 })
                 .verifyComplete();
-
-        Mockito.verify(transactionEventStoreRepository, times(1)).save(
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).closePaymentV2(closePaymentRequest);
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
                 argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_CLOSED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
@@ -3083,7 +3078,7 @@ class TransactionSendClosureHandlerTest {
                                 .authorizationCode(AUTHORIZATION_CODE)
                                 .rrn(ECOMMERCE_RRN)
                 )
-                .timestampOperation(OffsetDateTime.now());
+                .timestampOperation(operationTimestamp);
 
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
@@ -3143,9 +3138,7 @@ class TransactionSendClosureHandlerTest {
                                                 .toString()
                                 )
                                 .timestampOperation(
-                                        OffsetDateTime.now()
-                                                .truncatedTo(ChronoUnit.SECONDS)
-                                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                                        expectedOperationTimestamp
                                 )
                                 .totalAmount(totalAmount.toString())
                 ).transactionDetails(
@@ -3311,7 +3304,7 @@ class TransactionSendClosureHandlerTest {
                         new OutcomeVposGatewayDto()
                                 .outcome(OutcomeVposGatewayDto.OutcomeEnum.KO)
                 )
-                .timestampOperation(OffsetDateTime.now());
+                .timestampOperation(operationTimestamp);
 
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
@@ -3415,7 +3408,7 @@ class TransactionSendClosureHandlerTest {
 
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
-        Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
+        Mockito.when(nodeForPspClient.closePaymentV2(any())).thenReturn(Mono.just(closePaymentResponse));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(events);
         Mockito.when(
@@ -3436,8 +3429,8 @@ class TransactionSendClosureHandlerTest {
                     assertEquals(event.getTransactionId(), next.getT2().get().getTransactionId());
                 })
                 .verifyComplete();
-
-        Mockito.verify(transactionEventStoreRepository, times(1)).save(
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).closePaymentV2(closePaymentRequest);
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
                 argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_CLOSURE_FAILED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
@@ -3469,7 +3462,7 @@ class TransactionSendClosureHandlerTest {
                         new OutcomeVposGatewayDto()
                                 .outcome(OutcomeVposGatewayDto.OutcomeEnum.KO)
                 )
-                .timestampOperation(OffsetDateTime.now());
+                .timestampOperation(operationTimestamp);
 
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
