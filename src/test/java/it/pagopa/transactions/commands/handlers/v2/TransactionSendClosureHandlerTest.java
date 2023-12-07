@@ -41,13 +41,13 @@ import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
@@ -64,6 +64,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -126,23 +127,6 @@ class TransactionSendClosureHandlerTest {
 
     private final TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
     private final String ECOMMERCE_RRN = uuidUtils.uuidToBase64(transactionId.uuid());
-
-    private static MockedStatic<OffsetDateTime> offsetDateTimeMockedStatic;
-
-    private static final String expectedOperationTimestamp = "2023-01-01T01:02:03";
-    private static final OffsetDateTime operationTimestamp = OffsetDateTime
-            .parse(expectedOperationTimestamp.concat("+01:00"));
-
-    @BeforeAll
-    static void init() {
-        offsetDateTimeMockedStatic = Mockito.mockStatic(OffsetDateTime.class);
-        offsetDateTimeMockedStatic.when(OffsetDateTime::now).thenReturn(operationTimestamp);
-    }
-
-    @AfterAll
-    static void shutdown() {
-        offsetDateTimeMockedStatic.close();
-    }
 
     @Test
     void shouldRejectTransactionInWrongState() {
@@ -257,7 +241,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         "rrn",
-                        expectedOperationTimestamp,
+                        OffsetDateTime.now().toString(),
                         new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
                 )
         );
@@ -348,7 +332,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         AUTHORIZATION_CODE,
                         ECOMMERCE_RRN,
-                        expectedOperationTimestamp,
+                        OffsetDateTime.now().toString(),
                         new PgsTransactionGatewayAuthorizationData(
                                 OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(),
                                 AuthorizationResultDto.KO
@@ -578,7 +562,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         AUTHORIZATION_CODE,
                         ECOMMERCE_RRN,
-                        expectedOperationTimestamp,
+                        OffsetDateTime.now().toString(),
                         new PgsTransactionGatewayAuthorizationData(
                                 OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(),
                                 AuthorizationResultDto.KO
@@ -736,8 +720,19 @@ class TransactionSendClosureHandlerTest {
         );
     }
 
-    @Test
-    void shoulGenerateClosedEventOnAuthorizationOKAndOkNodoClosePayment() {
+    private static Stream<Arguments> closePaymentDateFormat() {
+        return Stream.of(
+                Arguments.of("2023-05-01T23:59:59.000Z", "2023-05-02T01:59:59"),
+                Arguments.of("2023-12-01T23:59:59.000Z", "2023-12-02T00:59:59")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("closePaymentDateFormat")
+    void shoulGenerateClosedEventOnAuthorizationOKAndOkNodoClosePayment(
+                                                                        String expectedOperationTimestamp,
+                                                                        String expectedLocalTime
+    ) {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -799,7 +794,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         ECOMMERCE_RRN,
-                        expectedOperationTimestamp,
+                        OffsetDateTime.now().toString(),
                         new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
                 )
         );
@@ -811,7 +806,7 @@ class TransactionSendClosureHandlerTest {
                                 .authorizationCode("authorizationCode")
                                 .rrn(ECOMMERCE_RRN)
                 )
-                .timestampOperation(OffsetDateTime.now());
+                .timestampOperation(OffsetDateTime.parse(expectedOperationTimestamp));
 
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
@@ -873,8 +868,7 @@ class TransactionSendClosureHandlerTest {
                                                 .toPlainString()
                                 )
                                 .timestampOperation(
-                                        OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS)
-                                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                                        expectedLocalTime
                                 )
                                 .rrn(((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getRrn())
                                 .totalAmount(totalAmount.setScale(2).toPlainString())
@@ -976,7 +970,7 @@ class TransactionSendClosureHandlerTest {
 
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
-        Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
+        Mockito.when(nodeForPspClient.closePaymentV2(any())).thenReturn(Mono.just(closePaymentResponse));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(events);
 
@@ -993,7 +987,7 @@ class TransactionSendClosureHandlerTest {
                     assertEquals(event.getTransactionId(), next.getT2().get().getTransactionId());
                 })
                 .verifyComplete();
-
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).closePaymentV2(closePaymentRequest);
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
                 argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_CLOSED_EVENT.toString()
@@ -1065,7 +1059,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         ECOMMERCE_RRN,
-                        expectedOperationTimestamp,
+                        OffsetDateTime.now().toString(),
                         new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
                 )
         );
@@ -1331,7 +1325,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         ECOMMERCE_RRN,
-                        expectedOperationTimestamp,
+                        OffsetDateTime.now().toString(),
                         new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
                 )
         );
@@ -1617,7 +1611,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         ECOMMERCE_RRN,
-                        expectedOperationTimestamp,
+                        OffsetDateTime.now().toString(),
                         new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
                 )
         );
@@ -1905,7 +1899,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         null,
                         null,
-                        expectedOperationTimestamp,
+                        OffsetDateTime.now().toString(),
                         new PgsTransactionGatewayAuthorizationData(
                                 OutcomeVposGatewayDto.ErrorCodeEnum._07.toString(),
                                 AuthorizationResultDto.KO
@@ -2143,7 +2137,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         null,
                         ECOMMERCE_RRN,
-                        expectedOperationTimestamp,
+                        OffsetDateTime.now().toString(),
                         new PgsTransactionGatewayAuthorizationData(
                                 OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(),
                                 AuthorizationResultDto.KO
@@ -2398,7 +2392,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         ECOMMERCE_RRN,
-                        expectedOperationTimestamp,
+                        OffsetDateTime.now().toString(),
                         new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
                 )
         );
@@ -2680,7 +2674,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         ECOMMERCE_RRN,
-                        expectedOperationTimestamp,
+                        OffsetDateTime.now().toString(),
                         new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
                 )
         );
@@ -3744,7 +3738,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         ECOMMERCE_RRN,
-                        expectedOperationTimestamp,
+                        OffsetDateTime.now().toString(),
                         TransactionTestUtils.npgTransactionGatewayAuthorizationData(OperationResultDto.EXECUTED)
                 )
         );

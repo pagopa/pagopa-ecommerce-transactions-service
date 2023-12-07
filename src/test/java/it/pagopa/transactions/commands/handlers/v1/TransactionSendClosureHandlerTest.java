@@ -29,20 +29,19 @@ import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestD
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.commands.TransactionClosureSendCommand;
 import it.pagopa.transactions.commands.data.ClosureSendData;
-import it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
@@ -63,6 +62,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionSendClosureHandlerTest {
@@ -122,23 +122,6 @@ class TransactionSendClosureHandlerTest {
 
     private final TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
     private final String ECOMMERCE_RRN = uuidUtils.uuidToBase64(transactionId.uuid());
-
-    private static MockedStatic<OffsetDateTime> offsetDateTimeMockedStatic;
-
-    private static final String expectedOperationTimestamp = "2023-01-01T01:02:03";
-    private static final OffsetDateTime operationTimestamp = OffsetDateTime
-            .parse(expectedOperationTimestamp.concat("+01:00"));
-
-    @BeforeAll
-    static void init() {
-        offsetDateTimeMockedStatic = Mockito.mockStatic(OffsetDateTime.class);
-        offsetDateTimeMockedStatic.when(OffsetDateTime::now).thenReturn(operationTimestamp);
-    }
-
-    @AfterAll
-    static void shutdown() {
-        offsetDateTimeMockedStatic.close();
-    }
 
     @Test
     void shouldRejectTransactionInWrongState() {
@@ -249,7 +232,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         "rrn",
-                        expectedOperationTimestamp,
+                        OffsetDateTime.now().toString(),
                         null,
                         AuthorizationResultDto.OK
                 )
@@ -272,7 +255,7 @@ class TransactionSendClosureHandlerTest {
                 .expectErrorMatches(error -> error instanceof AlreadyProcessedException)
                 .verify();
 
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(any());
+        Mockito.verify(transactionEventStoreRepository, times(0)).save(any());
     }
 
     @Test
@@ -337,7 +320,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         AUTHORIZATION_CODE,
                         ECOMMERCE_RRN,
-                        expectedOperationTimestamp,
+                        OffsetDateTime.now().toString(),
                         OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(),
                         AuthorizationResultDto.KO
                 )
@@ -481,7 +464,7 @@ class TransactionSendClosureHandlerTest {
                 })
                 .verifyComplete();
 
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
+        Mockito.verify(transactionEventStoreRepository, times(1)).save(
                 argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_CLOSURE_FAILED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
@@ -552,7 +535,7 @@ class TransactionSendClosureHandlerTest {
                         AUTHORIZATION_CODE,
                         ECOMMERCE_RRN,
                         OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(),
-                        expectedOperationTimestamp,
+                        OffsetDateTime.now().toString(),
                         AuthorizationResultDto.KO
                 )
         );
@@ -698,7 +681,7 @@ class TransactionSendClosureHandlerTest {
                 })
                 .verifyComplete();
 
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
+        Mockito.verify(transactionEventStoreRepository, times(1)).save(
                 argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_CLOSURE_FAILED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
@@ -706,8 +689,19 @@ class TransactionSendClosureHandlerTest {
         );
     }
 
-    @Test
-    void shoulGenerateClosedEventOnAuthorizationOKAndOkNodoClosePayment() {
+    private static Stream<Arguments> closePaymentDateFormat() {
+        return Stream.of(
+                Arguments.of("2023-05-01T23:59:59.000Z", "2023-05-02T01:59:59"),
+                Arguments.of("2023-12-01T23:59:59.000Z", "2023-12-02T00:59:59")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("closePaymentDateFormat")
+    void shoulGenerateClosedEventOnAuthorizationOKAndOkNodoClosePayment(
+                                                                        String expectedOperationTimestamp,
+                                                                        String expectedLocalTime
+    ) {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -780,7 +774,7 @@ class TransactionSendClosureHandlerTest {
                                 .authorizationCode("authorizationCode")
                                 .rrn(ECOMMERCE_RRN)
                 )
-                .timestampOperation(OffsetDateTime.now());
+                .timestampOperation(OffsetDateTime.parse(expectedOperationTimestamp));
 
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
@@ -842,8 +836,7 @@ class TransactionSendClosureHandlerTest {
                                                 .toPlainString()
                                 )
                                 .timestampOperation(
-                                        OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS)
-                                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                                        expectedLocalTime
                                 )
                                 .rrn(((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getRrn())
                                 .totalAmount(totalAmount.setScale(2).toPlainString())
@@ -946,7 +939,7 @@ class TransactionSendClosureHandlerTest {
 
         /* preconditions */
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
-        Mockito.when(nodeForPspClient.closePaymentV2(closePaymentRequest)).thenReturn(Mono.just(closePaymentResponse));
+        Mockito.when(nodeForPspClient.closePaymentV2(any())).thenReturn(Mono.just(closePaymentResponse));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(events);
 
@@ -963,8 +956,8 @@ class TransactionSendClosureHandlerTest {
                     assertEquals(event.getTransactionId(), next.getT2().get().getTransactionId());
                 })
                 .verifyComplete();
-
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
+        Mockito.verify(nodeForPspClient, times(1)).closePaymentV2(closePaymentRequest);
+        Mockito.verify(transactionEventStoreRepository, times(1)).save(
                 argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_CLOSED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
@@ -1033,7 +1026,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         ECOMMERCE_RRN,
-                        expectedOperationTimestamp,
+                        OffsetDateTime.now().toString(),
                         null,
                         AuthorizationResultDto.OK
                 )
@@ -1219,14 +1212,14 @@ class TransactionSendClosureHandlerTest {
                 })
                 .verifyComplete();
 
-        Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
+        Mockito.verify(transactionClosureErrorEventStoreRepository, times(1))
                 .save(
                         argThat(
                                 e -> e.getEventCode()
                                         .equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT.toString())
                         )
                 );
-        Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
+        Mockito.verify(transactionClosureSentEventQueueClient, times(1))
                 .sendMessageWithResponse(
                         argThat(
                                 (QueueEvent<TransactionClosureErrorEvent> e) -> e.event().equals(errorEvent)
@@ -1298,7 +1291,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         ECOMMERCE_RRN,
-                        expectedOperationTimestamp,
+                        OffsetDateTime.now().toString(),
                         null,
                         AuthorizationResultDto.OK
                 )
@@ -1504,7 +1497,7 @@ class TransactionSendClosureHandlerTest {
                 })
                 .verifyComplete();
 
-        Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
+        Mockito.verify(transactionClosureErrorEventStoreRepository, times(1))
                 .save(
                         argThat(
                                 e -> e.getEventCode()
@@ -1512,7 +1505,7 @@ class TransactionSendClosureHandlerTest {
                         )
                 );
 
-        Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
+        Mockito.verify(transactionClosureSentEventQueueClient, times(1))
                 .sendMessageWithResponse(
                         argThat(
                                 (QueueEvent<TransactionClosureErrorEvent> e) -> e.event().equals(errorEvent)
@@ -1584,7 +1577,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         ECOMMERCE_RRN,
-                        expectedOperationTimestamp,
+                        OffsetDateTime.now().toString(),
                         null,
                         AuthorizationResultDto.OK
                 )
@@ -1782,7 +1775,7 @@ class TransactionSendClosureHandlerTest {
 
         Mockito.verify(
                 refundQueueAsyncClient,
-                Mockito.times(1)
+                times(1)
         ).sendMessageWithResponse(
                 argThat(
                         (QueueEvent<TransactionRefundRequestedEvent> e) -> e.event().getData()
@@ -1793,9 +1786,9 @@ class TransactionSendClosureHandlerTest {
         );
         // check that one closure error event is saved and none is sent to event
         // dispatcher
-        Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
+        Mockito.verify(transactionClosureErrorEventStoreRepository, times(1))
                 .save(any());
-        Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(0))
+        Mockito.verify(transactionClosureSentEventQueueClient, times(0))
                 .sendMessageWithResponse(
                         argThat(
                                 (QueueEvent<TransactionClosureErrorEvent> e) -> e.event().equals(errorEvent)
@@ -1869,7 +1862,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         null,
                         null,
-                        expectedOperationTimestamp,
+                        OffsetDateTime.now().toString(),
                         OutcomeVposGatewayDto.ErrorCodeEnum._07.toString(),
                         AuthorizationResultDto.KO
                 )
@@ -2030,9 +2023,9 @@ class TransactionSendClosureHandlerTest {
                 .verifyComplete();
 
         // check that no closure error event is saved but not sent to event dispatcher
-        Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
+        Mockito.verify(transactionClosureErrorEventStoreRepository, times(1))
                 .save(any());
-        Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(0))
+        Mockito.verify(transactionClosureSentEventQueueClient, times(0))
                 .sendMessageWithResponse(
                         argThat(
                                 (QueueEvent<TransactionClosureErrorEvent> e) -> e.event().equals(errorEvent)
@@ -2041,7 +2034,7 @@ class TransactionSendClosureHandlerTest {
                         isNull()
                 );
         // check that closure error event is saved
-        Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1)).save(any());
+        Mockito.verify(transactionClosureErrorEventStoreRepository, times(1)).save(any());
     }
 
     @Test
@@ -2106,7 +2099,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         null,
                         ECOMMERCE_RRN,
-                        expectedOperationTimestamp,
+                        OffsetDateTime.now().toString(),
                         OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1.toString(),
                         AuthorizationResultDto.KO
                 )
@@ -2272,14 +2265,14 @@ class TransactionSendClosureHandlerTest {
                 .verifyComplete();
 
         // check that no closure error event is saved and sent to event dispatcher
-        Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
+        Mockito.verify(transactionClosureErrorEventStoreRepository, times(1))
                 .save(
                         argThat(
                                 e -> e.getEventCode()
                                         .equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT.toString())
                         )
                 );
-        Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
+        Mockito.verify(transactionClosureSentEventQueueClient, times(1))
                 .sendMessageWithResponse(
                         argThat(
                                 (QueueEvent<TransactionClosureErrorEvent> e) -> e.event().equals(errorEvent)
@@ -2288,7 +2281,7 @@ class TransactionSendClosureHandlerTest {
                         any()
                 );
         // check that closure event with KO status is not saved
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(
+        Mockito.verify(transactionEventStoreRepository, times(0)).save(
                 argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_CLOSURE_FAILED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
@@ -2359,7 +2352,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         ECOMMERCE_RRN,
-                        expectedOperationTimestamp,
+                        OffsetDateTime.now().toString(),
                         null,
                         AuthorizationResultDto.OK
                 )
@@ -2563,14 +2556,14 @@ class TransactionSendClosureHandlerTest {
                 })
                 .verifyComplete();
 
-        Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
+        Mockito.verify(transactionClosureErrorEventStoreRepository, times(1))
                 .save(
                         argThat(
                                 e -> e.getEventCode()
                                         .equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT.toString())
                         )
                 );
-        Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
+        Mockito.verify(transactionClosureSentEventQueueClient, times(1))
                 .sendMessageWithResponse(
                         argThat(
                                 (QueueEvent<TransactionClosureErrorEvent> e) -> e.event().equals(errorEvent)
@@ -2642,7 +2635,7 @@ class TransactionSendClosureHandlerTest {
                 new TransactionAuthorizationCompletedData(
                         "authorizationCode",
                         ECOMMERCE_RRN,
-                        expectedOperationTimestamp,
+                        OffsetDateTime.now().toString(),
                         null,
                         AuthorizationResultDto.OK
                 )
@@ -2836,14 +2829,14 @@ class TransactionSendClosureHandlerTest {
                 })
                 .verifyComplete();
 
-        Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1))
+        Mockito.verify(transactionClosureErrorEventStoreRepository, times(1))
                 .save(
                         argThat(
                                 e -> e.getEventCode()
                                         .equals(TransactionEventCode.TRANSACTION_CLOSURE_ERROR_EVENT.toString())
                         )
                 );
-        Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(1))
+        Mockito.verify(transactionClosureSentEventQueueClient, times(1))
                 .sendMessageWithResponse(
                         argThat(
                                 (QueueEvent<TransactionClosureErrorEvent> e) -> e.event().equals(errorEvent)
@@ -3052,13 +3045,13 @@ class TransactionSendClosureHandlerTest {
                 })
                 .verifyComplete();
 
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
+        Mockito.verify(transactionEventStoreRepository, times(1)).save(
                 argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_CLOSED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                 )
         );
-        Mockito.verify(refundQueueAsyncClient, Mockito.times(1))
+        Mockito.verify(refundQueueAsyncClient, times(1))
                 .sendMessageWithResponse(
                         argThat(
                                 (
@@ -3279,7 +3272,7 @@ class TransactionSendClosureHandlerTest {
          * check that the closure event with outcome KO is sent in the transaction
          * activated queue
          */
-        Mockito.verify(refundQueueAsyncClient, Mockito.times(1))
+        Mockito.verify(refundQueueAsyncClient, times(1))
                 .sendMessageWithResponse(
                         argThat(
                                 (
@@ -3294,7 +3287,7 @@ class TransactionSendClosureHandlerTest {
         /*
          * check that no event is sent on the closure error queue
          */
-        Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(0))
+        Mockito.verify(transactionClosureSentEventQueueClient, times(0))
                 .sendMessageWithResponse(
                         any(),
                         any(),
@@ -3444,13 +3437,13 @@ class TransactionSendClosureHandlerTest {
                 })
                 .verifyComplete();
 
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(
+        Mockito.verify(transactionEventStoreRepository, times(1)).save(
                 argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_CLOSURE_FAILED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                 )
         );
-        Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(0))
+        Mockito.verify(transactionClosureSentEventQueueClient, times(0))
                 .sendMessageWithResponse(
                         any(),
                         any(),
@@ -3601,8 +3594,8 @@ class TransactionSendClosureHandlerTest {
                 })
                 .verifyComplete();
 
-        Mockito.verify(transactionClosureErrorEventStoreRepository, Mockito.times(1)).save(any());
-        Mockito.verify(transactionClosureSentEventQueueClient, Mockito.times(0))
+        Mockito.verify(transactionClosureErrorEventStoreRepository, times(1)).save(any());
+        Mockito.verify(transactionClosureSentEventQueueClient, times(0))
                 .sendMessageWithResponse(
                         any(),
                         any(),
