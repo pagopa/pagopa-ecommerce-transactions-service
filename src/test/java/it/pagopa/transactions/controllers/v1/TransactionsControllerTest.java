@@ -14,6 +14,7 @@ import it.pagopa.transactions.utils.UUIDUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -492,29 +493,31 @@ class TransactionsControllerTest {
         assertEquals(HttpStatus.BAD_GATEWAY, error.getStatusCode());
     }
 
-    @Test
-    void shouldReturnResponseEntityWithPartyConfigurationFault() {
-        CtFaultBean faultBean = faultBeanWithCode(PartyConfigurationFaultDto.PPT_DOMINIO_DISABILITATO.getValue());
+    @ParameterizedTest
+    @EnumSource(PartyConfigurationFaultDto.class)
+    void shouldReturnResponseEntityWithPartyConfigurationFault(PartyConfigurationFaultDto nodoErrorCode) {
+        CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
         ResponseEntity<PartyConfigurationFaultPaymentProblemJsonDto> responseEntity = (ResponseEntity<PartyConfigurationFaultPaymentProblemJsonDto>) transactionsController
                 .nodoErrorHandler(
                         new NodoErrorException(faultBean)
                 );
 
         assertEquals(Boolean.TRUE, responseEntity != null);
-        assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, responseEntity.getStatusCode());
         assertEquals(
                 FaultCategoryDto.PAYMENT_UNAVAILABLE,
                 responseEntity.getBody().getFaultCodeCategory()
         );
         assertEquals(
-                PartyConfigurationFaultDto.PPT_DOMINIO_DISABILITATO.getValue(),
+                nodoErrorCode.getValue(),
                 responseEntity.getBody().getFaultCodeDetail().getValue()
         );
     }
 
-    @Test
-    void shouldReturnResponseEntityWithValidationFault() {
-        CtFaultBean faultBean = faultBeanWithCode(ValidationFaultDto.PPT_DOMINIO_SCONOSCIUTO.getValue());
+    @ParameterizedTest
+    @EnumSource(ValidationFaultDto.class)
+    void shouldReturnResponseEntityWithValidationFault(ValidationFaultDto nodoErrorCode) {
+        CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
 
         ResponseEntity<ValidationFaultPaymentProblemJsonDto> responseEntity = (ResponseEntity<ValidationFaultPaymentProblemJsonDto>) transactionsController
                 .nodoErrorHandler(
@@ -525,14 +528,15 @@ class TransactionsControllerTest {
         assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
         assertEquals(FaultCategoryDto.PAYMENT_UNKNOWN, responseEntity.getBody().getFaultCodeCategory());
         assertEquals(
-                ValidationFaultDto.PPT_DOMINIO_SCONOSCIUTO.getValue(),
+                nodoErrorCode.getValue(),
                 responseEntity.getBody().getFaultCodeDetail().getValue()
         );
     }
 
-    @Test
-    void shouldReturnResponseEntityWithGatewayFault() {
-        CtFaultBean faultBean = faultBeanWithCode(GatewayFaultDto.PAA_SYSTEM_ERROR.getValue());
+    @ParameterizedTest
+    @EnumSource(GatewayFaultDto.class)
+    void shouldReturnResponseEntityWithGatewayFault(GatewayFaultDto nodoErrorCode) {
+        CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
 
         ResponseEntity<GatewayFaultPaymentProblemJsonDto> responseEntity = (ResponseEntity<GatewayFaultPaymentProblemJsonDto>) transactionsController
                 .nodoErrorHandler(
@@ -543,14 +547,15 @@ class TransactionsControllerTest {
         assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
         assertEquals(FaultCategoryDto.GENERIC_ERROR, responseEntity.getBody().getFaultCodeCategory());
         assertEquals(
-                GatewayFaultDto.PAA_SYSTEM_ERROR.getValue(),
+                nodoErrorCode.getValue(),
                 responseEntity.getBody().getFaultCodeDetail().getValue()
         );
     }
 
-    @Test
-    void shouldReturnResponseEntityWithPartyTimeoutFault() {
-        CtFaultBean faultBean = faultBeanWithCode(PartyTimeoutFaultDto.PPT_STAZIONE_INT_PA_IRRAGGIUNGIBILE.getValue());
+    @ParameterizedTest
+    @EnumSource(PartyTimeoutFaultDto.class)
+    void shouldReturnResponseEntityWithPartyTimeoutFault(PartyTimeoutFaultDto nodoErrorCode) {
+        CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
         ResponseEntity<PartyTimeoutFaultPaymentProblemJsonDto> responseEntity = (ResponseEntity<PartyTimeoutFaultPaymentProblemJsonDto>) transactionsController
                 .nodoErrorHandler(
                         new NodoErrorException(faultBean)
@@ -560,14 +565,15 @@ class TransactionsControllerTest {
         assertEquals(HttpStatus.GATEWAY_TIMEOUT, responseEntity.getStatusCode());
         assertEquals(FaultCategoryDto.GENERIC_ERROR, responseEntity.getBody().getFaultCodeCategory());
         assertEquals(
-                PartyTimeoutFaultDto.PPT_STAZIONE_INT_PA_IRRAGGIUNGIBILE.getValue(),
+                nodoErrorCode.getValue(),
                 responseEntity.getBody().getFaultCodeDetail().getValue()
         );
     }
 
-    @Test
-    void shouldReturnResponseEntityWithPaymentStatusFault() {
-        CtFaultBean faultBean = faultBeanWithCode(PaymentStatusFaultDto.PAA_PAGAMENTO_IN_CORSO.getValue());
+    @ParameterizedTest
+    @EnumSource(PaymentStatusFaultDto.class)
+    void shouldReturnResponseEntityWithPaymentStatusFault(PaymentStatusFaultDto nodoErrorCode) {
+        CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
         ResponseEntity<PaymentStatusFaultPaymentProblemJsonDto> responseEntity = (ResponseEntity<PaymentStatusFaultPaymentProblemJsonDto>) transactionsController
                 .nodoErrorHandler(
                         new NodoErrorException(faultBean)
@@ -580,7 +586,7 @@ class TransactionsControllerTest {
                 responseEntity.getBody().getFaultCodeCategory()
         );
         assertEquals(
-                PaymentStatusFaultDto.PAA_PAGAMENTO_IN_CORSO.getValue(),
+                nodoErrorCode.getValue(),
                 responseEntity.getBody().getFaultCodeDetail().getValue()
         );
     }
