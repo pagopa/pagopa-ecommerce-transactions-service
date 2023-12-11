@@ -12,7 +12,7 @@ resources:
     - repository: pagopaEcommerceLocal
       type: github
       name: pagopa/pagopa-ecommerce-local 
-      ref: CHK-2188-transaction-env-variable
+      ref: main
       endpoint: 'io-azure-devops-github-ro'
 
 stages:
