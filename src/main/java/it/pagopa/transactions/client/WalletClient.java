@@ -17,9 +17,12 @@ import java.util.UUID;
 @Slf4j
 public class WalletClient {
 
-    @Autowired
-    @Qualifier("walletWebClient")
     private WalletsApi walletWebClient;
+
+    @Autowired
+    public WalletClient(@Qualifier("walletWebClient") WalletsApi walletWebClient) {
+        this.walletWebClient = walletWebClient;
+    }
 
     public Mono<WalletInfoDto> getWalletInfo(
                                              String walletId
