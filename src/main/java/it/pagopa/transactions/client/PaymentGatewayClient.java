@@ -1,5 +1,6 @@
 package it.pagopa.transactions.client;
 
+import com.azure.cosmos.implementation.InternalServerErrorException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.ecommerce.commons.client.NpgClient;
@@ -305,7 +306,9 @@ public class PaymentGatewayClient {
                                     null,
                                     NpgClient.PaymentMethod.fromServiceName(authorizationData.paymentMethodName()),
                                     npgDefaultApiKey,
-                                    authorizationData.contractId().get()
+                                    authorizationData.contractId().orElseThrow(
+                                            () -> new InternalServerErrorException("Invalid request missing contractId")
+                                    )
                             ).map(fieldsDto -> Tuples.of(orderId, fieldsDto));
                         }
                 ).onErrorMap(
