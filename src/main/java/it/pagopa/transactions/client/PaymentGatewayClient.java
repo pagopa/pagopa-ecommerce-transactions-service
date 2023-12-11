@@ -279,10 +279,9 @@ public class PaymentGatewayClient {
                             URI returnUrlBasePath = URI.create(npgSessionUrlConfig.basePath());
                             URI outcomeResultUrl = UriComponentsBuilder.fromUriString(
                                     returnUrlBasePath.resolve(npgSessionUrlConfig.outcomeSuffix()).toString()
-                            ).queryParam(
-                                    "clientId",
-                                    "IO"
-                            ).queryParam("transactionId", authorizationData.transactionId().value()).build().toUri();
+                                            .concat("&clientId=IO&transactionId=")
+                                            .concat(authorizationData.transactionId().value())
+                            ).build().toUri();
                             URI merchantUrl = returnUrlBasePath;
                             URI cancelUrl = returnUrlBasePath.resolve(npgSessionUrlConfig.cancelSuffix());
                             URI notificationUrl = UriComponentsBuilder

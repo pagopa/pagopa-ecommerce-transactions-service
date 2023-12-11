@@ -190,7 +190,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                             )
                                                     ).toString();
                                             yield isWalletPayment
-                                                    ? authorizationUrl.concat("?clientId=IO").concat("&transactionId=")
+                                                    ? authorizationUrl.concat("&clientId=IO").concat("&transactionId=")
                                                             .concat(authorizationData.transactionId().value())
                                                     : authorizationUrl;
                                         }

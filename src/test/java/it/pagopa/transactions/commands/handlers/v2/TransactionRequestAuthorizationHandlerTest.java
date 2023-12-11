@@ -2147,7 +2147,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         NPG_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
                                 NPG_URL_IFRAME
                                         .getBytes(StandardCharsets.UTF_8)
-                        ).concat("?clientId=IO&transactionId=").concat(authorizationData.transactionId().value())
+                        ).concat("&clientId=IO&transactionId=").concat(authorizationData.transactionId().value())
                 );
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
