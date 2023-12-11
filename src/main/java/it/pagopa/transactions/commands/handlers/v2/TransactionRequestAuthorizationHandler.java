@@ -1,6 +1,7 @@
 package it.pagopa.transactions.commands.handlers.v2;
 
 import com.azure.cosmos.implementation.BadRequestException;
+import com.azure.cosmos.implementation.InternalServerErrorException;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData.PaymentGateway;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestedEvent;
@@ -166,7 +167,11 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                 brand,
                                                 authorizationRequestData
                                                         .authDetails() instanceof WalletAuthRequestDetailsDto
-                                                                ? tuple5.getT4().get() // build session id
+                                                                ? tuple5.getT4().orElseThrow(
+                                                                        () -> new InternalServerErrorException(
+                                                                                "Cannot retrieve session id for transaction"
+                                                                        )
+                                                                ) // build session id
                                                                 : authorizationRequestData.sessionId().orElseThrow(
                                                                         () -> new BadGatewayException(
                                                                                 "Cannot retrieve session id for transaction",
