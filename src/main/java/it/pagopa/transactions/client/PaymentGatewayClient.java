@@ -279,7 +279,7 @@ public class PaymentGatewayClient {
                             URI returnUrlBasePath = URI.create(npgSessionUrlConfig.basePath());
                             URI outcomeResultUrl = UriComponentsBuilder.fromUriString(
                                     returnUrlBasePath.resolve(npgSessionUrlConfig.outcomeSuffix()).toString()
-                                            .concat("&clientId=IO&transactionId=")
+                                            .concat("#clientId=IO&transactionId=")
                                             .concat(authorizationData.transactionId().value())
                             ).build().toUri();
                             URI merchantUrl = returnUrlBasePath;
