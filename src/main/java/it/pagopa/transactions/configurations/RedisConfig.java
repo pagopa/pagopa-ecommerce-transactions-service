@@ -4,7 +4,7 @@ import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedi
 import it.pagopa.ecommerce.commons.redis.templatewrappers.RedisTemplateWrapperBuilder;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.UniqueIdTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.UniqueIdDocument;
-import it.pagopa.transactions.repositories.TransactionDocument;
+import it.pagopa.transactions.repositories.TransactionCacheInfo;
 import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -62,9 +62,9 @@ public class RedisConfig {
                                                                      "${transactionDocument.ttl}"
                                                                  ) int transactionDocumentTtl
     ) {
-        RedisTemplate<String, TransactionDocument> redisTemplate = new RedisTemplate<>();
-        Jackson2JsonRedisSerializer<TransactionDocument> jacksonRedisSerializer = new Jackson2JsonRedisSerializer<>(
-                TransactionDocument.class
+        RedisTemplate<String, TransactionCacheInfo> redisTemplate = new RedisTemplate<>();
+        Jackson2JsonRedisSerializer<TransactionCacheInfo> jacksonRedisSerializer = new Jackson2JsonRedisSerializer<>(
+                TransactionCacheInfo.class
         );
 
         redisTemplate.setConnectionFactory(redisConnectionFactory);

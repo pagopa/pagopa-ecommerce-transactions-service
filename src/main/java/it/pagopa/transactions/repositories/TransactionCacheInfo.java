@@ -6,7 +6,7 @@ import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
-public record TransactionDocument(
+public record TransactionCacheInfo(
         @NonNull @Id TransactionId transactionId,
         @Nullable WalletPaymentInfo walletPaymentInfo
 ) {
@@ -21,7 +21,7 @@ public record TransactionDocument(
      */
     @SuppressWarnings("java:S6207")
     @PersistenceConstructor
-    public TransactionDocument {
+    public TransactionCacheInfo {
         // Do nothing
     }
 }

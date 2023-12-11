@@ -3,7 +3,6 @@ package it.pagopa.transactions.commands.handlers;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
-import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
@@ -11,7 +10,7 @@ import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.BadGatewayException;
-import it.pagopa.transactions.repositories.TransactionDocument;
+import it.pagopa.transactions.repositories.TransactionCacheInfo;
 import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
 import it.pagopa.transactions.repositories.WalletPaymentInfo;
 import it.pagopa.transactions.utils.LogoMappingUtils;
@@ -26,7 +25,6 @@ import reactor.util.function.Tuples;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 import java.util.Optional;
 
 @Slf4j
@@ -105,7 +103,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
             case WalletAuthRequestDetailsDto ignored ->
                     paymentGatewayClient.requestNpgBuildSession(authorizationData)
                             .map( orderIdAndFieldsDto -> {
-                                        transactionTemplateWrapper.save(new TransactionDocument(authorizationData.transactionId(), new WalletPaymentInfo(orderIdAndFieldsDto.getT2().getSessionId(), orderIdAndFieldsDto.getT2().getSecurityToken(), orderIdAndFieldsDto.getT1())));
+                                        transactionTemplateWrapper.save(new TransactionCacheInfo(authorizationData.transactionId(), new WalletPaymentInfo(orderIdAndFieldsDto.getT2().getSessionId(), orderIdAndFieldsDto.getT2().getSecurityToken(), orderIdAndFieldsDto.getT1())));
                                         return orderIdAndFieldsDto;
                             }
                             )
