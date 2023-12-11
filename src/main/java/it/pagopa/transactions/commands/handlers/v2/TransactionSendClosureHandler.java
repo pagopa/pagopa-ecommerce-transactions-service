@@ -39,6 +39,7 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -174,6 +175,7 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                                                 .timestampOperation(
                                                         updateAuthorizationRequestDto
                                                                 .getTimestampOperation()
+                                                                .atZoneSameInstant(ZoneId.of("Europe/Paris"))
                                                                 .truncatedTo(ChronoUnit.SECONDS)
                                                                 .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                                 )
