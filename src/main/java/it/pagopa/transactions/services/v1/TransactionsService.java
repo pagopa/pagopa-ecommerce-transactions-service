@@ -17,12 +17,14 @@ import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.CalculateFeeResponseD
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.TransferListItemDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
+import it.pagopa.transactions.client.WalletClient;
 import it.pagopa.transactions.commands.*;
 import it.pagopa.transactions.commands.data.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.EventVersion;
+import it.pagopa.transactions.utils.PaymentSessionData;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +35,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
 import java.util.List;
@@ -104,6 +105,8 @@ public class TransactionsService {
     private final TransactionsViewRepository transactionsViewRepository;
 
     private final EcommercePaymentMethodsClient ecommercePaymentMethodsClient;
+
+    private final WalletClient walletClient;
 
     private final UUIDUtils uuidUtils;
 
@@ -199,6 +202,7 @@ public class TransactionsService {
             ) it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2,
             TransactionsViewRepository transactionsViewRepository,
             EcommercePaymentMethodsClient ecommercePaymentMethodsClient,
+            WalletClient walletClient,
             UUIDUtils uuidUtils,
             TransactionsUtils transactionsUtils,
             TransactionsEventStoreRepository<Object> eventsRepository,
@@ -235,6 +239,7 @@ public class TransactionsService {
         this.transactionsActivationProjectionHandlerV2 = transactionsActivationProjectionHandlerV2;
         this.transactionsViewRepository = transactionsViewRepository;
         this.ecommercePaymentMethodsClient = ecommercePaymentMethodsClient;
+        this.walletClient = walletClient;
         this.uuidUtils = uuidUtils;
         this.transactionsUtils = transactionsUtils;
         this.eventsRepository = eventsRepository;
@@ -503,7 +508,7 @@ public class TransactionsService {
                             Integer amountTotal = transactionsUtils.getTransactionTotalAmount(transaction);
                             return retrieveInformationFromAuthorizationRequest(requestAuthorizationRequestDto)
                                     .flatMap(
-                                            authorizationInfo -> ecommercePaymentMethodsClient
+                                            paymentSessionData -> ecommercePaymentMethodsClient
                                                     .calculateFee(
                                                             requestAuthorizationRequestDto.getPaymentInstrumentId(),
                                                             transactionId,
@@ -512,8 +517,7 @@ public class TransactionsService {
                                                                             transactionsUtils.getClientId(transaction)
                                                                     )
                                                                     .bin(
-                                                                            authorizationInfo.map(Tuple3::getT1)
-                                                                                    .orElse(null)
+                                                                            paymentSessionData.cardBin()
                                                                     )
                                                                     .idPspList(
                                                                             List.of(
@@ -553,8 +557,9 @@ public class TransactionsService {
                                                     .map(
                                                             calculateFeeResponseDto -> Tuples.of(
                                                                     calculateFeeResponseDto,
-                                                                    authorizationInfo.flatMap(Tuple3::getT2),
-                                                                    authorizationInfo.map(Tuple3::getT3)
+                                                                    Optional.ofNullable(paymentSessionData.sessionId()),
+                                                                    paymentSessionData.brand(),
+                                                                    Optional.ofNullable(paymentSessionData.contractId())
                                                             )
                                                     )
                                     )
@@ -580,7 +585,8 @@ public class TransactionsService {
                                                                                 )
                                                                 ).findFirst(),
                                                         data.getT2(),
-                                                        data.getT3()
+                                                        data.getT3(),
+                                                        data.getT4()
                                                 );
                                             }
                                     )
@@ -601,7 +607,8 @@ public class TransactionsService {
                                                     t.getT2(),
                                                     t.getT3().get(),
                                                     t.getT4(),
-                                                    t.getT5()
+                                                    t.getT5(),
+                                                    t.getT6()
                                             )
 
                                     );
@@ -615,7 +622,8 @@ public class TransactionsService {
                             String paymentMethodDescription = args.getT3();
                             BundleDto bundle = args.getT4();
                             Optional<String> sessionId = args.getT5();
-                            Optional<String> brand = args.getT6();
+                            String brand = args.getT6();
+                            Optional<String> contractId = args.getT7();
                             log.info(
                                     "Requesting authorization for transactionId: {}",
                                     transactionDocument.getTransactionId()
@@ -659,7 +667,8 @@ public class TransactionsService {
                                     bundle.getOnUs(),
                                     paymentGatewayId,
                                     sessionId,
-                                    brand.orElse(null),
+                                    contractId,
+                                    brand,
                                     requestAuthorizationRequestDto.getDetails()
                             );
 
@@ -1282,13 +1291,15 @@ public class TransactionsService {
                 ).orElseThrow(() -> new InvalidRequestException("Null value as input origin"));
     }
 
-    private Mono<Optional<Tuple3<String, Optional<String>, String>>> retrieveInformationFromAuthorizationRequest(RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
+    private Mono<PaymentSessionData> retrieveInformationFromAuthorizationRequest(RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
         return switch (requestAuthorizationRequestDto.getDetails()) {
             case CardAuthRequestDetailsDto cardData ->
-                    Mono.just(Optional.of(Tuples.of(cardData.getPan().substring(0, 6), Optional.empty(), Optional.of(cardData.getBrand()).map(Enum::toString).orElse(null))));
+                    Mono.just(new PaymentSessionData(cardData.getPan().substring(0, 6),null,Optional.of(cardData.getBrand()).map(Enum::toString).orElse(null),null));
             case CardsAuthRequestDetailsDto cards ->
-                    ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId()).map(response -> Optional.of(Tuples.of(response.getBin(), Optional.of(response.getSessionId()), response.getBrand())));
-            default -> Mono.just(Optional.empty());
+                    ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId()).map(response -> new PaymentSessionData(response.getBin(),response.getSessionId(),response.getBrand(),null));
+            case WalletAuthRequestDetailsDto wallet ->
+                 walletClient.getWalletInfo(wallet.getWalletId()).map(walletInfoDto -> new PaymentSessionData(walletInfoDto.getBin(),null,walletInfoDto.getBrand(),walletInfoDto.getContractId()));
+            default -> Mono.just(new PaymentSessionData(null,null,null,null));
         };
     }
 }

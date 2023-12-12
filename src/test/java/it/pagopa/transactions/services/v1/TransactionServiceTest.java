@@ -17,6 +17,7 @@ import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
+import it.pagopa.transactions.client.WalletClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.configurations.AzureStorageConfig;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -46,6 +47,9 @@ class TransactionServiceTest {
     private UUIDUtils uuidUtils;
     private final EcommercePaymentMethodsClient ecommercePaymentMethodsClient = Mockito
             .mock(EcommercePaymentMethodsClient.class);
+
+    private final WalletClient walletClient = Mockito
+            .mock(WalletClient.class);
 
     private final PaymentGatewayClient paymentGatewayClient = Mockito.mock(PaymentGatewayClient.class);
 
@@ -164,6 +168,7 @@ class TransactionServiceTest {
             transactionsActivationProjectionHandlerV2,
             transactionsViewRepository,
             ecommercePaymentMethodsClient,
+            walletClient,
             uuidUtils,
             transactionsUtils,
             transactionsEventStoreRepository,
@@ -202,6 +207,7 @@ class TransactionServiceTest {
             transactionsActivationProjectionHandlerV2,
             transactionsViewRepository,
             ecommercePaymentMethodsClient,
+            walletClient,
             uuidUtils,
             transactionsUtils,
             transactionsEventStoreRepository,

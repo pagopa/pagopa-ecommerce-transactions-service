@@ -219,6 +219,44 @@ public class WebClientsConfig {
         return new it.pagopa.generated.ecommerce.paymentmethods.v1.api.PaymentMethodsApi(apiClient);
     }
 
+    @Bean(name = "walletWebClient")
+    public it.pagopa.generated.wallet.v1.api.WalletsApi walletWebClient(
+                                                                        @Value(
+                                                                            "${wallet.uri}"
+                                                                        ) String walletUri,
+                                                                        @Value(
+                                                                            "${wallet.readTimeout}"
+                                                                        ) int walletReadTimeout,
+                                                                        @Value(
+                                                                            "${wallet.connectionTimeout}"
+                                                                        ) int walletConnectionTimeout,
+                                                                        @Value(
+                                                                            "${wallet.apiKey}"
+                                                                        ) String apiKey
+    ) {
+        HttpClient httpClient = HttpClient.create()
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, walletConnectionTimeout)
+                .doOnConnected(
+                        connection -> connection.addHandlerLast(
+                                new ReadTimeoutHandler(
+                                        walletReadTimeout,
+                                        TimeUnit.MILLISECONDS
+                                )
+                        )
+                );
+
+        WebClient webClient = it.pagopa.generated.wallet.v1.ApiClient.buildWebClientBuilder()
+                .clientConnector(
+                        new ReactorClientHttpConnector(httpClient)
+                ).baseUrl(walletUri).build();
+
+        it.pagopa.generated.wallet.v1.ApiClient apiClient = new it.pagopa.generated.wallet.v1.ApiClient(
+                webClient
+        ).setBasePath(walletUri);
+        apiClient.setApiKey(apiKey);
+        return new it.pagopa.generated.wallet.v1.api.WalletsApi(apiClient);
+    }
+
     @Bean
     public it.pagopa.generated.transactions.model.ObjectFactory objectFactoryNodeForPsp() {
         return new it.pagopa.generated.transactions.model.ObjectFactory();

@@ -5,10 +5,14 @@ import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
+import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.BadGatewayException;
+import it.pagopa.transactions.repositories.TransactionCacheInfo;
+import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
+import it.pagopa.transactions.repositories.WalletPaymentInfo;
 import it.pagopa.transactions.utils.LogoMappingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
@@ -16,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuple3;
+import reactor.util.function.Tuple4;
 import reactor.util.function.Tuples;
 
 import java.net.URI;
@@ -34,14 +39,18 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
 
     private final LogoMappingUtils logoMappingUtils;
 
+    private final TransactionTemplateWrapper transactionTemplateWrapper;
+
     protected TransactionRequestAuthorizationHandlerCommon(
             PaymentGatewayClient paymentGatewayClient,
             String checkoutBasePath,
-            LogoMappingUtils logoMappingUtils
+            LogoMappingUtils logoMappingUtils,
+            TransactionTemplateWrapper transactionTemplateWrapper
     ) {
         this.paymentGatewayClient = paymentGatewayClient;
         this.checkoutBasePath = checkoutBasePath;
         this.logoMappingUtils = logoMappingUtils;
+        this.transactionTemplateWrapper = transactionTemplateWrapper;
     }
 
     protected Mono<Tuple2<String, String>> postepayAuthRequestPipeline(AuthorizationRequestData authorizationData) {
@@ -84,8 +93,57 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                 );
     }
 
-    protected Mono<Tuple3<String, String, Optional<String>>> npgAuthRequestPipeline(
+    protected Mono<Tuple4<String, String, Optional<String>,Optional<String>>> npgAuthRequestPipeline(
                                                                                     AuthorizationRequestData authorizationData
+    ) {
+        return Mono.just(authorizationData).flatMap( authData -> switch (authData.authDetails()){
+            case CardsAuthRequestDetailsDto cards ->
+                    invokeNpgConfirmPayment(authorizationData,cards
+                            .getOrderId(),false).map(confirmPaymentResponse -> Tuples.of(confirmPaymentResponse.getT1(),confirmPaymentResponse.getT2(),confirmPaymentResponse.getT3(),Optional.empty()));
+            case WalletAuthRequestDetailsDto ignored ->
+                    paymentGatewayClient.requestNpgBuildSession(authorizationData)
+                            .map( orderIdAndFieldsDto -> {
+                                        transactionTemplateWrapper.save(new TransactionCacheInfo(authorizationData.transactionId(), new WalletPaymentInfo(orderIdAndFieldsDto.getT2().getSessionId(), orderIdAndFieldsDto.getT2().getSecurityToken(), orderIdAndFieldsDto.getT1())));
+                                        return orderIdAndFieldsDto;
+                            }
+                            )
+                            .flatMap(orderIdAndFieldsDto->
+                                  invokeNpgConfirmPayment(
+                                          new AuthorizationRequestData(
+                                                  authorizationData.transactionId(),
+                                                  authorizationData.paymentNotices(),
+                                                  authorizationData.email(),
+                                                  authorizationData.fee(),
+                                                  authorizationData.paymentInstrumentId(),
+                                                  authorizationData.pspId(),
+                                                  authorizationData.paymentTypeCode(),
+                                                  authorizationData.brokerName(),
+                                                  authorizationData.pspChannelCode(),
+                                                  authorizationData.paymentMethodName(),
+                                                  authorizationData.paymentMethodDescription(),
+                                                  authorizationData.pspBusinessName(),
+                                                  authorizationData.pspOnUs(),
+                                                  authorizationData.paymentGatewayId(),
+                                                  Optional.of(orderIdAndFieldsDto.getT2().getSessionId()),
+                                                  authorizationData.contractId(),
+                                                  authorizationData.brand(),
+                                                  authorizationData.authDetails()),
+                                          orderIdAndFieldsDto.getT1()
+                                          ,true)
+                                          .map(confirmPaymentResponse -> Tuples.of(confirmPaymentResponse.getT1(),confirmPaymentResponse.getT2(),confirmPaymentResponse.getT3(),Optional.of(orderIdAndFieldsDto.getT2().getSessionId())))
+                            );
+
+
+            default -> Mono.empty();
+        });
+
+    }
+
+    private Mono<Tuple3<String, String, Optional<String>>> invokeNpgConfirmPayment(
+                                                                                   AuthorizationRequestData authorizationData,
+                                                                                   String orderId,
+                                                                                   boolean isWalletPayment
+
     ) {
         return Mono.just(authorizationData)
                 .flatMap(
@@ -101,10 +159,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                     log.info("NGP auth completed session id: {}", confirmPaymentSessionId);
                                     return Mono.just(
                                             Tuples.of(
-                                                    // safe cast here, filter against authDetails performed into
-                                                    // requestNpgCardsAuthorization method
-                                                    ((CardsAuthRequestDetailsDto) authorizationData.authDetails())
-                                                            .getOrderId(),
+                                                    orderId,
                                                     switch (npgResponse.getState()) {
                                         case GDI_VERIFICATION -> {
                                             if (npgResponse.getFieldSet() == null
@@ -125,13 +180,17 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                         HttpStatus.BAD_GATEWAY
                                                 );
                                             }
-                                            yield URI.create(checkoutBasePath)
+                                            String authorizationUrl = URI.create(checkoutBasePath)
                                                     .resolve(
                                                             CHECKOUT_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
                                                                     redirectionUrl
                                                                             .getBytes(StandardCharsets.UTF_8)
                                                             )
                                                     ).toString();
+                                            yield isWalletPayment
+                                                    ? authorizationUrl.concat("&clientId=IO").concat("&transactionId=")
+                                                            .concat(authorizationData.transactionId().value())
+                                                    : authorizationUrl;
                                         }
                                         case REDIRECTED_TO_EXTERNAL_DOMAIN -> {
                                             if (npgResponse.getUrl() == null) {

@@ -1,19 +1,25 @@
 package it.pagopa.transactions.client;
 
+import com.azure.cosmos.implementation.InternalServerErrorException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
+import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
+import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
+import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.*;
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
+import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
+import it.pagopa.transactions.configurations.NpgSessionUrlConfig;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.GatewayTimeoutException;
@@ -22,15 +28,21 @@ import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 @Component
@@ -50,7 +62,11 @@ public class PaymentGatewayClient {
 
     private final NpgClient npgClient;
 
+    private final NpgSessionUrlConfig npgSessionUrlConfig;
+
     private final NpgPspApiKeysConfig npgCardsApiKeys;
+    private final UniqueIdUtils uniqueIdUtils;
+    private final String npgDefaultApiKey;
 
     @Autowired
     public PaymentGatewayClient(
@@ -61,7 +77,10 @@ public class PaymentGatewayClient {
             UUIDUtils uuidUtils,
             ConfidentialMailUtils confidentialMailUtils,
             NpgClient npgClient,
-            NpgPspApiKeysConfig npgCardsApiKeys
+            NpgPspApiKeysConfig npgCardsApiKeys,
+            NpgSessionUrlConfig npgSessionUrlConfig,
+            UniqueIdUtils uniqueIdUtils,
+            @Value("${npg.client.apiKey}") String npgDefaultApiKey
 
     ) {
         this.postePayInternalApi = postePayInternalApi;
@@ -72,6 +91,9 @@ public class PaymentGatewayClient {
         this.confidentialMailUtils = confidentialMailUtils;
         this.npgClient = npgClient;
         this.npgCardsApiKeys = npgCardsApiKeys;
+        this.npgSessionUrlConfig = npgSessionUrlConfig;
+        this.uniqueIdUtils = uniqueIdUtils;
+        this.npgDefaultApiKey = npgDefaultApiKey;
     }
 
     // TODO Handle multiple rptId
@@ -250,6 +272,84 @@ public class PaymentGatewayClient {
                 );
     }
 
+    public Mono<Tuple2<String, FieldsDto>> requestNpgBuildSession(AuthorizationRequestData authorizationData) {
+        return uniqueIdUtils.generateUniqueId()
+                .flatMap(
+                        orderId -> {
+                            UUID correlationId = UUID.randomUUID();
+                            URI returnUrlBasePath = URI.create(npgSessionUrlConfig.basePath());
+                            URI outcomeResultUrl = UriComponentsBuilder.fromUriString(
+                                    returnUrlBasePath.resolve(npgSessionUrlConfig.outcomeSuffix()).toString()
+                                            .concat("#clientId=IO&transactionId=")
+                                            .concat(authorizationData.transactionId().value())
+                            ).build().toUri();
+                            URI merchantUrl = returnUrlBasePath;
+                            URI cancelUrl = returnUrlBasePath.resolve(npgSessionUrlConfig.cancelSuffix());
+                            URI notificationUrl = UriComponentsBuilder
+                                    .fromHttpUrl(npgSessionUrlConfig.notificationUrl())
+                                    .build(
+                                            Map.of(
+                                                    "orderId",
+                                                    orderId,
+                                                    "paymentMethodId",
+                                                    authorizationData.paymentInstrumentId()
+                                            )
+                                    );
+
+                            return npgClient.buildForm(
+                                    correlationId,
+                                    merchantUrl,
+                                    outcomeResultUrl,
+                                    notificationUrl,
+                                    cancelUrl,
+                                    orderId,
+                                    null,
+                                    NpgClient.PaymentMethod.fromServiceName(authorizationData.paymentMethodName()),
+                                    npgDefaultApiKey,
+                                    authorizationData.contractId().orElseThrow(
+                                            () -> new InternalServerErrorException("Invalid request missing contractId")
+                                    )
+                            ).map(fieldsDto -> Tuples.of(orderId, fieldsDto));
+                        }
+                ).onErrorMap(
+                        NpgResponseException.class,
+                        exception -> exception
+                                .getStatusCode()
+                                .map(statusCode -> switch (statusCode) {
+                                case UNAUTHORIZED -> new AlreadyProcessedException(
+                                        authorizationData.transactionId()
+                                ); // 401
+                                case INTERNAL_SERVER_ERROR -> new BadGatewayException(
+                                        "NPG internal server error response received",
+                                        statusCode
+                                ); // 500
+                                default -> new BadGatewayException(
+                                        "Received NPG error response with unmanaged HTTP response status code",
+                                        statusCode
+                                );
+                                })
+                                .orElse(
+                                        new BadGatewayException(
+                                                "Received NPG error response with unknown HTTP response status code",
+                                                null
+                                        )
+                                )
+                )
+                .filter(
+                        orderIdAndFieldsDto -> Objects
+                                .equals(orderIdAndFieldsDto.getT2().getState(), WorkflowStateDto.READY_FOR_PAYMENT)
+                                && orderIdAndFieldsDto.getT2().getSessionId() != null
+                                && orderIdAndFieldsDto.getT2().getSecurityToken() != null
+                )
+                .switchIfEmpty(
+                        Mono.error(
+                                new BadGatewayException("Error while invoke NPG build session", HttpStatus.BAD_GATEWAY)
+                        )
+                )
+
+        ;
+    }
+
     public Mono<StateResponseDto> requestNpgCardsAuthorization(AuthorizationRequestData authorizationData) {
         return Mono.just(authorizationData)
                 .filter(
@@ -263,16 +363,16 @@ public class PaymentGatewayClient {
                 .filter(
                         authorizationRequestData -> authorizationData
                                 .authDetails() instanceof CardsAuthRequestDetailsDto
+                                || authorizationData
+                                        .authDetails() instanceof WalletAuthRequestDetailsDto
                 )
                 .switchIfEmpty(
                         Mono.error(
                                 new InvalidRequestException(
-                                        "Cannot perform NPG authorization for invalid input CardsAuthRequestDetailsDto"
+                                        "Cannot perform NPG authorization for invalid input CardsAuthRequestDetailsDto or WalletAuthRequestDetailsDto"
                                 )
                         )
                 )
-                .map(AuthorizationRequestData::authDetails)
-                .cast(CardsAuthRequestDetailsDto.class)
                 .flatMap(authorizationRequestData -> {
                     final BigDecimal grandTotal = BigDecimal.valueOf(
                             ((long) authorizationData.paymentNotices().stream()

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.AdditionalPaymentInformationsDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.api.PaymentMethodsApi;
-import it.pagopa.generated.ecommerce.paymentmethods.v1.auth.ApiKeyAuth;
+import it.pagopa.generated.wallet.v1.api.WalletsApi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -112,7 +112,23 @@ class WebClientsConfigTest {
                 .ecommercePaymentInstrumentsWebClient(basePath, 1000, 1000, apiKey);
         // assertions
         assertEquals(basePath, paymentMethodsApi.getApiClient().getBasePath());
-        ApiKeyAuth apiKeyAuth = (ApiKeyAuth) paymentMethodsApi.getApiClient().getAuthentication("ApiKeyAuth");
+        it.pagopa.generated.ecommerce.paymentmethods.v1.auth.ApiKeyAuth apiKeyAuth = (it.pagopa.generated.ecommerce.paymentmethods.v1.auth.ApiKeyAuth) paymentMethodsApi
+                .getApiClient().getAuthentication("ApiKeyAuth");
+        assertEquals(apiKey, apiKeyAuth.getApiKey());
+    }
+
+    @Test
+    void shouldValueApiKeyForWalletClient() {
+        // pre-conditions
+        String basePath = "http://wallet/base/path";
+        String apiKey = "walletApiKey";
+        // test
+        WalletsApi walletsApi = webClientsConfig
+                .walletWebClient(basePath, 1000, 1000, apiKey);
+        // assertions
+        assertEquals(basePath, walletsApi.getApiClient().getBasePath());
+        it.pagopa.generated.wallet.v1.auth.ApiKeyAuth apiKeyAuth = (it.pagopa.generated.wallet.v1.auth.ApiKeyAuth) walletsApi
+                .getApiClient().getAuthentication("ApiKeyAuth");
         assertEquals(apiKey, apiKeyAuth.getApiKey());
     }
 

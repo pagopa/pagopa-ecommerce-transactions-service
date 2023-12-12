@@ -15,6 +15,7 @@ import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandlerCommon;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.LogoMappingUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -46,12 +47,14 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             TransactionsUtils transactionsUtils,
             @Value("${checkout.basePath}") String checkoutBasePath,
             EcommercePaymentMethodsClient paymentMethodsClient,
-            LogoMappingUtils logoMappingUtils
+            LogoMappingUtils logoMappingUtils,
+            TransactionTemplateWrapper transactionTemplateWrapper
     ) {
         super(
                 paymentGatewayClient,
                 checkoutBasePath,
-                logoMappingUtils
+                logoMappingUtils,
+                transactionTemplateWrapper
         );
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionsUtils = transactionsUtils;

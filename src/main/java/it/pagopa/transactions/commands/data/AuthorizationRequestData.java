@@ -27,9 +27,8 @@ public record AuthorizationRequestData(
         String pspBusinessName,
         Boolean pspOnUs,
         String paymentGatewayId,
-
         Optional<String> sessionId,
-
+        Optional<String> contractId,
         String brand,
         RequestAuthorizationRequestDetailsDto authDetails
 ) {

@@ -35,6 +35,9 @@ microservice-chart:
       ECOMMERCE_PAYMENT_METHODS_URI: https://api.platform.pagopa.it/ecommerce/payment-methods-service/v1
       ECOMMERCE_PAYMENT_METHODS_READ_TIMEOUT: "10000"
       ECOMMERCE_PAYMENT_METHODS_CONNECTION_TIMEOUT: "10000"
+      WALLET_URI: https://api.platform.pagopa.it/payment-wallet-for-ecommerce/v1
+      WALLET_READ_TIMEOUT: "10000"
+      WALLET_CONNECTION_TIMEOUT: "10000"
       PAYMENT_TRANSACTIONS_GATEWAY_URI: https://api.platform.pagopa.it/payment-transactions-gateway/internal/v1
       PAYMENT_TRANSACTIONS_GATEWAY_READ_TIMEOUT: "10000"
       PAYMENT_TRANSACTIONS_GATEWAY_CONNECTION_TIMEOUT: "10000"
@@ -72,10 +75,15 @@ microservice-chart:
       NPG_URI: "https://localhost/npg"
       NPG_READ_TIMEOUT: "10000"
       NPG_CONNECTION_TIMEOUT: "10000"
+      TRANSACTION_DOCUMENT_TTL: "600"
       NPG_CARDS_PSP_LIST: "" #TODO to be filled with psp id list that are expected to be present into psp api keys configuration
       CHECKOUT_BASE_PATH: "https://checkout.pagopa.it"
       ECOMMERCE_EVENT_VERSION: "V1"
       SEND_PAYMENT_RESULT_FOR_TX_EXPIRED_ENABLED: "false"
+      SESSION_URL_BASEPATH: "https://checkout.pagopa.it"
+      SESSION_URL_OUTCOME_SUFFIX: "/esito"
+      SESSION_URL_CANCEL_SUFFIX: "/cancel"
+      SESSION_URL_NOTIFICATION_URL: "https://api.platform.pagopa.it/ecommerce/npg/notifications/v1/sessions/{orderId}/outcomes?paymentMethodId={paymentMethodId}"
     envSecret:
       MONGO_PASSWORD: mongo-ecommerce-password
       REDIS_PASSWORD: redis-ecommerce-password
@@ -85,6 +93,7 @@ microservice-chart:
       PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
       OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
       ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
+      WALLET_API_KEY: wallet-api-key
       NPG_API_KEY: npg-api-key
       NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
   image:
@@ -163,6 +172,9 @@ microservice-chart:
     ECOMMERCE_PAYMENT_METHODS_URI: https://api.platform.pagopa.it/ecommerce/payment-methods-service/v1
     ECOMMERCE_PAYMENT_METHODS_READ_TIMEOUT: "10000"
     ECOMMERCE_PAYMENT_METHODS_CONNECTION_TIMEOUT: "10000"
+    WALLET_URI: https://api.platform.pagopa.it/payment-wallet-for-ecommerce/v1
+    WALLET_READ_TIMEOUT: "10000"
+    WALLET_CONNECTION_TIMEOUT: "10000"
     PAYMENT_TRANSACTIONS_GATEWAY_URI: https://api.platform.pagopa.it/payment-transactions-gateway/internal/v1
     PAYMENT_TRANSACTIONS_GATEWAY_READ_TIMEOUT: "10000"
     PAYMENT_TRANSACTIONS_GATEWAY_CONNECTION_TIMEOUT: "10000"
@@ -201,9 +213,14 @@ microservice-chart:
     NPG_READ_TIMEOUT: "10000"
     NPG_CONNECTION_TIMEOUT: "10000"
     NPG_CARDS_PSP_LIST: "" #TODO to be filled with psp id list that are expected to be present into psp api keys configuration
+    TRANSACTION_DOCUMENT_TTL: "600"
     CHECKOUT_BASE_PATH: "https://checkout.pagopa.it"
     ECOMMERCE_EVENT_VERSION: "V1"
     SEND_PAYMENT_RESULT_FOR_TX_EXPIRED_ENABLED: "false"
+    SESSION_URL_BASEPATH: "https://checkout.pagopa.it"
+    SESSION_URL_OUTCOME_SUFFIX: "/esito"
+    SESSION_URL_CANCEL_SUFFIX: "/cancel"
+    SESSION_URL_NOTIFICATION_URL: "https://api.platform.pagopa.it/ecommerce/npg/notifications/v1/sessions/{orderId}/outcomes?paymentMethodId={paymentMethodId}"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password
@@ -215,6 +232,7 @@ microservice-chart:
     PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
     OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
     ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
+    WALLET_API_KEY: wallet-api-key
     NPG_API_KEY: npg-api-key
     NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
   keyvault:

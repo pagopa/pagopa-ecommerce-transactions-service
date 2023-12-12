@@ -1,6 +1,7 @@
 package it.pagopa.transactions.controllers.v2;
 
 import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.generated.transactions.v2.server.model.*;
@@ -62,6 +63,9 @@ class TransactionsControllerTest {
 
     @MockBean
     private UUIDUtils uuidUtils;
+
+    @MockBean
+    private UniqueIdUtils uniqueIdUtils;
 
     @Mock
     ServerWebExchange mockExchange;
