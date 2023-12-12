@@ -22,6 +22,7 @@ import it.pagopa.generated.transactions.server.model.PostePayAuthRequestDetailsD
 import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.configurations.NpgSessionUrlConfig;
+import it.pagopa.transactions.configurations.SecretsConfigurations;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.GatewayTimeoutException;
@@ -46,13 +47,13 @@ import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
+import javax.crypto.SecretKey;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Stream;
 
-import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL;
-import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL_STRING;
+import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -85,7 +86,7 @@ class PaymentGatewayClientTest {
             "http://localhost:1234",
             "/esito",
             "/annulla",
-            "https://localhost/ecommerce/{orderId}/outcomes?paymentMethodId={paymentMethodId}"
+            "https://localhost/ecommerce/{orderId}/outcomes?sessionToken={sessionToken}"
     );
 
     NpgPspApiKeysConfig npgPspApiKeysConfig = NpgPspApiKeysConfig.parseApiKeyConfiguration(
@@ -107,6 +108,12 @@ class PaymentGatewayClientTest {
     @Spy
     ObjectMapper objectMapper = new ObjectMapper();
 
+    private static final String STRONG_KEY = "ODMzNUZBNTZENDg3NTYyREUyNDhGNDdCRUZDNzI3NDMzMzQwNTFEREZGQ0MyQzA5Mjc1RjY2NTQ1NDk5MDMxNzU5NDc0NUVFMTdDMDhGNzk4Q0Q3RENFMEJBODE1NURDREExNEY2Mzk4QzFEMTU0NTExNjUyMEExMzMwMTdDMDk";
+
+    private static final int TOKEN_VALIDITY_TIME_SECONDS = 900;
+
+    private final SecretKey jwtSecretKey = new SecretsConfigurations().npgNotificationSigningKey(STRONG_KEY);
+
     @BeforeEach
     private void init() {
         client = new PaymentGatewayClient(
@@ -120,7 +127,9 @@ class PaymentGatewayClientTest {
                 npgPspApiKeysConfig,
                 sessionUrlConfig,
                 uniqueIdUtils,
-                npgDefaultApiKey
+                npgDefaultApiKey,
+                jwtSecretKey,
+                TOKEN_VALIDITY_TIME_SECONDS
         );
 
         Hooks.onOperatorDebug();

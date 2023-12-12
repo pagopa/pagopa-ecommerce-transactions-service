@@ -6,6 +6,7 @@ import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
+import it.pagopa.ecommerce.commons.domain.Claims;
 import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
@@ -13,12 +14,12 @@ import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
+import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandlerCommon;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
-import it.pagopa.transactions.utils.JwtTokenUtils;
 import it.pagopa.transactions.utils.NodoOperations;
 import it.pagopa.transactions.utils.OpenTelemetryUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,7 @@ import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
+import javax.crypto.SecretKey;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -65,7 +67,9 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
             @Value("${nodo.parallelRequests}") int nodoParallelRequests,
             TracingUtils tracingUtils,
-            OpenTelemetryUtils openTelemetryUtils
+            OpenTelemetryUtils openTelemetryUtils,
+            SecretKey ecommerceSigningKey,
+            @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds
     ) {
         super(
                 paymentTokenTimeout,
@@ -74,7 +78,9 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                 transientQueuesTTLSeconds,
                 nodoParallelRequests,
                 tracingUtils,
-                openTelemetryUtils
+                openTelemetryUtils,
+                ecommerceSigningKey,
+                jwtEcommerceValidityTimeInSeconds
         );
         this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
         this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
@@ -208,7 +214,11 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                         .collectList()
                         .flatMap(
                                 paymentRequestInfos -> jwtTokenUtils
-                                        .generateToken(transactionId, null)
+                                        .generateToken(
+                                                ecommerceSigningKey,
+                                                jwtEcommerceValidityTimeInSeconds,
+                                                new Claims(transactionId, null, null)
+                                        )
                                         .map(generatedToken -> Tuples.of(generatedToken, paymentRequestInfos))
                         ).flatMap(
                                 args -> {

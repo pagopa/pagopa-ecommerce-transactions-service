@@ -5,10 +5,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData;
+import it.pagopa.ecommerce.commons.domain.Claims;
 import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
+import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
@@ -37,6 +39,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
+import javax.crypto.SecretKey;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -67,6 +70,8 @@ public class PaymentGatewayClient {
     private final NpgPspApiKeysConfig npgCardsApiKeys;
     private final UniqueIdUtils uniqueIdUtils;
     private final String npgDefaultApiKey;
+    private final SecretKey npgNotificationSigningKey;
+    private final int npgJwtKeyValidityTime;
 
     @Autowired
     public PaymentGatewayClient(
@@ -80,7 +85,9 @@ public class PaymentGatewayClient {
             NpgPspApiKeysConfig npgCardsApiKeys,
             NpgSessionUrlConfig npgSessionUrlConfig,
             UniqueIdUtils uniqueIdUtils,
-            @Value("${npg.client.apiKey}") String npgDefaultApiKey
+            @Value("${npg.client.apiKey}") String npgDefaultApiKey,
+            SecretKey npgNotificationSigningKey,
+            @Value("${jwt.npg.notification.validityTime}") int npgJwtKeyValidityTime
 
     ) {
         this.postePayInternalApi = postePayInternalApi;
@@ -94,6 +101,8 @@ public class PaymentGatewayClient {
         this.npgSessionUrlConfig = npgSessionUrlConfig;
         this.uniqueIdUtils = uniqueIdUtils;
         this.npgDefaultApiKey = npgDefaultApiKey;
+        this.npgNotificationSigningKey = npgNotificationSigningKey;
+        this.npgJwtKeyValidityTime = npgJwtKeyValidityTime;
     }
 
     // TODO Handle multiple rptId
@@ -274,8 +283,22 @@ public class PaymentGatewayClient {
 
     public Mono<Tuple2<String, FieldsDto>> requestNpgBuildSession(AuthorizationRequestData authorizationData) {
         return uniqueIdUtils.generateUniqueId()
+                .zipWhen(
+                        orderId -> new JwtTokenUtils()
+                                .generateToken(
+                                        npgNotificationSigningKey,
+                                        npgJwtKeyValidityTime,
+                                        new Claims(
+                                                authorizationData.transactionId(),
+                                                orderId,
+                                                authorizationData.paymentInstrumentId()
+                                        )
+                                )
+                )
                 .flatMap(
-                        orderId -> {
+                        orderIdJwtToken -> {
+                            String orderId = orderIdJwtToken.getT1();
+                            String jwtToken = orderIdJwtToken.getT2();
                             UUID correlationId = UUID.randomUUID();
                             URI returnUrlBasePath = URI.create(npgSessionUrlConfig.basePath());
                             URI outcomeResultUrl = UriComponentsBuilder.fromUriString(
@@ -285,14 +308,15 @@ public class PaymentGatewayClient {
                             ).build().toUri();
                             URI merchantUrl = returnUrlBasePath;
                             URI cancelUrl = returnUrlBasePath.resolve(npgSessionUrlConfig.cancelSuffix());
+
                             URI notificationUrl = UriComponentsBuilder
                                     .fromHttpUrl(npgSessionUrlConfig.notificationUrl())
                                     .build(
                                             Map.of(
                                                     "orderId",
                                                     orderId,
-                                                    "paymentMethodId",
-                                                    authorizationData.paymentInstrumentId()
+                                                    "sessionToken",
+                                                    jwtToken
                                             )
                                     );
 
