@@ -87,7 +87,7 @@ public class PaymentGatewayClient {
             UniqueIdUtils uniqueIdUtils,
             @Value("${npg.client.apiKey}") String npgDefaultApiKey,
             SecretKey npgNotificationSigningKey,
-            @Value("${jwt.npg.notification.validityTime}") int npgJwtKeyValidityTime
+            @Value("${npg.notification.jwt.validity.time}") int npgJwtKeyValidityTime
 
     ) {
         this.postePayInternalApi = postePayInternalApi;

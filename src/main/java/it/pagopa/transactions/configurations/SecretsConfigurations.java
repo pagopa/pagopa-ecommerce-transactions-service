@@ -22,7 +22,7 @@ public class SecretsConfigurations {
     }
 
     @Bean
-    public SecretKey npgNotificationSigningKey(@Value("${jwt.npg.notification.secretKey}") String jwtSecret) {
+    public SecretKey npgNotificationSigningKey(@Value("${npg.notification.jwt.secret}") String jwtSecret) {
         return jwtSigningKey(jwtSecret);
     }
 
