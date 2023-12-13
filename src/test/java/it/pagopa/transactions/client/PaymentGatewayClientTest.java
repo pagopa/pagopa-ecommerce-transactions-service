@@ -2,6 +2,10 @@ package it.pagopa.transactions.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.Header;
+import io.jsonwebtoken.Jwt;
+import io.jsonwebtoken.JwtParser;
+import io.jsonwebtoken.Jwts;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
@@ -9,6 +13,7 @@ import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
+import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -28,6 +33,7 @@ import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.GatewayTimeoutException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
+import it.pagopa.transactions.utils.NpgNotificationUrlMatcher;
 import it.pagopa.transactions.utils.UUIDUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,12 +41,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.Spy;
+import org.mockito.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -49,10 +54,13 @@ import reactor.util.function.Tuples;
 
 import javax.crypto.SecretKey;
 import java.math.BigDecimal;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Stream;
 
+import static it.pagopa.ecommerce.commons.utils.JwtTokenUtils.*;
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -1766,6 +1774,7 @@ class PaymentGatewayClientTest {
 
     @Test
     void shouldReturnBuildSessionResponseForWalletWithNpg() {
+        Instant now = Instant.now();
         String walletId = UUID.randomUUID().toString();
         String orderId = "orderIdGenerated";
         String sessionId = "sessionId";
@@ -1837,8 +1846,39 @@ class PaymentGatewayClientTest {
                 .expectNext(responseRequestNpgBuildSession)
                 .verifyComplete();
 
+        String npgNotificationUrl = UriComponentsBuilder
+                .fromHttpUrl(sessionUrlConfig.notificationUrl())
+                .build(
+                        Map.of(
+                                "orderId",
+                                orderId,
+                                "sessionToken",
+                                "sessionToken"
+                        )
+                ).toString();
+        String npgNotificationUrlPrefix = npgNotificationUrl
+                .substring(0, npgNotificationUrl.indexOf("sessionToken=") + "sessionToken=".length());
+
         verify(npgClient, times(1))
-                .buildForm(any(), any(), any(), any(), any(), eq(orderId), eq(null), any(), any(), eq(contractId));
+                .buildForm(
+                        any(),
+                        any(),
+                        any(),
+                        argThat(
+                                new NpgNotificationUrlMatcher(
+                                        npgNotificationUrlPrefix,
+                                        transactionId.value(),
+                                        orderId,
+                                        authorizationData.paymentInstrumentId()
+                                )
+                        ),
+                        any(),
+                        eq(orderId),
+                        eq(null),
+                        any(),
+                        any(),
+                        eq(contractId)
+                );
     }
 
     @Test
