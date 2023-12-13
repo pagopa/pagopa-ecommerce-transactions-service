@@ -148,7 +148,7 @@ microservice-chart:
     OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
     NPG_API_KEY: npg-api-key
     NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
-    JWT_NPG_NOTIFICATION_SECRET: npg-notification-jwt-secret
+    JWT_NPG_NOTIFICATION_SECRET: npg-notification-signing-key
   keyvault:
     name: "pagopa-d-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
