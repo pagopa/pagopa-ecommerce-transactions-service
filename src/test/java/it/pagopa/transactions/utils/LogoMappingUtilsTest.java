@@ -8,6 +8,7 @@ import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.PostePayAuthRequestDetailsDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.configurations.BrandLogoConfig;
+import it.pagopa.transactions.exceptions.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
@@ -15,8 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 class LogoMappingUtilsTest {
 
@@ -61,6 +61,7 @@ class LogoMappingUtilsTest {
                 "VISA",
                 new CardAuthRequestDetailsDto()
                         .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
+                        .detailType("card")
         );
         // test
         URI logo = logoMappingUtils.getLogo(authorizationRequestData);
@@ -129,7 +130,7 @@ class LogoMappingUtilsTest {
     }
 
     @Test
-    void shouldReturnNoLogoForUnhandledAuthRequestDetails() {
+    void shouldThrowInvalidRequestExceptionForUnhandledAuthRequestDetails() {
         // pre-conditions
         AuthorizationRequestData authorizationRequestData = new AuthorizationRequestData(
                 new TransactionId(TransactionTestUtils.TRANSACTION_ID),
@@ -151,10 +152,8 @@ class LogoMappingUtilsTest {
                 "UnhandledBrand",
                 new PostePayAuthRequestDetailsDto()
         );
-        // test
-        URI logo = logoMappingUtils.getLogo(authorizationRequestData);
         // assertions
-        assertNull(logo);
+        assertThrows(InvalidRequestException.class, () -> logoMappingUtils.getLogo(authorizationRequestData));
     }
 
 }

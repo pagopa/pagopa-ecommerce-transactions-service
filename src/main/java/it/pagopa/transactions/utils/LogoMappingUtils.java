@@ -31,13 +31,13 @@ public class LogoMappingUtils {
 
     public URI getLogo(AuthorizationRequestData authRequestedData) {
         RequestAuthorizationRequestDetailsDto authorizationRequestDetailsDto = authRequestedData.authDetails();
-        return switch (authorizationRequestDetailsDto.getDetailType()) {
-            case "card" -> pgsBrandConfMap.get(((CardAuthRequestDetailsDto) authorizationRequestDetailsDto).getBrand());
-            case "cards", "wallet" -> npgPaymentCircuitLogoMap.getOrDefault(
+        return switch (authorizationRequestDetailsDto.getClass().getSimpleName()) {
+            case "CardAuthRequestDetailsDto" -> pgsBrandConfMap.get(((CardAuthRequestDetailsDto)authorizationRequestDetailsDto).getBrand());
+            case "CardsAuthRequestDetailsDto", "WalletAuthRequestDetailsDto"-> npgPaymentCircuitLogoMap.getOrDefault(
                     authRequestedData.brand(),
                     npgPaymentCircuitLogoMap.get(BrandLogoConfig.UNKNOWN_LOGO_KEY)
             );
-            default -> throw new InvalidRequestException("Authorization request detail type not valid");
+            case default -> throw new InvalidRequestException("Authorization request detail type not valid");
         };
     }
 }
