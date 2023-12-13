@@ -3,8 +3,10 @@ package it.pagopa.transactions.utils;
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDetailsDto;
+import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.configurations.BrandLogoConfig;
+import it.pagopa.transactions.exceptions.InvalidRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -35,7 +37,11 @@ public class LogoMappingUtils {
                 URI unknown = npgPaymentCircuitLogoMap.get(BrandLogoConfig.UNKNOWN_LOGO_KEY);
                 yield npgPaymentCircuitLogoMap.getOrDefault(authRequestedData.brand(), unknown);
             }
-            default -> null;
+            case WalletAuthRequestDetailsDto ignored -> {
+                URI unknown = npgPaymentCircuitLogoMap.get(BrandLogoConfig.UNKNOWN_LOGO_KEY);
+                yield npgPaymentCircuitLogoMap.getOrDefault(authRequestedData.brand(), unknown);
+            }
+            default -> throw new InvalidRequestException("Brand logo not available");
         };
     }
 }
