@@ -182,31 +182,27 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                 );
                                             }
 
-                                            if (isWalletPayment) {
-                                                yield URI.create(checkoutBasePath)
-                                                        .resolve(
-                                                                WALLET_GDI_CHECK_PATH
-                                                                        + Base64.encodeBase64URLSafeString(
-                                                                                redirectionUrl
-                                                                                        .getBytes(
-                                                                                                StandardCharsets.UTF_8
-                                                                                        )
-                                                                        )
-                                                        ).toString().concat("&clientId=IO").concat("&transactionId=")
-                                                        .concat(authorizationData.transactionId().value());
-                                            } else {
-                                                yield URI.create(checkoutBasePath)
-                                                        .resolve(
-                                                                CHECKOUT_GDI_CHECK_PATH
-                                                                        + Base64.encodeBase64URLSafeString(
-                                                                                redirectionUrl
-                                                                                        .getBytes(
-                                                                                                StandardCharsets.UTF_8
-                                                                                        )
-                                                                        )
-                                                        ).toString();
+                                            String base64redirectionUrl = Base64.encodeBase64URLSafeString(
+                                                    redirectionUrl
+                                                            .getBytes(
+                                                                    StandardCharsets.UTF_8
+                                                            )
+                                            );
 
-                                            }
+                                            StringBuilder gdiCheckPathWithFragment = isWalletPayment
+                                                    ? new StringBuilder(
+                                                            WALLET_GDI_CHECK_PATH
+                                                    ).append(base64redirectionUrl).append("&clientId=IO")
+                                                            .append("&transactionId=")
+                                                            .append(authorizationData.transactionId().value())
+                                                    : new StringBuilder(CHECKOUT_GDI_CHECK_PATH)
+                                                            .append(base64redirectionUrl);
+
+                                            yield URI.create(checkoutBasePath)
+                                                    .resolve(
+                                                            gdiCheckPathWithFragment.toString()
+                                                    ).toString();
+
                                         }
                                         case REDIRECTED_TO_EXTERNAL_DOMAIN -> {
                                             if (npgResponse.getUrl() == null) {
