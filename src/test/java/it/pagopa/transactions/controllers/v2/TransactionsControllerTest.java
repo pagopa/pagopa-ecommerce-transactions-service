@@ -1,5 +1,6 @@
 package it.pagopa.transactions.controllers.v2;
 
+import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.domain.Claims;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
@@ -106,7 +107,7 @@ class TransactionsControllerTest {
                             anyInt(),
                             eq(new Claims(transactionId, "orderId", null))
                     )
-            ).thenReturn(Mono.just(""));
+            ).thenReturn(Either.right(""));
             Mockito.lenient()
                     .when(
                             transactionsService
@@ -183,7 +184,7 @@ class TransactionsControllerTest {
     @Test
     void shouldReturnProblemJsonWith400OnBadInput() {
         Mockito.when(jwtTokenUtils.generateToken(any(SecretKey.class), anyInt(), any(Claims.class)))
-                .thenReturn(Mono.just(""));
+                .thenReturn(Either.right(""));
         webTestClient.post()
                 .uri("/v2/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -355,7 +356,7 @@ class TransactionsControllerTest {
     )
     void shouldHandleTransactionCreatedWithMailCaseInsensitive(String email) {
         Mockito.when(jwtTokenUtils.generateToken(any(SecretKey.class), anyInt(), any(Claims.class)))
-                .thenReturn(Mono.just(""));
+                .thenReturn(Either.right(""));
         Mockito.when(transactionsService.newTransaction(any(), any(), any()))
                 .thenReturn(Mono.just(new NewTransactionResponseDto()));
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
@@ -380,7 +381,7 @@ class TransactionsControllerTest {
     @Test
     void shouldReturnBadRequestForInvalidMail() {
         Mockito.when(jwtTokenUtils.generateToken(any(SecretKey.class), anyInt(), any(Claims.class)))
-                .thenReturn(Mono.just(""));
+                .thenReturn(Either.right(""));
         Mockito.when(transactionsService.newTransaction(any(), any(), any()))
                 .thenReturn(Mono.just(new NewTransactionResponseDto()));
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()

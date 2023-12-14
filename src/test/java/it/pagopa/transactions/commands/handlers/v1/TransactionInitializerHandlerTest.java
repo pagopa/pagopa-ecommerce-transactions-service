@@ -1,6 +1,7 @@
 package it.pagopa.transactions.commands.handlers.v1;
 
 import io.opentelemetry.api.common.AttributeKey;
+import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
@@ -197,8 +198,7 @@ class TransactionInitializerHandlerTest {
                         eq(tokenValidityTimeInSeconds),
                         eq(new Claims(transactionId, null, null))
                 )
-        )
-                .thenReturn(Mono.just("authToken"));
+        ).thenReturn(Either.right("authToken"));
 
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
 
@@ -330,7 +330,7 @@ class TransactionInitializerHandlerTest {
                         eq(new Claims(transactionId, null, null))
                 )
         )
-                .thenReturn(Mono.just("authToken"));
+                .thenReturn(Either.right("authToken"));
 
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
 
@@ -393,7 +393,7 @@ class TransactionInitializerHandlerTest {
         /* preconditions */
 
         Mockito.when(jwtTokenUtils.generateToken(eq(jwtSecretKey), eq(tokenValidityTimeInSeconds), any()))
-                .thenReturn(Mono.error(new JWTTokenGenerationException()));
+                .thenReturn(Either.left(new JWTTokenGenerationException()));
 
         /* run test */
         StepVerifier
@@ -594,7 +594,7 @@ class TransactionInitializerHandlerTest {
                         eq(new Claims(transactionId, null, null))
                 )
         )
-                .thenReturn(Mono.just("authToken"));
+                .thenReturn(Either.right("authToken"));
         Mockito.when(
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(
                         any(),
@@ -707,7 +707,7 @@ class TransactionInitializerHandlerTest {
                         eq(new Claims(transactionId, null, null))
                 )
         )
-                .thenReturn(Mono.just("authToken"));
+                .thenReturn(Either.right("authToken"));
         Mockito.when(
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(
                         any(QueueEvent.class),
@@ -814,7 +814,7 @@ class TransactionInitializerHandlerTest {
                         eq(new Claims(transactionId, null, null))
                 )
         )
-                .thenReturn(Mono.just("authToken"));
+                .thenReturn(Either.right("authToken"));
         Mockito.when(
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(
                         any(QueueEvent.class),

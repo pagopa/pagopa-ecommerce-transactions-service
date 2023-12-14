@@ -293,6 +293,9 @@ public class PaymentGatewayClient {
                                                 orderId,
                                                 authorizationData.paymentInstrumentId()
                                         )
+                                ).fold(
+                                        Mono::error,
+                                        Mono::just
                                 )
                 )
                 .flatMap(

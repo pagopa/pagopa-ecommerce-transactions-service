@@ -2,6 +2,7 @@ package it.pagopa.transactions.commands.handlers.v1;
 
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
+import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
@@ -220,6 +221,10 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                 new Claims(transactionId, null, null)
                                         )
                                         .map(generatedToken -> Tuples.of(generatedToken, paymentRequestInfos))
+                                        .fold(
+                                                Mono::error,
+                                                Mono::just
+                                        )
                         ).flatMap(
                                 args -> {
                                     String authToken = args.getT1();

@@ -221,6 +221,10 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                 new Claims(transactionId, command.getData().orderId(), null)
                                         )
                                         .map(generatedToken -> Tuples.of(generatedToken, paymentRequestInfos))
+                                        .fold(
+                                                Mono::error,
+                                                Mono::just
+                                        )
                         ).flatMap(
                                 args -> {
                                     String authToken = args.getT1();
