@@ -31,6 +31,7 @@ import java.util.Optional;
 public abstract class TransactionRequestAuthorizationHandlerCommon
         implements CommandHandler<TransactionRequestAuthorizationCommand, Mono<RequestAuthorizationResponseDto>> {
     private static final String CHECKOUT_GDI_CHECK_PATH = "/gdi-check#gdiIframeUrl=";
+    private static final String WALLET_GDI_CHECK_PATH = "/ecommerce-fe/gdi-check#gdiIframeUrl=";
     private static final String CHECKOUT_ESITO_PATH = "/esito";
 
     private final PaymentGatewayClient paymentGatewayClient;
@@ -180,17 +181,32 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                         HttpStatus.BAD_GATEWAY
                                                 );
                                             }
-                                            String authorizationUrl = URI.create(checkoutBasePath)
-                                                    .resolve(
-                                                            CHECKOUT_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
-                                                                    redirectionUrl
-                                                                            .getBytes(StandardCharsets.UTF_8)
-                                                            )
-                                                    ).toString();
-                                            yield isWalletPayment
-                                                    ? authorizationUrl.concat("&clientId=IO").concat("&transactionId=")
-                                                            .concat(authorizationData.transactionId().value())
-                                                    : authorizationUrl;
+
+                                            if (isWalletPayment) {
+                                                yield URI.create(checkoutBasePath)
+                                                        .resolve(
+                                                                WALLET_GDI_CHECK_PATH
+                                                                        + Base64.encodeBase64URLSafeString(
+                                                                                redirectionUrl
+                                                                                        .getBytes(
+                                                                                                StandardCharsets.UTF_8
+                                                                                        )
+                                                                        )
+                                                        ).toString().concat("&clientId=IO").concat("&transactionId=")
+                                                        .concat(authorizationData.transactionId().value());
+                                            } else {
+                                                yield URI.create(checkoutBasePath)
+                                                        .resolve(
+                                                                CHECKOUT_GDI_CHECK_PATH
+                                                                        + Base64.encodeBase64URLSafeString(
+                                                                                redirectionUrl
+                                                                                        .getBytes(
+                                                                                                StandardCharsets.UTF_8
+                                                                                        )
+                                                                        )
+                                                        ).toString();
+
+                                            }
                                         }
                                         case REDIRECTED_TO_EXTERNAL_DOMAIN -> {
                                             if (npgResponse.getUrl() == null) {
