@@ -220,7 +220,11 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                 jwtEcommerceValidityTimeInSeconds,
                                                 new Claims(transactionId, null, null)
                                         )
-                                        .map(generatedToken -> Tuples.of(generatedToken, paymentRequestInfos))
+                                      .fold(
+                                                Mono::error,
+                                                generatedToken -> Mono.just( Tuples.of(generatedToken, paymentRequestInfos)
+                                        )
+                                        
                                         .fold(
                                                 Mono::error,
                                                 Mono::just
