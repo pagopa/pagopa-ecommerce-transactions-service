@@ -2,11 +2,14 @@ package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
+import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.utils.*;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
+
+import javax.crypto.SecretKey;
 
 @Slf4j
 public abstract class TransactionActivateHandlerCommon
@@ -24,6 +27,9 @@ public abstract class TransactionActivateHandlerCommon
     protected final TracingUtils tracingUtils;
     protected final OpenTelemetryUtils openTelemetryUtils;
 
+    protected final SecretKey ecommerceSigningKey;
+    protected final int jwtEcommerceValidityTimeInSeconds;
+
     protected TransactionActivateHandlerCommon(
 
             Integer paymentTokenTimeout,
@@ -32,7 +38,9 @@ public abstract class TransactionActivateHandlerCommon
             int transientQueuesTTLSeconds,
             int nodoParallelRequests,
             TracingUtils tracingUtils,
-            OpenTelemetryUtils openTelemetryUtils
+            OpenTelemetryUtils openTelemetryUtils,
+            SecretKey ecommerceSigningKey,
+            int jwtEcommerceValidityTimeInSeconds
     ) {
 
         this.paymentTokenTimeout = paymentTokenTimeout;
@@ -42,5 +50,7 @@ public abstract class TransactionActivateHandlerCommon
         this.nodoParallelRequests = nodoParallelRequests;
         this.tracingUtils = tracingUtils;
         this.openTelemetryUtils = openTelemetryUtils;
+        this.ecommerceSigningKey = ecommerceSigningKey;
+        this.jwtEcommerceValidityTimeInSeconds = jwtEcommerceValidityTimeInSeconds;
     }
 }

@@ -12,13 +12,21 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-import java.util.Base64;
 
 @Configuration
 public class SecretsConfigurations {
+
     @Bean
-    public SecretKey jwtSigningKey(@Value("${jwt.secret}") String jwtSecret) {
+    public SecretKey ecommerceSigningKey(@Value("${jwt.ecommerce.secretKey}") String jwtSecret) {
+        return jwtSigningKey(jwtSecret);
+    }
+
+    @Bean
+    public SecretKey npgNotificationSigningKey(@Value("${npg.notification.jwt.secret}") String jwtSecret) {
+        return jwtSigningKey(jwtSecret);
+    }
+
+    private SecretKey jwtSigningKey(String jwtSecret) {
         try {
             return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
         } catch (WeakKeyException | DecodingException e) {

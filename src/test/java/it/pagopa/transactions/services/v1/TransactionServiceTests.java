@@ -10,6 +10,7 @@ import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.UniqueIdTemplateWrapper;
+import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
@@ -33,7 +34,6 @@ import it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProj
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
-import it.pagopa.transactions.utils.JwtTokenUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import org.junit.jupiter.api.Test;
