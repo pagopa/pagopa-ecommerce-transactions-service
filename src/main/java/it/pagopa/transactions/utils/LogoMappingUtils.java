@@ -31,13 +31,17 @@ public class LogoMappingUtils {
 
     public URI getLogo(AuthorizationRequestData authRequestedData) {
         RequestAuthorizationRequestDetailsDto authorizationRequestDetailsDto = authRequestedData.authDetails();
-        return switch (authorizationRequestDetailsDto.getClass().getSimpleName()) {
-            case "CardAuthRequestDetailsDto" -> pgsBrandConfMap.get(((CardAuthRequestDetailsDto)authorizationRequestDetailsDto).getBrand());
-            case "CardsAuthRequestDetailsDto", "WalletAuthRequestDetailsDto"-> npgPaymentCircuitLogoMap.getOrDefault(
-                    authRequestedData.brand(),
-                    npgPaymentCircuitLogoMap.get(BrandLogoConfig.UNKNOWN_LOGO_KEY)
-            );
-            case default -> throw new InvalidRequestException("Authorization request detail type not valid");
+        return switch (authorizationRequestDetailsDto) {
+            case CardAuthRequestDetailsDto details -> pgsBrandConfMap.get(details.getBrand());
+            case CardsAuthRequestDetailsDto ignored -> {
+                URI unknown = npgPaymentCircuitLogoMap.get(BrandLogoConfig.UNKNOWN_LOGO_KEY);
+                yield npgPaymentCircuitLogoMap.getOrDefault(authRequestedData.brand(), unknown);
+            }
+            case WalletAuthRequestDetailsDto ignored1 -> {
+                URI unknown = npgPaymentCircuitLogoMap.get(BrandLogoConfig.UNKNOWN_LOGO_KEY);
+                yield npgPaymentCircuitLogoMap.getOrDefault(authRequestedData.brand(), unknown);
+            }
+            default -> null;
         };
     }
 }
