@@ -81,8 +81,8 @@ microservice-chart:
       ECOMMERCE_EVENT_VERSION: "V1"
       SEND_PAYMENT_RESULT_FOR_TX_EXPIRED_ENABLED: "false"
       SESSION_URL_BASEPATH: "https://checkout.pagopa.it"
-      SESSION_URL_OUTCOME_SUFFIX: "/esito"
-      SESSION_URL_CANCEL_SUFFIX: "/cancel"
+      SESSION_URL_OUTCOME_SUFFIX: "/ecommerce-fe/esito"
+      SESSION_URL_CANCEL_SUFFIX: "/ecommerce-fe/cancel"
       SESSION_URL_NOTIFICATION_URL: "https://api.platform.pagopa.it/ecommerce/npg/notifications/v1/sessions/{orderId}/outcomes?sessionToken={sessionToken}"
       JWT_NPG_NOTIFICATION_VALIDITY_TIME: "900"
     envSecret:
@@ -220,8 +220,8 @@ microservice-chart:
     ECOMMERCE_EVENT_VERSION: "V1"
     SEND_PAYMENT_RESULT_FOR_TX_EXPIRED_ENABLED: "false"
     SESSION_URL_BASEPATH: "https://checkout.pagopa.it"
-    SESSION_URL_OUTCOME_SUFFIX: "/esito"
-    SESSION_URL_CANCEL_SUFFIX: "/cancel"
+    SESSION_URL_OUTCOME_SUFFIX: "/ecommerce-fe/esito"
+    SESSION_URL_CANCEL_SUFFIX: "/ecommerce-fe/cancel"
     SESSION_URL_NOTIFICATION_URL: "https://api.platform.pagopa.it/ecommerce/npg/notifications/v1/sessions/{orderId}/outcomes?sessionToken={sessionToken}"
     JWT_NPG_NOTIFICATION_VALIDITY_TIME: "900"
   envSecret:

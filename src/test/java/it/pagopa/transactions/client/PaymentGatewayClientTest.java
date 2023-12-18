@@ -92,8 +92,8 @@ class PaymentGatewayClientTest {
 
     private final NpgSessionUrlConfig sessionUrlConfig = new NpgSessionUrlConfig(
             "http://localhost:1234",
-            "/esito",
-            "/annulla",
+            "/ecommerce-fe/esito",
+            "/ecommerce-fe/annulla",
             "https://localhost/ecommerce/{orderId}/outcomes?sessionToken={sessionToken}"
     );
 
