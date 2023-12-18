@@ -41,7 +41,7 @@ public class LogoMappingUtils {
                 URI unknown = npgPaymentCircuitLogoMap.get(BrandLogoConfig.UNKNOWN_LOGO_KEY);
                 yield npgPaymentCircuitLogoMap.getOrDefault(authRequestedData.brand(), unknown);
             }
-            default -> null;
+            default -> throw new InvalidRequestException("Authorization request detail type not valid");
         };
     }
 }
