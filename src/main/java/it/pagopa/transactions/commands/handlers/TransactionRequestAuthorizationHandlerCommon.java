@@ -191,9 +191,12 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
         return paymentGatewayClient.requestNpgBuildApmPayment(authorizationData)
                 .filter(orderIdAndFieldsDto -> {
                     String returnUrl = orderIdAndFieldsDto.getT2().getUrl();
-                    boolean isReturnUrlValued = returnUrl != null && returnUrl.isEmpty();
+                    boolean isReturnUrlValued = returnUrl != null && !returnUrl.isEmpty();
                     if (!isReturnUrlValued) {
-                        log.error("NPG order/build wallet APM response error: return url is not valid: {}", returnUrl);
+                        log.error(
+                                "NPG order/build wallet APM response error: return url is not valid: [{}]",
+                                returnUrl
+                        );
                     }
                     return isReturnUrlValued;
                 })
