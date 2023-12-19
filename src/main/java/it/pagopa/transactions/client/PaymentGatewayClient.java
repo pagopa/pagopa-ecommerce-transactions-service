@@ -339,6 +339,11 @@ public class PaymentGatewayClient {
                                                     jwtToken
                                             )
                                     );
+                            /*
+                             * FIXME: here we are using the same api key used for CARDS but they have to
+                             * been differentiated for each payment methods. This issue is tracked with Jira
+                             * task CHK-2265
+                             */
                             Either<NpgApiKeyMissingPspRequestedException, String> buildApiKey = isApmPayment
                                     ? npgPspApiKeysConfig.get(authorizationData.pspId())
                                     : Either.right(npgDefaultApiKey);
