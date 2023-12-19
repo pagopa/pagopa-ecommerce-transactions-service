@@ -52,7 +52,6 @@ import reactor.util.function.Tuples;
 import javax.crypto.SecretKey;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -1769,8 +1768,7 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldReturnBuildSessionResponseForWalletWithNpg() {
-        Instant now = Instant.now();
+    void shouldReturnBuildSessionResponseForWalletWithNpgWithCards() {
         String walletId = UUID.randomUUID().toString();
         String orderId = "orderIdGenerated";
         String sessionId = "sessionId";
@@ -1875,6 +1873,8 @@ class PaymentGatewayClientTest {
                         any(),
                         eq(contractId)
                 );
+        verify(npgClient, times(0))
+                .buildFormForPayment(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -2215,6 +2215,8 @@ class PaymentGatewayClientTest {
 
         verify(npgClient, times(1))
                 .buildForm(any(), any(), any(), any(), any(), eq(orderId), eq(null), any(), any(), eq(contractId));
+        verify(npgClient, times(0))
+                .buildFormForPayment(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
     }
 
     private static Stream<Arguments> buildSessionInvalidBodyResponse() {
@@ -2237,6 +2239,122 @@ class PaymentGatewayClientTest {
                                 .securityToken("securityToken").state(WorkflowStateDto.CARD_DATA_COLLECTION)
                 )
         );
+    }
+
+    @Test
+    void shouldReturnBuildSessionResponseForWalletWithNpgForApmMethod() {
+        String walletId = UUID.randomUUID().toString();
+        String orderId = "orderIdGenerated";
+        String sessionId = "sessionId";
+        String contractId = "contractId";
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                List.of(
+                        new PaymentNotice(
+                                new PaymentToken("paymentToken"),
+                                new RptId("77777777777111111111111111111"),
+                                new TransactionAmount(100),
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                false
+                        )
+                ),
+                TransactionTestUtils.EMAIL,
+                null,
+                null,
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+        );
+        WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
+                .walletId(walletId);
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                10,
+                "paymentInstrumentId",
+                "pspId1",
+                "PPAL",
+                "brokerName",
+                "pspChannelCode",
+                "PAYPAL",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "NPG",
+                Optional.empty(),
+                Optional.of(contractId),
+                "VISA",
+                walletDetails
+        );
+        int totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
+                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
+        FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
+                .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN)
+                .securityToken("securityToken")
+                .sessionId("sessionId")
+                .url("http://localhost/redirectionUrl");
+        /* preconditions */
+        Mockito.when(
+                npgClient.buildFormForPayment(
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        eq(orderId),
+                        eq(null),
+                        any(),
+                        any(),
+                        eq(contractId),
+                        eq(totalAmount)
+                )
+        ).thenReturn(Mono.just(npgBuildSessionResponse));
+
+        Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
+        /* test */
+        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData))
+                .expectNext(responseRequestNpgBuildSession)
+                .verifyComplete();
+
+        String npgNotificationUrl = UriComponentsBuilder
+                .fromHttpUrl(sessionUrlConfig.notificationUrl())
+                .build(
+                        Map.of(
+                                "orderId",
+                                orderId,
+                                "sessionToken",
+                                "sessionToken"
+                        )
+                ).toString();
+        String npgNotificationUrlPrefix = npgNotificationUrl
+                .substring(0, npgNotificationUrl.indexOf("sessionToken=") + "sessionToken=".length());
+        verify(npgClient, times(1))
+                .buildFormForPayment(
+                        any(),
+                        any(),
+                        any(),
+                        argThat(
+                                new NpgNotificationUrlMatcher(
+                                        npgNotificationUrlPrefix,
+                                        transactionId.value(),
+                                        orderId,
+                                        authorizationData.paymentInstrumentId()
+                                )
+                        ),
+                        any(),
+                        eq(orderId),
+                        eq(null),
+                        any(),
+                        any(),
+                        eq(contractId),
+                        eq(totalAmount)
+                );
+        verify(npgClient, times(0))
+                .buildForm(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
     }
 
 }
