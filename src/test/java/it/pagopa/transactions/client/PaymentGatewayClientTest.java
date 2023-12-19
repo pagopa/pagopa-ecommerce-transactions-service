@@ -1838,7 +1838,7 @@ class PaymentGatewayClientTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
-        StepVerifier.create(client.requestNpgOrderBuild(authorizationData))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData))
                 .expectNext(responseRequestNpgBuildSession)
                 .verifyComplete();
 
@@ -1959,7 +1959,7 @@ class PaymentGatewayClientTest {
                 );
         /* test */
 
-        StepVerifier.create(client.requestNpgOrderBuild(authorizationData))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData))
                 .expectErrorMatches(
                         error -> error instanceof AlreadyProcessedException &&
                                 ((AlreadyProcessedException) error).getTransactionId()
@@ -2049,7 +2049,7 @@ class PaymentGatewayClientTest {
                         )
                 );
         /* test */
-        StepVerifier.create(client.requestNpgOrderBuild(authorizationData))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData))
                 .expectErrorMatches(
                         error -> error instanceof BadGatewayException
                 )
@@ -2137,7 +2137,7 @@ class PaymentGatewayClientTest {
                         )
                 );
         /* test */
-        StepVerifier.create(client.requestNpgOrderBuild(authorizationData))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData))
                 .expectErrorMatches(
                         error -> error instanceof BadGatewayException
                 )
@@ -2209,7 +2209,7 @@ class PaymentGatewayClientTest {
                 )
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
-        StepVerifier.create(client.requestNpgOrderBuild(authorizationData))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData))
                 .expectErrorMatches(error -> error instanceof BadGatewayException)
                 .verify();
 

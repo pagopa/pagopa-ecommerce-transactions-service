@@ -2133,7 +2133,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestNpgOrderBuild(authorizationData))
+        Mockito.when(paymentGatewayClient.requestNpgBuildSession(authorizationData))
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationDataAfterBuildSession))
                 .thenReturn(Mono.just(stateResponseDto));
@@ -2255,7 +2255,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .expectErrorMatches(error -> error instanceof BadRequestException)
                 .verify();
 
-        Mockito.verify(paymentGatewayClient, Mockito.times(0)).requestNpgOrderBuild(any());
+        Mockito.verify(paymentGatewayClient, Mockito.times(0)).requestNpgBuildSession(any());
         Mockito.verify(paymentGatewayClient, Mockito.times(0)).requestNpgCardsAuthorization(any());
         Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(any());
         Mockito.verify(transactionTemplateWrapper, Mockito.times(0)).save(any());

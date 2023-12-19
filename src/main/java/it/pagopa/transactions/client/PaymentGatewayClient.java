@@ -285,17 +285,17 @@ public class PaymentGatewayClient {
                 );
     }
 
-    public Mono<Tuple2<String, FieldsDto>> requestNpgOrderBuild(AuthorizationRequestData authorizationData) {
-        return requestNpgOrderBuild(authorizationData, false);
+    public Mono<Tuple2<String, FieldsDto>> requestNpgBuildSession(AuthorizationRequestData authorizationData) {
+        return requestNpgBuildSession(authorizationData, false);
     }
 
     public Mono<Tuple2<String, FieldsDto>> requestNpgBuildApmPayment(AuthorizationRequestData authorizationData) {
-        return requestNpgOrderBuild(authorizationData, true);
+        return requestNpgBuildSession(authorizationData, true);
     }
 
-    private Mono<Tuple2<String, FieldsDto>> requestNpgOrderBuild(
-                                                                 AuthorizationRequestData authorizationData,
-                                                                 boolean isApmPayment
+    private Mono<Tuple2<String, FieldsDto>> requestNpgBuildSession(
+                                                                   AuthorizationRequestData authorizationData,
+                                                                   boolean isApmPayment
     ) {
         WorkflowStateDto expectedResponseState = isApmPayment ? WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN
                 : WorkflowStateDto.READY_FOR_PAYMENT;

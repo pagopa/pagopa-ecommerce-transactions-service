@@ -125,7 +125,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     private Mono<Tuple4<String, String, Optional<String>, Optional<String>>> walletNpgCardsPaymentFlow(
                                                                                                        AuthorizationRequestData authorizationData
     ) {
-        return paymentGatewayClient.requestNpgOrderBuild(authorizationData)
+        return paymentGatewayClient.requestNpgBuildSession(authorizationData)
                 .map(orderIdAndFieldsDto -> {
                     transactionTemplateWrapper.save(
                             new TransactionCacheInfo(
@@ -222,7 +222,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                         orderIdAndFieldsDto -> Tuples.of(
                                 orderIdAndFieldsDto.getT1(),
                                 orderIdAndFieldsDto.getT2().getUrl(), // safe here, return url is checked in above
-                                                                      // filter
+                                // filter
                                 Optional.empty(),
                                 Optional.of(orderIdAndFieldsDto.getT2().getSessionId())
                         )

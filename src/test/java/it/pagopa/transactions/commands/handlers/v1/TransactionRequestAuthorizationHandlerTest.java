@@ -1170,7 +1170,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestNpgOrderBuild(authorizationData))
+        Mockito.when(paymentGatewayClient.requestNpgBuildSession(authorizationData))
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationDataAfterBuildSession))
                 .thenReturn(Mono.just(stateResponseDto));
