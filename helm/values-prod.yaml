@@ -16,6 +16,11 @@ microservice-chart:
         repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
         tag: "latest"
         pullPolicy: Always
+    strategy:
+      type: "RollingUpdate"
+      rollingUpdate:
+        maxSurge: 0
+        maxUnavailable: 1
     envConfig:
       MONGO_HOST: pagopa-p-weu-ecommerce-cosmos-account.mongo.cosmos.azure.com
       MONGO_USERNAME: pagopa-p-weu-ecommerce-cosmos-account
@@ -155,6 +160,11 @@ microservice-chart:
           # Required
           type: Utilization # Allowed types are 'Utilization' or 'AverageValue'
           value: "70"
+  strategy:
+    type: "RollingUpdate"
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   envConfig:
     MONGO_HOST: pagopa-p-weu-ecommerce-cosmos-account.mongo.cosmos.azure.com
     MONGO_USERNAME: pagopa-p-weu-ecommerce-cosmos-account

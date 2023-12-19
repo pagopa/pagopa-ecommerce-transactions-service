@@ -60,7 +60,7 @@ microservice-chart:
           tenantId: 7788edaf-0346-4068-9d79-c868aed15b3d
           subscriptionId: bbe47ad4-08b3-4925-94c5-1278e5819b86
           resourceGroupName: pagopa-d-ecommerce-sec-rg
-          resourceURI: Microsoft.KeyVault/vaults/pagopa-git statusd-ecommerce-kv
+          resourceURI: Microsoft.KeyVault/vaults/pagopa-d-ecommerce-kv
           metricName: ServiceApiHit
           # metricNamespace: Microsoft.KeyVault/vaults
           # metricFilter: namespace eq 'default'
@@ -70,7 +70,8 @@ microservice-chart:
   strategy:
     type: "RollingUpdate"
     rollingUpdate:
-      maxSurge: 1
+      maxSurge: 0
+      maxUnavailable: 1
   envConfig:
     MONGO_HOST: pagopa-d-weu-ecommerce-cosmos-account.mongo.cosmos.azure.com
     MONGO_USERNAME: pagopa-d-weu-ecommerce-cosmos-account
