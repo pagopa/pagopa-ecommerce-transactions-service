@@ -67,11 +67,6 @@ microservice-chart:
           # metricAggregationInterval: "-1:1:0"
           metricAggregationType: Count
           targetValue: "30"
-  strategy:
-    type: "RollingUpdate"
-    rollingUpdate:
-      maxSurge: 0
-      maxUnavailable: 1
   envConfig:
     MONGO_HOST: pagopa-d-weu-ecommerce-cosmos-account.mongo.cosmos.azure.com
     MONGO_USERNAME: pagopa-d-weu-ecommerce-cosmos-account

@@ -154,11 +154,6 @@ microservice-chart:
           # Required
           type: Utilization # Allowed types are 'Utilization' or 'AverageValue'
           value: "70"
-  strategy:
-    type: "RollingUpdate"
-    rollingUpdate:
-      maxSurge: 0
-      maxUnavailable: 1
   envConfig:
     MONGO_HOST: pagopa-u-weu-ecommerce-cosmos-account.mongo.cosmos.azure.com
     MONGO_USERNAME: pagopa-u-weu-ecommerce-cosmos-account
