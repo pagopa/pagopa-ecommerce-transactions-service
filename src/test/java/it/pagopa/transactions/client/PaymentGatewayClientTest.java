@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
+import it.pagopa.ecommerce.commons.exceptions.NpgApiKeyMissingPspRequestedException;
 import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
@@ -51,6 +52,7 @@ import reactor.util.function.Tuples;
 
 import javax.crypto.SecretKey;
 import java.math.BigDecimal;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Stream;
@@ -1828,8 +1830,8 @@ class PaymentGatewayClientTest {
                         any(),
                         eq(orderId),
                         eq(null),
-                        any(),
-                        any(),
+                        eq(NpgClient.PaymentMethod.CARDS),
+                        eq(npgDefaultApiKey),
                         eq(contractId)
                 )
         ).thenReturn(Mono.just(npgBuildSessionResponse));
@@ -1856,8 +1858,18 @@ class PaymentGatewayClientTest {
         verify(npgClient, times(1))
                 .buildForm(
                         any(),
-                        any(),
-                        any(),
+                        eq(URI.create(sessionUrlConfig.basePath())),
+                        eq(
+                                URI
+                                        .create(sessionUrlConfig.basePath())
+                                        .resolve(
+                                                URI.create(
+                                                        sessionUrlConfig.outcomeSuffix()
+                                                                + "#clientId=IO&transactionId=%s"
+                                                                        .formatted(transactionId.value())
+                                                )
+                                        )
+                        ),
                         argThat(
                                 new NpgNotificationUrlMatcher(
                                         npgNotificationUrlPrefix,
@@ -1866,7 +1878,10 @@ class PaymentGatewayClientTest {
                                         authorizationData.paymentInstrumentId()
                                 )
                         ),
-                        any(),
+                        eq(
+                                URI.create(sessionUrlConfig.basePath())
+                                        .resolve(URI.create(sessionUrlConfig.cancelSuffix()))
+                        ),
                         eq(orderId),
                         eq(null),
                         any(),
@@ -2203,8 +2218,8 @@ class PaymentGatewayClientTest {
                         any(),
                         eq(orderId),
                         eq(null),
-                        any(),
-                        any(),
+                        eq(NpgClient.PaymentMethod.CARDS),
+                        eq(npgDefaultApiKey),
                         eq(contractId)
                 )
         ).thenReturn(Mono.just(npgBuildSessionResponse));
@@ -2212,9 +2227,51 @@ class PaymentGatewayClientTest {
         StepVerifier.create(client.requestNpgBuildSession(authorizationData))
                 .expectErrorMatches(error -> error instanceof BadGatewayException)
                 .verify();
-
+        String npgNotificationUrl = UriComponentsBuilder
+                .fromHttpUrl(sessionUrlConfig.notificationUrl())
+                .build(
+                        Map.of(
+                                "orderId",
+                                orderId,
+                                "sessionToken",
+                                "sessionToken"
+                        )
+                ).toString();
+        String npgNotificationUrlPrefix = npgNotificationUrl
+                .substring(0, npgNotificationUrl.indexOf("sessionToken=") + "sessionToken=".length());
         verify(npgClient, times(1))
-                .buildForm(any(), any(), any(), any(), any(), eq(orderId), eq(null), any(), any(), eq(contractId));
+                .buildForm(
+                        any(),
+                        eq(URI.create(sessionUrlConfig.basePath())),
+                        eq(
+                                URI
+                                        .create(sessionUrlConfig.basePath())
+                                        .resolve(
+                                                URI.create(
+                                                        sessionUrlConfig.outcomeSuffix()
+                                                                + "#clientId=IO&transactionId=%s"
+                                                                        .formatted(transactionId.value())
+                                                )
+                                        )
+                        ),
+                        argThat(
+                                new NpgNotificationUrlMatcher(
+                                        npgNotificationUrlPrefix,
+                                        transactionId.value(),
+                                        orderId,
+                                        authorizationData.paymentInstrumentId()
+                                )
+                        ),
+                        eq(
+                                URI.create(sessionUrlConfig.basePath())
+                                        .resolve(URI.create(sessionUrlConfig.cancelSuffix()))
+                        ),
+                        eq(orderId),
+                        eq(null),
+                        any(),
+                        any(),
+                        eq(contractId)
+                );
         verify(npgClient, times(0))
                 .buildFormForPayment(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
     }
@@ -2307,7 +2364,7 @@ class PaymentGatewayClientTest {
                         any(),
                         eq(orderId),
                         eq(null),
-                        any(),
+                        eq(NpgClient.PaymentMethod.PAYPAL),
                         any(),
                         eq(contractId),
                         eq(totalAmount)
@@ -2335,8 +2392,18 @@ class PaymentGatewayClientTest {
         verify(npgClient, times(1))
                 .buildFormForPayment(
                         any(),
-                        any(),
-                        any(),
+                        eq(URI.create(sessionUrlConfig.basePath())),
+                        eq(
+                                URI
+                                        .create(sessionUrlConfig.basePath())
+                                        .resolve(
+                                                URI.create(
+                                                        sessionUrlConfig.outcomeSuffix()
+                                                                + "#clientId=IO&transactionId=%s"
+                                                                        .formatted(transactionId.value())
+                                                )
+                                        )
+                        ),
                         argThat(
                                 new NpgNotificationUrlMatcher(
                                         npgNotificationUrlPrefix,
@@ -2345,14 +2412,133 @@ class PaymentGatewayClientTest {
                                         authorizationData.paymentInstrumentId()
                                 )
                         ),
-                        any(),
+                        eq(
+                                URI.create(sessionUrlConfig.basePath())
+                                        .resolve(URI.create(sessionUrlConfig.cancelSuffix()))
+                        ),
                         eq(orderId),
                         eq(null),
                         any(),
-                        any(),
+                        eq("pspKey1"),
                         eq(contractId),
                         eq(totalAmount)
                 );
+        verify(npgClient, times(0))
+                .buildForm(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldThrowErrorForWalletWithNpgForApmMethodAndMissingKey() {
+        String walletId = UUID.randomUUID().toString();
+        String orderId = "orderIdGenerated";
+        String sessionId = "sessionId";
+        String contractId = "contractId";
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                List.of(
+                        new PaymentNotice(
+                                new PaymentToken("paymentToken"),
+                                new RptId("77777777777111111111111111111"),
+                                new TransactionAmount(100),
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                false
+                        )
+                ),
+                TransactionTestUtils.EMAIL,
+                null,
+                null,
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+        );
+        WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
+                .walletId(walletId);
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                10,
+                "paymentInstrumentId",
+                "pspId2",
+                "PPAL",
+                "brokerName",
+                "pspChannelCode",
+                "PAYPAL",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "NPG",
+                Optional.empty(),
+                Optional.of(contractId),
+                "VISA",
+                walletDetails
+        );
+        int totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
+                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
+        FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
+                .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN)
+                .securityToken("securityToken")
+                .sessionId("sessionId")
+                .url("http://localhost/redirectionUrl");
+        /* preconditions */
+        String npgNotificationUrl = UriComponentsBuilder
+                .fromHttpUrl(sessionUrlConfig.notificationUrl())
+                .build(
+                        Map.of(
+                                "orderId",
+                                orderId,
+                                "sessionToken",
+                                "sessionToken"
+                        )
+                ).toString();
+        String npgNotificationUrlPrefix = npgNotificationUrl
+                .substring(0, npgNotificationUrl.indexOf("sessionToken=") + "sessionToken=".length());
+        Mockito.when(
+                npgClient.buildFormForPayment(
+                        any(),
+                        eq(URI.create(sessionUrlConfig.basePath())),
+                        eq(
+                                URI
+                                        .create(sessionUrlConfig.basePath())
+                                        .resolve(
+                                                URI.create(
+                                                        sessionUrlConfig.outcomeSuffix()
+                                                                + "#clientId=IO&transactionId=%s"
+                                                                        .formatted(transactionId.value())
+                                                )
+                                        )
+                        ),
+                        argThat(
+                                new NpgNotificationUrlMatcher(
+                                        npgNotificationUrlPrefix,
+                                        transactionId.value(),
+                                        orderId,
+                                        authorizationData.paymentInstrumentId()
+                                )
+                        ),
+                        eq(
+                                URI.create(sessionUrlConfig.basePath())
+                                        .resolve(URI.create(sessionUrlConfig.cancelSuffix()))
+                        ),
+                        eq(orderId),
+                        eq(null),
+                        eq(NpgClient.PaymentMethod.PAYPAL),
+                        eq("pspKey1"),
+                        eq(contractId),
+                        eq(totalAmount)
+                )
+        ).thenReturn(Mono.just(npgBuildSessionResponse));
+
+        /* test */
+        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData))
+                .expectError(NpgApiKeyMissingPspRequestedException.class)
+                .verify();
+
+        verify(npgClient, times(0))
+                .buildFormForPayment(any(), any(), any(), any(), any(), eq(orderId), any(), any(), any(), any(), any());
         verify(npgClient, times(0))
                 .buildForm(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
     }
