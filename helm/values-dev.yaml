@@ -70,7 +70,7 @@ microservice-chart:
   strategy:
     type: "RollingUpdate"
     rollingUpdate:
-      maxUnavailable: 0
+      maxSurge: 1
   envConfig:
     MONGO_HOST: pagopa-d-weu-ecommerce-cosmos-account.mongo.cosmos.azure.com
     MONGO_USERNAME: pagopa-d-weu-ecommerce-cosmos-account
