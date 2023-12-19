@@ -485,6 +485,8 @@
                     <connectionUrl>scm:git:https://github.com/pagopa/pagopa-ecommerce-commons.git</connectionUrl>
                     <scmVersionType>tag</scmVersionType>
                     <scmVersion>${pagopa-ecommerce-commons.version}</scmVersion>
+                    <scmVersionType>branch</scmVersionType>
+                    <scmVersion>CHK-2257-apm-auth-request</scmVersion>
                     <goals>install -DskipTests</goals>
                 </configuration>
                 <executions>

@@ -3,9 +3,11 @@ package it.pagopa.transactions.client;
 import com.azure.cosmos.implementation.InternalServerErrorException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.domain.Claims;
+import it.pagopa.ecommerce.commons.exceptions.NpgApiKeyMissingPspRequestedException;
 import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
@@ -28,6 +30,7 @@ import it.pagopa.transactions.exceptions.GatewayTimeoutException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,6 +52,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Component
+@Slf4j
 public class PaymentGatewayClient {
 
     private final PostePayInternalApi postePayInternalApi;
@@ -67,7 +71,7 @@ public class PaymentGatewayClient {
 
     private final NpgSessionUrlConfig npgSessionUrlConfig;
 
-    private final NpgPspApiKeysConfig npgCardsApiKeys;
+    private final NpgPspApiKeysConfig npgPspApiKeysConfig;
     private final UniqueIdUtils uniqueIdUtils;
     private final String npgDefaultApiKey;
     private final SecretKey npgNotificationSigningKey;
@@ -82,7 +86,7 @@ public class PaymentGatewayClient {
             UUIDUtils uuidUtils,
             ConfidentialMailUtils confidentialMailUtils,
             NpgClient npgClient,
-            NpgPspApiKeysConfig npgCardsApiKeys,
+            NpgPspApiKeysConfig npgPspApiKeysConfig,
             NpgSessionUrlConfig npgSessionUrlConfig,
             UniqueIdUtils uniqueIdUtils,
             @Value("${npg.client.apiKey}") String npgDefaultApiKey,
@@ -97,7 +101,7 @@ public class PaymentGatewayClient {
         this.uuidUtils = uuidUtils;
         this.confidentialMailUtils = confidentialMailUtils;
         this.npgClient = npgClient;
-        this.npgCardsApiKeys = npgCardsApiKeys;
+        this.npgPspApiKeysConfig = npgPspApiKeysConfig;
         this.npgSessionUrlConfig = npgSessionUrlConfig;
         this.uniqueIdUtils = uniqueIdUtils;
         this.npgDefaultApiKey = npgDefaultApiKey;
@@ -281,7 +285,20 @@ public class PaymentGatewayClient {
                 );
     }
 
-    public Mono<Tuple2<String, FieldsDto>> requestNpgBuildSession(AuthorizationRequestData authorizationData) {
+    public Mono<Tuple2<String, FieldsDto>> requestNpgOrderBuild(AuthorizationRequestData authorizationData) {
+        return requestNpgOrderBuild(authorizationData, false);
+    }
+
+    public Mono<Tuple2<String, FieldsDto>> requestNpgBuildApmPayment(AuthorizationRequestData authorizationData) {
+        return requestNpgOrderBuild(authorizationData, true);
+    }
+
+    private Mono<Tuple2<String, FieldsDto>> requestNpgOrderBuild(
+                                                                 AuthorizationRequestData authorizationData,
+                                                                 boolean isApmPayment
+    ) {
+        WorkflowStateDto expectedResponseState = isApmPayment ? WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN
+                : WorkflowStateDto.READY_FOR_PAYMENT;
         return uniqueIdUtils.generateUniqueId()
                 .zipWhen(
                         orderId -> new JwtTokenUtils()
@@ -322,21 +339,57 @@ public class PaymentGatewayClient {
                                                     jwtToken
                                             )
                                     );
-
-                            return npgClient.buildForm(
-                                    correlationId,
-                                    merchantUrl,
-                                    outcomeResultUrl,
-                                    notificationUrl,
-                                    cancelUrl,
-                                    orderId,
-                                    null,
-                                    NpgClient.PaymentMethod.fromServiceName(authorizationData.paymentMethodName()),
-                                    npgDefaultApiKey,
-                                    authorizationData.contractId().orElseThrow(
-                                            () -> new InternalServerErrorException("Invalid request missing contractId")
-                                    )
-                            ).map(fieldsDto -> Tuples.of(orderId, fieldsDto));
+                            Either<NpgApiKeyMissingPspRequestedException, String> buildApiKey = isApmPayment
+                                    ? npgPspApiKeysConfig.get(authorizationData.pspId())
+                                    : Either.right(npgDefaultApiKey);
+                            return buildApiKey.fold(
+                                    Mono::error,
+                                    apiKey -> {
+                                        if (isApmPayment) {
+                                            return npgClient.buildFormForPayment(
+                                                    correlationId,
+                                                    merchantUrl,
+                                                    outcomeResultUrl,
+                                                    notificationUrl,
+                                                    cancelUrl,
+                                                    orderId,
+                                                    null,
+                                                    NpgClient.PaymentMethod
+                                                            .fromServiceName(authorizationData.paymentMethodName()),
+                                                    apiKey,
+                                                    authorizationData.contractId().orElseThrow(
+                                                            () -> new InternalServerErrorException(
+                                                                    "Invalid request missing contractId"
+                                                            )
+                                                    ),
+                                                    authorizationData.paymentNotices().stream()
+                                                            .mapToInt(
+                                                                    paymentNotice -> paymentNotice.transactionAmount()
+                                                                            .value()
+                                                            ).sum()
+                                                            + authorizationData.fee()
+                                            ).map(fieldsDto -> Tuples.of(orderId, fieldsDto));
+                                        } else {
+                                            return npgClient.buildForm(
+                                                    correlationId,
+                                                    merchantUrl,
+                                                    outcomeResultUrl,
+                                                    notificationUrl,
+                                                    cancelUrl,
+                                                    orderId,
+                                                    null,
+                                                    NpgClient.PaymentMethod
+                                                            .fromServiceName(authorizationData.paymentMethodName()),
+                                                    apiKey,
+                                                    authorizationData.contractId().orElseThrow(
+                                                            () -> new InternalServerErrorException(
+                                                                    "Invalid request missing contractId"
+                                                            )
+                                                    )
+                                            ).map(fieldsDto -> Tuples.of(orderId, fieldsDto));
+                                        }
+                                    }
+                            );
                         }
                 ).onErrorMap(
                         NpgResponseException.class,
@@ -363,18 +416,31 @@ public class PaymentGatewayClient {
                                 )
                 )
                 .filter(
-                        orderIdAndFieldsDto -> Objects
-                                .equals(orderIdAndFieldsDto.getT2().getState(), WorkflowStateDto.READY_FOR_PAYMENT)
-                                && orderIdAndFieldsDto.getT2().getSessionId() != null
-                                && orderIdAndFieldsDto.getT2().getSecurityToken() != null
+                        orderIdAndFieldsDto -> {
+                            WorkflowStateDto receivedState = orderIdAndFieldsDto.getT2().getState();
+                            boolean sessionIdValid = orderIdAndFieldsDto.getT2().getSessionId() != null
+                                    && !orderIdAndFieldsDto.getT2().getSessionId().isEmpty();
+                            boolean securityTokenValid = orderIdAndFieldsDto.getT2().getSecurityToken() != null
+                                    && !orderIdAndFieldsDto.getT2().getSecurityToken().isEmpty();
+                            boolean isOk = sessionIdValid && securityTokenValid && Objects
+                                    .equals(orderIdAndFieldsDto.getT2().getState(), expectedResponseState);
+                            if (!isOk) {
+                                log.error(
+                                        "NPG order/build response error! Received state: [{}], expected state: [{}]. Session id is valid: [{}], security token is valid: [{}]",
+                                        receivedState,
+                                        expectedResponseState,
+                                        sessionIdValid,
+                                        securityTokenValid
+                                );
+                            }
+                            return isOk;
+                        }
                 )
                 .switchIfEmpty(
                         Mono.error(
                                 new BadGatewayException("Error while invoke NPG build session", HttpStatus.BAD_GATEWAY)
                         )
-                )
-
-        ;
+                );
     }
 
     public Mono<StateResponseDto> requestNpgCardsAuthorization(AuthorizationRequestData authorizationData) {
@@ -416,7 +482,7 @@ public class PaymentGatewayClient {
                         );
                     }
                     final UUID correlationId = UUID.randomUUID();
-                    final var pspNpgApiKey = npgCardsApiKeys.get(authorizationData.pspId());
+                    final var pspNpgApiKey = npgPspApiKeysConfig.get(authorizationData.pspId());
                     return pspNpgApiKey.fold(
                             Mono::error,
                             apiKey -> npgClient.confirmPayment(

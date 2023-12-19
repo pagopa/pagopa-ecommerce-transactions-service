@@ -1,6 +1,7 @@
 package it.pagopa.transactions.commands.handlers;
 
 import io.vavr.control.Either;
+import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
@@ -94,50 +95,138 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                 );
     }
 
-    protected Mono<Tuple4<String, String, Optional<String>,Optional<String>>> npgAuthRequestPipeline(
-                                                                                    AuthorizationRequestData authorizationData
+    protected Mono<Tuple4<String, String, Optional<String>, Optional<String>>> npgAuthRequestPipeline(
+            AuthorizationRequestData authorizationData
     ) {
-        return Mono.just(authorizationData).flatMap( authData -> switch (authData.authDetails()){
-            case CardsAuthRequestDetailsDto cards ->
-                    invokeNpgConfirmPayment(authorizationData,cards
-                            .getOrderId(),false).map(confirmPaymentResponse -> Tuples.of(confirmPaymentResponse.getT1(),confirmPaymentResponse.getT2(),confirmPaymentResponse.getT3(),Optional.empty()));
-            case WalletAuthRequestDetailsDto ignored ->
-                    paymentGatewayClient.requestNpgBuildSession(authorizationData)
-                            .map( orderIdAndFieldsDto -> {
-                                        transactionTemplateWrapper.save(new TransactionCacheInfo(authorizationData.transactionId(), new WalletPaymentInfo(orderIdAndFieldsDto.getT2().getSessionId(), orderIdAndFieldsDto.getT2().getSecurityToken(), orderIdAndFieldsDto.getT1())));
-                                        return orderIdAndFieldsDto;
-                            }
-                            )
-                            .flatMap(orderIdAndFieldsDto->
-                                  invokeNpgConfirmPayment(
-                                          new AuthorizationRequestData(
-                                                  authorizationData.transactionId(),
-                                                  authorizationData.paymentNotices(),
-                                                  authorizationData.email(),
-                                                  authorizationData.fee(),
-                                                  authorizationData.paymentInstrumentId(),
-                                                  authorizationData.pspId(),
-                                                  authorizationData.paymentTypeCode(),
-                                                  authorizationData.brokerName(),
-                                                  authorizationData.pspChannelCode(),
-                                                  authorizationData.paymentMethodName(),
-                                                  authorizationData.paymentMethodDescription(),
-                                                  authorizationData.pspBusinessName(),
-                                                  authorizationData.pspOnUs(),
-                                                  authorizationData.paymentGatewayId(),
-                                                  Optional.of(orderIdAndFieldsDto.getT2().getSessionId()),
-                                                  authorizationData.contractId(),
-                                                  authorizationData.brand(),
-                                                  authorizationData.authDetails()),
-                                          orderIdAndFieldsDto.getT1()
-                                          ,true)
-                                          .map(confirmPaymentResponse -> Tuples.of(confirmPaymentResponse.getT1(),confirmPaymentResponse.getT2(),confirmPaymentResponse.getT3(),Optional.of(orderIdAndFieldsDto.getT2().getSessionId())))
-                            );
-
-
+        return Mono.just(authorizationData).flatMap(authData -> switch (authData.authDetails()) {
+            case CardsAuthRequestDetailsDto cards -> invokeNpgConfirmPayment(authorizationData, cards
+                    .getOrderId(), false).map(confirmPaymentResponse -> Tuples.of(confirmPaymentResponse.getT1(), confirmPaymentResponse.getT2(), confirmPaymentResponse.getT3(), Optional.empty()));
+            case WalletAuthRequestDetailsDto ignored -> {
+                NpgClient.PaymentMethod npgPaymentMethod = NpgClient.PaymentMethod.fromServiceName(authorizationData.paymentMethodName());
+                if (npgPaymentMethod.equals(NpgClient.PaymentMethod.CARDS)) {
+                    yield walletNpgCardsPaymentFlow(authorizationData);
+                } else {
+                    yield walletNpgApmPaymentFlow(authorizationData);
+                }
+            }
             default -> Mono.empty();
         });
 
+    }
+
+    /**
+     * Perform NPG payment flow with a card wallet. Payment flow is composed of two
+     * requests made to NPG: 1) order/build 2) confirmPayment
+     *
+     * @param authorizationData the authorization requested data
+     * @return a tuple of orderId, return url, confirm payment response session id
+     *         and order/build session id
+     */
+    private Mono<Tuple4<String, String, Optional<String>, Optional<String>>> walletNpgCardsPaymentFlow(
+                                                                                                       AuthorizationRequestData authorizationData
+    ) {
+        return paymentGatewayClient.requestNpgOrderBuild(authorizationData)
+                .map(orderIdAndFieldsDto -> {
+                    transactionTemplateWrapper.save(
+                            new TransactionCacheInfo(
+                                    authorizationData.transactionId(),
+                                    new WalletPaymentInfo(
+                                            orderIdAndFieldsDto.getT2().getSessionId(),
+                                            orderIdAndFieldsDto.getT2().getSecurityToken(),
+                                            orderIdAndFieldsDto.getT1()
+                                    )
+                            )
+                    );
+                    return orderIdAndFieldsDto;
+                }
+                )
+                .flatMap(
+                        orderIdAndFieldsDto -> invokeNpgConfirmPayment(
+                                new AuthorizationRequestData(
+                                        authorizationData.transactionId(),
+                                        authorizationData.paymentNotices(),
+                                        authorizationData.email(),
+                                        authorizationData.fee(),
+                                        authorizationData.paymentInstrumentId(),
+                                        authorizationData.pspId(),
+                                        authorizationData.paymentTypeCode(),
+                                        authorizationData.brokerName(),
+                                        authorizationData.pspChannelCode(),
+                                        authorizationData.paymentMethodName(),
+                                        authorizationData.paymentMethodDescription(),
+                                        authorizationData.pspBusinessName(),
+                                        authorizationData.pspOnUs(),
+                                        authorizationData.paymentGatewayId(),
+                                        Optional.of(orderIdAndFieldsDto.getT2().getSessionId()),
+                                        authorizationData.contractId(),
+                                        authorizationData.brand(),
+                                        authorizationData.authDetails()
+                                ),
+                                orderIdAndFieldsDto.getT1(),
+                                true
+                        )
+                                .map(
+                                        confirmPaymentResponse -> Tuples.of(
+                                                confirmPaymentResponse.getT1(),
+                                                confirmPaymentResponse.getT2(),
+                                                confirmPaymentResponse.getT3(),
+                                                Optional.of(orderIdAndFieldsDto.getT2().getSessionId())
+                                        )
+                                )
+                );
+    }
+
+    /**
+     * Perform NPG payment flow with an apm wallet (PayPal etx). Payment flow is
+     * composed of one request made to NPG: 1) order/build (with PSP selected api
+     * key)
+     *
+     * @param authorizationData the authorization requested data
+     * @return a tuple of orderId, return url, confirm payment response session id
+     *         (empty) and order/build session id
+     */
+    private Mono<Tuple4<String, String, Optional<String>, Optional<String>>> walletNpgApmPaymentFlow(
+                                                                                                     AuthorizationRequestData authorizationData
+    ) {
+        return paymentGatewayClient.requestNpgBuildApmPayment(authorizationData)
+                .filter(orderIdAndFieldsDto -> {
+                    String returnUrl = orderIdAndFieldsDto.getT2().getUrl();
+                    boolean isReturnUrlValued = returnUrl != null && returnUrl.isEmpty();
+                    if (!isReturnUrlValued) {
+                        log.error("NPG order/build wallet APM response error: return url is not valid: {}", returnUrl);
+                    }
+                    return isReturnUrlValued;
+                })
+                .switchIfEmpty(
+                        Mono.error(
+                                new BadGatewayException(
+                                        "NPG order/build response is not valid, missing return url",
+                                        HttpStatus.BAD_GATEWAY
+                                )
+                        )
+                )
+                .map(orderIdAndFieldsDto -> {
+                    transactionTemplateWrapper.save(
+                            new TransactionCacheInfo(
+                                    authorizationData.transactionId(),
+                                    new WalletPaymentInfo(
+                                            orderIdAndFieldsDto.getT2().getSessionId(),
+                                            orderIdAndFieldsDto.getT2().getSecurityToken(),
+                                            orderIdAndFieldsDto.getT1()
+                                    )
+                            )
+                    );
+                    return orderIdAndFieldsDto;
+                }
+                ).map(
+                        orderIdAndFieldsDto -> Tuples.of(
+                                orderIdAndFieldsDto.getT1(),
+                                orderIdAndFieldsDto.getT2().getUrl(), // safe here, return url is checked in above
+                                                                      // filter
+                                Optional.empty(),
+                                Optional.of(orderIdAndFieldsDto.getT2().getSessionId())
+                        )
+                );// safe here, sessionId is checked in requestNpgBuildSession method
     }
 
     private Mono<Tuple3<String, String, Optional<String>>> invokeNpgConfirmPayment(
