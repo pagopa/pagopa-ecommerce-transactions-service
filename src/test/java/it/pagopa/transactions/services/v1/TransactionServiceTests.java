@@ -16,7 +16,8 @@ import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDt
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.*;
 import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.generated.wallet.v1.dto.WalletInfoDto;
+import it.pagopa.generated.wallet.v1.dto.WalletAuthCardDataDto;
+import it.pagopa.generated.wallet.v1.dto.WalletAuthDataDto;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
@@ -1989,8 +1990,9 @@ class TransactionServiceTests {
                 walletClient.getWalletInfo(walletId)
         ).thenReturn(
                 Mono.just(
-                        new WalletInfoDto().walletId(UUID.fromString(walletId)).bin("bin").brand("VISA")
+                        new WalletAuthDataDto().walletId(UUID.fromString(walletId)).brand("VISA")
                                 .contractId(contractId)
+                                .paymentMethodData(new WalletAuthCardDataDto().bin("bin"))
                 )
         );
 
