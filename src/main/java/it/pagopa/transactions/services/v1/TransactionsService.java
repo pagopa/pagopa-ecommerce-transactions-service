@@ -16,6 +16,7 @@ import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.CalculateFeeRequestDt
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.CalculateFeeResponseDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.TransferListItemDto;
 import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.generated.wallet.v1.dto.WalletAuthCardDataDto;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.WalletClient;
 import it.pagopa.transactions.commands.*;
@@ -1294,12 +1295,24 @@ public class TransactionsService {
     private Mono<PaymentSessionData> retrieveInformationFromAuthorizationRequest(RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
         return switch (requestAuthorizationRequestDto.getDetails()) {
             case CardAuthRequestDetailsDto cardData ->
-                    Mono.just(new PaymentSessionData(cardData.getPan().substring(0, 6),null,Optional.of(cardData.getBrand()).map(Enum::toString).orElse(null),null));
+                    Mono.just(new PaymentSessionData(cardData.getPan().substring(0, 6), null, Optional.of(cardData.getBrand()).map(Enum::toString).orElse(null), null));
             case CardsAuthRequestDetailsDto cards ->
-                    ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId()).map(response -> new PaymentSessionData(response.getBin(),response.getSessionId(),response.getBrand(),null));
-            case WalletAuthRequestDetailsDto wallet ->
-                 walletClient.getWalletInfo(wallet.getWalletId()).map(walletInfoDto -> new PaymentSessionData(walletInfoDto.getBin(),null,walletInfoDto.getBrand(),walletInfoDto.getContractId()));
-            default -> Mono.just(new PaymentSessionData(null,null,null,null));
+                    ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId()).map(response -> new PaymentSessionData(response.getBin(), response.getSessionId(), response.getBrand(), null));
+            case WalletAuthRequestDetailsDto wallet -> walletClient
+                    .getWalletInfo(wallet.getWalletId())
+                    .map(walletAuthDataDto -> {
+                        String bin = null;
+                        if (walletAuthDataDto.getPaymentMethodData() instanceof WalletAuthCardDataDto cardsData) {
+                            bin = cardsData.getBin();
+                        }
+                        return new PaymentSessionData(
+                                bin,
+                                null,
+                                walletAuthDataDto.getBrand(),
+                                walletAuthDataDto.getContractId());
+                    });
+
+            default -> Mono.just(new PaymentSessionData(null, null, null, null));
         };
     }
 }
