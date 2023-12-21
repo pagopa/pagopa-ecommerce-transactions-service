@@ -211,10 +211,10 @@ microservice-chart:
     OTEL_TRACES_SAMPLER: "always_on"
     ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service
     ECS_SERVICE_ENVIRONMENT: "prod"
-    NPG_URI: "https://localhost/npg"
+    NPG_URI: "https://xpay.nexigroup.com/api/phoenix-0.0"
     NPG_READ_TIMEOUT: "10000"
     NPG_CONNECTION_TIMEOUT: "10000"
-    NPG_CARDS_PSP_LIST: "" #TODO to be filled with psp id list that are expected to be present into psp api keys configuration
+    NPG_CARDS_PSP_LIST: "BCITITMM,CIPBITMM,BIC36019,UNCRITMM,BPPIITRRXXX,PPAYITR1XXX"
     TRANSACTION_DOCUMENT_TTL: "600"
     CHECKOUT_BASE_PATH: "https://checkout.pagopa.it"
     ECOMMERCE_EVENT_VERSION: "V1"
