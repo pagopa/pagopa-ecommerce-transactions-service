@@ -220,7 +220,27 @@ public class TransactionsController implements TransactionsApi {
                                         _v -> new AddUserReceiptResponseDto()
                                                 .outcome(AddUserReceiptResponseDto.OutcomeEnum.OK)
                                 )
-                                .doOnError(e -> log.error("Got error while trying to add user receipt", e))
+                                .doOnNext(ignored -> updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
+                                        new UpdateTransactionStatusTracerUtils.StatusUpdateInfo(
+                                                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.SEND_PAYMENT_RESULT_OUTCOME,
+                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NODO,
+                                                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK
+                                        )
+                                ))
+                                .doOnError(exception -> {
+                                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.PROCESSING_ERROR;
+                                    if (exception instanceof AlreadyProcessedException) {
+                                        outcome = UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS;
+                                    }
+                                    updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
+                                            new UpdateTransactionStatusTracerUtils.StatusUpdateInfo(
+                                                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.SEND_PAYMENT_RESULT_OUTCOME,
+                                                    UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NODO,
+                                                    outcome
+                                            )
+                                    );
+                                    log.error("Got error while trying to add user receipt", exception);
+                                })
                                 .onErrorMap(SendPaymentResultException::new)
                 )
                 .map(ResponseEntity::ok)
