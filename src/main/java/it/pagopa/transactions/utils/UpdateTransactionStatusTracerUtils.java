@@ -24,21 +24,21 @@ public class UpdateTransactionStatusTracerUtils {
      *
      * @see UpdateTransactionStatusType
      */
-    public static final AttributeKey<String> UPDATE_TRANSACTION_STATUS_TYPE_ATTRIBUTE_KEY = AttributeKey
+    static final AttributeKey<String> UPDATE_TRANSACTION_STATUS_TYPE_ATTRIBUTE_KEY = AttributeKey
             .stringKey("updateTransactionStatus.type");
     /**
      * Spqn attribute used to trace status update outcome
      *
      * @see UpdateTransactionStatusOutcome
      */
-    public static final AttributeKey<String> UPDATE_TRANSACTION_STATUS_OUTCOME_ATTRIBUTE_KEY = AttributeKey
+    static final AttributeKey<String> UPDATE_TRANSACTION_STATUS_OUTCOME_ATTRIBUTE_KEY = AttributeKey
             .stringKey("updateTransactionStatus.outcome");
     /**
      * Spqn attribute used to trace status update trigger
      *
      * @see UpdateTransactionTrigger
      */
-    public static final AttributeKey<String> UPDATE_TRANSACTION_STATUS_TRIGGER_ATTRIBUTE_KEY = AttributeKey
+    static final AttributeKey<String> UPDATE_TRANSACTION_STATUS_TRIGGER_ATTRIBUTE_KEY = AttributeKey
             .stringKey("updateTransactionStatus.trigger");
 
     /**
@@ -101,7 +101,7 @@ public class UpdateTransactionStatusTracerUtils {
         PROCESSING_ERROR
     }
 
-    private static final String UPDATE_TRANSACTION_STATUS_SPAN_NAME = "Transaction status updated";
+    static final String UPDATE_TRANSACTION_STATUS_SPAN_NAME = "Transaction status updated";
 
     @Autowired
     public UpdateTransactionStatusTracerUtils(OpenTelemetryUtils openTelemetryUtils) {

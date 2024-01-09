@@ -162,9 +162,9 @@ public class TransactionsController implements TransactionsApi {
                                         case OutcomeNpgGatewayDto ignored1 ->
                                                 UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG;
                                         case OutcomeVposGatewayDto ignored2 ->
-                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY;
-                                        case OutcomeXpayGatewayDto ignored3 ->
                                                 UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS;
+                                        case OutcomeXpayGatewayDto ignored3 ->
+                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY;
                                         default ->
                                                 throw new InvalidRequestException("Unmanaged trigger for transaction status update: [%s]".formatted(updateAuthorizationRequest.getOutcomeGateway()));
                                     };
