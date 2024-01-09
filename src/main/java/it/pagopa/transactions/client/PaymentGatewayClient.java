@@ -422,13 +422,14 @@ public class PaymentGatewayClient {
                 )
                 .filter(
                         orderIdAndFieldsDto -> {
-                            WorkflowStateDto receivedState = orderIdAndFieldsDto.getT2().getState();
-                            boolean sessionIdValid = orderIdAndFieldsDto.getT2().getSessionId() != null
-                                    && !orderIdAndFieldsDto.getT2().getSessionId().isEmpty();
-                            boolean securityTokenValid = orderIdAndFieldsDto.getT2().getSecurityToken() != null
-                                    && !orderIdAndFieldsDto.getT2().getSecurityToken().isEmpty();
+                            FieldsDto fields = orderIdAndFieldsDto.getT2();
+                            WorkflowStateDto receivedState = fields.getState();
+                            boolean sessionIdValid = fields.getSessionId() != null
+                                    && !fields.getSessionId().isEmpty();
+                            boolean securityTokenValid = fields.getSecurityToken() != null
+                                    && !fields.getSecurityToken().isEmpty();
                             boolean isOk = sessionIdValid && securityTokenValid && Objects
-                                    .equals(orderIdAndFieldsDto.getT2().getState(), expectedResponseState);
+                                    .equals(fields.getState(), expectedResponseState);
                             if (!isOk) {
                                 log.error(
                                         "NPG order/build response error! Received state: [{}], expected state: [{}]. Session id is valid: [{}], security token is valid: [{}]",
