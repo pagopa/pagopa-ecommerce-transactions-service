@@ -220,13 +220,15 @@ public class TransactionsController implements TransactionsApi {
                                         _v -> new AddUserReceiptResponseDto()
                                                 .outcome(AddUserReceiptResponseDto.OutcomeEnum.OK)
                                 )
-                                .doOnNext(ignored -> updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
-                                        new UpdateTransactionStatusTracerUtils.StatusUpdateInfo(
-                                                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.SEND_PAYMENT_RESULT_OUTCOME,
-                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NODO,
-                                                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK
+                                .doOnNext(
+                                        ignored -> updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
+                                                new UpdateTransactionStatusTracerUtils.StatusUpdateInfo(
+                                                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.SEND_PAYMENT_RESULT_OUTCOME,
+                                                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NODO,
+                                                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK
+                                                )
                                         )
-                                ))
+                                )
                                 .doOnError(exception -> {
                                     UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.PROCESSING_ERROR;
                                     if (exception instanceof AlreadyProcessedException) {
