@@ -1,8 +1,6 @@
 package it.pagopa.transactions.commands.handlers.v1;
 
-import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
-import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
@@ -266,11 +264,9 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
             openTelemetryUtils.addSpanWithAttributes(
                     OpenTelemetryUtils.REPEATED_ACTIVATION_SPAN_NAME,
                     Attributes.of(
-                            AttributeKey.stringKey(OpenTelemetryUtils.REPEATED_ACTIVATION_PAYMENT_TOKEN_ATTRIBUTE_KEY),
+                            OpenTelemetryUtils.REPEATED_ACTIVATION_PAYMENT_TOKEN_ATTRIBUTE_KEY,
                             paymentToken,
-                            AttributeKey.longKey(
-                                    OpenTelemetryUtils.REPEATED_ACTIVATION_PAYMENT_TOKEN_LEFT_TIME_ATTRIBUTE_KEY
-                            ),
+                            OpenTelemetryUtils.REPEATED_ACTIVATION_PAYMENT_TOKEN_LEFT_TIME_ATTRIBUTE_KEY,
                             paymentTokenValidityTimeLeft.getSeconds()
                     )
             );

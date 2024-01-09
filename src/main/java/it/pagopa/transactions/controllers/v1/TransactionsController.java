@@ -11,6 +11,7 @@ import it.pagopa.transactions.mdcutilities.TransactionTracingUtils;
 import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
+import it.pagopa.transactions.utils.UpdateTransactionStatusTracerUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -42,6 +43,9 @@ public class TransactionsController implements TransactionsApi {
 
     @Autowired
     private UUIDUtils uuidUtils;
+
+    @Autowired
+    private UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
 
     @ExceptionHandler(
         {
@@ -138,9 +142,9 @@ public class TransactionsController implements TransactionsApi {
 
     @Override
     public Mono<ResponseEntity<TransactionInfoDto>> updateTransactionAuthorization(
-                                                                                   String transactionId,
-                                                                                   Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto,
-                                                                                   ServerWebExchange exchange
+            String transactionId,
+            Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto,
+            ServerWebExchange exchange
     ) {
         return uuidUtils.uuidFromBase64(transactionId).fold(
                 Mono::error,
@@ -153,11 +157,43 @@ public class TransactionsController implements TransactionsApi {
                                 )
                         )
                         .flatMap(
-                                updateAuthorizationRequest -> transactionsService
-                                        .updateTransactionAuthorization(
-                                                transactionIdDecoded,
-                                                updateAuthorizationRequest
-                                        )
+                                updateAuthorizationRequest -> {
+                                    UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger trigger = switch (updateAuthorizationRequest.getOutcomeGateway()) {
+                                        case OutcomeNpgGatewayDto ignored1 ->
+                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG;
+                                        case OutcomeVposGatewayDto ignored2 ->
+                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY;
+                                        case OutcomeXpayGatewayDto ignored3 ->
+                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS;
+                                        default ->
+                                                throw new InvalidRequestException("Unmanaged trigger for transaction status update: [%s]".formatted(updateAuthorizationRequest.getOutcomeGateway()));
+                                    };
+                                    return transactionsService
+                                            .updateTransactionAuthorization(
+                                                    transactionIdDecoded,
+                                                    updateAuthorizationRequest
+                                            )
+                                            .doOnNext(ignored -> updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
+                                                    new UpdateTransactionStatusTracerUtils.StatusUpdateInfo(
+                                                            UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.AUTHORIZATION_OUTCOME,
+                                                            trigger,
+                                                            UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK
+                                                    )
+                                            ))
+                                            .doOnError(exception -> {
+                                                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.PROCESSING_ERROR;
+                                                if (exception instanceof AlreadyProcessedException) {
+                                                    outcome = UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS;
+                                                }
+                                                updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
+                                                        new UpdateTransactionStatusTracerUtils.StatusUpdateInfo(
+                                                                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.AUTHORIZATION_OUTCOME,
+                                                                trigger,
+                                                                outcome
+                                                        )
+                                                );
+                                            });
+                                }
                         )
                         .map(ResponseEntity::ok)
                         .contextWrite(

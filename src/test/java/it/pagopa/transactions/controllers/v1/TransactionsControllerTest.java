@@ -14,6 +14,7 @@ import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
+import it.pagopa.transactions.utils.UpdateTransactionStatusTracerUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -78,6 +79,9 @@ class TransactionsControllerTest {
 
     @MockBean
     private UniqueIdUtils uniqueIdUtils;
+
+    @MockBean
+    private UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
 
     @Mock
     ServerWebExchange mockExchange;
