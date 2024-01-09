@@ -213,6 +213,8 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                             new TransactionCacheInfo(
                                     authorizationData.transactionId(),
                                     new WalletPaymentInfo(
+                                            // safe here: session id and security token presence are checked in
+                                            // requestNpgBuildSession method
                                             orderIdAndFieldsDto.getT2().getSessionId(),
                                             orderIdAndFieldsDto.getT2().getSecurityToken(),
                                             orderIdAndFieldsDto.getT1()
@@ -222,16 +224,32 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                     return orderIdAndFieldsDto;
                 }
                 ).map(
+                        /*
+                         * For APM payments eCommerce performs a single order/build api call to NPG.
+                         * Since no confirmPayment api call is performed here there will be no
+                         * confirmSessionId to be valued (the 3rd parameter, see above javadoc for
+                         * returned parameter order) and then the hardcoded Optional.empty() confirm
+                         * session id
+                         */
                         orderIdAndFieldsDto -> Tuples.of(
-                                orderIdAndFieldsDto.getT1(),
-                                orderIdAndFieldsDto.getT2().getUrl(), // safe here, return url is checked in above
-                                // filter
-                                Optional.empty(),
-                                Optional.of(orderIdAndFieldsDto.getT2().getSessionId())
+                                orderIdAndFieldsDto.getT1(), // orderId
+                                // safe here, return url is checked in above filter
+                                orderIdAndFieldsDto.getT2().getUrl(), // redirect url
+                                Optional.empty(), // confirm session id
+                                // safe here, sessionId is checked in requestNpgBuildSession method
+                                Optional.of(orderIdAndFieldsDto.getT2().getSessionId())// order/build session id
                         )
-                );// safe here, sessionId is checked in requestNpgBuildSession method
+                );
     }
 
+    /**
+     * @param authorizationData authorization data
+     * @param orderId           order id to be used for confirm payment
+     * @param isWalletPayment   boolean flag for distinguish payment requests coming
+     *                          from wallet or guest flows
+     * @return a tuple containing order id, return url and confirm payment session
+     *         id
+     */
     private Mono<Tuple3<String, String, Optional<String>>> invokeNpgConfirmPayment(
                                                                                    AuthorizationRequestData authorizationData,
                                                                                    String orderId,
