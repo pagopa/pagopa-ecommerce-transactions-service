@@ -1013,6 +1013,30 @@ class TransactionsControllerTest {
                         new AlreadyProcessedException(new TransactionId(TransactionTestUtils.TRANSACTION_ID))
                 ),
                 Arguments.of(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.TRANSACTION_NOT_FOUND,
+                        new TransactionNotFoundException(TransactionTestUtils.PAYMENT_TOKEN)
+                ),
+                Arguments.of(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
+                        new UnsatisfiablePspRequestException(
+                                new PaymentToken(TransactionTestUtils.PAYMENT_TOKEN),
+                                RequestAuthorizationRequestDto.LanguageEnum.IT,
+                                0
+                        )
+                ),
+                Arguments.of(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
+                        new TransactionAmountMismatchException(0, 1)
+                ),
+                Arguments.of(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
+                        new PaymentNoticeAllCCPMismatchException("rptId", true, false)
+                ),
+                Arguments.of(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
+                        new InvalidRequestException("Invalid request exception")
+                ),
+                Arguments.of(
                         UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.PROCESSING_ERROR,
                         new RuntimeException("Error processing request")
                 )

@@ -95,6 +95,17 @@ public class UpdateTransactionStatusTracerUtils {
         WRONG_TRANSACTION_STATUS,
 
         /**
+         * Error processing transaction status update: cannot found transaction for
+         * input transaction id
+         */
+        TRANSACTION_NOT_FOUND,
+
+        /**
+         * Error processing transaction status update: the input request is invalid
+         */
+        INVALID_REQUEST,
+
+        /**
          * Error processing transaction status update: an unexpected error has occurred
          * processing transaction update state
          */
