@@ -1,7 +1,8 @@
 package it.pagopa.transactions.client;
 
 import it.pagopa.generated.wallet.v1.api.WalletsApi;
-import it.pagopa.generated.wallet.v1.dto.WalletInfoDto;
+import it.pagopa.generated.wallet.v1.dto.WalletAuthCardDataDto;
+import it.pagopa.generated.wallet.v1.dto.WalletAuthDataDto;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,7 +13,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+
 import java.util.UUID;
+
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,11 +31,11 @@ public class WalletClientTest {
     void shouldReturnWalletInfo() {
         UUID WALLET_ID = UUID.randomUUID();
 
-        WalletInfoDto walletTestResponseDto = new WalletInfoDto()
-                .bin("bin")
+        WalletAuthDataDto walletTestResponseDto = new WalletAuthDataDto()
                 .walletId(WALLET_ID)
                 .brand("brand")
-                .contractId("contractId");
+                .contractId("contractId")
+                .paymentMethodData(new WalletAuthCardDataDto().bin("bin"));
 
         when(walletsApi.getWalletAuthDataById(WALLET_ID))
                 .thenReturn(Mono.just(walletTestResponseDto));
