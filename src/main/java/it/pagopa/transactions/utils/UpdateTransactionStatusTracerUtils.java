@@ -189,7 +189,7 @@ public class UpdateTransactionStatusTracerUtils {
                 case OutcomeNpgGatewayDto ignored -> UpdateTransactionTrigger.NPG;
                 case OutcomeXpayGatewayDto ignored -> UpdateTransactionTrigger.PGS_XPAY;
                 case OutcomeVposGatewayDto ignored -> UpdateTransactionTrigger.PGS_VPOS;
-                default -> UpdateTransactionTrigger.UNKNOWN;
+                case null, default -> UpdateTransactionTrigger.UNKNOWN;
             };
         }
 
