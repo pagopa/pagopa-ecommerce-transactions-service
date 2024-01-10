@@ -20,7 +20,7 @@ paths:
     post:
       tags:
         - b2b - PSP side
-      operationId: PostRedirectUrl
+      operationId: RetrieveRedirectUrl
       summary: Retrieve redirect URL
       description: Retrieve redirect URL to be followed to perform transaction payment
       security:
@@ -72,7 +72,7 @@ paths:
     delete:
       tags:
         - b2b - PSP side
-      operationId: DeleteRedirectedTransaction
+      operationId: RefundTransaction
       summary: Api for refund
       description: Perform a refund for a transaction
       security:
@@ -141,7 +141,7 @@ paths:
     post:
       tags:
         - b2b - pagoPA side
-      operationId: PostRedirectionOutcome
+      operationId: CallbackOutcome
       summary: Callback API for communicate authorization outcome
       description: Communicate the outcome for the authorization process
       security:
@@ -217,6 +217,21 @@ components:
     ProblemJson:
       type: object
       properties:
+        type:
+          type: string
+          format: uri
+          description: |-
+            An absolute URI that identifies the problem type. When dereferenced,
+            it SHOULD provide human-readable documentation for the problem type
+            (e.g., using HTML).
+          default: about:blank
+          example: https://example.com/problem/constraint-violation
+        title:
+          type: string
+          description: |-
+            A short, summary of the problem type. Written in english and readable
+            for engineers (usually not suited for non technical stakeholders and
+            not localized); example: Service Unavailable
         status:
           $ref: '#/components/schemas/HttpStatusCode'
         detail:
@@ -225,6 +240,12 @@ components:
             A human readable explanation specific to this occurrence of the
             problem.
           example: There was an error processing the request
+        instance:
+          type: string
+          format: uri
+          description: |-
+            An absolute URI that identifies the specific occurrence of the problem.
+            It may or may not yield further information if dereferenced.
         idTransaction:
           $ref: '#/components/schemas/PagopaIdTransaction'
     HttpStatusCode:
@@ -321,6 +342,7 @@ components:
     AmountEuroCents:
       description: Amount for payments, in euro cents
       type: integer
+      format: int32
       minimum: 0
       maximum: 99999999
     PagopaIdTransaction:
