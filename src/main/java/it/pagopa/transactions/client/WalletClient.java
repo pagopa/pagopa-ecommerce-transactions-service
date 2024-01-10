@@ -1,7 +1,7 @@
 package it.pagopa.transactions.client;
 
 import it.pagopa.generated.wallet.v1.api.WalletsApi;
-import it.pagopa.generated.wallet.v1.dto.WalletInfoDto;
+import it.pagopa.generated.wallet.v1.dto.WalletAuthDataDto;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +24,8 @@ public class WalletClient {
         this.walletWebClient = walletWebClient;
     }
 
-    public Mono<WalletInfoDto> getWalletInfo(
-                                             String walletId
+    public Mono<WalletAuthDataDto> getWalletInfo(
+                                                 String walletId
 
     ) {
         return walletWebClient
