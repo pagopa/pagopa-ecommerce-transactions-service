@@ -1278,7 +1278,10 @@ class TransactionsControllerTest {
                                 null
                         )
         )
-                .expectErrorMatches(exc -> exc instanceof SendPaymentResultException && ((SendPaymentResultException)exc).cause.equals(raisedException))
+                .expectErrorMatches(
+                        exc -> exc instanceof SendPaymentResultException
+                                && ((SendPaymentResultException) exc).cause.equals(raisedException)
+                )
                 .verify();
 
         UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.StatusUpdateInfo(
