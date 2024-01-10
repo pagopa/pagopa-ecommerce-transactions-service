@@ -219,10 +219,9 @@ public class TransactionsController implements TransactionsApi {
                                         )
                                 )
                                 .doOnError(exception -> {
-                                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.PROCESSING_ERROR;
-                                    if (exception instanceof AlreadyProcessedException) {
-                                        outcome = UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS;
-                                    }
+                                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = exceptionToUpdateStatusOutcome(
+                                            exception
+                                    );
                                     updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
                                             new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(outcome)
                                     );
