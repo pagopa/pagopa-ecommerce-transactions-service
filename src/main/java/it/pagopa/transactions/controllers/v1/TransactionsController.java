@@ -181,22 +181,7 @@ public class TransactionsController implements TransactionsApi {
                                                     )
                                             ))
                                             .doOnError(exception -> {
-                                                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = switch (exception) {
-                                                    case AlreadyProcessedException ignored ->
-                                                            UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS;
-                                                    case TransactionNotFoundException ignored ->
-                                                            UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.TRANSACTION_NOT_FOUND;
-                                                    case UnsatisfiablePspRequestException ignored ->
-                                                            UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST;
-                                                    case TransactionAmountMismatchException ignored ->
-                                                            UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST;
-                                                    case PaymentNoticeAllCCPMismatchException ignored ->
-                                                            UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST;
-                                                    case InvalidRequestException ignored ->
-                                                            UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST;
-                                                    default ->
-                                                            UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.PROCESSING_ERROR;
-                                                };
+                                                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = exceptionToUpdateStatusOutcome(exception);
                                                 updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
                                                         new UpdateTransactionStatusTracerUtils.StatusUpdateInfo(
                                                                 UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.AUTHORIZATION_OUTCOME,
@@ -248,6 +233,32 @@ public class TransactionsController implements TransactionsApi {
                                 context
                         )
                 );
+    }
+
+    /**
+     * This method maps input throwable to proper {@link UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome} enumeration
+     *
+     * @param throwable the caught throwable
+     * @return the mapped outcome to be traced
+     */
+    private UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome exceptionToUpdateStatusOutcome(Throwable throwable) {
+        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = switch (throwable) {
+            case AlreadyProcessedException ignored ->
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS;
+            case TransactionNotFoundException ignored ->
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.TRANSACTION_NOT_FOUND;
+            case UnsatisfiablePspRequestException ignored ->
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST;
+            case TransactionAmountMismatchException ignored ->
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST;
+            case PaymentNoticeAllCCPMismatchException ignored ->
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST;
+            case InvalidRequestException ignored ->
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST;
+            default -> UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.PROCESSING_ERROR;
+        };
+        log.error("Exception processing request. [{}] mapped to [{}]", throwable, outcome);
+        return outcome;
     }
 
     @Override
