@@ -1177,9 +1177,7 @@ class TransactionsControllerTest {
                 })
                 .verifyComplete();
 
-        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedTransactionUpdateStatus = new UpdateTransactionStatusTracerUtils.StatusUpdateInfo(
-                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.SEND_PAYMENT_RESULT_OUTCOME,
-                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NODO,
+        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedTransactionUpdateStatus = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
                 UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK
         );
         verify(updateTransactionStatusTracerUtils, times(1))
@@ -1240,9 +1238,7 @@ class TransactionsControllerTest {
                 )
                 .verify();
 
-        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.StatusUpdateInfo(
-                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.SEND_PAYMENT_RESULT_OUTCOME,
-                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NODO,
+        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
                 expectedOutcome
         );
         verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(

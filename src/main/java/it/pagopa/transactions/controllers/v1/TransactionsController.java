@@ -213,9 +213,7 @@ public class TransactionsController implements TransactionsApi {
                                 )
                                 .doOnNext(
                                         ignored -> updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
-                                                new UpdateTransactionStatusTracerUtils.StatusUpdateInfo(
-                                                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.SEND_PAYMENT_RESULT_OUTCOME,
-                                                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NODO,
+                                                new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
                                                         UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK
                                                 )
                                         )
@@ -226,11 +224,7 @@ public class TransactionsController implements TransactionsApi {
                                         outcome = UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS;
                                     }
                                     updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
-                                            new UpdateTransactionStatusTracerUtils.StatusUpdateInfo(
-                                                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.SEND_PAYMENT_RESULT_OUTCOME,
-                                                    UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NODO,
-                                                    outcome
-                                            )
+                                            new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(outcome)
                                     );
                                     log.error("Got error while trying to add user receipt", exception);
                                 })
