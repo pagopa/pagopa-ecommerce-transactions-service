@@ -142,9 +142,9 @@ public class TransactionsController implements TransactionsApi {
 
     @Override
     public Mono<ResponseEntity<TransactionInfoDto>> updateTransactionAuthorization(
-            String transactionId,
-            Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto,
-            ServerWebExchange exchange
+                                                                                   String transactionId,
+                                                                                   Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto,
+                                                                                   ServerWebExchange exchange
     ) {
         return uuidUtils.uuidFromBase64(transactionId).fold(
                 Mono::error,
@@ -157,40 +157,31 @@ public class TransactionsController implements TransactionsApi {
                                 )
                         )
                         .flatMap(
-                                updateAuthorizationRequest -> {
-                                    UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger trigger = switch (updateAuthorizationRequest.getOutcomeGateway()) {
-                                        case OutcomeNpgGatewayDto ignored ->
-                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG;
-                                        case OutcomeVposGatewayDto ignored ->
-                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS;
-                                        case OutcomeXpayGatewayDto ignored ->
-                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY;
-                                        default ->
-                                                throw new InvalidRequestException("Unmanaged trigger for transaction status update: [%s]".formatted(updateAuthorizationRequest.getOutcomeGateway()));
-                                    };
-                                    return transactionsService
-                                            .updateTransactionAuthorization(
-                                                    transactionIdDecoded,
-                                                    updateAuthorizationRequest
-                                            )
-                                            .doOnNext(ignored -> updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
-                                                    new UpdateTransactionStatusTracerUtils.StatusUpdateInfo(
-                                                            UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.AUTHORIZATION_OUTCOME,
-                                                            trigger,
-                                                            UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK
-                                                    )
-                                            ))
-                                            .doOnError(exception -> {
-                                                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = exceptionToUpdateStatusOutcome(exception);
-                                                updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
-                                                        new UpdateTransactionStatusTracerUtils.StatusUpdateInfo(
-                                                                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.AUTHORIZATION_OUTCOME,
-                                                                trigger,
-                                                                outcome
+                                updateAuthorizationRequest -> transactionsService
+                                        .updateTransactionAuthorization(
+                                                transactionIdDecoded,
+                                                updateAuthorizationRequest
+                                        )
+                                        .doOnNext(
+                                                ignored -> updateTransactionStatusTracerUtils
+                                                        .traceStatusUpdateOperation(
+                                                                new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
+                                                                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
+                                                                        updateAuthorizationRequest.getOutcomeGateway()
+                                                                )
                                                         )
-                                                );
-                                            });
-                                }
+                                        )
+                                        .doOnError(exception -> {
+                                            UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = exceptionToUpdateStatusOutcome(
+                                                    exception
+                                            );
+                                            updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
+                                                    new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
+                                                            outcome,
+                                                            updateAuthorizationRequest.getOutcomeGateway()
+                                                    )
+                                            );
+                                        })
                         )
                         .map(ResponseEntity::ok)
                         .contextWrite(
@@ -350,20 +341,19 @@ public class TransactionsController implements TransactionsApi {
     }
 
     private void traceInvalidRequestException(String contextPath) {
-        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType type = null;
+        UpdateTransactionStatusTracerUtils.StatusUpdateInfo statusUpdateInfo = null;
         if (contextPath.endsWith("auth-requests")) {
-            type = UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.AUTHORIZATION_OUTCOME;
-        } else if (contextPath.endsWith("user-receipts")) {
-            type = UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.SEND_PAYMENT_RESULT_OUTCOME;
-        }
-        if (type != null) {
-            updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
-                    new UpdateTransactionStatusTracerUtils.StatusUpdateInfo(
-                            type,
-                            UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.UNKNOWN,
-                            UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST
-                    )
+            statusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
+                    null
             );
+        } else if (contextPath.endsWith("user-receipts")) {
+            statusUpdateInfo = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST
+            );
+        }
+        if (statusUpdateInfo != null) {
+            updateTransactionStatusTracerUtils.traceStatusUpdateOperation(statusUpdateInfo);
         }
     }
 
