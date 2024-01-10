@@ -27,7 +27,7 @@ public class UpdateTransactionStatusTracerUtils {
     static final AttributeKey<String> UPDATE_TRANSACTION_STATUS_TYPE_ATTRIBUTE_KEY = AttributeKey
             .stringKey("updateTransactionStatus.type");
     /**
-     * Spqn attribute used to trace status update outcome
+     * Span attribute used to trace status update outcome
      *
      * @see UpdateTransactionStatusOutcome
      */
