@@ -2289,9 +2289,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new ArrayList<>(),
                                 false
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -2404,9 +2402,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new ArrayList<>(),
                                 false
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
