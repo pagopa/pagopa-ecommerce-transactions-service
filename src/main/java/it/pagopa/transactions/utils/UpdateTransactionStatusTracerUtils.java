@@ -78,7 +78,12 @@ public class UpdateTransactionStatusTracerUtils {
         /**
          * Transaction status update triggered by PGS (XPAY)
          */
-        PGS_XPAY
+        PGS_XPAY,
+
+        /**
+         * Used when cannot derive transaction status update trigger
+         */
+        UNKNOWN
     }
 
     /**

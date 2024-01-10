@@ -349,8 +349,30 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
+    private void traceInvalidRequestException(String contextPath) {
+        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType type = null;
+        if (contextPath.endsWith("auth-requests")) {
+            type = UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.AUTHORIZATION_OUTCOME;
+        } else if (contextPath.endsWith("user-receipts")) {
+            type = UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.SEND_PAYMENT_RESULT_OUTCOME;
+        }
+        if (type != null) {
+            updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
+                    new UpdateTransactionStatusTracerUtils.StatusUpdateInfo(
+                            type,
+                            UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.UNKNOWN,
+                            UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST
+                    )
+            );
+        }
+    }
+
     @ExceptionHandler(WebExchangeBindException.class)
-    ResponseEntity<ProblemJsonDto> validationExceptionHandler(WebExchangeBindException exception) {
+    ResponseEntity<ProblemJsonDto> validationExceptionHandler(
+                                                              WebExchangeBindException exception,
+                                                              ServerWebExchange exchange
+    ) {
+        traceInvalidRequestException(exchange.getRequest().getPath().value());
         String errorMessage = exception.getAllErrors().stream().map(ObjectError::toString)
                 .collect(Collectors.joining(", "));
 
@@ -400,8 +422,12 @@ public class TransactionsController implements TransactionsApi {
                 ConstraintViolationException.class
         }
     )
-    ResponseEntity<ProblemJsonDto> validationExceptionHandler(Exception exception) {
+    ResponseEntity<ProblemJsonDto> validationExceptionHandler(
+                                                              Exception exception,
+                                                              ServerWebExchange exchange
+    ) {
         log.warn("Got invalid input: {}", exception.getMessage());
+        traceInvalidRequestException(exchange.getRequest().getPath().value());
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(400)

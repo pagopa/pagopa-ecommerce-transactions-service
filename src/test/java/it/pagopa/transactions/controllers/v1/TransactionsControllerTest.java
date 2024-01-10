@@ -35,6 +35,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.server.RequestPath;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -54,6 +55,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -619,8 +621,14 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnResponseEntityWithBadRequest() {
+        ServerWebExchange exchange = Mockito.mock(ServerWebExchange.class);
+        ServerHttpRequest serverHttpRequest = Mockito.mock(ServerHttpRequest.class);
+        RequestPath requestPath = Mockito.mock(RequestPath.class);
+        given(exchange.getRequest()).willReturn(serverHttpRequest);
+        given(serverHttpRequest.getPath()).willReturn(requestPath);
+        given(requestPath.value()).willReturn("");
         ResponseEntity<ProblemJsonDto> responseEntity = transactionsController
-                .validationExceptionHandler(new InvalidRequestException("Some message"));
+                .validationExceptionHandler(new InvalidRequestException("Some message"), exchange);
         assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
         assertEquals("Invalid request: Some message", responseEntity.getBody().getDetail());
     }
@@ -1102,6 +1110,61 @@ class TransactionsControllerTest {
                 .expectError(InvalidRequestException.class)
                 .verify();
 
+        verify(updateTransactionStatusTracerUtils, times(0)).traceStatusUpdateOperation(any());
+    }
+
+    private static Stream<Arguments> syntacticInvalidRequestMethodSource() {
+        return Stream.of(
+                Arguments.of(
+                        "auth-requests",
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.AUTHORIZATION_OUTCOME
+                ),
+                Arguments.of(
+                        "user-receipts",
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.SEND_PAYMENT_RESULT_OUTCOME
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("syntacticInvalidRequestMethodSource")
+    void shouldTraceSyntacticInvalidRequest(
+                                            String contextPath,
+                                            UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType expectedType
+    ) {
+        ServerWebExchange exchange = Mockito.mock(ServerWebExchange.class);
+        ServerHttpRequest serverHttpRequest = Mockito.mock(ServerHttpRequest.class);
+        RequestPath requestPath = Mockito.mock(RequestPath.class);
+        given(exchange.getRequest()).willReturn(serverHttpRequest);
+        given(serverHttpRequest.getPath()).willReturn(requestPath);
+        given(requestPath.value()).willReturn(contextPath);
+
+        ResponseEntity<ProblemJsonDto> responseEntity = transactionsController
+                .validationExceptionHandler(new InvalidRequestException("Some message"), exchange);
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertEquals("Invalid request: Some message", responseEntity.getBody().getDetail());
+        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.StatusUpdateInfo(
+                expectedType,
+                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.UNKNOWN,
+                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST
+        );
+        verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
+                expectedStatusUpdateInfo
+        );
+    }
+
+    @Test
+    void shouldNotTraceInvalidRequestExceptionForUnmanagedPaths() {
+        ServerWebExchange exchange = Mockito.mock(ServerWebExchange.class);
+        ServerHttpRequest serverHttpRequest = Mockito.mock(ServerHttpRequest.class);
+        RequestPath requestPath = Mockito.mock(RequestPath.class);
+        given(exchange.getRequest()).willReturn(serverHttpRequest);
+        given(serverHttpRequest.getPath()).willReturn(requestPath);
+        given(requestPath.value()).willReturn("unmanagedPath");
+        ResponseEntity<ProblemJsonDto> responseEntity = transactionsController
+                .validationExceptionHandler(new InvalidRequestException("Some message"), exchange);
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertEquals("Invalid request: Some message", responseEntity.getBody().getDetail());
         verify(updateTransactionStatusTracerUtils, times(0)).traceStatusUpdateOperation(any());
     }
 
