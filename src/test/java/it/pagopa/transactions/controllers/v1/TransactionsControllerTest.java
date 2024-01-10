@@ -1018,22 +1018,6 @@ class TransactionsControllerTest {
                 ),
                 Arguments.of(
                         UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
-                        new UnsatisfiablePspRequestException(
-                                new PaymentToken(TransactionTestUtils.PAYMENT_TOKEN),
-                                RequestAuthorizationRequestDto.LanguageEnum.IT,
-                                0
-                        )
-                ),
-                Arguments.of(
-                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
-                        new TransactionAmountMismatchException(0, 1)
-                ),
-                Arguments.of(
-                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
-                        new PaymentNoticeAllCCPMismatchException("rptId", true, false)
-                ),
-                Arguments.of(
-                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
                         new InvalidRequestException("Invalid request exception")
                 ),
                 Arguments.of(
