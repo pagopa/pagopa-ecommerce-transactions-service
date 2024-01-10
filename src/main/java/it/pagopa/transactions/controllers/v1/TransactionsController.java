@@ -159,11 +159,11 @@ public class TransactionsController implements TransactionsApi {
                         .flatMap(
                                 updateAuthorizationRequest -> {
                                     UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger trigger = switch (updateAuthorizationRequest.getOutcomeGateway()) {
-                                        case OutcomeNpgGatewayDto ignored1 ->
+                                        case OutcomeNpgGatewayDto ignored ->
                                                 UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG;
-                                        case OutcomeVposGatewayDto ignored2 ->
+                                        case OutcomeVposGatewayDto ignored ->
                                                 UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS;
-                                        case OutcomeXpayGatewayDto ignored3 ->
+                                        case OutcomeXpayGatewayDto ignored ->
                                                 UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY;
                                         default ->
                                                 throw new InvalidRequestException("Unmanaged trigger for transaction status update: [%s]".formatted(updateAuthorizationRequest.getOutcomeGateway()));
