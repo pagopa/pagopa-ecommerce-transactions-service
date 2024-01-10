@@ -1278,7 +1278,7 @@ class TransactionsControllerTest {
                                 null
                         )
         )
-                .expectError(SendPaymentResultException.class)
+                .expectError(raisedException.getClass())
                 .verify();
 
         UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.StatusUpdateInfo(
