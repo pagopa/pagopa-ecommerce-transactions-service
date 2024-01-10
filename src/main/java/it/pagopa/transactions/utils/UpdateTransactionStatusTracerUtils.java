@@ -2,6 +2,10 @@ package it.pagopa.transactions.utils;
 
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
+import it.pagopa.generated.transactions.server.model.OutcomeNpgGatewayDto;
+import it.pagopa.generated.transactions.server.model.OutcomeVposGatewayDto;
+import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
+import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestOutcomeGatewayDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -132,26 +136,74 @@ public class UpdateTransactionStatusTracerUtils {
     public void traceStatusUpdateOperation(StatusUpdateInfo statusUpdateInfo) {
         Attributes spanAttributes = Attributes.of(
                 UPDATE_TRANSACTION_STATUS_TYPE_ATTRIBUTE_KEY,
-                statusUpdateInfo.type.toString(),
+                statusUpdateInfo.type().toString(),
                 UPDATE_TRANSACTION_STATUS_OUTCOME_ATTRIBUTE_KEY,
-                statusUpdateInfo.outcome.toString(),
+                statusUpdateInfo.outcome().toString(),
                 UPDATE_TRANSACTION_STATUS_TRIGGER_ATTRIBUTE_KEY,
-                statusUpdateInfo.trigger.toString()
+                statusUpdateInfo.trigger().toString()
         );
         openTelemetryUtils.addSpanWithAttributes(UPDATE_TRANSACTION_STATUS_SPAN_NAME, spanAttributes);
     }
 
     /**
-     * Transaction status update information
+     * Transaction status update record for Nodo update trigger
      *
-     * @param type    - status update type
-     * @param trigger - status update trigger
-     * @param outcome - status update outcome
+     * @param outcome - the transaction update outcome
      */
-    public record StatusUpdateInfo(
-            UpdateTransactionStatusType type,
-            UpdateTransactionTrigger trigger,
-            UpdateTransactionStatusOutcome outcome
-    ) {
+    public record NodoStatusUpdate(UpdateTransactionStatusOutcome outcome)
+            implements
+            StatusUpdateInfo {
+        @Override
+        public UpdateTransactionStatusType type() {
+            return UpdateTransactionStatusType.SEND_PAYMENT_RESULT_OUTCOME;
+        }
+
+        @Override
+        public UpdateTransactionTrigger trigger() {
+            return UpdateTransactionTrigger.NODO;
+        }
+
     }
+
+    /**
+     * Transaction status update record for payment transaction gateway update
+     * trigger
+     *
+     * @param outcome           - the transaction update status outcome
+     * @param outcomeGatewayDto - the request gateway dto
+     */
+    public record PaymentGatewayStatusUpdate(
+            UpdateTransactionStatusOutcome outcome,
+            UpdateAuthorizationRequestOutcomeGatewayDto outcomeGatewayDto
+    )
+            implements
+            StatusUpdateInfo {
+        @Override
+        public UpdateTransactionStatusType type() {
+            return UpdateTransactionStatusType.AUTHORIZATION_OUTCOME;
+        }
+
+        @Override
+        public UpdateTransactionTrigger trigger() {
+            return switch (outcomeGatewayDto) {
+                case OutcomeNpgGatewayDto ignored -> UpdateTransactionTrigger.NPG;
+                case OutcomeXpayGatewayDto ignored -> UpdateTransactionTrigger.PGS_XPAY;
+                case OutcomeVposGatewayDto ignored -> UpdateTransactionTrigger.PGS_VPOS;
+                default -> UpdateTransactionTrigger.UNKNOWN;
+            };
+        }
+
+    }
+
+    /**
+     * Common interface for all status update information
+     */
+    public interface StatusUpdateInfo {
+        UpdateTransactionStatusType type();
+
+        UpdateTransactionTrigger trigger();
+
+        UpdateTransactionStatusOutcome outcome();
+    }
+
 }

@@ -14,8 +14,8 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class UpdateTransactionStatusTracerUtilsTest {
 
-    private OpenTelemetryUtils openTelemetryUtils = Mockito.mock(OpenTelemetryUtils.class);
-    private UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils = new UpdateTransactionStatusTracerUtils(
+    private final OpenTelemetryUtils openTelemetryUtils = Mockito.mock(OpenTelemetryUtils.class);
+    private final UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils = new UpdateTransactionStatusTracerUtils(
             openTelemetryUtils
     );
 
@@ -24,9 +24,7 @@ class UpdateTransactionStatusTracerUtilsTest {
 
     @Test
     void shouldTraceTransactionUpdateStatusSuccessfully() {
-        UpdateTransactionStatusTracerUtils.StatusUpdateInfo statusUpdateInfo = new UpdateTransactionStatusTracerUtils.StatusUpdateInfo(
-                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.AUTHORIZATION_OUTCOME,
-                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG,
+        UpdateTransactionStatusTracerUtils.StatusUpdateInfo statusUpdateInfo = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
                 UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS
         );
         // pre-conditions
