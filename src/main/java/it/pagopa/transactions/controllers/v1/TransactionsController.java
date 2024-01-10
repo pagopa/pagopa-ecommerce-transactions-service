@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.ServerWebInputException;
 import reactor.core.publisher.Mono;
 
 import javax.validation.ConstraintViolationException;
@@ -409,7 +410,8 @@ public class TransactionsController implements TransactionsApi {
     @ExceptionHandler(
         {
                 InvalidRequestException.class,
-                ConstraintViolationException.class
+                ConstraintViolationException.class,
+                ServerWebInputException.class
         }
     )
     ResponseEntity<ProblemJsonDto> validationExceptionHandler(
