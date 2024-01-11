@@ -49,6 +49,7 @@ import javax.crypto.SecretKey;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -940,7 +941,8 @@ class TransactionsControllerTest {
                                         new OutcomeXpayGatewayDto()
                                                 .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
                                                 .authorizationCode("authorizationCode")
-                                ).timestampOperation(OffsetDateTime.now())
+                                ).timestampOperation(OffsetDateTime.now()),
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY
                 ),
                 Arguments.of(
                         new UpdateAuthorizationRequestDto()
@@ -948,7 +950,8 @@ class TransactionsControllerTest {
                                         new OutcomeVposGatewayDto()
                                                 .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
                                                 .authorizationCode("authorizationCode")
-                                ).timestampOperation(OffsetDateTime.now())
+                                ).timestampOperation(OffsetDateTime.now()),
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS
                 ),
                 Arguments.of(
                         new UpdateAuthorizationRequestDto()
@@ -956,7 +959,8 @@ class TransactionsControllerTest {
                                         new OutcomeNpgGatewayDto()
                                                 .authorizationCode("authorizationCode")
                                                 .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
-                                ).timestampOperation(OffsetDateTime.now())
+                                ).timestampOperation(OffsetDateTime.now()),
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG
                 )
         );
     }
@@ -964,7 +968,8 @@ class TransactionsControllerTest {
     @ParameterizedTest
     @MethodSource("authRequestMethodSource")
     void shouldTraceTransactionUpdateStatusOK(
-                                              UpdateAuthorizationRequestDto updateAuthorizationRequest
+                                              UpdateAuthorizationRequestDto updateAuthorizationRequest,
+                                              UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger trigger
     ) {
 
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
@@ -1003,7 +1008,7 @@ class TransactionsControllerTest {
 
         UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedTransactionUpdateStatus = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                 UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
-                updateAuthorizationRequest.getOutcomeGateway()
+                trigger
         );
         verify(updateTransactionStatusTracerUtils, times(1))
                 .traceStatusUpdateOperation(expectedTransactionUpdateStatus);
@@ -1062,37 +1067,45 @@ class TransactionsControllerTest {
 
         UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                 expectedOutcome,
-                updateAuthorizationRequest.getOutcomeGateway()
+                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY
         );
         verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
                 expectedStatusUpdateInfo
         );
     }
 
-    private static Stream<Arguments> syntacticInvalidRequestMethodSource() {
-        return Stream.of(
-                Arguments.of(
-                        "auth-requests",
-                        new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
-                                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
-                                null
-                        )
-                ),
-                Arguments.of(
-                        "user-receipts",
-                        new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
-                                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST
-                        )
-                )
+    @Test
+    void shouldTraceSyntacticInvalidRequestForUpdateAuthRequest() {
+        String contextPath = "auth-requests";
+        UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
+                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
+                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY
+        );
+        ServerWebExchange exchange = Mockito.mock(ServerWebExchange.class);
+        ServerHttpRequest serverHttpRequest = Mockito.mock(ServerHttpRequest.class);
+        RequestPath requestPath = Mockito.mock(RequestPath.class);
+        HttpHeaders httpHeaders = Mockito.mock(HttpHeaders.class);
+        given(exchange.getRequest()).willReturn(serverHttpRequest);
+        given(serverHttpRequest.getPath()).willReturn(requestPath);
+        given(serverHttpRequest.getHeaders()).willReturn(httpHeaders);
+        given(httpHeaders.get("x-payment-gateway-type")).willReturn(List.of("XPAY"));
+        given(requestPath.value()).willReturn(contextPath);
+
+        ResponseEntity<ProblemJsonDto> responseEntity = transactionsController
+                .validationExceptionHandler(new InvalidRequestException("Some message"), exchange);
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertEquals("Invalid request: Some message", responseEntity.getBody().getDetail());
+        verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
+                expectedStatusUpdateInfo
         );
     }
 
-    @ParameterizedTest
-    @MethodSource("syntacticInvalidRequestMethodSource")
-    void shouldTraceSyntacticInvalidRequest(
-                                            String contextPath,
-                                            UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo
-    ) {
+    @Test
+    void shouldTraceSyntacticInvalidRequestForSendPaymentResult() {
+        String contextPath = "user-receipts";
+        UpdateTransactionStatusTracerUtils.NodoStatusUpdate expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
+                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST
+        );
         ServerWebExchange exchange = Mockito.mock(ServerWebExchange.class);
         ServerHttpRequest serverHttpRequest = Mockito.mock(ServerHttpRequest.class);
         RequestPath requestPath = Mockito.mock(RequestPath.class);

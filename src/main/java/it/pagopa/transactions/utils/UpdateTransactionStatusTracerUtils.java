@@ -2,10 +2,6 @@ package it.pagopa.transactions.utils;
 
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
-import it.pagopa.generated.transactions.server.model.OutcomeNpgGatewayDto;
-import it.pagopa.generated.transactions.server.model.OutcomeVposGatewayDto;
-import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
-import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestOutcomeGatewayDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -174,23 +170,13 @@ public class UpdateTransactionStatusTracerUtils {
      */
     public record PaymentGatewayStatusUpdate(
             UpdateTransactionStatusOutcome outcome,
-            UpdateAuthorizationRequestOutcomeGatewayDto outcomeGatewayDto
+            UpdateTransactionTrigger trigger
     )
             implements
             StatusUpdateInfo {
         @Override
         public UpdateTransactionStatusType type() {
             return UpdateTransactionStatusType.AUTHORIZATION_OUTCOME;
-        }
-
-        @Override
-        public UpdateTransactionTrigger trigger() {
-            return switch (outcomeGatewayDto) {
-                case OutcomeNpgGatewayDto ignored -> UpdateTransactionTrigger.NPG;
-                case OutcomeXpayGatewayDto ignored -> UpdateTransactionTrigger.PGS_XPAY;
-                case OutcomeVposGatewayDto ignored -> UpdateTransactionTrigger.PGS_VPOS;
-                case null, default -> UpdateTransactionTrigger.UNKNOWN;
-            };
         }
 
     }
