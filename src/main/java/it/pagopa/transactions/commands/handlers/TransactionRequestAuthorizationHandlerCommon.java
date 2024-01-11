@@ -196,17 +196,11 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                     String returnUrl = orderIdAndFieldsDto.getT2().getUrl();
                     boolean isReturnUrlValued = returnUrl != null && !returnUrl.isEmpty();
                     if (!isReturnUrlValued) {
-                        if (isWalletPayment) {
-                            log.error(
-                                    "NPG order/build wallet APM response error: return url is not valid: [{}] the payment w",
-                                    returnUrl
-                            );
-                        } else {
-                            log.error(
-                                    "NPG order/build APM response error: return url is not valid: [{}]",
-                                    returnUrl
-                            );
-                        }
+                        log.error(
+                                "NPG order/build APM response error: return url is not valid: [{}]. The payment was performed using wallet: [{}]",
+                                returnUrl,
+                                isWalletPayment
+                        );
                     }
                     return isReturnUrlValued;
                 })
