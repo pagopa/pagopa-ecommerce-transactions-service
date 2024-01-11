@@ -1,7 +1,11 @@
 package it.pagopa.transactions.projections.handlers.v2;
 
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
@@ -43,15 +47,17 @@ public class AuthorizationUpdateProjectionHandler
                 .switchIfEmpty(
                         Mono.error(new TransactionNotFoundException(data.getTransactionId()))
                 )
-                .cast(it.pagopa.ecommerce.commons.documents.v2.Transaction.class)
+                .cast(Transaction.class)
                 .flatMap(transactionDocument -> {
                     transactionDocument.setRrn(data.getData().getRrn());
                     transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_COMPLETED);
                     transactionDocument.setAuthorizationCode(data.getData().getAuthorizationCode());
 
                     String authorizationErrorCode = switch (data.getData().getTransactionGatewayAuthorizationData()) {
-                        case it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData ignored -> null;
-                        case it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData pgsTransactionGatewayAuthorizationData -> pgsTransactionGatewayAuthorizationData.getErrorCode();
+                        case NpgTransactionGatewayAuthorizationData ignored -> null;
+                        case PgsTransactionGatewayAuthorizationData pgsTransactionGatewayAuthorizationData -> pgsTransactionGatewayAuthorizationData.getErrorCode();
+                        case RedirectTransactionGatewayAuthorizationData redirectTransactionGatewayAuthorizationData ->
+                                redirectTransactionGatewayAuthorizationData.getErrorCode();
                     };
 
                     transactionDocument.setAuthorizationErrorCode(authorizationErrorCode);
