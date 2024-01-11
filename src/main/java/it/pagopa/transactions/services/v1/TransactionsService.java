@@ -1311,7 +1311,7 @@ public class TransactionsService {
                                 walletAuthDataDto.getBrand(),
                                 walletAuthDataDto.getContractId());
                     });
-
+            case ApmAuthRequestDetailsDto ignore -> ecommercePaymentMethodsClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId()).map(response -> new PaymentSessionData(null,null,response.getName(),null));
             default -> Mono.just(new PaymentSessionData(null, null, null, null));
         };
     }
