@@ -285,17 +285,24 @@ public class PaymentGatewayClient {
                 );
     }
 
-    public Mono<Tuple2<String, FieldsDto>> requestNpgBuildSession(AuthorizationRequestData authorizationData) {
-        return requestNpgBuildSession(authorizationData, false);
+    public Mono<Tuple2<String, FieldsDto>> requestNpgBuildSession(
+                                                                  AuthorizationRequestData authorizationData,
+                                                                  boolean isWalletPayment
+    ) {
+        return requestNpgBuildSession(authorizationData, false, isWalletPayment);
     }
 
-    public Mono<Tuple2<String, FieldsDto>> requestNpgBuildApmPayment(AuthorizationRequestData authorizationData) {
-        return requestNpgBuildSession(authorizationData, true);
+    public Mono<Tuple2<String, FieldsDto>> requestNpgBuildApmPayment(
+                                                                     AuthorizationRequestData authorizationData,
+                                                                     boolean isWalletPayment
+    ) {
+        return requestNpgBuildSession(authorizationData, true, isWalletPayment);
     }
 
     private Mono<Tuple2<String, FieldsDto>> requestNpgBuildSession(
                                                                    AuthorizationRequestData authorizationData,
-                                                                   boolean isApmPayment
+                                                                   boolean isApmPayment,
+                                                                   boolean isWalletPayment
     ) {
         WorkflowStateDto expectedResponseState = isApmPayment ? WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN
                 : WorkflowStateDto.READY_FOR_PAYMENT;
@@ -321,11 +328,11 @@ public class PaymentGatewayClient {
                             String jwtToken = orderIdJwtToken.getT2();
                             UUID correlationId = UUID.randomUUID();
                             URI returnUrlBasePath = URI.create(npgSessionUrlConfig.basePath());
-                            URI outcomeResultUrl = UriComponentsBuilder.fromUriString(
+                            URI outcomeResultUrl = isWalletPayment ? UriComponentsBuilder.fromUriString(
                                     returnUrlBasePath.resolve(npgSessionUrlConfig.outcomeSuffix()).toString()
                                             .concat("#clientId=IO&transactionId=")
                                             .concat(authorizationData.transactionId().value())
-                            ).build().toUri();
+                            ).build().toUri() : URI.create(npgSessionUrlConfig.outcomeSuffix());
                             URI merchantUrl = returnUrlBasePath;
                             URI cancelUrl = returnUrlBasePath.resolve(npgSessionUrlConfig.cancelSuffix());
 
@@ -362,11 +369,11 @@ public class PaymentGatewayClient {
                                                     NpgClient.PaymentMethod
                                                             .fromServiceName(authorizationData.paymentMethodName()),
                                                     apiKey,
-                                                    authorizationData.contractId().orElseThrow(
+                                                    isWalletPayment ? authorizationData.contractId().orElseThrow(
                                                             () -> new InternalServerErrorException(
                                                                     "Invalid request missing contractId"
                                                             )
-                                                    ),
+                                                    ) : null,
                                                     authorizationData.paymentNotices().stream()
                                                             .mapToInt(
                                                                     paymentNotice -> paymentNotice.transactionAmount()
