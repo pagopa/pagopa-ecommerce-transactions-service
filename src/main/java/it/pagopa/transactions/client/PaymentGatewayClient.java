@@ -332,7 +332,7 @@ public class PaymentGatewayClient {
                                     returnUrlBasePath.resolve(npgSessionUrlConfig.outcomeSuffix()).toString()
                                             .concat("#clientId=IO&transactionId=")
                                             .concat(authorizationData.transactionId().value())
-                            ).build().toUri() : URI.create(npgSessionUrlConfig.outcomeSuffix());
+                            ).build().toUri() : returnUrlBasePath.resolve(npgSessionUrlConfig.outcomeSuffix());
                             URI merchantUrl = returnUrlBasePath;
                             URI cancelUrl = returnUrlBasePath.resolve(npgSessionUrlConfig.cancelSuffix());
 
