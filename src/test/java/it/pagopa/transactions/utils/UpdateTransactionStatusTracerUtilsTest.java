@@ -1,10 +1,6 @@
 package it.pagopa.transactions.utils;
 
 import io.opentelemetry.api.common.Attributes;
-import it.pagopa.generated.transactions.server.model.OutcomeNpgGatewayDto;
-import it.pagopa.generated.transactions.server.model.OutcomeVposGatewayDto;
-import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
-import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestOutcomeGatewayDto;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -67,34 +63,26 @@ class UpdateTransactionStatusTracerUtilsTest {
     private static Stream<Arguments> tracePaymentGatewayDetailsTestMethodSource() {
         return Stream.of(
                 Arguments.of(
-                        new OutcomeXpayGatewayDto(),
                         UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY
                 ),
                 Arguments.of(
-                        new OutcomeVposGatewayDto(),
                         UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS
                 ),
                 Arguments.of(
-                        new OutcomeNpgGatewayDto(),
                         UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG
                 ),
-                Arguments.of(null, UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.UNKNOWN),
-                Arguments.of(
-                        Mockito.mock(UpdateAuthorizationRequestOutcomeGatewayDto.class),
-                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.UNKNOWN
-                )
+                Arguments.of(UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.UNKNOWN)
         );
     }
 
     @ParameterizedTest
     @MethodSource("tracePaymentGatewayDetailsTestMethodSource")
     void shouldTraceTransactionUpdateStatusSuccessfullyForPaymentGatewayDetails(
-                                                                                UpdateAuthorizationRequestOutcomeGatewayDto outcomeGatewayDto,
-                                                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger expectedTrigger
+                                                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger trigger
     ) {
         UpdateTransactionStatusTracerUtils.StatusUpdateInfo statusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                 UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
-                outcomeGatewayDto
+                trigger
         );
         // pre-conditions
         doNothing().when(openTelemetryUtils).addSpanWithAttributes(
