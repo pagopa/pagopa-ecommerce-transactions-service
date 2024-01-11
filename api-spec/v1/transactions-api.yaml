@@ -453,6 +453,7 @@ components:
             - $ref: "#/components/schemas/CardAuthRequestDetails"
             - $ref: "#/components/schemas/CardsAuthRequestDetails"
             - $ref: "#/components/schemas/WalletAuthRequestDetails"
+            - $ref: "#/components/schemas/ApmAuthRequestDetails"
           discriminator:
             propertyName: detailType
             mapping:
@@ -460,6 +461,7 @@ components:
               card: "#/components/schemas/CardAuthRequestDetails"
               cards: "#/components/schemas/CardsAuthRequestDetails"
               wallet: "#/components/schemas/WalletAuthRequestDetails"
+              apm: "#/components/schemas/ApmAuthRequestDetails"
 
       required:
         - amount
@@ -569,6 +571,17 @@ components:
       example:
         detailType: "wallet"
         walletId: "walletId"
+    ApmAuthRequestDetails:
+      type: object
+      description: Additional payment authorization details for payment apm authorization
+      properties:
+        detailType:
+          description: property discriminator, used to discriminate the authorization request detail. Fixed value 'apm'
+          type: string
+      required:
+        - detailType
+      example:
+        detailType: "apm"
     RequestAuthorizationResponse:
       type: object
       description: Response body for requesting an authorization for a transaction
