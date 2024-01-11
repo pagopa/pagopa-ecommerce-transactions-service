@@ -54,6 +54,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionRequestAuthorizationHandlerTest {
@@ -2134,7 +2135,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestNpgBuildSession(authorizationData))
+        Mockito.when(paymentGatewayClient.requestNpgBuildSession(authorizationData, true))
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationDataAfterBuildSession))
                 .thenReturn(Mono.just(stateResponseDto));
@@ -2256,7 +2257,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .expectErrorMatches(error -> error instanceof BadRequestException)
                 .verify();
 
-        Mockito.verify(paymentGatewayClient, Mockito.times(0)).requestNpgBuildSession(any());
+        Mockito.verify(paymentGatewayClient, Mockito.times(0)).requestNpgBuildSession(any(), eq(true));
         Mockito.verify(paymentGatewayClient, Mockito.times(0)).requestNpgCardsAuthorization(any());
         Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(any());
         Mockito.verify(transactionTemplateWrapper, Mockito.times(0)).save(any());
@@ -2264,7 +2265,7 @@ class TransactionRequestAuthorizationHandlerTest {
     }
 
     @Test
-    void shouldPerformTransactionAuthorizationForApmPaymentMethodUsingOrderBuildNpgCall() {
+    void shouldPerformTransactionAuthorizationForWalletApmPaymentMethodUsingOrderBuildNpgCall() {
         String walletId = UUID.randomUUID().toString();
         String contractId = "contractId";
         String sessionId = "sessionId";
@@ -2346,7 +2347,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestNpgBuildApmPayment(authorizationData))
+        Mockito.when(paymentGatewayClient.requestNpgBuildApmPayment(authorizationData, true))
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
@@ -2377,7 +2378,7 @@ class TransactionRequestAuthorizationHandlerTest {
     @ParameterizedTest
     @ValueSource(strings = "")
     @NullSource
-    void shouldReturnErrorPerformingTransactionAuthorizationForApmForInvalidNpgReturnUrl(String wrongReturnUrl) {
+    void shouldReturnErrorPerformingTransactionAuthorizationForWalletApmForInvalidNpgReturnUrl(String wrongReturnUrl) {
         String walletId = UUID.randomUUID().toString();
         String contractId = "contractId";
         String sessionId = "sessionId";
@@ -2459,7 +2460,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestNpgBuildApmPayment(authorizationData))
+        Mockito.when(paymentGatewayClient.requestNpgBuildApmPayment(authorizationData, true))
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));

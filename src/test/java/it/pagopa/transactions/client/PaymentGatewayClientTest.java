@@ -1838,7 +1838,7 @@ class PaymentGatewayClientTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData, true))
                 .expectNext(responseRequestNpgBuildSession)
                 .verifyComplete();
 
@@ -1974,7 +1974,7 @@ class PaymentGatewayClientTest {
                 );
         /* test */
 
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData, true))
                 .expectErrorMatches(
                         error -> error instanceof AlreadyProcessedException &&
                                 ((AlreadyProcessedException) error).getTransactionId()
@@ -2064,7 +2064,7 @@ class PaymentGatewayClientTest {
                         )
                 );
         /* test */
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData, true))
                 .expectErrorMatches(
                         error -> error instanceof BadGatewayException
                 )
@@ -2152,7 +2152,7 @@ class PaymentGatewayClientTest {
                         )
                 );
         /* test */
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData, true))
                 .expectErrorMatches(
                         error -> error instanceof BadGatewayException
                 )
@@ -2224,7 +2224,7 @@ class PaymentGatewayClientTest {
                 )
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData, true))
                 .expectErrorMatches(error -> error instanceof BadGatewayException)
                 .verify();
         String npgNotificationUrl = UriComponentsBuilder
@@ -2299,7 +2299,7 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldReturnBuildSessionResponseForWalletWithNpgForApmMethod() {
+    void shouldReturnBuildSessionResponseForWalletWithNpgForWalletApmMethod() {
         String walletId = UUID.randomUUID().toString();
         String orderId = "orderIdGenerated";
         String sessionId = "sessionId";
@@ -2373,7 +2373,7 @@ class PaymentGatewayClientTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
-        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData))
+        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData, true))
                 .expectNext(responseRequestNpgBuildSession)
                 .verifyComplete();
 
@@ -2428,7 +2428,7 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldThrowErrorForWalletWithNpgForApmMethodAndMissingKey() {
+    void shouldThrowErrorForWalletWithNpgForWalletApmMethodAndMissingKey() {
         String walletId = UUID.randomUUID().toString();
         String orderId = "orderIdGenerated";
         String sessionId = "sessionId";
@@ -2533,7 +2533,7 @@ class PaymentGatewayClientTest {
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
         /* test */
-        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData))
+        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData, true))
                 .expectError(NpgApiKeyMissingPspRequestedException.class)
                 .verify();
 
