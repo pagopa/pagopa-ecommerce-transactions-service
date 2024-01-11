@@ -11,6 +11,7 @@ import it.pagopa.ecommerce.commons.documents.v2.authorization.TransactionGateway
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.generated.transactions.server.model.ApmAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
@@ -167,17 +168,20 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                 brand,
                                                 authorizationRequestData
                                                         .authDetails() instanceof WalletAuthRequestDetailsDto
-                                                                ? tuple5.getT4().orElseThrow(
-                                                                        () -> new InternalServerErrorException(
-                                                                                "Cannot retrieve session id for transaction"
-                                                                        )
-                                                                ) // build session id
-                                                                : authorizationRequestData.sessionId().orElseThrow(
-                                                                        () -> new BadGatewayException(
-                                                                                "Cannot retrieve session id for transaction",
-                                                                                HttpStatus.INTERNAL_SERVER_ERROR
-                                                                        )
-                                                                ),
+                                                        || authorizationRequestData
+                                                                .authDetails() instanceof ApmAuthRequestDetailsDto
+                                                                        ? tuple5.getT4().orElseThrow(
+                                                                                () -> new InternalServerErrorException(
+                                                                                        "Cannot retrieve session id for transaction"
+                                                                                )
+                                                                        ) // build session id
+                                                                        : authorizationRequestData.sessionId()
+                                                                                .orElseThrow(
+                                                                                        () -> new BadGatewayException(
+                                                                                                "Cannot retrieve session id for transaction",
+                                                                                                HttpStatus.INTERNAL_SERVER_ERROR
+                                                                                        )
+                                                                                ),
                                                 tuple5.getT3().orElse(null)
                                         );
                                         // TODO remove this after the cancellation of the postepay logic
