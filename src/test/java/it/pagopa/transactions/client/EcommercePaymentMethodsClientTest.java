@@ -93,7 +93,7 @@ class EcommercePaymentMethodsClientTest {
     @Test
     void shouldReturnPaymentMethod() {
         String TEST_ID = UUID.randomUUID().toString();
-
+        String CLIENT_ID = "CHECKOUT";
         PaymentMethodResponseDto testPaymentMethodResponseDto = new PaymentMethodResponseDto();
         testPaymentMethodResponseDto
                 .description("")
@@ -106,13 +106,14 @@ class EcommercePaymentMethodsClientTest {
         /**
          * preconditions
          */
-        when(ecommercePaymentInstrumentsWebClient.getPaymentMethod(TEST_ID))
+        when(ecommercePaymentInstrumentsWebClient.getPaymentMethod(TEST_ID, CLIENT_ID))
                 .thenReturn(Mono.just(testPaymentMethodResponseDto));
 
         /**
          * test
          */
-        PaymentMethodResponseDto paymentMethodResponseDto = ecommercePaymentMethodsClient.getPaymentMethod(TEST_ID)
+        PaymentMethodResponseDto paymentMethodResponseDto = ecommercePaymentMethodsClient
+                .getPaymentMethod(TEST_ID, CLIENT_ID)
                 .block();
 
         /**
