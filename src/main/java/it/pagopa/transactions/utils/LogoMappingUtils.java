@@ -1,9 +1,6 @@
 package it.pagopa.transactions.utils;
 
-import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
-import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
-import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDetailsDto;
-import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
+import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.configurations.BrandLogoConfig;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
@@ -37,11 +34,15 @@ public class LogoMappingUtils {
                 URI unknown = npgPaymentCircuitLogoMap.get(BrandLogoConfig.UNKNOWN_LOGO_KEY);
                 yield npgPaymentCircuitLogoMap.getOrDefault(authRequestedData.brand(), unknown);
             }
-            case WalletAuthRequestDetailsDto ignored1 -> {
+            case WalletAuthRequestDetailsDto ignored -> {
                 URI unknown = npgPaymentCircuitLogoMap.get(BrandLogoConfig.UNKNOWN_LOGO_KEY);
                 yield npgPaymentCircuitLogoMap.getOrDefault(authRequestedData.brand(), unknown);
             }
-            default -> throw new InvalidRequestException("Authorization request detail type not valid");
+            case ApmAuthRequestDetailsDto ignored -> {
+                URI unknown = npgPaymentCircuitLogoMap.get(BrandLogoConfig.UNKNOWN_LOGO_KEY);
+                yield npgPaymentCircuitLogoMap.getOrDefault(authRequestedData.brand(), unknown);
+            }
+            default -> throw new InvalidRequestException("Cannot retrieve logo for input authorization request detail: [%s]".formatted(authorizationRequestDetailsDto));
         };
     }
 }
