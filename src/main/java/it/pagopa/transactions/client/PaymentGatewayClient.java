@@ -328,11 +328,11 @@ public class PaymentGatewayClient {
                             String jwtToken = orderIdJwtToken.getT2();
                             UUID correlationId = UUID.randomUUID();
                             URI returnUrlBasePath = URI.create(npgSessionUrlConfig.basePath());
-                            URI outcomeResultUrl = isWalletPayment ? UriComponentsBuilder.fromUriString(
+                            URI outcomeResultUrl = UriComponentsBuilder.fromUriString(
                                     returnUrlBasePath.resolve(npgSessionUrlConfig.outcomeSuffix()).toString()
                                             .concat("#clientId=IO&transactionId=")
                                             .concat(authorizationData.transactionId().value())
-                            ).build().toUri() : returnUrlBasePath.resolve(npgSessionUrlConfig.outcomeSuffix());
+                            ).build().toUri();
                             URI merchantUrl = returnUrlBasePath;
                             URI cancelUrl = returnUrlBasePath.resolve(npgSessionUrlConfig.cancelSuffix());
 

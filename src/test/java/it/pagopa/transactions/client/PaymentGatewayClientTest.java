@@ -2639,6 +2639,8 @@ class PaymentGatewayClientTest {
                                         .resolve(
                                                 URI.create(
                                                         sessionUrlConfig.outcomeSuffix()
+                                                                + "#clientId=IO&transactionId=%s"
+                                                                        .formatted(transactionId.value())
                                                 )
                                         )
                         ),
