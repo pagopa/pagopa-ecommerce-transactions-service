@@ -37,6 +37,7 @@ import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
+import it.pagopa.transactions.utils.UpdateTransactionStatusTracerUtils;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -234,6 +235,9 @@ class TransactionServiceTests {
 
     @MockBean
     private UniqueIdTemplateWrapper uniqueIdTemplateWrapper;
+
+    @MockBean
+    private UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
 
     final String TRANSACTION_ID = TransactionTestUtils.TRANSACTION_ID;
 

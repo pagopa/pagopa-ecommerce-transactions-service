@@ -1,6 +1,5 @@
 package it.pagopa.transactions.utils;
 
-import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
 import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.RptId;
@@ -149,9 +148,7 @@ class NodoOperationsTest {
                 OpenTelemetryUtils.NODO_ACTIVATION_OK_SPAN_NAME,
                 Attributes
                         .of(
-                                AttributeKey.stringKey(
-                                        OpenTelemetryUtils.NODO_ACTIVATION_ERROR_FAULT_CODE_ATTRIBUTE_KEY
-                                ),
+                                OpenTelemetryUtils.NODO_ACTIVATION_ERROR_FAULT_CODE_ATTRIBUTE_KEY,
                                 StOutcome.OK.toString()
                         )
 
@@ -1874,9 +1871,7 @@ class NodoOperationsTest {
                 OpenTelemetryUtils.NODO_ACTIVATION_ERROR_SPAN_NAME.formatted(nodoFaultCode),
                 Attributes
                         .of(
-                                AttributeKey.stringKey(
-                                        OpenTelemetryUtils.NODO_ACTIVATION_ERROR_FAULT_CODE_ATTRIBUTE_KEY
-                                ),
+                                OpenTelemetryUtils.NODO_ACTIVATION_ERROR_FAULT_CODE_ATTRIBUTE_KEY,
                                 nodoFaultCode
                         )
 
