@@ -1311,6 +1311,12 @@ public class TransactionsService {
                                 walletAuthDataDto.getBrand(),
                                 walletAuthDataDto.getContractId());
                     });
+            case RedirectionAuthRequestDetailsDto ignored -> Mono.just(new PaymentSessionData(
+                    null,
+                    null,
+                    "N/A",//TODO handle this value for Nodo close payment
+                    null
+            ));
             default -> Mono.just(new PaymentSessionData(null, null, null, null));
         };
     }
