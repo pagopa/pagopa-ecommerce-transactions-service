@@ -208,7 +208,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                         );
                                         // TODO remove this after the cancellation of the postepay logic
                                         case POSTEPAY -> null;
-                                        // FIXME: temporary just to update commons version
                                         case REDIRECT -> new RedirectTransactionGatewayAuthorizationRequestedData(
                                                 logo,
                                                 tuple6.getT1(),
