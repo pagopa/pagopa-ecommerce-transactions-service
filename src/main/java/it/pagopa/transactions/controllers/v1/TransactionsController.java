@@ -224,7 +224,22 @@ public class TransactionsController implements TransactionsApi {
                                         _v -> new AddUserReceiptResponseDto()
                                                 .outcome(AddUserReceiptResponseDto.OutcomeEnum.OK)
                                 )
-                                .doOnError(e -> log.error("Got error while trying to add user receipt", e))
+                                .doOnNext(
+                                        ignored -> updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
+                                                new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
+                                                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK
+                                                )
+                                        )
+                                )
+                                .doOnError(exception -> {
+                                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = exceptionToUpdateStatusOutcome(
+                                            exception
+                                    );
+                                    updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
+                                            new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(outcome)
+                                    );
+                                    log.error("Got error while trying to add user receipt", exception);
+                                })
                                 .onErrorMap(SendPaymentResultException::new)
                 )
                 .map(ResponseEntity::ok)
