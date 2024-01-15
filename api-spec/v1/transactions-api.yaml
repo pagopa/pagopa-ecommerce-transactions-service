@@ -154,7 +154,7 @@ paths:
           name: x-pgs-id
           schema:
             type: string
-            pattern: 'XPAY|VPOS|NPG'
+            pattern: 'XPAY|VPOS|NPG|REDIRECT'
           required: false
           description: Pgs identifier (populated by APIM policy)
       requestBody:

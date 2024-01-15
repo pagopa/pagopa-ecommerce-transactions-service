@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NpgClient;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.domain.Claims;
 import it.pagopa.ecommerce.commons.exceptions.NpgApiKeyMissingPspRequestedException;
 import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
