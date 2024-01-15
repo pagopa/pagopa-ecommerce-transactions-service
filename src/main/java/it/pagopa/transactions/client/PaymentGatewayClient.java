@@ -508,7 +508,7 @@ public class PaymentGatewayClient {
                                             exception -> exception
                                                     .getStatusCode()
                                                     .map(statusCode -> switch (statusCode) {
-                        case UNAUTHORIZED -> new AlreadyProcessedException(
+                        case BAD_REQUEST -> new AlreadyProcessedException(
                                 authorizationData.transactionId()
                         ); // 401
                         case INTERNAL_SERVER_ERROR -> new BadGatewayException(
@@ -597,6 +597,27 @@ public class PaymentGatewayClient {
                                                         .paName(null)// optional
                                                         // TODO what is this field?
                                                         .idPaymentMethod(null)// optional
+                                        ).onErrorMap(
+                                                WebClientResponseException.class,
+                                                exception -> {
+                                                    String pspId = authorizationData.pspId();
+                                                    HttpStatus httpStatus = exception.getStatusCode();
+                                                    log.error(
+                                                            "Error communicating with PSP: [{}] to retrieve redirection URL. Received HTTP status code: {}",
+                                                            pspId,
+                                                            httpStatus
+                                                    );
+                                                    return switch (exception.getStatusCode()) {
+                                                        case BAD_REQUEST, UNAUTHORIZED -> new AlreadyProcessedException(
+                                                                authorizationData.transactionId()
+                                                        );
+                                                        default -> new BadGatewayException(
+                                                                "KO performing redirection URL api call for PSP: [%s]"
+                                                                        .formatted(pspId),
+                                                                exception.getStatusCode()
+                                                        );
+                                                    };
+                                                }
                                         )
                         )
                 );

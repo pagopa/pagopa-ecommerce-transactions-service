@@ -2563,20 +2563,20 @@ class PaymentGatewayClientTest {
                 10,
                 "paymentInstrumentId",
                 pspId,
-                "PPAL",
+                "CC",
                 "brokerName",
                 "pspChannelCode",
-                "PAYPAL",
+                "REDIRECT",
                 "paymentMethodDescription",
                 "pspBusinessName",
                 false,
-                "NPG",
+                "REDIRECT",
                 Optional.empty(),
                 Optional.empty(),
-                "VISA",
+                "N/A",
                 new RedirectionAuthRequestDetailsDto()
         );
-        int totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
+        int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
         given(checkoutRedirectClientBuilder.getApiClientForPsp(pspId)).willReturn(Either.right(b2bPspSideApi));
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
@@ -2601,6 +2601,78 @@ class PaymentGatewayClientTest {
         StepVerifier.create(client.requestRedirectUrlAuthorization(authorizationData))
                 .expectNext(redirectUrlResponseDto)
                 .verifyComplete();
+        verify(b2bPspSideApi, times(1)).retrieveRedirectUrl(redirectUrlRequestDto);
+    }
+
+    private static Stream<Arguments> errorRetrievingRedirectionUrl() {
+        return Stream.of(
+                Arguments.of(HttpStatus.BAD_REQUEST, AlreadyProcessedException.class),
+                Arguments.of(HttpStatus.UNAUTHORIZED, AlreadyProcessedException.class),
+                Arguments.of(HttpStatus.INTERNAL_SERVER_ERROR, BadGatewayException.class),
+                Arguments.of(HttpStatus.GATEWAY_TIMEOUT, BadGatewayException.class)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("errorRetrievingRedirectionUrl")
+    void shouldHandleErrorRetrievingRedirectionUrl(
+                                                   HttpStatus httpResponseStatusCode,
+                                                   Class<? extends Exception> expectedMappedException
+    ) {
+        String pspId = "pspId";
+        TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                10,
+                "paymentInstrumentId",
+                pspId,
+                "CC",
+                "brokerName",
+                "pspChannelCode",
+                "REDIRECT",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "REDIRECT",
+                Optional.empty(),
+                Optional.empty(),
+                "N/A",
+                new RedirectionAuthRequestDetailsDto()
+        );
+        int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
+                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        given(checkoutRedirectClientBuilder.getApiClientForPsp(pspId)).willReturn(Either.right(b2bPspSideApi));
+        RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
+                .paymentMethod(RedirectUrlRequestDto.PaymentMethodEnum.BANK_ACCOUNT)
+                .amount(totalAmount)
+                .idPsp(pspId)
+                .idTransaction(transaction.getTransactionId().value())
+                .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
+                .urlBack(
+                        URI.create(
+                                "http://localhost:1234/ecommerce-fe/esito#clientId=REDIRECT&transactionId="
+                                        .concat(transaction.getTransactionId().value())
+                        )
+                );
+        given(b2bPspSideApi.retrieveRedirectUrl(any())).willReturn(
+                Mono.error(
+                        new WebClientResponseException(
+                                "Redirect error",
+                                httpResponseStatusCode.value(),
+                                httpResponseStatusCode.getReasonPhrase(),
+                                null,
+                                null,
+                                null
+                        )
+                )
+        );
+        Hooks.onOperatorDebug();
+        /* test */
+        StepVerifier.create(client.requestRedirectUrlAuthorization(authorizationData))
+                .expectError(expectedMappedException)
+                .verify();
         verify(b2bPspSideApi, times(1)).retrieveRedirectUrl(redirectUrlRequestDto);
     }
 
