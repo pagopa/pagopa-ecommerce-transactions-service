@@ -67,6 +67,9 @@ These are all environment variables needed by the application:
 | JWT_ECOMMERCE_SECRET                           |     | Secret key used to sign authorization jwt for ecommerce REST calls                                                                            | string  |         |
 | CHECKOUT_REDIRECT_PSP_KEYS                     |     | Secret structure that holds PSP - API keys association for authorization request for PSPs that are integrated with Checkout Redirect          | string  |         |
 | CHECKOUT_REDIRECT_PSP_LIST                     |     | List of all psp ids that are expected to be found into the CHECKOUT_REDIRECT_PSP_KEYS configuration (used for configuration cross validation) | string  |         |
+| CHECKOUT_REDIRECT_URL_MAPPING                  |     | Key-value string map PSP to backend URI mapping that will be used for Checkout Redirect payments                                              | string  |         |
+| CHECKOUT_REDIRECT_READ_TIMEOUT                 |     | Checkout Redirection request read timeout                                                                                                     | number  |         |
+| CHECKOUT_REDIRECT_CONNECTION_TIMEOUT           |     | Checkout Redirection request connection timeout                                                                                               | number  |         |
 
 An example configuration of these environment variables is in the `.env.example` file.
 
