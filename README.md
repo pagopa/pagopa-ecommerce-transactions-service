@@ -70,6 +70,7 @@ These are all environment variables needed by the application:
 | CHECKOUT_REDIRECT_URL_MAPPING                  |     | Key-value string map PSP to backend URI mapping that will be used for Checkout Redirect payments                                              | string  |         |
 | CHECKOUT_REDIRECT_READ_TIMEOUT                 |     | Checkout Redirection request read timeout                                                                                                     | number  |         |
 | CHECKOUT_REDIRECT_CONNECTION_TIMEOUT           |     | Checkout Redirection request connection timeout                                                                                               | number  |         |
+| CHECKOUT_REDIRECT_LOGO_MAPPING                 |     | Checkout Redirection PSP logo mappings. Those logos will be used in user notification email                                                   | number  |         |
 
 An example configuration of these environment variables is in the `.env.example` file.
 

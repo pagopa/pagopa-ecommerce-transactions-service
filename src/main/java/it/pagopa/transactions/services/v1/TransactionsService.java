@@ -1311,7 +1311,14 @@ public class TransactionsService {
                                 walletAuthDataDto.getBrand(),
                                 walletAuthDataDto.getContractId());
                     });
-
+            case RedirectionAuthRequestDetailsDto ignored -> Mono.just(
+                    new PaymentSessionData(
+                            null,
+                            null,
+                            "null",//TODO handle brand from payment methods
+                            null
+                    )
+            );
             default -> Mono.just(new PaymentSessionData(null, null, null, null));
         };
     }
