@@ -508,7 +508,7 @@ public class PaymentGatewayClient {
                                             exception -> exception
                                                     .getStatusCode()
                                                     .map(statusCode -> switch (statusCode) {
-                        case BAD_REQUEST -> new AlreadyProcessedException(
+                        case UNAUTHORIZED -> new AlreadyProcessedException(
                                 authorizationData.transactionId()
                         ); // 401
                         case INTERNAL_SERVER_ERROR -> new BadGatewayException(
