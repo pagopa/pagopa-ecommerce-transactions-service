@@ -100,7 +100,7 @@ microservice-chart:
       JWT_NPG_NOTIFICATION_SECRET: npg-notification-signing-key
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.9.0"
+    tag: "1.9.1"
     pullPolicy: Always
   livenessProbe:
     httpGet:
