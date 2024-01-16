@@ -412,7 +412,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>./api-spec/redirect/redirect-api.yaml</inputSpec>
+                            <inputSpec>./api-spec/client/openapi/redirect/redirect-api.yaml</inputSpec>
                             <generatorName>java</generatorName>
                             <library>webclient</library>
                             <generateApiDocumentation>false</generateApiDocumentation>
