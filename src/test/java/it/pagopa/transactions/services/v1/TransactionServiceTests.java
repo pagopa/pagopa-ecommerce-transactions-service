@@ -2062,7 +2062,7 @@ class TransactionServiceTests {
                         List.of(
                                 new BundleDto()
                                         .idPsp("PSP_CODE")
-                                        .taxPayerFee(200l)
+                                        .taxPayerFee(200L)
                         )
                 );
 
