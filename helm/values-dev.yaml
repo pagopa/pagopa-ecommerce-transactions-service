@@ -4,7 +4,7 @@ microservice-chart:
   fullnameOverride: ""
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.9.0" #improve
+    tag: "1.9.1" #improve
     pullPolicy: Always
   livenessProbe:
     httpGet:
