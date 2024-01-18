@@ -323,7 +323,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-infra/e87e1ff9bdedb8339a160a0741f0b2d70a4dbdd4/src/domains/ecommerce-app/api/ecommerce-payment-methods-service/v1/_openapi.json.tpl</inputSpec>
+                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-infra/0a0ee0fec1e162bebdc62cc516d81db216bade52/src/domains/ecommerce-app/api/ecommerce-payment-methods-service/v1/_openapi.json.tpl</inputSpec>
                             <generatorName>java</generatorName>
                             <library>webclient</library>
                             <generateApiDocumentation>false</generateApiDocumentation>

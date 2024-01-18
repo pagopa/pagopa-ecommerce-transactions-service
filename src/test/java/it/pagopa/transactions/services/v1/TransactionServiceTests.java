@@ -2072,6 +2072,7 @@ class TransactionServiceTests {
                 .status(PaymentMethodStatusDto.ENABLED)
                 .id("paymentInstrumentId")
                 .paymentTypeCode("PO")
+                .methodManagement(PaymentMethodManagementTypeDto.NOT_ONBOARDABLE)
                 .addRangesItem(new RangeDto().min(0L).max(100L));
 
         RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
