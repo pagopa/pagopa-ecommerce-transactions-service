@@ -486,7 +486,10 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                 logoUri = Optional.ofNullable(npgData.getLogo());
                 brand = Optional.ofNullable(npgData.getBrand());
             }
-
+            case it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationRequestedData redirectTransactionGatewayAuthorizationRequestedData -> {
+                logoUri = Optional.ofNullable(redirectTransactionGatewayAuthorizationRequestedData.getLogo());
+                brand = Optional.empty(); // FIXME just to get to compile with new commons version
+            }
         }
 
         InfoDto result = new InfoDto()
