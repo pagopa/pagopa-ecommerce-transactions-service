@@ -367,9 +367,6 @@ components:
           $ref: '#/components/schemas/AuthorizationOutcome'
         details:
           $ref: '#/components/schemas/TransactionResultDetails'
-        errorCode:
-          type: string
-          description: Authorization error code, to be valued only for KO authorizations
       required:
         - idPsp
         - idPSPTransaction
