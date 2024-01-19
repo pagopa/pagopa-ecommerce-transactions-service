@@ -15,6 +15,7 @@ import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.*;
+import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.generated.wallet.v1.dto.WalletAuthCardDataDto;
 import it.pagopa.generated.wallet.v1.dto.WalletAuthDataDto;
@@ -2119,6 +2120,101 @@ class TransactionServiceTests {
         assertEquals(Optional.empty(), captureData.sessionId());
         assertEquals(Optional.empty(), captureData.contractId());
         assertEquals(paymentMethod.getName(), captureData.brand());
+        assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
+        assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
+    }
+
+    @Test
+    void shouldRedirectToAuthorizationURIForValidRequestWithRedirectDetail() {
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .paymentInstrumentId("paymentInstrumentId")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
+                .pspId("PSP_CODE")
+                .isAllCCP(false)
+                .details(
+                        new RedirectionAuthRequestDetailsDto()
+                );
+
+        Transaction transaction = TransactionTestUtils.transactionDocument(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
+                ZonedDateTime.now()
+        );
+
+        /* preconditions */
+        CalculateFeeResponseDto calculateFeeResponseDto = new CalculateFeeResponseDto()
+                .belowThreshold(true)
+                .paymentMethodName("PaymentMethodName")
+                .paymentMethodDescription("PaymentMethodDescription")
+                .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
+                .bundles(
+                        List.of(
+                                new BundleDto()
+                                        .idPsp("PSP_CODE")
+                                        .taxPayerFee(200L)
+                        )
+                );
+
+        PaymentMethodResponseDto paymentMethod = new PaymentMethodResponseDto()
+                .name("paymentMethodName")
+                .description("desc")
+                .status(PaymentMethodStatusDto.ENABLED)
+                .id("paymentInstrumentId")
+                .paymentTypeCode("PO")
+                .addRangesItem(new RangeDto().min(0L).max(100L));
+
+        RedirectUrlResponseDto redirectUrlResponseDto = new RedirectUrlResponseDto()
+                .url("http://redirectionUrl")
+                .idTransaction("idTransaction")
+                .idPSPTransaction("idPspTransaction")
+                .timeout(60000)
+                .amount(300);
+
+        RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
+                .authorizationUrl(redirectUrlResponseDto.getUrl());
+
+        Mockito.when(
+                ecommercePaymentMethodsClient.calculateFee(
+                        eq(authorizationRequest.getPaymentInstrumentId()),
+                        eq(transaction.getTransactionId()),
+                        any(),
+                        eq(Integer.MAX_VALUE)
+                )
+        ).thenReturn(
+                Mono.just(calculateFeeResponseDto)
+        );
+
+        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(authorizationRequest.getPaymentInstrumentId()))
+                .thenReturn(Mono.just(paymentMethod));
+
+        Mockito.when(repository.findById(TRANSACTION_ID))
+                .thenReturn(Mono.just(transaction));
+
+        Mockito.when(paymentGatewayClient.requestRedirectUrlAuthorization(any()))
+                .thenReturn(Mono.just(redirectUrlResponseDto));
+
+        Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
+
+        Mockito.when(transactionsUtils.getPaymentNotices(any())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getTransactionTotalAmount(any())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getRptId(any(), anyInt())).thenCallRealMethod();
+
+        Mockito.when(transactionRequestAuthorizationHandlerV1.handle(commandArgumentCaptor.capture()))
+                .thenReturn(Mono.just(requestAuthorizationResponse));
+
+        /* test */
+        StepVerifier
+                .create(
+                        transactionsServiceV1
+                                .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest)
+                )
+                .expectNext(requestAuthorizationResponse)
+                .verifyComplete();
+
+        AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
+        assertEquals(Optional.empty(), captureData.sessionId());
+        assertEquals(Optional.empty(), captureData.contractId());
+        assertEquals("N/A", captureData.brand());
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
         assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
     }

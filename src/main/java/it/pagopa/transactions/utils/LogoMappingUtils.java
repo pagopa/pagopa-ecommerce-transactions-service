@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.net.URI;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 public class LogoMappingUtils {
@@ -17,13 +18,17 @@ public class LogoMappingUtils {
 
     private final Map<String, URI> npgPaymentCircuitLogoMap;
 
+    private final Map<String, URI> checkoutRedirectLogoMap;
+
     @Autowired
     public LogoMappingUtils(
             Map<CardAuthRequestDetailsDto.BrandEnum, URI> pgsBrandConfMap,
-            Map<String, URI> npgPaymentCircuitLogoMap
+            Map<String, URI> npgPaymentCircuitLogoMap,
+            Map<String, URI> checkoutRedirectLogoMap
     ) {
         this.pgsBrandConfMap = pgsBrandConfMap;
         this.npgPaymentCircuitLogoMap = npgPaymentCircuitLogoMap;
+        this.checkoutRedirectLogoMap = checkoutRedirectLogoMap;
     }
 
     public URI getLogo(AuthorizationRequestData authRequestedData) {
@@ -42,6 +47,12 @@ public class LogoMappingUtils {
                 URI unknown = npgPaymentCircuitLogoMap.get(BrandLogoConfig.UNKNOWN_LOGO_KEY);
                 yield npgPaymentCircuitLogoMap.getOrDefault(authRequestedData.brand(), unknown);
             }
+            case RedirectionAuthRequestDetailsDto ignored -> Optional
+                    .ofNullable(
+                            checkoutRedirectLogoMap
+                                    .get(authRequestedData.pspId())
+                    )
+                    .orElseThrow(() -> new InvalidRequestException("No logo mapping found for psp with id: [%s]".formatted(authRequestedData.pspId())));
             default -> throw new InvalidRequestException("Cannot retrieve logo for input authorization request detail: [%s]".formatted(authorizationRequestDetailsDto));
         };
     }
