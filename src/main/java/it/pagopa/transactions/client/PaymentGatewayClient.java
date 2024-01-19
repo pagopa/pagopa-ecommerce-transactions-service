@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NpgClient;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.domain.Claims;
 import it.pagopa.ecommerce.commons.exceptions.NpgApiKeyMissingPspRequestedException;
 import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
@@ -19,6 +19,8 @@ import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.*;
+import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
+import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
@@ -77,6 +79,8 @@ public class PaymentGatewayClient {
     private final SecretKey npgNotificationSigningKey;
     private final int npgJwtKeyValidityTime;
 
+    private final CheckoutRedirectClientBuilder checkoutRedirectClientBuilder;
+
     @Autowired
     public PaymentGatewayClient(
             @Qualifier("paymentTransactionGatewayPostepayWebClient") PostePayInternalApi postePayInternalApi,
@@ -91,8 +95,9 @@ public class PaymentGatewayClient {
             UniqueIdUtils uniqueIdUtils,
             @Value("${npg.client.apiKey}") String npgDefaultApiKey,
             SecretKey npgNotificationSigningKey,
-            @Value("${npg.notification.jwt.validity.time}") int npgJwtKeyValidityTime
+            @Value("${npg.notification.jwt.validity.time}") int npgJwtKeyValidityTime,
 
+            CheckoutRedirectClientBuilder checkoutRedirectClientBuilder
     ) {
         this.postePayInternalApi = postePayInternalApi;
         this.paymentTransactionGatewayXPayWebClient = paymentTransactionGatewayXPayWebClient;
@@ -107,6 +112,7 @@ public class PaymentGatewayClient {
         this.npgDefaultApiKey = npgDefaultApiKey;
         this.npgNotificationSigningKey = npgNotificationSigningKey;
         this.npgJwtKeyValidityTime = npgJwtKeyValidityTime;
+        this.checkoutRedirectClientBuilder = checkoutRedirectClientBuilder;
     }
 
     // TODO Handle multiple rptId
@@ -523,6 +529,96 @@ public class PaymentGatewayClient {
                                     )
                     );
                 });
+    }
+
+    /**
+     * Perform authorization request with PSP retrieving redirection URL
+     *
+     * @param authorizationData authorization data
+     * @return RedirectUrlResponseDto response bean
+     */
+    public Mono<RedirectUrlResponseDto> requestRedirectUrlAuthorization(AuthorizationRequestData authorizationData) {
+        return Mono
+                .just(checkoutRedirectClientBuilder.getApiClientForPsp(authorizationData.pspId()))
+                .flatMap(
+                        clientEither -> clientEither.fold(
+                                Mono::error,
+                                client -> client
+                                        .retrieveRedirectUrl(
+                                                new RedirectUrlRequestDto()
+                                                        .paymentMethod(
+                                                                RedirectUrlRequestDto.PaymentMethodEnum.BANK_ACCOUNT
+                                                        )
+                                                        .amount(
+                                                                authorizationData
+                                                                        .paymentNotices()
+                                                                        .stream()
+                                                                        .mapToInt(
+                                                                                p -> p.transactionAmount().value()
+                                                                        )
+                                                                        .sum()
+                                                                        + authorizationData.fee()
+                                                        )
+                                                        .idPsp(authorizationData.pspId())
+                                                        .idTransaction(authorizationData.transactionId().value())
+                                                        .description(
+                                                                authorizationData
+                                                                        .paymentNotices()
+                                                                        .stream()
+                                                                        .findFirst()
+                                                                        .map(p -> p.transactionDescription().value())
+                                                                        .orElseThrow()
+                                                        )
+                                                        .urlBack(
+                                                                UriComponentsBuilder
+                                                                        .fromUriString(
+                                                                                // url back to be checked with f.e.
+                                                                                URI
+                                                                                        .create(
+                                                                                                npgSessionUrlConfig
+                                                                                                        .basePath()
+                                                                                        )
+                                                                                        .resolve(
+                                                                                                npgSessionUrlConfig
+                                                                                                        .outcomeSuffix()
+                                                                                        ).toString()
+                                                                                        .concat(
+                                                                                                "#clientId=REDIRECT&transactionId="
+                                                                                        )
+                                                                                        .concat(
+                                                                                                authorizationData
+                                                                                                        .transactionId()
+                                                                                                        .value()
+                                                                                        )
+                                                                        ).build()
+                                                                        .toUri()
+                                                        )
+                                                        .paName(null)// optional
+                                                        .idPaymentMethod(null)// optional
+                                        ).onErrorMap(
+                                                WebClientResponseException.class,
+                                                exception -> {
+                                                    String pspId = authorizationData.pspId();
+                                                    HttpStatus httpStatus = exception.getStatusCode();
+                                                    log.error(
+                                                            "Error communicating with PSP: [{}] to retrieve redirection URL. Received HTTP status code: {}",
+                                                            pspId,
+                                                            httpStatus
+                                                    );
+                                                    return switch (exception.getStatusCode()) {
+                                                        case BAD_REQUEST, UNAUTHORIZED -> new AlreadyProcessedException(
+                                                                authorizationData.transactionId()
+                                                        );
+                                                        default -> new BadGatewayException(
+                                                                "KO performing redirection URL api call for PSP: [%s]"
+                                                                        .formatted(pspId),
+                                                                exception.getStatusCode()
+                                                        );
+                                                    };
+                                                }
+                                        )
+                        )
+                );
     }
 
     private String encodeMdcFields(AuthorizationRequestData authorizationData) {

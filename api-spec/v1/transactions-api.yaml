@@ -154,7 +154,7 @@ paths:
           name: x-pgs-id
           schema:
             type: string
-            pattern: 'XPAY|VPOS|NPG'
+            pattern: 'XPAY|VPOS|NPG|REDIRECT'
           required: false
           description: Pgs identifier (populated by APIM policy)
       requestBody:
@@ -453,6 +453,7 @@ components:
             - $ref: "#/components/schemas/CardAuthRequestDetails"
             - $ref: "#/components/schemas/CardsAuthRequestDetails"
             - $ref: "#/components/schemas/WalletAuthRequestDetails"
+            - $ref: "#/components/schemas/RedirectionAuthRequestDetails"
           discriminator:
             propertyName: detailType
             mapping:
@@ -460,6 +461,7 @@ components:
               card: "#/components/schemas/CardAuthRequestDetails"
               cards: "#/components/schemas/CardsAuthRequestDetails"
               wallet: "#/components/schemas/WalletAuthRequestDetails"
+              redirect: "#/components/schemas/RedirectionAuthRequestDetails"
 
       required:
         - amount
@@ -569,6 +571,17 @@ components:
       example:
         detailType: "wallet"
         walletId: "walletId"
+    RedirectionAuthRequestDetails:
+      type: object
+      description: Additional payment authorization details for Redirection authorization request
+      properties:
+        detailType:
+          description: property discriminator, used to discriminate the authorization request detail. Fixed value 'redirect'
+          type: string
+      required:
+        - detailType
+      example:
+        detailType: "redirect"
     RequestAuthorizationResponse:
       type: object
       description: Response body for requesting an authorization for a transaction
