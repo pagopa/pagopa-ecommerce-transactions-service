@@ -593,9 +593,7 @@ public class PaymentGatewayClient {
                                                                         ).build()
                                                                         .toUri()
                                                         )
-                                                        // TODO what field use for PA NAME?
                                                         .paName(null)// optional
-                                                        // TODO what is this field?
                                                         .idPaymentMethod(null)// optional
                                         ).onErrorMap(
                                                 WebClientResponseException.class,
