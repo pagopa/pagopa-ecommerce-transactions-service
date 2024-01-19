@@ -32,12 +32,12 @@ public class CheckoutRedirectClientBuilder {
     /**
      * Internal caching map that will contain psp to api client mapping
      */
-    private final Map<String, B2bPspSideApi> checkoutRedirectClientMap = new HashMap<>();
+    final Map<String, B2bPspSideApi> checkoutRedirectClientMap = new HashMap<>();
 
     /**
      * PSP id to Checkout Redirect backend mapping
      */
-    private final Map<String, URI> checkoutRedirectUriMap;
+    private final Map<String, URI> checkoutRedirectBeApiCallUriMap;
 
     /**
      * Checkout redirect psp api key configuration
@@ -56,19 +56,19 @@ public class CheckoutRedirectClientBuilder {
     /**
      * Constructor
      *
-     * @param checkoutRedirectUriMap            psp to URI configuration map
+     * @param checkoutRedirectBeApiCallUriMap   psp to URI configuration map
      * @param checkoutRedirectApiKeys           psp to api key configuration map
      * @param checkoutRedirectReadTimeout       redirection read timeout
      * @param checkoutRedirectConnectionTimeout redirection connection timeout
      */
     @Autowired
     public CheckoutRedirectClientBuilder(
-            Map<String, URI> checkoutRedirectUriMap,
+            Map<String, URI> checkoutRedirectBeApiCallUriMap,
             CheckoutRedirectPspApiKeysConfig checkoutRedirectApiKeys,
             @Value("${checkout.redirect.readTimeout}") int checkoutRedirectReadTimeout,
             @Value("${checkout.redirect.connectionTimeout}") int checkoutRedirectConnectionTimeout
     ) {
-        this.checkoutRedirectUriMap = checkoutRedirectUriMap;
+        this.checkoutRedirectBeApiCallUriMap = checkoutRedirectBeApiCallUriMap;
         this.checkoutRedirectApiKeys = checkoutRedirectApiKeys;
         this.checkoutRedirectReadTimeout = checkoutRedirectReadTimeout;
         this.checkoutRedirectConnectionTimeout = checkoutRedirectConnectionTimeout;
@@ -111,12 +111,12 @@ public class CheckoutRedirectClientBuilder {
      *         configuration for input psp id
      */
 
-    private Either<CheckoutRedirectMissingPspRequestedException, B2bPspSideApi> buildApiClientForPsp(
-                                                                                                     String apiKey,
-                                                                                                     String pspId
+    Either<CheckoutRedirectMissingPspRequestedException, B2bPspSideApi> buildApiClientForPsp(
+                                                                                             String apiKey,
+                                                                                             String pspId
     ) {
-        URI pspUri = checkoutRedirectUriMap.get(pspId);
-        Either<CheckoutRedirectMissingPspRequestedException, B2bPspSideApi> either;
+        URI pspUri = checkoutRedirectBeApiCallUriMap.get(pspId);
+        Either<CheckoutRedirectMissingPspRequestedException, B2bPspSideApi> taskEither;
         if (pspUri != null) {
             HttpClient httpClient = HttpClient.create()
                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, checkoutRedirectConnectionTimeout)
@@ -140,17 +140,17 @@ public class CheckoutRedirectClientBuilder {
             apiClient.setApiKey(apiKey);
             B2bPspSideApi b2bPspSideApi = new B2bPspSideApi(apiClient);
             checkoutRedirectClientMap.put(pspId, b2bPspSideApi);
-            either = Either.right(b2bPspSideApi);
+            taskEither = Either.right(b2bPspSideApi);
         } else {
-            either = Either.left(
+            taskEither = Either.left(
                     new CheckoutRedirectMissingPspRequestedException(
                             pspId,
-                            checkoutRedirectUriMap.keySet(),
+                            checkoutRedirectBeApiCallUriMap.keySet(),
                             CheckoutRedirectConfigurationType.BACKEND_URLS
                     )
             );
         }
-        return either;
+        return taskEither;
     }
 
 }

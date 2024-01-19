@@ -3,20 +3,22 @@ package it.pagopa.transactions.utils;
 import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
-import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
-import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
-import it.pagopa.generated.transactions.server.model.PostePayAuthRequestDetailsDto;
+import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.configurations.BrandLogoConfig;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class LogoMappingUtilsTest {
 
@@ -36,7 +38,16 @@ class LogoMappingUtilsTest {
             VISA_LOGO_URI
     );
 
-    private final LogoMappingUtils logoMappingUtils = new LogoMappingUtils(pgsBrandConfig, npgPaymentCircuitLogoMap);
+    private final Map<String, URI> checkoutRedirectLogoMap = Map.of(
+            "psp1",
+            VISA_LOGO_URI
+    );
+
+    private final LogoMappingUtils logoMappingUtils = new LogoMappingUtils(
+            pgsBrandConfig,
+            npgPaymentCircuitLogoMap,
+            checkoutRedirectLogoMap
+    );
 
     @Test
     void shouldGetLogoForPgsAuthRequest() {
@@ -69,8 +80,16 @@ class LogoMappingUtilsTest {
         assertEquals(VISA_LOGO_URI, logo);
     }
 
-    @Test
-    void shouldGetLogoForNpgAuthRequest() {
+    private static Stream<RequestAuthorizationRequestDetailsDto> npgLogoMappingTestMethodSource() {
+        return Stream.of(
+                new CardsAuthRequestDetailsDto(),
+                new WalletAuthRequestDetailsDto()
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("npgLogoMappingTestMethodSource")
+    void shouldGetLogoForNpgAuthRequest(RequestAuthorizationRequestDetailsDto authDetails) {
         // pre-conditions
         AuthorizationRequestData authorizationRequestData = new AuthorizationRequestData(
                 new TransactionId(TransactionTestUtils.TRANSACTION_ID),
@@ -90,8 +109,7 @@ class LogoMappingUtilsTest {
                 Optional.empty(),
                 Optional.empty(),
                 "VISA",
-                new CardsAuthRequestDetailsDto()
-                        .orderId("orderId")
+                authDetails
         );
         // test
         URI logo = logoMappingUtils.getLogo(authorizationRequestData);
@@ -156,4 +174,32 @@ class LogoMappingUtilsTest {
         assertThrows(InvalidRequestException.class, () -> logoMappingUtils.getLogo(authorizationRequestData));
     }
 
+    @Test
+    void shouldGetLogoForRedirectAuthRequest() {
+        // pre-conditions
+        AuthorizationRequestData authorizationRequestData = new AuthorizationRequestData(
+                new TransactionId(TransactionTestUtils.TRANSACTION_ID),
+                List.of(),
+                new Confidential<>(""),
+                0,
+                "paymentInstrumentId",
+                "psp1",
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "paymentMethodName",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "PGS",
+                Optional.empty(),
+                Optional.empty(),
+                null,
+                new RedirectionAuthRequestDetailsDto()
+        );
+        // test
+        URI logo = logoMappingUtils.getLogo(authorizationRequestData);
+        // assertions
+        assertEquals(VISA_LOGO_URI, logo);
+    }
 }

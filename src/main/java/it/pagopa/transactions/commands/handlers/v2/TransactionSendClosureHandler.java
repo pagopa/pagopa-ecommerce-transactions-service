@@ -6,6 +6,7 @@ import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationRequestedData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionAuthorizationCompleted;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
@@ -486,10 +487,11 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                 logoUri = Optional.ofNullable(npgData.getLogo());
                 brand = Optional.ofNullable(npgData.getBrand());
             }
-            case it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationRequestedData redirectTransactionGatewayAuthorizationRequestedData -> {
-                logoUri = Optional.ofNullable(redirectTransactionGatewayAuthorizationRequestedData.getLogo());
-                brand = Optional.empty(); // FIXME just to get to compile with new commons version
+            case RedirectTransactionGatewayAuthorizationRequestedData redirectData -> {
+                logoUri = Optional.ofNullable(redirectData.getLogo());
+                brand = Optional.empty();
             }
+
         }
 
         InfoDto result = new InfoDto()
