@@ -279,7 +279,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
      *
      * @param authorizationData authorization data
      * @param clientId          client that initiated the transaction
-     * @return a tuple of redirection url and psp authorization id
+     * @return a tuple of redirection url, psp authorization id and authorization
+     *         timeout
      */
     protected Mono<Tuple3<String, String, Optional<Integer>>> redirectionAuthRequestPipeline(
                                                                                              AuthorizationRequestData authorizationData,
