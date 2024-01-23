@@ -140,6 +140,12 @@ components:
           type: string
           enum:
             - BANK_ACCOUNT
+        touchpoint:
+          description: Touchpoint used to initiate the transaction
+          type: string
+          enum:
+            - CHECKOUT
+            - IO
         paName:
           description: Name of the payment notice issuer
           type: string
@@ -156,6 +162,7 @@ components:
         - urlBack
         - description
         - paymentMethod
+        - touchpoint
       example:
         idTransaction: 3fa85f6457174562b3fc2c963f66afa6
         idPsp: idPsp
@@ -163,6 +170,7 @@ components:
         urlBack: https://psp.site/payment
         description: payment description
         paymentMethod: BANK_ACCOUNT
+        touchpoint: CHECKOUT
         paName: paName
         idPaymentMethod: f40ccb17-3b0b-43d2-942a-2686eb121c6a
     RedirectUrlResponse:
