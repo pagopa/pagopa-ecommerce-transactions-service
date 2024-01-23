@@ -2185,7 +2185,7 @@ class TransactionServiceTests {
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
 
-        Mockito.when(paymentGatewayClient.requestRedirectUrlAuthorization(any()))
+        Mockito.when(paymentGatewayClient.requestRedirectUrlAuthorization(any(), any()))
                 .thenReturn(Mono.just(redirectUrlResponseDto));
 
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));

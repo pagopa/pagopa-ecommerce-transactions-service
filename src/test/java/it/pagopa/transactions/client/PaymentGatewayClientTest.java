@@ -2725,7 +2725,7 @@ class PaymentGatewayClientTest {
         given(b2bPspSideApi.retrieveRedirectUrl(any())).willReturn(Mono.just(redirectUrlResponseDto));
         Hooks.onOperatorDebug();
         /* test */
-        StepVerifier.create(client.requestRedirectUrlAuthorization(authorizationData))
+        StepVerifier.create(client.requestRedirectUrlAuthorization(authorizationData, any()))
                 .expectNext(redirectUrlResponseDto)
                 .verifyComplete();
         verify(b2bPspSideApi, times(1)).retrieveRedirectUrl(redirectUrlRequestDto);
@@ -2797,7 +2797,7 @@ class PaymentGatewayClientTest {
         );
         Hooks.onOperatorDebug();
         /* test */
-        StepVerifier.create(client.requestRedirectUrlAuthorization(authorizationData))
+        StepVerifier.create(client.requestRedirectUrlAuthorization(authorizationData, any()))
                 .expectError(expectedMappedException)
                 .verify();
         verify(b2bPspSideApi, times(1)).retrieveRedirectUrl(redirectUrlRequestDto);
