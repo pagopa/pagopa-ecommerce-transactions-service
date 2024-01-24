@@ -4,7 +4,7 @@ microservice-chart:
   fullnameOverride: ""
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.10.0" #improve
+    tag: "1.11.0" #improve
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -144,6 +144,7 @@ microservice-chart:
     CHECKOUT_REDIRECT_CONNECTION_TIMEOUT: "10000"
     CHECKOUT_REDIRECT_LOGO_MAPPING: >
       { PSP1:'https://host/assets/logo.png' }
+
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password
