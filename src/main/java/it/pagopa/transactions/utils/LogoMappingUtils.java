@@ -43,14 +43,17 @@ public class LogoMappingUtils {
                 URI unknown = npgPaymentCircuitLogoMap.get(BrandLogoConfig.UNKNOWN_LOGO_KEY);
                 yield npgPaymentCircuitLogoMap.getOrDefault(authRequestedData.brand(), unknown);
             }
+            case ApmAuthRequestDetailsDto ignored -> {
+                URI unknown = npgPaymentCircuitLogoMap.get(BrandLogoConfig.UNKNOWN_LOGO_KEY);
+                yield npgPaymentCircuitLogoMap.getOrDefault(authRequestedData.brand(), unknown);
+            }
             case RedirectionAuthRequestDetailsDto ignored -> Optional
                     .ofNullable(
                             checkoutRedirectLogoMap
                                     .get(authRequestedData.pspId())
                     )
                     .orElseThrow(() -> new InvalidRequestException("No logo mapping found for psp with id: [%s]".formatted(authRequestedData.pspId())));
-
-            default -> throw new InvalidRequestException("Authorization request detail type not valid");
+            default -> throw new InvalidRequestException("Cannot retrieve logo for input authorization request detail: [%s]".formatted(authorizationRequestDetailsDto));
         };
     }
 }

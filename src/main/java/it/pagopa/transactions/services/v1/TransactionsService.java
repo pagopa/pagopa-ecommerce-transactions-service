@@ -507,7 +507,8 @@ public class TransactionsService {
                                     transactionId
                             );
                             Integer amountTotal = transactionsUtils.getTransactionTotalAmount(transaction);
-                            return retrieveInformationFromAuthorizationRequest(requestAuthorizationRequestDto)
+                            String clientId = transactionsUtils.getClientId(transaction);
+                            return retrieveInformationFromAuthorizationRequest(requestAuthorizationRequestDto, clientId)
                                     .flatMap(
                                             paymentSessionData -> ecommercePaymentMethodsClient
                                                     .calculateFee(
@@ -515,7 +516,7 @@ public class TransactionsService {
                                                             transactionId,
                                                             new CalculateFeeRequestDto()
                                                                     .touchpoint(
-                                                                            transactionsUtils.getClientId(transaction)
+                                                                            clientId
                                                                     )
                                                                     .bin(
                                                                             paymentSessionData.cardBin()
@@ -1292,7 +1293,7 @@ public class TransactionsService {
                 ).orElseThrow(() -> new InvalidRequestException("Null value as input origin"));
     }
 
-    private Mono<PaymentSessionData> retrieveInformationFromAuthorizationRequest(RequestAuthorizationRequestDto requestAuthorizationRequestDto) {
+    private Mono<PaymentSessionData> retrieveInformationFromAuthorizationRequest(RequestAuthorizationRequestDto requestAuthorizationRequestDto, String clientId) {
         return switch (requestAuthorizationRequestDto.getDetails()) {
             case CardAuthRequestDetailsDto cardData ->
                     Mono.just(new PaymentSessionData(cardData.getPan().substring(0, 6), null, Optional.of(cardData.getBrand()).map(Enum::toString).orElse(null), null));
@@ -1311,6 +1312,7 @@ public class TransactionsService {
                                 walletAuthDataDto.getBrand(),
                                 walletAuthDataDto.getContractId());
                     });
+            case ApmAuthRequestDetailsDto ignore -> ecommercePaymentMethodsClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(response -> new PaymentSessionData(null,null,response.getName(),null));
             case RedirectionAuthRequestDetailsDto ignored -> Mono.just(new PaymentSessionData(
                     null,
                     null,

@@ -36,8 +36,11 @@ public class EcommercePaymentMethodsClient {
                 );
     }
 
-    public Mono<PaymentMethodResponseDto> getPaymentMethod(String paymentMethodId) {
-        return ecommercePaymentInstrumentsWebClient.getPaymentMethod(paymentMethodId);
+    public Mono<PaymentMethodResponseDto> getPaymentMethod(
+                                                           String paymentMethodId,
+                                                           String xClientId
+    ) {
+        return ecommercePaymentInstrumentsWebClient.getPaymentMethod(paymentMethodId, xClientId);
     }
 
     public Mono<SessionPaymentMethodResponseDto> retrieveCardData(

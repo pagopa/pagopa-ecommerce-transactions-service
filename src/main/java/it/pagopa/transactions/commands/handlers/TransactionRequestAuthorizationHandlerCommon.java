@@ -4,6 +4,7 @@ import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
+import it.pagopa.generated.transactions.server.model.ApmAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RedirectionAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
@@ -107,9 +108,10 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                 if (npgPaymentMethod.equals(NpgClient.PaymentMethod.CARDS)) {
                     yield walletNpgCardsPaymentFlow(authorizationData);
                 } else {
-                    yield walletNpgApmPaymentFlow(authorizationData);
+                    yield walletNpgApmPaymentFlow(authorizationData, true);
                 }
             }
+            case ApmAuthRequestDetailsDto ignored ->  walletNpgApmPaymentFlow(authorizationData, false);
             default -> Mono.empty();
         });
 
@@ -126,7 +128,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     private Mono<Tuple4<String, String, Optional<String>, Optional<String>>> walletNpgCardsPaymentFlow(
                                                                                                        AuthorizationRequestData authorizationData
     ) {
-        return paymentGatewayClient.requestNpgBuildSession(authorizationData)
+        return paymentGatewayClient.requestNpgBuildSession(authorizationData, true)
                 .map(orderIdAndFieldsDto -> {
                     transactionTemplateWrapper.save(
                             new TransactionCacheInfo(
@@ -187,16 +189,18 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
      *         (empty) and order/build session id
      */
     private Mono<Tuple4<String, String, Optional<String>, Optional<String>>> walletNpgApmPaymentFlow(
-                                                                                                     AuthorizationRequestData authorizationData
+                                                                                                     AuthorizationRequestData authorizationData,
+                                                                                                     boolean isWalletPayment
     ) {
-        return paymentGatewayClient.requestNpgBuildApmPayment(authorizationData)
+        return paymentGatewayClient.requestNpgBuildApmPayment(authorizationData, isWalletPayment)
                 .filter(orderIdAndFieldsDto -> {
                     String returnUrl = orderIdAndFieldsDto.getT2().getUrl();
                     boolean isReturnUrlValued = returnUrl != null && !returnUrl.isEmpty();
                     if (!isReturnUrlValued) {
                         log.error(
-                                "NPG order/build wallet APM response error: return url is not valid: [{}]",
-                                returnUrl
+                                "NPG order/build APM response error: return url is not valid: [{}]. The payment was performed using wallet: [{}]",
+                                returnUrl,
+                                isWalletPayment
                         );
                     }
                     return isReturnUrlValued;

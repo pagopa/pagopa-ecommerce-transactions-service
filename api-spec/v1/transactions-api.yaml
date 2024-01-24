@@ -453,6 +453,7 @@ components:
             - $ref: "#/components/schemas/CardAuthRequestDetails"
             - $ref: "#/components/schemas/CardsAuthRequestDetails"
             - $ref: "#/components/schemas/WalletAuthRequestDetails"
+            - $ref: "#/components/schemas/ApmAuthRequestDetails"
             - $ref: "#/components/schemas/RedirectionAuthRequestDetails"
           discriminator:
             propertyName: detailType
@@ -461,6 +462,7 @@ components:
               card: "#/components/schemas/CardAuthRequestDetails"
               cards: "#/components/schemas/CardsAuthRequestDetails"
               wallet: "#/components/schemas/WalletAuthRequestDetails"
+              apm: "#/components/schemas/ApmAuthRequestDetails"
               redirect: "#/components/schemas/RedirectionAuthRequestDetails"
 
       required:
@@ -571,6 +573,17 @@ components:
       example:
         detailType: "wallet"
         walletId: "walletId"
+    ApmAuthRequestDetails:
+      type: object
+      description: Additional payment authorization details for payment apm authorization
+      properties:
+        detailType:
+          description: property discriminator, used to discriminate the authorization request detail. Fixed value 'apm'
+          type: string
+      required:
+        - detailType
+      example:
+        detailType: "apm"
     RedirectionAuthRequestDetails:
       type: object
       description: Additional payment authorization details for Redirection authorization request
