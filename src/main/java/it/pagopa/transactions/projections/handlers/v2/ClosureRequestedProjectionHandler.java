@@ -30,7 +30,7 @@ public class ClosureRequestedProjectionHandler implements
                         )
                 )
                 .flatMap(transactionDocument -> {
-                    transactionDocument.setStatus(TransactionStatusDto.CLOSED_REQUESTED);
+                    transactionDocument.setStatus(TransactionStatusDto.CLOSURE_REQUESTED);
                     return transactionsViewRepository.save(transactionDocument);
                 });
     }
