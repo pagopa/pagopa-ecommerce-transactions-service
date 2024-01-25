@@ -2690,7 +2690,7 @@ class PaymentGatewayClientTest {
                 10,
                 "paymentInstrumentId",
                 pspId,
-                "CC",
+                "RBPS",
                 "brokerName",
                 "pspChannelCode",
                 "REDIRECT",
@@ -2706,8 +2706,9 @@ class PaymentGatewayClientTest {
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
         given(checkoutRedirectClientBuilder.getApiClientForPsp(pspId)).willReturn(Either.right(b2bPspSideApi));
+        PaymentGatewayClient.RedirectPaymentMethodId idPaymentMethod = PaymentGatewayClient.RedirectPaymentMethodId.RBPS;
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
-                .paymentMethod(RedirectUrlRequestDto.PaymentMethodEnum.BANK_ACCOUNT)
+                .idPaymentMethod(idPaymentMethod.toString())
                 .amount(totalAmount)
                 .idPsp(pspId)
                 .idTransaction(transaction.getTransactionId().value())
@@ -2717,7 +2718,8 @@ class PaymentGatewayClientTest {
                                 "http://localhost:1234/ecommerce-fe/esito#clientId=REDIRECT&transactionId="
                                         .concat(transaction.getTransactionId().value())
                         )
-                );
+                )
+                .paymentMethod(PaymentGatewayClient.redirectMethodsDescriptions.get(idPaymentMethod));
         RedirectUrlResponseDto redirectUrlResponseDto = new RedirectUrlResponseDto()
                 .timeout(60000)
                 .url("http://redirectionUrl")
@@ -2755,7 +2757,7 @@ class PaymentGatewayClientTest {
                 10,
                 "paymentInstrumentId",
                 pspId,
-                "CC",
+                "RBPS",
                 "brokerName",
                 "pspChannelCode",
                 "REDIRECT",
@@ -2771,8 +2773,9 @@ class PaymentGatewayClientTest {
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
         given(checkoutRedirectClientBuilder.getApiClientForPsp(pspId)).willReturn(Either.right(b2bPspSideApi));
+        PaymentGatewayClient.RedirectPaymentMethodId idPaymentMethod = PaymentGatewayClient.RedirectPaymentMethodId.RBPS;
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
-                .paymentMethod(RedirectUrlRequestDto.PaymentMethodEnum.BANK_ACCOUNT)
+                .idPaymentMethod(idPaymentMethod.toString())
                 .amount(totalAmount)
                 .idPsp(pspId)
                 .idTransaction(transaction.getTransactionId().value())
@@ -2782,7 +2785,8 @@ class PaymentGatewayClientTest {
                                 "http://localhost:1234/ecommerce-fe/esito#clientId=REDIRECT&transactionId="
                                         .concat(transaction.getTransactionId().value())
                         )
-                );
+                )
+                .paymentMethod(PaymentGatewayClient.redirectMethodsDescriptions.get(idPaymentMethod));
         given(b2bPspSideApi.retrieveRedirectUrl(any())).willReturn(
                 Mono.error(
                         new WebClientResponseException(

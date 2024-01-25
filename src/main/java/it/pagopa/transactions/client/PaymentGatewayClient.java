@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NpgClient;
-import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.domain.Claims;
 import it.pagopa.ecommerce.commons.exceptions.NpgApiKeyMissingPspRequestedException;
@@ -81,6 +80,27 @@ public class PaymentGatewayClient {
     private final int npgJwtKeyValidityTime;
 
     private final CheckoutRedirectClientBuilder checkoutRedirectClientBuilder;
+
+    static final Map<RedirectPaymentMethodId, String> redirectMethodsDescriptions = Map.of(
+            RedirectPaymentMethodId.RBPR,
+            "Poste addebito in conto Retail",
+            RedirectPaymentMethodId.RBPB,
+            "Poste addebito in conto Business",
+            RedirectPaymentMethodId.RBPP,
+            "Paga con BottonePostePay",
+            RedirectPaymentMethodId.RPIC,
+            "Pago in Conto Intesa",
+            RedirectPaymentMethodId.RBPS,
+            "SCRIGNO Internet Banking"
+    );
+    
+    public enum RedirectPaymentMethodId {
+        RBPR,
+        RBPB,
+        RBPP,
+        RPIC,
+        RBPS
+    }
 
     @Autowired
     public PaymentGatewayClient(
@@ -555,81 +575,90 @@ public class PaymentGatewayClient {
                 .flatMap(
                         clientEither -> clientEither.fold(
                                 Mono::error,
-                                client -> client
-                                        .retrieveRedirectUrl(
-                                                new RedirectUrlRequestDto()
-                                                        .paymentMethod(
-                                                                RedirectUrlRequestDto.PaymentMethodEnum.BANK_ACCOUNT
-                                                        )
-                                                        .amount(
-                                                                authorizationData
-                                                                        .paymentNotices()
-                                                                        .stream()
-                                                                        .mapToInt(
-                                                                                p -> p.transactionAmount().value()
-                                                                        )
-                                                                        .sum()
-                                                                        + authorizationData.fee()
-                                                        )
-                                                        .idPsp(authorizationData.pspId())
-                                                        .idTransaction(authorizationData.transactionId().value())
-                                                        .description(
-                                                                authorizationData
-                                                                        .paymentNotices()
-                                                                        .stream()
-                                                                        .findFirst()
-                                                                        .map(p -> p.transactionDescription().value())
-                                                                        .orElseThrow()
-                                                        )
-                                                        .urlBack(
-                                                                UriComponentsBuilder
-                                                                        .fromUriString(
-                                                                                // url back to be checked with f.e.
-                                                                                URI
-                                                                                        .create(
-                                                                                                npgSessionUrlConfig
-                                                                                                        .basePath()
-                                                                                        )
-                                                                                        .resolve(
-                                                                                                npgSessionUrlConfig
-                                                                                                        .outcomeSuffix()
-                                                                                        ).toString()
-                                                                                        .concat(
-                                                                                                "#clientId=REDIRECT&transactionId="
-                                                                                        )
-                                                                                        .concat(
-                                                                                                authorizationData
-                                                                                                        .transactionId()
-                                                                                                        .value()
-                                                                                        )
-                                                                        ).build()
-                                                                        .toUri()
-                                                        )
-                                                        .touchpoint(touchpoint)
-                                                        .paName(null)// optional
-                                                        .idPaymentMethod(null)// optional
-                                        ).onErrorMap(
-                                                WebClientResponseException.class,
-                                                exception -> {
-                                                    String pspId = authorizationData.pspId();
-                                                    HttpStatus httpStatus = exception.getStatusCode();
-                                                    log.error(
-                                                            "Error communicating with PSP: [{}] to retrieve redirection URL. Received HTTP status code: {}",
-                                                            pspId,
-                                                            httpStatus
-                                                    );
-                                                    return switch (exception.getStatusCode()) {
-                                                        case BAD_REQUEST, UNAUTHORIZED -> new AlreadyProcessedException(
-                                                                authorizationData.transactionId()
+                                client -> {
+                                    RedirectPaymentMethodId idPaymentMethod = RedirectPaymentMethodId
+                                            .valueOf(authorizationData.paymentTypeCode());
+                                    return client
+                                            .retrieveRedirectUrl(
+                                                    new RedirectUrlRequestDto()
+                                                            .idPaymentMethod(
+                                                                    idPaymentMethod.toString()
+                                                            )
+                                                            .amount(
+                                                                    authorizationData
+                                                                            .paymentNotices()
+                                                                            .stream()
+                                                                            .mapToInt(
+                                                                                    p -> p.transactionAmount().value()
+                                                                            )
+                                                                            .sum()
+                                                                            + authorizationData.fee()
+                                                            )
+                                                            .idPsp(authorizationData.pspId())
+                                                            .idTransaction(authorizationData.transactionId().value())
+                                                            .description(
+                                                                    authorizationData
+                                                                            .paymentNotices()
+                                                                            .stream()
+                                                                            .findFirst()
+                                                                            .map(
+                                                                                    p -> p.transactionDescription()
+                                                                                            .value()
+                                                                            )
+                                                                            .orElseThrow()
+                                                            )
+                                                            .urlBack(
+                                                                    UriComponentsBuilder
+                                                                            .fromUriString(
+                                                                                    // url back to be checked with f.e.
+                                                                                    URI
+                                                                                            .create(
+                                                                                                    npgSessionUrlConfig
+                                                                                                            .basePath()
+                                                                                            )
+                                                                                            .resolve(
+                                                                                                    npgSessionUrlConfig
+                                                                                                            .outcomeSuffix()
+                                                                                            ).toString()
+                                                                                            .concat(
+                                                                                                    "#clientId=REDIRECT&transactionId="
+                                                                                            )
+                                                                                            .concat(
+                                                                                                    authorizationData
+                                                                                                            .transactionId()
+                                                                                                            .value()
+                                                                                            )
+                                                                            ).build()
+                                                                            .toUri()
+                                                            )
+                                                            .touchpoint(touchpoint)
+                                                            .paymentMethod(
+                                                                    redirectMethodsDescriptions.get(idPaymentMethod)
+                                                            )
+                                                            .paName(null)// optional
+                                            ).onErrorMap(
+                                                    WebClientResponseException.class,
+                                                    exception -> {
+                                                        String pspId = authorizationData.pspId();
+                                                        HttpStatus httpStatus = exception.getStatusCode();
+                                                        log.error(
+                                                                "Error communicating with PSP: [{}] to retrieve redirection URL. Received HTTP status code: {}",
+                                                                pspId,
+                                                                httpStatus
                                                         );
-                                                        default -> new BadGatewayException(
-                                                                "KO performing redirection URL api call for PSP: [%s]"
-                                                                        .formatted(pspId),
-                                                                exception.getStatusCode()
-                                                        );
-                                                    };
-                                                }
-                                        )
+                                                        return switch (exception.getStatusCode()) {
+                                                            case BAD_REQUEST, UNAUTHORIZED -> new AlreadyProcessedException(
+                                                                    authorizationData.transactionId()
+                                                            );
+                                                            default -> new BadGatewayException(
+                                                                    "KO performing redirection URL api call for PSP: [%s]"
+                                                                            .formatted(pspId),
+                                                                    exception.getStatusCode()
+                                                            );
+                                                        };
+                                                    }
+                                            );
+                                }
                         )
                 );
     }
