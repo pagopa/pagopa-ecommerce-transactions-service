@@ -135,8 +135,8 @@ components:
         description:
           description: Payment description
           type: string
-        paymentMethod:
-          description: Description of the payment method chosen by the user
+        idPaymentMethod:
+          description: Redirect payment method type
           type: string
         touchpoint:
           description: Touchpoint used to initiate the transaction
@@ -149,8 +149,8 @@ components:
           type: string
           minLength: 1
           maxLength: 70
-        idPaymentMethod:
-          description: Redirect payment method type
+        paymentMethod:
+          description: Description of the payment method chosen by the user
           type: string
       required:
         - idTransaction
