@@ -63,7 +63,7 @@ public class ClosureRequestedProjectionHandlerTests {
     @Test
     void shouldReturnTransactionNotFoundExceptionOnTransactionNotFound() {
         Transaction transaction = TransactionTestUtils
-                .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
+                .transactionDocument(TransactionStatusDto.AUTHORIZATION_COMPLETED, ZonedDateTime.now());
 
         TransactionClosureRequestedEvent transactionClosureRequestedEvent = new TransactionClosureRequestedEvent(
                 transaction.getTransactionId()
