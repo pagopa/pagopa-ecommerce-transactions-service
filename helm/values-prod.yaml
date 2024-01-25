@@ -80,7 +80,7 @@ microservice-chart:
       NPG_CARDS_PSP_LIST: "" #TODO to be filled with psp id list that are expected to be present into psp api keys configuration
       CHECKOUT_BASE_PATH: "https://checkout.pagopa.it"
       ECOMMERCE_EVENT_VERSION: "V1"
-      SEND_PAYMENT_RESULT_FOR_TX_EXPIRED_ENABLED: "false"
+      SEND_PAYMENT_RESULT_FOR_TX_EXPIRED_ENABLED: "true"
       SESSION_URL_BASEPATH: "https://checkout.pagopa.it"
       SESSION_URL_OUTCOME_SUFFIX: "/ecommerce-fe/esito"
       SESSION_URL_CANCEL_SUFFIX: "/ecommerce-fe/cancel"
@@ -234,7 +234,7 @@ microservice-chart:
     TRANSACTION_DOCUMENT_TTL: "600"
     CHECKOUT_BASE_PATH: "https://checkout.pagopa.it"
     ECOMMERCE_EVENT_VERSION: "V1"
-    SEND_PAYMENT_RESULT_FOR_TX_EXPIRED_ENABLED: "false"
+    SEND_PAYMENT_RESULT_FOR_TX_EXPIRED_ENABLED: "true"
     SESSION_URL_BASEPATH: "https://checkout.pagopa.it"
     SESSION_URL_OUTCOME_SUFFIX: "/ecommerce-fe/esito"
     SESSION_URL_CANCEL_SUFFIX: "/ecommerce-fe/cancel"
