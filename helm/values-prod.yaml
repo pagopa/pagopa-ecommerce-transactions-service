@@ -12,6 +12,7 @@ microservice-chart:
       create: true
     deployment:
       create: true
+      replicas: 3
       image:
         repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
         tag: "latest"
@@ -165,6 +166,11 @@ microservice-chart:
           # Required
           type: Utilization # Allowed types are 'Utilization' or 'AverageValue'
           value: "70"
+  strategy:
+    type: "RollingUpdate"
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   envConfig:
     MONGO_HOST: pagopa-p-weu-ecommerce-cosmos-account.mongo.cosmos.azure.com
     MONGO_USERNAME: pagopa-p-weu-ecommerce-cosmos-account
