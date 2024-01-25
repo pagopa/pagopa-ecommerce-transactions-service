@@ -136,10 +136,9 @@ components:
           description: Payment description
           type: string
         paymentMethod:
-          description: Redirect payment method type
+          description: Unique id of the payment method chosen by the user
           type: string
-          enum:
-            - BANK_ACCOUNT
+          format: uuid
         touchpoint:
           description: Touchpoint used to initiate the transaction
           type: string
@@ -152,16 +151,17 @@ components:
           minLength: 1
           maxLength: 70
         idPaymentMethod:
-          description: Unique id of the payment method chosen by the user
+          description: Redirect payment method type
           type: string
-          format: uuid
+          enum:
+            - BANK_ACCOUNT
       required:
         - idTransaction
         - idPsp
         - amount
         - urlBack
         - description
-        - paymentMethod
+        - idPaymentMethod
         - touchpoint
       example:
         idTransaction: 3fa85f6457174562b3fc2c963f66afa6
