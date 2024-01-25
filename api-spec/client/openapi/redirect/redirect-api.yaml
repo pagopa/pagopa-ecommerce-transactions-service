@@ -215,6 +215,62 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/RedirectUrlRequest'
+          examples:
+            Poste addebito in conto Retail (RBPR):
+              value:
+                idTransaction: 3fa85f6457174562b3fc2c963f66afa6
+                idPsp: idPsp
+                amount: 99999999
+                urlBack: https://psp.site/payment
+                description: payment description
+                idPaymentMethod: RBPR
+                touchpoint: CHECKOUT
+                paName: paName
+                paymentMethod: Poste addebito in conto Retail
+            Poste addebito in conto Business (RBPB):
+              value:
+                idTransaction: 3fa85f6457174562b3fc2c963f66afa6
+                idPsp: idPsp
+                amount: 99999999
+                urlBack: https://psp.site/payment
+                description: payment description
+                idPaymentMethod: RBPB
+                touchpoint: CHECKOUT
+                paName: paName
+                paymentMethod: Poste addebito in conto Business
+            Pago con BottonePostePay (RBPP):
+              value:
+                idTransaction: 3fa85f6457174562b3fc2c963f66afa6
+                idPsp: idPsp
+                amount: 99999999
+                urlBack: https://psp.site/payment
+                description: payment description
+                idPaymentMethod: RBPP
+                touchpoint: CHECKOUT
+                paName: paName
+                paymentMethod: Pago con BottonePostePay
+            Pago in Conto Intesa (RBPIC):
+              value:
+                idTransaction: 3fa85f6457174562b3fc2c963f66afa6
+                idPsp: idPsp
+                amount: 99999999
+                urlBack: https://psp.site/payment
+                description: payment description
+                idPaymentMethod: RBPIC
+                touchpoint: CHECKOUT
+                paName: paName
+                paymentMethod: Pago in Conto Intesa
+            SCRIGNO Internet Banking (RBPS):
+              value:
+                idTransaction: 3fa85f6457174562b3fc2c963f66afa6
+                idPsp: idPsp
+                amount: 99999999
+                urlBack: https://psp.site/payment
+                description: payment description
+                idPaymentMethod: RBPS
+                touchpoint: CHECKOUT
+                paName: paName
+                paymentMethod: SCRIGNO Internet Banking
   securitySchemes:
     PspApiKeyAuth:
       type: apiKey
