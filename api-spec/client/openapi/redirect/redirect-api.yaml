@@ -136,9 +136,8 @@ components:
           description: Payment description
           type: string
         paymentMethod:
-          description: Unique id of the payment method chosen by the user
+          description: Description of the payment method chosen by the user
           type: string
-          format: uuid
         touchpoint:
           description: Touchpoint used to initiate the transaction
           type: string
