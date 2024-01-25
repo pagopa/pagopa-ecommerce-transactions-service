@@ -42,7 +42,7 @@ class TransactionSendClosureRequestedHandlerTest {
     private it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureRequestHandler transactionSendClosureRequestHandler;
 
     @Mock
-    private TransactionsEventStoreRepository<Void> transactionEventUserCancelStoreRepository;
+    private TransactionsEventStoreRepository<Void> transactionEventClosureRequestedRepository;
 
     @Mock
     private QueueAsyncClient transactionSendClosureRequestQueueClient;
@@ -62,7 +62,7 @@ class TransactionSendClosureRequestedHandlerTest {
     @BeforeEach
     private void init() {
         transactionSendClosureRequestHandler = new TransactionSendClosureRequestHandler(
-                transactionEventUserCancelStoreRepository,
+                transactionEventClosureRequestedRepository,
                 transactionSendClosureRequestQueueClient,
                 transientQueueEventsTtlSeconds,
                 transactionsUtils,
@@ -91,7 +91,7 @@ class TransactionSendClosureRequestedHandlerTest {
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId))
                 .thenReturn(events);
 
-        Mockito.when(transactionEventUserCancelStoreRepository.save(any()))
+        Mockito.when(transactionEventClosureRequestedRepository.save(any()))
                 .thenAnswer(a -> Mono.just(a.getArgument(0)));
 
         Mockito.when(
@@ -113,7 +113,7 @@ class TransactionSendClosureRequestedHandlerTest {
                 )
                 .verifyComplete();
 
-        verify(transactionEventUserCancelStoreRepository, times(1)).save(any());
+        verify(transactionEventClosureRequestedRepository, times(1)).save(any());
         verify(transactionSendClosureRequestQueueClient, times(1)).sendMessageWithResponse(any(), any(), any());
         assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationCaptor.getValue());
     }
@@ -135,7 +135,7 @@ class TransactionSendClosureRequestedHandlerTest {
                 .expectError(TransactionNotFoundException.class)
                 .verify();
 
-        verify(transactionEventUserCancelStoreRepository, times(0)).save(any());
+        verify(transactionEventClosureRequestedRepository, times(0)).save(any());
         verify(transactionSendClosureRequestQueueClient, times(0)).sendMessageWithResponse(any(), any(), any());
     }
 
@@ -165,7 +165,7 @@ class TransactionSendClosureRequestedHandlerTest {
                 .expectError(AlreadyProcessedException.class)
                 .verify();
 
-        verify(transactionEventUserCancelStoreRepository, times(0)).save(any());
+        verify(transactionEventClosureRequestedRepository, times(0)).save(any());
         verify(transactionSendClosureRequestQueueClient, times(0)).sendMessageWithResponse(any(), any(), any());
     }
 
