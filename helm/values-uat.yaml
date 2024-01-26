@@ -125,6 +125,9 @@ microservice-chart:
     initialDelaySeconds: 60
     failureThreshold: 6
     periodSeconds: 10
+  deployment:
+    create: true
+    replicas: 1
   service:
     create: true
     type: ClusterIP
