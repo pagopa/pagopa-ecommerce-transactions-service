@@ -12,7 +12,6 @@ microservice-chart:
       create: true
     deployment:
       create: true
-      replicas: 3
       image:
         repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
         tag: "latest"
@@ -127,6 +126,9 @@ microservice-chart:
     initialDelaySeconds: 60
     failureThreshold: 6
     periodSeconds: 10
+  deployment:
+    create: true
+    replicas: 3
   service:
     create: true
     type: ClusterIP
