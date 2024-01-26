@@ -126,8 +126,8 @@ microservice-chart:
     failureThreshold: 6
     periodSeconds: 10
   deployment:
-    replicas: 3
     create: true
+    replicas: 3
   service:
     create: true
     type: ClusterIP
