@@ -5,13 +5,11 @@ import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mockito;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -128,23 +126,6 @@ class AuthRequestDataUtilsTest {
         assertEquals(
                 data.errorCode(),
                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getErrorCode().toString()
-        );
-    }
-
-    private static Stream<Arguments> npgOutcomeTestArguments() {
-        return Stream.of(
-                // npg operation result - expected outcome mappings
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.AUTHORIZED, "KO"),
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED, "OK"),
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.DECLINED, "KO"),
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.DENIED_BY_RISK, "KO"),
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.THREEDS_VALIDATED, "KO"),
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.THREEDS_FAILED, "KO"),
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.PENDING, "KO"),
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.CANCELED, "KO"),
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.VOIDED, "KO"),
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.REFUNDED, "KO"),
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.FAILED, "KO")
         );
     }
 
