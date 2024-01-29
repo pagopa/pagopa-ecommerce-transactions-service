@@ -33,6 +33,7 @@ import reactor.test.StepVerifier;
 
 import java.net.URI;
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -94,7 +95,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
                 updateAuthorizationRequest,
-                OffsetDateTime.now()
+                ZonedDateTime.now()
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
@@ -117,8 +118,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                                 eventArg -> TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
                                         .equals(eventArg.getEventCode())
                                         && ((PgsTransactionGatewayAuthorizationData) eventArg.getData()
-                                        .getTransactionGatewayAuthorizationData()).getAuthorizationResultDto()
-                                        .equals(AuthorizationResultDto.OK)
+                                                .getTransactionGatewayAuthorizationData()).getAuthorizationResultDto()
+                                                        .equals(AuthorizationResultDto.OK)
                         )
                 );
     }
@@ -150,7 +151,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
                 updateAuthorizationRequest,
-                OffsetDateTime.now()
+                ZonedDateTime.now()
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
@@ -176,13 +177,13 @@ class TransactionUpdateAuthorizationHandlerTest {
                                     return TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
                                             .equals(eventArg.getEventCode())
                                             && npgData.getOperationResult()
-                                            .equals(
-                                                    OperationResultDto.valueOf(
-                                                            ((OutcomeNpgGatewayDto) updateAuthorizationRequest
-                                                                    .getOutcomeGateway())
-                                                                    .getOperationResult().getValue()
-                                                    )
-                                            );
+                                                    .equals(
+                                                            OperationResultDto.valueOf(
+                                                                    ((OutcomeNpgGatewayDto) updateAuthorizationRequest
+                                                                            .getOutcomeGateway())
+                                                                                    .getOperationResult().getValue()
+                                                            )
+                                                    );
                                 }
                         )
                 );
@@ -234,7 +235,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
                 updateAuthorizationRequest,
-                OffsetDateTime.now()
+                ZonedDateTime.now()
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
@@ -274,7 +275,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
                 updateAuthorizationRequest,
-                OffsetDateTime.now()
+                ZonedDateTime.now()
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
@@ -295,8 +296,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                         eventArg -> TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                                 && ((PgsTransactionGatewayAuthorizationData) eventArg.getData()
-                                .getTransactionGatewayAuthorizationData()).getAuthorizationResultDto()
-                                .equals(AuthorizationResultDto.KO)
+                                        .getTransactionGatewayAuthorizationData()).getAuthorizationResultDto()
+                                                .equals(AuthorizationResultDto.KO)
                 )
         );
     }

@@ -35,7 +35,6 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
 
     private final Map<String, URI> npgPaymentCircuitLogoMap;
 
-
     @Autowired
     protected TransactionUpdateAuthorizationHandler(
             TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> transactionEventStoreRepository,
@@ -111,22 +110,26 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
     }
 
     /**
-     * This method performs validation check against received update authorization request
+     * This method performs validation check against received update authorization
+     * request
      *
      * @param command the handler command
-     * @return an empty mono if request was validated successfully otherwise a mono error with request validation failure details
+     * @return an empty mono if request was validated successfully otherwise a mono
+     *         error with request validation failure details
      */
     private Mono<Void> isUpdateTransactionRequestValid(TransactionUpdateAuthorizationCommand command) {
         TransactionId transactionId = command.getData().transactionId();
-        UpdateAuthorizationRequestOutcomeGatewayDto outcomeGateway = command.getData().updateAuthorizationRequest().getOutcomeGateway();
+        UpdateAuthorizationRequestOutcomeGatewayDto outcomeGateway = command.getData().updateAuthorizationRequest()
+                .getOutcomeGateway();
         Mono<Void> updateAuthorizationTimeoutCheck = Mono.empty();
-        //update transaction status request validation for Redirect payment flows
+        // update transaction status request validation for Redirect payment flows
         if (outcomeGateway instanceof OutcomeRedirectGatewayDto redirectGatewayDto) {
             updateAuthorizationTimeoutCheck = transactionsUtils
                     .reduceEventsV2(transactionId)
                     .cast(TransactionWithRequestedAuthorization.class)
                     .flatMap(tx -> {
-                        if (tx.getTransactionAuthorizationRequestData().getTransactionGatewayAuthorizationRequestedData() instanceof RedirectTransactionGatewayAuthorizationRequestedData authRequestedData) {
+                        if (tx.getTransactionAuthorizationRequestData()
+                                .getTransactionGatewayAuthorizationRequestedData()instanceof RedirectTransactionGatewayAuthorizationRequestedData authRequestedData) {
                             String requestValidationErrorHeader = "Invalid update auth redirect request received! Validation error: %s";
                             String pspId = redirectGatewayDto.getPspId();
                             String expectedPspId = tx.getTransactionAuthorizationRequestData().getPspId();
@@ -134,22 +137,56 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                             String expectedPspTransactionId = authRequestedData.getPspTransactionId();
                             long timeout = authRequestedData.getTransactionOutcomeTimeoutMillis();
                             if (!pspId.equals(expectedPspId)) {
-                                log.error("Invalid redirect authorization outcome psp id received. Expected: [{}], received: [{}]", expectedPspId, pspId);
-                                Mono.error(new InvalidRequestException(requestValidationErrorHeader.formatted("psp id mismatch")));
+                                log.error(
+                                        "Invalid redirect authorization outcome psp id received. Expected: [{}], received: [{}]",
+                                        expectedPspId,
+                                        pspId
+                                );
+                                Mono.error(
+                                        new InvalidRequestException(
+                                                requestValidationErrorHeader.formatted("psp id mismatch")
+                                        )
+                                );
                             }
                             if (!pspTransactionId.equals(expectedPspTransactionId)) {
-                                log.error("Invalid redirect authorization outcome psp transaction id received. Expected: [{}], received: [{}]", expectedPspTransactionId, pspTransactionId);
-                                Mono.error(new InvalidRequestException(requestValidationErrorHeader.formatted("psp transaction id mismatch")));
+                                log.error(
+                                        "Invalid redirect authorization outcome psp transaction id received. Expected: [{}], received: [{}]",
+                                        expectedPspTransactionId,
+                                        pspTransactionId
+                                );
+                                Mono.error(
+                                        new InvalidRequestException(
+                                                requestValidationErrorHeader.formatted("psp transaction id mismatch")
+                                        )
+                                );
                             }
                             Instant authRequestedInstant = command.getData().authorizationRequestedTime().toInstant();
                             Instant authCompletedThreshold = authRequestedInstant.plus(Duration.ofMillis(timeout));
                             if (Instant.now().isAfter(authCompletedThreshold)) {
-                                log.error("Redirect authorization outcome received after timeout. Authorization requested at: [{}], psp received timeout: [{}] -> authorization update outcome threshold: [{}]", authRequestedInstant, timeout, authCompletedThreshold);
-                                Mono.error(new InvalidRequestException(requestValidationErrorHeader.formatted("authorization outcome received after threshold")));
+                                log.error(
+                                        "Redirect authorization outcome received after timeout. Authorization requested at: [{}], psp received timeout: [{}] -> authorization update outcome threshold: [{}]",
+                                        authRequestedInstant,
+                                        timeout,
+                                        authCompletedThreshold
+                                );
+                                Mono.error(
+                                        new InvalidRequestException(
+                                                requestValidationErrorHeader
+                                                        .formatted("authorization outcome received after threshold")
+                                        )
+                                );
                             }
                             return Mono.empty();
                         } else {
-                            return Mono.error(new InvalidRequestException("Redirect update auth request received for transaction performed with gateway: [%s]".formatted(tx.getTransactionAuthorizationRequestData().getPaymentGateway())));
+                            return Mono.error(
+                                    new InvalidRequestException(
+                                            "Redirect update auth request received for transaction performed with gateway: [%s]"
+                                                    .formatted(
+                                                            tx.getTransactionAuthorizationRequestData()
+                                                                    .getPaymentGateway()
+                                                    )
+                                    )
+                            );
                         }
                     });
 
