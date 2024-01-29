@@ -93,7 +93,8 @@ class TransactionUpdateAuthorizationHandlerTest {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
-                updateAuthorizationRequest
+                updateAuthorizationRequest,
+                OffsetDateTime.now()
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
@@ -116,8 +117,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                                 eventArg -> TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
                                         .equals(eventArg.getEventCode())
                                         && ((PgsTransactionGatewayAuthorizationData) eventArg.getData()
-                                                .getTransactionGatewayAuthorizationData()).getAuthorizationResultDto()
-                                                        .equals(AuthorizationResultDto.OK)
+                                        .getTransactionGatewayAuthorizationData()).getAuthorizationResultDto()
+                                        .equals(AuthorizationResultDto.OK)
                         )
                 );
     }
@@ -148,7 +149,8 @@ class TransactionUpdateAuthorizationHandlerTest {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
-                updateAuthorizationRequest
+                updateAuthorizationRequest,
+                OffsetDateTime.now()
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
@@ -174,13 +176,13 @@ class TransactionUpdateAuthorizationHandlerTest {
                                     return TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
                                             .equals(eventArg.getEventCode())
                                             && npgData.getOperationResult()
-                                                    .equals(
-                                                            OperationResultDto.valueOf(
-                                                                    ((OutcomeNpgGatewayDto) updateAuthorizationRequest
-                                                                            .getOutcomeGateway())
-                                                                                    .getOperationResult().getValue()
-                                                            )
-                                                    );
+                                            .equals(
+                                                    OperationResultDto.valueOf(
+                                                            ((OutcomeNpgGatewayDto) updateAuthorizationRequest
+                                                                    .getOutcomeGateway())
+                                                                    .getOperationResult().getValue()
+                                                    )
+                                            );
                                 }
                         )
                 );
@@ -231,7 +233,8 @@ class TransactionUpdateAuthorizationHandlerTest {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
-                updateAuthorizationRequest
+                updateAuthorizationRequest,
+                OffsetDateTime.now()
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
@@ -270,7 +273,8 @@ class TransactionUpdateAuthorizationHandlerTest {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
-                updateAuthorizationRequest
+                updateAuthorizationRequest,
+                OffsetDateTime.now()
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
@@ -291,8 +295,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                         eventArg -> TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                                 && ((PgsTransactionGatewayAuthorizationData) eventArg.getData()
-                                        .getTransactionGatewayAuthorizationData()).getAuthorizationResultDto()
-                                                .equals(AuthorizationResultDto.KO)
+                                .getTransactionGatewayAuthorizationData()).getAuthorizationResultDto()
+                                .equals(AuthorizationResultDto.KO)
                 )
         );
     }

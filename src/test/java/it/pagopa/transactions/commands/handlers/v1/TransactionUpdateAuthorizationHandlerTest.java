@@ -76,7 +76,8 @@ class TransactionUpdateAuthorizationHandlerTest {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
-                updateAuthorizationRequest
+                updateAuthorizationRequest,
+                OffsetDateTime.now()
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
@@ -99,7 +100,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                                 eventArg -> TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
                                         .equals(eventArg.getEventCode())
                                         && eventArg.getData().getAuthorizationResultDto()
-                                                .equals(AuthorizationResultDto.OK)
+                                        .equals(AuthorizationResultDto.OK)
                         )
                 );
     }
@@ -148,7 +149,8 @@ class TransactionUpdateAuthorizationHandlerTest {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
-                updateAuthorizationRequest
+                updateAuthorizationRequest,
+                OffsetDateTime.now()
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
@@ -185,7 +187,8 @@ class TransactionUpdateAuthorizationHandlerTest {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
-                updateAuthorizationRequest
+                updateAuthorizationRequest,
+                OffsetDateTime.now()
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
