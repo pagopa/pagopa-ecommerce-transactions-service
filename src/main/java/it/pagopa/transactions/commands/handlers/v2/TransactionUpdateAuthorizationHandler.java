@@ -87,7 +87,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                         authRequestDataExtracted.errorCode()
 
                                 );
-                        default -> throw new IllegalStateException("Unexpected value: " + outcomeGateway);
+                        default -> throw new InvalidRequestException("Unexpected value: " + outcomeGateway);
                     };
 
             return isUpdateTransactionRequestValid(command)
@@ -142,7 +142,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                         expectedPspId,
                                         pspId
                                 );
-                                Mono.error(
+                                return Mono.error(
                                         new InvalidRequestException(
                                                 requestValidationErrorHeader.formatted("psp id mismatch")
                                         )
@@ -154,7 +154,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                         expectedPspTransactionId,
                                         pspTransactionId
                                 );
-                                Mono.error(
+                                return Mono.error(
                                         new InvalidRequestException(
                                                 requestValidationErrorHeader.formatted("psp transaction id mismatch")
                                         )
@@ -162,14 +162,20 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                             }
                             Instant authRequestedInstant = command.getData().authorizationRequestedTime().toInstant();
                             Instant authCompletedThreshold = authRequestedInstant.plus(Duration.ofMillis(timeout));
-                            if (Instant.now().isAfter(authCompletedThreshold)) {
-                                log.error(
-                                        "Redirect authorization outcome received after timeout. Authorization requested at: [{}], psp received timeout: [{}] -> authorization update outcome threshold: [{}]",
-                                        authRequestedInstant,
-                                        timeout,
-                                        authCompletedThreshold
-                                );
-                                Mono.error(
+                            Instant now = Instant.now();
+                            System.out.println(authCompletedThreshold);
+                            System.out.println(now);
+                            boolean isOnTime = !now.isAfter(authCompletedThreshold);
+                            log.info(
+                                    "Redirect authorization outcome received at: [{}]. Authorization requested at: [{}], psp received timeout: [{}] -> is on time: [{}]",
+                                    now,
+                                    authRequestedInstant,
+                                    timeout,
+                                    isOnTime
+                            );
+                            if (!isOnTime) {
+
+                                return Mono.error(
                                         new InvalidRequestException(
                                                 requestValidationErrorHeader
                                                         .formatted("authorization outcome received after threshold")
