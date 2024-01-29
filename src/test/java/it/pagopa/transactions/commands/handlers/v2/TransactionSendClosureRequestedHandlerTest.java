@@ -119,7 +119,7 @@ class TransactionSendClosureRequestedHandlerTest {
     }
 
     @Test
-    void shouldSaveClosureRequestedEventWithErrorTransactionNotFound() {
+    void shouldNotSaveClosureRequestedEventWithErrorTransactionNotFound() {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
         TransactionClosureRequestCommand transactionClosureRequestCommand = new TransactionClosureRequestCommand(
                 null,
@@ -140,7 +140,7 @@ class TransactionSendClosureRequestedHandlerTest {
     }
 
     @Test
-    void shouldSaveClosureRequestedEventWithErrorAlreadyProcessedException() {
+    void shouldNotSaveClosureRequestedEventWithErrorAlreadyProcessedException() {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
         TransactionClosureRequestCommand transactionClosureRequestCommand = new TransactionClosureRequestCommand(
                 null,
