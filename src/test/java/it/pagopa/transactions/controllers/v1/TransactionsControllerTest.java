@@ -51,6 +51,7 @@ import java.net.URISyntaxException;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -942,7 +943,8 @@ class TransactionsControllerTest {
                                                 .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
                                                 .authorizationCode("authorizationCode")
                                 ).timestampOperation(OffsetDateTime.now()),
-                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
+                        null
                 ),
                 Arguments.of(
                         new UpdateAuthorizationRequestDto()
@@ -951,7 +953,8 @@ class TransactionsControllerTest {
                                                 .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
                                                 .authorizationCode("authorizationCode")
                                 ).timestampOperation(OffsetDateTime.now()),
-                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS,
+                        null
                 ),
                 Arguments.of(
                         new UpdateAuthorizationRequestDto()
@@ -960,7 +963,8 @@ class TransactionsControllerTest {
                                                 .authorizationCode("authorizationCode")
                                                 .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
                                 ).timestampOperation(OffsetDateTime.now()),
-                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG,
+                        null
                 ),
                 Arguments.of(
                         new UpdateAuthorizationRequestDto()
@@ -968,8 +972,10 @@ class TransactionsControllerTest {
                                         new OutcomeRedirectGatewayDto()
                                                 .authorizationCode("authorizationCode")
                                                 .outcome(AuthorizationOutcomeDto.OK)
+                                                .pspId(TransactionTestUtils.PSP_ID)
                                 ).timestampOperation(OffsetDateTime.now()),
-                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT,
+                        TransactionTestUtils.PSP_ID
                 )
         );
     }
@@ -978,7 +984,8 @@ class TransactionsControllerTest {
     @MethodSource("authRequestMethodSource")
     void shouldTraceTransactionUpdateStatusOK(
                                               UpdateAuthorizationRequestDto updateAuthorizationRequest,
-                                              UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger trigger
+                                              UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger trigger,
+                                              String expectedPspId
     ) {
 
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
@@ -1017,7 +1024,8 @@ class TransactionsControllerTest {
 
         UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedTransactionUpdateStatus = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                 UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
-                trigger
+                trigger,
+                Optional.ofNullable(expectedPspId)
         );
         verify(updateTransactionStatusTracerUtils, times(1))
                 .traceStatusUpdateOperation(expectedTransactionUpdateStatus);
@@ -1111,7 +1119,8 @@ class TransactionsControllerTest {
 
         UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                 expectedOutcome,
-                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY
+                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
+                Optional.empty()
         );
         verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
                 expectedStatusUpdateInfo
@@ -1141,7 +1150,8 @@ class TransactionsControllerTest {
         String contextPath = "auth-requests";
         UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                 UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
-                expectedTrigger
+                expectedTrigger,
+                Optional.empty()
         );
         ServerWebExchange exchange = Mockito.mock(ServerWebExchange.class);
         ServerHttpRequest serverHttpRequest = Mockito.mock(ServerHttpRequest.class);

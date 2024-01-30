@@ -5,6 +5,9 @@ import io.opentelemetry.api.common.Attributes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
+import java.util.Optional;
+
 /**
  * This utility class traces transaction update status performed by external
  * entities. Tracing is performed by meaning of OpenTelemetry span creation.
@@ -40,6 +43,13 @@ public class UpdateTransactionStatusTracerUtils {
      */
     static final AttributeKey<String> UPDATE_TRANSACTION_STATUS_TRIGGER_ATTRIBUTE_KEY = AttributeKey
             .stringKey("updateTransactionStatus.trigger");
+
+    /**
+     * Span attribute used to trace transaction psp id (useful to discriminate
+     * redirection payment flows
+     */
+    static final AttributeKey<String> UPDATE_TRANSACTION_STATUS_PSP_ID_ATTRIBUTE_KEY = AttributeKey
+            .stringKey("updateTransactionStatus.pspId");
 
     /**
      * Enumeration of all operation that update transaction status performed by
@@ -142,7 +152,9 @@ public class UpdateTransactionStatusTracerUtils {
                 UPDATE_TRANSACTION_STATUS_OUTCOME_ATTRIBUTE_KEY,
                 statusUpdateInfo.outcome().toString(),
                 UPDATE_TRANSACTION_STATUS_TRIGGER_ATTRIBUTE_KEY,
-                statusUpdateInfo.trigger().toString()
+                statusUpdateInfo.trigger().toString(),
+                UPDATE_TRANSACTION_STATUS_PSP_ID_ATTRIBUTE_KEY,
+                statusUpdateInfo.pspId().orElse("N/A")
         );
         openTelemetryUtils.addSpanWithAttributes(UPDATE_TRANSACTION_STATUS_SPAN_NAME, spanAttributes);
     }
@@ -155,6 +167,10 @@ public class UpdateTransactionStatusTracerUtils {
     public record NodoStatusUpdate(UpdateTransactionStatusOutcome outcome)
             implements
             StatusUpdateInfo {
+        public NodoStatusUpdate {
+            Objects.requireNonNull(outcome);
+        }
+
         @Override
         public UpdateTransactionStatusType type() {
             return UpdateTransactionStatusType.SEND_PAYMENT_RESULT_OUTCOME;
@@ -165,21 +181,45 @@ public class UpdateTransactionStatusTracerUtils {
             return UpdateTransactionTrigger.NODO;
         }
 
+        @Override
+        public Optional<String> pspId() {
+            return Optional.empty();
+        }
+
     }
 
     /**
      * Transaction status update record for payment transaction gateway update
      * trigger
      *
-     * @param outcome           - the transaction update status outcome
-     * @param outcomeGatewayDto - the request gateway dto
+     * @param outcome - the transaction update status outcome
+     * @param trigger - the gateway trigger that initiate the request
+     * @param pspId   - the psp id chosen for the current transaction
      */
     public record PaymentGatewayStatusUpdate(
             UpdateTransactionStatusOutcome outcome,
-            UpdateTransactionTrigger trigger
+            UpdateTransactionTrigger trigger,
+
+            Optional<String> pspId
     )
             implements
             StatusUpdateInfo {
+
+        public PaymentGatewayStatusUpdate {
+            Objects.requireNonNull(outcome);
+            Objects.requireNonNull(trigger);
+            Objects.requireNonNull(pspId);
+            if (trigger != UpdateTransactionTrigger.NPG
+                    && trigger != UpdateTransactionTrigger.PGS_XPAY
+                    && trigger != UpdateTransactionTrigger.PGS_VPOS
+                    && trigger != UpdateTransactionTrigger.REDIRECT
+                    && trigger != UpdateTransactionTrigger.UNKNOWN) {
+                throw new IllegalArgumentException(
+                        "Invalid trigger for PaymentGatewayStatusUpdate: %s".formatted(trigger)
+                );
+            }
+        }
+
         @Override
         public UpdateTransactionStatusType type() {
             return UpdateTransactionStatusType.AUTHORIZATION_OUTCOME;
@@ -191,11 +231,30 @@ public class UpdateTransactionStatusTracerUtils {
      * Common interface for all status update information
      */
     public interface StatusUpdateInfo {
+        /**
+         * @return the update transaction status type
+         * @see UpdateTransactionStatusType
+         */
         UpdateTransactionStatusType type();
 
+        /**
+         * @return the update transaction trigger
+         * @see UpdateTransactionTrigger
+         */
         UpdateTransactionTrigger trigger();
 
+        /**
+         * @return the update transaction outcome
+         * @see UpdateTransactionStatusOutcome
+         */
         UpdateTransactionStatusOutcome outcome();
+
+        /**
+         * The id of the psp chosen by the user
+         *
+         * @return the id of the PSP
+         */
+        Optional<String> pspId();
     }
 
 }
