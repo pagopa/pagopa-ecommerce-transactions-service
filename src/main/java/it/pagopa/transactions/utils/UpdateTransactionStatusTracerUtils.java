@@ -81,6 +81,12 @@ public class UpdateTransactionStatusTracerUtils {
         PGS_XPAY,
 
         /**
+         * Transaction status update triggered by PSP (through redirect payment flow
+         * integration)
+         */
+        REDIRECT,
+
+        /**
          * Used when cannot derive transaction status update trigger
          */
         UNKNOWN

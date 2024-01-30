@@ -166,6 +166,8 @@ public class TransactionsController implements TransactionsApi {
                                                 UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS;
                                         case OutcomeNpgGatewayDto ignored ->
                                                 UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG;
+                                        case OutcomeRedirectGatewayDto ignored ->
+                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT;
                                         default ->
                                                 throw new InvalidRequestException("Input outcomeGateway not map to any trigger: [%s]".formatted(updateAuthorizationRequest.getOutcomeGateway()));
                                     };
@@ -380,6 +382,7 @@ public class TransactionsController implements TransactionsApi {
                 case "XPAY" -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY;
                 case "VPOS" -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS;
                 case "NPG" -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG;
+                case "REDIRECT" -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT;
                 default -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.UNKNOWN;
             };
             statusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
