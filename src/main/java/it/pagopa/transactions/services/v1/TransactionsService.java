@@ -379,14 +379,14 @@ public class TransactionsService {
                     )
                     .status(transactionsUtils.convertEnumerationV1(transaction.getStatus()))
                     .idCart(transaction.getIdCart())
-                    .paymentGateway(transaction.getPaymentGateway())
+                    .gateway(transaction.getPaymentGateway())
                     .sendPaymentResultOutcome(
                             transaction.getSendPaymentResultOutcome() == null ? null
                                     : TransactionInfoDto.SendPaymentResultOutcomeEnum
                                     .valueOf(transaction.getSendPaymentResultOutcome().name())
                     )
                     .authorizationCode(transaction.getAuthorizationCode())
-                    .authorizationErrorCode(transaction.getAuthorizationErrorCode());
+                    .errorCode(transaction.getAuthorizationErrorCode());
             case it.pagopa.ecommerce.commons.documents.v2.Transaction transaction -> new TransactionInfoDto()
                     .transactionId(transaction.getTransactionId())
                     .payments(
@@ -419,14 +419,14 @@ public class TransactionsService {
                     )
                     .status(transactionsUtils.convertEnumerationV1(transaction.getStatus()))
                     .idCart(transaction.getIdCart())
-                    .paymentGateway(transaction.getPaymentGateway())
+                    .gateway(transaction.getPaymentGateway())
                     .sendPaymentResultOutcome(
                             transaction.getSendPaymentResultOutcome() == null ? null
                                     : TransactionInfoDto.SendPaymentResultOutcomeEnum
                                     .valueOf(transaction.getSendPaymentResultOutcome().name())
                     )
                     .authorizationCode(transaction.getAuthorizationCode())
-                    .authorizationErrorCode(transaction.getAuthorizationErrorCode());
+                    .errorCode(transaction.getAuthorizationErrorCode());
             default -> throw new IllegalStateException("Unexpected value: " + baseTransactionView);
         };
     }
@@ -1312,7 +1312,8 @@ public class TransactionsService {
                                 walletAuthDataDto.getBrand(),
                                 walletAuthDataDto.getContractId());
                     });
-            case ApmAuthRequestDetailsDto ignore -> ecommercePaymentMethodsClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(response -> new PaymentSessionData(null,null,response.getName(),null));
+            case ApmAuthRequestDetailsDto ignore ->
+                    ecommercePaymentMethodsClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(response -> new PaymentSessionData(null, null, response.getName(), null));
             case RedirectionAuthRequestDetailsDto ignored -> Mono.just(new PaymentSessionData(
                     null,
                     null,
