@@ -284,10 +284,10 @@ class TransactionServiceTests {
                 .feeTotal(null)
                 .status(TransactionStatusDto.ACTIVATED)
                 .idCart("ecIdCart")
-                .paymentGateway("VPOS")
+                .gateway("VPOS")
                 .sendPaymentResultOutcome(TransactionInfoDto.SendPaymentResultOutcomeEnum.OK)
                 .authorizationCode("00")
-                .authorizationErrorCode(null);
+                .errorCode(null);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
         when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
@@ -339,10 +339,10 @@ class TransactionServiceTests {
                 .feeTotal(null)
                 .status(TransactionStatusDto.ACTIVATED)
                 .idCart("ecIdCart")
-                .paymentGateway(null)
+                .gateway(null)
                 .sendPaymentResultOutcome(null)
                 .authorizationCode(null)
-                .authorizationErrorCode(null);
+                .errorCode(null);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
         when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
