@@ -245,7 +245,8 @@ class AuthorizationUpdateProjectionHandlerTest {
                 new NpgTransactionGatewayAuthorizationData(
                         OperationResultDto.EXECUTED,
                         "operationId",
-                        "paymentEndToEndId"
+                        "paymentEndToEndId",
+                        null
                 )
 
         );
