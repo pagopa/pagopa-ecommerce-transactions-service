@@ -77,20 +77,6 @@ public class AzureStorageConfig {
         return buildQueueAsyncClient(storageConnectionString, queueName, jsonSerializerV1);
     }
 
-    @Bean("transactionRefundQueueAsyncClientV2")
-    @Qualifier
-    public QueueAsyncClient transactionRefundQueueAsyncClientV2(
-                                                                @Value(
-                                                                    "${azurestorage.connectionstringtransient}"
-                                                                ) String storageConnectionString,
-                                                                @Value(
-                                                                    "${azurestorage.queues.transactionrefund.name}"
-                                                                ) String queueName,
-                                                                JsonSerializer jsonSerializerV2
-    ) {
-        return buildQueueAsyncClient(storageConnectionString, queueName, jsonSerializerV2);
-    }
-
     @Bean("transactionClosureRetryQueueAsyncClientV1")
     public QueueAsyncClient transactionClosureRetryQueueAsyncClientV1(
                                                                       @Value(

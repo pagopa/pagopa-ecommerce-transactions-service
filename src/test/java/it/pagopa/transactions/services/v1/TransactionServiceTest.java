@@ -87,8 +87,9 @@ class TransactionServiceTest {
             .mock(it.pagopa.transactions.commands.handlers.v2.TransactionRequestUserReceiptHandler.class);
     private final it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler transactionSendClosureHandlerV1 = Mockito
             .mock(it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler.class);
-    private final it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureHandler transactionSendClosureHandlerV2 = Mockito
-            .mock(it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureHandler.class);
+
+    private final it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureRequestHandler transactionSendClosureRequestHandler = Mockito
+            .mock(it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureRequestHandler.class);
 
     private final it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler authorizationProjectionHandlerV1 = Mockito
             .mock(it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler.class);
@@ -104,16 +105,13 @@ class TransactionServiceTest {
             .mock(it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler.class);
     private final it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler refundRequestProjectionHandlerV1 = Mockito
             .mock(it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler.class);
-    private final it.pagopa.transactions.projections.handlers.v2.RefundRequestProjectionHandler refundRequestProjectionHandlerV2 = Mockito
-            .mock(it.pagopa.transactions.projections.handlers.v2.RefundRequestProjectionHandler.class);
     private final it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler closureSendProjectionHandlerV1 = Mockito
             .mock(it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler.class);
-    private final it.pagopa.transactions.projections.handlers.v2.ClosureSendProjectionHandler closureSendProjectionHandlerV2 = Mockito
-            .mock(it.pagopa.transactions.projections.handlers.v2.ClosureSendProjectionHandler.class);
+
+    private final it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler closureRequestedProjectionHandler = Mockito
+            .mock(it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler.class);
     private final it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler closureErrorProjectionHandlerV1 = Mockito
             .mock(it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler.class);
-    private final it.pagopa.transactions.projections.handlers.v2.ClosureErrorProjectionHandler closureErrorProjectionHandlerV2 = Mockito
-            .mock(it.pagopa.transactions.projections.handlers.v2.ClosureErrorProjectionHandler.class);
     private final it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV1 = Mockito
             .mock(it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler.class);
     private final it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2 = Mockito
@@ -146,7 +144,7 @@ class TransactionServiceTest {
             transactionUpdateAuthorizationHandlerV1,
             transactionUpdateAuthorizationHandlerV2,
             transactionSendClosureHandlerV1,
-            transactionSendClosureHandlerV2,
+            transactionSendClosureRequestHandler,
             transactionUpdateStatusHandlerV1,
             transactionUpdateStatusHandlerV2,
             transactionCancelHandlerV1,
@@ -156,11 +154,9 @@ class TransactionServiceTest {
             authorizationUpdateProjectionHandlerV1,
             authorizationUpdateProjectionHandlerV2,
             refundRequestProjectionHandlerV1,
-            refundRequestProjectionHandlerV2,
             closureSendProjectionHandlerV1,
-            closureSendProjectionHandlerV2,
+            closureRequestedProjectionHandler,
             closureErrorProjectionHandlerV1,
-            closureErrorProjectionHandlerV2,
             cancellationRequestProjectionHandlerV1,
             cancellationRequestProjectionHandlerV2,
             transactionUserReceiptProjectionHandlerV1,
@@ -185,7 +181,7 @@ class TransactionServiceTest {
             transactionUpdateAuthorizationHandlerV1,
             transactionUpdateAuthorizationHandlerV2,
             transactionSendClosureHandlerV1,
-            transactionSendClosureHandlerV2,
+            transactionSendClosureRequestHandler,
             transactionUpdateStatusHandlerV1,
             transactionUpdateStatusHandlerV2,
             transactionCancelHandlerV1,
@@ -195,11 +191,9 @@ class TransactionServiceTest {
             authorizationUpdateProjectionHandlerV1,
             authorizationUpdateProjectionHandlerV2,
             refundRequestProjectionHandlerV1,
-            refundRequestProjectionHandlerV2,
             closureSendProjectionHandlerV1,
-            closureSendProjectionHandlerV2,
+            closureRequestedProjectionHandler,
             closureErrorProjectionHandlerV1,
-            closureErrorProjectionHandlerV2,
             cancellationRequestProjectionHandlerV1,
             cancellationRequestProjectionHandlerV2,
             transactionUserReceiptProjectionHandlerV1,
