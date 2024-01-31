@@ -209,11 +209,12 @@ public class UpdateTransactionStatusTracerUtils {
             Objects.requireNonNull(outcome);
             Objects.requireNonNull(trigger);
             Objects.requireNonNull(pspId);
-            if (trigger != UpdateTransactionTrigger.NPG
-                    && trigger != UpdateTransactionTrigger.PGS_XPAY
-                    && trigger != UpdateTransactionTrigger.PGS_VPOS
-                    && trigger != UpdateTransactionTrigger.REDIRECT
-                    && trigger != UpdateTransactionTrigger.UNKNOWN) {
+            if (!Set.of(
+                    UpdateTransactionTrigger.NPG,
+                    UpdateTransactionTrigger.PGS_XPAY,
+                    UpdateTransactionTrigger.PGS_VPOS,
+                    UpdateTransactionTrigger.REDIRECT,
+                    UpdateTransactionTrigger.UNKNOWN).contains(trigger)) {
                 throw new IllegalArgumentException(
                         "Invalid trigger for PaymentGatewayStatusUpdate: %s".formatted(trigger)
                 );
