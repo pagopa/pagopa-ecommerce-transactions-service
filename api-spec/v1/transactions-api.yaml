@@ -711,7 +711,7 @@ components:
           properties:
             feeTotal:
               $ref: "#/components/schemas/AmountEuroCents"
-            paymentGateway:
+            gateway:
               type: string
               example: 'XPAY'
             sendPaymentResultOutcome:
@@ -722,7 +722,7 @@ components:
                 - NOT_RECEIVED
             authorizationCode:
               type: string
-            authorizationErrorCode:
+            errorCode:
               type: string
           required:
             - status
@@ -744,6 +744,7 @@ components:
         - ACTIVATED
         - AUTHORIZATION_REQUESTED
         - AUTHORIZATION_COMPLETED
+        - CLOSURE_REQUESTED
         - CLOSED
         - CLOSURE_ERROR
         - NOTIFIED_OK
