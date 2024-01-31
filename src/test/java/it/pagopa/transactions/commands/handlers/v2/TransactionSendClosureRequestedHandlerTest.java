@@ -41,11 +41,10 @@ class TransactionSendClosureRequestedHandlerTest {
 
     private it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureRequestHandler transactionSendClosureRequestHandler;
 
-    @Mock
-    private TransactionsEventStoreRepository<Void> transactionEventClosureRequestedRepository;
+    private TransactionsEventStoreRepository<Void> transactionEventClosureRequestedRepository = Mockito
+            .mock(TransactionsEventStoreRepository.class);;
 
-    @Mock
-    private QueueAsyncClient transactionSendClosureRequestQueueClient;
+    private QueueAsyncClient transactionSendClosureRequestQueueClient = Mockito.mock(QueueAsyncClient.class);
 
     private TransactionsEventStoreRepository<Object> eventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
