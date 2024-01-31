@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * This utility class traces transaction update status performed by external
@@ -214,7 +215,8 @@ public class UpdateTransactionStatusTracerUtils {
                     UpdateTransactionTrigger.PGS_XPAY,
                     UpdateTransactionTrigger.PGS_VPOS,
                     UpdateTransactionTrigger.REDIRECT,
-                    UpdateTransactionTrigger.UNKNOWN).contains(trigger)) {
+                    UpdateTransactionTrigger.UNKNOWN
+            ).contains(trigger)) {
                 throw new IllegalArgumentException(
                         "Invalid trigger for PaymentGatewayStatusUpdate: %s".formatted(trigger)
                 );
