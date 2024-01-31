@@ -722,6 +722,9 @@ components:
               type: string
             errorCode:
               type: string
+            gatewayAuthorizationStatus:
+              type: string
+              description: payment gateway authorization status
           required:
             - status
     AmountEuroCents:
