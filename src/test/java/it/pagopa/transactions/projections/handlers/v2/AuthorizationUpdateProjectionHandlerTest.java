@@ -65,6 +65,7 @@ class AuthorizationUpdateProjectionHandlerTest {
         expectedDocument.setPaymentGateway(null);
         expectedDocument.setAuthorizationCode("authorizationCode");
         expectedDocument.setAuthorizationErrorCode(null);
+        expectedDocument.setGatewayAuthorizationStatus("OK");
 
         TransactionAuthorizationCompletedData statusAuthCompleted = new TransactionAuthorizationCompletedData(
                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode(),
@@ -153,6 +154,7 @@ class AuthorizationUpdateProjectionHandlerTest {
         expectedDocument.setPaymentGateway(null);
         expectedDocument.setAuthorizationCode("authorizationCode");
         expectedDocument.setAuthorizationErrorCode(null);
+        expectedDocument.setGatewayAuthorizationStatus("OK");
 
         TransactionAuthorizationCompletedData statusAuthCompleted = new TransactionAuthorizationCompletedData(
                 ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode(),
@@ -234,6 +236,7 @@ class AuthorizationUpdateProjectionHandlerTest {
         expectedDocument.setPaymentGateway(null);
         expectedDocument.setAuthorizationCode("authorizationCode");
         expectedDocument.setAuthorizationErrorCode(null);
+        expectedDocument.setGatewayAuthorizationStatus("EXECUTED");
 
         TransactionAuthorizationCompletedData statusAuthCompleted = new TransactionAuthorizationCompletedData(
                 "authorizationCode",
@@ -312,6 +315,7 @@ class AuthorizationUpdateProjectionHandlerTest {
         expectedDocument.setPaymentGateway(null);
         expectedDocument.setAuthorizationCode("authorizationCode");
         expectedDocument.setAuthorizationErrorCode(authorizationErrorCode);
+        expectedDocument.setGatewayAuthorizationStatus("KO");
 
         TransactionAuthorizationCompletedData statusAuthCompleted = new TransactionAuthorizationCompletedData(
                 "authorizationCode",

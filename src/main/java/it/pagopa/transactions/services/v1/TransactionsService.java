@@ -410,7 +410,8 @@ public class TransactionsService {
                                     .valueOf(transaction.getSendPaymentResultOutcome().name())
                     )
                     .authorizationCode(transaction.getAuthorizationCode())
-                    .errorCode(transaction.getAuthorizationErrorCode());
+                    .errorCode(transaction.getAuthorizationErrorCode())
+                    .gatewayAuthorizationStatus(transaction.getGatewayAuthorizationStatus());
             default -> throw new IllegalStateException("Unexpected value: " + baseTransactionView);
         };
     }

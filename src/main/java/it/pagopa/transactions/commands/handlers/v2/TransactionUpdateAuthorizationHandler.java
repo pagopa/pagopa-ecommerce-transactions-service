@@ -64,7 +64,8 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                 authorizationData = new NpgTransactionGatewayAuthorizationData(
                         OperationResultDto.valueOf(outcomeNpgGateway.getOperationResult().toString()),
                         outcomeNpgGateway.getOperationId(),
-                        outcomeNpgGateway.getPaymentEndToEndId()
+                        outcomeNpgGateway.getPaymentEndToEndId(),
+                        authRequestDataExtracted.errorCode()
                 );
             } else if (outcomeGateway instanceof OutcomeXpayGatewayDto
                     || outcomeGateway instanceof OutcomeVposGatewayDto) {
