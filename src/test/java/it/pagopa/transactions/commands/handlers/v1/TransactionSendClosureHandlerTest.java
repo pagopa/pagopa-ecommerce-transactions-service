@@ -838,7 +838,7 @@ class TransactionSendClosureHandlerTest {
         BigDecimal totalAmountEuroCents = BigDecimal.valueOf(totalAmount);
 
         BigDecimal feeEuro = EuroUtils.euroCentsToEuro(fee);
-        BigDecimal totalAmountEuro = BigDecimal.valueOf(totalAmount);
+        BigDecimal totalAmountEuro = EuroUtils.euroCentsToEuro(totalAmount);
 
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
@@ -1103,7 +1103,7 @@ class TransactionSendClosureHandlerTest {
         BigDecimal totalAmountEuroCents = BigDecimal.valueOf(totalAmount);
 
         BigDecimal feeEuro = EuroUtils.euroCentsToEuro(fee);
-        BigDecimal totalAmountEuro = BigDecimal.valueOf(totalAmount);
+        BigDecimal totalAmountEuro = EuroUtils.euroCentsToEuro(totalAmount);
 
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
@@ -1372,7 +1372,7 @@ class TransactionSendClosureHandlerTest {
         BigDecimal totalAmountEuroCents = BigDecimal.valueOf(totalAmount);
 
         BigDecimal feeEuro = EuroUtils.euroCentsToEuro(fee);
-        BigDecimal totalAmountEuro = BigDecimal.valueOf(totalAmount);
+        BigDecimal totalAmountEuro = EuroUtils.euroCentsToEuro(totalAmount);
 
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
@@ -1657,7 +1657,7 @@ class TransactionSendClosureHandlerTest {
         BigDecimal totalAmountEuroCents = BigDecimal.valueOf(totalAmount);
 
         BigDecimal feeEuro = EuroUtils.euroCentsToEuro(fee);
-        BigDecimal totalAmountEuro = BigDecimal.valueOf(totalAmount);
+        BigDecimal totalAmountEuro = EuroUtils.euroCentsToEuro(totalAmount);
 
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
@@ -2461,7 +2461,7 @@ class TransactionSendClosureHandlerTest {
         BigDecimal totalAmountEuroCents = BigDecimal.valueOf(totalAmount);
 
         BigDecimal feeEuro = EuroUtils.euroCentsToEuro(fee);
-        BigDecimal totalAmountEuro = BigDecimal.valueOf(totalAmount);
+        BigDecimal totalAmountEuro = EuroUtils.euroCentsToEuro(totalAmount);
 
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
@@ -2738,7 +2738,7 @@ class TransactionSendClosureHandlerTest {
         BigDecimal totalAmountEuroCents = BigDecimal.valueOf(totalAmount);
 
         BigDecimal feeEuro = EuroUtils.euroCentsToEuro(fee);
-        BigDecimal totalAmountEuro = BigDecimal.valueOf(totalAmount);
+        BigDecimal totalAmountEuro = EuroUtils.euroCentsToEuro(totalAmount);
 
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
@@ -2753,7 +2753,7 @@ class TransactionSendClosureHandlerTest {
                 .totalAmount(
                         totalAmountEuro
                 )
-                .fee(EuroUtils.euroCentsToEuro(authorizationRequestData.getFee()))
+                .fee(feeEuro)
                 .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
                 .paymentMethod(authorizationRequestData.getPaymentTypeCode())
                 .additionalPaymentInformations(
@@ -2772,7 +2772,7 @@ class TransactionSendClosureHandlerTest {
                                 .timestampOperation(
                                         expectedOperationTimestamp
                                 ).rrn(ECOMMERCE_RRN)
-                                .totalAmount(totalAmount.toString())
+                                .totalAmount(totalAmountEuro.toString())
                 )
                 .transactionDetails(
                         new TransactionDetailsDto()
@@ -2953,7 +2953,7 @@ class TransactionSendClosureHandlerTest {
         BigDecimal totalAmountEuroCents = BigDecimal.valueOf(totalAmount);
 
         BigDecimal feeEuro = EuroUtils.euroCentsToEuro(fee);
-        BigDecimal totalAmountEuro = BigDecimal.valueOf(totalAmount);
+        BigDecimal totalAmountEuro = EuroUtils.euroCentsToEuro(totalAmount);
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         List.of(
@@ -3163,7 +3163,7 @@ class TransactionSendClosureHandlerTest {
         BigDecimal totalAmountEuroCents = BigDecimal.valueOf(totalAmount);
 
         BigDecimal feeEuro = EuroUtils.euroCentsToEuro(fee);
-        BigDecimal totalAmountEuro = BigDecimal.valueOf(totalAmount);
+        BigDecimal totalAmountEuro = EuroUtils.euroCentsToEuro(totalAmount);
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(
                         List.of(

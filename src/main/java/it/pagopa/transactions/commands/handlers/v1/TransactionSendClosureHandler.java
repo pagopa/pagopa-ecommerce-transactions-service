@@ -135,11 +135,8 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                     BigDecimal feeEuroCents = BigDecimal.valueOf(fee);
                     BigDecimal totalAmountEuroCents = BigDecimal.valueOf(totalAmount);
 
-                    BigDecimal amountEuro = EuroUtils.euroCentsToEuro(
-                            amount
-                    );
                     BigDecimal feeEuro = EuroUtils.euroCentsToEuro(fee);
-                    BigDecimal totalAmountEuro = BigDecimal.valueOf(totalAmount);
+                    BigDecimal totalAmountEuro = EuroUtils.euroCentsToEuro(totalAmount);
 
                     ClosePaymentRequestV2Dto.OutcomeEnum outcome = authorizationResultToOutcomeV2(
                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
