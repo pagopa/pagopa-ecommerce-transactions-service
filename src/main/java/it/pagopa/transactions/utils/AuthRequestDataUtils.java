@@ -40,8 +40,17 @@ public class AuthRequestDataUtils {
                     result = new AuthRequestData(t.getAuthorizationCode(), t.getOutcome().toString(), t.getRrn(), t.getErrorCode() != null ? t.getErrorCode().getValue() : null);
             case OutcomeXpayGatewayDto t ->
                     result = new AuthRequestData(t.getAuthorizationCode(), t.getOutcome().toString(), uuidUtils.uuidToBase64(transactionId.uuid()), t.getErrorCode() != null ? t.getErrorCode().getValue().toString() : null);
-            case OutcomeNpgGatewayDto t ->
-                    result = new AuthRequestData(t.getAuthorizationCode(), npgResultToOutcome(t.getOperationResult()), t.getRrn(), null);
+            }
+            case OutcomeNpgGatewayDto t -> {
+                String authorizationCode = null;
+                String errorCode = null;
+                if (t.getOperationResult() == OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED) {
+                    authorizationCode = t.getAuthorizationCode();
+                } else {
+                    errorCode = t.getAuthorizationCode();
+                }
+                result = new AuthRequestData(authorizationCode, npgResultToOutcome(t.getOperationResult()), t.getRrn(), errorCode);
+            }
             case OutcomeRedirectGatewayDto t ->
                     result = new AuthRequestData(t.getAuthorizationCode(), redirectResultToOutcome(t.getOutcome()), null, t.getErrorCode());
             default ->
