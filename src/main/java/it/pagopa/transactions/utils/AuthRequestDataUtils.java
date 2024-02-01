@@ -34,13 +34,12 @@ public class AuthRequestDataUtils {
     }
 
     public AuthRequestData from(UpdateAuthorizationRequestDto updateAuthorizationRequest, TransactionId transactionId) {
-        AuthRequestData result;
-        switch (updateAuthorizationRequest.getOutcomeGateway()) {
+
+        return switch (updateAuthorizationRequest.getOutcomeGateway()) {
             case OutcomeVposGatewayDto t ->
-                    result = new AuthRequestData(t.getAuthorizationCode(), t.getOutcome().toString(), t.getRrn(), t.getErrorCode() != null ? t.getErrorCode().getValue() : null);
+                    new AuthRequestData(t.getAuthorizationCode(), t.getOutcome().toString(), t.getRrn(), t.getErrorCode() != null ? t.getErrorCode().getValue() : null);
             case OutcomeXpayGatewayDto t ->
-                    result = new AuthRequestData(t.getAuthorizationCode(), t.getOutcome().toString(), uuidUtils.uuidToBase64(transactionId.uuid()), t.getErrorCode() != null ? t.getErrorCode().getValue().toString() : null);
-            }
+                    new AuthRequestData(t.getAuthorizationCode(), t.getOutcome().toString(), uuidUtils.uuidToBase64(transactionId.uuid()), t.getErrorCode() != null ? t.getErrorCode().getValue().toString() : null);
             case OutcomeNpgGatewayDto t -> {
                 String authorizationCode = null;
                 String errorCode = null;
@@ -49,15 +48,14 @@ public class AuthRequestDataUtils {
                 } else {
                     errorCode = t.getAuthorizationCode();
                 }
-                result = new AuthRequestData(authorizationCode, npgResultToOutcome(t.getOperationResult()), t.getRrn(), errorCode);
+                yield new AuthRequestData(authorizationCode, npgResultToOutcome(t.getOperationResult()), t.getRrn(), errorCode);
             }
             case OutcomeRedirectGatewayDto t ->
-                    result = new AuthRequestData(t.getAuthorizationCode(), redirectResultToOutcome(t.getOutcome()), null, t.getErrorCode());
+                    new AuthRequestData(t.getAuthorizationCode(), redirectResultToOutcome(t.getOutcome()), null, t.getErrorCode());
             default ->
                     throw new InvalidRequestException("Unexpected value: " + updateAuthorizationRequest.getOutcomeGateway());
-        }
+        };
 
-        return result;
     }
 
     private String npgResultToOutcome(OutcomeNpgGatewayDto.OperationResultEnum result) {
