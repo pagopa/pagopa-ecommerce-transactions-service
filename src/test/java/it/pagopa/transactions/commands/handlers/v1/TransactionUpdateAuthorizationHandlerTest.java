@@ -27,7 +27,9 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -76,7 +78,9 @@ class TransactionUpdateAuthorizationHandlerTest {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
-                updateAuthorizationRequest
+                updateAuthorizationRequest,
+                ZonedDateTime.now(),
+                Optional.empty()
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
@@ -148,7 +152,9 @@ class TransactionUpdateAuthorizationHandlerTest {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
-                updateAuthorizationRequest
+                updateAuthorizationRequest,
+                ZonedDateTime.now(),
+                Optional.empty()
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
@@ -185,7 +191,9 @@ class TransactionUpdateAuthorizationHandlerTest {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
-                updateAuthorizationRequest
+                updateAuthorizationRequest,
+                ZonedDateTime.now(),
+                Optional.empty()
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(

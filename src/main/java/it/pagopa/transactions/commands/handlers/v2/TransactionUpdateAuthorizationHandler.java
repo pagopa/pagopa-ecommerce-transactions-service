@@ -4,6 +4,7 @@ import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.TransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.OperationResultDto;
@@ -12,6 +13,7 @@ import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHandlerCommon;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -58,43 +60,53 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
             UpdateAuthorizationRequestOutcomeGatewayDto outcomeGateway = command.getData().updateAuthorizationRequest()
                     .getOutcomeGateway();
 
-            TransactionGatewayAuthorizationData authorizationData;
-
-            if (outcomeGateway instanceof OutcomeNpgGatewayDto outcomeNpgGateway) {
-                authorizationData = new NpgTransactionGatewayAuthorizationData(
-                        OperationResultDto.valueOf(outcomeNpgGateway.getOperationResult().toString()),
-                        outcomeNpgGateway.getOperationId(),
+            TransactionGatewayAuthorizationData authorizationData =
+                    switch (outcomeGateway) {
+                        case OutcomeNpgGatewayDto outcomeNpgGateway -> new NpgTransactionGatewayAuthorizationData(
+                                OperationResultDto.valueOf(outcomeNpgGateway.getOperationResult().toString()),
+                                outcomeNpgGateway.getOperationId(),
                         outcomeNpgGateway.getPaymentEndToEndId(),
                         authRequestDataExtracted.errorCode()
-                );
-            } else if (outcomeGateway instanceof OutcomeXpayGatewayDto
-                    || outcomeGateway instanceof OutcomeVposGatewayDto) {
-                authorizationData = new PgsTransactionGatewayAuthorizationData(
-                        authRequestDataExtracted.errorCode(),
-                        AuthorizationResultDto
-                                .fromValue(
-                                        authRequestDataExtracted.outcome()
-                                )
-                );
-            } else {
-                throw new IllegalStateException("Unexpected value: " + outcomeGateway);
-            }
+                        );
+                        case OutcomeXpayGatewayDto ignored -> new PgsTransactionGatewayAuthorizationData(
+                                authRequestDataExtracted.errorCode(),
+                                AuthorizationResultDto
+                                        .fromValue(
+                                                authRequestDataExtracted.outcome()
+                                        )
+                        );
+                        case OutcomeVposGatewayDto ignored -> new PgsTransactionGatewayAuthorizationData(
+                                authRequestDataExtracted.errorCode(),
+                                AuthorizationResultDto
+                                        .fromValue(
+                                                authRequestDataExtracted.outcome()
+                                        )
+                        );
+                        case OutcomeRedirectGatewayDto outcomeRedirectGatewayDto ->
+                                new RedirectTransactionGatewayAuthorizationData(
+                                        RedirectTransactionGatewayAuthorizationData.Outcome.valueOf(outcomeRedirectGatewayDto.getOutcome().toString()),
+                                        authRequestDataExtracted.errorCode()
+
+                                );
+                        default -> throw new InvalidRequestException("Unexpected value: " + outcomeGateway);
+                    };
 
             return Mono.just(
-                    new it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent(
-                            transactionId.value(),
-                            new it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData(
-                                    authRequestDataExtracted.authorizationCode(),
-                                    authRequestDataExtracted.rrn(),
-                                    updateAuthorizationRequest.getTimestampOperation().toString(),
-                                    authorizationData
+                            new it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent(
+                                    transactionId.value(),
+                                    new it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData(
+                                            authRequestDataExtracted.authorizationCode(),
+                                            authRequestDataExtracted.rrn(),
+                                            updateAuthorizationRequest.getTimestampOperation().toString(),
+                                            authorizationData
+                                    )
                             )
                     )
-            )
                     .flatMap(transactionEventStoreRepository::save);
         } else {
             return alreadyProcessedError;
         }
 
     }
+
 }

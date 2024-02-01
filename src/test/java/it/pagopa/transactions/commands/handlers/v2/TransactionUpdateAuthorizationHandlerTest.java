@@ -1,12 +1,10 @@
 package it.pagopa.transactions.commands.handlers.v2;
 
-import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData;
-import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent;
-import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestedEvent;
+import it.pagopa.ecommerce.commons.documents.v2.*;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
@@ -14,12 +12,11 @@ import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.OperationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
-import it.pagopa.generated.transactions.server.model.OutcomeNpgGatewayDto;
-import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
-import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
+import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -28,14 +25,19 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.net.URI;
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 
@@ -45,7 +47,7 @@ class TransactionUpdateAuthorizationHandlerTest {
     private TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> transactionEventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
 
-    private TransactionsEventStoreRepository<Object> eventStoreRepository = Mockito
+    private TransactionsEventStoreRepository eventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
     private TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
 
@@ -93,7 +95,63 @@ class TransactionUpdateAuthorizationHandlerTest {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
-                updateAuthorizationRequest
+                updateAuthorizationRequest,
+                ZonedDateTime.now(),
+                Optional.of(transaction)
+        );
+
+        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
+                transaction.getPaymentNotices().get(0).rptId(),
+                updateAuthorizationStatusData
+        );
+
+        /* preconditions */
+        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
+                .thenReturn(transactionId.uuid().toString());
+        /* test */
+        StepVerifier.create(updateAuthorizationHandler.handle(requestAuthorizationCommand))
+                .expectNextMatches(authorizationStatusUpdatedEvent -> authorizationStatusUpdatedEvent.equals(event))
+                .verifyComplete();
+
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1))
+                .save(
+                        argThat(
+                                eventArg -> TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
+                                        .equals(eventArg.getEventCode())
+                                        && ((PgsTransactionGatewayAuthorizationData) eventArg.getData()
+                                                .getTransactionGatewayAuthorizationData()).getAuthorizationResultDto()
+                                                        .equals(AuthorizationResultDto.OK)
+                        )
+                );
+    }
+
+    @Test
+    void shouldSaveSuccessfulUpdateVpos() {
+        TransactionActivatedEvent activatedEvent = TransactionTestUtils.transactionActivateEvent();
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
+                .transactionAuthorizationRequestedEvent();
+
+        TransactionAuthorizationCompletedEvent event = TransactionTestUtils
+                .transactionAuthorizationCompletedEvent(
+                        new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
+                );
+        BaseTransaction transaction = TransactionTestUtils.reduceEvents(activatedEvent, authorizationRequestedEvent);
+
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .outcomeGateway(
+                        new OutcomeVposGatewayDto()
+                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
+                                .authorizationCode("authorizationCode")
+                )
+                .timestampOperation(OffsetDateTime.now());
+
+        UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
+                transaction.getTransactionId(),
+                transaction.getStatus().toString(),
+                updateAuthorizationRequest,
+                ZonedDateTime.now(),
+                Optional.of(transaction)
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
@@ -148,7 +206,9 @@ class TransactionUpdateAuthorizationHandlerTest {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
-                updateAuthorizationRequest
+                updateAuthorizationRequest,
+                ZonedDateTime.now(),
+                Optional.of(transaction)
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
@@ -231,7 +291,9 @@ class TransactionUpdateAuthorizationHandlerTest {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
-                updateAuthorizationRequest
+                updateAuthorizationRequest,
+                ZonedDateTime.now(),
+                Optional.of(transaction)
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
@@ -270,7 +332,10 @@ class TransactionUpdateAuthorizationHandlerTest {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
-                updateAuthorizationRequest
+                updateAuthorizationRequest,
+                ZonedDateTime.now(),
+
+                Optional.of(transaction)
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
@@ -296,4 +361,147 @@ class TransactionUpdateAuthorizationHandlerTest {
                 )
         );
     }
+
+    @Test
+    void shouldThrowExceptionForUnhandledOutcomeGatewayDto() {
+        TransactionActivatedEvent activatedEvent = TransactionTestUtils.transactionActivateEvent();
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
+                .transactionAuthorizationRequestedEvent(
+                        TransactionAuthorizationRequestData.PaymentGateway.REDIRECT,
+                        TransactionTestUtils.redirectTransactionGatewayAuthorizationRequestedData()
+                );
+        RedirectTransactionGatewayAuthorizationData.Outcome authOutcome = RedirectTransactionGatewayAuthorizationData.Outcome.OK;
+        String errorCode = "errorCode";
+        TransactionAuthorizationCompletedEvent event = TransactionTestUtils
+                .transactionAuthorizationCompletedEvent(
+                        TransactionTestUtils.redirectTransactionGatewayAuthorizationData(
+                                authOutcome,
+                                errorCode
+                        )
+                );
+        BaseTransaction transaction = TransactionTestUtils.reduceEvents(activatedEvent, authorizationRequestedEvent);
+
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .outcomeGateway(
+                        Mockito.mock(UpdateAuthorizationRequestOutcomeGatewayDto.class)
+                )
+                .timestampOperation(OffsetDateTime.now());
+
+        UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
+                transaction.getTransactionId(),
+                transaction.getStatus().toString(),
+                updateAuthorizationRequest,
+                ZonedDateTime.now(),
+                Optional.of(transaction)
+        );
+
+        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
+                transaction.getPaymentNotices().get(0).rptId(),
+                updateAuthorizationStatusData
+        );
+
+        /* preconditions */
+
+        AuthRequestDataUtils authRequestDataUtilsMock = Mockito.mock(AuthRequestDataUtils.class);
+        Mockito.when(authRequestDataUtilsMock.from(any(), any()))
+                .thenReturn(new AuthRequestDataUtils.AuthRequestData("", "", "", ""));
+        TransactionUpdateAuthorizationHandler updateAuthHandler = new TransactionUpdateAuthorizationHandler(
+                transactionEventStoreRepository,
+                authRequestDataUtilsMock,
+                transactionsUtils,
+                npgPaymentCircuitLogoMap
+        );
+        /* test */
+        assertThrows(InvalidRequestException.class, () -> updateAuthHandler.handle(requestAuthorizationCommand));
+
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(0))
+                .save(any());
+    }
+
+    @Test
+    void shouldHandleTransactionUpdateCommandForRedirectPaymentSuccessfully() {
+        TransactionActivatedEvent activatedEvent = TransactionTestUtils.transactionActivateEvent();
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
+                .transactionAuthorizationRequestedEvent(
+                        TransactionAuthorizationRequestData.PaymentGateway.REDIRECT,
+                        TransactionTestUtils.redirectTransactionGatewayAuthorizationRequestedData()
+                );
+        RedirectTransactionGatewayAuthorizationData.Outcome authOutcome = RedirectTransactionGatewayAuthorizationData.Outcome.OK;
+        String errorCode = "errorCode";
+        TransactionAuthorizationCompletedEvent event = TransactionTestUtils
+                .transactionAuthorizationCompletedEvent(
+                        TransactionTestUtils.redirectTransactionGatewayAuthorizationData(
+                                authOutcome,
+                                errorCode
+                        )
+                );
+        BaseTransaction transaction = TransactionTestUtils.reduceEvents(activatedEvent, authorizationRequestedEvent);
+
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .outcomeGateway(
+                        new OutcomeRedirectGatewayDto()
+                                .outcome(AuthorizationOutcomeDto.OK)
+                                .paymentGatewayType("REDIRECT")
+                                .errorCode(errorCode)
+                                .authorizationCode(TransactionTestUtils.AUTHORIZATION_CODE)
+                                .pspTransactionId(TransactionTestUtils.REDIRECT_PSP_TRANSACTION_ID)
+                                .pspId(TransactionTestUtils.PSP_ID)
+                )
+                .timestampOperation(OffsetDateTime.now());
+
+        UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
+                transaction.getTransactionId(),
+                transaction.getStatus().toString(),
+                updateAuthorizationRequest,
+                ZonedDateTime.now(),
+                Optional.of(transaction)
+        );
+
+        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
+                transaction.getPaymentNotices().get(0).rptId(),
+                updateAuthorizationStatusData
+        );
+
+        /* preconditions */
+        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
+                .thenReturn(transactionId.uuid().toString());
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        activatedEvent,
+                                        authorizationRequestedEvent
+                                )
+                        )
+                );
+        /* test */
+        StepVerifier.create(updateAuthorizationHandler.handle(requestAuthorizationCommand))
+                .expectNextMatches(authorizationStatusUpdatedEvent -> authorizationStatusUpdatedEvent.equals(event))
+                .verifyComplete();
+
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1))
+                .save(
+                        argThat(
+                                eventArg -> {
+
+                                    assertEquals(
+                                            TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString(),
+                                            eventArg.getEventCode()
+                                    );
+                                    RedirectTransactionGatewayAuthorizationData redirectTransactionGatewayAuthorizationData = (RedirectTransactionGatewayAuthorizationData) eventArg
+                                            .getData().getTransactionGatewayAuthorizationData();
+                                    assertEquals(errorCode, redirectTransactionGatewayAuthorizationData.getErrorCode());
+                                    assertEquals(authOutcome, redirectTransactionGatewayAuthorizationData.getOutcome());
+                                    assertEquals(
+                                            TransactionTestUtils.AUTHORIZATION_CODE,
+                                            eventArg.getData().getAuthorizationCode()
+                                    );
+                                    return true;
+
+                                }
+                        )
+                );
+    }
+
 }

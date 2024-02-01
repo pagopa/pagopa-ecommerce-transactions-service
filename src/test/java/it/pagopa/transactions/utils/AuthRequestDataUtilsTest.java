@@ -1,56 +1,25 @@
 package it.pagopa.transactions.utils;
 
 import it.pagopa.ecommerce.commons.domain.TransactionId;
-import it.pagopa.generated.transactions.server.model.OutcomeNpgGatewayDto;
-import it.pagopa.generated.transactions.server.model.OutcomeVposGatewayDto;
-import it.pagopa.generated.transactions.server.model.OutcomeXpayGatewayDto;
-import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
-import org.junit.jupiter.api.AfterAll;
+import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
+import it.pagopa.generated.transactions.server.model.*;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.OffsetDateTime;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-@ExtendWith(MockitoExtension.class)
 class AuthRequestDataUtilsTest {
 
-    @InjectMocks
-    private AuthRequestDataUtils authRequestDataUtils;
-    @Mock
-    private UUIDUtils uuidUtils;
+    private final UUIDUtils uuidUtils = Mockito.mock(UUIDUtils.class);
+    private final AuthRequestDataUtils authRequestDataUtils = new AuthRequestDataUtils(uuidUtils);
 
     private static final String TRANSACTION_ID_ENCODED = "transactionIdEncoded";
-
-    private static Set<OutcomeNpgGatewayDto.OperationResultEnum> testedStatuses = new HashSet<>();
-
-    @AfterAll
-    public static void afterAllTests() {
-        Set<OutcomeNpgGatewayDto.OperationResultEnum> untestedOperationResults = Arrays
-                .stream(OutcomeNpgGatewayDto.OperationResultEnum.values())
-                .filter(Predicate.not(testedStatuses::contains))
-                .collect(Collectors.toSet());
-        assertTrue(
-                untestedOperationResults.isEmpty(),
-                "Untested outcome detected! %s".formatted(untestedOperationResults)
-        );
-    }
 
     @Test
     void shouldExtractVposInformation() {
@@ -160,30 +129,12 @@ class AuthRequestDataUtilsTest {
         );
     }
 
-    private static Stream<Arguments> npgOutcomeTestArguments() {
-        return Stream.of(
-                // npg operation result - expected outcome mappings
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.AUTHORIZED, "KO"),
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED, "OK"),
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.DECLINED, "KO"),
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.DENIED_BY_RISK, "KO"),
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.THREEDS_VALIDATED, "KO"),
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.THREEDS_FAILED, "KO"),
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.PENDING, "KO"),
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.CANCELED, "KO"),
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.VOIDED, "KO"),
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.REFUNDED, "KO"),
-                Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.FAILED, "KO")
-        );
-    }
-
     @ParameterizedTest
-    @MethodSource("npgOutcomeTestArguments")
+    @EnumSource(OutcomeNpgGatewayDto.OperationResultEnum.class)
     void shouldExtractNpgInformation(
-                                     OutcomeNpgGatewayDto.OperationResultEnum operationResultEnum,
-                                     String expectedOutcome
+                                     OutcomeNpgGatewayDto.OperationResultEnum operationResultEnum
     ) {
-        testedStatuses.add(operationResultEnum);
+        String expectedOutcome = operationResultEnum == OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED ? "OK" : "KO";
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
         String orderId = "orderId";
         String operationId = "operationId";
@@ -213,6 +164,35 @@ class AuthRequestDataUtilsTest {
         assertEquals(expectedOutcome, authRequestData.outcome());
         assertEquals(rrn, authRequestData.rrn());
         assertEquals(expectedErrorCode, authRequestData.errorCode());
+    }
+
+    @ParameterizedTest
+    @EnumSource(AuthorizationOutcomeDto.class)
+    void shouldExtractRedirectInformation(AuthorizationOutcomeDto authorizationOutcomeDto) {
+        // pre-condition
+        String pspTransactionId = TransactionTestUtils.REDIRECT_PSP_TRANSACTION_ID;
+        String pspId = TransactionTestUtils.PSP_ID;
+        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
+        String expectedOutcome = authorizationOutcomeDto == AuthorizationOutcomeDto.OK ? "OK" : "KO";
+        String errorCode = "errorCode";
+        String authorizationCode = "authorizationCode";
+        OutcomeRedirectGatewayDto outcomeRedirectGatewayDto = new OutcomeRedirectGatewayDto()
+                .paymentGatewayType("REDIRECT")
+                .outcome(authorizationOutcomeDto)
+                .pspTransactionId(pspTransactionId)
+                .errorCode(errorCode)
+                .authorizationCode(authorizationCode)
+                .pspId(pspId);
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .outcomeGateway(outcomeRedirectGatewayDto);
+        // test
+        AuthRequestDataUtils.AuthRequestData authRequestData = authRequestDataUtils
+                .from(updateAuthorizationRequest, transactionId);
+        // assertions
+        assertEquals(expectedOutcome, authRequestData.outcome());
+        assertEquals(errorCode, authRequestData.errorCode());
+        assertEquals(authorizationCode, authRequestData.authorizationCode());
+        assertNull(authRequestData.rrn());
     }
 
 }
