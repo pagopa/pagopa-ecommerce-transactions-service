@@ -2,9 +2,11 @@ package it.pagopa.transactions.commands.handlers;
 
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NpgClient;
+import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.generated.transactions.server.model.ApmAuthRequestDetailsDto;
+import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RedirectionAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
@@ -379,15 +381,19 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
      * Redirection authorization pipeline
      *
      * @param authorizationData authorization data
-     * @return a tuple of redirection url and psp authorization id
+     * @param touchpoint        touchpoint that initiated the transaction
+     * @return a tuple of redirection url, psp authorization id and authorization
+     *         timeout
      */
     protected Mono<Tuple3<String, String, Optional<Integer>>> redirectionAuthRequestPipeline(
-                                                                                             AuthorizationRequestData authorizationData
+                                                                                             AuthorizationRequestData authorizationData,
+                                                                                             RedirectUrlRequestDto.TouchpointEnum touchpoint
+
     ) {
         return Mono.just(authorizationData)
                 .filter(authData -> authorizationData.authDetails() instanceof RedirectionAuthRequestDetailsDto)
                 .flatMap(
-                        paymentGatewayClient::requestRedirectUrlAuthorization
+                        details -> paymentGatewayClient.requestRedirectUrlAuthorization(details, touchpoint)
                 )
                 .map(
                         redirectUrlResponseDto -> Tuples.of(

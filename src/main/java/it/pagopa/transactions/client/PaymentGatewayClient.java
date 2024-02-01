@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NpgClient;
+import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.domain.Claims;
 import it.pagopa.ecommerce.commons.exceptions.NpgApiKeyMissingPspRequestedException;
@@ -542,9 +543,13 @@ public class PaymentGatewayClient {
      * Perform authorization request with PSP retrieving redirection URL
      *
      * @param authorizationData authorization data
+     * @param touchpoint        the touchpoint used to initiate the transaction
      * @return RedirectUrlResponseDto response bean
      */
-    public Mono<RedirectUrlResponseDto> requestRedirectUrlAuthorization(AuthorizationRequestData authorizationData) {
+    public Mono<RedirectUrlResponseDto> requestRedirectUrlAuthorization(
+                                                                        AuthorizationRequestData authorizationData,
+                                                                        RedirectUrlRequestDto.TouchpointEnum touchpoint
+    ) {
         return Mono
                 .just(checkoutRedirectClientBuilder.getApiClientForPsp(authorizationData.pspId()))
                 .flatMap(
@@ -600,6 +605,7 @@ public class PaymentGatewayClient {
                                                                         ).build()
                                                                         .toUri()
                                                         )
+                                                        .touchpoint(touchpoint)
                                                         .paName(null)// optional
                                                         .idPaymentMethod(null)// optional
                                         ).onErrorMap(

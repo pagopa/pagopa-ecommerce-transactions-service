@@ -2,6 +2,7 @@ package it.pagopa.transactions.commands.handlers.v2;
 
 import com.azure.cosmos.implementation.BadRequestException;
 import com.azure.cosmos.implementation.InternalServerErrorException;
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData.PaymentGateway;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestedEvent;
@@ -13,6 +14,7 @@ import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.ApmAuthRequestDetailsDto;
+import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
@@ -33,6 +35,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple3;
 import reactor.util.function.Tuple6;
 import reactor.util.function.Tuples;
 
@@ -148,9 +151,13 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                 )
                 );
 
-        Mono<Tuple6<String, String, Optional<String>, Optional<String>, Optional<Integer>, PaymentGateway>> monoRedirect = redirectionAuthRequestPipeline(
-                authorizationRequestData
-        )
+        Mono<Tuple6<String, String, Optional<String>, Optional<String>, Optional<Integer>, PaymentGateway>> monoRedirect = transaction
+                .map(BaseTransaction::getClientId).flatMap(
+                        clientId -> redirectionAuthRequestPipeline(
+                                authorizationRequestData,
+                                clientId
+                        )
+                )
                 .map(
                         tuple -> Tuples
                                 .of(
@@ -267,4 +274,27 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 );
     }
 
+    /**
+     * Redirection authorization pipeline
+     *
+     * @param authorizationData authorization data
+     * @param clientId          client that initiated the transaction
+     * @return a tuple of redirection url, psp authorization id and authorization
+     *         timeout
+     */
+    protected Mono<Tuple3<String, String, Optional<Integer>>> redirectionAuthRequestPipeline(
+                                                                                             AuthorizationRequestData authorizationData,
+                                                                                             Transaction.ClientId clientId
+
+    ) {
+        Transaction.ClientId effectiveClient = switch (clientId) {
+            case CHECKOUT_CART -> Transaction.ClientId.CHECKOUT;
+            default -> clientId;
+        };
+
+        RedirectUrlRequestDto.TouchpointEnum touchpoint = RedirectUrlRequestDto.TouchpointEnum
+                .valueOf(effectiveClient.name());
+
+        return redirectionAuthRequestPipeline(authorizationData, touchpoint);
+    }
 }
