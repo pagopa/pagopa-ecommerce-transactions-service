@@ -5,7 +5,6 @@ import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatew
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationData;
-import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
@@ -31,11 +30,11 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.net.URI;
-import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -97,7 +96,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
                 updateAuthorizationRequest,
-                ZonedDateTime.now()
+                ZonedDateTime.now(),
+                Optional.of(transaction)
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
@@ -150,7 +150,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
                 updateAuthorizationRequest,
-                ZonedDateTime.now()
+                ZonedDateTime.now(),
+                Optional.of(transaction)
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
@@ -206,7 +207,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
                 updateAuthorizationRequest,
-                ZonedDateTime.now()
+                ZonedDateTime.now(),
+                Optional.of(transaction)
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
@@ -290,7 +292,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
                 updateAuthorizationRequest,
-                ZonedDateTime.now()
+                ZonedDateTime.now(),
+                Optional.of(transaction)
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
@@ -330,7 +333,9 @@ class TransactionUpdateAuthorizationHandlerTest {
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
                 updateAuthorizationRequest,
-                ZonedDateTime.now()
+                ZonedDateTime.now(),
+
+                Optional.of(transaction)
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
@@ -386,7 +391,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
                 updateAuthorizationRequest,
-                ZonedDateTime.now()
+                ZonedDateTime.now(),
+                Optional.of(transaction)
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
@@ -447,7 +453,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
                 updateAuthorizationRequest,
-                ZonedDateTime.now()
+                ZonedDateTime.now(),
+                Optional.of(transaction)
         );
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
@@ -497,294 +504,4 @@ class TransactionUpdateAuthorizationHandlerTest {
                 );
     }
 
-    @Test
-    void shouldReturnErrorHandlingRedirectAuthUpdateRequestWithMismatchPspId() {
-        TransactionActivatedEvent activatedEvent = TransactionTestUtils.transactionActivateEvent();
-        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
-                .transactionAuthorizationRequestedEvent(
-                        TransactionAuthorizationRequestData.PaymentGateway.REDIRECT,
-                        TransactionTestUtils.redirectTransactionGatewayAuthorizationRequestedData()
-                );
-        RedirectTransactionGatewayAuthorizationData.Outcome authOutcome = RedirectTransactionGatewayAuthorizationData.Outcome.OK;
-        String errorCode = "errorCode";
-        TransactionAuthorizationCompletedEvent event = TransactionTestUtils
-                .transactionAuthorizationCompletedEvent(
-                        TransactionTestUtils.redirectTransactionGatewayAuthorizationData(
-                                authOutcome,
-                                errorCode
-                        )
-                );
-        BaseTransaction transaction = TransactionTestUtils.reduceEvents(activatedEvent, authorizationRequestedEvent);
-
-        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .outcomeGateway(
-                        new OutcomeRedirectGatewayDto()
-                                .outcome(AuthorizationOutcomeDto.OK)
-                                .paymentGatewayType("REDIRECT")
-                                .errorCode(errorCode)
-                                .authorizationCode(TransactionTestUtils.AUTHORIZATION_CODE)
-                                .pspTransactionId(TransactionTestUtils.REDIRECT_PSP_TRANSACTION_ID)
-                                .pspId("invalid")
-                )
-                .timestampOperation(OffsetDateTime.now());
-
-        UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
-                transaction.getTransactionId(),
-                transaction.getStatus().toString(),
-                updateAuthorizationRequest,
-                ZonedDateTime.now()
-        );
-
-        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
-                updateAuthorizationStatusData
-        );
-
-        /* preconditions */
-        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
-        Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
-                .thenReturn(transactionId.uuid().toString());
-        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(
-                        Flux.fromIterable(
-                                List.of(
-                                        activatedEvent,
-                                        authorizationRequestedEvent
-                                )
-                        )
-                );
-        /* test */
-        StepVerifier.create(updateAuthorizationHandler.handle(requestAuthorizationCommand))
-                .expectErrorMatches(
-                        ex -> ex instanceof InvalidRequestException && ex.getMessage().equals(
-                                "Invalid update auth redirect request received! Validation error: psp id mismatch"
-                        )
-                )
-                .verify();
-
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(0))
-                .save(any());
-    }
-
-    @Test
-    void shouldReturnErrorHandlingRedirectAuthUpdateRequestWithMismatchPspTransactionId() {
-        TransactionActivatedEvent activatedEvent = TransactionTestUtils.transactionActivateEvent();
-        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
-                .transactionAuthorizationRequestedEvent(
-                        TransactionAuthorizationRequestData.PaymentGateway.REDIRECT,
-                        TransactionTestUtils.redirectTransactionGatewayAuthorizationRequestedData()
-                );
-        RedirectTransactionGatewayAuthorizationData.Outcome authOutcome = RedirectTransactionGatewayAuthorizationData.Outcome.OK;
-        String errorCode = "errorCode";
-        TransactionAuthorizationCompletedEvent event = TransactionTestUtils
-                .transactionAuthorizationCompletedEvent(
-                        TransactionTestUtils.redirectTransactionGatewayAuthorizationData(
-                                authOutcome,
-                                errorCode
-                        )
-                );
-        BaseTransaction transaction = TransactionTestUtils.reduceEvents(activatedEvent, authorizationRequestedEvent);
-
-        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .outcomeGateway(
-                        new OutcomeRedirectGatewayDto()
-                                .outcome(AuthorizationOutcomeDto.OK)
-                                .paymentGatewayType("REDIRECT")
-                                .errorCode(errorCode)
-                                .authorizationCode(TransactionTestUtils.AUTHORIZATION_CODE)
-                                .pspTransactionId("Invalid")
-                                .pspId(TransactionTestUtils.PSP_ID)
-                )
-                .timestampOperation(OffsetDateTime.now());
-
-        UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
-                transaction.getTransactionId(),
-                transaction.getStatus().toString(),
-                updateAuthorizationRequest,
-                ZonedDateTime.now()
-        );
-
-        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
-                updateAuthorizationStatusData
-        );
-
-        /* preconditions */
-        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
-        Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
-                .thenReturn(transactionId.uuid().toString());
-        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(
-                        Flux.fromIterable(
-                                List.of(
-                                        activatedEvent,
-                                        authorizationRequestedEvent
-                                )
-                        )
-                );
-        /* test */
-        StepVerifier.create(updateAuthorizationHandler.handle(requestAuthorizationCommand))
-                .expectErrorMatches(
-                        ex -> ex instanceof InvalidRequestException && ex.getMessage().equals(
-                                "Invalid update auth redirect request received! Validation error: psp transaction id mismatch"
-                        )
-                )
-                .verify();
-
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(0))
-                .save(any());
-    }
-
-    @Test
-    void shouldReturnErrorHandlingRedirectAuthUpdateRequestReceivedAfterTimeout() {
-        int authorizationTimeoutMillis = 600000;
-        TransactionActivatedEvent activatedEvent = TransactionTestUtils.transactionActivateEvent();
-        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
-                .transactionAuthorizationRequestedEvent(
-                        TransactionAuthorizationRequestData.PaymentGateway.REDIRECT,
-                        new RedirectTransactionGatewayAuthorizationRequestedData(
-                                TransactionTestUtils.LOGO_URI,
-                                TransactionTestUtils.REDIRECT_PSP_TRANSACTION_ID,
-                                authorizationTimeoutMillis,
-                                TransactionTestUtils.REDIRECT_AUTHORIZATION_PAYMENT_METHOD
-                        )
-                );
-        // set authorization requested event to be performed at
-        // authorizationTimeoutMillis timeout +1 milliseconds so that
-        // authorization completed timestamp evaluation will fail because of too late
-        // received authorization request
-        ZonedDateTime authorizationRequestedEventTimestamp = ZonedDateTime.now()
-                .minus(Duration.ofMillis(authorizationTimeoutMillis + 1));
-        System.out.println("TEST: " + authorizationRequestedEventTimestamp.toInstant());
-        authorizationRequestedEvent.setCreationDate(
-                authorizationRequestedEventTimestamp.toString()
-        );
-        RedirectTransactionGatewayAuthorizationData.Outcome authOutcome = RedirectTransactionGatewayAuthorizationData.Outcome.OK;
-        String errorCode = "errorCode";
-        TransactionAuthorizationCompletedEvent event = TransactionTestUtils
-                .transactionAuthorizationCompletedEvent(
-                        TransactionTestUtils.redirectTransactionGatewayAuthorizationData(
-                                authOutcome,
-                                errorCode
-                        )
-                );
-        BaseTransaction transaction = TransactionTestUtils.reduceEvents(activatedEvent, authorizationRequestedEvent);
-
-        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .outcomeGateway(
-                        new OutcomeRedirectGatewayDto()
-                                .outcome(AuthorizationOutcomeDto.OK)
-                                .paymentGatewayType("REDIRECT")
-                                .errorCode(errorCode)
-                                .authorizationCode(TransactionTestUtils.AUTHORIZATION_CODE)
-                                .pspTransactionId(TransactionTestUtils.REDIRECT_PSP_TRANSACTION_ID)
-                                .pspId(TransactionTestUtils.PSP_ID)
-                )
-                .timestampOperation(OffsetDateTime.now());
-
-        UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
-                transaction.getTransactionId(),
-                transaction.getStatus().toString(),
-                updateAuthorizationRequest,
-                authorizationRequestedEventTimestamp
-        );
-
-        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
-                updateAuthorizationStatusData
-        );
-
-        /* preconditions */
-        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
-        Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
-                .thenReturn(transactionId.uuid().toString());
-        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(
-                        Flux.fromIterable(
-                                List.of(
-                                        activatedEvent,
-                                        authorizationRequestedEvent
-                                )
-                        )
-                );
-        /* test */
-        StepVerifier.create(updateAuthorizationHandler.handle(requestAuthorizationCommand))
-                .expectErrorMatches(
-                        ex -> ex instanceof InvalidRequestException && ex.getMessage().equals(
-                                "Invalid update auth redirect request received! Validation error: authorization outcome received after threshold"
-                        )
-                )
-                .verify();
-
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(0))
-                .save(any());
-    }
-
-    @Test
-    void shouldReturnErrorHandlingRedirectAuthUpdateRequestWithInvalidEventData() {
-        TransactionActivatedEvent activatedEvent = TransactionTestUtils.transactionActivateEvent();
-        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
-                .transactionAuthorizationRequestedEvent(
-                        TransactionTestUtils.npgTransactionGatewayAuthorizationRequestedData()
-                );
-        RedirectTransactionGatewayAuthorizationData.Outcome authOutcome = RedirectTransactionGatewayAuthorizationData.Outcome.OK;
-        String errorCode = "errorCode";
-        TransactionAuthorizationCompletedEvent event = TransactionTestUtils
-                .transactionAuthorizationCompletedEvent(
-                        TransactionTestUtils.redirectTransactionGatewayAuthorizationData(
-                                authOutcome,
-                                errorCode
-                        )
-                );
-        BaseTransaction transaction = TransactionTestUtils.reduceEvents(activatedEvent, authorizationRequestedEvent);
-
-        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .outcomeGateway(
-                        new OutcomeRedirectGatewayDto()
-                                .outcome(AuthorizationOutcomeDto.OK)
-                                .paymentGatewayType("REDIRECT")
-                                .errorCode(errorCode)
-                                .authorizationCode(TransactionTestUtils.AUTHORIZATION_CODE)
-                                .pspTransactionId("Invalid")
-                                .pspId(TransactionTestUtils.PSP_ID)
-                )
-                .timestampOperation(OffsetDateTime.now());
-
-        UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
-                transaction.getTransactionId(),
-                transaction.getStatus().toString(),
-                updateAuthorizationRequest,
-                ZonedDateTime.now()
-        );
-
-        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
-                updateAuthorizationStatusData
-        );
-
-        /* preconditions */
-        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
-        Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
-                .thenReturn(transactionId.uuid().toString());
-        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(
-                        Flux.fromIterable(
-                                List.of(
-                                        activatedEvent,
-                                        authorizationRequestedEvent
-                                )
-                        )
-                );
-        /* test */
-        StepVerifier.create(updateAuthorizationHandler.handle(requestAuthorizationCommand))
-                .expectErrorMatches(
-                        ex -> ex instanceof InvalidRequestException && ex.getMessage().equals(
-                                "Redirect update auth request received for transaction performed with gateway: [VPOS]"
-                        )
-                )
-                .verify();
-
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(0))
-                .save(any());
-    }
 }

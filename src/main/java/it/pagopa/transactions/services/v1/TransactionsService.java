@@ -720,7 +720,7 @@ public class TransactionsService {
                 .next()
                 .map(authRequestedEvent -> ZonedDateTime.parse(authRequestedEvent.getCreationDate()));
 
-        Mono<Tuple2<it.pagopa.ecommerce.commons.domain.v1.Transaction, ZonedDateTime>> transactionV1 = transactionsUtils
+        Mono<Tuple2<it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction, ZonedDateTime>> transactionV1 = transactionsUtils
                 .reduceEvents(
                         events,
                         new it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction(),
@@ -728,9 +728,10 @@ public class TransactionsService {
                         it.pagopa.ecommerce.commons.domain.v1.Transaction.class
                 )
                 .filter(t -> !(t instanceof it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction))
+                .cast(it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction.class)
                 .zipWith(authorizationRequestedCreationDate);
 
-        Mono<Tuple2<it.pagopa.ecommerce.commons.domain.v2.Transaction, ZonedDateTime>> transactionV2 = transactionsUtils
+        Mono<Tuple2<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction, ZonedDateTime>> transactionV2 = transactionsUtils
                 .reduceEvents(
                         events,
                         new it.pagopa.ecommerce.commons.domain.v2.EmptyTransaction(),
@@ -738,12 +739,13 @@ public class TransactionsService {
                         it.pagopa.ecommerce.commons.domain.v2.Transaction.class
                 )
                 .filter(t -> !(t instanceof it.pagopa.ecommerce.commons.domain.v2.EmptyTransaction))
+                .cast(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction.class)
                 .zipWith(authorizationRequestedCreationDate);
 
         Mono<TransactionInfoDto> v1Info = transactionV1
                 .flatMap(
                         t -> this.updateTransactionAuthorizationStatusV1(
-                                (it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction) t.getT1(),
+                                t.getT1(),
                                 updateAuthorizationRequestDto,
                                 t.getT2()
                         )
@@ -752,7 +754,7 @@ public class TransactionsService {
         Mono<TransactionInfoDto> v2Info = transactionV2
                 .flatMap(
                         t -> this.updateTransactionAuthorizationStatusV2(
-                                (it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction) t.getT1(),
+                                t.getT1(),
                                 updateAuthorizationRequestDto,
                                 t.getT2()
                         )
@@ -772,7 +774,8 @@ public class TransactionsService {
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
                 updateAuthorizationRequestDto,
-                authorizationRequestedTime
+                authorizationRequestedTime,
+                Optional.empty()
         );
 
         // FIXME Handle multiple rtpId
@@ -849,7 +852,8 @@ public class TransactionsService {
                 transaction.getTransactionId(),
                 transaction.getStatus().toString(),
                 updateAuthorizationRequestDto,
-                authorizationRequestedTime
+                authorizationRequestedTime,
+                Optional.of(transaction)
         );
 
         // FIXME Handle multiple rtpId
