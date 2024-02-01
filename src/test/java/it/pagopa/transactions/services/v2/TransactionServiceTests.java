@@ -1,6 +1,5 @@
 package it.pagopa.transactions.services.v2;
 
-import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v2.*;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
@@ -51,12 +50,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-import reactor.util.function.Tuples;
 
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -701,7 +698,14 @@ class TransactionServiceTests {
                         )
                 );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsServiceV1
@@ -1242,7 +1246,14 @@ class TransactionServiceTests {
                         )
                 );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
@@ -1319,7 +1330,14 @@ class TransactionServiceTests {
                         )
                 );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */

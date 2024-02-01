@@ -699,7 +699,14 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsServiceV1
@@ -1233,7 +1240,14 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
@@ -1309,7 +1323,14 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
@@ -1382,7 +1403,14 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
@@ -1519,7 +1547,14 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
@@ -1649,7 +1684,14 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
@@ -1781,10 +1823,18 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
+        Hooks.onOperatorDebug();
         TransactionInfoDto transactionInfoResponse = transactionsServiceV1
                 .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest).block();
 
@@ -1911,9 +1961,14 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
-        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
