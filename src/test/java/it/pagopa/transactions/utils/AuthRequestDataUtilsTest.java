@@ -25,7 +25,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MockitoExtension.class)
 class AuthRequestDataUtilsTest {
@@ -159,37 +160,6 @@ class AuthRequestDataUtilsTest {
         );
     }
 
-    @ParameterizedTest
-    @MethodSource("npgOutcomeTestArguments")
-    void shouldExtractNpgInformation(
-                                     OutcomeNpgGatewayDto.OperationResultEnum operationResultEnum,
-                                     String expectedOutcome
-    ) {
-        testedStatuses.add(operationResultEnum);
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
-        String orderId = "orderId";
-        String operationId = "operationId";
-        String paymentEndToEndId = "paymentEndToEndId";
-        String authorizationCode = "authorizationCode";
-        String rrn = "rrn";
-        OutcomeNpgGatewayDto outcomeNpgGatewayDto = new OutcomeNpgGatewayDto()
-                .paymentGatewayType("NPG")
-                .orderId(orderId)
-                .operationId(operationId)
-                .paymentEndToEndId(paymentEndToEndId)
-                .operationResult(operationResultEnum)
-                .authorizationCode(authorizationCode)
-                .rrn(rrn);
-        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .outcomeGateway(outcomeNpgGatewayDto);
-        AuthRequestDataUtils.AuthRequestData authRequestData = authRequestDataUtils
-                .from(updateAuthorizationRequest, transactionId);
-        assertEquals(authorizationCode, authRequestData.authorizationCode());
-        assertEquals(expectedOutcome, authRequestData.outcome());
-        assertEquals(rrn, authRequestData.rrn());
-        assertNull(authRequestData.errorCode());
-    }
-
     private static Stream<Arguments> npgOutcomeTestArguments() {
         return Stream.of(
                 // npg operation result - expected outcome mappings
@@ -206,4 +176,43 @@ class AuthRequestDataUtilsTest {
                 Arguments.arguments(OutcomeNpgGatewayDto.OperationResultEnum.FAILED, "KO")
         );
     }
+
+    @ParameterizedTest
+    @MethodSource("npgOutcomeTestArguments")
+    void shouldExtractNpgInformation(
+                                     OutcomeNpgGatewayDto.OperationResultEnum operationResultEnum,
+                                     String expectedOutcome
+    ) {
+        testedStatuses.add(operationResultEnum);
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        String orderId = "orderId";
+        String operationId = "operationId";
+        String paymentEndToEndId = "paymentEndToEndId";
+        String authorizationCode = "authorizationCode";
+        String rrn = "rrn";
+        String expectedAuthorizationCode = null;
+        String expectedErrorCode = null;
+        if (operationResultEnum == OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED) {
+            expectedAuthorizationCode = authorizationCode;
+        } else {
+            expectedErrorCode = authorizationCode;
+        }
+        OutcomeNpgGatewayDto outcomeNpgGatewayDto = new OutcomeNpgGatewayDto()
+                .paymentGatewayType("NPG")
+                .orderId(orderId)
+                .operationId(operationId)
+                .paymentEndToEndId(paymentEndToEndId)
+                .operationResult(operationResultEnum)
+                .authorizationCode(authorizationCode)
+                .rrn(rrn);
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .outcomeGateway(outcomeNpgGatewayDto);
+        AuthRequestDataUtils.AuthRequestData authRequestData = authRequestDataUtils
+                .from(updateAuthorizationRequest, transactionId);
+        assertEquals(expectedAuthorizationCode, authRequestData.authorizationCode());
+        assertEquals(expectedOutcome, authRequestData.outcome());
+        assertEquals(rrn, authRequestData.rrn());
+        assertEquals(expectedErrorCode, authRequestData.errorCode());
+    }
+
 }

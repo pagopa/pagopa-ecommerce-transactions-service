@@ -17,8 +17,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 import static it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler.QUALIFIER_NAME;
 
@@ -53,14 +56,22 @@ public class AuthorizationUpdateProjectionHandler
                     transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_COMPLETED);
                     transactionDocument.setAuthorizationCode(data.getData().getAuthorizationCode());
 
-                    String authorizationErrorCode = switch (data.getData().getTransactionGatewayAuthorizationData()) {
-                        case NpgTransactionGatewayAuthorizationData ignored -> null;
-                        case PgsTransactionGatewayAuthorizationData pgsTransactionGatewayAuthorizationData -> pgsTransactionGatewayAuthorizationData.getErrorCode();
-                        case RedirectTransactionGatewayAuthorizationData redirectTransactionGatewayAuthorizationData ->
-                                redirectTransactionGatewayAuthorizationData.getErrorCode();
+                    Tuple2<String, Optional<String>> gatewayStatusAndErrorCode = switch (data.getData().getTransactionGatewayAuthorizationData()) {
+                        case NpgTransactionGatewayAuthorizationData npgData -> Tuples.of(
+                                npgData.getOperationResult().toString(),
+                                Optional.ofNullable(npgData.getErrorCode())
+                        );
+                        case PgsTransactionGatewayAuthorizationData pgsData -> Tuples.of(
+                                pgsData.getAuthorizationResultDto().toString(),
+                                Optional.ofNullable(pgsData.getErrorCode())
+                        );
+                        case RedirectTransactionGatewayAuthorizationData redirectData -> Tuples.of(
+                                redirectData.getOutcome().toString(),
+                                Optional.ofNullable(redirectData.getErrorCode())
+                        );
                     };
-
-                    transactionDocument.setAuthorizationErrorCode(authorizationErrorCode);
+                    transactionDocument.setAuthorizationErrorCode(gatewayStatusAndErrorCode.getT2().orElse(null));
+                    transactionDocument.setGatewayAuthorizationStatus(gatewayStatusAndErrorCode.getT1());
 
                     return transactionsViewRepository.save(transactionDocument);
                 })
