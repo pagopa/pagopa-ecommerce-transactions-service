@@ -121,14 +121,23 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                             .getTransactionAuthorizationCompletedData();
                     it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData transactionActivatedData = tx
                             .getTransactionActivatedData();
-                    BigDecimal amount = EuroUtils.euroCentsToEuro(
-                            tx.getPaymentNotices().stream()
-                                    .mapToInt(
-                                            paymentNotice -> paymentNotice.transactionAmount().value()
-                                    ).sum()
+
+                    Integer amount = tx.getPaymentNotices().stream()
+                            .mapToInt(
+                                    paymentNotice -> paymentNotice.transactionAmount().value()
+                            ).sum();
+                    Integer fee = transactionAuthorizationRequestData.getFee();
+                    Integer totalAmount = amount + fee;
+
+                    BigDecimal amountEuroCents = BigDecimal.valueOf(
+                            amount
                     );
-                    BigDecimal fee = EuroUtils.euroCentsToEuro(transactionAuthorizationRequestData.getFee());
-                    BigDecimal totalAmount = amount.add(fee);
+                    BigDecimal feeEuroCents = BigDecimal.valueOf(fee);
+                    BigDecimal totalAmountEuroCents = BigDecimal.valueOf(totalAmount);
+
+                    BigDecimal feeEuro = EuroUtils.euroCentsToEuro(fee);
+                    BigDecimal totalAmountEuro = EuroUtils.euroCentsToEuro(totalAmount);
+
                     ClosePaymentRequestV2Dto.OutcomeEnum outcome = authorizationResultToOutcomeV2(
                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
                     );
@@ -147,9 +156,9 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                                             authRequestData,
                                             transactionAuthorizationRequestData,
                                             transactionAuthorizationCompletedData,
-                                            fee,
-                                            amount,
-                                            totalAmount,
+                                            feeEuroCents,
+                                            amountEuroCents,
+                                            totalAmountEuroCents,
                                             outcome,
                                             tx.getTransactionId(),
                                             tx.getCreationDate()
@@ -160,8 +169,8 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                                 .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())
                                 .idChannel(transactionAuthorizationRequestData.getPspChannelCode())
                                 .transactionId(tx.getTransactionId().value())
-                                .totalAmount(totalAmount)
-                                .fee(fee)
+                                .totalAmount(totalAmountEuro)
+                                .fee(feeEuro)
                                 .timestampOperation(updateAuthorizationRequestDto.getTimestampOperation())
                                 .paymentMethod(transactionAuthorizationRequestData.getPaymentTypeCode())
                                 .additionalPaymentInformations(
@@ -171,7 +180,7 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                                                                 .fromValue(authRequestData.outcome())
                                                 )
                                                 .authorizationCode(authRequestData.authorizationCode())
-                                                .fee(fee.toString())
+                                                .fee(feeEuro.toString())
                                                 .timestampOperation(
                                                         updateAuthorizationRequestDto
                                                                 .getTimestampOperation()
@@ -179,7 +188,7 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                                                                 .truncatedTo(ChronoUnit.SECONDS)
                                                                 .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                                 )
-                                                .totalAmount(totalAmount.toString())
+                                                .totalAmount(totalAmountEuro.toString())
                                                 .rrn(authRequestData.rrn())
                                 );
                     }
