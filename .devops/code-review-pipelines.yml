@@ -92,7 +92,7 @@ stages:
             echo "##[debug] Change placeholder for ecommerce-transaction-service set branch: $(BRANCH_NAME)"
             sed -i "s/^ECOMMERCE_TRANSACTIONS_COMMIT_SHA=.*$/ECOMMERCE_TRANSACTIONS_COMMIT_SHA=$(BRANCH_NAME)/" .env
           displayName: 'Change transaction branch name ecommerce-local .env'
-        - script: docker compose up pagopa-ecommerce-transactions-service pagopa-ecommerce-payment-methods-service pagopa-ecommerce-event-dispatcher-service mongo redis storage pagopa-pdv-mock pagopa-gec-mock pagopa-npg-mock pagopa-node-mock traefik pagopa-pgs-mock azurite-init -d
+        - script: docker compose up pagopa-ecommerce-transactions-service pagopa-ecommerce-payment-methods-service pagopa-ecommerce-event-dispatcher-service mongo redis storage pagopa-pdv-mock pagopa-gec-mock pagopa-npg-mock pagopa-node-mock traefik pagopa-pgs-mock azurite-init pagopa-psp-mock -d
           displayName: 'Run app with docker-compose'
         - script: |
               timeout 180 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:8080/actuator/health/liveness)" != "200" ]]; do sleep 5; done' || exit 1
@@ -105,6 +105,8 @@ stages:
           displayName: 'Run api test for PGS VPOS integration'
         - script: newman run api-tests/transaction-service/pgs/xpay/transaction-service_ecommerce_local.postman_collection.json --environment=api-tests/transaction-service/pgs/transaction-service_ecommerce_local.postman_environment.json --reporters cli,junit --reporter-junit-export Results/PGS-XPAY-api-TEST.xml
           displayName: 'Run api test for XPAY integration'
+        - script: newman run api-tests/transaction-service/redirect/transaction-service_ecommerce_local.postman_collection.json --environment=api-tests/transaction-service/redirect/transaction-service_ecommerce_local.postman_environment.json --reporters cli,junit --reporter-junit-export Results/REDIRECT-api-TEST.xml
+          displayName: 'Run api test for REDIRECT integration'
           continueOnError: false
         - task: PublishTestResults@2
           inputs:
