@@ -105,6 +105,8 @@ stages:
           displayName: 'Run api test for PGS VPOS integration'
         - script: newman run api-tests/transaction-service/pgs/xpay/transaction-service_ecommerce_local.postman_collection.json --environment=api-tests/transaction-service/pgs/transaction-service_ecommerce_local.postman_environment.json --reporters cli,junit --reporter-junit-export Results/PGS-XPAY-api-TEST.xml
           displayName: 'Run api test for XPAY integration'
+        - script: newman run api-tests/transaction-service/redirect/transaction-service_ecommerce_local.postman_collection.json --environment=api-tests/transaction-service/redirect/transaction-service_ecommerce_local.postman_environment.json --reporters cli,junit --reporter-junit-export Results/REDIRECT-api-TEST.xml
+          displayName: 'Run api test for REDIRECT integration'
           continueOnError: false
         - task: PublishTestResults@2
           inputs:
