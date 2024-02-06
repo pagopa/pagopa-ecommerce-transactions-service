@@ -40,6 +40,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Component(TransactionActivateHandler.QUALIFIER_NAME)
@@ -319,7 +320,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                                        String idCart,
                                                                        Integer paymentTokenTimeout,
                                                                        String orderId,
-                                                                       String correlationId
+                                                                       UUID correlationId
     ) {
         List<PaymentNotice> paymentNotices = toPaymentNoticeList(paymentRequestsInfo);
         Mono<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData> data = confidentialMailUtils
@@ -332,21 +333,22 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.valueOf(clientId),
                                 idCart,
                                 paymentTokenTimeout,
-                                orderId != null ? new NpgTransactionGatewayActivationData(orderId, correlationId) // this
-                                                                                                                  // logic
-                                                                                                                  // will
-                                                                                                                  // be
-                                                                                                                  // eliminated
-                                                                                                                  // with
-                                                                                                                  // task
-                                                                                                                  // CHK-2286
-                                                                                                                  // by
-                                                                                                                  // handling
-                                                                                                                  // the
-                                                                                                                  // saving
-                                                                                                                  // of
-                                                                                                                  // correlationId
-                                                                                                                  // only
+                                orderId != null
+                                        ? new NpgTransactionGatewayActivationData(orderId, correlationId.toString()) // this
+                                        // logic
+                                        // will
+                                        // be
+                                        // eliminated
+                                        // with
+                                        // task
+                                        // CHK-2286
+                                        // by
+                                        // handling
+                                        // the
+                                        // saving
+                                        // of
+                                        // correlationId
+                                        // only
                                         : new EmptyTransactionGatewayActivationData()
                         )
                 );

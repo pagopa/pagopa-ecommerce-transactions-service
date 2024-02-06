@@ -162,7 +162,7 @@ components:
         correlationId:
           description: NPG correlation id
           type: string
-          example: correlationId
+          format: uuid
       required:
         - paymentNotices
         - email

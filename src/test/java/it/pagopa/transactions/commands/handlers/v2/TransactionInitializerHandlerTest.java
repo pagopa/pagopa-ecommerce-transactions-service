@@ -91,7 +91,7 @@ class TransactionInitializerHandlerTest {
 
     private static final String ORDER_ID = "orderId";
 
-    private static final String CORRELATION_ID = UUID.randomUUID().toString();
+    private static final UUID CORRELATION_ID = UUID.randomUUID();
 
     private static final String STRONG_KEY = "ODMzNUZBNTZENDg3NTYyREUyNDhGNDdCRUZDNzI3NDMzMzQwNTFEREZGQ0MyQzA5Mjc1RjY2NTQ1NDk5MDMxNzU5NDc0NUVFMTdDMDhGNzk4Q0Q3RENFMEJBODE1NURDREExNEY2Mzk4QzFEMTU0NTExNjUyMEExMzMwMTdDMDk";
 
@@ -255,7 +255,7 @@ class TransactionInitializerHandlerTest {
                         .getOrderId()
         );
         assertEquals(
-                CORRELATION_ID,
+                CORRELATION_ID.toString(),
                 ((NpgTransactionGatewayActivationData) event.getData().getTransactionGatewayActivationData())
                         .getCorrelationId()
         );
