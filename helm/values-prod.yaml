@@ -108,7 +108,7 @@ microservice-chart:
       NPG_API_KEY: npg-api-key
       NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
       JWT_NPG_NOTIFICATION_SECRET: npg-notification-signing-key
-      NODE_FORWARDER_API_KEY: checkout-redirect-forwarder-api-key
+      NODE_FORWARDER_API_KEY: node-forwarder-api-key
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
     tag: "1.16.1"
@@ -268,7 +268,7 @@ microservice-chart:
     NPG_API_KEY: npg-api-key
     NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
     JWT_NPG_NOTIFICATION_SECRET: npg-notification-signing-key
-    NODE_FORWARDER_API_KEY: checkout-redirect-forwarder-api-key
+    NODE_FORWARDER_API_KEY: node-forwarder-api-key
   keyvault:
     name: "pagopa-p-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
