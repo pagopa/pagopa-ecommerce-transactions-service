@@ -612,7 +612,8 @@ public class PaymentGatewayClient {
                         .proxyRequest(
                                 request,
                                 proxyPspUrl,
-                                authorizationData.transactionId().value()
+                                authorizationData.transactionId().value(),
+                                RedirectUrlResponseDto.class
                         ).onErrorMap(
                                 NodeForwarderClientException.class,
                                 exception -> {

@@ -294,8 +294,7 @@ public class WebClientsConfig {
                 apiKey,
                 backendUrl,
                 readTimeout,
-                connectionTimeout,
-                RedirectUrlResponseDto.class
+                connectionTimeout
         );
     }
 

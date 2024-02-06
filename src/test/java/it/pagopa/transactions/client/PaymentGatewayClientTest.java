@@ -2726,7 +2726,7 @@ class PaymentGatewayClientTest {
                 .timeout(60000)
                 .url("http://redirectionUrl")
                 .idPSPTransaction("idPspTransaction");
-        given(nodeForwarderClient.proxyRequest(any(), any(), any())).willReturn(
+        given(nodeForwarderClient.proxyRequest(any(), any(), any(), any())).willReturn(
                 Mono.just(
                         new NodeForwarderClient.NodeForwarderResponse<>(
                                 redirectUrlResponseDto,
@@ -2744,7 +2744,8 @@ class PaymentGatewayClientTest {
         verify(nodeForwarderClient, times(1)).proxyRequest(
                 redirectUrlRequestDto,
                 URI.create("http://redirect/pspId"),
-                authorizationData.transactionId().value()
+                authorizationData.transactionId().value(),
+                RedirectUrlResponseDto.class
         );
     }
 
@@ -2800,7 +2801,7 @@ class PaymentGatewayClientTest {
                                         .concat(transaction.getTransactionId().value())
                         )
                 );
-        given(nodeForwarderClient.proxyRequest(any(), any(), any())).willReturn(
+        given(nodeForwarderClient.proxyRequest(any(), any(), any(), any())).willReturn(
                 Mono.error(
                         new NodeForwarderClientException(
                                 "Error",
@@ -2825,7 +2826,8 @@ class PaymentGatewayClientTest {
         verify(nodeForwarderClient, times(1)).proxyRequest(
                 redirectUrlRequestDto,
                 URI.create("http://redirect/pspId"),
-                authorizationData.transactionId().value()
+                authorizationData.transactionId().value(),
+                RedirectUrlResponseDto.class
         );
     }
 
@@ -2868,7 +2870,7 @@ class PaymentGatewayClientTest {
                                         .concat(transaction.getTransactionId().value())
                         )
                 );
-        given(nodeForwarderClient.proxyRequest(any(), any(), any())).willReturn(
+        given(nodeForwarderClient.proxyRequest(any(), any(), any(), any())).willReturn(
                 Mono.error(
                         new NodeForwarderClientException(
                                 "Error",
@@ -2886,7 +2888,8 @@ class PaymentGatewayClientTest {
         verify(nodeForwarderClient, times(1)).proxyRequest(
                 redirectUrlRequestDto,
                 URI.create("http://redirect/pspId"),
-                authorizationData.transactionId().value()
+                authorizationData.transactionId().value(),
+                RedirectUrlResponseDto.class
         );
     }
 
@@ -2922,7 +2925,7 @@ class PaymentGatewayClientTest {
         )
                 .expectError(CheckoutRedirectConfigurationException.class)
                 .verify();
-        verify(nodeForwarderClient, times(0)).proxyRequest(any(), any(), any());
+        verify(nodeForwarderClient, times(0)).proxyRequest(any(), any(), any(), any());
     }
 
 }
