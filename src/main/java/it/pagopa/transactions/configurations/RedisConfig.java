@@ -2,8 +2,6 @@ package it.pagopa.transactions.configurations;
 
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.RedisTemplateWrapperBuilder;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.UniqueIdTemplateWrapper;
-import it.pagopa.ecommerce.commons.repositories.UniqueIdDocument;
 import it.pagopa.transactions.repositories.TransactionCacheInfo;
 import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,27 +29,6 @@ public class RedisConfig {
         return RedisTemplateWrapperBuilder.buildPaymentRequestInfoRedisTemplateWrapper(
                 redisConnectionFactory,
                 Duration.ofSeconds(paymentTokenTimeout)
-        );
-    }
-
-    @Bean
-    public UniqueIdTemplateWrapper uniqueIdTemplateWrapper(
-                                                           RedisConnectionFactory redisConnectionFactory
-    ) {
-        RedisTemplate<String, UniqueIdDocument> redisTemplate = new RedisTemplate<>();
-        Jackson2JsonRedisSerializer<UniqueIdDocument> jacksonRedisSerializer = new Jackson2JsonRedisSerializer<>(
-                UniqueIdDocument.class
-        );
-
-        redisTemplate.setConnectionFactory(redisConnectionFactory);
-        redisTemplate.setKeySerializer(new StringRedisSerializer());
-        redisTemplate.setValueSerializer(jacksonRedisSerializer);
-        redisTemplate.afterPropertiesSet();
-
-        return new UniqueIdTemplateWrapper(
-                redisTemplate,
-                "uniqueId",
-                Duration.ofSeconds(60)
         );
     }
 

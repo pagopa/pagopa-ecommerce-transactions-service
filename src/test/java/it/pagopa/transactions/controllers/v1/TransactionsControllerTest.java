@@ -14,9 +14,12 @@ import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
+import it.pagopa.transactions.utils.UpdateTransactionStatusTracerUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -32,6 +35,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.server.RequestPath;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -45,11 +49,17 @@ import javax.crypto.SecretKey;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @WebFluxTest(TransactionsController.class)
@@ -78,6 +88,9 @@ class TransactionsControllerTest {
 
     @MockBean
     private UniqueIdUtils uniqueIdUtils;
+
+    @MockBean
+    private UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
 
     @Mock
     ServerWebExchange mockExchange;
@@ -132,7 +145,7 @@ class TransactionsControllerTest {
                     .newTransaction(clientIdDto, Mono.just(newTransactionRequestDto), null).block();
 
             // Verify mock
-            Mockito.verify(transactionsService, Mockito.times(1))
+            verify(transactionsService, Mockito.times(1))
                     .newTransaction(newTransactionRequestDto, clientIdDto, transactionId);
 
             // Verify status code and response
@@ -160,7 +173,7 @@ class TransactionsControllerTest {
                 .getTransactionInfo(transactionId, null).block();
 
         // Verify mock
-        Mockito.verify(transactionsService, Mockito.times(1)).getTransactionInfo(transactionId);
+        verify(transactionsService, Mockito.times(1)).getTransactionInfo(transactionId);
 
         // Verify status code and response
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -177,7 +190,7 @@ class TransactionsControllerTest {
                 .requestTransactionUserCancellation(transactionId, null).block();
 
         // Verify mock
-        Mockito.verify(transactionsService, Mockito.times(1)).cancelTransaction(transactionId);
+        verify(transactionsService, Mockito.times(1)).cancelTransaction(transactionId);
 
         // Verify status code and response
         assertEquals(HttpStatus.ACCEPTED, responseEntity.getStatusCode());
@@ -610,8 +623,14 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnResponseEntityWithBadRequest() {
+        ServerWebExchange exchange = Mockito.mock(ServerWebExchange.class);
+        ServerHttpRequest serverHttpRequest = Mockito.mock(ServerHttpRequest.class);
+        RequestPath requestPath = Mockito.mock(RequestPath.class);
+        given(exchange.getRequest()).willReturn(serverHttpRequest);
+        given(serverHttpRequest.getPath()).willReturn(requestPath);
+        given(requestPath.value()).willReturn("");
         ResponseEntity<ProblemJsonDto> responseEntity = transactionsController
-                .validationExceptionHandler(new InvalidRequestException("Some message"));
+                .validationExceptionHandler(new InvalidRequestException("Some message"), exchange);
         assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
         assertEquals("Invalid request: Some message", responseEntity.getBody().getDetail());
     }
@@ -913,6 +932,407 @@ class TransactionsControllerTest {
                 .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY)
                 .expectBody(ProblemJsonDto.class)
                 .value(p -> assertEquals(422, p.getStatus()));
+    }
+
+    private static Stream<Arguments> authRequestMethodSource() {
+        return Stream.of(
+                Arguments.of(
+                        new UpdateAuthorizationRequestDto()
+                                .outcomeGateway(
+                                        new OutcomeXpayGatewayDto()
+                                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
+                                                .authorizationCode("authorizationCode")
+                                ).timestampOperation(OffsetDateTime.now()),
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
+                        null
+                ),
+                Arguments.of(
+                        new UpdateAuthorizationRequestDto()
+                                .outcomeGateway(
+                                        new OutcomeVposGatewayDto()
+                                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
+                                                .authorizationCode("authorizationCode")
+                                ).timestampOperation(OffsetDateTime.now()),
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS,
+                        null
+                ),
+                Arguments.of(
+                        new UpdateAuthorizationRequestDto()
+                                .outcomeGateway(
+                                        new OutcomeNpgGatewayDto()
+                                                .authorizationCode("authorizationCode")
+                                                .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
+                                ).timestampOperation(OffsetDateTime.now()),
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG,
+                        null
+                ),
+                Arguments.of(
+                        new UpdateAuthorizationRequestDto()
+                                .outcomeGateway(
+                                        new OutcomeRedirectGatewayDto()
+                                                .authorizationCode("authorizationCode")
+                                                .outcome(AuthorizationOutcomeDto.OK)
+                                                .pspId(TransactionTestUtils.PSP_ID)
+                                ).timestampOperation(OffsetDateTime.now()),
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT,
+                        TransactionTestUtils.PSP_ID
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("authRequestMethodSource")
+    void shouldTraceTransactionUpdateStatusOK(
+                                              UpdateAuthorizationRequestDto updateAuthorizationRequest,
+                                              UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger trigger,
+                                              String expectedPspId
+    ) {
+
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        String paymentToken = "paymentToken";
+        TransactionInfoDto transactionInfo = new TransactionInfoDto()
+                .addPaymentsItem(
+                        new PaymentInfoDto()
+                                .amount(100)
+                                .paymentToken(paymentToken)
+                )
+                .authToken("authToken")
+                .status(TransactionStatusDto.AUTHORIZATION_COMPLETED);
+
+        /* preconditions */
+        Mockito.when(
+                transactionsService.updateTransactionAuthorization(transactionId.uuid(), updateAuthorizationRequest)
+        )
+                .thenReturn(Mono.just(transactionInfo));
+        Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
+        Hooks.onOperatorDebug();
+        /* test */
+
+        StepVerifier.create(
+                transactionsController
+                        .updateTransactionAuthorization(
+                                transactionId.value(),
+                                Mono.just(updateAuthorizationRequest),
+                                null
+                        )
+        )
+                .assertNext(response -> {
+                    assertEquals(HttpStatus.OK, response.getStatusCode());
+                    assertEquals(transactionInfo, response.getBody());
+                })
+                .verifyComplete();
+
+        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedTransactionUpdateStatus = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
+                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
+                trigger,
+                Optional.ofNullable(expectedPspId)
+        );
+        verify(updateTransactionStatusTracerUtils, times(1))
+                .traceStatusUpdateOperation(expectedTransactionUpdateStatus);
+    }
+
+    @Test
+    void shouldThrowExceptionForUnhandledPatchAuthOutcomePaymentGateway() {
+
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        String paymentToken = "paymentToken";
+        TransactionInfoDto transactionInfo = new TransactionInfoDto()
+                .addPaymentsItem(
+                        new PaymentInfoDto()
+                                .amount(100)
+                                .paymentToken(paymentToken)
+                )
+                .authToken("authToken")
+                .status(TransactionStatusDto.AUTHORIZATION_COMPLETED);
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto();
+        updateAuthorizationRequest.setOutcomeGateway(Mockito.mock(UpdateAuthorizationRequestOutcomeGatewayDto.class));
+        /* preconditions */
+        Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
+        Hooks.onOperatorDebug();
+        /* test */
+
+        StepVerifier.create(
+                transactionsController
+                        .updateTransactionAuthorization(
+                                transactionId.value(),
+                                Mono.just(updateAuthorizationRequest),
+                                null
+                        )
+        )
+                .expectError(InvalidRequestException.class)
+                .verify();
+
+        verify(updateTransactionStatusTracerUtils, times(0))
+                .traceStatusUpdateOperation(any());
+    }
+
+    private static Stream<Arguments> koAuthRequestPatchMethodSource() {
+        return Stream.of(
+                Arguments.of(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS,
+                        new AlreadyProcessedException(new TransactionId(TransactionTestUtils.TRANSACTION_ID))
+                ),
+                Arguments.of(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.TRANSACTION_NOT_FOUND,
+                        new TransactionNotFoundException(TransactionTestUtils.PAYMENT_TOKEN)
+                ),
+                Arguments.of(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
+                        new InvalidRequestException("Invalid request exception")
+                ),
+                Arguments.of(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.PROCESSING_ERROR,
+                        new RuntimeException("Error processing request")
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("koAuthRequestPatchMethodSource")
+    void shouldTraceTransactionUpdateStatusKO(
+                                              UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome expectedOutcome,
+                                              Exception raisedException
+    ) {
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .outcomeGateway(
+                        new OutcomeXpayGatewayDto()
+                ).timestampOperation(OffsetDateTime.now());
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+
+        /* preconditions */
+        Mockito.when(
+                transactionsService.updateTransactionAuthorization(transactionId.uuid(), updateAuthorizationRequest)
+        )
+                .thenReturn(Mono.error(raisedException));
+        Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
+        /* test */
+        StepVerifier.create(
+                transactionsController
+                        .updateTransactionAuthorization(
+                                transactionId.value(),
+                                Mono.just(updateAuthorizationRequest),
+                                null
+                        )
+        )
+                .expectError(raisedException.getClass())
+                .verify();
+
+        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
+                expectedOutcome,
+                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
+                Optional.empty()
+        );
+        verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
+                expectedStatusUpdateInfo
+        );
+    }
+
+    private static Stream<Arguments> badRequestForUpdateAuthRequestMethodSource() {
+        return Stream.of(
+                Arguments.of("XPAY", UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY),
+                Arguments.of("VPOS", UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS),
+                Arguments.of("NPG", UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG),
+                Arguments.of("REDIRECT", UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT),
+                Arguments.of(null, UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.UNKNOWN),
+                Arguments.of(
+                        "unmanaged payment gateway",
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.UNKNOWN
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("badRequestForUpdateAuthRequestMethodSource")
+    void shouldTraceSyntacticInvalidRequestForUpdateAuthRequest(
+                                                                String paymentGatewayTypeHeaderValue,
+                                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger expectedTrigger
+    ) {
+        String contextPath = "auth-requests";
+        UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
+                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
+                expectedTrigger,
+                Optional.empty()
+        );
+        ServerWebExchange exchange = Mockito.mock(ServerWebExchange.class);
+        ServerHttpRequest serverHttpRequest = Mockito.mock(ServerHttpRequest.class);
+        RequestPath requestPath = Mockito.mock(RequestPath.class);
+        HttpHeaders httpHeaders = Mockito.mock(HttpHeaders.class);
+        given(exchange.getRequest()).willReturn(serverHttpRequest);
+        given(serverHttpRequest.getPath()).willReturn(requestPath);
+        given(serverHttpRequest.getHeaders()).willReturn(httpHeaders);
+        if (paymentGatewayTypeHeaderValue != null) {
+            given(httpHeaders.get("x-payment-gateway-type")).willReturn(List.of(paymentGatewayTypeHeaderValue));
+        } else {
+            given(httpHeaders.get("x-payment-gateway-type")).willReturn(List.of());
+        }
+        given(requestPath.value()).willReturn(contextPath);
+
+        ResponseEntity<ProblemJsonDto> responseEntity = transactionsController
+                .validationExceptionHandler(new InvalidRequestException("Some message"), exchange);
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertEquals("Invalid request: Some message", responseEntity.getBody().getDetail());
+        verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
+                expectedStatusUpdateInfo
+        );
+    }
+
+    @Test
+    void shouldTraceSyntacticInvalidRequestForSendPaymentResult() {
+        String contextPath = "user-receipts";
+        UpdateTransactionStatusTracerUtils.NodoStatusUpdate expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
+                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST
+        );
+        ServerWebExchange exchange = Mockito.mock(ServerWebExchange.class);
+        ServerHttpRequest serverHttpRequest = Mockito.mock(ServerHttpRequest.class);
+        RequestPath requestPath = Mockito.mock(RequestPath.class);
+        given(exchange.getRequest()).willReturn(serverHttpRequest);
+        given(serverHttpRequest.getPath()).willReturn(requestPath);
+        given(requestPath.value()).willReturn(contextPath);
+
+        ResponseEntity<ProblemJsonDto> responseEntity = transactionsController
+                .validationExceptionHandler(new InvalidRequestException("Some message"), exchange);
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertEquals("Invalid request: Some message", responseEntity.getBody().getDetail());
+        verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
+                expectedStatusUpdateInfo
+        );
+    }
+
+    @Test
+    void shouldNotTraceInvalidRequestExceptionForUnmanagedPaths() {
+        ServerWebExchange exchange = Mockito.mock(ServerWebExchange.class);
+        ServerHttpRequest serverHttpRequest = Mockito.mock(ServerHttpRequest.class);
+        RequestPath requestPath = Mockito.mock(RequestPath.class);
+        given(exchange.getRequest()).willReturn(serverHttpRequest);
+        given(serverHttpRequest.getPath()).willReturn(requestPath);
+        given(requestPath.value()).willReturn("unmanagedPath");
+        ResponseEntity<ProblemJsonDto> responseEntity = transactionsController
+                .validationExceptionHandler(new InvalidRequestException("Some message"), exchange);
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertEquals("Invalid request: Some message", responseEntity.getBody().getDetail());
+        verify(updateTransactionStatusTracerUtils, times(0)).traceStatusUpdateOperation(any());
+    }
+
+    @Test
+    void shouldTraceAddUserReceiptStatusOK() {
+
+        AddUserReceiptRequestDto addUserReceiptRequestDto = new AddUserReceiptRequestDto()
+                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK).paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(
+                        new AddUserReceiptRequestPaymentsInnerDto()
+                                .companyName("companyName")
+                                .creditorReferenceId("creditorReferenceId")
+                                .debtor("debtor")
+                                .fiscalCode("fiscalCode")
+                                .officeName("officeName")
+                                .paymentToken("paymentToken")
+                                .description("description")
+                );
+
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        String paymentToken = "paymentToken";
+        TransactionInfoDto transactionInfo = new TransactionInfoDto()
+                .addPaymentsItem(
+                        new PaymentInfoDto()
+                                .amount(100)
+                                .paymentToken(paymentToken)
+                )
+                .authToken("authToken")
+                .status(TransactionStatusDto.AUTHORIZATION_COMPLETED);
+
+        AddUserReceiptResponseDto addUserReceiptResponseDto = new AddUserReceiptResponseDto()
+                .outcome(AddUserReceiptResponseDto.OutcomeEnum.OK);
+
+        /* preconditions */
+        Mockito.when(
+                transactionsService.addUserReceipt(transactionId.value(), addUserReceiptRequestDto)
+        )
+                .thenReturn(Mono.just(transactionInfo));
+        Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
+        Hooks.onOperatorDebug();
+        /* test */
+
+        StepVerifier.create(
+                transactionsController
+                        .addUserReceipt(
+                                transactionId.value(),
+                                Mono.just(addUserReceiptRequestDto),
+                                null
+                        )
+        )
+                .assertNext(response -> {
+                    assertEquals(HttpStatus.OK, response.getStatusCode());
+                    assertEquals(addUserReceiptResponseDto, response.getBody());
+                })
+                .verifyComplete();
+
+        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedTransactionUpdateStatus = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
+                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK
+        );
+        verify(updateTransactionStatusTracerUtils, times(1))
+                .traceStatusUpdateOperation(expectedTransactionUpdateStatus);
+    }
+
+    private static Stream<Arguments> koAddUserReceiptMethodSource() {
+        return Stream.of(
+                Arguments.of(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS,
+                        new AlreadyProcessedException(new TransactionId(TransactionTestUtils.TRANSACTION_ID))
+                ),
+                Arguments.of(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.PROCESSING_ERROR,
+                        new RuntimeException("Error processing request")
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("koAddUserReceiptMethodSource")
+    void shouldTraceAddUserReceiptStatusKO(
+                                           UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome expectedOutcome,
+                                           Exception raisedException
+    ) {
+        AddUserReceiptRequestDto addUserReceiptRequestDto = new AddUserReceiptRequestDto()
+                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK).paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(
+                        new AddUserReceiptRequestPaymentsInnerDto()
+                                .companyName("companyName")
+                                .creditorReferenceId("creditorReferenceId")
+                                .debtor("debtor")
+                                .fiscalCode("fiscalCode")
+                                .officeName("officeName")
+                                .paymentToken("paymentToken")
+                                .description("description")
+                );
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+
+        /* preconditions */
+        Mockito.when(
+                transactionsService.addUserReceipt(transactionId.value(), addUserReceiptRequestDto)
+        )
+                .thenReturn(Mono.error(raisedException));
+        Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
+        /* test */
+        StepVerifier.create(
+                transactionsController
+                        .addUserReceipt(
+                                transactionId.value(),
+                                Mono.just(addUserReceiptRequestDto),
+                                null
+                        )
+        )
+                .expectErrorMatches(
+                        exc -> exc instanceof SendPaymentResultException
+                                && ((SendPaymentResultException) exc).cause.equals(raisedException)
+                )
+                .verify();
+
+        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
+                expectedOutcome
+        );
+        verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
+                expectedStatusUpdateInfo
+        );
     }
 
     private static CtFaultBean faultBeanWithCode(String faultCode) {

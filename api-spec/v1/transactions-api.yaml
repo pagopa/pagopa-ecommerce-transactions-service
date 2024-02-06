@@ -154,7 +154,7 @@ paths:
           name: x-pgs-id
           schema:
             type: string
-            pattern: 'XPAY|VPOS|NPG'
+            pattern: 'XPAY|VPOS|NPG|REDIRECT'
           required: false
           description: Pgs identifier (populated by APIM policy)
       requestBody:
@@ -453,6 +453,8 @@ components:
             - $ref: "#/components/schemas/CardAuthRequestDetails"
             - $ref: "#/components/schemas/CardsAuthRequestDetails"
             - $ref: "#/components/schemas/WalletAuthRequestDetails"
+            - $ref: "#/components/schemas/ApmAuthRequestDetails"
+            - $ref: "#/components/schemas/RedirectionAuthRequestDetails"
           discriminator:
             propertyName: detailType
             mapping:
@@ -460,6 +462,8 @@ components:
               card: "#/components/schemas/CardAuthRequestDetails"
               cards: "#/components/schemas/CardsAuthRequestDetails"
               wallet: "#/components/schemas/WalletAuthRequestDetails"
+              apm: "#/components/schemas/ApmAuthRequestDetails"
+              redirect: "#/components/schemas/RedirectionAuthRequestDetails"
 
       required:
         - amount
@@ -569,6 +573,28 @@ components:
       example:
         detailType: "wallet"
         walletId: "walletId"
+    ApmAuthRequestDetails:
+      type: object
+      description: Additional payment authorization details for payment apm authorization
+      properties:
+        detailType:
+          description: property discriminator, used to discriminate the authorization request detail. Fixed value 'apm'
+          type: string
+      required:
+        - detailType
+      example:
+        detailType: "apm"
+    RedirectionAuthRequestDetails:
+      type: object
+      description: Additional payment authorization details for Redirection authorization request
+      properties:
+        detailType:
+          description: property discriminator, used to discriminate the authorization request detail. Fixed value 'redirect'
+          type: string
+      required:
+        - detailType
+      example:
+        detailType: "redirect"
     RequestAuthorizationResponse:
       type: object
       description: Response body for requesting an authorization for a transaction
@@ -596,12 +622,14 @@ components:
             - $ref: '#/components/schemas/OutcomeVposGateway'
             - $ref: '#/components/schemas/OutcomeXpayGateway'
             - $ref: '#/components/schemas/OutcomeNpgGateway'
+            - $ref: '#/components/schemas/OutcomeRedirectGateway'
           discriminator:
             propertyName: paymentGatewayType
             mapping:
               XPAY: "#/components/schemas/OutcomeXpayGateway"
               VPOS: "#/components/schemas/OutcomeVposGateway"
               NPG: '#/components/schemas/OutcomeNpgGateway'
+              REDIRECT: '#/components/schemas/OutcomeRedirectGateway'
         timestampOperation:
           type: string
           format: date-time
@@ -683,7 +711,7 @@ components:
           properties:
             feeTotal:
               $ref: "#/components/schemas/AmountEuroCents"
-            paymentGateway:
+            gateway:
               type: string
               example: 'XPAY'
             sendPaymentResultOutcome:
@@ -694,8 +722,11 @@ components:
                 - NOT_RECEIVED
             authorizationCode:
               type: string
-            authorizationErrorCode:
+            errorCode:
               type: string
+            gatewayAuthorizationStatus:
+              type: string
+              description: payment gateway authorization status
           required:
             - status
     AmountEuroCents:
@@ -716,6 +747,7 @@ components:
         - ACTIVATED
         - AUTHORIZATION_REQUESTED
         - AUTHORIZATION_COMPLETED
+        - CLOSURE_REQUESTED
         - CLOSED
         - CLOSURE_ERROR
         - NOTIFIED_OK
@@ -1172,6 +1204,32 @@ components:
       required:
         - paymentGatewayType
         - operationResult
+    OutcomeRedirectGateway:
+      type: object
+      properties:
+        paymentGatewayType:
+          type: string
+          example: REDIRECT
+          description: disciminator field. fixed value `REDIRECT`
+        pspTransactionId:
+          type: string
+          description: PSP transaction unique ID
+        outcome:
+          $ref: 'https://raw.githubusercontent.com/pagopa/pagopa-api/SANP3.6.1/openapi/redirect.yaml#/components/schemas/AuthorizationOutcome'
+        pspId:
+          type: string
+          description: PSP ID from which the authorization outcome request come
+        authorizationCode:
+          type: string
+          description: payment authorization code
+        errorCode:
+          type: string
+          description: payment error code
+      required:
+        - paymentGatewayType
+        - pspId
+        - outcome
+        - pspTransactionId
   requestBodies:
     NewTransactionRequest:
       required: true

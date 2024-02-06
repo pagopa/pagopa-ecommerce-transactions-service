@@ -2,6 +2,7 @@ package it.pagopa.transactions.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
@@ -17,10 +18,10 @@ import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.*;
-import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
-import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
-import it.pagopa.generated.transactions.server.model.PostePayAuthRequestDetailsDto;
-import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
+import it.pagopa.generated.ecommerce.redirect.v1.api.B2bPspSideApi;
+import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
+import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
+import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.configurations.NpgSessionUrlConfig;
 import it.pagopa.transactions.configurations.SecretsConfigurations;
@@ -54,12 +55,14 @@ import javax.crypto.SecretKey;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Stream;
 
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL;
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL_STRING;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
@@ -119,6 +122,11 @@ class PaymentGatewayClientTest {
 
     private final SecretKey jwtSecretKey = new SecretsConfigurations().npgNotificationSigningKey(STRONG_KEY);
 
+    private final CheckoutRedirectClientBuilder checkoutRedirectClientBuilder = Mockito
+            .mock(CheckoutRedirectClientBuilder.class);
+
+    private final B2bPspSideApi b2bPspSideApi = Mockito.mock(B2bPspSideApi.class);
+
     @BeforeEach
     private void init() {
         client = new PaymentGatewayClient(
@@ -134,7 +142,8 @@ class PaymentGatewayClientTest {
                 uniqueIdUtils,
                 npgDefaultApiKey,
                 jwtSecretKey,
-                TOKEN_VALIDITY_TIME_SECONDS
+                TOKEN_VALIDITY_TIME_SECONDS,
+                checkoutRedirectClientBuilder
         );
 
         Hooks.onOperatorDebug();
@@ -1838,7 +1847,7 @@ class PaymentGatewayClientTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData, true))
                 .expectNext(responseRequestNpgBuildSession)
                 .verifyComplete();
 
@@ -1974,7 +1983,7 @@ class PaymentGatewayClientTest {
                 );
         /* test */
 
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData, true))
                 .expectErrorMatches(
                         error -> error instanceof AlreadyProcessedException &&
                                 ((AlreadyProcessedException) error).getTransactionId()
@@ -2064,7 +2073,7 @@ class PaymentGatewayClientTest {
                         )
                 );
         /* test */
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData, true))
                 .expectErrorMatches(
                         error -> error instanceof BadGatewayException
                 )
@@ -2152,7 +2161,7 @@ class PaymentGatewayClientTest {
                         )
                 );
         /* test */
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData, true))
                 .expectErrorMatches(
                         error -> error instanceof BadGatewayException
                 )
@@ -2224,7 +2233,7 @@ class PaymentGatewayClientTest {
                 )
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData, true))
                 .expectErrorMatches(error -> error instanceof BadGatewayException)
                 .verify();
         String npgNotificationUrl = UriComponentsBuilder
@@ -2299,7 +2308,7 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldReturnBuildSessionResponseForWalletWithNpgForApmMethod() {
+    void shouldReturnBuildSessionResponseForWalletWithNpgForWalletApmMethod() {
         String walletId = UUID.randomUUID().toString();
         String orderId = "orderIdGenerated";
         String sessionId = "sessionId";
@@ -2373,7 +2382,7 @@ class PaymentGatewayClientTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
-        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData))
+        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData, true))
                 .expectNext(responseRequestNpgBuildSession)
                 .verifyComplete();
 
@@ -2428,7 +2437,7 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldThrowErrorForWalletWithNpgForApmMethodAndMissingKey() {
+    void shouldThrowErrorForWalletWithNpgForGenericApmMethodAndMissingKey() {
         String walletId = UUID.randomUUID().toString();
         String orderId = "orderIdGenerated";
         String sessionId = "sessionId";
@@ -2533,7 +2542,7 @@ class PaymentGatewayClientTest {
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
         /* test */
-        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData))
+        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData, true))
                 .expectError(NpgApiKeyMissingPspRequestedException.class)
                 .verify();
 
@@ -2541,6 +2550,257 @@ class PaymentGatewayClientTest {
                 .buildFormForPayment(any(), any(), any(), any(), any(), eq(orderId), any(), any(), any(), any(), any());
         verify(npgClient, times(0))
                 .buildForm(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldReturnBuildSessionResponseForWalletWithNpgForApmMethod() {
+        String walletId = UUID.randomUUID().toString();
+        String orderId = "orderIdGenerated";
+        String sessionId = "sessionId";
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                List.of(
+                        new PaymentNotice(
+                                new PaymentToken("paymentToken"),
+                                new RptId("77777777777111111111111111111"),
+                                new TransactionAmount(100),
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                false
+                        )
+                ),
+                TransactionTestUtils.EMAIL,
+                null,
+                null,
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+        );
+        ApmAuthRequestDetailsDto apmDetails = new ApmAuthRequestDetailsDto();
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                10,
+                "paymentInstrumentId",
+                "pspId1",
+                "BPAY",
+                "brokerName",
+                "pspChannelCode",
+                "BANCOMATPAY",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "NPG",
+                Optional.empty(),
+                Optional.empty(),
+                "VISA",
+                apmDetails
+        );
+        int totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
+                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
+        FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
+                .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN)
+                .securityToken("securityToken")
+                .sessionId("sessionId")
+                .url("http://localhost/redirectionUrl");
+        /* preconditions */
+        Mockito.when(
+                npgClient.buildFormForPayment(
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        eq(orderId),
+                        eq(null),
+                        eq(NpgClient.PaymentMethod.BANCOMATPAY),
+                        any(),
+                        eq(null),
+                        eq(totalAmount)
+                )
+        ).thenReturn(Mono.just(npgBuildSessionResponse));
+
+        Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
+        /* test */
+        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData, false))
+                .expectNext(responseRequestNpgBuildSession)
+                .verifyComplete();
+
+        String npgNotificationUrl = UriComponentsBuilder
+                .fromHttpUrl(sessionUrlConfig.notificationUrl())
+                .build(
+                        Map.of(
+                                "orderId",
+                                orderId,
+                                "sessionToken",
+                                "sessionToken"
+                        )
+                ).toString();
+        String npgNotificationUrlPrefix = npgNotificationUrl
+                .substring(0, npgNotificationUrl.indexOf("sessionToken=") + "sessionToken=".length());
+        verify(npgClient, times(1))
+                .buildFormForPayment(
+                        any(),
+                        eq(URI.create(sessionUrlConfig.basePath())),
+                        eq(
+                                URI
+                                        .create(sessionUrlConfig.basePath())
+                                        .resolve(
+                                                URI.create(
+                                                        sessionUrlConfig.outcomeSuffix()
+                                                                + "#clientId=IO&transactionId=%s"
+                                                                        .formatted(transactionId.value())
+                                                )
+                                        )
+                        ),
+                        argThat(
+                                new NpgNotificationUrlMatcher(
+                                        npgNotificationUrlPrefix,
+                                        transactionId.value(),
+                                        orderId,
+                                        authorizationData.paymentInstrumentId()
+                                )
+                        ),
+                        eq(
+                                URI.create(sessionUrlConfig.basePath())
+                                        .resolve(URI.create(sessionUrlConfig.cancelSuffix()))
+                        ),
+                        eq(orderId),
+                        eq(null),
+                        any(),
+                        eq("pspKey1"),
+                        eq(null),
+                        eq(totalAmount)
+                );
+        verify(npgClient, times(0))
+                .buildForm(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldPerformAuthorizationRequestRetrievingRedirectionUrl() {
+        String pspId = "pspId";
+        TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                10,
+                "paymentInstrumentId",
+                pspId,
+                "CC",
+                "brokerName",
+                "pspChannelCode",
+                "REDIRECT",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "REDIRECT",
+                Optional.empty(),
+                Optional.empty(),
+                "N/A",
+                new RedirectionAuthRequestDetailsDto()
+        );
+        int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
+                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        given(checkoutRedirectClientBuilder.getApiClientForPsp(pspId)).willReturn(Either.right(b2bPspSideApi));
+        RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
+                .paymentMethod(RedirectUrlRequestDto.PaymentMethodEnum.BANK_ACCOUNT)
+                .amount(totalAmount)
+                .idPsp(pspId)
+                .idTransaction(transaction.getTransactionId().value())
+                .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
+                .urlBack(
+                        URI.create(
+                                "http://localhost:1234/ecommerce-fe/esito#clientId=REDIRECT&transactionId="
+                                        .concat(transaction.getTransactionId().value())
+                        )
+                );
+        RedirectUrlResponseDto redirectUrlResponseDto = new RedirectUrlResponseDto()
+                .timeout(60000)
+                .url("http://redirectionUrl")
+                .idPSPTransaction("idPspTransaction");
+        given(b2bPspSideApi.retrieveRedirectUrl(any())).willReturn(Mono.just(redirectUrlResponseDto));
+        Hooks.onOperatorDebug();
+        /* test */
+        StepVerifier.create(client.requestRedirectUrlAuthorization(authorizationData, any()))
+                .expectNext(redirectUrlResponseDto)
+                .verifyComplete();
+        verify(b2bPspSideApi, times(1)).retrieveRedirectUrl(redirectUrlRequestDto);
+    }
+
+    private static Stream<Arguments> errorRetrievingRedirectionUrl() {
+        return Stream.of(
+                Arguments.of(HttpStatus.BAD_REQUEST, AlreadyProcessedException.class),
+                Arguments.of(HttpStatus.UNAUTHORIZED, AlreadyProcessedException.class),
+                Arguments.of(HttpStatus.INTERNAL_SERVER_ERROR, BadGatewayException.class),
+                Arguments.of(HttpStatus.GATEWAY_TIMEOUT, BadGatewayException.class)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("errorRetrievingRedirectionUrl")
+    void shouldHandleErrorRetrievingRedirectionUrl(
+                                                   HttpStatus httpResponseStatusCode,
+                                                   Class<? extends Exception> expectedMappedException
+    ) {
+        String pspId = "pspId";
+        TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                10,
+                "paymentInstrumentId",
+                pspId,
+                "CC",
+                "brokerName",
+                "pspChannelCode",
+                "REDIRECT",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "REDIRECT",
+                Optional.empty(),
+                Optional.empty(),
+                "N/A",
+                new RedirectionAuthRequestDetailsDto()
+        );
+        int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
+                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        given(checkoutRedirectClientBuilder.getApiClientForPsp(pspId)).willReturn(Either.right(b2bPspSideApi));
+        RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
+                .paymentMethod(RedirectUrlRequestDto.PaymentMethodEnum.BANK_ACCOUNT)
+                .amount(totalAmount)
+                .idPsp(pspId)
+                .idTransaction(transaction.getTransactionId().value())
+                .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
+                .urlBack(
+                        URI.create(
+                                "http://localhost:1234/ecommerce-fe/esito#clientId=REDIRECT&transactionId="
+                                        .concat(transaction.getTransactionId().value())
+                        )
+                );
+        given(b2bPspSideApi.retrieveRedirectUrl(any())).willReturn(
+                Mono.error(
+                        new WebClientResponseException(
+                                "Redirect error",
+                                httpResponseStatusCode.value(),
+                                httpResponseStatusCode.getReasonPhrase(),
+                                null,
+                                null,
+                                null
+                        )
+                )
+        );
+        Hooks.onOperatorDebug();
+        /* test */
+        StepVerifier.create(client.requestRedirectUrlAuthorization(authorizationData, any()))
+                .expectError(expectedMappedException)
+                .verify();
+        verify(b2bPspSideApi, times(1)).retrieveRedirectUrl(redirectUrlRequestDto);
     }
 
 }

@@ -1,7 +1,11 @@
 package it.pagopa.transactions.projections.handlers.v2;
 
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
@@ -13,8 +17,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 import static it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler.QUALIFIER_NAME;
 
@@ -43,18 +50,28 @@ public class AuthorizationUpdateProjectionHandler
                 .switchIfEmpty(
                         Mono.error(new TransactionNotFoundException(data.getTransactionId()))
                 )
-                .cast(it.pagopa.ecommerce.commons.documents.v2.Transaction.class)
+                .cast(Transaction.class)
                 .flatMap(transactionDocument -> {
                     transactionDocument.setRrn(data.getData().getRrn());
                     transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_COMPLETED);
                     transactionDocument.setAuthorizationCode(data.getData().getAuthorizationCode());
 
-                    String authorizationErrorCode = switch (data.getData().getTransactionGatewayAuthorizationData()) {
-                        case it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData ignored -> null;
-                        case it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData pgsTransactionGatewayAuthorizationData -> pgsTransactionGatewayAuthorizationData.getErrorCode();
+                    Tuple2<String, Optional<String>> gatewayStatusAndErrorCode = switch (data.getData().getTransactionGatewayAuthorizationData()) {
+                        case NpgTransactionGatewayAuthorizationData npgData -> Tuples.of(
+                                npgData.getOperationResult().toString(),
+                                Optional.ofNullable(npgData.getErrorCode())
+                        );
+                        case PgsTransactionGatewayAuthorizationData pgsData -> Tuples.of(
+                                pgsData.getAuthorizationResultDto().toString(),
+                                Optional.ofNullable(pgsData.getErrorCode())
+                        );
+                        case RedirectTransactionGatewayAuthorizationData redirectData -> Tuples.of(
+                                redirectData.getOutcome().toString(),
+                                Optional.ofNullable(redirectData.getErrorCode())
+                        );
                     };
-
-                    transactionDocument.setAuthorizationErrorCode(authorizationErrorCode);
+                    transactionDocument.setAuthorizationErrorCode(gatewayStatusAndErrorCode.getT2().orElse(null));
+                    transactionDocument.setGatewayAuthorizationStatus(gatewayStatusAndErrorCode.getT1());
 
                     return transactionsViewRepository.save(transactionDocument);
                 })

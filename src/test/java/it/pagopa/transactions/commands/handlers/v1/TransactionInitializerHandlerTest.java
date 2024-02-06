@@ -1,6 +1,5 @@
 package it.pagopa.transactions.commands.handlers.v1;
 
-import io.opentelemetry.api.common.AttributeKey;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
@@ -28,7 +27,10 @@ import it.pagopa.transactions.configurations.SecretsConfigurations;
 import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
 import it.pagopa.transactions.projections.TransactionsProjection;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
-import it.pagopa.transactions.utils.*;
+import it.pagopa.transactions.utils.ConfidentialMailUtils;
+import it.pagopa.transactions.utils.NodoOperations;
+import it.pagopa.transactions.utils.OpenTelemetryUtils;
+import it.pagopa.transactions.utils.Queues;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -214,14 +216,10 @@ class TransactionInitializerHandlerTest {
                 argThat(
                         arguments -> {
                             String spanPaymentToken = arguments.get(
-                                    AttributeKey.stringKey(
-                                            OpenTelemetryUtils.REPEATED_ACTIVATION_PAYMENT_TOKEN_ATTRIBUTE_KEY
-                                    )
+                                    OpenTelemetryUtils.REPEATED_ACTIVATION_PAYMENT_TOKEN_ATTRIBUTE_KEY
                             );
                             Long spanLeftTime = arguments.get(
-                                    AttributeKey.longKey(
-                                            OpenTelemetryUtils.REPEATED_ACTIVATION_PAYMENT_TOKEN_LEFT_TIME_ATTRIBUTE_KEY
-                                    )
+                                    OpenTelemetryUtils.REPEATED_ACTIVATION_PAYMENT_TOKEN_LEFT_TIME_ATTRIBUTE_KEY
                             );
                             return paymentToken.equals(spanPaymentToken) && spanLeftTime != null;
                         }

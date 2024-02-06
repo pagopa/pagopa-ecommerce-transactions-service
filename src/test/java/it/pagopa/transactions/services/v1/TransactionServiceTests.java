@@ -15,6 +15,7 @@ import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.*;
+import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.generated.wallet.v1.dto.WalletAuthCardDataDto;
 import it.pagopa.generated.wallet.v1.dto.WalletAuthDataDto;
@@ -37,6 +38,7 @@ import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
+import it.pagopa.transactions.utils.UpdateTransactionStatusTracerUtils;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -81,13 +83,11 @@ import static org.mockito.Mockito.*;
             it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler.class,
             it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler.class,
-            it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureHandler.class,
+            it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureRequestHandler.class,
             it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler.class,
-            it.pagopa.transactions.projections.handlers.v2.RefundRequestProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler.class,
-            it.pagopa.transactions.projections.handlers.v2.ClosureSendProjectionHandler.class,
+            it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler.class,
-            it.pagopa.transactions.projections.handlers.v2.ClosureErrorProjectionHandler.class,
             it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler.class,
             it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler.class,
@@ -139,8 +139,8 @@ class TransactionServiceTests {
     private QueueAsyncClient queueAsyncClientClosureRetryV2;
 
     @MockBean
-    @Qualifier("transactionRefundQueueAsyncClientV2")
-    private QueueAsyncClient queueAsyncClientRefundV2;
+    @Qualifier("transactionClosureQueueAsyncClientV2")
+    private QueueAsyncClient transactionClosureQueueAsyncClientV2;
 
     @MockBean
     private TransactionActivateHandler transactionActivateHandler;
@@ -190,17 +190,12 @@ class TransactionServiceTests {
     private it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler refundRequestProjectionHandlerV1;
 
     @MockBean
-    private it.pagopa.transactions.projections.handlers.v2.RefundRequestProjectionHandler refundRequestProjectionHandlerV2;
-    @MockBean
     private it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler closureSendProjectionHandlerV1;
 
     @MockBean
-    private it.pagopa.transactions.projections.handlers.v2.ClosureSendProjectionHandler closureSendProjectionHandlerV2;
+    private it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler closureRequestedProjectionHandler;
     @MockBean
     private it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler closureErrorProjectionHandlerV1;
-
-    @MockBean
-    private it.pagopa.transactions.projections.handlers.v2.ClosureErrorProjectionHandler closureErrorProjectionHandlerV2;
 
     @MockBean
     private TransactionsEventStoreRepository transactionsEventStoreRepository;
@@ -234,6 +229,9 @@ class TransactionServiceTests {
 
     @MockBean
     private UniqueIdTemplateWrapper uniqueIdTemplateWrapper;
+
+    @MockBean
+    private UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
 
     final String TRANSACTION_ID = TransactionTestUtils.TRANSACTION_ID;
 
@@ -279,10 +277,10 @@ class TransactionServiceTests {
                 .feeTotal(null)
                 .status(TransactionStatusDto.ACTIVATED)
                 .idCart("ecIdCart")
-                .paymentGateway("VPOS")
+                .gateway("VPOS")
                 .sendPaymentResultOutcome(TransactionInfoDto.SendPaymentResultOutcomeEnum.OK)
                 .authorizationCode("00")
-                .authorizationErrorCode(null);
+                .errorCode(null);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
         when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
@@ -334,10 +332,10 @@ class TransactionServiceTests {
                 .feeTotal(null)
                 .status(TransactionStatusDto.ACTIVATED)
                 .idCart("ecIdCart")
-                .paymentGateway(null)
+                .gateway(null)
                 .sendPaymentResultOutcome(null)
                 .authorizationCode(null)
-                .authorizationErrorCode(null);
+                .errorCode(null);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
         when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
@@ -425,7 +423,7 @@ class TransactionServiceTests {
                 Mono.just(calculateFeeResponseDto)
         );
 
-        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
+        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.just(paymentMethod));
 
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
@@ -514,7 +512,9 @@ class TransactionServiceTests {
                 Mono.just(calculateFeeResponseDto)
         );
 
-        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(authorizationRequest.getPaymentInstrumentId()))
+        Mockito.when(
+                ecommercePaymentMethodsClient.getPaymentMethod(eq(authorizationRequest.getPaymentInstrumentId()), any())
+        )
                 .thenReturn(Mono.just(paymentMethod));
 
         Mockito.when(
@@ -699,7 +699,14 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsServiceV1
@@ -945,7 +952,7 @@ class TransactionServiceTests {
                 Mono.just(calculateFeeResponseDto)
         );
 
-        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
+        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.just(paymentMethod));
 
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
@@ -1029,7 +1036,7 @@ class TransactionServiceTests {
                 Mono.just(calculateFeeResponseDto)
         );
 
-        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
+        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.just(paymentMethod));
 
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
@@ -1097,7 +1104,7 @@ class TransactionServiceTests {
                 Mono.just(calculateFeeResponseDto)
         );
 
-        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any())).thenReturn(Mono.just(paymentMethod));
+        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.just(paymentMethod));
 
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
@@ -1233,7 +1240,14 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
@@ -1309,7 +1323,14 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
@@ -1382,7 +1403,14 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
@@ -1519,7 +1547,14 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
@@ -1649,7 +1684,14 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
@@ -1781,10 +1823,18 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
+        Hooks.onOperatorDebug();
         TransactionInfoDto transactionInfoResponse = transactionsServiceV1
                 .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest).block();
 
@@ -1911,9 +1961,14 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
-        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
@@ -1983,7 +2038,9 @@ class TransactionServiceTests {
                 Mono.just(calculateFeeResponseDto)
         );
 
-        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(authorizationRequest.getPaymentInstrumentId()))
+        Mockito.when(
+                ecommercePaymentMethodsClient.getPaymentMethod(eq(authorizationRequest.getPaymentInstrumentId()), any())
+        )
                 .thenReturn(Mono.just(paymentMethod));
 
         Mockito.when(
@@ -2023,6 +2080,191 @@ class TransactionServiceTests {
         AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
         assertEquals(Optional.empty(), captureData.sessionId());
         assertEquals(contractId, captureData.contractId().get());
+        assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
+        assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
+    }
+
+    @Test
+    void shouldRedirectToAuthorizationURIForValidRequestWithNPGApmDetail() {
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .paymentInstrumentId("paymentInstrumentId")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
+                .pspId("PSP_CODE")
+                .isAllCCP(false)
+                .details(
+                        new ApmAuthRequestDetailsDto()
+                );
+
+        Transaction transaction = TransactionTestUtils.transactionDocument(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
+                ZonedDateTime.now()
+        );
+
+        /* preconditions */
+        CalculateFeeResponseDto calculateFeeResponseDto = new CalculateFeeResponseDto()
+                .belowThreshold(true)
+                .paymentMethodName("PaymentMethodName")
+                .paymentMethodDescription("PaymentMethodDescription")
+                .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
+                .bundles(
+                        List.of(
+                                new BundleDto()
+                                        .idPsp("PSP_CODE")
+                                        .taxPayerFee(200L)
+                        )
+                );
+
+        PaymentMethodResponseDto paymentMethod = new PaymentMethodResponseDto()
+                .name("paymentMethodName")
+                .description("desc")
+                .status(PaymentMethodStatusDto.ENABLED)
+                .id("paymentInstrumentId")
+                .paymentTypeCode("PO")
+                .methodManagement(PaymentMethodManagementTypeDto.NOT_ONBOARDABLE)
+                .addRangesItem(new RangeDto().min(0L).max(100L));
+
+        RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
+                .authorizationUrl("http://example.com");
+
+        Mockito.when(
+                ecommercePaymentMethodsClient.calculateFee(
+                        eq(authorizationRequest.getPaymentInstrumentId()),
+                        eq(transaction.getTransactionId()),
+                        any(),
+                        eq(Integer.MAX_VALUE)
+                )
+        ).thenReturn(
+                Mono.just(calculateFeeResponseDto)
+        );
+
+        Mockito.when(
+                ecommercePaymentMethodsClient.getPaymentMethod(eq(authorizationRequest.getPaymentInstrumentId()), any())
+        )
+                .thenReturn(Mono.just(paymentMethod));
+
+        Mockito.when(repository.findById(TRANSACTION_ID))
+                .thenReturn(Mono.just(transaction));
+
+        Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
+
+        Mockito.when(transactionsUtils.getPaymentNotices(any())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getTransactionTotalAmount(any())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getRptId(any(), anyInt())).thenCallRealMethod();
+
+        Mockito.when(transactionRequestAuthorizationHandlerV1.handle(commandArgumentCaptor.capture()))
+                .thenReturn(Mono.just(requestAuthorizationResponse));
+
+        /* test */
+        StepVerifier
+                .create(
+                        transactionsServiceV1
+                                .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest)
+                )
+                .expectNext(requestAuthorizationResponse)
+                .verifyComplete();
+
+        AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
+        assertEquals(Optional.empty(), captureData.sessionId());
+        assertEquals(Optional.empty(), captureData.contractId());
+        assertEquals(paymentMethod.getName(), captureData.brand());
+        assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
+        assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
+    }
+
+    @Test
+    void shouldRedirectToAuthorizationURIForValidRequestWithRedirectDetail() {
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .paymentInstrumentId("paymentInstrumentId")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
+                .pspId("PSP_CODE")
+                .isAllCCP(false)
+                .details(
+                        new RedirectionAuthRequestDetailsDto()
+                );
+
+        Transaction transaction = TransactionTestUtils.transactionDocument(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
+                ZonedDateTime.now()
+        );
+
+        /* preconditions */
+        CalculateFeeResponseDto calculateFeeResponseDto = new CalculateFeeResponseDto()
+                .belowThreshold(true)
+                .paymentMethodName("PaymentMethodName")
+                .paymentMethodDescription("PaymentMethodDescription")
+                .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
+                .bundles(
+                        List.of(
+                                new BundleDto()
+                                        .idPsp("PSP_CODE")
+                                        .taxPayerFee(200L)
+                        )
+                );
+
+        PaymentMethodResponseDto paymentMethod = new PaymentMethodResponseDto()
+                .name("paymentMethodName")
+                .description("desc")
+                .status(PaymentMethodStatusDto.ENABLED)
+                .id("paymentInstrumentId")
+                .paymentTypeCode("PO")
+                .addRangesItem(new RangeDto().min(0L).max(100L));
+
+        RedirectUrlResponseDto redirectUrlResponseDto = new RedirectUrlResponseDto()
+                .url("http://redirectionUrl")
+                .idTransaction("idTransaction")
+                .idPSPTransaction("idPspTransaction")
+                .timeout(60000)
+                .amount(300);
+
+        RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
+                .authorizationUrl(redirectUrlResponseDto.getUrl());
+
+        Mockito.when(
+                ecommercePaymentMethodsClient.calculateFee(
+                        eq(authorizationRequest.getPaymentInstrumentId()),
+                        eq(transaction.getTransactionId()),
+                        any(),
+                        eq(Integer.MAX_VALUE)
+                )
+        ).thenReturn(
+                Mono.just(calculateFeeResponseDto)
+        );
+
+        Mockito.when(
+                ecommercePaymentMethodsClient.getPaymentMethod(eq(authorizationRequest.getPaymentInstrumentId()), any())
+        )
+                .thenReturn(Mono.just(paymentMethod));
+
+        Mockito.when(repository.findById(TRANSACTION_ID))
+                .thenReturn(Mono.just(transaction));
+
+        Mockito.when(paymentGatewayClient.requestRedirectUrlAuthorization(any(), any()))
+                .thenReturn(Mono.just(redirectUrlResponseDto));
+
+        Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
+
+        Mockito.when(transactionsUtils.getPaymentNotices(any())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getTransactionTotalAmount(any())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getRptId(any(), anyInt())).thenCallRealMethod();
+
+        Mockito.when(transactionRequestAuthorizationHandlerV1.handle(commandArgumentCaptor.capture()))
+                .thenReturn(Mono.just(requestAuthorizationResponse));
+
+        /* test */
+        StepVerifier
+                .create(
+                        transactionsServiceV1
+                                .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest)
+                )
+                .expectNext(requestAuthorizationResponse)
+                .verifyComplete();
+
+        AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
+        assertEquals(Optional.empty(), captureData.sessionId());
+        assertEquals(Optional.empty(), captureData.contractId());
+        assertEquals("N/A", captureData.brand());
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
         assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
     }

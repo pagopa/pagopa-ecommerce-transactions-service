@@ -5,6 +5,7 @@ import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestD
 import it.pagopa.ecommerce.commons.documents.v2.TransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldDto;
@@ -16,6 +17,7 @@ import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDt
 import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthResponseDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
+import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
@@ -47,6 +49,7 @@ import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Predicate;
@@ -54,6 +57,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionRequestAuthorizationHandlerTest {
@@ -2134,7 +2138,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestNpgBuildSession(authorizationData))
+        Mockito.when(paymentGatewayClient.requestNpgBuildSession(authorizationData, true))
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationDataAfterBuildSession))
                 .thenReturn(Mono.just(stateResponseDto));
@@ -2256,7 +2260,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .expectErrorMatches(error -> error instanceof BadRequestException)
                 .verify();
 
-        Mockito.verify(paymentGatewayClient, Mockito.times(0)).requestNpgBuildSession(any());
+        Mockito.verify(paymentGatewayClient, Mockito.times(0)).requestNpgBuildSession(any(), eq(true));
         Mockito.verify(paymentGatewayClient, Mockito.times(0)).requestNpgCardsAuthorization(any());
         Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(any());
         Mockito.verify(transactionTemplateWrapper, Mockito.times(0)).save(any());
@@ -2264,7 +2268,7 @@ class TransactionRequestAuthorizationHandlerTest {
     }
 
     @Test
-    void shouldPerformTransactionAuthorizationForApmPaymentMethodUsingOrderBuildNpgCall() {
+    void shouldPerformTransactionAuthorizationForWalletApmPaymentMethodUsingOrderBuildNpgCall() {
         String walletId = UUID.randomUUID().toString();
         String contractId = "contractId";
         String sessionId = "sessionId";
@@ -2289,9 +2293,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new ArrayList<>(),
                                 false
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -2348,9 +2350,119 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestNpgBuildApmPayment(authorizationData))
+        Mockito.when(paymentGatewayClient.requestNpgBuildApmPayment(authorizationData, true))
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
+                .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
+        Mockito.when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+                .thenAnswer(args -> Mono.just(args.getArguments()[0]));
+
+        RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
+                .authorizationRequestId(orderId)
+                .authorizationUrl(npgBuildSessionResponse.getUrl());
+        /* test */
+        StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
+                .expectNext(responseDto)
+                .verifyComplete();
+
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
+        TransactionEvent<TransactionAuthorizationRequestData> savedEvent = eventStoreCaptor.getValue();
+        NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = (NpgTransactionGatewayAuthorizationRequestedData) savedEvent
+                .getData().getTransactionGatewayAuthorizationRequestedData();
+        assertEquals(
+                "sessionId",
+                npgTransactionGatewayAuthorizationRequestedData.getSessionId()
+        );
+        assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
+        Mockito.verify(transactionTemplateWrapper, Mockito.times(1)).save(any());
+
+    }
+
+    @Test
+    void shouldPerformTransactionAuthorizationForApmPaymentMethodUsingOrderBuildNpgCall() {
+        String walletId = UUID.randomUUID().toString();
+        String sessionId = "sessionId";
+        String orderId = "oderId";
+        TransactionId transactionId = new TransactionId(transactionIdUUID);
+        PaymentToken paymentToken = new PaymentToken("paymentToken");
+        RptId rptId = new RptId("77777777777111111111111111111");
+        TransactionDescription description = new TransactionDescription("description");
+        TransactionAmount amount = new TransactionAmount(100);
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
+        String idCart = "idCart";
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                List.of(
+                        new PaymentNotice(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description,
+                                nullPaymentContextCode,
+                                new ArrayList<>(),
+                                false
+                        )
+                ),
+                email,
+                null,
+                null,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
+                idCart,
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                TransactionTestUtils.npgTransactionGatewayActivationData()
+        );
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .fee(200)
+                .paymentInstrumentId("paymentInstrumentId")
+                .pspId("PSP_CODE")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
+
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                authorizationRequest.getFee(),
+                authorizationRequest.getPaymentInstrumentId(),
+                authorizationRequest.getPspId(),
+                "BPAY",
+                "brokerName",
+                "pspChannelCode",
+                "PAYPAL",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "NPG",
+                Optional.empty(),
+                Optional.empty(),
+                "BANCOMATPAY",
+                new ApmAuthRequestDetailsDto().detailType("apm")
+        );
+
+        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
+                transaction.getPaymentNotices().get(0).rptId(),
+                authorizationData
+        );
+
+        FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
+                .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN)
+                .securityToken("securityToken")
+                .sessionId("sessionId")
+                .url("http://localhost/redirectionUrl");
+
+        Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
+        /* preconditions */
+        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
+                .thenReturn(Mono.empty());
+        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
+                .thenReturn(Mono.empty());
+        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
+                .thenReturn(Mono.empty());
+        Mockito.when(paymentGatewayClient.requestNpgBuildApmPayment(authorizationData, false))
+                .thenReturn(Mono.just(responseRequestNpgBuildSession));
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         Mockito.when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
@@ -2379,7 +2491,7 @@ class TransactionRequestAuthorizationHandlerTest {
     @ParameterizedTest
     @ValueSource(strings = "")
     @NullSource
-    void shouldReturnErrorPerformingTransactionAuthorizationForApmForInvalidNpgReturnUrl(String wrongReturnUrl) {
+    void shouldReturnErrorPerformingTransactionAuthorizationForWalletApmForInvalidNpgReturnUrl(String wrongReturnUrl) {
         String walletId = UUID.randomUUID().toString();
         String contractId = "contractId";
         String sessionId = "sessionId";
@@ -2404,9 +2516,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new ArrayList<>(),
                                 false
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -2463,7 +2573,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestNpgBuildApmPayment(authorizationData))
+        Mockito.when(paymentGatewayClient.requestNpgBuildApmPayment(authorizationData, true))
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
@@ -2478,4 +2588,119 @@ class TransactionRequestAuthorizationHandlerTest {
 
     }
 
+    @Test
+    void shouldHandleAuthorizationRequestForRedirectionPaymentGateway() {
+        TransactionId transactionId = new TransactionId(transactionIdUUID);
+        PaymentToken paymentToken = new PaymentToken("paymentToken");
+        RptId rptId = new RptId("77777777777111111111111111111");
+        TransactionDescription description = new TransactionDescription("description");
+        TransactionAmount amount = new TransactionAmount(100);
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
+        String idCart = "idCart";
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                List.of(
+                        new PaymentNotice(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description,
+                                nullPaymentContextCode,
+                                new ArrayList<>(),
+                                false
+                        )
+                ),
+                email,
+                null,
+                null,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
+                idCart,
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                TransactionTestUtils.npgTransactionGatewayActivationData()
+        );
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .fee(200)
+                .paymentInstrumentId("paymentInstrumentId")
+                .pspId("PSP_CODE")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT)
+                .details(new RedirectionAuthRequestDetailsDto());
+
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                authorizationRequest.getFee(),
+                authorizationRequest.getPaymentInstrumentId(),
+                authorizationRequest.getPspId(),
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "paymentMethodName",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "REDIRECT",
+                Optional.empty(),
+                Optional.empty(),
+                null,
+                new RedirectionAuthRequestDetailsDto()
+        );
+
+        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
+                transaction.getPaymentNotices().get(0).rptId(),
+                authorizationData
+        );
+
+        RedirectUrlResponseDto redirectUrlResponseDto = new RedirectUrlResponseDto()
+                .url("http://redirectUrl")
+                .idTransaction(transactionId.value())
+                .idPSPTransaction(TransactionTestUtils.REDIRECT_PSP_TRANSACTION_ID)
+                .amount(authorizationRequest.getAmount() + authorizationRequest.getFee())
+                .timeout(TransactionTestUtils.REDIRECT_AUTHORIZATION_TIMEOUT);
+
+        /* preconditions */
+        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
+                .thenReturn(Mono.empty());
+        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
+                .thenReturn(Mono.empty());
+        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
+                .thenReturn(Mono.empty());
+        Mockito.when(paymentGatewayClient.requestRedirectUrlAuthorization(eq(authorizationData), any()))
+                .thenReturn(Mono.just(redirectUrlResponseDto));
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
+                .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
+        Mockito.when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+                .thenAnswer(args -> Mono.just(args.getArguments()[0]));
+        String expectedLogo = "http://localhost/logo";
+        Mockito.when(logoMappingUtils.getLogo(authorizationData)).thenReturn(URI.create(expectedLogo));
+
+        /* test */
+        requestAuthorizationHandler.handle(requestAuthorizationCommand).block();
+
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
+        TransactionEvent<TransactionAuthorizationRequestData> authorizationRequestedEvent = eventStoreCaptor.getValue();
+        TransactionAuthorizationRequestData authRequestedData = authorizationRequestedEvent.getData();
+        assertTrue(
+                authRequestedData
+                        .getTransactionGatewayAuthorizationRequestedData() instanceof RedirectTransactionGatewayAuthorizationRequestedData
+        );
+        RedirectTransactionGatewayAuthorizationRequestedData redirectionAuthRequestedData = (RedirectTransactionGatewayAuthorizationRequestedData) authRequestedData
+                .getTransactionGatewayAuthorizationRequestedData();
+        assertEquals(expectedLogo, redirectionAuthRequestedData.getLogo().toString());
+        assertEquals(
+                TransactionTestUtils.REDIRECT_PSP_TRANSACTION_ID,
+                redirectionAuthRequestedData.getPspTransactionId()
+        );
+        assertEquals(
+                RedirectTransactionGatewayAuthorizationRequestedData.PaymentMethodType.BANK_ACCOUNT,
+                redirectionAuthRequestedData.getPaymentMethodType()
+        );
+        assertEquals(
+                redirectUrlResponseDto.getTimeout(),
+                redirectionAuthRequestedData.getTransactionOutcomeTimeoutMillis()
+        );
+    }
 }

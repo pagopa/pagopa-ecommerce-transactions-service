@@ -4,7 +4,7 @@ microservice-chart:
   fullnameOverride: ""
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.5.0" #improve
+    tag: "1.15.2" #improve
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -22,6 +22,7 @@ microservice-chart:
     periodSeconds: 10
   deployment:
     create: true
+    replicas: 1
   service:
     create: true
     type: ClusterIP
@@ -50,8 +51,9 @@ microservice-chart:
       memory: "512Mi"
       cpu: "300m"
   autoscaling:
+    enable: false
     minReplica: 1
-    maxReplica: 2
+    maxReplica: 1
     pollingInterval: 30 # seconds
     cooldownPeriod: 300 # seconds
     triggers:
@@ -134,6 +136,15 @@ microservice-chart:
     SESSION_URL_CANCEL_SUFFIX: "/ecommerce-fe/cancel"
     SESSION_URL_NOTIFICATION_URL: "https://api.dev.platform.pagopa.it/ecommerce/npg/notifications/v1/sessions/{orderId}/outcomes?sessionToken={sessionToken}"
     JWT_NPG_NOTIFICATION_VALIDITY_TIME: "900"
+    CHECKOUT_REDIRECT_PSP_LIST: ""
+    CHECKOUT_REDIRECT_URL_MAPPING: >
+      { PSP1:'http://localhost' }
+
+    CHECKOUT_REDIRECT_READ_TIMEOUT: "10000"
+    CHECKOUT_REDIRECT_CONNECTION_TIMEOUT: "10000"
+    CHECKOUT_REDIRECT_LOGO_MAPPING: >
+      { PSP1:'https://host/assets/logo.png' }
+
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-password
@@ -149,6 +160,7 @@ microservice-chart:
     NPG_API_KEY: npg-api-key
     NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
     JWT_NPG_NOTIFICATION_SECRET: npg-notification-signing-key
+    CHECKOUT_REDIRECT_PSP_KEYS: checkout-redirect-psp-keys
   keyvault:
     name: "pagopa-d-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"

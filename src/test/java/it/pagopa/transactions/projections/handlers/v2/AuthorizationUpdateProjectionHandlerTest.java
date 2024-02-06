@@ -4,8 +4,11 @@ import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
+import it.pagopa.ecommerce.commons.generated.npg.v1.dto.OperationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.OutcomeVposGatewayDto;
@@ -62,6 +65,7 @@ class AuthorizationUpdateProjectionHandlerTest {
         expectedDocument.setPaymentGateway(null);
         expectedDocument.setAuthorizationCode("authorizationCode");
         expectedDocument.setAuthorizationErrorCode(null);
+        expectedDocument.setGatewayAuthorizationStatus("OK");
 
         TransactionAuthorizationCompletedData statusAuthCompleted = new TransactionAuthorizationCompletedData(
                 ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode(),
@@ -150,6 +154,7 @@ class AuthorizationUpdateProjectionHandlerTest {
         expectedDocument.setPaymentGateway(null);
         expectedDocument.setAuthorizationCode("authorizationCode");
         expectedDocument.setAuthorizationErrorCode(null);
+        expectedDocument.setGatewayAuthorizationStatus("OK");
 
         TransactionAuthorizationCompletedData statusAuthCompleted = new TransactionAuthorizationCompletedData(
                 ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode(),
@@ -163,6 +168,242 @@ class AuthorizationUpdateProjectionHandlerTest {
                                                 .getOutcome()
                                                 .toString()
                                 )
+                )
+
+        );
+
+        TransactionAuthorizationCompletedEvent event = new TransactionAuthorizationCompletedEvent(
+                transaction.getTransactionId().value(),
+                statusAuthCompleted
+        );
+
+        TransactionActivated expected = new TransactionActivated(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                null,
+                null,
+                ZonedDateTime.parse(expectedDocument.getCreationDate()),
+                Transaction.ClientId.CHECKOUT,
+                transaction.getTransactionActivatedData().getIdCart(),
+                paymentTokenValidity,
+                new EmptyTransactionGatewayActivationData()
+        );
+
+        /*
+         * Preconditions
+         */
+        Mockito.when(viewRepository.findById(transaction.getTransactionId().value()))
+                .thenReturn(Mono.just(Transaction.from(transaction)));
+
+        Mockito.when(viewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
+
+        /*
+         * Test
+         */
+        StepVerifier.create(authorizationUpdateProjectionHandler.handle(event))
+                .expectNext(expected)
+                .verifyComplete();
+
+        /*
+         * Assertions
+         */
+        Mockito.verify(viewRepository, Mockito.times(1)).save(
+                argThat(
+                        savedTransaction -> ((Transaction) savedTransaction).getStatus()
+                                .equals(TransactionStatusDto.AUTHORIZATION_COMPLETED)
+                )
+        );
+    }
+
+    @Test
+    void shouldHandleTransactionNpg() {
+
+        TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
+
+        Transaction expectedDocument = new Transaction(
+                transaction.getTransactionId().value(),
+                transaction.getTransactionActivatedData().getPaymentNotices(),
+                null,
+                transaction.getEmail(),
+                TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                Transaction.ClientId.CHECKOUT,
+                transaction.getCreationDate().toString(),
+                transaction.getTransactionActivatedData().getIdCart(),
+                "rrn"
+        );
+
+        expectedDocument.setPaymentGateway(null);
+        expectedDocument.setAuthorizationCode("authorizationCode");
+        expectedDocument.setAuthorizationErrorCode(null);
+        expectedDocument.setGatewayAuthorizationStatus("EXECUTED");
+
+        TransactionAuthorizationCompletedData statusAuthCompleted = new TransactionAuthorizationCompletedData(
+                "authorizationCode",
+                "rrn",
+                expectedOperationTimestamp,
+                new NpgTransactionGatewayAuthorizationData(
+                        OperationResultDto.EXECUTED,
+                        "operationId",
+                        "paymentEndToEndId",
+                        null
+                )
+
+        );
+
+        TransactionAuthorizationCompletedEvent event = new TransactionAuthorizationCompletedEvent(
+                transaction.getTransactionId().value(),
+                statusAuthCompleted
+        );
+
+        TransactionActivated expected = new TransactionActivated(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                null,
+                null,
+                ZonedDateTime.parse(expectedDocument.getCreationDate()),
+                Transaction.ClientId.CHECKOUT,
+                transaction.getTransactionActivatedData().getIdCart(),
+                paymentTokenValidity,
+                new EmptyTransactionGatewayActivationData()
+        );
+
+        /*
+         * Preconditions
+         */
+        Mockito.when(viewRepository.findById(transaction.getTransactionId().value()))
+                .thenReturn(Mono.just(Transaction.from(transaction)));
+
+        Mockito.when(viewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
+
+        /*
+         * Test
+         */
+        StepVerifier.create(authorizationUpdateProjectionHandler.handle(event))
+                .expectNext(expected)
+                .verifyComplete();
+
+        /*
+         * Assertions
+         */
+        Mockito.verify(viewRepository, Mockito.times(1)).save(
+                argThat(
+                        savedTransaction -> ((Transaction) savedTransaction).getStatus()
+                                .equals(TransactionStatusDto.AUTHORIZATION_COMPLETED)
+                )
+        );
+    }
+
+    @Test
+    void shouldHandleTransactionRedirection() {
+
+        TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
+
+        Transaction expectedDocument = new Transaction(
+                transaction.getTransactionId().value(),
+                transaction.getTransactionActivatedData().getPaymentNotices(),
+                null,
+                transaction.getEmail(),
+                TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                Transaction.ClientId.CHECKOUT,
+                transaction.getCreationDate().toString(),
+                transaction.getTransactionActivatedData().getIdCart(),
+                "rrn"
+        );
+        String authorizationErrorCode = "authorization error code";
+
+        expectedDocument.setPaymentGateway(null);
+        expectedDocument.setAuthorizationCode("authorizationCode");
+        expectedDocument.setAuthorizationErrorCode(authorizationErrorCode);
+        expectedDocument.setGatewayAuthorizationStatus("KO");
+
+        TransactionAuthorizationCompletedData statusAuthCompleted = new TransactionAuthorizationCompletedData(
+                "authorizationCode",
+                "rrn",
+                expectedOperationTimestamp,
+                new RedirectTransactionGatewayAuthorizationData(
+                        RedirectTransactionGatewayAuthorizationData.Outcome.KO,
+                        authorizationErrorCode
+                )
+
+        );
+
+        TransactionAuthorizationCompletedEvent event = new TransactionAuthorizationCompletedEvent(
+                transaction.getTransactionId().value(),
+                statusAuthCompleted
+        );
+
+        TransactionActivated expected = new TransactionActivated(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                null,
+                null,
+                ZonedDateTime.parse(expectedDocument.getCreationDate()),
+                Transaction.ClientId.CHECKOUT,
+                transaction.getTransactionActivatedData().getIdCart(),
+                paymentTokenValidity,
+                new EmptyTransactionGatewayActivationData()
+        );
+
+        /*
+         * Preconditions
+         */
+        Mockito.when(viewRepository.findById(transaction.getTransactionId().value()))
+                .thenReturn(Mono.just(Transaction.from(transaction)));
+
+        Mockito.when(viewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
+
+        /*
+         * Test
+         */
+        StepVerifier.create(authorizationUpdateProjectionHandler.handle(event))
+                .expectNext(expected)
+                .verifyComplete();
+
+        /*
+         * Assertions
+         */
+        Mockito.verify(viewRepository, Mockito.times(1)).save(
+                argThat(
+                        savedTransaction -> ((Transaction) savedTransaction).getStatus()
+                                .equals(TransactionStatusDto.AUTHORIZATION_COMPLETED)
+                )
+        );
+    }
+
+    @Test
+    void shouldSaveErrorCodeForNpgKOAuthorizationRequest() {
+
+        TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
+
+        Transaction expectedDocument = new Transaction(
+                transaction.getTransactionId().value(),
+                transaction.getTransactionActivatedData().getPaymentNotices(),
+                null,
+                transaction.getEmail(),
+                TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                Transaction.ClientId.CHECKOUT,
+                transaction.getCreationDate().toString(),
+                transaction.getTransactionActivatedData().getIdCart(),
+                "rrn"
+        );
+
+        expectedDocument.setPaymentGateway(null);
+        expectedDocument.setAuthorizationCode("authorizationCode");
+        expectedDocument.setAuthorizationErrorCode("errorCode");
+        expectedDocument.setGatewayAuthorizationStatus("DECLINED");
+
+        TransactionAuthorizationCompletedData statusAuthCompleted = new TransactionAuthorizationCompletedData(
+                "authorizationCode",
+                "rrn",
+                expectedOperationTimestamp,
+                new NpgTransactionGatewayAuthorizationData(
+                        OperationResultDto.DECLINED,
+                        "operationId",
+                        "paymentEndToEndId",
+                        "errorCode"
                 )
 
         );
