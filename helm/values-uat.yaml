@@ -109,7 +109,7 @@ microservice-chart:
       CHECKOUT_REDIRECT_PSP_KEYS: checkout-redirect-psp-keys
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.15.2"
+    tag: "1.16.0"
     pullPolicy: Always
   livenessProbe:
     httpGet:
