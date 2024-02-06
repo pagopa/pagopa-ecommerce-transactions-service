@@ -9,6 +9,7 @@ public record NewTransactionRequestData(
         String idCard,
         String email,
         String orderId,
+        String correlationId,
         List<PaymentNotice> paymentNoticeList
 ) {
 

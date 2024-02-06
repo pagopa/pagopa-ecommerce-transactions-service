@@ -69,6 +69,7 @@ public class TransactionsService {
                         newTransactionRequestDto.getIdCart(),
                         newTransactionRequestDto.getEmail(),
                         newTransactionRequestDto.getOrderId(),
+                        newTransactionRequestDto.getCorrelationId(),
                         newTransactionRequestDto.getPaymentNotices().stream().map(
                                 el -> new PaymentNotice(
                                         null,
