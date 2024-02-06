@@ -367,6 +367,7 @@ class TransactionsControllerTest {
                 )
                 .email(email)
                 .orderId("orderId")
+                .correlationId(UUID.randomUUID().toString())
                 .idCart(TransactionTestUtils.ID_CART);
         webTestClient.post()
                 .uri("/v2/transactions")

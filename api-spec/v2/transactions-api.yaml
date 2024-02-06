@@ -159,10 +159,15 @@ components:
           description: NPG order id
           type: string
           example: orderId
+        correlationId:
+          description: NPG correlation id
+          type: string
+          example: correlationId
       required:
         - paymentNotices
         - email
         - orderId
+        - correlationId
     NewTransactionResponse:
       type: object
       description: Transaction data returned when creating a new transaction
