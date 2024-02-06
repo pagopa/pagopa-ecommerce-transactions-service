@@ -47,7 +47,6 @@ import reactor.util.function.Tuples;
 import javax.crypto.SecretKey;
 import java.math.BigDecimal;
 import java.net.URI;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
@@ -604,7 +603,7 @@ public class PaymentGatewayClient {
                 .touchpoint(touchpoint)
                 .paName(null)// optional
                 .idPaymentMethod(null);// optional
-        Either<CheckoutRedirectConfigurationException, URL> pspConfiguredUrl = getRedirectUrlForPsp(
+        Either<CheckoutRedirectConfigurationException, URI> pspConfiguredUrl = getRedirectUrlForPsp(
                 authorizationData.pspId()
         );
         return pspConfiguredUrl.fold(
@@ -664,18 +663,9 @@ public class PaymentGatewayClient {
         return Base64.getEncoder().encodeToString(mdcData.getBytes(StandardCharsets.UTF_8));
     }
 
-    private Either<CheckoutRedirectConfigurationException, URL> getRedirectUrlForPsp(String pspId) {
+    private Either<CheckoutRedirectConfigurationException, URI> getRedirectUrlForPsp(String pspId) {
         if (checkoutRedirectBeApiCallUriMap.containsKey(pspId)) {
-            try {
-                return Either.right(checkoutRedirectBeApiCallUriMap.get(pspId).toURL());
-            } catch (Exception e) {
-                return Either.left(
-                        new CheckoutRedirectConfigurationException(
-                                e.getMessage(),
-                                CheckoutRedirectConfigurationType.BACKEND_URLS
-                        )
-                );
-            }
+            return Either.right(checkoutRedirectBeApiCallUriMap.get(pspId));
         } else {
             return Either.left(
                     new CheckoutRedirectConfigurationException(

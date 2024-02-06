@@ -39,7 +39,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
@@ -2744,7 +2743,7 @@ class PaymentGatewayClientTest {
                 .verifyComplete();
         verify(nodeForwarderClient, times(1)).proxyRequest(
                 redirectUrlRequestDto,
-                URI.create("http://redirect/pspId").toURL(),
+                URI.create("http://redirect/pspId"),
                 authorizationData.transactionId().value()
         );
     }
@@ -2825,7 +2824,7 @@ class PaymentGatewayClientTest {
                 .verify();
         verify(nodeForwarderClient, times(1)).proxyRequest(
                 redirectUrlRequestDto,
-                URI.create("http://redirect/pspId").toURL(),
+                URI.create("http://redirect/pspId"),
                 authorizationData.transactionId().value()
         );
     }
@@ -2886,19 +2885,14 @@ class PaymentGatewayClientTest {
                 .verify();
         verify(nodeForwarderClient, times(1)).proxyRequest(
                 redirectUrlRequestDto,
-                URI.create("http://redirect/pspId").toURL(),
+                URI.create("http://redirect/pspId"),
                 authorizationData.transactionId().value()
         );
     }
 
-    @ParameterizedTest
-    @ValueSource(
-            strings = {
-                    "malformedUrlPspId",
-                    "unknownPsp"
-            }
-    )
-    void shouldReturnErrorDuringRedirectPaymentTransactionForInvalidPspURL(String pspId) {
+    @Test
+    void shouldReturnErrorDuringRedirectPaymentTransactionForInvalidPspURL() {
+        String pspId = "unknownPspId";
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
@@ -2920,21 +2914,7 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto()
         );
-        int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
-                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
-        RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
-                .paymentMethod(RedirectUrlRequestDto.PaymentMethodEnum.BANK_ACCOUNT)
-                .amount(totalAmount)
-                .idPsp(pspId)
-                .idTransaction(transaction.getTransactionId().value())
-                .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
-                .touchpoint(RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
-                .urlBack(
-                        URI.create(
-                                "http://localhost:1234/ecommerce-fe/esito#clientId=REDIRECT&transactionId="
-                                        .concat(transaction.getTransactionId().value())
-                        )
-                );
+
         Hooks.onOperatorDebug();
         /* test */
         StepVerifier.create(
