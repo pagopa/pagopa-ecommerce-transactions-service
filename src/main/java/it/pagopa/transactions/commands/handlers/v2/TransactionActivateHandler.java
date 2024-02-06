@@ -233,14 +233,9 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                     return Mono.just(
                                             Tuples.of(
                                                     newTransactionActivatedEvent(
+                                                            command,
                                                             paymentRequestsInfo,
-                                                            transactionId.value(),
-                                                            newTransactionRequestDto.email(),
-                                                            command.getClientId(),
-                                                            newTransactionRequestDto.idCard(),
-                                                            paymentTokenTimeout,
-                                                            command.getData().orderId(),
-                                                            command.getData().correlationId()
+                                                            paymentTokenTimeout
                                                     ),
                                                     authToken
                                             )
@@ -313,49 +308,39 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
     }
 
     private Mono<BaseTransactionEvent<?>> newTransactionActivatedEvent(
+                                                                       TransactionActivateCommand command,
                                                                        List<PaymentRequestInfo> paymentRequestsInfo,
-                                                                       String transactionId,
-                                                                       String email,
-                                                                       String clientId,
-                                                                       String idCart,
-                                                                       Integer paymentTokenTimeout,
-                                                                       String orderId,
-                                                                       UUID correlationId
+                                                                       Integer paymentTokenTimeout
     ) {
+        NewTransactionRequestData newTransactionRequestData = command.getData();
+        TransactionId transactionId = command.getTransactionId();
         List<PaymentNotice> paymentNotices = toPaymentNoticeList(paymentRequestsInfo);
         Mono<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData> data = confidentialMailUtils
-                .toConfidential(email).map(
+                .toConfidential(command.getData().email()).map(
                         e -> new it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData(
                                 e,
                                 paymentNotices,
                                 null,
                                 null,
-                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.valueOf(clientId),
-                                idCart,
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId
+                                        .valueOf(command.getClientId()),
+                                newTransactionRequestData.idCard(),
                                 paymentTokenTimeout,
-                                orderId != null
-                                        ? new NpgTransactionGatewayActivationData(orderId, correlationId.toString()) // this
-                                        // logic
-                                        // will
-                                        // be
-                                        // eliminated
-                                        // with
-                                        // task
-                                        // CHK-2286
-                                        // by
-                                        // handling
-                                        // the
-                                        // saving
-                                        // of
-                                        // correlationId
-                                        // only
-                                        : new EmptyTransactionGatewayActivationData()
+                                newTransactionRequestData.orderId() != null
+                                        ? new NpgTransactionGatewayActivationData(
+                                                newTransactionRequestData.orderId(),
+                                                newTransactionRequestData.correlationId().toString()
+                                        )
+                                        : new EmptyTransactionGatewayActivationData() // this logic will be eliminated
+                                                                                      // with task CHK-2286 by handling
+                                                                                      // the saving of correlationId
+                                                                                      // only
                         )
                 );
 
         Mono<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent> transactionActivatedEvent = data.map(
                 d -> new it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent(
-                        transactionId,
+                        transactionId.value(),
                         d
                 )
         );
@@ -372,14 +357,14 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                         ).doOnError(
                                 exception -> log.error(
                                         "Error to generate event TRANSACTION_ACTIVATED_EVENT for transactionId {} - error {}",
-                                        transactionId,
+                                        transactionId.value(),
                                         exception.getMessage()
                                 )
                         )
                                 .doOnNext(
                                         event -> log.info(
                                                 "Generated event TRANSACTION_ACTIVATED_EVENT for transactionId {}",
-                                                transactionId
+                                                transactionId.value()
                                         )
                                 ).thenReturn(e)
 
