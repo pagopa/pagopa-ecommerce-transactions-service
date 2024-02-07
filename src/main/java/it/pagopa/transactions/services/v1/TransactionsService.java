@@ -257,6 +257,7 @@ public class TransactionsService {
                         newTransactionRequestDto.getIdCart(),
                         newTransactionRequestDto.getEmail(),
                         null,
+                        null,
                         newTransactionRequestDto.getPaymentNotices().stream().map(
                                 el -> new PaymentNotice(
                                         null,
