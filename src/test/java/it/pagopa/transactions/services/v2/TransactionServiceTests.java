@@ -13,7 +13,6 @@ import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedi
 import it.pagopa.ecommerce.commons.redis.templatewrappers.UniqueIdTemplateWrapper;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.*;
 import it.pagopa.generated.transactions.server.model.*;
@@ -405,13 +404,12 @@ class TransactionServiceTests {
                 .paymentTypeCode("PO")
                 .addRangesItem(new RangeDto().min(0L).max(100L));
 
-        PostePayAuthResponseEntityDto postePayAuthResponseEntityDto = new PostePayAuthResponseEntityDto()
-                .channel("channel")
+        XPayAuthResponseEntityDto gatewayResponse = new XPayAuthResponseEntityDto()
                 .requestId("requestId")
                 .urlRedirect("http://example.com");
 
         RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
-                .authorizationUrl(postePayAuthResponseEntityDto.getUrlRedirect());
+                .authorizationUrl(gatewayResponse.getUrlRedirect());
 
         Mockito.when(ecommercePaymentMethodsClient.calculateFee(any(), any(), any(), any())).thenReturn(
                 Mono.just(calculateFeeResponseDto)
@@ -422,9 +420,7 @@ class TransactionServiceTests {
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
 
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(any()))
-                .thenReturn(Mono.just(postePayAuthResponseEntityDto));
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.empty());
+        Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.just(gatewayResponse));
 
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 
@@ -436,14 +432,14 @@ class TransactionServiceTests {
         Mockito.when(transactionsUtils.getRptId(any(), anyInt())).thenCallRealMethod();
 
         /* test */
-        RequestAuthorizationResponseDto postePayAuthorizationResponse = transactionsServiceV1
+        RequestAuthorizationResponseDto xpayPayAuthorizationResponse = transactionsServiceV1
                 .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest).block();
 
         AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
         assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
-        assertNotNull(postePayAuthorizationResponse);
-        assertFalse(postePayAuthorizationResponse.getAuthorizationUrl().isEmpty());
+        assertNotNull(xpayPayAuthorizationResponse);
+        assertFalse(xpayPayAuthorizationResponse.getAuthorizationUrl().isEmpty());
     }
 
     @Test
@@ -940,8 +936,7 @@ class TransactionServiceTests {
                 .paymentTypeCode("PO")
                 .addRangesItem(new RangeDto().min(0L).max(100L));
 
-        PostePayAuthResponseEntityDto gatewayResponse = new PostePayAuthResponseEntityDto()
-                .channel("channel")
+        XPayAuthResponseEntityDto gatewayResponse = new XPayAuthResponseEntityDto()
                 .requestId("requestId")
                 .urlRedirect("http://example.com");
 
@@ -957,8 +952,7 @@ class TransactionServiceTests {
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
 
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(any())).thenReturn(Mono.just(gatewayResponse));
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.empty());
+        Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.just(gatewayResponse));
 
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 
@@ -1024,13 +1018,9 @@ class TransactionServiceTests {
                 .paymentTypeCode("PO")
                 .addRangesItem(new RangeDto().min(0L).max(100L));
 
-        PostePayAuthResponseEntityDto gatewayResponse = new PostePayAuthResponseEntityDto()
-                .channel("channel")
+        XPayAuthResponseEntityDto gatewayResponse = new XPayAuthResponseEntityDto()
                 .requestId("requestId")
                 .urlRedirect("http://example.com");
-
-        RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
-                .authorizationUrl(gatewayResponse.getUrlRedirect());
 
         Mockito.when(ecommercePaymentMethodsClient.calculateFee(any(), any(), any(), any())).thenReturn(
                 Mono.just(calculateFeeResponseDto)
@@ -1041,8 +1031,7 @@ class TransactionServiceTests {
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
 
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(any())).thenReturn(Mono.just(gatewayResponse));
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.empty());
+        Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.just(gatewayResponse));
 
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 
@@ -1092,13 +1081,12 @@ class TransactionServiceTests {
                 .paymentTypeCode("PO")
                 .addRangesItem(new RangeDto().min(0L).max(100L));
 
-        PostePayAuthResponseEntityDto postePayAuthResponseEntityDto = new PostePayAuthResponseEntityDto()
-                .channel("channel")
+        XPayAuthResponseEntityDto gatewayResponse = new XPayAuthResponseEntityDto()
                 .requestId("requestId")
                 .urlRedirect("http://example.com");
 
         RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
-                .authorizationUrl(postePayAuthResponseEntityDto.getUrlRedirect());
+                .authorizationUrl(gatewayResponse.getUrlRedirect());
 
         Mockito.when(ecommercePaymentMethodsClient.calculateFee(any(), any(), any(), any())).thenReturn(
                 Mono.just(calculateFeeResponseDto)
@@ -1109,9 +1097,7 @@ class TransactionServiceTests {
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
 
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(any()))
-                .thenReturn(Mono.just(postePayAuthResponseEntityDto));
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.empty());
+        Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.just(gatewayResponse));
 
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 

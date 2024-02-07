@@ -2,15 +2,10 @@ package it.pagopa.transactions.commands.handlers;
 
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NpgClient;
-import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
-import it.pagopa.generated.transactions.server.model.ApmAuthRequestDetailsDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
-import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
-import it.pagopa.generated.transactions.server.model.RedirectionAuthRequestDetailsDto;
-import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
-import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
+import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
@@ -59,19 +54,6 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
         this.transactionTemplateWrapper = transactionTemplateWrapper;
     }
 
-    protected Mono<Tuple2<String, String>> postepayAuthRequestPipeline(AuthorizationRequestData authorizationData) {
-        return Mono.just(authorizationData)
-                .flatMap(
-                        paymentGatewayClient::requestPostepayAuthorization
-                )
-                .map(
-                        postePayAuthResponseEntityDto -> Tuples.of(
-                                postePayAuthResponseEntityDto.getRequestId(),
-                                postePayAuthResponseEntityDto.getUrlRedirect()
-                        )
-                );
-    }
-
     protected Mono<Tuple2<String, String>> xpayAuthRequestPipeline(AuthorizationRequestData authorizationData) {
         return Mono.just(authorizationData)
                 .flatMap(
@@ -113,7 +95,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                     yield walletNpgApmPaymentFlow(authorizationData, true);
                 }
             }
-            case ApmAuthRequestDetailsDto ignored ->  walletNpgApmPaymentFlow(authorizationData, false);
+            case ApmAuthRequestDetailsDto ignored -> walletNpgApmPaymentFlow(authorizationData, false);
             default -> Mono.empty();
         });
 
