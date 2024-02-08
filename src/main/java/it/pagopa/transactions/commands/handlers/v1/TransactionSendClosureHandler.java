@@ -241,8 +241,8 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                                         && "Node did not receive RPT yet".equals(responseStatusException.getDetail());
 
                                 log.error(
-                                        "Got exception while invoking closePaymentV2 unrecoverable error: %s"
-                                                .formatted(unrecoverableError),
+                                        "Got exception while invoking closePaymentV2 unrecoverable error: %s - isRefundable: %s "
+                                                .formatted(unrecoverableError, isRefundable),
                                         exception
                                 );
                                 // the closure error event is build and sent iff the transaction was previously
