@@ -11,6 +11,7 @@ import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
+import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.BundleDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.CalculateFeeRequestDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.CalculateFeeResponseDto;
@@ -116,6 +117,8 @@ public class TransactionsService {
     private final Integer paymentTokenValidity;
     private final EventVersion eventVersion;
 
+    private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper;
+
     @Autowired
     public TransactionsService(
             @Qualifier(
@@ -196,7 +199,8 @@ public class TransactionsService {
             TransactionsUtils transactionsUtils,
             TransactionsEventStoreRepository<Object> eventsRepository,
             @Value("${payment.token.validity}") Integer paymentTokenValidity,
-            @Value("${ecommerce.event.version}") EventVersion eventVersion
+            @Value("${ecommerce.event.version}") EventVersion eventVersion,
+            PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper
     ) {
         this.transactionActivateHandlerV1 = transactionActivateHandlerV1;
         this.transactionActivateHandlerV2 = transactionActivateHandlerV2;
@@ -232,6 +236,7 @@ public class TransactionsService {
         this.eventsRepository = eventsRepository;
         this.paymentTokenValidity = paymentTokenValidity;
         this.eventVersion = eventVersion;
+        this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
     }
 
     @CircuitBreaker(name = "node-backend")
@@ -666,7 +671,7 @@ public class TransactionsService {
                                     new RptId(transactionsUtils.getRptId(transactionDocument, 0)),
                                     authorizationData
                             );
-                            return switch (transactionDocument) {
+                            Mono<RequestAuthorizationResponseDto> authPipeline = switch (transactionDocument) {
                                 case it.pagopa.ecommerce.commons.documents.v1.Transaction ignored ->
                                         requestAuthHandlerV1
                                                 .handle(transactionRequestAuthorizationCommand)
@@ -696,6 +701,10 @@ public class TransactionsService {
                                 default ->
                                         throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(transactionDocument.getClass()));
                             };
+                            return authPipeline.doOnSuccess(response -> transactionsUtils.getPaymentNotices(transactionDocument).forEach(paymentNotice -> {
+                                log.info("Invalidate cache for RptId : {}", paymentNotice.getRptId());
+                                paymentRequestInfoRedisTemplateWrapper.deleteById(paymentNotice.getRptId());
+                            }));
                         }
                 );
     }
