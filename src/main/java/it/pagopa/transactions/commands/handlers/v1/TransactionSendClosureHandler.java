@@ -373,7 +373,10 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                                  * status code. The transaction status remains AUTHORIZATION_COMPLETED
                                  */
                                 return Mono.error(
-                                        exception
+                                        new BadGatewayException(
+                                                "Error while invoke Nodo closePayment",
+                                                HttpStatus.BAD_GATEWAY
+                                        )
                                 );
 
                             });

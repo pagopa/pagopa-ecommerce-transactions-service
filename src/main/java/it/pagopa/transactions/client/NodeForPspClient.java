@@ -1,7 +1,10 @@
 package it.pagopa.transactions.client;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
+import it.pagopa.generated.ecommerce.nodo.v2.dto.ErrorDto;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Request;
 import it.pagopa.generated.transactions.model.ActivatePaymentNoticeV2Response;
 import it.pagopa.transactions.exceptions.BadGatewayException;
@@ -29,6 +32,11 @@ public class NodeForPspClient {
     private final String ecommerceClientId;
 
     private final String nodoPerPmUri;
+
+    /**
+     * ObjectMapper instance used to decode JSON string http response
+     */
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     public NodeForPspClient(
@@ -106,10 +114,10 @@ public class NodeForPspClient {
                                 .bodyToMono(String.class)
                                 .switchIfEmpty(Mono.just("N/A"))
                                 .flatMap(
-                                        errorResponseBody -> Mono.error(
+                                        errorResponseBodyAsString -> Mono.error(
                                                 new ResponseStatusException(
                                                         clientResponse.statusCode(),
-                                                        errorResponseBody
+                                                        errorResponseBodyAsString
                                                 )
                                         )
                                 )
@@ -127,8 +135,24 @@ public class NodeForPspClient {
                 .onErrorMap(
                         ResponseStatusException.class,
                         error -> {
-                            log.error("ResponseStatus Error:", error);
-                            return new BadGatewayException(error.getReason(), error.getStatus());
+
+                            log.error(
+                                    "Received closePaymentV2 Response Status Error for transactionId [{}]: {}",
+                                    request.getTransactionId(),
+                                    error
+                            );
+
+                            try {
+
+                                return new BadGatewayException(
+                                        objectMapper.readValue(error.getReason(), ErrorDto.class).getDescription(),
+                                        error.getStatus()
+                                );
+                            } catch (JsonProcessingException e) {
+
+                                return new BadGatewayException(null, error.getStatus());
+                            }
+
                         }
                 )
                 .doOnError(Exception.class, error -> log.error("Generic Error:", error));
