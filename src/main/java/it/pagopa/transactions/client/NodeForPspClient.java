@@ -150,7 +150,7 @@ public class NodeForPspClient {
                                 );
                             } catch (JsonProcessingException e) {
 
-                                return new BadGatewayException(null, error.getStatus());
+                                return new BadGatewayException(error.getReason(), error.getStatus());
                             }
 
                         }
