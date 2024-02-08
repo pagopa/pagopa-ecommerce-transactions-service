@@ -22,11 +22,7 @@ import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.WalletClient;
 import it.pagopa.transactions.commands.*;
 import it.pagopa.transactions.commands.data.*;
-import it.pagopa.transactions.commands.handlers.v1.*;
-import it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureRequestHandler;
 import it.pagopa.transactions.exceptions.*;
-import it.pagopa.transactions.projections.handlers.v1.*;
-import it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.EventVersion;
@@ -126,73 +122,73 @@ public class TransactionsService {
     @Autowired
     public TransactionsService(
             @Qualifier(
-                TransactionActivateHandler.QUALIFIER_NAME
-            ) TransactionActivateHandler transactionActivateHandlerV1,
+                it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler.QUALIFIER_NAME
+            ) it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler transactionActivateHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler transactionActivateHandlerV2,
-            TransactionRequestAuthorizationHandler requestAuthHandlerV1,
+            it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler requestAuthHandlerV1,
             it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler requestAuthHandlerV2,
             @Qualifier(
-                TransactionUpdateAuthorizationHandler.QUALIFIER_NAME
-            ) TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV1,
+                it.pagopa.transactions.commands.handlers.v1.TransactionUpdateAuthorizationHandler.QUALIFIER_NAME
+            ) it.pagopa.transactions.commands.handlers.v1.TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV2,
             @Qualifier(
-                TransactionSendClosureHandler.QUALIFIER_NAME
-            ) TransactionSendClosureHandler transactionSendClosureHandlerV1,
-            TransactionSendClosureRequestHandler transactionSendClosureRequestHandler,
+                it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler.QUALIFIER_NAME
+            ) it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler transactionSendClosureHandlerV1,
+            it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureRequestHandler transactionSendClosureRequestHandler,
             @Qualifier(
-                TransactionRequestUserReceiptHandler.QUALIFIER_NAME
-            ) TransactionRequestUserReceiptHandler transactionRequestUserReceiptHandlerV1,
+                it.pagopa.transactions.commands.handlers.v1.TransactionRequestUserReceiptHandler.QUALIFIER_NAME
+            ) it.pagopa.transactions.commands.handlers.v1.TransactionRequestUserReceiptHandler transactionRequestUserReceiptHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.commands.handlers.v2.TransactionRequestUserReceiptHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v2.TransactionRequestUserReceiptHandler transactionRequestUserReceiptHandlerV2,
             @Qualifier(
-                TransactionUserCancelHandler.QUALIFIER_NAME
-            ) TransactionUserCancelHandler transactionCancelHandlerV1,
+                it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler.QUALIFIER_NAME
+            ) it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler transactionCancelHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler transactionCancelHandlerV2,
 
             @Qualifier(
-                AuthorizationRequestProjectionHandler.QUALIFIER_NAME
-            ) AuthorizationRequestProjectionHandler authorizationProjectionHandlerV1,
+                it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler.QUALIFIER_NAME
+            ) it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler authorizationProjectionHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler authorizationProjectionHandlerV2,
             @Qualifier(
-                AuthorizationUpdateProjectionHandler.QUALIFIER_NAME
-            ) AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV1,
+                it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler.QUALIFIER_NAME
+            ) it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV2,
             @Qualifier(
-                RefundRequestProjectionHandler.QUALIFIER_NAME
-            ) RefundRequestProjectionHandler refundRequestProjectionHandlerV1,
+                it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler.QUALIFIER_NAME
+            ) it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler refundRequestProjectionHandlerV1,
             @Qualifier(
-                ClosureSendProjectionHandler.QUALIFIER_NAME
-            ) ClosureSendProjectionHandler closureSendProjectionHandlerV1,
-            ClosureRequestedProjectionHandler closureRequestedProjectionHandler,
+                it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler.QUALIFIER_NAME
+            ) it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler closureSendProjectionHandlerV1,
+            it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler closureRequestedProjectionHandler,
             @Qualifier(
-                ClosureErrorProjectionHandler.QUALIFIER_NAME
-            ) ClosureErrorProjectionHandler closureErrorProjectionHandlerV1,
+                it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler.QUALIFIER_NAME
+            ) it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler closureErrorProjectionHandlerV1,
             @Qualifier(
-                CancellationRequestProjectionHandler.QUALIFIER_NAME
-            ) CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV1,
+                it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler.QUALIFIER_NAME
+            ) it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV2,
             @Qualifier(
-                TransactionUserReceiptProjectionHandler.QUALIFIER_NAME
-            ) TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV1,
+                it.pagopa.transactions.projections.handlers.v1.TransactionUserReceiptProjectionHandler.QUALIFIER_NAME
+            ) it.pagopa.transactions.projections.handlers.v1.TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV2,
             @Qualifier(
-                TransactionsActivationProjectionHandler.QUALIFIER_NAME
-            ) TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV1,
+                it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler.QUALIFIER_NAME
+            ) it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2,
