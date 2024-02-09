@@ -31,7 +31,7 @@ microservice-chart:
       NODO_CONNECTION_TIMEOUT: "14000"
       NODO_PARALLEL_REQUESTS: "5"
       NODO_ALL_CCP_ON_TRANSFER_IBAN_ENABLED: "true"
-      NODO_ECOMMERCE_CLIENT_ID: ecomm
+      NODO_ECOMMERCE_CLIENT_ID: ecomm-blue
       ECOMMERCE_PAYMENT_METHODS_URI: https://api.uat.platform.pagopa.it/ecommerce/payment-methods-service/v1
       ECOMMERCE_PAYMENT_METHODS_READ_TIMEOUT: "10000"
       ECOMMERCE_PAYMENT_METHODS_CONNECTION_TIMEOUT: "10000"
@@ -44,11 +44,11 @@ microservice-chart:
       NOTIFICATIONS_SERVICE_URI: https://api.uat.platform.pagopa.it/ecommerce/notifications-service/v1
       NOTIFICATIONS_SERVICE_READ_TIMEOUT: "10000"
       NOTIFICATIONS_SERVICE_CONNECTION_TIMEOUT: "10000"
-      TRANSACTION_EXPIRATION_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-expiration-queue
-      TRANSACTION_CLOSE_PAYMENT_RETRY_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-close-payment-retry-queue
-      TRANSACTION_CLOSE_PAYMENT_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-close-payment-queue
-      TRANSACTION_REFUND_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-refund-queue
-      TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-notifications-queue
+      TRANSACTION_EXPIRATION_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-expiration-queue-b
+      TRANSACTION_CLOSE_PAYMENT_RETRY_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-close-payment-retry-queue-b
+      TRANSACTION_CLOSE_PAYMENT_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-close-payment-queue-b
+      TRANSACTION_REFUND_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-refund-queue-b
+      TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-notifications-queue-b
       PAYMENT_TOKEN_VALIDITY_TIME: "900"
       TRANSACTIONS_RETRY_OFFSET: "60"
       CLOSURE_RETRY_INTERVAL: "30"
