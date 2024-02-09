@@ -28,6 +28,7 @@ microservice-chart:
     type: ClusterIP
     ports:
       - 8080
+      - 7091
   ingress:
     create: true
     host: "weudev.ecommerce.internal.dev.platform.pagopa.it"

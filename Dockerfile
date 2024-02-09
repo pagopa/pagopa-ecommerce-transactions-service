@@ -37,4 +37,4 @@ RUN true
 COPY --from=build --chown=user ${EXTRACTED}/application/ ./
 RUN true
 
-ENTRYPOINT ["java","-javaagent:opentelemetry-javaagent.jar","--enable-preview","org.springframework.boot.loader.JarLauncher"]
+ENTRYPOINT ["java","-javaagent:opentelemetry-javaagent.jar","-Dcom.sun.management.jmxremote", "-Djava.rmi.server.hostname=127.0.0.1", "-Dcom.sun.management.jmxremote.port=7091", "-Dcom.sun.management.jmxremote.rmi.port=7091", "-Dcom.sun.management.jmxremote.authenticate=false", "-Dcom.sun.management.jmxremote.ssl=false", "-XX:NativeMemoryTracking=detail", "--enable-preview","org.springframework.boot.loader.JarLauncher"]
