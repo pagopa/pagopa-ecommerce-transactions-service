@@ -16,101 +16,18 @@ microservice-chart:
         repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
         tag: "latest"
         pullPolicy: Always
-    envConfig:
-      MONGO_HOST: pagopa-u-weu-ecommerce-cosmos-account.mongo.cosmos.azure.com
-      MONGO_USERNAME: pagopa-u-weu-ecommerce-cosmos-account
-      MONGO_PORT: "10255"
-      MONGO_SSL_ENABLED: "true"
-      REDIS_HOST: pagopa-u-weu-ecommerce-redis.redis.cache.windows.net
-      REDIS_PORT: "6380"
-      REDIS_SSL_ENABLED: "true"
-      NODO_HOSTNAME: https://api.uat.platform.pagopa.it
-      NODE_FOR_PSP_URI: /nodo/node-for-psp/v1
-      NODO_PER_PM_URI: /nodo/nodo-per-pm/v2
-      NODO_READ_TIMEOUT: "10000"
-      NODO_CONNECTION_TIMEOUT: "10000"
-      NODO_PARALLEL_REQUESTS: "5"
-      NODO_ALL_CCP_ON_TRANSFER_IBAN_ENABLED: "true"
-      NODO_ECOMMERCE_CLIENT_ID: ecomm
-      ECOMMERCE_PAYMENT_METHODS_URI: https://api.uat.platform.pagopa.it/ecommerce/payment-methods-service/v1
-      ECOMMERCE_PAYMENT_METHODS_READ_TIMEOUT: "10000"
-      ECOMMERCE_PAYMENT_METHODS_CONNECTION_TIMEOUT: "10000"
-      WALLET_URI: https://api.uat.platform.pagopa.it/payment-wallet-for-ecommerce/v1
-      WALLET_READ_TIMEOUT: "10000"
-      WALLET_CONNECTION_TIMEOUT: "10000"
-      PAYMENT_TRANSACTIONS_GATEWAY_URI: https://api.uat.platform.pagopa.it/payment-transactions-gateway/internal/v1
-      PAYMENT_TRANSACTIONS_GATEWAY_READ_TIMEOUT: "10000"
-      PAYMENT_TRANSACTIONS_GATEWAY_CONNECTION_TIMEOUT: "10000"
-      NOTIFICATIONS_SERVICE_URI: https://api.uat.platform.pagopa.it/ecommerce/notifications-service/v1
-      NOTIFICATIONS_SERVICE_READ_TIMEOUT: "10000"
-      NOTIFICATIONS_SERVICE_CONNECTION_TIMEOUT: "10000"
-      TRANSACTION_EXPIRATION_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-expiration-queue
-      TRANSACTION_CLOSE_PAYMENT_RETRY_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-close-payment-retry-queue
-      TRANSACTION_CLOSE_PAYMENT_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-close-payment-queue
-      TRANSACTION_REFUND_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-refund-queue
-      TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-notifications-queue
-      PAYMENT_TOKEN_VALIDITY_TIME: "900"
-      TRANSACTIONS_RETRY_OFFSET: "60"
-      CLOSURE_RETRY_INTERVAL: "30"
-      WEB_LOGGING_LEVEL: "off"
-      SERVICE_LOGGING_LEVEL: "info"
-      PERSONAL_DATA_VAULT_API_BASE_PATH: "https://api.uat.tokenizer.pdv.pagopa.it/tokenizer/v1"
-      WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3020"
-      LOGO_CARD_BRANDING_MAPPING: >
-        { VISA:'https://assets.cdn.platform.pagopa.it/creditcard/visa.png', MASTERCARD:'https://assets.cdn.platform.pagopa.it/creditcard/mastercard.png', DINERS:'https://assets.cdn.platform.pagopa.it/creditcard/diners.png', MAESTRO:'https://assets.cdn.platform.pagopa.it/creditcard/maestro.png', AMEX:'https://assets.cdn.platform.pagopa.it/creditcard/amex.png', UNKNOWN:'https://assets.cdn.platform.pagopa.it/creditcard/generic.png' }
-
-      LOGO_NPG_PAYMENT_CIRCUIT_MAPPING: >
-        { VISA:'https://assets.cdn.platform.pagopa.it/creditcard/visa.png', MC:'https://assets.cdn.platform.pagopa.it/creditcard/mastercard.png', DINERS:'https://assets.cdn.platform.pagopa.it/creditcard/diners.png', AMEX:'https://assets.cdn.platform.pagopa.it/creditcard/amex.png', UNKNOWN:'https://assets.cdn.platform.pagopa.it/creditcard/generic.png', PAYPAL:'https://assets.cdn.platform.pagopa.it/apm/paypal.png' }
-
-      SERVER_ERROR_INCLUDE_STACKTRACE: "never"
-      OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-blue,deployment.environment=uat"
-      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.elastic-system.svc:4317"
-      OTEL_TRACES_EXPORTER: otlp
-      OTEL_METRICS_EXPORTER: otlp
-      OTEL_LOGS_EXPORTER: none
-      OTEL_TRACES_SAMPLER: "always_on"
-      ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
-      ECS_SERVICE_ENVIRONMENT: "uat"
-      NPG_URI: "https://stg-ta.nexigroup.com/api/phoenix-0.0"
-      NPG_READ_TIMEOUT: "10000"
-      NPG_CONNECTION_TIMEOUT: "10000"
-      NPG_CARDS_PSP_LIST: "BCITITMM"
-      TRANSACTION_DOCUMENT_TTL: "600"
-      CHECKOUT_BASE_PATH: "https://uat.checkout.pagopa.it"
-      ECOMMERCE_EVENT_VERSION: "V1"
-      SEND_PAYMENT_RESULT_FOR_TX_EXPIRED_ENABLED: "true"
-      SESSION_URL_BASEPATH: "https://uat.checkout.pagopa.it"
-      SESSION_URL_OUTCOME_SUFFIX: "/ecommerce-fe/esito"
-      SESSION_URL_CANCEL_SUFFIX: "/ecommerce-fe/cancel"
-      SESSION_URL_NOTIFICATION_URL: "https://api.uat.platform.pagopa.it/ecommerce/npg/notifications/v1/sessions/{orderId}/outcomes?sessionToken={sessionToken}"
-      JWT_NPG_NOTIFICATION_VALIDITY_TIME: "900"
-      CHECKOUT_REDIRECT_PSP_LIST: ""
-      NODE_FORWARDER_URL: "http://TBD"
-    CHECKOUT_REDIRECT_URL_MAPPING: >
-      { PSP1:'http://localhost' }
-
-      NODE_FORWARDER_READ_TIMEOUT: "10000"
-      NODE_FORWARDER_CONNECTION_TIMEOUT: "10000"
-      CHECKOUT_REDIRECT_LOGO_MAPPING: >
-        { PSP1:'https://host/assets/logo.png' }
-
-    envSecret:
-      MONGO_PASSWORD: mongo-ecommerce-password
-      REDIS_PASSWORD: redis-ecommerce-password
-      NODO_CONNECTION_STRING: nodo-connection-string
-      PAYMENT_TRANSACTIONS_GATEWAY_API_KEY: payment-transactions-gateway-api-key
-      JWT_ECOMMERCE_SECRET: sessions-jwt-secret
-      PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
-      OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
-      ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
-      WALLET_API_KEY: wallet-api-key
-      NPG_API_KEY: npg-api-key
-      NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
-      JWT_NPG_NOTIFICATION_SECRET: npg-notification-signing-key
-      NODE_FORWARDER_API_KEY: node-forwarder-api-key
+      envConfig:
+        NODO_ECOMMERCE_CLIENT_ID: ecomm-blue
+        TRANSACTION_EXPIRATION_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-expiration-queue-b
+        TRANSACTION_CLOSE_PAYMENT_RETRY_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-close-payment-retry-queue-b
+        TRANSACTION_CLOSE_PAYMENT_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-close-payment-queue-b
+        TRANSACTION_REFUND_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-refund-queue-b
+        TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-notifications-queue-b
+        OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-blue,deployment.environment=uat"
+        ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.16.1"
+    tag: "1.16.3"
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -179,8 +96,8 @@ microservice-chart:
     NODO_HOSTNAME: https://api.uat.platform.pagopa.it
     NODE_FOR_PSP_URI: /nodo/node-for-psp/v1
     NODO_PER_PM_URI: /nodo/nodo-per-pm/v2
-    NODO_READ_TIMEOUT: "10000"
-    NODO_CONNECTION_TIMEOUT: "10000"
+    NODO_READ_TIMEOUT: "14000"
+    NODO_CONNECTION_TIMEOUT: "14000"
     NODO_PARALLEL_REQUESTS: "5"
     NODO_ALL_CCP_ON_TRANSFER_IBAN_ENABLED: "true"
     NODO_ECOMMERCE_CLIENT_ID: ecomm
@@ -237,12 +154,11 @@ microservice-chart:
     SESSION_URL_NOTIFICATION_URL: "https://api.uat.platform.pagopa.it/ecommerce/npg/notifications/v1/sessions/{orderId}/outcomes?sessionToken={sessionToken}"
     JWT_NPG_NOTIFICATION_VALIDITY_TIME: "900"
     CHECKOUT_REDIRECT_PSP_LIST: ""
-    NODE_FORWARDER_URL: "http://TBD"
     CHECKOUT_REDIRECT_URL_MAPPING: >
       { PSP1:'http://localhost' }
 
-    NODE_FORWARDER_READ_TIMEOUT: "10000"
-    NODE_FORWARDER_CONNECTION_TIMEOUT: "10000"
+    CHECKOUT_REDIRECT_READ_TIMEOUT: "10000"
+    CHECKOUT_REDIRECT_CONNECTION_TIMEOUT: "10000"
     CHECKOUT_REDIRECT_LOGO_MAPPING: >
       { PSP1:'https://host/assets/logo.png' }
 
@@ -261,7 +177,7 @@ microservice-chart:
     NPG_API_KEY: npg-api-key
     NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
     JWT_NPG_NOTIFICATION_SECRET: npg-notification-signing-key
-    NODE_FORWARDER_API_KEY: node-forwarder-api-key
+    CHECKOUT_REDIRECT_PSP_KEYS: checkout-redirect-psp-keys
   keyvault:
     name: "pagopa-u-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
