@@ -450,4 +450,47 @@ class NodeForPspClientTest {
                 .expectErrorMatches(ex -> ex instanceof BadGatewayException)
                 .verify();
     }
+
+    @Test
+    void shouldHandleClosePaymentWith422AnNotReceiveRPT() {
+        ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
+                .paymentTokens(List.of("paymentToken"))
+                .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
+                .idPSP("identificativoPsp")
+                .idBrokerPSP("identificativoIntermediario")
+                .idChannel("identificativoCanale")
+                .transactionId("transactionId")
+                .fee(new BigDecimal(1))
+                .timestampOperation(OffsetDateTime.now())
+                .totalAmount(new BigDecimal(101))
+                .additionalPaymentInformations(null);
+
+        /* preconditions */
+        String nodoPerPmUri = "/nodo-per-pm/v2";
+        String ecommerceClientId = "ecomm";
+        Dispatcher dispatcher = new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest request) {
+                return new MockResponse()
+                        .setResponseCode(422)
+                        .setBody("{\"outcome\":\"KO\",\"description\":\"Node did not receive RPT yet\"}");
+            }
+        };
+
+        mockWebServer.setDispatcher(dispatcher);
+        NodeForPspClient nodeForPspClient = new NodeForPspClient(
+                new WebClientsConfig().nodoWebClient(
+                        "http://localhost:9000",
+                        10000,
+                        10000
+                ),
+                "/",
+                ecommerceClientId,
+                nodoPerPmUri
+        );
+        StepVerifier
+                .create(nodeForPspClient.closePaymentV2(closePaymentRequest))
+                .expectErrorMatches(ex -> ex instanceof BadGatewayException)
+                .verify();
+    }
 }
