@@ -48,10 +48,9 @@ import javax.crypto.SecretKey;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -101,7 +100,21 @@ public class PaymentGatewayClient {
         RBPB,
         RBPP,
         RPIC,
-        RBPS
+        RBPS;
+
+        private static final Map<String, RedirectPaymentMethodId> lookupMap = Arrays
+                .stream(RedirectPaymentMethodId.values())
+                .collect(Collectors.toMap(Enum::toString, Function.identity()));
+
+        static RedirectPaymentMethodId fromPaymentTypeCode(String paymentTypeCode) {
+            RedirectPaymentMethodId converted = lookupMap.get(paymentTypeCode);
+            if (converted == null) {
+                throw new InvalidRequestException(
+                        "Unmanaged payment method with type code: [%s]".formatted(paymentTypeCode)
+                );
+            }
+            return converted;
+        }
     }
 
     @Autowired
@@ -578,10 +591,9 @@ public class PaymentGatewayClient {
                                                                         AuthorizationRequestData authorizationData,
                                                                         RedirectUrlRequestDto.TouchpointEnum touchpoint
     ) {
+        RedirectPaymentMethodId idPaymentMethod = RedirectPaymentMethodId
+                .fromPaymentTypeCode(authorizationData.paymentTypeCode());
         RedirectUrlRequestDto request = new RedirectUrlRequestDto()
-                .paymentMethod(
-                        RedirectUrlRequestDto.PaymentMethodEnum.BANK_ACCOUNT
-                )
                 .amount(
                         authorizationData
                                 .paymentNotices()
@@ -599,10 +611,10 @@ public class PaymentGatewayClient {
                                 .paymentNotices()
                                 .stream()
                                 .findFirst()
-                                                                            .map(
-                                                                                    p -> p.transactionDescription()
-                                                                                            .value()
-                                                                            )
+                                .map(
+                                        p -> p.transactionDescription()
+                                                .value()
+                                )
                                 .orElseThrow()
                 )
                 .urlBack(
@@ -629,12 +641,12 @@ public class PaymentGatewayClient {
                                 ).build()
                                 .toUri()
                 )
-                                                            .touchpoint(touchpoint)
-                                                            .paymentMethod(
-                                                                    redirectMethodsDescriptions.get(idPaymentMethod)
-                                                            )
-                                                        .paName(null)// optional
-                .idPaymentMethod(null);// optional
+                .touchpoint(touchpoint)
+                .paymentMethod(
+                        redirectMethodsDescriptions.get(idPaymentMethod)
+                )
+                .idPaymentMethod(idPaymentMethod.toString())
+                .paName(null);// optional
         Either<CheckoutRedirectConfigurationException, URI> pspConfiguredUrl = getRedirectUrlForPsp(
                 authorizationData.pspId()
         );
