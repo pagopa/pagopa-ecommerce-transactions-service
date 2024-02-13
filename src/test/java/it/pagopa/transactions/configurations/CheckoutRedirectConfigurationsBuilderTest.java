@@ -44,26 +44,6 @@ class CheckoutRedirectConfigurationsBuilderTest {
             "http://localhost/psp3/logo"
     );
 
-    @Test
-    void shouldBuildPspApiKeySuccessfully() {
-        assertDoesNotThrow(
-                () -> checkoutRedirectConfigurationsBuilder
-                        .checkoutRedirectApiKeys(pspConfigurationApiKeyJson, pspToHandle)
-        );
-    }
-
-    @Test
-    void shouldThrowExceptionForErrorBuildingApiKeyMapping() {
-        CheckoutRedirectConfigurationException exception = assertThrows(
-                CheckoutRedirectConfigurationException.class,
-                () -> checkoutRedirectConfigurationsBuilder.checkoutRedirectApiKeys("{", pspToHandle)
-        );
-        assertEquals(
-                "Error parsing Checkout Redirect PSP API_KEYS configuration, cause: Invalid json configuration map",
-                exception.getMessage()
-        );
-    }
-
     @ParameterizedTest
     @ValueSource(
             strings = {

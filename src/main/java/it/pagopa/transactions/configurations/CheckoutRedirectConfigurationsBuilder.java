@@ -1,9 +1,7 @@
 package it.pagopa.transactions.configurations;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.ecommerce.commons.exceptions.CheckoutRedirectConfigurationException;
 import it.pagopa.ecommerce.commons.exceptions.CheckoutRedirectConfigurationType;
-import it.pagopa.ecommerce.commons.utils.CheckoutRedirectPspApiKeysConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -13,7 +11,6 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -24,39 +21,6 @@ import java.util.stream.Collectors;
 @Configuration
 @Slf4j
 public class CheckoutRedirectConfigurationsBuilder {
-
-    /**
-     * ObjectMapper instance used to decode JSON string configuration
-     */
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-    /**
-     * Return a map where valued with each psp id - api keys entries
-     *
-     * @param apiKeys - the secret api keys configuration json
-     * @return the parsed map
-     */
-    @Bean
-    public CheckoutRedirectPspApiKeysConfig checkoutRedirectApiKeys(
-                                                                    @Value(
-                                                                        "${checkout.redirect.keys}"
-                                                                    ) String apiKeys,
-                                                                    @Value(
-                                                                        "${checkout.redirect.pspList}"
-                                                                    ) Set<String> pspToHandle
-    ) {
-        return CheckoutRedirectPspApiKeysConfig.parseApiKeyConfiguration(
-                apiKeys,
-                pspToHandle,
-                objectMapper
-        )
-                .fold(exception -> {
-                    throw exception;
-                },
-                        Function.identity()
-                );
-    }
-
     /**
      * Create a Map &lt String,URI &gt that will associate, to every handled PSP,
      * the backend URI to be used to perform Checkout Redirect payment flow api call
