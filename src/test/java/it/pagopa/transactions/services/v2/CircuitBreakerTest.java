@@ -181,6 +181,7 @@ class CircuitBreakerTest {
                         transactionsService.newTransaction(
                                 transactionRequestDto,
                                 clientIdDto,
+                                UUID.randomUUID(),
                                 new TransactionId(transactionActivatedEvent.getTransactionId())
                         )
                 )
@@ -239,6 +240,7 @@ class CircuitBreakerTest {
                         transactionsService.newTransaction(
                                 transactionRequestDto,
                                 clientIdDto,
+                                UUID.randomUUID(),
                                 new TransactionId(transactionActivatedEvent.getTransactionId())
                         )
                 )
@@ -293,6 +295,7 @@ class CircuitBreakerTest {
                         transactionsService.newTransaction(
                                 transactionRequestDto,
                                 clientIdDto,
+                                UUID.randomUUID(),
                                 new TransactionId(transactionActivatedEvent.getTransactionId())
                         )
                 )

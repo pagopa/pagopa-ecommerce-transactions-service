@@ -2,10 +2,12 @@ package it.pagopa.transactions.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.vavr.control.Either;
+import it.pagopa.ecommerce.commons.client.NodeForwarderClient;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
+import it.pagopa.ecommerce.commons.exceptions.CheckoutRedirectConfigurationException;
+import it.pagopa.ecommerce.commons.exceptions.NodeForwarderClientException;
 import it.pagopa.ecommerce.commons.exceptions.NpgApiKeyMissingPspRequestedException;
 import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
@@ -18,7 +20,6 @@ import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.*;
-import it.pagopa.generated.ecommerce.redirect.v1.api.B2bPspSideApi;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
@@ -53,6 +54,7 @@ import reactor.util.function.Tuples;
 
 import javax.crypto.SecretKey;
 import java.math.BigDecimal;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
@@ -122,10 +124,11 @@ class PaymentGatewayClientTest {
 
     private final SecretKey jwtSecretKey = new SecretsConfigurations().npgNotificationSigningKey(STRONG_KEY);
 
-    private final CheckoutRedirectClientBuilder checkoutRedirectClientBuilder = Mockito
-            .mock(CheckoutRedirectClientBuilder.class);
+    private final NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderClient = Mockito
+            .mock(NodeForwarderClient.class);
 
-    private final B2bPspSideApi b2bPspSideApi = Mockito.mock(B2bPspSideApi.class);
+    private final Map<String, URI> checkoutRedirectBeApiCallUriMap = Map
+            .of("pspId", URI.create("http://redirect/pspId"), "malformedUrlPspId", URI.create("malformedUrl"));
 
     @BeforeEach
     private void init() {
@@ -143,7 +146,8 @@ class PaymentGatewayClientTest {
                 npgDefaultApiKey,
                 jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
-                checkoutRedirectClientBuilder
+                nodeForwarderClient,
+                checkoutRedirectBeApiCallUriMap
         );
 
         Hooks.onOperatorDebug();
@@ -547,7 +551,7 @@ class PaymentGatewayClientTest {
         Mockito.when(npgClient.confirmPayment(any(), any(), any(), any())).thenReturn(Mono.just(ngpStateResponse));
 
         /* test */
-        StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData))
+        StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData, UUID.randomUUID().toString()))
                 .expectNext(ngpStateResponse)
                 .verifyComplete();
         String expectedApiKey = npgPspApiKeysConfig.get(authorizationData.pspId()).get();
@@ -629,7 +633,7 @@ class PaymentGatewayClientTest {
                 );
         /* test */
 
-        StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData))
+        StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData, UUID.randomUUID().toString()))
                 .expectErrorMatches(
                         error -> error instanceof AlreadyProcessedException &&
                                 ((AlreadyProcessedException) error).getTransactionId()
@@ -703,7 +707,7 @@ class PaymentGatewayClientTest {
                         )
                 );
         /* test */
-        StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData))
+        StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData, UUID.randomUUID().toString()))
                 .expectErrorMatches(
                         error -> error instanceof BadGatewayException
                 )
@@ -775,7 +779,7 @@ class PaymentGatewayClientTest {
                         )
                 );
         /* test */
-        StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData))
+        StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData, UUID.randomUUID().toString()))
                 .expectErrorMatches(
                         error -> error instanceof BadGatewayException
                 )
@@ -1784,6 +1788,7 @@ class PaymentGatewayClientTest {
         String orderId = "orderIdGenerated";
         String sessionId = "sessionId";
         String contractId = "contractId";
+        String correlationId = UUID.randomUUID().toString();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -1832,7 +1837,7 @@ class PaymentGatewayClientTest {
         /* preconditions */
         Mockito.when(
                 npgClient.buildForm(
-                        any(),
+                        eq(UUID.fromString(correlationId)),
                         any(),
                         any(),
                         any(),
@@ -1847,7 +1852,7 @@ class PaymentGatewayClientTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData, true))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData, correlationId, true))
                 .expectNext(responseRequestNpgBuildSession)
                 .verifyComplete();
 
@@ -1906,6 +1911,7 @@ class PaymentGatewayClientTest {
         String walletId = UUID.randomUUID().toString();
         String orderId = "orderIdGenerated";
         String contractId = "contractId";
+        String correlationId = UUID.randomUUID().toString();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -1952,7 +1958,7 @@ class PaymentGatewayClientTest {
         /* preconditions */
         Mockito.when(
                 npgClient.buildForm(
-                        any(),
+                        eq(UUID.fromString(correlationId)),
                         any(),
                         any(),
                         any(),
@@ -1983,7 +1989,7 @@ class PaymentGatewayClientTest {
                 );
         /* test */
 
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData, true))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData, correlationId, true))
                 .expectErrorMatches(
                         error -> error instanceof AlreadyProcessedException &&
                                 ((AlreadyProcessedException) error).getTransactionId()
@@ -1997,6 +2003,7 @@ class PaymentGatewayClientTest {
         String walletId = UUID.randomUUID().toString();
         String orderId = "orderIdGenerated";
         String contractId = "contractId";
+        String correlationId = UUID.randomUUID().toString();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -2043,7 +2050,7 @@ class PaymentGatewayClientTest {
         /* preconditions */
         Mockito.when(
                 npgClient.buildForm(
-                        any(),
+                        eq(UUID.fromString(correlationId)),
                         any(),
                         any(),
                         any(),
@@ -2073,7 +2080,7 @@ class PaymentGatewayClientTest {
                         )
                 );
         /* test */
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData, true))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData, correlationId, true))
                 .expectErrorMatches(
                         error -> error instanceof BadGatewayException
                 )
@@ -2085,6 +2092,7 @@ class PaymentGatewayClientTest {
         String walletId = UUID.randomUUID().toString();
         String orderId = "orderIdGenerated";
         String contractId = "contractId";
+        String correlationId = UUID.randomUUID().toString();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -2131,7 +2139,7 @@ class PaymentGatewayClientTest {
         /* preconditions */
         Mockito.when(
                 npgClient.buildForm(
-                        any(),
+                        eq(UUID.fromString(correlationId)),
                         any(),
                         any(),
                         any(),
@@ -2161,7 +2169,7 @@ class PaymentGatewayClientTest {
                         )
                 );
         /* test */
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData, true))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData, correlationId, true))
                 .expectErrorMatches(
                         error -> error instanceof BadGatewayException
                 )
@@ -2174,6 +2182,7 @@ class PaymentGatewayClientTest {
         String walletId = UUID.randomUUID().toString();
         String orderId = "orderIdGenerated";
         String contractId = "contractId";
+        String correlationId = UUID.randomUUID().toString();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -2220,7 +2229,7 @@ class PaymentGatewayClientTest {
         /* preconditions */
         Mockito.when(
                 npgClient.buildForm(
-                        any(),
+                        eq(UUID.fromString(correlationId)),
                         any(),
                         any(),
                         any(),
@@ -2233,7 +2242,7 @@ class PaymentGatewayClientTest {
                 )
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData, true))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData, correlationId, true))
                 .expectErrorMatches(error -> error instanceof BadGatewayException)
                 .verify();
         String npgNotificationUrl = UriComponentsBuilder
@@ -2313,6 +2322,7 @@ class PaymentGatewayClientTest {
         String orderId = "orderIdGenerated";
         String sessionId = "sessionId";
         String contractId = "contractId";
+        String correlationId = UUID.randomUUID().toString();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -2366,7 +2376,7 @@ class PaymentGatewayClientTest {
         /* preconditions */
         Mockito.when(
                 npgClient.buildFormForPayment(
-                        any(),
+                        eq(UUID.fromString(correlationId)),
                         any(),
                         any(),
                         any(),
@@ -2382,7 +2392,7 @@ class PaymentGatewayClientTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
-        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData, true))
+        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData, correlationId, true))
                 .expectNext(responseRequestNpgBuildSession)
                 .verifyComplete();
 
@@ -2442,6 +2452,7 @@ class PaymentGatewayClientTest {
         String orderId = "orderIdGenerated";
         String sessionId = "sessionId";
         String contractId = "contractId";
+        String correlationId = UUID.randomUUID().toString();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -2507,7 +2518,7 @@ class PaymentGatewayClientTest {
                 .substring(0, npgNotificationUrl.indexOf("sessionToken=") + "sessionToken=".length());
         Mockito.when(
                 npgClient.buildFormForPayment(
-                        any(),
+                        eq(UUID.fromString(correlationId)),
                         eq(URI.create(sessionUrlConfig.basePath())),
                         eq(
                                 URI
@@ -2542,7 +2553,7 @@ class PaymentGatewayClientTest {
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
         /* test */
-        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData, true))
+        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData, correlationId, true))
                 .expectError(NpgApiKeyMissingPspRequestedException.class)
                 .verify();
 
@@ -2557,6 +2568,7 @@ class PaymentGatewayClientTest {
         String walletId = UUID.randomUUID().toString();
         String orderId = "orderIdGenerated";
         String sessionId = "sessionId";
+        String correlationId = UUID.randomUUID().toString();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -2609,7 +2621,7 @@ class PaymentGatewayClientTest {
         /* preconditions */
         Mockito.when(
                 npgClient.buildFormForPayment(
-                        any(),
+                        eq(UUID.fromString(correlationId)),
                         any(),
                         any(),
                         any(),
@@ -2625,7 +2637,7 @@ class PaymentGatewayClientTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
-        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData, false))
+        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData, correlationId, false))
                 .expectNext(responseRequestNpgBuildSession)
                 .verifyComplete();
 
@@ -2680,7 +2692,7 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldPerformAuthorizationRequestRetrievingRedirectionUrl() {
+    void shouldPerformAuthorizationRequestRetrievingRedirectionUrl() throws MalformedURLException {
         String pspId = "pspId";
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -2705,13 +2717,13 @@ class PaymentGatewayClientTest {
         );
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
-        given(checkoutRedirectClientBuilder.getApiClientForPsp(pspId)).willReturn(Either.right(b2bPspSideApi));
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
                 .paymentMethod(RedirectUrlRequestDto.PaymentMethodEnum.BANK_ACCOUNT)
                 .amount(totalAmount)
                 .idPsp(pspId)
                 .idTransaction(transaction.getTransactionId().value())
                 .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
+                .touchpoint(RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
                 .urlBack(
                         URI.create(
                                 "http://localhost:1234/ecommerce-fe/esito#clientId=REDIRECT&transactionId="
@@ -2722,13 +2734,27 @@ class PaymentGatewayClientTest {
                 .timeout(60000)
                 .url("http://redirectionUrl")
                 .idPSPTransaction("idPspTransaction");
-        given(b2bPspSideApi.retrieveRedirectUrl(any())).willReturn(Mono.just(redirectUrlResponseDto));
+        given(nodeForwarderClient.proxyRequest(any(), any(), any(), any())).willReturn(
+                Mono.just(
+                        new NodeForwarderClient.NodeForwarderResponse<>(
+                                redirectUrlResponseDto,
+                                Optional.of(authorizationData.transactionId().value())
+                        )
+                )
+        );
         Hooks.onOperatorDebug();
         /* test */
-        StepVerifier.create(client.requestRedirectUrlAuthorization(authorizationData, any()))
+        StepVerifier.create(
+                client.requestRedirectUrlAuthorization(authorizationData, RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
+        )
                 .expectNext(redirectUrlResponseDto)
                 .verifyComplete();
-        verify(b2bPspSideApi, times(1)).retrieveRedirectUrl(redirectUrlRequestDto);
+        verify(nodeForwarderClient, times(1)).proxyRequest(
+                redirectUrlRequestDto,
+                URI.create("http://redirect/pspId"),
+                authorizationData.transactionId().value(),
+                RedirectUrlResponseDto.class
+        );
     }
 
     private static Stream<Arguments> errorRetrievingRedirectionUrl() {
@@ -2745,7 +2771,7 @@ class PaymentGatewayClientTest {
     void shouldHandleErrorRetrievingRedirectionUrl(
                                                    HttpStatus httpResponseStatusCode,
                                                    Class<? extends Exception> expectedMappedException
-    ) {
+    ) throws MalformedURLException {
         String pspId = "pspId";
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -2770,37 +2796,144 @@ class PaymentGatewayClientTest {
         );
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
-        given(checkoutRedirectClientBuilder.getApiClientForPsp(pspId)).willReturn(Either.right(b2bPspSideApi));
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
                 .paymentMethod(RedirectUrlRequestDto.PaymentMethodEnum.BANK_ACCOUNT)
                 .amount(totalAmount)
                 .idPsp(pspId)
                 .idTransaction(transaction.getTransactionId().value())
                 .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
+                .touchpoint(RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
                 .urlBack(
                         URI.create(
                                 "http://localhost:1234/ecommerce-fe/esito#clientId=REDIRECT&transactionId="
                                         .concat(transaction.getTransactionId().value())
                         )
                 );
-        given(b2bPspSideApi.retrieveRedirectUrl(any())).willReturn(
+        given(nodeForwarderClient.proxyRequest(any(), any(), any(), any())).willReturn(
                 Mono.error(
-                        new WebClientResponseException(
-                                "Redirect error",
-                                httpResponseStatusCode.value(),
-                                httpResponseStatusCode.getReasonPhrase(),
-                                null,
-                                null,
-                                null
+                        new NodeForwarderClientException(
+                                "Error",
+                                new WebClientResponseException(
+                                        "Redirect error",
+                                        httpResponseStatusCode.value(),
+                                        httpResponseStatusCode.getReasonPhrase(),
+                                        null,
+                                        null,
+                                        null
+                                )
                         )
                 )
         );
         Hooks.onOperatorDebug();
         /* test */
-        StepVerifier.create(client.requestRedirectUrlAuthorization(authorizationData, any()))
+        StepVerifier.create(
+                client.requestRedirectUrlAuthorization(authorizationData, RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
+        )
                 .expectError(expectedMappedException)
                 .verify();
-        verify(b2bPspSideApi, times(1)).retrieveRedirectUrl(redirectUrlRequestDto);
+        verify(nodeForwarderClient, times(1)).proxyRequest(
+                redirectUrlRequestDto,
+                URI.create("http://redirect/pspId"),
+                authorizationData.transactionId().value(),
+                RedirectUrlResponseDto.class
+        );
+    }
+
+    @Test
+    void shouldHandleErrorRetrievingRedirectionUrlWithGenericException() throws MalformedURLException {
+        String pspId = "pspId";
+        TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                10,
+                "paymentInstrumentId",
+                pspId,
+                "CC",
+                "brokerName",
+                "pspChannelCode",
+                "REDIRECT",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "REDIRECT",
+                Optional.empty(),
+                Optional.empty(),
+                "N/A",
+                new RedirectionAuthRequestDetailsDto()
+        );
+        int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
+                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
+                .paymentMethod(RedirectUrlRequestDto.PaymentMethodEnum.BANK_ACCOUNT)
+                .amount(totalAmount)
+                .idPsp(pspId)
+                .idTransaction(transaction.getTransactionId().value())
+                .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
+                .touchpoint(RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
+                .urlBack(
+                        URI.create(
+                                "http://localhost:1234/ecommerce-fe/esito#clientId=REDIRECT&transactionId="
+                                        .concat(transaction.getTransactionId().value())
+                        )
+                );
+        given(nodeForwarderClient.proxyRequest(any(), any(), any(), any())).willReturn(
+                Mono.error(
+                        new NodeForwarderClientException(
+                                "Error",
+                                new NullPointerException()
+                        )
+                )
+        );
+        Hooks.onOperatorDebug();
+        /* test */
+        StepVerifier.create(
+                client.requestRedirectUrlAuthorization(authorizationData, RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
+        )
+                .expectError(BadGatewayException.class)
+                .verify();
+        verify(nodeForwarderClient, times(1)).proxyRequest(
+                redirectUrlRequestDto,
+                URI.create("http://redirect/pspId"),
+                authorizationData.transactionId().value(),
+                RedirectUrlResponseDto.class
+        );
+    }
+
+    @Test
+    void shouldReturnErrorDuringRedirectPaymentTransactionForInvalidPspURL() {
+        String pspId = "unknownPspId";
+        TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                10,
+                "paymentInstrumentId",
+                pspId,
+                "CC",
+                "brokerName",
+                "pspChannelCode",
+                "REDIRECT",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "REDIRECT",
+                Optional.empty(),
+                Optional.empty(),
+                "N/A",
+                new RedirectionAuthRequestDetailsDto()
+        );
+
+        Hooks.onOperatorDebug();
+        /* test */
+        StepVerifier.create(
+                client.requestRedirectUrlAuthorization(authorizationData, RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
+        )
+                .expectError(CheckoutRedirectConfigurationException.class)
+                .verify();
+        verify(nodeForwarderClient, times(0)).proxyRequest(any(), any(), any(), any());
     }
 
 }
