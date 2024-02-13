@@ -31,7 +31,7 @@ paths:
           schema:
             $ref: '#/components/schemas/ClientId'
         - in: header
-          name: correlationId
+          name: x-correlation-id
           required: true
           description: NPG correlation id
           schema:

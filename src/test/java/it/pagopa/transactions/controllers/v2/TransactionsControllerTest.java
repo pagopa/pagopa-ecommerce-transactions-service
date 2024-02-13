@@ -374,7 +374,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("X-Client-Id", "CHECKOUT")
-                .header("correlationId", UUID.randomUUID().toString())
+                .header("x-correlation-id", UUID.randomUUID().toString())
                 .exchange()
                 .expectStatus()
                 .isOk();
@@ -399,7 +399,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("X-Client-Id", "CHECKOUT")
-                .header("correlationId", UUID.randomUUID().toString())
+                .header("x-correlation-id", UUID.randomUUID().toString())
                 .exchange()
                 .expectStatus()
                 .isBadRequest()
