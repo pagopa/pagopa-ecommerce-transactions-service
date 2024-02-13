@@ -111,7 +111,7 @@ microservice-chart:
       NODE_FORWARDER_API_KEY: node-forwarder-api-key
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.16.3"
+    tag: "1.17.0"
     pullPolicy: Always
   livenessProbe:
     httpGet:
