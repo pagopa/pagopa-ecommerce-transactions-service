@@ -122,20 +122,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(TransactionActivated.class);
 
-        Mono<Tuple6<String, String, Optional<String>, Optional<String>, Optional<Integer>, PaymentGateway>> monoPostePay = postepayAuthRequestPipeline(
-                authorizationRequestData
-        )
-                .map(
-                        tuple -> Tuples.of(
-                                tuple.getT1(),
-                                tuple.getT2(),
-                                Optional.empty(),
-                                Optional.empty(),
-                                Optional.empty(),
-                                PaymentGateway.POSTEPAY
-                        )
-                );
-
         Mono<Tuple6<String, String, Optional<String>, Optional<String>, Optional<Integer>, PaymentGateway>> monoXPay = xpayAuthRequestPipeline(
                 authorizationRequestData
         )
@@ -207,7 +193,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 );
 
         List<Mono<Tuple6<String, String, Optional<String>, Optional<String>, Optional<Integer>, PaymentGateway>>> gatewayRequests = List
-                .of(monoPostePay, monoXPay, monoVPOS, monoNpgCards, monoRedirect);
+                .of(monoXPay, monoVPOS, monoNpgCards, monoRedirect);
 
         Mono<Tuple6<String, String, Optional<String>, Optional<String>, Optional<Integer>, PaymentGateway>> gatewayAttempts = gatewayRequests
                 .stream()
@@ -253,8 +239,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                                 ),
                                                 tuple6.getT3().orElse(null)
                                         );
-                                        // TODO remove this after the cancellation of the postepay logic
-                                        case POSTEPAY -> null;
                                         case REDIRECT -> new RedirectTransactionGatewayAuthorizationRequestedData(
                                                 logo,
                                                 tuple6.getT1(),
