@@ -13,6 +13,7 @@ import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
+import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
@@ -32,6 +33,7 @@ import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.LogoMappingUtils;
 import it.pagopa.transactions.utils.OpenTelemetryUtils;
+import it.pagopa.transactions.utils.Queues;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.apache.commons.codec.binary.Base64;
 import org.junit.jupiter.api.AfterAll;
@@ -55,6 +57,7 @@ import reactor.util.function.Tuples;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -113,6 +116,8 @@ class TransactionRequestAuthorizationHandlerTest {
     private final int paymentTokenTimeout = 150;
 
     private final OpenTelemetryUtils openTelemetryUtils = Mockito.mock(OpenTelemetryUtils.class);
+
+    private final QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClient = Mockito.mock(QueueAsyncClient.class);
 
     @AfterAll
     public static void afterAll() {
@@ -620,6 +625,15 @@ class TransactionRequestAuthorizationHandlerTest {
                         transactionId.value()
                 )
         ).thenReturn(Mono.empty());
+
+        Mockito.when(
+                        transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
+                                any(QueueEvent.class),
+                                any(),
+                                eq(Duration.ofSeconds(transientQueueEventsTtlSeconds))
+                        )
+                )
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
