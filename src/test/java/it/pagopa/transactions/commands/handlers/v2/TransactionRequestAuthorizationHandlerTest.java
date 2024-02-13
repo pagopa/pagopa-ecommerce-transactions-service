@@ -117,7 +117,8 @@ class TransactionRequestAuthorizationHandlerTest {
 
     private final OpenTelemetryUtils openTelemetryUtils = Mockito.mock(OpenTelemetryUtils.class);
 
-    private final QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClient = Mockito.mock(QueueAsyncClient.class);
+    private final QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClient = Mockito
+            .mock(QueueAsyncClient.class);
 
     @AfterAll
     public static void afterAll() {
@@ -627,12 +628,12 @@ class TransactionRequestAuthorizationHandlerTest {
         ).thenReturn(Mono.empty());
 
         Mockito.when(
-                        transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
-                                any(QueueEvent.class),
-                                any(),
-                                eq(Duration.ofSeconds(transientQueueEventsTtlSeconds))
-                        )
+                transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
+                        any(QueueEvent.class),
+                        any(),
+                        eq(Duration.ofSeconds(transientQueueEventsTtlSeconds))
                 )
+        )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
