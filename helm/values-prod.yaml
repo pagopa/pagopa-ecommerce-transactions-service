@@ -90,11 +90,9 @@ microservice-chart:
     CHECKOUT_REDIRECT_URL_MAPPING: >
       { PSP1:'http://localhost' }
 
-      NODE_FORWARDER_READ_TIMEOUT: "10000"
-      NODE_FORWARDER_CONNECTION_TIMEOUT: "10000"
-      CHECKOUT_REDIRECT_LOGO_MAPPING: >
-        { PSP1:'https://host/assets/logo.png' }
+      NODE_FORWARDER_READ_TIMEOUT: "10000" NODE_FORWARDER_CONNECTION_TIMEOUT: "10000" CHECKOUT_REDIRECT_LOGO_MAPPING: >
 
+        { PSP1:'https://host/assets/logo.png' }
     envSecret:
       MONGO_PASSWORD: mongo-ecommerce-password
       REDIS_PASSWORD: redis-ecommerce-password
@@ -111,7 +109,7 @@ microservice-chart:
       NODE_FORWARDER_API_KEY: node-forwarder-api-key
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.17.0"
+    tag: "1.18.0"
     pullPolicy: Always
   livenessProbe:
     httpGet:
