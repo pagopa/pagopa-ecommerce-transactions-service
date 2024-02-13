@@ -286,7 +286,11 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                 log.info("Evaluating saving in auth request queue");
                                                                 if (authorizationEvent.getData().getPaymentGateway()
                                                                         .equals(PaymentGateway.NPG)) {
-                                                                    log.info("auth event payment gateway " + authorizationEvent.getData().getPaymentGateway());
+                                                                    log.info(
+                                                                            "auth event payment gateway "
+                                                                                    + authorizationEvent.getData()
+                                                                                            .getPaymentGateway()
+                                                                    );
                                                                     tracingUtils.traceMono(
                                                                             this.getClass().getSimpleName(),
                                                                             tracingInfo -> transactionAuthorizationRequestedQueueAsyncClientV2
