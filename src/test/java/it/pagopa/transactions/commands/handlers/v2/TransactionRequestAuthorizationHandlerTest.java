@@ -1,6 +1,7 @@
 package it.pagopa.transactions.commands.handlers.v2;
 
 import com.azure.cosmos.implementation.BadRequestException;
+import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
@@ -12,6 +13,8 @@ import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
+import it.pagopa.ecommerce.commons.queues.TracingUtils;
+import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthRequestDto;
@@ -28,6 +31,7 @@ import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.LogoMappingUtils;
+import it.pagopa.transactions.utils.OpenTelemetryUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.apache.commons.codec.binary.Base64;
 import org.junit.jupiter.api.AfterAll;
@@ -92,6 +96,9 @@ class TransactionRequestAuthorizationHandlerTest {
     @Mock
     private TransactionTemplateWrapper transactionTemplateWrapper;
 
+    @Mock
+    private QueueAsyncClient transactionAuthRequestedQueueClient;
+
     @Captor
     private ArgumentCaptor<TransactionEvent<TransactionAuthorizationRequestData>> eventStoreCaptor;
 
@@ -99,6 +106,13 @@ class TransactionRequestAuthorizationHandlerTest {
     private static final Set<CardAuthRequestDetailsDto.BrandEnum> testedCardBrands = new HashSet<>();
 
     private static boolean cardsTested = false;
+
+    private final TracingUtils tracingUtils = TracingUtilsTests.getMock();
+
+    private final int transientQueueEventsTtlSeconds = 30;
+    private final int paymentTokenTimeout = 150;
+
+    private final OpenTelemetryUtils openTelemetryUtils = Mockito.mock(OpenTelemetryUtils.class);
 
     @AfterAll
     public static void afterAll() {
@@ -132,7 +146,12 @@ class TransactionRequestAuthorizationHandlerTest {
                 CHECKOUT_BASE_PATH,
                 paymentMethodsClient,
                 logoMappingUtils,
-                transactionTemplateWrapper
+                transactionTemplateWrapper,
+                transactionAuthRequestedQueueClient,
+                transientQueueEventsTtlSeconds,
+                paymentTokenTimeout,
+                tracingUtils,
+                openTelemetryUtils
         );
     }
 

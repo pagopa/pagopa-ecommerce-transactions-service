@@ -155,6 +155,19 @@ public class AzureStorageConfig {
         return buildQueueAsyncClient(storageConnectionString, queueName, jsonSerializerV2);
     }
 
+    @Bean("transactionAuthorizationRequestedQueueAsyncClientV2")
+    public QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClientV2(
+                                                                                @Value(
+                                                                                    "${azurestorage.connectionstringtransient}"
+                                                                                ) String storageConnectionString,
+                                                                                @Value(
+                                                                                    "${azurestorage.queues.transactionauthorizationrequested.name}"
+                                                                                ) String queueName,
+                                                                                JsonSerializer jsonSerializerV2
+    ) {
+        return buildQueueAsyncClient(storageConnectionString, queueName, jsonSerializerV2);
+    }
+
     private QueueAsyncClient buildQueueAsyncClient(
                                                    String storageConnectionString,
                                                    String queueName,

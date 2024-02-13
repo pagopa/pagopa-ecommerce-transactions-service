@@ -61,10 +61,10 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
 
     protected final TracingUtils tracingUtils;
     protected final OpenTelemetryUtils openTelemetryUtils;
-    private final QueueAsyncClient transactionAuthRequestedQueueAsyncClientV2;
+    private final QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClientV2;
 
     protected final Integer paymentTokenTimeout;
-    protected final int transientQueuesTTLSeconds;
+    protected final Integer transientQueuesTTLSeconds;
 
     @Autowired
     public TransactionRequestAuthorizationHandler(
@@ -76,10 +76,10 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             LogoMappingUtils logoMappingUtils,
             TransactionTemplateWrapper transactionTemplateWrapper,
             @Qualifier(
-                    "transactionAuthRequestedQueueAsyncClientV2"
-            ) QueueAsyncClient transactionAuthRequestedQueueAsyncClientV2,
-            int transientQueuesTTLSeconds,
-            Integer paymentTokenTimeout,
+                "transactionAuthorizationRequestedQueueAsyncClientV2"
+            ) QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClientV2,
+            @Value("${azurestorage.queues.transientQueues.ttlSeconds}") Integer transientQueuesTTLSeconds,
+            @Value("${payment.token.validity}") Integer paymentTokenTimeout,
             TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils
     ) {
@@ -94,7 +94,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         this.paymentMethodsClient = paymentMethodsClient;
         this.tracingUtils = tracingUtils;
         this.openTelemetryUtils = openTelemetryUtils;
-        this.transactionAuthRequestedQueueAsyncClientV2 = transactionAuthRequestedQueueAsyncClientV2;
+        this.transactionAuthorizationRequestedQueueAsyncClientV2 = transactionAuthorizationRequestedQueueAsyncClientV2;
         this.paymentTokenTimeout = paymentTokenTimeout;
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
 
@@ -289,19 +289,36 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                             );
                                     return updateSession.then(
                                             transactionEventStoreRepository.save(authorizationEvent)
-                                                    .flatMap(                        e -> tracingUtils.traceMono(
-                                                                    this.getClass().getSimpleName(),
-                                                                    tracingInfo -> transactionAuthRequestedQueueAsyncClientV2.sendMessageWithResponse(
-                                                                            new QueueEvent<>(e, tracingInfo),
-                                                                            Duration.ofSeconds(paymentTokenTimeout),
-                                                                            Duration.ofSeconds(transientQueuesTTLSeconds)
-                                                                    )
-                                                            )
+                                                    .doOnNext(
+                                                            e -> {
+                                                                if (authorizationEvent.getData().getPaymentGateway()
+                                                                        .equals(PaymentGateway.NPG)) {
+                                                                    tracingUtils.traceMono(
+                                                                            this.getClass().getSimpleName(),
+                                                                            tracingInfo -> transactionAuthorizationRequestedQueueAsyncClientV2
+                                                                                    .sendMessageWithResponse(
+                                                                                            new QueueEvent<>(
+                                                                                                    e,
+                                                                                                    tracingInfo
+                                                                                            ),
+                                                                                            Duration.ofSeconds(
+                                                                                                    paymentTokenTimeout
+                                                                                            ),
+                                                                                            Duration.ofSeconds(
+                                                                                                    transientQueuesTTLSeconds
+                                                                                            )
+                                                                                    )
+                                                                    );
+                                                                }
+                                                            }
+                                                    )
                                                     .thenReturn(tuple6)
                                                     .map(
                                                             auth -> new RequestAuthorizationResponseDto()
                                                                     .authorizationUrl(tuple6.getT2())
-                                                                    .authorizationRequestId(tuple6.getT1())
+                                                                    .authorizationRequestId(
+                                                                            tuple6.getT1()
+                                                                    )
                                                     )
                                     );
                                 })
