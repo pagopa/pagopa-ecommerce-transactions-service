@@ -23,9 +23,14 @@ import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.configurations.AzureStorageConfig;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import it.pagopa.transactions.utils.*;
+import it.pagopa.transactions.utils.AuthRequestDataUtils;
+import it.pagopa.transactions.utils.EventVersion;
+import it.pagopa.transactions.utils.TransactionsUtils;
+import it.pagopa.transactions.utils.UUIDUtils;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.redis.AutoConfigureDataRedis;
 import reactor.core.publisher.Mono;
@@ -36,6 +41,7 @@ import reactor.util.function.Tuples;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL_STRING;
 import static org.mockito.ArgumentMatchers.any;
 
@@ -170,7 +176,8 @@ class TransactionServiceTest {
             transactionsUtils,
             transactionsEventStoreRepository,
             10,
-            EventVersion.V1
+            EventVersion.V1,
+            paymentRequestInfoRedisTemplateWrapper
     );
 
     private final TransactionsService transactionsServiceV2 = new TransactionsService(
@@ -207,7 +214,8 @@ class TransactionServiceTest {
             transactionsUtils,
             transactionsEventStoreRepository,
             10,
-            EventVersion.V2
+            EventVersion.V2,
+            paymentRequestInfoRedisTemplateWrapper
     );
 
     @Test
