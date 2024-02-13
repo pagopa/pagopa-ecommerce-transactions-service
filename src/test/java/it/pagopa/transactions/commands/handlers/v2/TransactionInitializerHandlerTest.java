@@ -131,7 +131,6 @@ class TransactionInitializerHandlerTest {
         paymentNoticeInfoDto.setRptId(rptId.value());
         requestDto.setEmail(EMAIL_STRING);
         requestDto.setOrderId(ORDER_ID);
-        requestDto.setCorrelationId(CORRELATION_ID);
         paymentNoticeInfoDto.setAmount(1200);
         TransactionActivateCommand command = new TransactionActivateCommand(
                 rptId,
@@ -139,7 +138,7 @@ class TransactionInitializerHandlerTest {
                         requestDto.getIdCart(),
                         requestDto.getEmail(),
                         requestDto.getOrderId(),
-                        requestDto.getCorrelationId(),
+                        CORRELATION_ID,
                         requestDto.getPaymentNotices().stream().map(
                                 el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
                                         null,

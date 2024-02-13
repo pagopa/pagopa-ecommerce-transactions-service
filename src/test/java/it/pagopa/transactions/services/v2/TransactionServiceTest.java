@@ -124,6 +124,7 @@ class TransactionServiceTest {
                         transactionsService.newTransaction(
                                 transactionRequestDto,
                                 clientIdDto,
+                                UUID.randomUUID(),
                                 new TransactionId(transactionActivatedEvent.getTransactionId())
                         )
                 )
