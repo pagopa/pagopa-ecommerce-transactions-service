@@ -60,6 +60,7 @@ public class TransactionsController implements V2Api {
     @Override
     public Mono<ResponseEntity<NewTransactionResponseDto>> newTransaction(
                                                                           ClientIdDto xClientId,
+                                                                          UUID correlationId,
                                                                           Mono<NewTransactionRequestDto> newTransactionRequest,
                                                                           ServerWebExchange exchange
     ) {
@@ -74,7 +75,7 @@ public class TransactionsController implements V2Api {
                             )
 
                     );
-                    return transactionsService.newTransaction(ntr, xClientId, transactionId);
+                    return transactionsService.newTransaction(ntr, xClientId, correlationId, transactionId);
                 })
                 .map(ResponseEntity::ok)
                 .contextWrite(

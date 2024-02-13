@@ -51,6 +51,7 @@ public class TransactionsService {
     public Mono<NewTransactionResponseDto> newTransaction(
                                                           NewTransactionRequestDto newTransactionRequestDto,
                                                           ClientIdDto clientIdDto,
+                                                          UUID correlationId,
                                                           TransactionId transactionId
     ) {
         Transaction.ClientId clientId = Transaction.ClientId.fromString(
@@ -69,6 +70,7 @@ public class TransactionsService {
                         newTransactionRequestDto.getIdCart(),
                         newTransactionRequestDto.getEmail(),
                         newTransactionRequestDto.getOrderId(),
+                        correlationId,
                         newTransactionRequestDto.getPaymentNotices().stream().map(
                                 el -> new PaymentNotice(
                                         null,
