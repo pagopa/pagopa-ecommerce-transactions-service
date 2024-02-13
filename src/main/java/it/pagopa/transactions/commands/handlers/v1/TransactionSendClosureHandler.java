@@ -13,7 +13,6 @@ import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.utils.EuroUtils;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.*;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
@@ -30,6 +29,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
@@ -52,7 +52,6 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
     private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v1.TransactionClosureData> transactionEventStoreRepository;
     private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v1.TransactionRefundedData> transactionRefundedEventStoreRepository;
     private final TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository;
-    private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper;
     private final NodeForPspClient nodeForPspClient;
     private final QueueAsyncClient closureRetryQueueAsyncClient;
     private final QueueAsyncClient refundQueueAsyncClient;
@@ -62,7 +61,6 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
             TransactionsEventStoreRepository<TransactionClosureData> transactionEventStoreRepository,
             TransactionsEventStoreRepository<Void> transactionClosureErrorEventStoreRepository,
             TransactionsEventStoreRepository<TransactionRefundedData> transactionRefundedEventStoreRepository,
-            PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
             NodeForPspClient nodeForPspClient,
             @Qualifier(
                 "transactionClosureRetryQueueAsyncClientV1"
@@ -88,7 +86,6 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionClosureErrorEventStoreRepository = transactionClosureErrorEventStoreRepository;
         this.transactionRefundedEventStoreRepository = transactionRefundedEventStoreRepository;
-        this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
         this.closureRetryQueueAsyncClient = closureRetryQueueAsyncClient;
         this.refundQueueAsyncClient = refundQueueAsyncClient;
         this.nodeForPspClient = nodeForPspClient;
@@ -121,14 +118,23 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                             .getTransactionAuthorizationCompletedData();
                     it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData transactionActivatedData = tx
                             .getTransactionActivatedData();
-                    BigDecimal amount = EuroUtils.euroCentsToEuro(
-                            tx.getPaymentNotices().stream()
-                                    .mapToInt(
-                                            paymentNotice -> paymentNotice.transactionAmount().value()
-                                    ).sum()
+
+                    Integer amount = tx.getPaymentNotices().stream()
+                            .mapToInt(
+                                    paymentNotice -> paymentNotice.transactionAmount().value()
+                            ).sum();
+                    Integer fee = transactionAuthorizationRequestData.getFee();
+                    Integer totalAmount = amount + fee;
+
+                    BigDecimal amountEuroCents = BigDecimal.valueOf(
+                            amount
                     );
-                    BigDecimal fee = EuroUtils.euroCentsToEuro(transactionAuthorizationRequestData.getFee());
-                    BigDecimal totalAmount = amount.add(fee);
+                    BigDecimal feeEuroCents = BigDecimal.valueOf(fee);
+                    BigDecimal totalAmountEuroCents = BigDecimal.valueOf(totalAmount);
+
+                    BigDecimal feeEuro = EuroUtils.euroCentsToEuro(fee);
+                    BigDecimal totalAmountEuro = EuroUtils.euroCentsToEuro(totalAmount);
+
                     ClosePaymentRequestV2Dto.OutcomeEnum outcome = authorizationResultToOutcomeV2(
                             transactionAuthorizationCompletedData.getAuthorizationResultDto()
                     );
@@ -147,9 +153,9 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                                             authRequestData,
                                             transactionAuthorizationRequestData,
                                             transactionAuthorizationCompletedData,
-                                            fee,
-                                            amount,
-                                            totalAmount,
+                                            feeEuroCents,
+                                            amountEuroCents,
+                                            totalAmountEuroCents,
                                             outcome,
                                             tx.getTransactionId(),
                                             tx.getCreationDate()
@@ -160,8 +166,8 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                                 .idBrokerPSP(transactionAuthorizationRequestData.getBrokerName())
                                 .idChannel(transactionAuthorizationRequestData.getPspChannelCode())
                                 .transactionId(tx.getTransactionId().value())
-                                .totalAmount(totalAmount)
-                                .fee(fee)
+                                .totalAmount(totalAmountEuro)
+                                .fee(feeEuro)
                                 .timestampOperation(updateAuthorizationRequestDto.getTimestampOperation())
                                 .paymentMethod(transactionAuthorizationRequestData.getPaymentTypeCode())
                                 .additionalPaymentInformations(
@@ -171,7 +177,7 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                                                                 .fromValue(authRequestData.outcome())
                                                 )
                                                 .authorizationCode(authRequestData.authorizationCode())
-                                                .fee(fee.toString())
+                                                .fee(feeEuro.toString())
                                                 .timestampOperation(
                                                         updateAuthorizationRequestDto
                                                                 .getTimestampOperation()
@@ -179,7 +185,7 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                                                                 .truncatedTo(ChronoUnit.SECONDS)
                                                                 .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                                 )
-                                                .totalAmount(totalAmount.toString())
+                                                .totalAmount(totalAmountEuro.toString())
                                                 .rrn(authRequestData.rrn())
                                 );
                     }
@@ -227,9 +233,16 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                                 boolean unrecoverableError = exception instanceof BadGatewayException responseStatusException
                                         && responseStatusException.getHttpStatus().is4xxClientError();
 
+                                // TODO: waiting for nodo update in order to have an error code to avoid check
+                                // on fixed string
+                                boolean isRefundable = exception instanceof BadGatewayException responseStatusException
+                                        && HttpStatus.UNPROCESSABLE_ENTITY
+                                                .equals(responseStatusException.getHttpStatus())
+                                        && "Node did not receive RPT yet".equals(responseStatusException.getDetail());
+
                                 log.error(
-                                        "Got exception while invoking closePaymentV2 unrecoverable error: %s"
-                                                .formatted(unrecoverableError),
+                                        "Got exception while invoking closePaymentV2 unrecoverable error: %s - isRefundable: %s "
+                                                .formatted(unrecoverableError, isRefundable),
                                         exception
                                 );
                                 // the closure error event is build and sent iff the transaction was previously
@@ -319,45 +332,53 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                                             )
                                     );
                                 }
+
                                 // Unrecoverable error calling Nodo for perform close payment.
                                 // Generate closure event setting closure outcome to KO
                                 // and enqueue refund request event
-                                return eventSaved
-                                        .flatMap(
+                                if (isRefundable) {
+                                    return eventSaved
+                                            .flatMap(
 
-                                                closureErrorEvent -> sendRefundRequestEvent(
-                                                        Either.left(closureErrorEvent),
-                                                        transactionAuthorizationCompletedData
-                                                                .getAuthorizationResultDto(),
-                                                        tx.getTransactionId()
-                                                ).map(
-                                                        (refundRequestedEvent) -> Tuples.of(
-                                                                Optional.<BaseTransactionEvent<?>>of(
-                                                                        refundRequestedEvent
-                                                                ),
-                                                                Either.<BaseTransactionEvent<?>, BaseTransactionEvent<?>>left(
-                                                                        closureErrorEvent
-                                                                )
-                                                        )
+                                                    closureErrorEvent -> sendRefundRequestEvent(
+                                                            Either.left(closureErrorEvent),
+                                                            transactionAuthorizationCompletedData
+                                                                    .getAuthorizationResultDto(),
+                                                            tx.getTransactionId()
+                                                    ).map(
+                                                            (refundRequestedEvent) -> Tuples.of(
+                                                                    Optional.<BaseTransactionEvent<?>>of(
+                                                                            refundRequestedEvent
+                                                                    ),
+                                                                    Either.<BaseTransactionEvent<?>, BaseTransactionEvent<?>>left(
+                                                                            closureErrorEvent
+                                                                    )
+                                                            )
 
-                                                ).switchIfEmpty(
-                                                        Mono.just(
-                                                                Tuples.of(
-                                                                        Optional.empty(),
-                                                                        Either.left(closureErrorEvent)
-                                                                )
-                                                        )
+                                                    ).switchIfEmpty(
+                                                            Mono.just(
+                                                                    Tuples.of(
+                                                                            Optional.empty(),
+                                                                            Either.left(closureErrorEvent)
+                                                                    )
+                                                            )
 
-                                                )
-                                        );
-
-                            })
-                            .doFinally(response -> {
-                                tx.getPaymentNotices().forEach(el -> {
-                                    log.info("Invalidate cache for RptId : {}", el.rptId().value());
-                                    paymentRequestInfoRedisTemplateWrapper.deleteById(el.rptId().value());
+                                                    )
+                                            );
                                 }
+
+                                /*
+                                 * When a transaction is not recoverable through retries and cannot be refunded,
+                                 * then the API returns a 502 status code along with the reason from the Node's
+                                 * status code. The transaction status remains AUTHORIZATION_COMPLETED
+                                 */
+                                return Mono.error(
+                                        new BadGatewayException(
+                                                "Error while invoke Nodo closePayment",
+                                                HttpStatus.BAD_GATEWAY
+                                        )
                                 );
+
                             });
                 });
     }

@@ -25,6 +25,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.ServerWebInputException;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import javax.validation.ConstraintViolationException;
 import java.time.Duration;
@@ -159,13 +161,15 @@ public class TransactionsController implements TransactionsApi {
                         )
                         .flatMap(
                                 updateAuthorizationRequest -> {
-                                    UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger trigger = switch (updateAuthorizationRequest.getOutcomeGateway()) {
+                                    Tuple2<UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger, Optional<String>> authDetails = switch (updateAuthorizationRequest.getOutcomeGateway()) {
                                         case OutcomeXpayGatewayDto ignored ->
-                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY;
+                                                Tuples.of(UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY, Optional.empty());
                                         case OutcomeVposGatewayDto ignored ->
-                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS;
+                                                Tuples.of(UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS, Optional.empty());
                                         case OutcomeNpgGatewayDto ignored ->
-                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG;
+                                                Tuples.of(UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG, Optional.empty());
+                                        case OutcomeRedirectGatewayDto outcomeRedirectGatewayDto ->
+                                                Tuples.of(UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT, Optional.of(outcomeRedirectGatewayDto.getPspId()));
                                         default ->
                                                 throw new InvalidRequestException("Input outcomeGateway not map to any trigger: [%s]".formatted(updateAuthorizationRequest.getOutcomeGateway()));
                                     };
@@ -179,7 +183,8 @@ public class TransactionsController implements TransactionsApi {
                                                             .traceStatusUpdateOperation(
                                                                     new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                                                                             UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
-                                                                            trigger
+                                                                            authDetails.getT1(),
+                                                                            authDetails.getT2()
                                                                     )
                                                             )
                                             )
@@ -190,7 +195,8 @@ public class TransactionsController implements TransactionsApi {
                                                 updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
                                                         new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                                                                 outcome,
-                                                                trigger
+                                                                authDetails.getT1(),
+                                                                authDetails.getT2()
                                                         )
                                                 );
                                             });
@@ -380,11 +386,13 @@ public class TransactionsController implements TransactionsApi {
                 case "XPAY" -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY;
                 case "VPOS" -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS;
                 case "NPG" -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG;
+                case "REDIRECT" -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT;
                 default -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.UNKNOWN;
             };
             statusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                     UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
-                    trigger
+                    trigger,
+                    Optional.empty()
             );
         } else if (contextPath.endsWith("user-receipts")) {
             statusUpdateInfo = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(

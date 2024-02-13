@@ -88,6 +88,9 @@ class TransactionRequestUserReceiptHandlerTest {
                 new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
         );
 
+        TransactionClosureRequestedEvent closureRequestedEvent = TransactionTestUtils
+                .transactionClosureRequestedEvent();
+
         TransactionClosedEvent closureSentEvent = TransactionTestUtils
                 .transactionClosedEvent(TransactionClosureData.Outcome.OK);
 
@@ -125,6 +128,7 @@ class TransactionRequestUserReceiptHandlerTest {
                 transactionActivatedEvent,
                 authorizationRequestedEvent,
                 authorizationCompletedEvent,
+                closureRequestedEvent,
                 closureSentEvent
         ));
 
@@ -168,6 +172,9 @@ class TransactionRequestUserReceiptHandlerTest {
                 new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
         );
 
+        TransactionClosureRequestedEvent closureRequestedEvent = TransactionTestUtils
+                .transactionClosureRequestedEvent();
+
         TransactionClosedEvent closureSentEvent = TransactionTestUtils
                 .transactionClosedEvent(TransactionClosureData.Outcome.OK);
 
@@ -205,6 +212,7 @@ class TransactionRequestUserReceiptHandlerTest {
                 transactionActivatedEvent,
                 authorizationRequestedEvent,
                 authorizationCompletedEvent,
+                closureRequestedEvent,
                 closureSentEvent
         ));
 
@@ -248,6 +256,9 @@ class TransactionRequestUserReceiptHandlerTest {
                 new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
         );
 
+        TransactionClosureRequestedEvent closureRequestedEvent = TransactionTestUtils
+                .transactionClosureRequestedEvent();
+
         TransactionClosedEvent closureSentEvent = TransactionTestUtils
                 .transactionClosedEvent(TransactionClosureData.Outcome.OK);
 
@@ -285,6 +296,7 @@ class TransactionRequestUserReceiptHandlerTest {
                 transactionActivatedEvent,
                 authorizationRequestedEvent,
                 authorizationCompletedEvent,
+                closureRequestedEvent,
                 closureSentEvent
         ));
 

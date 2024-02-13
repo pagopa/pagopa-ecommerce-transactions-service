@@ -30,6 +30,13 @@ paths:
           description: Transaction origin (populated by APIM policy)
           schema:
             $ref: '#/components/schemas/ClientId'
+        - in: header
+          name: x-correlation-id
+          required: true
+          description: NPG correlation id
+          schema:
+            $ref: '#/components/schemas/CorrelationId'
+
       summary: Make a new transaction
       requestBody:
         $ref: "#/components/requestBodies/NewTransactionRequest"
@@ -235,6 +242,7 @@ components:
         - ACTIVATED
         - AUTHORIZATION_REQUESTED
         - AUTHORIZATION_COMPLETED
+        - CLOSURE_REQUESTED
         - CLOSED
         - CLOSURE_ERROR
         - NOTIFIED_OK
@@ -257,6 +265,10 @@ components:
         - IO
         - CHECKOUT
         - CHECKOUT_CART
+    CorrelationId:
+      description: correlationId
+      type: string
+      format: uuid
     Transfer:
       type: object
       description: The dto that contains information about the creditor entities

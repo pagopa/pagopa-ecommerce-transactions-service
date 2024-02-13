@@ -6,6 +6,7 @@ import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData.PaymentGateway;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestedEvent;
+import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationRequestedData;
@@ -136,19 +137,27 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                         )
                 );
 
-        Mono<Tuple6<String, String, Optional<String>, Optional<String>, Optional<Integer>, PaymentGateway>> monoNpgCards = npgAuthRequestPipeline(
-                authorizationRequestData
-        )
-                .map(
-                        tuple -> Tuples
-                                .of(
-                                        tuple.getT1(),
-                                        tuple.getT2(),
-                                        tuple.getT3(),
-                                        tuple.getT4(),
-                                        Optional.empty(),
-                                        PaymentGateway.NPG
+        Mono<Tuple6<String, String, Optional<String>, Optional<String>, Optional<Integer>, PaymentGateway>> monoNpgCards = transactionActivated
+                .flatMap(
+                        tx -> npgAuthRequestPipeline(
+                                authorizationRequestData,
+                                tx.getTransactionActivatedData()
+                                        .getTransactionGatewayActivationData()instanceof NpgTransactionGatewayActivationData transactionGatewayActivationData
+                                                ? transactionGatewayActivationData.getCorrelationId()
+                                                : null
+                        )
+                                .map(
+                                        tuple -> Tuples
+                                                .of(
+                                                        tuple.getT1(),
+                                                        tuple.getT2(),
+                                                        tuple.getT3(),
+                                                        tuple.getT4(),
+                                                        Optional.empty(),
+                                                        PaymentGateway.NPG
+                                                )
                                 )
+
                 );
 
         Mono<Tuple6<String, String, Optional<String>, Optional<String>, Optional<Integer>, PaymentGateway>> monoRedirect = transaction

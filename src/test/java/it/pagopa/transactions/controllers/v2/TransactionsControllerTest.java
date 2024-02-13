@@ -114,17 +114,18 @@ class TransactionsControllerTest {
                                     .newTransaction(
                                             newTransactionRequestDto,
                                             clientIdDto,
+                                            UUID.randomUUID(),
                                             transactionId
                                     )
                     )
                     .thenReturn(Mono.just(response));
 
             ResponseEntity<NewTransactionResponseDto> responseEntity = transactionsController
-                    .newTransaction(clientIdDto, Mono.just(newTransactionRequestDto), null).block();
+                    .newTransaction(clientIdDto, UUID.randomUUID(), Mono.just(newTransactionRequestDto), null).block();
 
             // Verify mock
             Mockito.verify(transactionsService, Mockito.times(1))
-                    .newTransaction(newTransactionRequestDto, clientIdDto, transactionId);
+                    .newTransaction(newTransactionRequestDto, clientIdDto, UUID.randomUUID(), transactionId);
 
             // Verify status code and response
             assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -357,7 +358,7 @@ class TransactionsControllerTest {
     void shouldHandleTransactionCreatedWithMailCaseInsensitive(String email) {
         Mockito.when(jwtTokenUtils.generateToken(any(SecretKey.class), anyInt(), any(Claims.class)))
                 .thenReturn(Either.right(""));
-        Mockito.when(transactionsService.newTransaction(any(), any(), any()))
+        Mockito.when(transactionsService.newTransaction(any(), any(), any(), any()))
                 .thenReturn(Mono.just(new NewTransactionResponseDto()));
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
                 .addPaymentNoticesItem(
@@ -373,6 +374,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("X-Client-Id", "CHECKOUT")
+                .header("x-correlation-id", UUID.randomUUID().toString())
                 .exchange()
                 .expectStatus()
                 .isOk();
@@ -382,7 +384,7 @@ class TransactionsControllerTest {
     void shouldReturnBadRequestForInvalidMail() {
         Mockito.when(jwtTokenUtils.generateToken(any(SecretKey.class), anyInt(), any(Claims.class)))
                 .thenReturn(Either.right(""));
-        Mockito.when(transactionsService.newTransaction(any(), any(), any()))
+        Mockito.when(transactionsService.newTransaction(any(), any(), any(), any()))
                 .thenReturn(Mono.just(new NewTransactionResponseDto()));
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
                 .addPaymentNoticesItem(
@@ -397,6 +399,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("X-Client-Id", "CHECKOUT")
+                .header("x-correlation-id", UUID.randomUUID().toString())
                 .exchange()
                 .expectStatus()
                 .isBadRequest()

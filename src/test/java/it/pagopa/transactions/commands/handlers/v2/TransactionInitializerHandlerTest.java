@@ -48,6 +48,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static it.pagopa.ecommerce.commons.v2.TransactionTestUtils.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -89,6 +90,8 @@ class TransactionInitializerHandlerTest {
     private final OpenTelemetryUtils openTelemetryUtils = Mockito.mock(OpenTelemetryUtils.class);
 
     private static final String ORDER_ID = "orderId";
+
+    private static final UUID CORRELATION_ID = UUID.randomUUID();
 
     private static final String STRONG_KEY = "ODMzNUZBNTZENDg3NTYyREUyNDhGNDdCRUZDNzI3NDMzMzQwNTFEREZGQ0MyQzA5Mjc1RjY2NTQ1NDk5MDMxNzU5NDc0NUVFMTdDMDhGNzk4Q0Q3RENFMEJBODE1NURDREExNEY2Mzk4QzFEMTU0NTExNjUyMEExMzMwMTdDMDk";
 
@@ -135,6 +138,7 @@ class TransactionInitializerHandlerTest {
                         requestDto.getIdCart(),
                         requestDto.getEmail(),
                         requestDto.getOrderId(),
+                        CORRELATION_ID,
                         requestDto.getPaymentNotices().stream().map(
                                 el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
                                         null,
@@ -249,6 +253,11 @@ class TransactionInitializerHandlerTest {
                 ((NpgTransactionGatewayActivationData) event.getData().getTransactionGatewayActivationData())
                         .getOrderId()
         );
+        assertEquals(
+                CORRELATION_ID.toString(),
+                ((NpgTransactionGatewayActivationData) event.getData().getTransactionGatewayActivationData())
+                        .getCorrelationId()
+        );
         assertNotNull(event.getEventCode());
         assertNotNull(event.getCreationDate());
         assertNotNull(event.getId());
@@ -278,6 +287,7 @@ class TransactionInitializerHandlerTest {
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
                         requestDto.getEmail(),
+                        null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
                                 el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
@@ -413,6 +423,7 @@ class TransactionInitializerHandlerTest {
                         requestDto.getIdCart(),
                         requestDto.getEmail(),
                         null,
+                        null,
                         requestDto.getPaymentNotices().stream().map(
                                 el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
                                         null,
@@ -526,6 +537,7 @@ class TransactionInitializerHandlerTest {
                         requestDto.getIdCart(),
                         requestDto.getEmail(),
                         null,
+                        null,
                         requestDto.getPaymentNotices().stream().map(
                                 el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
                                         null,
@@ -615,6 +627,7 @@ class TransactionInitializerHandlerTest {
                         requestDto.getIdCart(),
                         requestDto.getEmail(),
                         null,
+                        null,
                         requestDto.getPaymentNotices().stream().map(
                                 el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
                                         null,
@@ -683,6 +696,7 @@ class TransactionInitializerHandlerTest {
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
                         requestDto.getEmail(),
+                        null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
                                 el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
@@ -797,6 +811,7 @@ class TransactionInitializerHandlerTest {
                         requestDto.getIdCart(),
                         requestDto.getEmail(),
                         null,
+                        null,
                         requestDto.getPaymentNotices().stream().map(
                                 el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
                                         null,
@@ -909,6 +924,7 @@ class TransactionInitializerHandlerTest {
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
                         requestDto.getEmail(),
+                        null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
                                 el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(

@@ -83,13 +83,11 @@ import static org.mockito.Mockito.*;
             it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler.class,
             it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler.class,
-            it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureHandler.class,
+            it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureRequestHandler.class,
             it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler.class,
-            it.pagopa.transactions.projections.handlers.v2.RefundRequestProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler.class,
-            it.pagopa.transactions.projections.handlers.v2.ClosureSendProjectionHandler.class,
+            it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler.class,
-            it.pagopa.transactions.projections.handlers.v2.ClosureErrorProjectionHandler.class,
             it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler.class,
             it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler.class,
@@ -141,8 +139,8 @@ class TransactionServiceTests {
     private QueueAsyncClient queueAsyncClientClosureRetryV2;
 
     @MockBean
-    @Qualifier("transactionRefundQueueAsyncClientV2")
-    private QueueAsyncClient queueAsyncClientRefundV2;
+    @Qualifier("transactionClosureQueueAsyncClientV2")
+    private QueueAsyncClient transactionClosureQueueAsyncClientV2;
 
     @MockBean
     private TransactionActivateHandler transactionActivateHandler;
@@ -192,17 +190,12 @@ class TransactionServiceTests {
     private it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler refundRequestProjectionHandlerV1;
 
     @MockBean
-    private it.pagopa.transactions.projections.handlers.v2.RefundRequestProjectionHandler refundRequestProjectionHandlerV2;
-    @MockBean
     private it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler closureSendProjectionHandlerV1;
 
     @MockBean
-    private it.pagopa.transactions.projections.handlers.v2.ClosureSendProjectionHandler closureSendProjectionHandlerV2;
+    private it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler closureRequestedProjectionHandler;
     @MockBean
     private it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler closureErrorProjectionHandlerV1;
-
-    @MockBean
-    private it.pagopa.transactions.projections.handlers.v2.ClosureErrorProjectionHandler closureErrorProjectionHandlerV2;
 
     @MockBean
     private TransactionsEventStoreRepository transactionsEventStoreRepository;
@@ -284,10 +277,10 @@ class TransactionServiceTests {
                 .feeTotal(null)
                 .status(TransactionStatusDto.ACTIVATED)
                 .idCart("ecIdCart")
-                .paymentGateway("VPOS")
+                .gateway("VPOS")
                 .sendPaymentResultOutcome(TransactionInfoDto.SendPaymentResultOutcomeEnum.OK)
                 .authorizationCode("00")
-                .authorizationErrorCode(null);
+                .errorCode(null);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
         when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
@@ -339,10 +332,10 @@ class TransactionServiceTests {
                 .feeTotal(null)
                 .status(TransactionStatusDto.ACTIVATED)
                 .idCart("ecIdCart")
-                .paymentGateway(null)
+                .gateway(null)
                 .sendPaymentResultOutcome(null)
                 .authorizationCode(null)
-                .authorizationErrorCode(null);
+                .errorCode(null);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
         when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
@@ -457,6 +450,12 @@ class TransactionServiceTests {
         assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
         assertNotNull(postePayAuthorizationResponse);
         assertFalse(postePayAuthorizationResponse.getAuthorizationUrl().isEmpty());
+        // verify that cache delete is called for each payment notice
+        transaction.getPaymentNotices().forEach(
+                paymentNotice -> verify(paymentRequestInfoRedisTemplateWrapper, times(1))
+                        .deleteById(paymentNotice.getRptId())
+        );
+
     }
 
     @Test
@@ -560,6 +559,11 @@ class TransactionServiceTests {
         AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
         assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
+        // verify that cache delete is called for each payment notice
+        transaction.getPaymentNotices().forEach(
+                paymentNotice -> verify(paymentRequestInfoRedisTemplateWrapper, times(1))
+                        .deleteById(paymentNotice.getRptId())
+        );
     }
 
     @Test
@@ -584,6 +588,8 @@ class TransactionServiceTests {
                     requestAuthorizationResponseDtoMono.block();
                 }
         );
+        // verify that cache delete is never called
+        verify(paymentRequestInfoRedisTemplateWrapper, times(0)).deleteById(any());
     }
 
     @Test
@@ -706,7 +712,14 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsServiceV1
@@ -982,6 +995,11 @@ class TransactionServiceTests {
             assertEquals(cardAuthRequestDetailsDto.getCvv(), cardDetails.getCvv());
             assertEquals(cardAuthRequestDetailsDto.getPan(), cardDetails.getPan());
             assertEquals(cardAuthRequestDetailsDto.getExpiryDate(), cardDetails.getExpiryDate());
+            // verify that cache delete is called for each payment notice
+            transaction.getPaymentNotices().forEach(
+                    paymentNotice -> verify(paymentRequestInfoRedisTemplateWrapper, times(1))
+                            .deleteById(paymentNotice.getRptId())
+            );
         } else {
             fail("AuthorizationRequestData.authDetails null or not instance of CardAuthRequestDetailsDto");
         }
@@ -1054,6 +1072,8 @@ class TransactionServiceTests {
                 )
                 .expectErrorMatches(exception -> exception instanceof TransactionAmountMismatchException)
                 .verify();
+        // verify that delete cache is neve
+        verify(paymentRequestInfoRedisTemplateWrapper, times(0)).deleteById(any());
     }
 
     @Test
@@ -1130,6 +1150,8 @@ class TransactionServiceTests {
                 )
                 .expectErrorMatches(exception -> exception instanceof PaymentNoticeAllCCPMismatchException)
                 .verify();
+        // verify that cache delete is called for each payment notice
+        verify(paymentRequestInfoRedisTemplateWrapper, times(0)).deleteById(any());
     }
 
     @Test
@@ -1240,7 +1262,14 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
@@ -1316,7 +1345,14 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
@@ -1389,7 +1425,14 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
@@ -1526,7 +1569,14 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
@@ -1656,7 +1706,14 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
@@ -1788,10 +1845,18 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
+        Hooks.onOperatorDebug();
         TransactionInfoDto transactionInfoResponse = transactionsServiceV1
                 .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest).block();
 
@@ -1918,9 +1983,14 @@ class TransactionServiceTests {
                 )
         );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
-        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn(Flux.empty());
+                .thenReturn(
+                        Flux.fromIterable(
+                                List.of(
+                                        TransactionTestUtils.transactionActivateEvent(),
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
         when(transactionsUtils.convertEnumerationV1(any()))
                 .thenCallRealMethod();
         /* test */
@@ -2034,6 +2104,11 @@ class TransactionServiceTests {
         assertEquals(contractId, captureData.contractId().get());
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
         assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
+        // verify that cache delete is called for each payment notice
+        transaction.getPaymentNotices().forEach(
+                paymentNotice -> verify(paymentRequestInfoRedisTemplateWrapper, times(1))
+                        .deleteById(paymentNotice.getRptId())
+        );
     }
 
     @Test
@@ -2122,6 +2197,11 @@ class TransactionServiceTests {
         assertEquals(paymentMethod.getName(), captureData.brand());
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
         assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
+        // verify that cache delete is called for each payment notice
+        transaction.getPaymentNotices().forEach(
+                paymentNotice -> verify(paymentRequestInfoRedisTemplateWrapper, times(1))
+                        .deleteById(paymentNotice.getRptId())
+        );
     }
 
     @Test
@@ -2219,6 +2299,11 @@ class TransactionServiceTests {
         assertEquals("N/A", captureData.brand());
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
         assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
+        // verify that cache delete is called for each payment notice
+        transaction.getPaymentNotices().forEach(
+                paymentNotice -> verify(paymentRequestInfoRedisTemplateWrapper, times(1))
+                        .deleteById(paymentNotice.getRptId())
+        );
     }
 
 }
