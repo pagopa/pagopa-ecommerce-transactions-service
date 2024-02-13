@@ -294,20 +294,24 @@ public class PaymentGatewayClient {
 
     public Mono<Tuple2<String, FieldsDto>> requestNpgBuildSession(
                                                                   AuthorizationRequestData authorizationData,
+                                                                  String correlationId,
                                                                   boolean isWalletPayment
+
     ) {
-        return requestNpgBuildSession(authorizationData, false, isWalletPayment);
+        return requestNpgBuildSession(authorizationData, correlationId, false, isWalletPayment);
     }
 
     public Mono<Tuple2<String, FieldsDto>> requestNpgBuildApmPayment(
                                                                      AuthorizationRequestData authorizationData,
+                                                                     String correlationId,
                                                                      boolean isWalletPayment
     ) {
-        return requestNpgBuildSession(authorizationData, true, isWalletPayment);
+        return requestNpgBuildSession(authorizationData, correlationId, true, isWalletPayment);
     }
 
     private Mono<Tuple2<String, FieldsDto>> requestNpgBuildSession(
                                                                    AuthorizationRequestData authorizationData,
+                                                                   String correlationId,
                                                                    boolean isApmPayment,
                                                                    boolean isWalletPayment
     ) {
@@ -333,7 +337,6 @@ public class PaymentGatewayClient {
                         orderIdJwtToken -> {
                             String orderId = orderIdJwtToken.getT1();
                             String jwtToken = orderIdJwtToken.getT2();
-                            UUID correlationId = UUID.randomUUID();
                             URI returnUrlBasePath = URI.create(npgSessionUrlConfig.basePath());
                             URI outcomeResultUrl = UriComponentsBuilder.fromUriString(
                                     returnUrlBasePath.resolve(npgSessionUrlConfig.outcomeSuffix()).toString()
@@ -366,7 +369,7 @@ public class PaymentGatewayClient {
                                     apiKey -> {
                                         if (isApmPayment) {
                                             return npgClient.buildFormForPayment(
-                                                    correlationId,
+                                                    UUID.fromString(correlationId),
                                                     merchantUrl,
                                                     outcomeResultUrl,
                                                     notificationUrl,
@@ -390,7 +393,7 @@ public class PaymentGatewayClient {
                                             ).map(fieldsDto -> Tuples.of(orderId, fieldsDto));
                                         } else {
                                             return npgClient.buildForm(
-                                                    correlationId,
+                                                    UUID.fromString(correlationId),
                                                     merchantUrl,
                                                     outcomeResultUrl,
                                                     notificationUrl,
@@ -463,7 +466,10 @@ public class PaymentGatewayClient {
                 );
     }
 
-    public Mono<StateResponseDto> requestNpgCardsAuthorization(AuthorizationRequestData authorizationData) {
+    public Mono<StateResponseDto> requestNpgCardsAuthorization(
+                                                               AuthorizationRequestData authorizationData,
+                                                               String correlationId
+    ) {
         return Mono.just(authorizationData)
                 .filter(
                         authorizationRequestData -> "CP".equals(authorizationRequestData.paymentTypeCode())
@@ -501,12 +507,11 @@ public class PaymentGatewayClient {
                                 )
                         );
                     }
-                    final UUID correlationId = UUID.randomUUID();
                     final var pspNpgApiKey = npgPspApiKeysConfig.get(authorizationData.pspId());
                     return pspNpgApiKey.fold(
                             Mono::error,
                             apiKey -> npgClient.confirmPayment(
-                                    correlationId,
+                                    UUID.fromString(correlationId),
                                     authorizationData.sessionId().get(),
                                     grandTotal,
                                     apiKey

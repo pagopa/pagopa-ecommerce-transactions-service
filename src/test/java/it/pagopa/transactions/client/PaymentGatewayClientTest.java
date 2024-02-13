@@ -547,7 +547,7 @@ class PaymentGatewayClientTest {
         Mockito.when(npgClient.confirmPayment(any(), any(), any(), any())).thenReturn(Mono.just(ngpStateResponse));
 
         /* test */
-        StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData))
+        StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData, UUID.randomUUID().toString()))
                 .expectNext(ngpStateResponse)
                 .verifyComplete();
         String expectedApiKey = npgPspApiKeysConfig.get(authorizationData.pspId()).get();
@@ -629,7 +629,7 @@ class PaymentGatewayClientTest {
                 );
         /* test */
 
-        StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData))
+        StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData, UUID.randomUUID().toString()))
                 .expectErrorMatches(
                         error -> error instanceof AlreadyProcessedException &&
                                 ((AlreadyProcessedException) error).getTransactionId()
@@ -703,7 +703,7 @@ class PaymentGatewayClientTest {
                         )
                 );
         /* test */
-        StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData))
+        StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData, UUID.randomUUID().toString()))
                 .expectErrorMatches(
                         error -> error instanceof BadGatewayException
                 )
@@ -775,7 +775,7 @@ class PaymentGatewayClientTest {
                         )
                 );
         /* test */
-        StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData))
+        StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData, UUID.randomUUID().toString()))
                 .expectErrorMatches(
                         error -> error instanceof BadGatewayException
                 )
@@ -1784,6 +1784,7 @@ class PaymentGatewayClientTest {
         String orderId = "orderIdGenerated";
         String sessionId = "sessionId";
         String contractId = "contractId";
+        String correlationId = UUID.randomUUID().toString();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -1832,7 +1833,7 @@ class PaymentGatewayClientTest {
         /* preconditions */
         Mockito.when(
                 npgClient.buildForm(
-                        any(),
+                        eq(UUID.fromString(correlationId)),
                         any(),
                         any(),
                         any(),
@@ -1847,7 +1848,7 @@ class PaymentGatewayClientTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData, true))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData, correlationId, true))
                 .expectNext(responseRequestNpgBuildSession)
                 .verifyComplete();
 
@@ -1906,6 +1907,7 @@ class PaymentGatewayClientTest {
         String walletId = UUID.randomUUID().toString();
         String orderId = "orderIdGenerated";
         String contractId = "contractId";
+        String correlationId = UUID.randomUUID().toString();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -1952,7 +1954,7 @@ class PaymentGatewayClientTest {
         /* preconditions */
         Mockito.when(
                 npgClient.buildForm(
-                        any(),
+                        eq(UUID.fromString(correlationId)),
                         any(),
                         any(),
                         any(),
@@ -1983,7 +1985,7 @@ class PaymentGatewayClientTest {
                 );
         /* test */
 
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData, true))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData, correlationId, true))
                 .expectErrorMatches(
                         error -> error instanceof AlreadyProcessedException &&
                                 ((AlreadyProcessedException) error).getTransactionId()
@@ -1997,6 +1999,7 @@ class PaymentGatewayClientTest {
         String walletId = UUID.randomUUID().toString();
         String orderId = "orderIdGenerated";
         String contractId = "contractId";
+        String correlationId = UUID.randomUUID().toString();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -2043,7 +2046,7 @@ class PaymentGatewayClientTest {
         /* preconditions */
         Mockito.when(
                 npgClient.buildForm(
-                        any(),
+                        eq(UUID.fromString(correlationId)),
                         any(),
                         any(),
                         any(),
@@ -2073,7 +2076,7 @@ class PaymentGatewayClientTest {
                         )
                 );
         /* test */
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData, true))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData, correlationId, true))
                 .expectErrorMatches(
                         error -> error instanceof BadGatewayException
                 )
@@ -2085,6 +2088,7 @@ class PaymentGatewayClientTest {
         String walletId = UUID.randomUUID().toString();
         String orderId = "orderIdGenerated";
         String contractId = "contractId";
+        String correlationId = UUID.randomUUID().toString();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -2131,7 +2135,7 @@ class PaymentGatewayClientTest {
         /* preconditions */
         Mockito.when(
                 npgClient.buildForm(
-                        any(),
+                        eq(UUID.fromString(correlationId)),
                         any(),
                         any(),
                         any(),
@@ -2161,7 +2165,7 @@ class PaymentGatewayClientTest {
                         )
                 );
         /* test */
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData, true))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData, correlationId, true))
                 .expectErrorMatches(
                         error -> error instanceof BadGatewayException
                 )
@@ -2174,6 +2178,7 @@ class PaymentGatewayClientTest {
         String walletId = UUID.randomUUID().toString();
         String orderId = "orderIdGenerated";
         String contractId = "contractId";
+        String correlationId = UUID.randomUUID().toString();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -2220,7 +2225,7 @@ class PaymentGatewayClientTest {
         /* preconditions */
         Mockito.when(
                 npgClient.buildForm(
-                        any(),
+                        eq(UUID.fromString(correlationId)),
                         any(),
                         any(),
                         any(),
@@ -2233,7 +2238,7 @@ class PaymentGatewayClientTest {
                 )
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData, true))
+        StepVerifier.create(client.requestNpgBuildSession(authorizationData, correlationId, true))
                 .expectErrorMatches(error -> error instanceof BadGatewayException)
                 .verify();
         String npgNotificationUrl = UriComponentsBuilder
@@ -2313,6 +2318,7 @@ class PaymentGatewayClientTest {
         String orderId = "orderIdGenerated";
         String sessionId = "sessionId";
         String contractId = "contractId";
+        String correlationId = UUID.randomUUID().toString();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -2366,7 +2372,7 @@ class PaymentGatewayClientTest {
         /* preconditions */
         Mockito.when(
                 npgClient.buildFormForPayment(
-                        any(),
+                        eq(UUID.fromString(correlationId)),
                         any(),
                         any(),
                         any(),
@@ -2382,7 +2388,7 @@ class PaymentGatewayClientTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
-        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData, true))
+        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData, correlationId, true))
                 .expectNext(responseRequestNpgBuildSession)
                 .verifyComplete();
 
@@ -2442,6 +2448,7 @@ class PaymentGatewayClientTest {
         String orderId = "orderIdGenerated";
         String sessionId = "sessionId";
         String contractId = "contractId";
+        String correlationId = UUID.randomUUID().toString();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -2507,7 +2514,7 @@ class PaymentGatewayClientTest {
                 .substring(0, npgNotificationUrl.indexOf("sessionToken=") + "sessionToken=".length());
         Mockito.when(
                 npgClient.buildFormForPayment(
-                        any(),
+                        eq(UUID.fromString(correlationId)),
                         eq(URI.create(sessionUrlConfig.basePath())),
                         eq(
                                 URI
@@ -2542,7 +2549,7 @@ class PaymentGatewayClientTest {
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
         /* test */
-        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData, true))
+        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData, correlationId, true))
                 .expectError(NpgApiKeyMissingPspRequestedException.class)
                 .verify();
 
@@ -2557,6 +2564,7 @@ class PaymentGatewayClientTest {
         String walletId = UUID.randomUUID().toString();
         String orderId = "orderIdGenerated";
         String sessionId = "sessionId";
+        String correlationId = UUID.randomUUID().toString();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -2609,7 +2617,7 @@ class PaymentGatewayClientTest {
         /* preconditions */
         Mockito.when(
                 npgClient.buildFormForPayment(
-                        any(),
+                        eq(UUID.fromString(correlationId)),
                         any(),
                         any(),
                         any(),
@@ -2625,7 +2633,7 @@ class PaymentGatewayClientTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
-        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData, false))
+        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData, correlationId, false))
                 .expectNext(responseRequestNpgBuildSession)
                 .verifyComplete();
 
