@@ -210,7 +210,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                             t.getTransactionId().value()
                                     );
 
-                                    // TODO remove this after the cancellation of the postepay logic
                                     String brand = authorizationRequestData.brand();
                                     TransactionGatewayAuthorizationRequestedData transactionGatewayAuthorizationRequestedData = switch (tuple6
                                             .getT6()) {
@@ -284,8 +283,10 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                             transactionEventStoreRepository.save(authorizationEvent)
                                                     .doOnNext(
                                                             e -> {
+                                                                log.info("Evaluating saving in auth request queue");
                                                                 if (authorizationEvent.getData().getPaymentGateway()
                                                                         .equals(PaymentGateway.NPG)) {
+                                                                    log.info("auth event payment gateway " + authorizationEvent.getData().getPaymentGateway());
                                                                     tracingUtils.traceMono(
                                                                             this.getClass().getSimpleName(),
                                                                             tracingInfo -> transactionAuthorizationRequestedQueueAsyncClientV2
