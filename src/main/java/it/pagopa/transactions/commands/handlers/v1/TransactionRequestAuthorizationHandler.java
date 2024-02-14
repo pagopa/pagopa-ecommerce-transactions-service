@@ -85,7 +85,10 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 .map(tuple -> Tuples.of(tuple.getT1(), tuple.getT2(), PaymentGateway.XPAY));
         Mono<Tuple3<String, String, PaymentGateway>> monoVPOS = vposAuthRequestPipeline(authorizationRequestData)
                 .map(tuple -> Tuples.of(tuple.getT1(), tuple.getT2(), PaymentGateway.VPOS));
-        Mono<Tuple3<String, String, PaymentGateway>> monoNpgCards = npgAuthRequestPipeline(authorizationRequestData)
+        Mono<Tuple3<String, String, PaymentGateway>> monoNpgCards = npgAuthRequestPipeline(
+                authorizationRequestData,
+                null
+        )
                 .map(tuple -> Tuples.of(tuple.getT1(), tuple.getT2(), PaymentGateway.NPG));
         List<Mono<Tuple3<String, String, PaymentGateway>>> gatewayRequests = List
                 .of(monoXPay, monoVPOS, monoNpgCards);

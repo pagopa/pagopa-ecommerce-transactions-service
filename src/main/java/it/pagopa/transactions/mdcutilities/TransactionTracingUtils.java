@@ -19,7 +19,8 @@ public class TransactionTracingUtils {
      */
     public enum TracingEntry {
         TRANSACTION_ID("transactionId", "{transactionId-not-found}"),
-        RPT_IDS("rptIds", "{rptId-not-found}");
+        RPT_IDS("rptIds", "{rptId-not-found}"),
+        CORRELATION_ID("correlationId", "{correlation-id-not-found}");
 
         private final String key;
 

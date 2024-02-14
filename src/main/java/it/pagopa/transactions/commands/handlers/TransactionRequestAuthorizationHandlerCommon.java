@@ -82,20 +82,20 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     }
 
     protected Mono<Tuple4<String, String, Optional<String>, Optional<String>>> npgAuthRequestPipeline(
-            AuthorizationRequestData authorizationData
+            AuthorizationRequestData authorizationData, String correlationId
     ) {
         return Mono.just(authorizationData).flatMap(authData -> switch (authData.authDetails()) {
             case CardsAuthRequestDetailsDto cards -> invokeNpgConfirmPayment(authorizationData, cards
-                    .getOrderId(), false).map(confirmPaymentResponse -> Tuples.of(confirmPaymentResponse.getT1(), confirmPaymentResponse.getT2(), confirmPaymentResponse.getT3(), Optional.empty()));
+                    .getOrderId(), correlationId,false).map(confirmPaymentResponse -> Tuples.of(confirmPaymentResponse.getT1(), confirmPaymentResponse.getT2(), confirmPaymentResponse.getT3(), Optional.empty()));
             case WalletAuthRequestDetailsDto ignored -> {
                 NpgClient.PaymentMethod npgPaymentMethod = NpgClient.PaymentMethod.fromServiceName(authorizationData.paymentMethodName());
                 if (npgPaymentMethod.equals(NpgClient.PaymentMethod.CARDS)) {
-                    yield walletNpgCardsPaymentFlow(authorizationData);
+                    yield walletNpgCardsPaymentFlow(authorizationData, correlationId);
                 } else {
-                    yield walletNpgApmPaymentFlow(authorizationData, true);
+                    yield walletNpgApmPaymentFlow(authorizationData, correlationId,true);
                 }
             }
-            case ApmAuthRequestDetailsDto ignored -> walletNpgApmPaymentFlow(authorizationData, false);
+            case ApmAuthRequestDetailsDto ignored ->  walletNpgApmPaymentFlow(authorizationData,correlationId, false);
             default -> Mono.empty();
         });
 
@@ -110,9 +110,10 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
      *         and order/build session id
      */
     private Mono<Tuple4<String, String, Optional<String>, Optional<String>>> walletNpgCardsPaymentFlow(
-                                                                                                       AuthorizationRequestData authorizationData
+                                                                                                       AuthorizationRequestData authorizationData,
+                                                                                                       String correlationId
     ) {
-        return paymentGatewayClient.requestNpgBuildSession(authorizationData, true)
+        return paymentGatewayClient.requestNpgBuildSession(authorizationData, correlationId, true)
                 .map(orderIdAndFieldsDto -> {
                     transactionTemplateWrapper.save(
                             new TransactionCacheInfo(
@@ -150,6 +151,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                         authorizationData.authDetails()
                                 ),
                                 orderIdAndFieldsDto.getT1(),
+                                correlationId,
                                 true
                         )
                                 .map(
@@ -174,9 +176,10 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
      */
     private Mono<Tuple4<String, String, Optional<String>, Optional<String>>> walletNpgApmPaymentFlow(
                                                                                                      AuthorizationRequestData authorizationData,
+                                                                                                     String correlationId,
                                                                                                      boolean isWalletPayment
     ) {
-        return paymentGatewayClient.requestNpgBuildApmPayment(authorizationData, isWalletPayment)
+        return paymentGatewayClient.requestNpgBuildApmPayment(authorizationData, correlationId, isWalletPayment)
                 .filter(orderIdAndFieldsDto -> {
                     String returnUrl = orderIdAndFieldsDto.getT2().getUrl();
                     boolean isReturnUrlValued = returnUrl != null && !returnUrl.isEmpty();
@@ -242,13 +245,11 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     private Mono<Tuple3<String, String, Optional<String>>> invokeNpgConfirmPayment(
                                                                                    AuthorizationRequestData authorizationData,
                                                                                    String orderId,
+                                                                                   String correlationId,
                                                                                    boolean isWalletPayment
 
     ) {
-        return Mono.just(authorizationData)
-                .flatMap(
-                        this::confirmPayment
-                )
+        return confirmPayment(authorizationData, correlationId)
                 .flatMap(
                         npgCardsResponseDto -> npgCardsResponseDto.fold(
                                 Mono::error,
@@ -338,10 +339,10 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
      *         response received
      */
     private Mono<Either<BadGatewayException, StateResponseDto>> confirmPayment(
-                                                                               AuthorizationRequestData authorizationData
+                                                                               AuthorizationRequestData authorizationData,
+                                                                               String correlationId
     ) {
-        return Mono.just(authorizationData)
-                .flatMap(paymentGatewayClient::requestNpgCardsAuthorization)
+        return paymentGatewayClient.requestNpgCardsAuthorization(authorizationData, correlationId)
                 .map(npgStateResponse -> {
                     if (npgStateResponse.getState() == null) {
                         return Either.left(

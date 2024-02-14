@@ -447,6 +447,11 @@ class TransactionServiceTests {
         assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
         assertNotNull(xpayAuthorizationResponse);
         assertFalse(xpayAuthorizationResponse.getAuthorizationUrl().isEmpty());
+        // verify that cache delete is called for each payment notice
+        transaction.getPaymentNotices().forEach(
+                paymentNotice -> verify(paymentRequestInfoRedisTemplateWrapper, times(1))
+                        .deleteById(paymentNotice.getRptId())
+        );
     }
 
     @Test
@@ -550,6 +555,11 @@ class TransactionServiceTests {
         AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
         assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
+        // verify that cache delete is called for each payment notice
+        transaction.getPaymentNotices().forEach(
+                paymentNotice -> verify(paymentRequestInfoRedisTemplateWrapper, times(1))
+                        .deleteById(paymentNotice.getRptId())
+        );
     }
 
     @Test
@@ -574,6 +584,8 @@ class TransactionServiceTests {
                     requestAuthorizationResponseDtoMono.block();
                 }
         );
+        // verify that cache delete is never called
+        verify(paymentRequestInfoRedisTemplateWrapper, times(0)).deleteById(any());
     }
 
     @Test
@@ -977,6 +989,11 @@ class TransactionServiceTests {
             assertEquals(cardAuthRequestDetailsDto.getCvv(), cardDetails.getCvv());
             assertEquals(cardAuthRequestDetailsDto.getPan(), cardDetails.getPan());
             assertEquals(cardAuthRequestDetailsDto.getExpiryDate(), cardDetails.getExpiryDate());
+            // verify that cache delete is called for each payment notice
+            transaction.getPaymentNotices().forEach(
+                    paymentNotice -> verify(paymentRequestInfoRedisTemplateWrapper, times(1))
+                            .deleteById(paymentNotice.getRptId())
+            );
         } else {
             fail("AuthorizationRequestData.authDetails null or not instance of CardAuthRequestDetailsDto");
         }
@@ -1044,6 +1061,8 @@ class TransactionServiceTests {
                 )
                 .expectErrorMatches(exception -> exception instanceof TransactionAmountMismatchException)
                 .verify();
+        // verify that delete cache is neve
+        verify(paymentRequestInfoRedisTemplateWrapper, times(0)).deleteById(any());
     }
 
     @Test
@@ -1117,6 +1136,8 @@ class TransactionServiceTests {
                 )
                 .expectErrorMatches(exception -> exception instanceof PaymentNoticeAllCCPMismatchException)
                 .verify();
+        // verify that cache delete is called for each payment notice
+        verify(paymentRequestInfoRedisTemplateWrapper, times(0)).deleteById(any());
     }
 
     @Test
@@ -2069,6 +2090,11 @@ class TransactionServiceTests {
         assertEquals(contractId, captureData.contractId().get());
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
         assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
+        // verify that cache delete is called for each payment notice
+        transaction.getPaymentNotices().forEach(
+                paymentNotice -> verify(paymentRequestInfoRedisTemplateWrapper, times(1))
+                        .deleteById(paymentNotice.getRptId())
+        );
     }
 
     @Test
@@ -2157,6 +2183,11 @@ class TransactionServiceTests {
         assertEquals(paymentMethod.getName(), captureData.brand());
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
         assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
+        // verify that cache delete is called for each payment notice
+        transaction.getPaymentNotices().forEach(
+                paymentNotice -> verify(paymentRequestInfoRedisTemplateWrapper, times(1))
+                        .deleteById(paymentNotice.getRptId())
+        );
     }
 
     @Test
@@ -2254,6 +2285,11 @@ class TransactionServiceTests {
         assertEquals("N/A", captureData.brand());
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
         assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
+        // verify that cache delete is called for each payment notice
+        transaction.getPaymentNotices().forEach(
+                paymentNotice -> verify(paymentRequestInfoRedisTemplateWrapper, times(1))
+                        .deleteById(paymentNotice.getRptId())
+        );
     }
 
 }

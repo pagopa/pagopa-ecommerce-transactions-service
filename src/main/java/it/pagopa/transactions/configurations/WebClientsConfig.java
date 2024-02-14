@@ -6,8 +6,12 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
+import it.pagopa.ecommerce.commons.client.NodeForwarderClient;
+import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
+import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
+import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.transactions.utils.soap.Jaxb2SoapDecoder;
 import it.pagopa.transactions.utils.soap.Jaxb2SoapEncoder;
 import org.springframework.beans.factory.annotation.Value;
@@ -221,6 +225,39 @@ public class WebClientsConfig {
     @Bean
     public it.pagopa.generated.transactions.model.ObjectFactory objectFactoryNodeForPsp() {
         return new it.pagopa.generated.transactions.model.ObjectFactory();
+    }
+
+    /**
+     * Build node forwarder proxy api client
+     *
+     * @param apiKey            backend api key
+     * @param backendUrl        backend URL
+     * @param readTimeout       read timeout
+     * @param connectionTimeout connection timeout
+     * @return the build Node forwarder proxy api client
+     */
+    @Bean
+    public NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient(
+                                                                                                             @Value(
+                                                                                                                 "${node.forwarder.apiKey}"
+                                                                                                             ) String apiKey,
+                                                                                                             @Value(
+                                                                                                                 "${node.forwarder.url}"
+                                                                                                             ) String backendUrl,
+                                                                                                             @Value(
+                                                                                                                 "${node.forwarder.readTimeout}"
+                                                                                                             ) int readTimeout,
+                                                                                                             @Value(
+                                                                                                                 "${node.forwarder.connectionTimeout}"
+                                                                                                             ) int connectionTimeout
+    ) {
+
+        return new NodeForwarderClient<>(
+                apiKey,
+                backendUrl,
+                readTimeout,
+                connectionTimeout
+        );
     }
 
 }
