@@ -13,7 +13,6 @@ import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.PostePayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthResponseDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
@@ -137,92 +136,6 @@ class TransactionRequestAuthorizationHandlerTest {
     }
 
     @Test
-    void shouldSaveAuthorizationEvent() {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
-        PaymentToken paymentToken = new PaymentToken("paymentToken");
-        RptId rptId = new RptId("77777777777111111111111111111");
-        TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
-        Confidential<Email> email = TransactionTestUtils.EMAIL;
-        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
-        String idCart = "idCart";
-        TransactionActivated transaction = new TransactionActivated(
-                transactionId,
-                List.of(
-                        new PaymentNotice(
-                                paymentToken,
-                                rptId,
-                                amount,
-                                description,
-                                nullPaymentContextCode,
-                                new ArrayList<>(),
-                                false
-                        )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
-                email,
-                null,
-                null,
-                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
-                idCart,
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
-
-        );
-
-        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
-                .fee(200)
-                .paymentInstrumentId("paymentInstrumentId")
-                .pspId("PSP_CODE")
-                .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
-
-        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction.getTransactionId(),
-                transaction.getPaymentNotices(),
-                transaction.getEmail(),
-                authorizationRequest.getFee(),
-                authorizationRequest.getPaymentInstrumentId(),
-                authorizationRequest.getPspId(),
-                "PPAY",
-                "brokerName",
-                "pspChannelCode",
-                "paymentMethodName",
-                "paymentMethodDescription",
-                "pspBusinessName",
-                false,
-                null,
-                Optional.empty(),
-                Optional.empty(),
-                "VISA",
-                new PostePayAuthRequestDetailsDto()
-        );
-
-        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
-                authorizationData
-        );
-
-        PostePayAuthResponseEntityDto postePayAuthResponseEntityDto = new PostePayAuthResponseEntityDto()
-                .channel("channel")
-                .requestId("requestId")
-                .urlRedirect("http://example.com");
-
-        /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.just(postePayAuthResponseEntityDto));
-        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
-        Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(args -> Mono.just(args.getArguments()[0]));
-
-        /* test */
-        requestAuthorizationHandler.handle(requestAuthorizationCommand).block();
-
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
-    }
-
-    @Test
     void shouldSaveAuthorizationEventXPAY() {
         TransactionId transactionId = new TransactionId(transactionIdUUID);
         PaymentToken paymentToken = new PaymentToken("paymentToken");
@@ -295,8 +208,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .urlRedirect("http://example.com");
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
+
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.just(xPayAuthResponseEntityDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
@@ -381,8 +293,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 .urlRedirect("http://example.com");
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
@@ -470,8 +380,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN).url(NPG_URL_IFRAME);
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
@@ -592,8 +500,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 );
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
@@ -714,8 +620,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 );
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
@@ -837,8 +741,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 .state(WorkflowStateDto.CARD_DATA_COLLECTION);
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
@@ -1006,7 +908,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 Optional.empty(),
                 Optional.empty(),
                 "VISA",
-                new PostePayAuthRequestDetailsDto().detailType("GPAY").accountEmail("test@test.it")
+                new CardAuthRequestDetailsDto()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -1016,7 +918,6 @@ class TransactionRequestAuthorizationHandlerTest {
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData)).thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData)).thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData)).thenReturn(Mono.empty());
 
         /* test */
@@ -1117,8 +1018,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 .urlRedirect("http://example.com");
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.just(xPayAuthResponseEntityDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
@@ -1134,96 +1033,6 @@ class TransactionRequestAuthorizationHandlerTest {
 
         cardsTested = true;
         testedCardBrands.add(CardAuthRequestDetailsDto.BrandEnum.fromValue(brand));
-    }
-
-    @Test
-    void shouldSaveEventIfPayingWithPostepay() {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
-        PaymentToken paymentToken = new PaymentToken("paymentToken");
-        String orderId = "orderId";
-        RptId rptId = new RptId("77777777777111111111111111111");
-        TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
-        Confidential<Email> email = TransactionTestUtils.EMAIL;
-        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
-        String idCart = "idCart";
-        TransactionActivated transaction = new TransactionActivated(
-                transactionId,
-                List.of(
-                        new PaymentNotice(
-                                paymentToken,
-                                rptId,
-                                amount,
-                                description,
-                                nullPaymentContextCode,
-                                new ArrayList<>(),
-                                false
-                        )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
-                email,
-                null,
-                null,
-                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
-                idCart,
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                new NpgTransactionGatewayActivationData(orderId, null)
-        );
-
-        String paymentInstrumentId = "paymentInstrumentId";
-        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
-                .fee(200)
-                .paymentInstrumentId(paymentInstrumentId)
-                .pspId("PSP_CODE")
-                .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
-
-        String sessionId = "sessionId";
-        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction.getTransactionId(),
-                transaction.getPaymentNotices(),
-                transaction.getEmail(),
-                authorizationRequest.getFee(),
-                authorizationRequest.getPaymentInstrumentId(),
-                authorizationRequest.getPspId(),
-                "NPG",
-                "brokerName",
-                "pspChannelCode",
-                "paymentMethodName",
-                "paymentMethodDescription",
-                "pspBusinessName",
-                false,
-                null,
-                Optional.of(sessionId),
-                Optional.empty(),
-                "VISA",
-                new PostePayAuthRequestDetailsDto()
-                        .detailType("postepay")
-        );
-
-        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
-                authorizationData
-        );
-
-        PostePayAuthResponseEntityDto postePayAuthResponseEntityDto = new PostePayAuthResponseEntityDto()
-                .channel("channel")
-                .requestId("requestId")
-                .urlRedirect("http://example.com");
-
-        /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.just(postePayAuthResponseEntityDto));
-        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
-                .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
-        Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(args -> Mono.just(args.getArguments()[0]));
-
-        /* test */
-        requestAuthorizationHandler.handle(requestAuthorizationCommand).block();
-
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
-
     }
 
     @Test
@@ -1298,8 +1107,6 @@ class TransactionRequestAuthorizationHandlerTest {
         StateResponseDto stateResponseDto = new StateResponseDto();
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
@@ -1400,8 +1207,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 .state(WorkflowStateDto.GDI_VERIFICATION);
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
@@ -1505,8 +1310,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 .fieldSet(new FieldsDto());
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
@@ -1610,8 +1413,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 .fieldSet(new FieldsDto().addFieldsItem(new FieldDto()));
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
@@ -1714,8 +1515,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN);
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
@@ -1819,8 +1618,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 .fieldSet(new FieldsDto().sessionId(TransactionTestUtils.NPG_CONFIRM_PAYMENT_SESSION_ID));
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
@@ -1945,8 +1742,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 );
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
@@ -2071,8 +1866,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 );
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
@@ -2229,8 +2022,6 @@ class TransactionRequestAuthorizationHandlerTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
@@ -2352,8 +2143,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 .state(WorkflowStateDto.READY_FOR_PAYMENT);
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
@@ -2450,8 +2239,6 @@ class TransactionRequestAuthorizationHandlerTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
@@ -2567,8 +2354,6 @@ class TransactionRequestAuthorizationHandlerTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
@@ -2687,8 +2472,6 @@ class TransactionRequestAuthorizationHandlerTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
@@ -2788,8 +2571,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 .timeout(TransactionTestUtils.REDIRECT_AUTHORIZATION_TIMEOUT);
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestPostepayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))

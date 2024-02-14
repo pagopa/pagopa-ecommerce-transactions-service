@@ -70,44 +70,6 @@ public class WebClientsConfig {
         return mapper;
     }
 
-    @Bean(name = "paymentTransactionGatewayPostepayWebClient")
-    public PostePayInternalApi paymentTransactionGatewayPostepayWebClient(
-                                                                          @Value(
-                                                                              "${paymentTransactionsGateway.uri}"
-                                                                          ) String paymentTransactionGatewayUri,
-                                                                          @Value(
-                                                                              "${paymentTransactionsGateway.readTimeout}"
-                                                                          ) int paymentTransactionGatewayReadTimeout,
-                                                                          @Value(
-                                                                              "${paymentTransactionsGateway.connectionTimeout}"
-                                                                          ) int paymentTransactionGatewayConnectionTimeout,
-                                                                          @Value(
-                                                                              "${paymentTransactionsGateway.apiKey}"
-                                                                          ) String apiKey
-    ) {
-        HttpClient httpClient = HttpClient.create()
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, paymentTransactionGatewayConnectionTimeout)
-                .doOnConnected(
-                        connection -> connection.addHandlerLast(
-                                new ReadTimeoutHandler(
-                                        paymentTransactionGatewayReadTimeout,
-                                        TimeUnit.MILLISECONDS
-                                )
-                        )
-                );
-
-        WebClient webClient = it.pagopa.generated.ecommerce.gateway.v1.ApiClient.buildWebClientBuilder()
-                .clientConnector(new ReactorClientHttpConnector(httpClient))
-                .baseUrl(paymentTransactionGatewayUri)
-                .build();
-        it.pagopa.generated.ecommerce.gateway.v1.ApiClient apiClient = new it.pagopa.generated.ecommerce.gateway.v1.ApiClient(
-                webClient
-        );
-        apiClient.setBasePath(paymentTransactionGatewayUri);
-        apiClient.setApiKey(apiKey);
-        return new PostePayInternalApi(apiClient);
-    }
-
     @Bean(name = "paymentTransactionGatewayXPayWebClient")
     public XPayInternalApi paymentTransactionGatewayXPayWebClient(
                                                                   @Value(
