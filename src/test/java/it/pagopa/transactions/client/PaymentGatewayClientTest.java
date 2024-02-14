@@ -57,7 +57,6 @@ import reactor.util.function.Tuples;
 
 import javax.crypto.SecretKey;
 import java.math.BigDecimal;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
@@ -66,6 +65,8 @@ import java.util.stream.Stream;
 
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL;
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL_STRING;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
@@ -2196,8 +2197,22 @@ class PaymentGatewayClientTest {
                 .buildForm(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
     }
 
-    @Test
-    void shouldPerformAuthorizationRequestRetrievingRedirectionUrl() throws MalformedURLException {
+    private static Stream<Arguments> redirectRetrieveUrlPaymentMethodsTestMethodSource() {
+        return Stream.of(
+                Arguments.of(PaymentGatewayClient.RedirectPaymentMethodId.RBPR, "Poste addebito in conto Retail"),
+                Arguments.of(PaymentGatewayClient.RedirectPaymentMethodId.RBPB, "Poste addebito in conto Business"),
+                Arguments.of(PaymentGatewayClient.RedirectPaymentMethodId.RBPP, "Paga con BottonePostePay"),
+                Arguments.of(PaymentGatewayClient.RedirectPaymentMethodId.RPIC, "Pago in Conto Intesa"),
+                Arguments.of(PaymentGatewayClient.RedirectPaymentMethodId.RBPS, "SCRIGNO Internet Banking")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("redirectRetrieveUrlPaymentMethodsTestMethodSource")
+    void shouldPerformAuthorizationRequestRetrievingRedirectionUrl(
+                                                                   PaymentGatewayClient.RedirectPaymentMethodId paymentTypeCode,
+                                                                   String mappedPaymentMethodDescription
+    ) {
         String pspId = "pspId";
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -2207,7 +2222,7 @@ class PaymentGatewayClientTest {
                 10,
                 "paymentInstrumentId",
                 pspId,
-                "CC",
+                paymentTypeCode.toString(),
                 "brokerName",
                 "pspChannelCode",
                 "REDIRECT",
@@ -2223,7 +2238,7 @@ class PaymentGatewayClientTest {
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
-                .paymentMethod(RedirectUrlRequestDto.PaymentMethodEnum.BANK_ACCOUNT)
+                .idPaymentMethod(paymentTypeCode.toString())
                 .amount(totalAmount)
                 .idPsp(pspId)
                 .idTransaction(transaction.getTransactionId().value())
@@ -2234,7 +2249,8 @@ class PaymentGatewayClientTest {
                                 "http://localhost:1234/ecommerce-fe/esito#clientId=REDIRECT&transactionId="
                                         .concat(transaction.getTransactionId().value())
                         )
-                );
+                )
+                .paymentMethod(mappedPaymentMethodDescription);
         RedirectUrlResponseDto redirectUrlResponseDto = new RedirectUrlResponseDto()
                 .timeout(60000)
                 .url("http://redirectionUrl")
@@ -2276,7 +2292,7 @@ class PaymentGatewayClientTest {
     void shouldHandleErrorRetrievingRedirectionUrl(
                                                    HttpStatus httpResponseStatusCode,
                                                    Class<? extends Exception> expectedMappedException
-    ) throws MalformedURLException {
+    ) {
         String pspId = "pspId";
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -2286,7 +2302,7 @@ class PaymentGatewayClientTest {
                 10,
                 "paymentInstrumentId",
                 pspId,
-                "CC",
+                "RBPS",
                 "brokerName",
                 "pspChannelCode",
                 "REDIRECT",
@@ -2299,10 +2315,12 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto()
         );
+        PaymentGatewayClient.RedirectPaymentMethodId idPaymentMethod = PaymentGatewayClient.RedirectPaymentMethodId.RBPS;
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
-                .paymentMethod(RedirectUrlRequestDto.PaymentMethodEnum.BANK_ACCOUNT)
+                .idPaymentMethod(idPaymentMethod.toString())
+                .paymentMethod(PaymentGatewayClient.redirectMethodsDescriptions.get(idPaymentMethod))
                 .amount(totalAmount)
                 .idPsp(pspId)
                 .idTransaction(transaction.getTransactionId().value())
@@ -2314,6 +2332,7 @@ class PaymentGatewayClientTest {
                                         .concat(transaction.getTransactionId().value())
                         )
                 );
+
         given(nodeForwarderClient.proxyRequest(any(), any(), any(), any())).willReturn(
                 Mono.error(
                         new NodeForwarderClientException(
@@ -2345,7 +2364,7 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldHandleErrorRetrievingRedirectionUrlWithGenericException() throws MalformedURLException {
+    void shouldHandleErrorRetrievingRedirectionUrlWithGenericException() {
         String pspId = "pspId";
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -2355,7 +2374,7 @@ class PaymentGatewayClientTest {
                 10,
                 "paymentInstrumentId",
                 pspId,
-                "CC",
+                "RBPS",
                 "brokerName",
                 "pspChannelCode",
                 "REDIRECT",
@@ -2368,10 +2387,12 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto()
         );
+        PaymentGatewayClient.RedirectPaymentMethodId idPaymentMethod = PaymentGatewayClient.RedirectPaymentMethodId.RBPS;
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
-                .paymentMethod(RedirectUrlRequestDto.PaymentMethodEnum.BANK_ACCOUNT)
+                .paymentMethod(PaymentGatewayClient.redirectMethodsDescriptions.get(idPaymentMethod))
+                .idPaymentMethod(idPaymentMethod.toString())
                 .amount(totalAmount)
                 .idPsp(pspId)
                 .idTransaction(transaction.getTransactionId().value())
@@ -2417,7 +2438,7 @@ class PaymentGatewayClientTest {
                 10,
                 "paymentInstrumentId",
                 pspId,
-                "CC",
+                "RBPS",
                 "brokerName",
                 "pspChannelCode",
                 "REDIRECT",
@@ -2439,6 +2460,44 @@ class PaymentGatewayClientTest {
                 .expectError(CheckoutRedirectConfigurationException.class)
                 .verify();
         verify(nodeForwarderClient, times(0)).proxyRequest(any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldReturnErrorDuringRedirectPaymentTransactionForUnmanagedPaymentTypeCode() {
+        String pspId = "pspId";
+        TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                10,
+                "paymentInstrumentId",
+                pspId,
+                "CC",
+                "brokerName",
+                "pspChannelCode",
+                "REDIRECT",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "REDIRECT",
+                Optional.empty(),
+                Optional.empty(),
+                "N/A",
+                new RedirectionAuthRequestDetailsDto()
+        );
+
+        Hooks.onOperatorDebug();
+        /* test */
+        InvalidRequestException exception = assertThrows(
+                InvalidRequestException.class,
+                () -> client.requestRedirectUrlAuthorization(
+                        authorizationData,
+                        RedirectUrlRequestDto.TouchpointEnum.CHECKOUT
+                )
+        );
+        verify(nodeForwarderClient, times(0)).proxyRequest(any(), any(), any(), any());
+        assertEquals("Unmanaged payment method with type code: [CC]", exception.getMessage());
     }
 
 }
