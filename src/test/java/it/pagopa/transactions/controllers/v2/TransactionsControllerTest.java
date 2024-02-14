@@ -416,6 +416,28 @@ class TransactionsControllerTest {
                 );
     }
 
+    @Test
+    void shouldReturnProblemJsonWith400OnMissingCorrelationId() {
+        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
+                .addPaymentNoticesItem(
+                        new PaymentNoticeInfoDto()
+                                .rptId(TransactionTestUtils.RPT_ID)
+                                .amount(TransactionTestUtils.AMOUNT)
+                )
+                .email("invalidMail")
+                .idCart(TransactionTestUtils.ID_CART);
+        webTestClient.post()
+                .uri("/v2/transactions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("X-Client-Id", "CHECKOUT")
+                .bodyValue(newTransactionRequestDto)
+                .exchange()
+                .expectStatus()
+                .isBadRequest()
+                .expectBody(ProblemJsonDto.class)
+                .value(p -> assertEquals(400, p.getStatus()));
+    }
+
     private static CtFaultBean faultBeanWithCode(String faultCode) {
         CtFaultBean fault = new CtFaultBean();
         fault.setFaultCode(faultCode);
