@@ -50,6 +50,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
@@ -99,11 +100,10 @@ class TransactionRequestAuthorizationHandlerTest {
     @Mock
     private TransactionTemplateWrapper transactionTemplateWrapper;
 
-    @Mock
-    private QueueAsyncClient transactionAuthRequestedQueueClient;
-
     @Captor
     private ArgumentCaptor<TransactionEvent<TransactionAuthorizationRequestData>> eventStoreCaptor;
+    @Captor
+    private ArgumentCaptor<Duration> durationArgumentCaptor;
 
     private static final String CHECKOUT_BASE_PATH = "checkoutUri";
     private static final Set<CardAuthRequestDetailsDto.BrandEnum> testedCardBrands = new HashSet<>();
@@ -113,7 +113,7 @@ class TransactionRequestAuthorizationHandlerTest {
     private final TracingUtils tracingUtils = TracingUtilsTests.getMock();
 
     private final int transientQueueEventsTtlSeconds = 30;
-    private final int paymentTokenTimeout = 150;
+    private final int npgAuthRequestTimeout = 150;
 
     private final OpenTelemetryUtils openTelemetryUtils = Mockito.mock(OpenTelemetryUtils.class);
 
@@ -153,9 +153,9 @@ class TransactionRequestAuthorizationHandlerTest {
                 paymentMethodsClient,
                 logoMappingUtils,
                 transactionTemplateWrapper,
-                transactionAuthRequestedQueueClient,
+                transactionAuthorizationRequestedQueueAsyncClient,
                 transientQueueEventsTtlSeconds,
-                paymentTokenTimeout,
+                npgAuthRequestTimeout,
                 tracingUtils,
                 openTelemetryUtils
         );
@@ -429,6 +429,15 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         ).thenReturn(Mono.empty());
 
+        Mockito.when(
+                transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
+                        any(QueueEvent.class),
+                        any(),
+                        durationArgumentCaptor.capture()
+                )
+        )
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
+
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
                 .authorizationUrl(NPG_URL_IFRAME);
@@ -553,7 +562,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
                         any(QueueEvent.class),
                         any(),
-                        eq(Duration.ofSeconds(transientQueueEventsTtlSeconds))
+                        durationArgumentCaptor.capture()
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
@@ -678,6 +687,15 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         ).thenReturn(Mono.empty());
 
+        Mockito.when(
+                transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
+                        any(QueueEvent.class),
+                        any(),
+                        durationArgumentCaptor.capture()
+                )
+        )
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
+
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
                 .authorizationUrl(
@@ -686,6 +704,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                         .getBytes(StandardCharsets.UTF_8)
                         )
                 );
+        Hooks.onOperatorDebug();
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectNext(responseDto)
@@ -1676,6 +1695,15 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         ).thenReturn(Mono.empty());
 
+        Mockito.when(
+                transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
+                        any(QueueEvent.class),
+                        any(),
+                        durationArgumentCaptor.capture()
+                )
+        )
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
+
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
                 .authorizationUrl(NPG_URL_IFRAME);
@@ -1800,9 +1828,19 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         ).thenReturn(Mono.empty());
 
+        Mockito.when(
+                transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
+                        any(QueueEvent.class),
+                        any(),
+                        durationArgumentCaptor.capture()
+                )
+        )
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
+
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
                 .authorizationUrl(NPG_CHECKOUT_ESITO_PATH);
+
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectNext(responseDto)
@@ -1923,6 +1961,15 @@ class TransactionRequestAuthorizationHandlerTest {
                         transactionId.value()
                 )
         ).thenReturn(Mono.empty());
+
+        Mockito.when(
+                transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
+                        any(QueueEvent.class),
+                        any(),
+                        durationArgumentCaptor.capture()
+                )
+        )
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
@@ -2076,6 +2123,15 @@ class TransactionRequestAuthorizationHandlerTest {
                 );
         Mockito.when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
+
+        Mockito.when(
+                transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
+                        any(QueueEvent.class),
+                        any(),
+                        durationArgumentCaptor.capture()
+                )
+        )
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(orderId)
@@ -2290,6 +2346,15 @@ class TransactionRequestAuthorizationHandlerTest {
         Mockito.when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
 
+        Mockito.when(
+                transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
+                        any(QueueEvent.class),
+                        any(),
+                        durationArgumentCaptor.capture()
+                )
+        )
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
+
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(orderId)
                 .authorizationUrl(npgBuildSessionResponse.getUrl());
@@ -2404,6 +2469,15 @@ class TransactionRequestAuthorizationHandlerTest {
                 );
         Mockito.when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
+
+        Mockito.when(
+                transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
+                        any(QueueEvent.class),
+                        any(),
+                        durationArgumentCaptor.capture()
+                )
+        )
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(orderId)

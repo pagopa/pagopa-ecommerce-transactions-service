@@ -281,45 +281,34 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                     return updateSession.then(
                                             transactionEventStoreRepository.save(authorizationEvent)
                                                     .flatMap(
-                                                            e -> {
-                                                                log.info("Evaluating saving in auth request queue");
-                                                                if (authorizationEvent.getData().getPaymentGateway()
-                                                                        .equals(PaymentGateway.NPG)) {
-                                                                    log.info(
-                                                                            "auth event payment gateway "
-                                                                                    + authorizationEvent.getData()
-                                                                                            .getPaymentGateway()
-                                                                    );
-                                                                    return tracingUtils.traceMono(
-                                                                            this.getClass().getSimpleName(),
-                                                                            tracingInfo -> transactionAuthorizationRequestedQueueAsyncClientV2
-                                                                                    .sendMessageWithResponse(
-                                                                                            new QueueEvent<>(
-                                                                                                    e,
-                                                                                                    tracingInfo
-                                                                                            ),
-                                                                                            Duration.ofSeconds(
-                                                                                                    npgAuthRequestTimeout
-                                                                                            ),
-                                                                                            Duration.ofSeconds(
-                                                                                                    transientQueuesTTLSeconds
+                                                            e -> Mono
+                                                                    .just(
+                                                                            e.getData()
+                                                                                    .getPaymentGateway()
+                                                                    )
+                                                                    .filter(
+                                                                            paymentGateway -> paymentGateway
+                                                                                    .equals(PaymentGateway.NPG)
+                                                                    )
+                                                                    .switchIfEmpty(Mono.empty())
+                                                                    .flatMap(
+                                                                            p -> tracingUtils.traceMono(
+                                                                                    this.getClass().getSimpleName(),
+                                                                                    tracingInfo -> transactionAuthorizationRequestedQueueAsyncClientV2
+                                                                                            .sendMessageWithResponse(
+                                                                                                    new QueueEvent<>(
+                                                                                                            e,
+                                                                                                            tracingInfo
+                                                                                                    ),
+                                                                                                    Duration.ofSeconds(
+                                                                                                            npgAuthRequestTimeout
+                                                                                                    ),
+                                                                                                    Duration.ofSeconds(
+                                                                                                            transientQueuesTTLSeconds
+                                                                                                    )
                                                                                             )
-                                                                                    )
-                                                                    ).doOnNext(
-                                                                            r -> log.info(
-                                                                                    "Enqueue response status code "
-                                                                                            + r.getStatusCode()
                                                                             )
                                                                     )
-                                                                            .doOnError(
-                                                                                    err -> log.error(
-                                                                                            "Enqueue error "
-                                                                                                    + err.getMessage()
-                                                                                    )
-                                                                            );
-                                                                }
-                                                                return Mono.empty();
-                                                            }
                                                     )
                                                     .thenReturn(tuple6)
                                                     .map(
