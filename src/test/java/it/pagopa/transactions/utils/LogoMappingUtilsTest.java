@@ -10,6 +10,7 @@ import it.pagopa.transactions.exceptions.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mockito;
 
 import java.net.URI;
 import java.util.List;
@@ -168,7 +169,7 @@ class LogoMappingUtilsTest {
                 Optional.empty(),
                 Optional.empty(),
                 "UnhandledBrand",
-                new PostePayAuthRequestDetailsDto()
+                Mockito.mock(RequestAuthorizationRequestDetailsDto.class)
         );
         // assertions
         assertThrows(InvalidRequestException.class, () -> logoMappingUtils.getLogo(authorizationRequestData));

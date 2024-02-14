@@ -81,10 +81,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(TransactionActivated.class);
 
-        Mono<Tuple3<String, String, PaymentGateway>> monoPostePay = postepayAuthRequestPipeline(
-                authorizationRequestData
-        )
-                .map(tuple -> Tuples.of(tuple.getT1(), tuple.getT2(), PaymentGateway.POSTEPAY));
         Mono<Tuple3<String, String, PaymentGateway>> monoXPay = xpayAuthRequestPipeline(authorizationRequestData)
                 .map(tuple -> Tuples.of(tuple.getT1(), tuple.getT2(), PaymentGateway.XPAY));
         Mono<Tuple3<String, String, PaymentGateway>> monoVPOS = vposAuthRequestPipeline(authorizationRequestData)
@@ -95,7 +91,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         )
                 .map(tuple -> Tuples.of(tuple.getT1(), tuple.getT2(), PaymentGateway.NPG));
         List<Mono<Tuple3<String, String, PaymentGateway>>> gatewayRequests = List
-                .of(monoPostePay, monoXPay, monoVPOS, monoNpgCards);
+                .of(monoXPay, monoVPOS, monoNpgCards);
         Mono<Tuple3<String, String, PaymentGateway>> gatewayAttempts = gatewayRequests
                 .stream()
                 .reduce(
