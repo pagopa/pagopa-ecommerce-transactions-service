@@ -300,10 +300,22 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                                                     tracingInfo
                                                                                             ),
                                                                                             Duration.ofSeconds(
-                                                                                                    paymentTokenTimeout
+                                                                                                    0
                                                                                             ),
                                                                                             Duration.ofSeconds(
-                                                                                                    transientQueuesTTLSeconds
+                                                                                                    -1
+                                                                                            )
+                                                                                    )
+                                                                                    .doOnNext(
+                                                                                            r -> log.info(
+                                                                                                    "Enqueue response code "
+                                                                                                            + r.getStatusCode()
+                                                                                            )
+                                                                                    )
+                                                                                    .doOnError(
+                                                                                            r -> log.info(
+                                                                                                    "Enqueue error " + r
+                                                                                                            .getMessage()
                                                                                             )
                                                                                     )
                                                                     );
