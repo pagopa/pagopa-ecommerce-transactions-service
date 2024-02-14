@@ -15,10 +15,12 @@ import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
-import it.pagopa.generated.ecommerce.gateway.v1.api.PostePayInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.*;
+import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthRequestDto;
+import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthResponseDto;
+import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthRequestDto;
+import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
@@ -28,7 +30,6 @@ import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.configurations.NpgSessionUrlConfig;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
-import it.pagopa.transactions.exceptions.GatewayTimeoutException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
@@ -48,16 +49,13 @@ import javax.crypto.SecretKey;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
 public class PaymentGatewayClient {
-
-    private final PostePayInternalApi postePayInternalApi;
 
     private final XPayInternalApi paymentTransactionGatewayXPayWebClient;
 
@@ -83,9 +81,43 @@ public class PaymentGatewayClient {
 
     private final Map<String, URI> checkoutRedirectBeApiCallUriMap;
 
+    static final Map<RedirectPaymentMethodId, String> redirectMethodsDescriptions = Map.of(
+            RedirectPaymentMethodId.RBPR,
+            "Poste addebito in conto Retail",
+            RedirectPaymentMethodId.RBPB,
+            "Poste addebito in conto Business",
+            RedirectPaymentMethodId.RBPP,
+            "Paga con BottonePostePay",
+            RedirectPaymentMethodId.RPIC,
+            "Pago in Conto Intesa",
+            RedirectPaymentMethodId.RBPS,
+            "SCRIGNO Internet Banking"
+    );
+
+    public enum RedirectPaymentMethodId {
+        RBPR,
+        RBPB,
+        RBPP,
+        RPIC,
+        RBPS;
+
+        private static final Map<String, RedirectPaymentMethodId> lookupMap = Arrays
+                .stream(RedirectPaymentMethodId.values())
+                .collect(Collectors.toMap(Enum::toString, Function.identity()));
+
+        static RedirectPaymentMethodId fromPaymentTypeCode(String paymentTypeCode) {
+            RedirectPaymentMethodId converted = lookupMap.get(paymentTypeCode);
+            if (converted == null) {
+                throw new InvalidRequestException(
+                        "Unmanaged payment method with type code: [%s]".formatted(paymentTypeCode)
+                );
+            }
+            return converted;
+        }
+    }
+
     @Autowired
     public PaymentGatewayClient(
-            @Qualifier("paymentTransactionGatewayPostepayWebClient") PostePayInternalApi postePayInternalApi,
             @Qualifier("paymentTransactionGatewayXPayWebClient") XPayInternalApi paymentTransactionGatewayXPayWebClient,
             @Qualifier("creditCardInternalApiClient") VposInternalApi creditCardInternalApiClient,
             ObjectMapper objectMapper,
@@ -101,7 +133,6 @@ public class PaymentGatewayClient {
             NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient,
             Map<String, URI> checkoutRedirectBeApiCallUriMap
     ) {
-        this.postePayInternalApi = postePayInternalApi;
         this.paymentTransactionGatewayXPayWebClient = paymentTransactionGatewayXPayWebClient;
         this.creditCardInternalApiClient = creditCardInternalApiClient;
         this.objectMapper = objectMapper;
@@ -116,51 +147,6 @@ public class PaymentGatewayClient {
         this.npgJwtKeyValidityTime = npgJwtKeyValidityTime;
         this.nodeForwarderRedirectApiClient = nodeForwarderRedirectApiClient;
         this.checkoutRedirectBeApiCallUriMap = checkoutRedirectBeApiCallUriMap;
-    }
-
-    // TODO Handle multiple rptId
-
-    public Mono<PostePayAuthResponseEntityDto> requestPostepayAuthorization(
-                                                                            AuthorizationRequestData authorizationData
-    ) {
-
-        return Mono.just(authorizationData)
-                .filter(authorizationRequestData -> "PPAY".equals(authorizationRequestData.paymentTypeCode()))
-                .map(authorizationRequestData -> {
-                    BigDecimal grandTotal = BigDecimal.valueOf(
-                            ((long) authorizationData.paymentNotices().stream()
-                                    .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value()).sum())
-                                    + authorizationData.fee()
-                    );
-                    return new PostePayAuthRequestDto()
-                            .grandTotal(grandTotal)
-                            .description(
-                                    authorizationData.paymentNotices().get(0).transactionDescription()
-                                            .value()
-                            )
-                            .paymentChannel(authorizationData.pspChannelCode())
-                            .idTransaction(
-                                    uuidUtils.uuidToBase64(authorizationData.transactionId().uuid())
-                            );
-                })
-                .flatMap(
-                        payAuthRequestDto -> postePayInternalApi
-                                .authRequest(payAuthRequestDto, false, encodeMdcFields(authorizationData))
-                                .onErrorMap(
-                                        WebClientResponseException.class,
-                                        exception -> switch (exception.getStatusCode()) {
-                                        case UNAUTHORIZED -> new AlreadyProcessedException(
-                                                authorizationData.transactionId()
-                                        );
-                                        case GATEWAY_TIMEOUT -> new GatewayTimeoutException();
-                                        case INTERNAL_SERVER_ERROR -> new BadGatewayException(
-                                                "PostePay API returned 500",
-                                                exception.getStatusCode()
-                                        );
-                                        default -> exception;
-                                        }
-                                )
-                );
     }
 
     public Mono<XPayAuthResponseEntityDto> requestXPayAuthorization(AuthorizationRequestData authorizationData) {
@@ -557,10 +543,9 @@ public class PaymentGatewayClient {
                                                                         AuthorizationRequestData authorizationData,
                                                                         RedirectUrlRequestDto.TouchpointEnum touchpoint
     ) {
+        RedirectPaymentMethodId idPaymentMethod = RedirectPaymentMethodId
+                .fromPaymentTypeCode(authorizationData.paymentTypeCode());
         RedirectUrlRequestDto request = new RedirectUrlRequestDto()
-                .paymentMethod(
-                        RedirectUrlRequestDto.PaymentMethodEnum.BANK_ACCOUNT
-                )
                 .amount(
                         authorizationData
                                 .paymentNotices()
@@ -578,7 +563,10 @@ public class PaymentGatewayClient {
                                 .paymentNotices()
                                 .stream()
                                 .findFirst()
-                                .map(p -> p.transactionDescription().value())
+                                .map(
+                                        p -> p.transactionDescription()
+                                                .value()
+                                )
                                 .orElseThrow()
                 )
                 .urlBack(
@@ -606,8 +594,11 @@ public class PaymentGatewayClient {
                                 .toUri()
                 )
                 .touchpoint(touchpoint)
-                .paName(null)// optional
-                .idPaymentMethod(null);// optional
+                .paymentMethod(
+                        redirectMethodsDescriptions.get(idPaymentMethod)
+                )
+                .idPaymentMethod(idPaymentMethod.toString())
+                .paName(null);// optional
         Either<CheckoutRedirectConfigurationException, URI> pspConfiguredUrl = getRedirectUrlForPsp(
                 authorizationData.pspId()
         );

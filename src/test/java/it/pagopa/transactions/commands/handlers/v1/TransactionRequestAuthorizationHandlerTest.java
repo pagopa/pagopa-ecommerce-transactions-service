@@ -751,7 +751,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 Optional.empty(),
                 Optional.empty(),
                 "VISA",
-                new PostePayAuthRequestDetailsDto().detailType("GPAY").accountEmail("test@test.it")
+                new RedirectionAuthRequestDetailsDto()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
