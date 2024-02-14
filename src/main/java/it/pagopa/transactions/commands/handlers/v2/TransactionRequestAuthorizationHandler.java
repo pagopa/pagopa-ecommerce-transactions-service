@@ -281,7 +281,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                             );
                                     return updateSession.then(
                                             transactionEventStoreRepository.save(authorizationEvent)
-                                                    .doOnNext(
+                                                    .flatMap(
                                                             e -> {
                                                                 log.info("Evaluating saving in auth request queue");
                                                                 if (authorizationEvent.getData().getPaymentGateway()
@@ -291,7 +291,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                                     + authorizationEvent.getData()
                                                                                             .getPaymentGateway()
                                                                     );
-                                                                    tracingUtils.traceMono(
+                                                                    return tracingUtils.traceMono(
                                                                             this.getClass().getSimpleName(),
                                                                             tracingInfo -> transactionAuthorizationRequestedQueueAsyncClientV2
                                                                                     .sendMessageWithResponse(
@@ -306,20 +306,20 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                                                     -1
                                                                                             )
                                                                                     )
-                                                                                    .doOnNext(
-                                                                                            r -> log.info(
-                                                                                                    "Enqueue response code "
-                                                                                                            + r.getStatusCode()
-                                                                                            )
+                                                                    ).doOnNext(
+                                                                            r -> log.info(
+                                                                                    "Enqueue response status code "
+                                                                                            + r.getStatusCode()
+                                                                            )
+                                                                    )
+                                                                            .doOnError(
+                                                                                    err -> log.error(
+                                                                                            "Enqueue error "
+                                                                                                    + err.getMessage()
                                                                                     )
-                                                                                    .doOnError(
-                                                                                            r -> log.info(
-                                                                                                    "Enqueue error " + r
-                                                                                                            .getMessage()
-                                                                                            )
-                                                                                    )
-                                                                    );
+                                                                            );
                                                                 }
+                                                                return Mono.empty();
                                                             }
                                                     )
                                                     .thenReturn(tuple6)
