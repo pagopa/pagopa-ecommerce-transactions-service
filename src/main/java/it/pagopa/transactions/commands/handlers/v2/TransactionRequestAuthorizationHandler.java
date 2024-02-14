@@ -2,7 +2,6 @@ package it.pagopa.transactions.commands.handlers.v2;
 
 import com.azure.cosmos.implementation.BadRequestException;
 import com.azure.cosmos.implementation.InternalServerErrorException;
-import io.swagger.models.auth.In;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
@@ -64,7 +63,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
     protected final OpenTelemetryUtils openTelemetryUtils;
     private final QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClientV2;
 
-    protected final Integer paymentTokenTimeout;
+    protected final Integer npgAuthRequestTimeout;
     protected final Integer transientQueuesTTLSeconds;
 
     @Autowired
@@ -80,7 +79,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 "transactionAuthorizationRequestedQueueAsyncClientV2"
             ) QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClientV2,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") Integer transientQueuesTTLSeconds,
-            @Value("${payment.token.validity}") Integer paymentTokenTimeout,
+            @Value("${npg.authorization.request.timeout}") Integer npgAuthRequestTimeout,
             TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils
     ) {
@@ -96,7 +95,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         this.tracingUtils = tracingUtils;
         this.openTelemetryUtils = openTelemetryUtils;
         this.transactionAuthorizationRequestedQueueAsyncClientV2 = transactionAuthorizationRequestedQueueAsyncClientV2;
-        this.paymentTokenTimeout = paymentTokenTimeout;
+        this.npgAuthRequestTimeout = npgAuthRequestTimeout;
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
 
     }
@@ -300,10 +299,10 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                                                     tracingInfo
                                                                                             ),
                                                                                             Duration.ofSeconds(
-                                                                                                    0
+                                                                                                    npgAuthRequestTimeout
                                                                                             ),
                                                                                             Duration.ofSeconds(
-                                                                                                    -1
+                                                                                                    transientQueuesTTLSeconds
                                                                                             )
                                                                                     )
                                                                     ).doOnNext(
