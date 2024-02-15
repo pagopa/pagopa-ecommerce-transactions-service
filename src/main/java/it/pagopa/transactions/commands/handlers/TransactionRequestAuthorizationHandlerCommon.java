@@ -4,7 +4,6 @@ import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
-import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.generated.transactions.server.model.ApmAuthRequestDetailsDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.transactions.server.model.*;

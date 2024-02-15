@@ -73,7 +73,7 @@ These are all environment variables needed by the application:
 | NODE_FORWARDER_CONNECTION_TIMEOUT               |     | Checkout Redirection request connection timeout                                                                                                                                      | number  |         |
 | CHECKOUT_REDIRECT_LOGO_MAPPING                  |     | Checkout Redirection PSP logo mappings. Those logos will be used in user notification email                                                                                          | string  |         |
 | TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME |     | Name of the queue for transaction payment gateway polling for authorization requested transactions                                                                                   | string  |         |
-| NPG_AUTHORIZATION_REQUEST_TIMEOUT               |     | Timeout for npg authorization state query                                                                                                                                            | number  |         |
+| NPG_AUTHORIZATION_REQUEST_TIMEOUT_SECONDS               |     | Timeout for npg authorization state query                                                                                                                                            | number  |         |
 
 An example configuration of these environment variables is in the `.env.example` file.
 

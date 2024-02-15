@@ -80,7 +80,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 "transactionAuthorizationRequestedQueueAsyncClientV2"
             ) QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClientV2,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") Integer transientQueuesTTLSeconds,
-            @Value("${npg.authorization.request.timeout}") Integer npgAuthRequestTimeout,
+            @Value("${npg.authorization.request.timeout.seconds}") Integer npgAuthRequestTimeout,
             TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils
     ) {
