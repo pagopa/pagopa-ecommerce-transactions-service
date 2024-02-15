@@ -552,40 +552,39 @@ public class TransactionsService {
                                                     .map(
                                                             calculateFeeResponseDto -> Tuples.of(
                                                                     calculateFeeResponseDto,
-                                                                    Optional.ofNullable(paymentSessionData.sessionId()),
-                                                                    paymentSessionData.brand(),
-                                                                    Optional.ofNullable(paymentSessionData.contractId())
+                                                                    paymentSessionData
                                                             )
                                                     )
                                     )
                                     .map(
                                             data -> {
                                                 CalculateFeeResponseDto calculateFeeResponse = data.getT1();
-                                                return Tuples.of(
+                                                PaymentSessionData paymentSessionData = data.getT2();
+                                                return new AuthorizationRequestSessionData(
                                                         calculateFeeResponse.getPaymentMethodName(),
                                                         calculateFeeResponse.getPaymentMethodDescription(),
                                                         calculateFeeResponse.getBundles().stream()
                                                                 .filter(
-                                                                        psp -> psp.getIdPsp()
+                                                                        psp -> requestAuthorizationRequestDto
+                                                                                .getPspId()
                                                                                 .equals(
-                                                                                        requestAuthorizationRequestDto
-                                                                                                .getPspId()
+                                                                                        psp.getIdPsp()
                                                                                 )
-                                                                                && psp.getTaxPayerFee()
+                                                                                && Long.valueOf(
+                                                                                        requestAuthorizationRequestDto
+                                                                                                .getFee()
+                                                                                )
                                                                                 .equals(
-                                                                                        Long.valueOf(
-                                                                                                requestAuthorizationRequestDto
-                                                                                                        .getFee()
-                                                                                        )
+                                                                                        psp.getTaxPayerFee()
                                                                                 )
                                                                 ).findFirst(),
-                                                        data.getT2(),
-                                                        data.getT3(),
-                                                        data.getT4()
+                                                        paymentSessionData.brand(),
+                                                        Optional.ofNullable(paymentSessionData.sessionId()),
+                                                        Optional.ofNullable(paymentSessionData.contractId())
                                                 );
                                             }
                                     )
-                                    .filter(t -> t.getT3().isPresent())
+                                    .filter(authSessionData -> authSessionData.bundle().isPresent())
                                     .switchIfEmpty(
                                             Mono.error(
                                                     new UnsatisfiablePspRequestException(
@@ -596,14 +595,9 @@ public class TransactionsService {
                                             )
                                     )
                                     .map(
-                                            t -> Tuples.of(
+                                            authSessionData -> Tuples.of(
                                                     transaction,
-                                                    t.getT1(),
-                                                    t.getT2(),
-                                                    t.getT3().get(),
-                                                    t.getT4(),
-                                                    t.getT5(),
-                                                    t.getT6()
+                                                    authSessionData
                                             )
 
                                     );
@@ -613,12 +607,13 @@ public class TransactionsService {
                         args -> {
                             it.pagopa.ecommerce.commons.documents.BaseTransactionView transactionDocument = args
                                     .getT1();
-                            String paymentMethodName = args.getT2();
-                            String paymentMethodDescription = args.getT3();
-                            BundleDto bundle = args.getT4();
-                            Optional<String> sessionId = args.getT5();
-                            String brand = args.getT6();
-                            Optional<String> contractId = args.getT7();
+                            AuthorizationRequestSessionData authorizationRequestSessionData = args.getT2();
+                            String paymentMethodName = authorizationRequestSessionData.paymentMethodName();
+                            String paymentMethodDescription = authorizationRequestSessionData.paymentMethodDescription();
+                            BundleDto bundle = authorizationRequestSessionData.bundle().orElseThrow();
+                            Optional<String> sessionId = authorizationRequestSessionData.npgSessionId();
+                            String brand = authorizationRequestSessionData.brand();
+                            Optional<String> contractId = authorizationRequestSessionData.npgContractId();
                             log.info(
                                     "Requesting authorization for transactionId: {}",
                                     transactionDocument.getTransactionId()
