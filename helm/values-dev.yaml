@@ -136,15 +136,15 @@ microservice-chart:
     SESSION_URL_CANCEL_SUFFIX: "/ecommerce-fe/cancel"
     SESSION_URL_NOTIFICATION_URL: "https://api.dev.platform.pagopa.it/ecommerce/npg/notifications/v1/sessions/{orderId}/outcomes?sessionToken={sessionToken}"
     JWT_NPG_NOTIFICATION_VALIDITY_TIME: "900"
-    CHECKOUT_REDIRECT_PSP_LIST: ""
+    CHECKOUT_REDIRECT_PSP_LIST: "BCITITMM"
     NODE_FORWARDER_URL: "https://api.uat.platform.pagopa.it/pagopa-node-forwarder/api/v1"
     CHECKOUT_REDIRECT_URL_MAPPING: >
-      { PSP1:'http://localhost' }
+      { BCITITMM:'https://pspintesa-coll.eng-dhub.it/pspIntesa/api/v1/redirections' }
 
     NODE_FORWARDER_READ_TIMEOUT: "10000"
     NODE_FORWARDER_CONNECTION_TIMEOUT: "10000"
     CHECKOUT_REDIRECT_LOGO_MAPPING: >
-      { PSP1:'https://host/assets/logo.png' }
+      { BCITITMM:'https://host/assets/logo.png' }
 
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
