@@ -435,7 +435,14 @@ class TransactionsControllerTest {
                 .expectStatus()
                 .isBadRequest()
                 .expectBody(ProblemJsonDto.class)
-                .value(p -> assertEquals(400, p.getStatus()));
+                .value(p -> {
+                    assertEquals(400, p.getStatus());
+                    assertTrue(
+                            p.getDetail().contains(
+                                    "Missing request header 'x-correlation-id' for method parameter of type UUID"
+                            )
+                    );
+                });
     }
 
     private static CtFaultBean faultBeanWithCode(String faultCode) {
