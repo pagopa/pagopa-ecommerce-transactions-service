@@ -8,6 +8,7 @@ import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
+import it.pagopa.transactions.commands.data.AuthorizationOutput;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionCacheInfo;
@@ -18,10 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuple3;
-import reactor.util.function.Tuple4;
-import reactor.util.function.Tuples;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -54,48 +51,74 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
         this.transactionTemplateWrapper = transactionTemplateWrapper;
     }
 
-    protected Mono<Tuple2<String, String>> xpayAuthRequestPipeline(AuthorizationRequestData authorizationData) {
+    /**
+     * XPAY authorization pipeline
+     *
+     * @param authorizationData the authorization requested data
+     * @return the authorization output data containing authorization id and
+     *         redirect URL
+     */
+    protected Mono<AuthorizationOutput> xpayAuthRequestPipeline(AuthorizationRequestData authorizationData) {
         return Mono.just(authorizationData)
                 .flatMap(
                         paymentGatewayClient::requestXPayAuthorization
                 )
                 .map(
-                        xPayAuthResponseEntityDto -> Tuples.of(
+                        xPayAuthResponseEntityDto -> new AuthorizationOutput(
                                 xPayAuthResponseEntityDto.getRequestId(),
-                                xPayAuthResponseEntityDto.getUrlRedirect()
-
+                                xPayAuthResponseEntityDto.getUrlRedirect(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty()
                         )
                 );
     }
 
-    protected Mono<Tuple2<String, String>> vposAuthRequestPipeline(AuthorizationRequestData authorizationData) {
+    /**
+     * VPOS authorization pipeline
+     *
+     * @param authorizationData the authorization requested data
+     * @return the authorization output data containing authorization id and
+     *         redirect URL
+     */
+    protected Mono<AuthorizationOutput> vposAuthRequestPipeline(AuthorizationRequestData authorizationData) {
         return Mono.just(authorizationData)
                 .flatMap(
                         paymentGatewayClient::requestCreditCardAuthorization
                 )
                 .map(
-                        creditCardAuthResponseDto -> Tuples.of(
+                        creditCardAuthResponseDto -> new AuthorizationOutput(
                                 creditCardAuthResponseDto.getRequestId(),
-                                creditCardAuthResponseDto.getUrlRedirect()
+                                creditCardAuthResponseDto.getUrlRedirect(),
+                                Optional.empty(),
+                                Optional.empty(),
+                                Optional.empty()
                         )
                 );
     }
 
-    protected Mono<Tuple4<String, String, Optional<String>, Optional<String>>> npgAuthRequestPipeline(
+    /**
+     * NPG authorization pipeline
+     *
+     * @param authorizationData the authorization requested data
+     * @return the authorization output data containing authorization id, redirect URL, session id, confirm payment session id (if present)
+     */
+    protected Mono<AuthorizationOutput> npgAuthRequestPipeline(
             AuthorizationRequestData authorizationData, String correlationId
     ) {
         return Mono.just(authorizationData).flatMap(authData -> switch (authData.authDetails()) {
             case CardsAuthRequestDetailsDto cards -> invokeNpgConfirmPayment(authorizationData, cards
-                    .getOrderId(), correlationId,false).map(confirmPaymentResponse -> Tuples.of(confirmPaymentResponse.getT1(), confirmPaymentResponse.getT2(), confirmPaymentResponse.getT3(), Optional.empty()));
+                    .getOrderId(), correlationId, false)
+            ;
             case WalletAuthRequestDetailsDto ignored -> {
                 NpgClient.PaymentMethod npgPaymentMethod = NpgClient.PaymentMethod.fromServiceName(authorizationData.paymentMethodName());
                 if (npgPaymentMethod.equals(NpgClient.PaymentMethod.CARDS)) {
                     yield walletNpgCardsPaymentFlow(authorizationData, correlationId);
                 } else {
-                    yield walletNpgApmPaymentFlow(authorizationData, correlationId,true);
+                    yield walletNpgApmPaymentFlow(authorizationData, correlationId, true);
                 }
             }
-            case ApmAuthRequestDetailsDto ignored ->  walletNpgApmPaymentFlow(authorizationData,correlationId, false);
+            case ApmAuthRequestDetailsDto ignored -> walletNpgApmPaymentFlow(authorizationData, correlationId, false);
             default -> Mono.empty();
         });
 
@@ -106,12 +129,12 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
      * requests made to NPG: 1) order/build 2) confirmPayment
      *
      * @param authorizationData the authorization requested data
-     * @return a tuple of orderId, return url, confirm payment response session id
-     *         and order/build session id
+     * @return the authorization output data with orderId, return url, confirm
+     *         payment response session id and order/build session id
      */
-    private Mono<Tuple4<String, String, Optional<String>, Optional<String>>> walletNpgCardsPaymentFlow(
-                                                                                                       AuthorizationRequestData authorizationData,
-                                                                                                       String correlationId
+    private Mono<AuthorizationOutput> walletNpgCardsPaymentFlow(
+                                                                AuthorizationRequestData authorizationData,
+                                                                String correlationId
     ) {
         return paymentGatewayClient.requestNpgBuildSession(authorizationData, correlationId, true)
                 .map(orderIdAndFieldsDto -> {
@@ -155,11 +178,12 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                 true
                         )
                                 .map(
-                                        confirmPaymentResponse -> Tuples.of(
-                                                confirmPaymentResponse.getT1(),
-                                                confirmPaymentResponse.getT2(),
-                                                confirmPaymentResponse.getT3(),
-                                                Optional.of(orderIdAndFieldsDto.getT2().getSessionId())
+                                        authorizationOutput -> new AuthorizationOutput(
+                                                authorizationOutput.authorizationId(),
+                                                authorizationOutput.authorizationUrl(),
+                                                Optional.of(orderIdAndFieldsDto.getT2().getSessionId()),
+                                                authorizationOutput.npgConfirmSessionId(),
+                                                authorizationOutput.authorizationTimeoutMillis()
                                         )
                                 )
                 );
@@ -171,13 +195,13 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
      * key)
      *
      * @param authorizationData the authorization requested data
-     * @return a tuple of orderId, return url, confirm payment response session id
-     *         (empty) and order/build session id
+     * @return the authorization output data with confirm payment response session
+     *         id (empty) and order/build session id
      */
-    private Mono<Tuple4<String, String, Optional<String>, Optional<String>>> walletNpgApmPaymentFlow(
-                                                                                                     AuthorizationRequestData authorizationData,
-                                                                                                     String correlationId,
-                                                                                                     boolean isWalletPayment
+    private Mono<AuthorizationOutput> walletNpgApmPaymentFlow(
+                                                              AuthorizationRequestData authorizationData,
+                                                              String correlationId,
+                                                              boolean isWalletPayment
     ) {
         return paymentGatewayClient.requestNpgBuildApmPayment(authorizationData, correlationId, isWalletPayment)
                 .filter(orderIdAndFieldsDto -> {
@@ -223,13 +247,12 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                          * returned parameter order) and then the hardcoded Optional.empty() confirm
                          * session id
                          */
-                        orderIdAndFieldsDto -> Tuples.of(
-                                orderIdAndFieldsDto.getT1(), // orderId
-                                // safe here, return url is checked in above filter
-                                orderIdAndFieldsDto.getT2().getUrl(), // redirect url
-                                Optional.empty(), // confirm session id
-                                // safe here, sessionId is checked in requestNpgBuildSession method
-                                Optional.of(orderIdAndFieldsDto.getT2().getSessionId())// order/build session id
+                        orderIdAndFieldsDto -> new AuthorizationOutput(
+                                orderIdAndFieldsDto.getT1(),
+                                orderIdAndFieldsDto.getT2().getUrl(),
+                                Optional.ofNullable(orderIdAndFieldsDto.getT2().getSessionId()),
+                                Optional.empty(),
+                                Optional.empty()
                         )
                 );
     }
@@ -239,14 +262,14 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
      * @param orderId           order id to be used for confirm payment
      * @param isWalletPayment   boolean flag for distinguish payment requests coming
      *                          from wallet or guest flows
-     * @return a tuple containing order id, return url and confirm payment session
-     *         id
+     * @return the authorization output data containing order id, return url and
+     *         confirm payment session id
      */
-    private Mono<Tuple3<String, String, Optional<String>>> invokeNpgConfirmPayment(
-                                                                                   AuthorizationRequestData authorizationData,
-                                                                                   String orderId,
-                                                                                   String correlationId,
-                                                                                   boolean isWalletPayment
+    private Mono<AuthorizationOutput> invokeNpgConfirmPayment(
+                                                              AuthorizationRequestData authorizationData,
+                                                              String orderId,
+                                                              String correlationId,
+                                                              boolean isWalletPayment
 
     ) {
         return confirmPayment(authorizationData, correlationId)
@@ -258,10 +281,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                             .ofNullable(npgResponse.getFieldSet())
                                             .map(FieldsDto::getSessionId);
                                     log.info("NGP auth completed session id: {}", confirmPaymentSessionId);
-                                    return Mono.just(
-                                            Tuples.of(
-                                                    orderId,
-                                                    switch (npgResponse.getState()) {
+                                    String authUrl = switch (npgResponse.getState()) {
                                         case GDI_VERIFICATION -> {
                                             if (npgResponse.getFieldSet() == null
                                                     || npgResponse.getFieldSet().getFields() == null
@@ -321,8 +341,14 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                 "Invalid NPG confirm payment state response: " + npgResponse.getState(),
                                                 HttpStatus.BAD_GATEWAY
                                         );
-                                    },
-                                                    confirmPaymentSessionId
+                                    };
+                                    return Mono.just(
+                                            new AuthorizationOutput(
+                                                    orderId,
+                                                    authUrl,
+                                                    authorizationData.sessionId(),
+                                                    confirmPaymentSessionId,
+                                                    Optional.empty()
                                             )
                                     );
                                 }
@@ -365,12 +391,12 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
      *
      * @param authorizationData authorization data
      * @param touchpoint        touchpoint that initiated the transaction
-     * @return a tuple of redirection url, psp authorization id and authorization
-     *         timeout
+     * @return the authorization output data with redirection url, psp authorization
+     *         id and authorization timeout
      */
-    protected Mono<Tuple3<String, String, Optional<Integer>>> redirectionAuthRequestPipeline(
-                                                                                             AuthorizationRequestData authorizationData,
-                                                                                             RedirectUrlRequestDto.TouchpointEnum touchpoint
+    protected Mono<AuthorizationOutput> redirectionAuthRequestPipeline(
+                                                                       AuthorizationRequestData authorizationData,
+                                                                       RedirectUrlRequestDto.TouchpointEnum touchpoint
 
     ) {
         return Mono.just(authorizationData)
@@ -379,9 +405,11 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                         details -> paymentGatewayClient.requestRedirectUrlAuthorization(details, touchpoint)
                 )
                 .map(
-                        redirectUrlResponseDto -> Tuples.of(
+                        redirectUrlResponseDto -> new AuthorizationOutput(
                                 redirectUrlResponseDto.getIdPSPTransaction(),
                                 redirectUrlResponseDto.getUrl(),
+                                Optional.empty(),
+                                Optional.empty(),
                                 Optional.ofNullable(redirectUrlResponseDto.getTimeout())
                         )
                 );

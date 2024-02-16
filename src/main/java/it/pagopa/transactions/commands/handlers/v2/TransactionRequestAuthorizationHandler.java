@@ -22,6 +22,7 @@ import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
+import it.pagopa.transactions.commands.data.AuthorizationOutput;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandlerCommon;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
@@ -36,13 +37,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple3;
-import reactor.util.function.Tuple6;
+import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Optional;
 
 @Component("TransactionRequestAuthorizationHandlerV2")
 @Slf4j
@@ -95,35 +94,25 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(TransactionActivated.class);
 
-        Mono<Tuple6<String, String, Optional<String>, Optional<String>, Optional<Integer>, PaymentGateway>> monoXPay = xpayAuthRequestPipeline(
+        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoXPay = xpayAuthRequestPipeline(
                 authorizationRequestData
-        )
-                .map(
-                        tuple -> Tuples.of(
-                                tuple.getT1(),
-                                tuple.getT2(),
-                                Optional.empty(),
-                                Optional.empty(),
-                                Optional.empty(),
-                                PaymentGateway.XPAY
-                        )
-                );
+        ).map(
+                authorizationOutput -> Tuples.of(
+                        authorizationOutput,
+                        PaymentGateway.XPAY
+                )
+        );
 
-        Mono<Tuple6<String, String, Optional<String>, Optional<String>, Optional<Integer>, PaymentGateway>> monoVPOS = vposAuthRequestPipeline(
+        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoVPOS = vposAuthRequestPipeline(
                 authorizationRequestData
-        )
-                .map(
-                        tuple -> Tuples.of(
-                                tuple.getT1(),
-                                tuple.getT2(),
-                                Optional.empty(),
-                                Optional.empty(),
-                                Optional.empty(),
-                                PaymentGateway.VPOS
-                        )
-                );
+        ).map(
+                authorizationOutput -> Tuples.of(
+                        authorizationOutput,
+                        PaymentGateway.VPOS
+                )
+        );
 
-        Mono<Tuple6<String, String, Optional<String>, Optional<String>, Optional<Integer>, PaymentGateway>> monoNpgCards = transactionActivated
+        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoNpgCards = transactionActivated
                 .flatMap(
                         tx -> npgAuthRequestPipeline(
                                 authorizationRequestData,
@@ -132,43 +121,31 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                 ? transactionGatewayActivationData.getCorrelationId()
                                                 : null
                         )
-                                .map(
-                                        tuple -> Tuples
-                                                .of(
-                                                        tuple.getT1(),
-                                                        tuple.getT2(),
-                                                        tuple.getT3(),
-                                                        tuple.getT4(),
-                                                        Optional.empty(),
-                                                        PaymentGateway.NPG
-                                                )
-                                )
 
+                ).map(
+                        authorizationOutput -> Tuples.of(
+                                authorizationOutput,
+                                PaymentGateway.NPG
+                        )
                 );
 
-        Mono<Tuple6<String, String, Optional<String>, Optional<String>, Optional<Integer>, PaymentGateway>> monoRedirect = transaction
+        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoRedirect = transaction
                 .map(BaseTransaction::getClientId).flatMap(
                         clientId -> redirectionAuthRequestPipeline(
                                 authorizationRequestData,
                                 clientId
                         )
-                )
-                .map(
-                        tuple -> Tuples
-                                .of(
-                                        tuple.getT1(),
-                                        tuple.getT2(),
-                                        Optional.empty(),
-                                        Optional.empty(),
-                                        tuple.getT3(),
-                                        PaymentGateway.REDIRECT
-                                )
+                ).map(
+                        authorizationOutput -> Tuples.of(
+                                authorizationOutput,
+                                PaymentGateway.REDIRECT
+                        )
                 );
 
-        List<Mono<Tuple6<String, String, Optional<String>, Optional<String>, Optional<Integer>, PaymentGateway>>> gatewayRequests = List
+        List<Mono<Tuple2<AuthorizationOutput, PaymentGateway>>> gatewayRequests = List
                 .of(monoXPay, monoVPOS, monoNpgCards, monoRedirect);
 
-        Mono<Tuple6<String, String, Optional<String>, Optional<String>, Optional<Integer>, PaymentGateway>> gatewayAttempts = gatewayRequests
+        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> gatewayAttempts = gatewayRequests
                 .stream()
                 .reduce(
                         Mono::switchIfEmpty
@@ -177,15 +154,16 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         return transactionActivated
                 .flatMap(
                         t -> gatewayAttempts.switchIfEmpty(Mono.error(new BadRequestException("No gateway matched")))
-                                .flatMap(tuple6 -> {
+                                .flatMap(authorizationOutputAndPaymentGateway -> {
                                     log.info(
                                             "Logging authorization event for transaction id {}",
                                             t.getTransactionId().value()
                                     );
-
+                                    AuthorizationOutput authorizationOutput = authorizationOutputAndPaymentGateway
+                                            .getT1();
+                                    PaymentGateway paymentGateway = authorizationOutputAndPaymentGateway.getT2();
                                     String brand = authorizationRequestData.brand();
-                                    TransactionGatewayAuthorizationRequestedData transactionGatewayAuthorizationRequestedData = switch (tuple6
-                                            .getT6()) {
+                                    TransactionGatewayAuthorizationRequestedData transactionGatewayAuthorizationRequestedData = switch (paymentGateway) {
                                         case VPOS, XPAY -> new PgsTransactionGatewayAuthorizationRequestedData(
                                                 logo,
                                                 PgsTransactionGatewayAuthorizationRequestedData.CardBrand.valueOf(brand)
@@ -197,11 +175,12 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                         .authDetails() instanceof WalletAuthRequestDetailsDto
                                                         || authorizationRequestData
                                                                 .authDetails() instanceof ApmAuthRequestDetailsDto
-                                                                        ? tuple6.getT4().orElseThrow(
-                                                                                () -> new InternalServerErrorException(
-                                                                                        "Cannot retrieve session id for transaction"
-                                                                                )
-                                                                        ) // build session id
+                                                                        ? authorizationOutput.npgSessionId()
+                                                                                .orElseThrow(
+                                                                                        () -> new InternalServerErrorException(
+                                                                                                "Cannot retrieve session id for transaction"
+                                                                                        )
+                                                                                ) // build session id
                                                                         : authorizationRequestData.sessionId()
                                                                                 .orElseThrow(
                                                                                         () -> new BadGatewayException(
@@ -209,12 +188,12 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                                                 HttpStatus.INTERNAL_SERVER_ERROR
                                                                                         )
                                                                                 ),
-                                                tuple6.getT3().orElse(null)
+                                                authorizationOutput.npgConfirmSessionId().orElse(null)
                                         );
                                         case REDIRECT -> new RedirectTransactionGatewayAuthorizationRequestedData(
                                                 logo,
-                                                tuple6.getT1(),
-                                                tuple6.getT5().orElse(600000),
+                                                authorizationOutput.authorizationId(),
+                                                authorizationOutput.authorizationTimeoutMillis().orElse(600000),
                                                 RedirectTransactionGatewayAuthorizationRequestedData.PaymentMethodType.BANK_ACCOUNT
                                         );
                                     };
@@ -235,8 +214,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                     command.getData().paymentMethodName(),
                                                     command.getData().pspBusinessName(),
                                                     command.getData().pspOnUs(),
-                                                    tuple6.getT1(),
-                                                    tuple6.getT6(),
+                                                    authorizationOutput.authorizationId(),
+                                                    paymentGateway,
                                                     command.getData().paymentMethodDescription(),
                                                     transactionGatewayAuthorizationRequestedData
                                             )
@@ -254,11 +233,15 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                             );
                                     return updateSession.then(
                                             transactionEventStoreRepository.save(authorizationEvent)
-                                                    .thenReturn(tuple6)
+                                                    .thenReturn(authorizationOutput)
                                                     .map(
                                                             auth -> new RequestAuthorizationResponseDto()
-                                                                    .authorizationUrl(tuple6.getT2())
-                                                                    .authorizationRequestId(tuple6.getT1())
+                                                                    .authorizationUrl(
+                                                                            authorizationOutput.authorizationUrl()
+                                                                    )
+                                                                    .authorizationRequestId(
+                                                                            authorizationOutput.authorizationId()
+                                                                    )
                                                     )
                                     );
                                 })
@@ -274,9 +257,9 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
      * @return a tuple of redirection url, psp authorization id and authorization
      *         timeout
      */
-    protected Mono<Tuple3<String, String, Optional<Integer>>> redirectionAuthRequestPipeline(
-                                                                                             AuthorizationRequestData authorizationData,
-                                                                                             Transaction.ClientId clientId
+    protected Mono<AuthorizationOutput> redirectionAuthRequestPipeline(
+                                                                       AuthorizationRequestData authorizationData,
+                                                                       Transaction.ClientId clientId
 
     ) {
         Transaction.ClientId effectiveClient = switch (clientId) {
