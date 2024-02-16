@@ -444,8 +444,12 @@ class TransactionRequestAuthorizationHandlerTest {
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectNext(responseDto)
                 .verifyComplete();
-
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
+        Mockito.verify(transactionAuthorizationRequestedQueueAsyncClient, Mockito.times(1)).sendMessageWithResponse(
+                any(QueueEvent.class),
+                any(),
+                durationArgumentCaptor.capture()
+        );
         TransactionEvent<TransactionAuthorizationRequestData> savedEvent = eventStoreCaptor.getValue();
         NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = (NpgTransactionGatewayAuthorizationRequestedData) savedEvent
                 .getData().getTransactionGatewayAuthorizationRequestedData();
@@ -575,6 +579,11 @@ class TransactionRequestAuthorizationHandlerTest {
                 .verifyComplete();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
+        Mockito.verify(transactionAuthorizationRequestedQueueAsyncClient, Mockito.times(1)).sendMessageWithResponse(
+                any(QueueEvent.class),
+                any(),
+                durationArgumentCaptor.capture()
+        );
         TransactionEvent<TransactionAuthorizationRequestData> savedEvent = eventStoreCaptor.getValue();
         NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = (NpgTransactionGatewayAuthorizationRequestedData) savedEvent
                 .getData().getTransactionGatewayAuthorizationRequestedData();
@@ -710,6 +719,11 @@ class TransactionRequestAuthorizationHandlerTest {
                 .verifyComplete();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
+        Mockito.verify(transactionAuthorizationRequestedQueueAsyncClient, Mockito.times(1)).sendMessageWithResponse(
+                any(QueueEvent.class),
+                any(),
+                durationArgumentCaptor.capture()
+        );
         TransactionEvent<TransactionAuthorizationRequestData> savedEvent = eventStoreCaptor.getValue();
         NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = (NpgTransactionGatewayAuthorizationRequestedData) savedEvent
                 .getData().getTransactionGatewayAuthorizationRequestedData();
