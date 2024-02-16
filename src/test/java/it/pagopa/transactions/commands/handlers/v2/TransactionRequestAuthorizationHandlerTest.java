@@ -243,6 +243,11 @@ class TransactionRequestAuthorizationHandlerTest {
         requestAuthorizationHandler.handle(requestAuthorizationCommand).block();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
+        Mockito.verify(transactionAuthorizationRequestedQueueAsyncClient, Mockito.times(0)).sendMessageWithResponse(
+                any(QueueEvent.class),
+                any(),
+                any()
+        );
     }
 
     @Test
@@ -329,6 +334,11 @@ class TransactionRequestAuthorizationHandlerTest {
         requestAuthorizationHandler.handle(requestAuthorizationCommand).block();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
+        Mockito.verify(transactionAuthorizationRequestedQueueAsyncClient, Mockito.times(0)).sendMessageWithResponse(
+                any(QueueEvent.class),
+                any(),
+                any()
+        );
     }
 
     @Test
@@ -2709,6 +2719,11 @@ class TransactionRequestAuthorizationHandlerTest {
         requestAuthorizationHandler.handle(requestAuthorizationCommand).block();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
+        Mockito.verify(transactionAuthorizationRequestedQueueAsyncClient, Mockito.times(0)).sendMessageWithResponse(
+                any(),
+                any(),
+                any()
+        );
         TransactionEvent<TransactionAuthorizationRequestData> authorizationRequestedEvent = eventStoreCaptor.getValue();
         TransactionAuthorizationRequestData authRequestedData = authorizationRequestedEvent.getData();
         assertTrue(
