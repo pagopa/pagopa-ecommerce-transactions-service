@@ -291,7 +291,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                             paymentGateway -> paymentGateway
                                                                                     .equals(PaymentGateway.NPG)
                                                                     )
-                                                                    .switchIfEmpty(Mono.empty())
                                                                     .flatMap(
                                                                             p -> tracingUtils.traceMono(
                                                                                     this.getClass().getSimpleName(),
