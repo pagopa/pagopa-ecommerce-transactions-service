@@ -18,8 +18,10 @@ import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.support.WebExchangeBindException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.ServerWebInputException;
 import reactor.core.publisher.Mono;
 
 import javax.validation.ConstraintViolationException;
@@ -155,7 +157,9 @@ public class TransactionsController implements V2Api {
     @ExceptionHandler(
         {
                 InvalidRequestException.class,
-                ConstraintViolationException.class
+                ConstraintViolationException.class,
+                ServerWebInputException.class,
+                MethodArgumentTypeMismatchException.class
         }
     )
     ResponseEntity<ProblemJsonDto> validationExceptionHandler(Exception exception) {
@@ -251,6 +255,7 @@ public class TransactionsController implements V2Api {
                 .post()
                 .uri("http://localhost:8080/v2/transactions")
                 .header("X-Client-Id", NewTransactionResponseDto.ClientIdEnum.CHECKOUT.toString())
+                .header("x-correlation-id", UUID.randomUUID().toString())
                 .bodyValue(transactionsUtils.buildWarmupRequestV2())
                 .retrieve()
                 .toBodilessEntity()

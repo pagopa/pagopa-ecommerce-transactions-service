@@ -12,6 +12,7 @@ import it.pagopa.generated.transactions.server.model.RequestAuthorizationRespons
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
+import it.pagopa.transactions.commands.data.AuthorizationOutput;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandlerCommon;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
@@ -24,7 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple3;
+import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.net.URI;
@@ -81,18 +82,18 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(TransactionActivated.class);
 
-        Mono<Tuple3<String, String, PaymentGateway>> monoXPay = xpayAuthRequestPipeline(authorizationRequestData)
-                .map(tuple -> Tuples.of(tuple.getT1(), tuple.getT2(), PaymentGateway.XPAY));
-        Mono<Tuple3<String, String, PaymentGateway>> monoVPOS = vposAuthRequestPipeline(authorizationRequestData)
-                .map(tuple -> Tuples.of(tuple.getT1(), tuple.getT2(), PaymentGateway.VPOS));
-        Mono<Tuple3<String, String, PaymentGateway>> monoNpgCards = npgAuthRequestPipeline(
+        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoXPay = xpayAuthRequestPipeline(authorizationRequestData)
+                .map(authorizationOutput -> Tuples.of(authorizationOutput, PaymentGateway.XPAY));
+        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoVPOS = vposAuthRequestPipeline(authorizationRequestData)
+                .map(authorizationOutput -> Tuples.of(authorizationOutput, PaymentGateway.VPOS));
+        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoNpgCards = npgAuthRequestPipeline(
                 authorizationRequestData,
                 null
         )
-                .map(tuple -> Tuples.of(tuple.getT1(), tuple.getT2(), PaymentGateway.NPG));
-        List<Mono<Tuple3<String, String, PaymentGateway>>> gatewayRequests = List
+                .map(authorizationOutput -> Tuples.of(authorizationOutput, PaymentGateway.NPG));
+        List<Mono<Tuple2<AuthorizationOutput, PaymentGateway>>> gatewayRequests = List
                 .of(monoXPay, monoVPOS, monoNpgCards);
-        Mono<Tuple3<String, String, PaymentGateway>> gatewayAttempts = gatewayRequests
+        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> gatewayAttempts = gatewayRequests
                 .stream()
                 .reduce(
                         Mono::switchIfEmpty
@@ -101,12 +102,13 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         return transactionActivated
                 .flatMap(
                         t -> gatewayAttempts.switchIfEmpty(Mono.error(new BadRequestException("No gateway matched")))
-                                .flatMap(tuple3 -> {
+                                .flatMap(authorizationOutputAndGateway -> {
                                     log.info(
                                             "Logging authorization event for transaction id {}",
                                             t.getTransactionId().value()
                                     );
-
+                                    AuthorizationOutput authorizationOutput = authorizationOutputAndGateway.getT1();
+                                    PaymentGateway paymentGateway = authorizationOutputAndGateway.getT2();
                                     TransactionAuthorizationRequestData.CardBrand cardBrand = TransactionAuthorizationRequestData.CardBrand
                                             .valueOf(authorizationRequestData.brand());
                                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
@@ -126,8 +128,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                     command.getData().paymentMethodName(),
                                                     command.getData().pspBusinessName(),
                                                     command.getData().pspOnUs(),
-                                                    tuple3.getT1(),
-                                                    tuple3.getT3(),
+                                                    authorizationOutput.authorizationId(),
+                                                    paymentGateway,
                                                     logo,
                                                     cardBrand,
                                                     command.getData().paymentMethodDescription()
@@ -147,11 +149,15 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
 
                                     return updateSession.then(
                                             transactionEventStoreRepository.save(authorizationEvent)
-                                                    .thenReturn(tuple3)
+                                                    .thenReturn(authorizationOutputAndGateway)
                                                     .map(
                                                             auth -> new RequestAuthorizationResponseDto()
-                                                                    .authorizationUrl(tuple3.getT2())
-                                                                    .authorizationRequestId(tuple3.getT1())
+                                                                    .authorizationUrl(
+                                                                            authorizationOutput.authorizationUrl()
+                                                                    )
+                                                                    .authorizationRequestId(
+                                                                            authorizationOutput.authorizationId()
+                                                                    )
                                                     )
                                     );
                                 })
