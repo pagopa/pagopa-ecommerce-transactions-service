@@ -267,7 +267,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                                     .getPaymentGateway()
                                                                     )
                                                                     .filter(
-                                                                            paymentGateway -> paymentGateway
+                                                                            gateway -> gateway
                                                                                     .equals(PaymentGateway.NPG)
                                                                     )
                                                                     .flatMap(
