@@ -101,6 +101,7 @@ microservice-chart:
 
 
 
+
         { PSP1:'https://host/assets/logo.png' }
     envSecret:
       MONGO_PASSWORD: mongo-ecommerce-password
@@ -118,7 +119,7 @@ microservice-chart:
       NODE_FORWARDER_API_KEY: node-forwarder-api-key
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.20.2"
+    tag: "1.20.3"
     pullPolicy: Always
   livenessProbe:
     httpGet:
