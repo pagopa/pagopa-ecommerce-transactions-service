@@ -285,7 +285,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 );
 
         /* preconditions */
-
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
@@ -388,7 +387,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 );
 
         /* preconditions */
-
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
@@ -594,7 +592,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 .state(WorkflowStateDto.CARD_DATA_COLLECTION);
 
         /* preconditions */
-
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
@@ -862,7 +859,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 .urlRedirect("http://example.com");
 
         /* preconditions */
-
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.just(xPayAuthResponseEntityDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))

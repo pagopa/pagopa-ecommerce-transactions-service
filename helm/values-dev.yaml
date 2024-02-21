@@ -102,6 +102,7 @@ microservice-chart:
     TRANSACTION_CLOSE_PAYMENT_QUEUE_NAME: pagopa-d-weu-ecommerce-transactions-close-payment-queue
     TRANSACTION_REFUND_QUEUE_NAME: pagopa-d-weu-ecommerce-transactions-refund-queue
     TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-d-weu-ecommerce-transaction-notifications-queue
+    TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-d-weu-ecommerce-transaction-auth-requested-queue
     PAYMENT_TOKEN_VALIDITY_TIME: "900"
     TRANSACTIONS_RETRY_OFFSET: "60"
     CLOSURE_RETRY_INTERVAL: "30"
@@ -127,6 +128,7 @@ microservice-chart:
     NPG_READ_TIMEOUT: "10000"
     NPG_CONNECTION_TIMEOUT: "10000"
     NPG_CARDS_PSP_LIST: "BCITITMM,CIPBITMM,BIC36019,UNCRITMM,BPPIITRRXXX,PPAYITR1XXX"
+    NPG_AUTHORIZATION_REQUEST_TIMEOUT_SECONDS: "60"
     TRANSACTION_DOCUMENT_TTL: "600"
     CHECKOUT_BASE_PATH: "https://dev.checkout.pagopa.it"
     ECOMMERCE_EVENT_VERSION: "V1"

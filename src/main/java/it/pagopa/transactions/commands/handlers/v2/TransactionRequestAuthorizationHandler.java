@@ -2,6 +2,7 @@ package it.pagopa.transactions.commands.handlers.v2;
 
 import com.azure.cosmos.implementation.BadRequestException;
 import com.azure.cosmos.implementation.InternalServerErrorException;
+import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData.PaymentGateway;
@@ -14,8 +15,10 @@ import it.pagopa.ecommerce.commons.documents.v2.authorization.TransactionGateway
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
-import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
+import it.pagopa.ecommerce.commons.queues.QueueEvent;
+import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.generated.transactions.server.model.ApmAuthRequestDetailsDto;
+import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
@@ -30,9 +33,11 @@ import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.LogoMappingUtils;
+import it.pagopa.transactions.utils.OpenTelemetryUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -41,6 +46,7 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.List;
 
 @Component("TransactionRequestAuthorizationHandlerV2")
@@ -52,6 +58,13 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
 
     private final EcommercePaymentMethodsClient paymentMethodsClient;
 
+    protected final TracingUtils tracingUtils;
+    protected final OpenTelemetryUtils openTelemetryUtils;
+    private final QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClientV2;
+
+    protected final Integer npgAuthRequestTimeout;
+    protected final Integer transientQueuesTTLSeconds;
+
     @Autowired
     public TransactionRequestAuthorizationHandler(
             PaymentGatewayClient paymentGatewayClient,
@@ -60,7 +73,14 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             @Value("${checkout.basePath}") String checkoutBasePath,
             EcommercePaymentMethodsClient paymentMethodsClient,
             LogoMappingUtils logoMappingUtils,
-            TransactionTemplateWrapper transactionTemplateWrapper
+            TransactionTemplateWrapper transactionTemplateWrapper,
+            @Qualifier(
+                "transactionAuthorizationRequestedQueueAsyncClientV2"
+            ) QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClientV2,
+            @Value("${azurestorage.queues.transientQueues.ttlSeconds}") Integer transientQueuesTTLSeconds,
+            @Value("${npg.authorization.request.timeout.seconds}") Integer npgAuthRequestTimeout,
+            TracingUtils tracingUtils,
+            OpenTelemetryUtils openTelemetryUtils
     ) {
         super(
                 paymentGatewayClient,
@@ -71,6 +91,12 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionsUtils = transactionsUtils;
         this.paymentMethodsClient = paymentMethodsClient;
+        this.tracingUtils = tracingUtils;
+        this.openTelemetryUtils = openTelemetryUtils;
+        this.transactionAuthorizationRequestedQueueAsyncClientV2 = transactionAuthorizationRequestedQueueAsyncClientV2;
+        this.npgAuthRequestTimeout = npgAuthRequestTimeout;
+        this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
+
     }
 
     @Override
@@ -233,6 +259,35 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                             );
                                     return updateSession.then(
                                             transactionEventStoreRepository.save(authorizationEvent)
+                                                    .flatMap(
+                                                            e -> Mono
+                                                                    .just(
+                                                                            e.getData()
+                                                                                    .getPaymentGateway()
+                                                                    )
+                                                                    .filter(
+                                                                            gateway -> gateway
+                                                                                    .equals(PaymentGateway.NPG)
+                                                                    )
+                                                                    .flatMap(
+                                                                            p -> tracingUtils.traceMono(
+                                                                                    this.getClass().getSimpleName(),
+                                                                                    tracingInfo -> transactionAuthorizationRequestedQueueAsyncClientV2
+                                                                                            .sendMessageWithResponse(
+                                                                                                    new QueueEvent<>(
+                                                                                                            e,
+                                                                                                            tracingInfo
+                                                                                                    ),
+                                                                                                    Duration.ofSeconds(
+                                                                                                            npgAuthRequestTimeout
+                                                                                                    ),
+                                                                                                    Duration.ofSeconds(
+                                                                                                            transientQueuesTTLSeconds
+                                                                                                    )
+                                                                                            )
+                                                                            )
+                                                                    )
+                                                    )
                                                     .thenReturn(authorizationOutput)
                                                     .map(
                                                             auth -> new RequestAuthorizationResponseDto()
