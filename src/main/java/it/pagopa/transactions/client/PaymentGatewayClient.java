@@ -604,16 +604,24 @@ public class PaymentGatewayClient {
                                                     NodeForwarderClientException.class,
                                                     exception -> {
                                                         String pspId = authorizationData.pspId();
-                                                        if (exception
-                                                                .getCause()instanceof WebClientResponseException webClientResponseException) {
+                                                        Optional<HttpStatus> responseHttpStatus = Optional
+                                                                .ofNullable(exception.getCause())
+                                                                .filter(WebClientResponseException.class::isInstance)
+                                                                .map(
+                                                                        e -> ((WebClientResponseException) e)
+                                                                                .getStatusCode()
+                                                                );
+                                                        log.error(
+                                                                "Error communicating with PSP: [%s] to retrieve redirection URL. Received HTTP status code: %s"
+                                                                        .formatted(
+                                                                                pspId,
+                                                                                responseHttpStatus
+                                                                        ),
+                                                                exception
+                                                        );
+                                                        if (responseHttpStatus.isPresent()) {
+                                                            HttpStatus httpStatus = responseHttpStatus.get();
 
-                                                            HttpStatus httpStatus = webClientResponseException
-                                                                    .getStatusCode();
-                                                            log.error(
-                                                                    "Error communicating with PSP: [{}] to retrieve redirection URL. Received HTTP status code: {}",
-                                                                    pspId,
-                                                                    httpStatus
-                                                            );
                                                             return switch (httpStatus) {
                                                                 case BAD_REQUEST, UNAUTHORIZED -> new AlreadyProcessedException(
                                                                         authorizationData.transactionId()
