@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.ecommerce.commons.client.NodeForwarderClient;
 import it.pagopa.ecommerce.commons.client.NpgClient;
+import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.exceptions.CheckoutRedirectConfigurationException;
@@ -35,6 +36,7 @@ import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.NpgNotificationUrlMatcher;
+import it.pagopa.transactions.utils.NpgOutcomeUrlMatcher;
 import it.pagopa.transactions.utils.UUIDUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,8 +67,7 @@ import java.util.stream.Stream;
 
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL;
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL_STRING;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
@@ -95,7 +96,7 @@ class PaymentGatewayClientTest {
 
     private final NpgSessionUrlConfig sessionUrlConfig = new NpgSessionUrlConfig(
             "http://localhost:1234",
-            "/ecommerce-fe/esito",
+            "/ecommerce-fe/esito#clientId={clientId}&transactionId={transactionId}&sessionToken={sessionToken}",
             "/ecommerce-fe/annulla",
             "https://localhost/ecommerce/{orderId}/outcomes?sessionToken={sessionToken}"
     );
@@ -144,6 +145,8 @@ class PaymentGatewayClientTest {
                 sessionUrlConfig,
                 uniqueIdUtils,
                 npgDefaultApiKey,
+                jwtSecretKey,
+                TOKEN_VALIDITY_TIME_SECONDS,
                 jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
@@ -1372,23 +1375,36 @@ class PaymentGatewayClientTest {
                                 "sessionToken"
                         )
                 ).toString();
+
+        String npgOutcomeUrl = UriComponentsBuilder
+                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .build(
+                        Map.of(
+                                "clientId",
+                                Transaction.ClientId.IO.name(),
+                                "transactionId",
+                                transactionId.value(),
+                                "sessionToken",
+                                "sessionToken"
+                        )
+                ).toString();
+
+        String outcomeUrlPrefix = npgOutcomeUrl
+                .substring(0, npgOutcomeUrl.indexOf("sessionToken=") + "sessionToken=".length());
+
         String npgNotificationUrlPrefix = npgNotificationUrl
                 .substring(0, npgNotificationUrl.indexOf("sessionToken=") + "sessionToken=".length());
-
         verify(npgClient, times(1))
                 .buildForm(
                         any(),
                         eq(URI.create(sessionUrlConfig.basePath())),
-                        eq(
-                                URI
-                                        .create(sessionUrlConfig.basePath())
-                                        .resolve(
-                                                URI.create(
-                                                        sessionUrlConfig.outcomeSuffix()
-                                                                + "#clientId=IO&transactionId=%s"
-                                                                        .formatted(transactionId.value())
-                                                )
-                                        )
+                        argThat(
+                                new NpgOutcomeUrlMatcher(
+                                        outcomeUrlPrefix,
+                                        transactionId.value(),
+                                        orderId,
+                                        authorizationData.paymentInstrumentId()
+                                )
                         ),
                         argThat(
                                 new NpgNotificationUrlMatcher(
@@ -1751,6 +1767,23 @@ class PaymentGatewayClientTest {
         StepVerifier.create(client.requestNpgBuildSession(authorizationData, correlationId, true))
                 .expectErrorMatches(error -> error instanceof BadGatewayException)
                 .verify();
+
+        String npgOutcomeUrl = UriComponentsBuilder
+                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .build(
+                        Map.of(
+                                "clientId",
+                                Transaction.ClientId.IO.name(),
+                                "transactionId",
+                                transactionId.value(),
+                                "sessionToken",
+                                "sessionToken"
+                        )
+                ).toString();
+
+        String outcomeUrlPrefix = npgOutcomeUrl
+                .substring(0, npgOutcomeUrl.indexOf("sessionToken=") + "sessionToken=".length());
+
         String npgNotificationUrl = UriComponentsBuilder
                 .fromHttpUrl(sessionUrlConfig.notificationUrl())
                 .build(
@@ -1767,16 +1800,14 @@ class PaymentGatewayClientTest {
                 .buildForm(
                         any(),
                         eq(URI.create(sessionUrlConfig.basePath())),
-                        eq(
-                                URI
-                                        .create(sessionUrlConfig.basePath())
-                                        .resolve(
-                                                URI.create(
-                                                        sessionUrlConfig.outcomeSuffix()
-                                                                + "#clientId=IO&transactionId=%s"
-                                                                        .formatted(transactionId.value())
-                                                )
-                                        )
+                        argThat(
+                                new NpgOutcomeUrlMatcher(
+                                        outcomeUrlPrefix,
+                                        transactionId.value(),
+                                        orderId,
+                                        authorizationData.paymentInstrumentId()
+                                )
+
                         ),
                         argThat(
                                 new NpgNotificationUrlMatcher(
@@ -1902,6 +1933,22 @@ class PaymentGatewayClientTest {
                 .expectNext(responseRequestNpgBuildSession)
                 .verifyComplete();
 
+        String npgOutcomeUrl = UriComponentsBuilder
+                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .build(
+                        Map.of(
+                                "clientId",
+                                Transaction.ClientId.IO.name(),
+                                "transactionId",
+                                transactionId.value(),
+                                "sessionToken",
+                                "sessionToken"
+                        )
+                ).toString();
+
+        String outcomeUrlPrefix = npgOutcomeUrl
+                .substring(0, npgOutcomeUrl.indexOf("sessionToken=") + "sessionToken=".length());
+
         String npgNotificationUrl = UriComponentsBuilder
                 .fromHttpUrl(sessionUrlConfig.notificationUrl())
                 .build(
@@ -1918,16 +1965,14 @@ class PaymentGatewayClientTest {
                 .buildFormForPayment(
                         any(),
                         eq(URI.create(sessionUrlConfig.basePath())),
-                        eq(
-                                URI
-                                        .create(sessionUrlConfig.basePath())
-                                        .resolve(
-                                                URI.create(
-                                                        sessionUrlConfig.outcomeSuffix()
-                                                                + "#clientId=IO&transactionId=%s"
-                                                                        .formatted(transactionId.value())
-                                                )
-                                        )
+                        argThat(
+                                new NpgOutcomeUrlMatcher(
+                                        outcomeUrlPrefix,
+                                        transactionId.value(),
+                                        orderId,
+                                        authorizationData.paymentInstrumentId()
+                                )
+
                         ),
                         argThat(
                                 new NpgNotificationUrlMatcher(
@@ -2010,6 +2055,22 @@ class PaymentGatewayClientTest {
                 .sessionId("sessionId")
                 .url("http://localhost/redirectionUrl");
         /* preconditions */
+        String npgOutcomeUrl = UriComponentsBuilder
+                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .build(
+                        Map.of(
+                                "clientId",
+                                Transaction.ClientId.IO.name(),
+                                "transactionId",
+                                transactionId.value(),
+                                "sessionToken",
+                                "sessionToken"
+                        )
+                ).toString();
+
+        String outcomeUrlPrefix = npgOutcomeUrl
+                .substring(0, npgOutcomeUrl.indexOf("sessionToken=") + "sessionToken=".length());
+
         String npgNotificationUrl = UriComponentsBuilder
                 .fromHttpUrl(sessionUrlConfig.notificationUrl())
                 .build(
@@ -2026,16 +2087,13 @@ class PaymentGatewayClientTest {
                 npgClient.buildFormForPayment(
                         eq(UUID.fromString(correlationId)),
                         eq(URI.create(sessionUrlConfig.basePath())),
-                        eq(
-                                URI
-                                        .create(sessionUrlConfig.basePath())
-                                        .resolve(
-                                                URI.create(
-                                                        sessionUrlConfig.outcomeSuffix()
-                                                                + "#clientId=IO&transactionId=%s"
-                                                                        .formatted(transactionId.value())
-                                                )
-                                        )
+                        argThat(
+                                new NpgOutcomeUrlMatcher(
+                                        outcomeUrlPrefix,
+                                        transactionId.value(),
+                                        orderId,
+                                        authorizationData.paymentInstrumentId()
+                                )
                         ),
                         argThat(
                                 new NpgNotificationUrlMatcher(
@@ -2091,7 +2149,7 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.IO,
                 "idCart",
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
@@ -2157,22 +2215,33 @@ class PaymentGatewayClientTest {
                                 "sessionToken"
                         )
                 ).toString();
+        String npgOutcomeUrl = UriComponentsBuilder
+                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .build(
+                        Map.of(
+                                "clientId",
+                                Transaction.ClientId.IO.name(),
+                                "transactionId",
+                                transactionId.value(),
+                                "sessionToken",
+                                "sessionToken"
+                        )
+                ).toString();
         String npgNotificationUrlPrefix = npgNotificationUrl
                 .substring(0, npgNotificationUrl.indexOf("sessionToken=") + "sessionToken=".length());
+        String outcomeUrlPrefix = npgOutcomeUrl
+                .substring(0, npgOutcomeUrl.indexOf("sessionToken=") + "sessionToken=".length());
         verify(npgClient, times(1))
                 .buildFormForPayment(
                         any(),
                         eq(URI.create(sessionUrlConfig.basePath())),
-                        eq(
-                                URI
-                                        .create(sessionUrlConfig.basePath())
-                                        .resolve(
-                                                URI.create(
-                                                        sessionUrlConfig.outcomeSuffix()
-                                                                + "#clientId=IO&transactionId=%s"
-                                                                        .formatted(transactionId.value())
-                                                )
-                                        )
+                        argThat(
+                                new NpgOutcomeUrlMatcher(
+                                        outcomeUrlPrefix,
+                                        transactionId.value(),
+                                        orderId,
+                                        authorizationData.paymentInstrumentId()
+                                )
                         ),
                         argThat(
                                 new NpgNotificationUrlMatcher(
@@ -2244,13 +2313,24 @@ class PaymentGatewayClientTest {
                 .idTransaction(transaction.getTransactionId().value())
                 .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
                 .touchpoint(RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
-                .urlBack(
-                        URI.create(
-                                "http://localhost:1234/ecommerce-fe/esito#clientId=REDIRECT&transactionId="
-                                        .concat(transaction.getTransactionId().value())
-                        )
-                )
                 .paymentMethod(mappedPaymentMethodDescription);
+
+        String urlBack = UriComponentsBuilder
+                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .build(
+                        Map.of(
+                                "clientId",
+                                RedirectUrlRequestDto.TouchpointEnum.CHECKOUT.getValue(),
+                                "transactionId",
+                                authorizationData.transactionId().value(),
+                                "sessionToken",
+                                "sessionToken"
+                        )
+                ).toString();
+
+        String urlBackPrefix = urlBack
+                .substring(0, urlBack.indexOf("sessionToken=") + "sessionToken=".length());
+
         RedirectUrlResponseDto redirectUrlResponseDto = new RedirectUrlResponseDto()
                 .timeout(60000)
                 .url("http://redirectionUrl")
@@ -2271,10 +2351,32 @@ class PaymentGatewayClientTest {
                 .expectNext(redirectUrlResponseDto)
                 .verifyComplete();
         verify(nodeForwarderClient, times(1)).proxyRequest(
-                redirectUrlRequestDto,
-                URI.create("http://redirect/pspId"),
-                authorizationData.transactionId().value(),
-                RedirectUrlResponseDto.class
+                argThat(request -> {
+                    URI urlBackExpected = request.getUrlBack();
+                    assertEquals(
+                            redirectUrlRequestDto,
+                            new RedirectUrlRequestDto()
+                                    .idPaymentMethod(request.getIdPaymentMethod())
+                                    .paymentMethod(request.getPaymentMethod())
+                                    .amount(request.getAmount())
+                                    .idPsp(request.getIdPsp())
+                                    .idTransaction(request.getIdTransaction())
+                                    .description(request.getDescription())
+                                    .touchpoint(request.getTouchpoint())
+                    );
+                    assertTrue(
+                            new NpgOutcomeUrlMatcher(
+                                    urlBackPrefix,
+                                    authorizationData.transactionId().value(),
+                                    null,
+                                    authorizationData.paymentInstrumentId()
+                            ).matches(urlBackExpected)
+                    );
+                    return true;
+                }),
+                eq(URI.create("http://redirect/pspId")),
+                eq(authorizationData.transactionId().value()),
+                eq(RedirectUrlResponseDto.class)
         );
     }
 
@@ -2325,13 +2427,23 @@ class PaymentGatewayClientTest {
                 .idPsp(pspId)
                 .idTransaction(transaction.getTransactionId().value())
                 .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
-                .touchpoint(RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
-                .urlBack(
-                        URI.create(
-                                "http://localhost:1234/ecommerce-fe/esito#clientId=REDIRECT&transactionId="
-                                        .concat(transaction.getTransactionId().value())
+                .touchpoint(RedirectUrlRequestDto.TouchpointEnum.CHECKOUT);
+
+        String urlBack = UriComponentsBuilder
+                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .build(
+                        Map.of(
+                                "clientId",
+                                RedirectUrlRequestDto.TouchpointEnum.CHECKOUT.getValue(),
+                                "transactionId",
+                                authorizationData.transactionId().value(),
+                                "sessionToken",
+                                "sessionToken"
                         )
-                );
+                ).toString();
+
+        String urlBackPrefix = urlBack
+                .substring(0, urlBack.indexOf("sessionToken=") + "sessionToken=".length());
 
         given(nodeForwarderClient.proxyRequest(any(), any(), any(), any())).willReturn(
                 Mono.error(
@@ -2356,10 +2468,32 @@ class PaymentGatewayClientTest {
                 .expectError(expectedMappedException)
                 .verify();
         verify(nodeForwarderClient, times(1)).proxyRequest(
-                redirectUrlRequestDto,
-                URI.create("http://redirect/pspId"),
-                authorizationData.transactionId().value(),
-                RedirectUrlResponseDto.class
+                argThat(request -> {
+                    URI urlBackExpected = request.getUrlBack();
+                    assertEquals(
+                            redirectUrlRequestDto,
+                            new RedirectUrlRequestDto()
+                                    .idPaymentMethod(request.getIdPaymentMethod())
+                                    .paymentMethod(request.getPaymentMethod())
+                                    .amount(request.getAmount())
+                                    .idPsp(request.getIdPsp())
+                                    .idTransaction(request.getIdTransaction())
+                                    .description(request.getDescription())
+                                    .touchpoint(request.getTouchpoint())
+                    );
+                    assertTrue(
+                            new NpgOutcomeUrlMatcher(
+                                    urlBackPrefix,
+                                    authorizationData.transactionId().value(),
+                                    null,
+                                    authorizationData.paymentInstrumentId()
+                            ).matches(urlBackExpected)
+                    );
+                    return true;
+                }),
+                eq(URI.create("http://redirect/pspId")),
+                eq(authorizationData.transactionId().value()),
+                eq(RedirectUrlResponseDto.class)
         );
     }
 
@@ -2397,13 +2531,24 @@ class PaymentGatewayClientTest {
                 .idPsp(pspId)
                 .idTransaction(transaction.getTransactionId().value())
                 .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
-                .touchpoint(RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
-                .urlBack(
-                        URI.create(
-                                "http://localhost:1234/ecommerce-fe/esito#clientId=REDIRECT&transactionId="
-                                        .concat(transaction.getTransactionId().value())
+                .touchpoint(RedirectUrlRequestDto.TouchpointEnum.CHECKOUT);
+
+        String urlBack = UriComponentsBuilder
+                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .build(
+                        Map.of(
+                                "clientId",
+                                RedirectUrlRequestDto.TouchpointEnum.CHECKOUT.getValue(),
+                                "transactionId",
+                                authorizationData.transactionId().value(),
+                                "sessionToken",
+                                "sessionToken"
                         )
-                );
+                ).toString();
+
+        String urlBackPrefix = urlBack
+                .substring(0, urlBack.indexOf("sessionToken=") + "sessionToken=".length());
+
         given(nodeForwarderClient.proxyRequest(any(), any(), any(), any())).willReturn(
                 Mono.error(
                         new NodeForwarderClientException(
@@ -2420,10 +2565,32 @@ class PaymentGatewayClientTest {
                 .expectError(BadGatewayException.class)
                 .verify();
         verify(nodeForwarderClient, times(1)).proxyRequest(
-                redirectUrlRequestDto,
-                URI.create("http://redirect/pspId"),
-                authorizationData.transactionId().value(),
-                RedirectUrlResponseDto.class
+                argThat(request -> {
+                    URI urlBackExpected = request.getUrlBack();
+                    assertEquals(
+                            redirectUrlRequestDto,
+                            new RedirectUrlRequestDto()
+                                    .idPaymentMethod(request.getIdPaymentMethod())
+                                    .paymentMethod(request.getPaymentMethod())
+                                    .amount(request.getAmount())
+                                    .idPsp(request.getIdPsp())
+                                    .idTransaction(request.getIdTransaction())
+                                    .description(request.getDescription())
+                                    .touchpoint(request.getTouchpoint())
+                    );
+                    assertTrue(
+                            new NpgOutcomeUrlMatcher(
+                                    urlBackPrefix,
+                                    authorizationData.transactionId().value(),
+                                    null,
+                                    authorizationData.paymentInstrumentId()
+                            ).matches(urlBackExpected)
+                    );
+                    return true;
+                }),
+                eq(URI.create("http://redirect/pspId")),
+                eq(authorizationData.transactionId().value()),
+                eq(RedirectUrlResponseDto.class)
         );
     }
 
