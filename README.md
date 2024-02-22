@@ -13,6 +13,15 @@ These are all environment variables needed by the application:
 | MONGO_HOST                                      |     | Host where MongoDB instance used to persise events and view resides                                                                                                                  | string  |
 | MONGO_USERNAME                                  |     | Username used for connecting to MongoDB instance                                                                                                                                     | string  |         |
 | MONGO_PASSWORD                                  |     | Password used for connecting to MongoDB instance                                                                                                                                     | string  |         |
+| MONGO_PORT                                     |     | Port used for connecting to MongoDB instance                                                                                                                                         | string  |         |
+| MONGO_MIN_POOL_SIZE                            |     | Min amount of connections to be retained into connection pool. See docs *                                                                                                            | string  |         |
+| MONGO_MAX_POOL_SIZE                            |     | Max amount of connections to be retained into connection pool.See docs *                                                                                                             | string  |         |
+| MONGO_MAX_IDLE_TIMEOUT_MS                      |     | Max timeout after which an idle connection is killed in milliseconds. See docs *                                                                                                     | string  |         |
+| MONGO_CONNECTION_TIMEOUT_MS                    |     | Max time to wait for a connection to be opened. See docs *                                                                                                                           | string  |         |
+| MONGO_SOCKET_TIMEOUT_MS                        |     | Max time to wait for a command send or receive before timing out. See docs *                                                                                                         | string  |         |
+| MONGO_SERVER_SELECTION_TIMEOUT_MS              |     | Max time to wait for a server to be selected while performing a communication with Mongo in milliseconds. See docs *                                                                 | string  |         |
+| MONGO_WAITING_QUEUE_MS                         |     | Max time a thread has to wait for a connection to be available in milliseconds. See docs *                                                                                           | string  |         |
+| MONGO_HEARTBEAT_FREQUENCY_MS                   |     | Hearth beat frequency in milliseconds. This is an hello command that is sent periodically on each active connection to perform an health check. See docs *                           | string  |         |
 | REDIS_HOST                                      |     | Host where the redis instance used to persist idempotency keys can be found                                                                                                          | string  |         |
 | REDIS_PASSWORD                                  |     | Password used for connecting to Redis instance                                                                                                                                       | string  |         |
 | PAYMENT_TRANSACTION_GATEWAY_URI                 |     | Payment transactions gateway service connection URI                                                                                                                                  | string  |         |
@@ -76,6 +85,9 @@ These are all environment variables needed by the application:
 | NPG_AUTHORIZATION_REQUEST_TIMEOUT_SECONDS       |     | Timeout for npg authorization state query                                                                                                                                            | number  |         |
 
 An example configuration of these environment variables is in the `.env.example` file.
+
+(*): for Mongo connection string options
+see [docs](https://www.mongodb.com/docs/drivers/java/sync/v4.3/fundamentals/connection/connection-options/#connection-options)
 
 ## Run the application with `Docker`
 
