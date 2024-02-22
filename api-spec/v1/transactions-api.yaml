@@ -1199,7 +1199,7 @@ components:
           type: string
           description: PSP transaction unique ID
         outcome:
-          $ref: 'https://raw.githubusercontent.com/pagopa/pagopa-api/SANP3.6.1/openapi/redirect.yaml#/components/schemas/AuthorizationOutcome'
+          $ref: 'https://raw.githubusercontent.com/pagopa/pagopa-api/37f52b0fe2db6345407e296f9aa5be562e7ba331/openapi/redirect.yaml#/components/schemas/AuthorizationOutcome'
         pspId:
           type: string
           description: PSP ID from which the authorization outcome request come
