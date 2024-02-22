@@ -23,6 +23,7 @@ microservice-chart:
         TRANSACTION_CLOSE_PAYMENT_QUEUE_NAME: pagopa-p-weu-ecommerce-transactions-close-payment-queue-b
         TRANSACTION_REFUND_QUEUE_NAME: pagopa-p-weu-ecommerce-transactions-refund-queue-b
         TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-p-weu-ecommerce-transaction-notifications-queue-b
+        TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-p-weu-ecommerce-transaction-auth-requested-queue-b
         OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-blue,deployment.environment=prod"
         ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
   image:
@@ -131,6 +132,7 @@ microservice-chart:
     TRANSACTION_CLOSE_PAYMENT_QUEUE_NAME: pagopa-p-weu-ecommerce-transactions-close-payment-queue
     TRANSACTION_REFUND_QUEUE_NAME: pagopa-p-weu-ecommerce-transactions-refund-queue
     TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-p-weu-ecommerce-transaction-notifications-queue
+    TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-p-weu-ecommerce-transaction-auth-requested-queue
     TRANSIENT_QUEUES_TTL_SECONDS: "2592000"
     PAYMENT_TOKEN_VALIDITY_TIME: "900"
     TRANSACTIONS_RETRY_OFFSET: "60"
