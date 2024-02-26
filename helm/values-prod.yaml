@@ -150,6 +150,7 @@ microservice-chart:
     SERVER_ERROR_INCLUDE_STACKTRACE: "never"
     OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service,deployment.environment=prod"
     OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.elastic-system.svc:4317"
+    OTEL_EXPORTER_OTLP_PROTOCOL: grpc
     OTEL_TRACES_EXPORTER: otlp
     OTEL_METRICS_EXPORTER: otlp
     OTEL_LOGS_EXPORTER: none
