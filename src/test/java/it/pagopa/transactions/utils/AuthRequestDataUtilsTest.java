@@ -140,14 +140,8 @@ class AuthRequestDataUtilsTest {
         String operationId = "operationId";
         String paymentEndToEndId = "paymentEndToEndId";
         String authorizationCode = "authorizationCode";
+        String errorCode = "errorCode";
         String rrn = "rrn";
-        String expectedAuthorizationCode = null;
-        String expectedErrorCode = null;
-        if (operationResultEnum == OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED) {
-            expectedAuthorizationCode = authorizationCode;
-        } else {
-            expectedErrorCode = authorizationCode;
-        }
         OutcomeNpgGatewayDto outcomeNpgGatewayDto = new OutcomeNpgGatewayDto()
                 .paymentGatewayType("NPG")
                 .orderId(orderId)
@@ -155,15 +149,16 @@ class AuthRequestDataUtilsTest {
                 .paymentEndToEndId(paymentEndToEndId)
                 .operationResult(operationResultEnum)
                 .authorizationCode(authorizationCode)
+                .errorCode(errorCode)
                 .rrn(rrn);
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(outcomeNpgGatewayDto);
         AuthRequestDataUtils.AuthRequestData authRequestData = authRequestDataUtils
                 .from(updateAuthorizationRequest, transactionId);
-        assertEquals(expectedAuthorizationCode, authRequestData.authorizationCode());
+        assertEquals(authorizationCode, authRequestData.authorizationCode());
         assertEquals(expectedOutcome, authRequestData.outcome());
         assertEquals(rrn, authRequestData.rrn());
-        assertEquals(expectedErrorCode, authRequestData.errorCode());
+        assertEquals(errorCode, authRequestData.errorCode());
     }
 
     @ParameterizedTest
