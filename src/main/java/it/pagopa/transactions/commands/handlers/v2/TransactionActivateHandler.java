@@ -347,13 +347,10 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
 
         return transactionActivatedEvent.flatMap(transactionEventActivatedStoreRepository::save)
                 .flatMap(
-                        e -> tracingUtils.traceMono(
-                                this.getClass().getSimpleName(),
-                                tracingInfo -> transactionActivatedQueueAsyncClientV2.sendMessageWithResponse(
-                                        new QueueEvent<>(e, tracingInfo),
-                                        Duration.ofSeconds(paymentTokenTimeout),
-                                        Duration.ofSeconds(transientQueuesTTLSeconds)
-                                )
+                        e -> transactionActivatedQueueAsyncClientV2.sendMessageWithResponse(
+                                new QueueEvent<>(e, null),
+                                Duration.ofSeconds(paymentTokenTimeout),
+                                Duration.ofSeconds(transientQueuesTTLSeconds)
                         ).doOnError(
                                 exception -> log.error(
                                         "Error to generate event TRANSACTION_ACTIVATED_EVENT for transactionId {} - error {}",

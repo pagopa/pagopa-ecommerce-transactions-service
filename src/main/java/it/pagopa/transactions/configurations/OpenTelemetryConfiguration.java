@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 public class OpenTelemetryConfiguration {
     @Bean
     public OpenTelemetry agentOpenTelemetrySDKInstance() {
-        return AutoConfiguredOpenTelemetrySdk.initialize().getOpenTelemetrySdk();
+        return OpenTelemetry.noop();
     }
 
     @Bean

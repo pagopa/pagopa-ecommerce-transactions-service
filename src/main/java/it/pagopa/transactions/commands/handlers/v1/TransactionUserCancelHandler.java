@@ -55,15 +55,12 @@ public class TransactionUserCancelHandler extends TransactionUserCancelHandlerCo
                             );
                             return transactionEventUserCancelStoreRepository.save(userCanceledEvent)
                                     .flatMap(
-                                            event -> tracingUtils.traceMono(
-                                                    this.getClass().getSimpleName(),
-                                                    tracingInfo -> transactionClosureQueueAsyncClient
-                                                            .sendMessageWithResponse(
-                                                                    new QueueEvent<>(userCanceledEvent, tracingInfo),
-                                                                    Duration.ZERO,
-                                                                    Duration.ofSeconds(transientQueuesTTLSeconds)
-                                                            )
-                                            )
+                                            event -> transactionClosureQueueAsyncClient
+                                                    .sendMessageWithResponse(
+                                                            new QueueEvent<>(userCanceledEvent, null),
+                                                            Duration.ZERO,
+                                                            Duration.ofSeconds(transientQueuesTTLSeconds)
+                                                    )
                                     )
                                     .thenReturn(userCanceledEvent)
                                     .doOnError(

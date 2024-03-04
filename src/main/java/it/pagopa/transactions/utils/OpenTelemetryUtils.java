@@ -57,10 +57,10 @@ public class OpenTelemetryUtils {
                                       String spanName,
                                       Attributes attributes
     ) {
-
-        Span span = openTelemetryTracer.spanBuilder(spanName).startSpan();
-        span.setAllAttributes(attributes);
-        span.end();
+        /*
+         * Span span = openTelemetryTracer.spanBuilder(spanName).startSpan();
+         * span.setAllAttributes(attributes); span.end();
+         */
 
     }
 
@@ -75,12 +75,11 @@ public class OpenTelemetryUtils {
                                            String spanName,
                                            Attributes attributes
     ) {
-
-        Span span = openTelemetryTracer.spanBuilder(spanName).startSpan();
-        span.setAllAttributes(attributes);
-        span.setStatus(StatusCode.ERROR);
-        span.end();
-
+        /*
+         * Span span = openTelemetryTracer.spanBuilder(spanName).startSpan();
+         * span.setAllAttributes(attributes); span.setStatus(StatusCode.ERROR);
+         * span.end();
+         */
     }
 
     /**
@@ -94,10 +93,11 @@ public class OpenTelemetryUtils {
                                           String spanName,
                                           Throwable throwable
     ) {
-        Span span = openTelemetryTracer.spanBuilder(spanName).startSpan();
-        span.setStatus(StatusCode.ERROR);
-        span.recordException(throwable);
-        span.end();
+        /*
+         * Span span = openTelemetryTracer.spanBuilder(spanName).startSpan();
+         * span.setStatus(StatusCode.ERROR); span.recordException(throwable);
+         * span.end();
+         */
     }
 
 }
