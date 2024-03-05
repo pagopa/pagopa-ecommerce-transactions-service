@@ -18,17 +18,17 @@ public class LogoMappingUtils {
 
     private final Map<String, URI> npgPaymentCircuitLogoMap;
 
-    private final Map<String, URI> checkoutRedirectLogoMap;
+    private final Map<String, URI> redirectLogoMap;
 
     @Autowired
     public LogoMappingUtils(
             Map<CardAuthRequestDetailsDto.BrandEnum, URI> pgsBrandConfMap,
             Map<String, URI> npgPaymentCircuitLogoMap,
-            Map<String, URI> checkoutRedirectLogoMap
+            Map<String, URI> redirectLogoMap
     ) {
         this.pgsBrandConfMap = pgsBrandConfMap;
         this.npgPaymentCircuitLogoMap = npgPaymentCircuitLogoMap;
-        this.checkoutRedirectLogoMap = checkoutRedirectLogoMap;
+        this.redirectLogoMap = redirectLogoMap;
     }
 
     public URI getLogo(AuthorizationRequestData authRequestedData) {
@@ -49,11 +49,12 @@ public class LogoMappingUtils {
             }
             case RedirectionAuthRequestDetailsDto ignored -> Optional
                     .ofNullable(
-                            checkoutRedirectLogoMap
+                            redirectLogoMap
                                     .get(authRequestedData.pspId())
                     )
                     .orElseThrow(() -> new InvalidRequestException("No logo mapping found for psp with id: [%s]".formatted(authRequestedData.pspId())));
-            default -> throw new InvalidRequestException("Cannot retrieve logo for input authorization request detail: [%s]".formatted(authorizationRequestDetailsDto));
+            default ->
+                    throw new InvalidRequestException("Cannot retrieve logo for input authorization request detail: [%s]".formatted(authorizationRequestDetailsDto));
         };
     }
 }

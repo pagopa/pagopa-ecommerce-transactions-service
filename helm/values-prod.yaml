@@ -171,14 +171,11 @@ microservice-chart:
     SESSION_URL_CANCEL_SUFFIX: "/ecommerce-fe/cancel"
     SESSION_URL_NOTIFICATION_URL: "https://api.platform.pagopa.it/ecommerce/npg/notifications/v1/sessions/{orderId}/outcomes?sessionToken={sessionToken}"
     JWT_NPG_NOTIFICATION_VALIDITY_TIME: "900"
-    CHECKOUT_REDIRECT_PSP_LIST: ""
+    REDIRECT_PSP_LIST: ""
     NODE_FORWARDER_URL: "https://api.platform.pagopa.it/pagopa-node-forwarder/api/v1"
-    CHECKOUT_REDIRECT_URL_MAPPING: >
-      { PSP1:'http://localhost' }
-
     NODE_FORWARDER_READ_TIMEOUT: "10000"
     NODE_FORWARDER_CONNECTION_TIMEOUT: "10000"
-    CHECKOUT_REDIRECT_LOGO_MAPPING: >
+    REDIRECT_LOGO_MAPPING: >
       { PSP1:'https://host/assets/logo.png' }
 
   envSecret:
@@ -197,6 +194,7 @@ microservice-chart:
     NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
     JWT_NPG_NOTIFICATION_SECRET: npg-notification-signing-key
     NODE_FORWARDER_API_KEY: node-forwarder-api-key
+    REDIRECT_URL_MAPPING: redirect-url-mapping
   keyvault:
     name: "pagopa-p-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"

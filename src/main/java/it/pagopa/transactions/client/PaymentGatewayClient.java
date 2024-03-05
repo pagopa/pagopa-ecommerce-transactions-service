@@ -82,7 +82,7 @@ public class PaymentGatewayClient {
     private final SecretKey ecommerceSigningKey;
     private final int jwtEcommerceValidityTimeInSeconds;
     private final NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient;
-    private final Map<String, URI> checkoutRedirectBeApiCallUriMap;
+    private final Map<String, URI> redirectBeApiCallUriMap;
 
     static final Map<RedirectPaymentMethodId, String> redirectMethodsDescriptions = Map.of(
             RedirectPaymentMethodId.RBPR,
@@ -136,7 +136,7 @@ public class PaymentGatewayClient {
             SecretKey ecommerceSigningKey,
             @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds,
             NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient,
-            Map<String, URI> checkoutRedirectBeApiCallUriMap
+            Map<String, URI> redirectBeApiCallUriMap
     ) {
         this.paymentTransactionGatewayXPayWebClient = paymentTransactionGatewayXPayWebClient;
         this.creditCardInternalApiClient = creditCardInternalApiClient;
@@ -151,7 +151,7 @@ public class PaymentGatewayClient {
         this.npgNotificationSigningKey = npgNotificationSigningKey;
         this.npgJwtKeyValidityTime = npgJwtKeyValidityTime;
         this.nodeForwarderRedirectApiClient = nodeForwarderRedirectApiClient;
-        this.checkoutRedirectBeApiCallUriMap = checkoutRedirectBeApiCallUriMap;
+        this.redirectBeApiCallUriMap = redirectBeApiCallUriMap;
         this.ecommerceSigningKey = ecommerceSigningKey;
         this.jwtEcommerceValidityTimeInSeconds = jwtEcommerceValidityTimeInSeconds;
     }
@@ -588,7 +588,7 @@ public class PaymentGatewayClient {
                                     )
                                     .idPaymentMethod(idPaymentMethod.toString())
                                     .paName(null);// optional
-                            Either<CheckoutRedirectConfigurationException, URI> pspConfiguredUrl = getRedirectUrlForPsp(
+                            Either<RedirectConfigurationException, URI> pspConfiguredUrl = getRedirectUrlForPsp(
                                     authorizationData.pspId()
                             );
 
@@ -661,14 +661,14 @@ public class PaymentGatewayClient {
         return Base64.getEncoder().encodeToString(mdcData.getBytes(StandardCharsets.UTF_8));
     }
 
-    private Either<CheckoutRedirectConfigurationException, URI> getRedirectUrlForPsp(String pspId) {
-        if (checkoutRedirectBeApiCallUriMap.containsKey(pspId)) {
-            return Either.right(checkoutRedirectBeApiCallUriMap.get(pspId));
+    private Either<RedirectConfigurationException, URI> getRedirectUrlForPsp(String pspId) {
+        if (redirectBeApiCallUriMap.containsKey(pspId)) {
+            return Either.right(redirectBeApiCallUriMap.get(pspId));
         } else {
             return Either.left(
-                    new CheckoutRedirectConfigurationException(
+                    new RedirectConfigurationException(
                             "Missing key for psp with id: %s".formatted(pspId),
-                            CheckoutRedirectConfigurationType.BACKEND_URLS
+                            RedirectConfigurationType.BACKEND_URLS
                     )
             );
         }
