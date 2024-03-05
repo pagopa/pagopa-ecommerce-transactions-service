@@ -149,9 +149,6 @@ microservice-chart:
     JWT_NPG_NOTIFICATION_VALIDITY_TIME: "900"
     CHECKOUT_REDIRECT_PSP_LIST: "BCITITMM"
     NODE_FORWARDER_URL: "https://api.uat.platform.pagopa.it/pagopa-node-forwarder/api/v1"
-    CHECKOUT_REDIRECT_URL_MAPPING: >
-      { BCITITMM:'http://url' }
-
     NODE_FORWARDER_READ_TIMEOUT: "10000"
     NODE_FORWARDER_CONNECTION_TIMEOUT: "10000"
     CHECKOUT_REDIRECT_LOGO_MAPPING: >
@@ -173,6 +170,7 @@ microservice-chart:
     NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
     JWT_NPG_NOTIFICATION_SECRET: npg-notification-signing-key
     NODE_FORWARDER_API_KEY: node-forwarder-api-key
+    CHECKOUT_REDIRECT_URL_MAPPING: checkout-redirect-url-mapping
   keyvault:
     name: "pagopa-d-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
