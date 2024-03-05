@@ -71,6 +71,10 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                 )
                 .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
         return transaction
+                .map(
+                        tx -> tx instanceof it.pagopa.ecommerce.commons.domain.v2.TransactionExpired txExpired
+                                && sendPaymentResultForTxExpiredEnabled ? txExpired.getTransactionAtPreviousState() : tx
+                )
                 .filter(
                         t -> t.getStatus() == TransactionStatusDto.CLOSED &&
                                 t instanceof it.pagopa.ecommerce.commons.domain.v2.TransactionClosed transactionClosed
