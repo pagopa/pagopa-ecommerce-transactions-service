@@ -7,10 +7,10 @@ import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
-import it.pagopa.ecommerce.commons.exceptions.CheckoutRedirectConfigurationException;
 import it.pagopa.ecommerce.commons.exceptions.NodeForwarderClientException;
 import it.pagopa.ecommerce.commons.exceptions.NpgApiKeyMissingPspRequestedException;
 import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
+import it.pagopa.ecommerce.commons.exceptions.RedirectConfigurationException;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
@@ -19,12 +19,10 @@ import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.*;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthResponseDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
-import it.pagopa.generated.ecommerce.redirect.v1.api.B2bPspSideApi;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
@@ -2624,7 +2622,7 @@ class PaymentGatewayClientTest {
         StepVerifier.create(
                 client.requestRedirectUrlAuthorization(authorizationData, RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
         )
-                .expectError(CheckoutRedirectConfigurationException.class)
+                .expectError(RedirectConfigurationException.class)
                 .verify();
         verify(nodeForwarderClient, times(0)).proxyRequest(any(), any(), any(), any());
     }

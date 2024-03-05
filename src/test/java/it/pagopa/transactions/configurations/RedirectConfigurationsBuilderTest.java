@@ -1,6 +1,6 @@
 package it.pagopa.transactions.configurations;
 
-import it.pagopa.ecommerce.commons.exceptions.CheckoutRedirectConfigurationException;
+import it.pagopa.ecommerce.commons.exceptions.RedirectConfigurationException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -12,9 +12,9 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class CheckoutRedirectConfigurationsBuilderTest {
+class RedirectConfigurationsBuilderTest {
 
-    private final CheckoutRedirectConfigurationsBuilder checkoutRedirectConfigurationsBuilder = new CheckoutRedirectConfigurationsBuilder();
+    private final RedirectConfigurationsBuilder checkoutRedirectConfigurationsBuilder = new RedirectConfigurationsBuilder();
 
     private Set<String> pspToHandle = Set.of("psp1", "psp2", "psp3");
 
@@ -54,7 +54,7 @@ class CheckoutRedirectConfigurationsBuilderTest {
     )
     void shouldBuildPspBackendUriMapSuccessfully(String pspId) {
         Map<String, URI> mapping = assertDoesNotThrow(
-                () -> checkoutRedirectConfigurationsBuilder.checkoutRedirectBeApiCallUriMap(pspToHandle, pspUriMap)
+                () -> checkoutRedirectConfigurationsBuilder.redirectBeApiCallUriMap(pspToHandle, pspUriMap)
         );
         assertEquals("http://localhost/%s/redirectionUrl".formatted(pspId), mapping.get(pspId).toString());
 
@@ -64,13 +64,13 @@ class CheckoutRedirectConfigurationsBuilderTest {
     void shouldThrowExceptionBuildingBackendUriMapForMissingApiKey() {
         Map<String, String> missingKeyPspMap = new HashMap<>(pspUriMap);
         missingKeyPspMap.remove("psp1");
-        CheckoutRedirectConfigurationException e = assertThrows(
-                CheckoutRedirectConfigurationException.class,
+        RedirectConfigurationException e = assertThrows(
+                RedirectConfigurationException.class,
                 () -> checkoutRedirectConfigurationsBuilder
-                        .checkoutRedirectBeApiCallUriMap(pspToHandle, missingKeyPspMap)
+                        .redirectBeApiCallUriMap(pspToHandle, missingKeyPspMap)
         );
         assertEquals(
-                "Error parsing Checkout Redirect PSP BACKEND_URLS configuration, cause: Misconfigured checkout.redirect.pspUrlMapping, the following PSP b.e. URIs are not configured: [psp1]",
+                "Error parsing Redirect PSP BACKEND_URLS configuration, cause: Misconfigured redirect.pspUrlMapping, the following PSP b.e. URIs are not configured: [psp1]",
                 e.getMessage()
         );
 
@@ -83,7 +83,7 @@ class CheckoutRedirectConfigurationsBuilderTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> checkoutRedirectConfigurationsBuilder
-                        .checkoutRedirectBeApiCallUriMap(pspToHandle, missingKeyPspMap)
+                        .redirectBeApiCallUriMap(pspToHandle, missingKeyPspMap)
         );
     }
 
@@ -97,7 +97,7 @@ class CheckoutRedirectConfigurationsBuilderTest {
     )
     void shouldBuildPspLogoUriMapSuccessfully(String pspId) {
         Map<String, URI> mapping = assertDoesNotThrow(
-                () -> checkoutRedirectConfigurationsBuilder.checkoutRedirectLogoMap(pspToHandle, pspLogoMap)
+                () -> checkoutRedirectConfigurationsBuilder.redirectLogoMap(pspToHandle, pspLogoMap)
         );
         assertEquals("http://localhost/%s/logo".formatted(pspId), mapping.get(pspId).toString());
 
@@ -107,12 +107,12 @@ class CheckoutRedirectConfigurationsBuilderTest {
     void shouldThrowExceptionBuildingLogoUriMapForMissingApiKey() {
         Map<String, String> missingKeyPspMap = new HashMap<>(pspLogoMap);
         missingKeyPspMap.remove("psp1");
-        CheckoutRedirectConfigurationException e = assertThrows(
-                CheckoutRedirectConfigurationException.class,
-                () -> checkoutRedirectConfigurationsBuilder.checkoutRedirectLogoMap(pspToHandle, missingKeyPspMap)
+        RedirectConfigurationException e = assertThrows(
+                RedirectConfigurationException.class,
+                () -> checkoutRedirectConfigurationsBuilder.redirectLogoMap(pspToHandle, missingKeyPspMap)
         );
         assertEquals(
-                "Error parsing Checkout Redirect PSP LOGOS configuration, cause: Misconfigured checkout.redirect.pspLogoMapping, the following PSP logos are not configured: [psp1]",
+                "Error parsing Redirect PSP LOGOS configuration, cause: Misconfigured redirect.pspLogoMapping, the following PSP logos are not configured: [psp1]",
                 e.getMessage()
         );
 
@@ -124,7 +124,7 @@ class CheckoutRedirectConfigurationsBuilderTest {
         missingKeyPspMap.put("psp1", "http:\\\\localhost");
         assertThrows(
                 IllegalArgumentException.class,
-                () -> checkoutRedirectConfigurationsBuilder.checkoutRedirectLogoMap(pspToHandle, missingKeyPspMap)
+                () -> checkoutRedirectConfigurationsBuilder.redirectLogoMap(pspToHandle, missingKeyPspMap)
         );
     }
 
