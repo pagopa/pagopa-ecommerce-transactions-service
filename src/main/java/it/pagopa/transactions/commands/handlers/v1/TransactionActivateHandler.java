@@ -339,17 +339,17 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
         return transactionActivatedEvent.flatMap(transactionEventActivatedStoreRepository::save)
                 .flatMap(
                         e -> transactionActivatedQueueAsyncClientV1.sendMessageWithResponse(
-                                        new QueueEvent<>(e, null),
-                                        Duration.ofSeconds(paymentTokenTimeout),
-                                        Duration.ofSeconds(transientQueuesTTLSeconds)
-                                )
-                        .doOnError(
-                                exception -> log.error(
-                                        "Error to generate event TRANSACTION_ACTIVATED_EVENT for transactionId {} - error {}",
-                                        transactionId,
-                                        exception.getMessage()
-                                )
+                                new QueueEvent<>(e, null),
+                                Duration.ofSeconds(paymentTokenTimeout),
+                                Duration.ofSeconds(transientQueuesTTLSeconds)
                         )
+                                .doOnError(
+                                        exception -> log.error(
+                                                "Error to generate event TRANSACTION_ACTIVATED_EVENT for transactionId {} - error {}",
+                                                transactionId,
+                                                exception.getMessage()
+                                        )
+                                )
                                 .doOnNext(
                                         event -> log.info(
                                                 "Generated event TRANSACTION_ACTIVATED_EVENT for transactionId {}",
