@@ -41,7 +41,7 @@ class UpdateAuthorizationStatusDataTest {
                                 .paymentGatewayType("REDIRECT")
                                 .errorCode(errorCode)
                                 .authorizationCode(TransactionTestUtils.AUTHORIZATION_CODE)
-                                .pspTransactionId(TransactionTestUtils.REDIRECT_PSP_TRANSACTION_ID)
+                                .pspTransactionId(TransactionTestUtils.AUTHORIZATION_REQUEST_ID)
                                 .pspId("invalid")
                 )
                 .timestampOperation(OffsetDateTime.now());
@@ -115,9 +115,7 @@ class UpdateAuthorizationStatusDataTest {
                         TransactionAuthorizationRequestData.PaymentGateway.REDIRECT,
                         new RedirectTransactionGatewayAuthorizationRequestedData(
                                 TransactionTestUtils.LOGO_URI,
-                                TransactionTestUtils.REDIRECT_PSP_TRANSACTION_ID,
-                                authorizationTimeoutMillis,
-                                TransactionTestUtils.REDIRECT_AUTHORIZATION_PAYMENT_METHOD
+                                authorizationTimeoutMillis
                         )
                 );
         // set authorization requested event to be performed at
@@ -139,7 +137,7 @@ class UpdateAuthorizationStatusDataTest {
                                 .paymentGatewayType("REDIRECT")
                                 .errorCode(errorCode)
                                 .authorizationCode(TransactionTestUtils.AUTHORIZATION_CODE)
-                                .pspTransactionId(TransactionTestUtils.REDIRECT_PSP_TRANSACTION_ID)
+                                .pspTransactionId(TransactionTestUtils.AUTHORIZATION_REQUEST_ID)
                                 .pspId(TransactionTestUtils.PSP_ID)
                 )
                 .timestampOperation(OffsetDateTime.now());
