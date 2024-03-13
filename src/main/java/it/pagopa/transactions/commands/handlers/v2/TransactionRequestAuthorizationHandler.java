@@ -17,8 +17,8 @@ import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
-import it.pagopa.generated.transactions.server.model.ApmAuthRequestDetailsDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
+import it.pagopa.generated.transactions.server.model.ApmAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
@@ -32,7 +32,6 @@ import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
-import it.pagopa.transactions.utils.LogoMappingUtils;
 import it.pagopa.transactions.utils.OpenTelemetryUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -72,7 +71,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             TransactionsUtils transactionsUtils,
             @Value("${checkout.basePath}") String checkoutBasePath,
             EcommercePaymentMethodsClient paymentMethodsClient,
-            LogoMappingUtils logoMappingUtils,
             TransactionTemplateWrapper transactionTemplateWrapper,
             @Qualifier(
                 "transactionAuthorizationRequestedQueueAsyncClientV2"
@@ -85,7 +83,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         super(
                 paymentGatewayClient,
                 checkoutBasePath,
-                logoMappingUtils,
                 transactionTemplateWrapper
         );
         this.transactionEventStoreRepository = transactionEventStoreRepository;
