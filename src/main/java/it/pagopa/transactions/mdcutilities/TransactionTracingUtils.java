@@ -6,6 +6,7 @@ import reactor.util.context.Context;
 
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Tracing utility class that contains helper methods to set transaction
@@ -20,7 +21,8 @@ public class TransactionTracingUtils {
     public enum TracingEntry {
         TRANSACTION_ID("transactionId", "{transactionId-not-found}"),
         RPT_IDS("rptIds", "{rptId-not-found}"),
-        CORRELATION_ID("correlationId", "{correlation-id-not-found}");
+        CORRELATION_ID("correlationId", "{correlation-id-not-found}"),
+        API_ID("apiId", "{api-id-not-found}");
 
         private final String key;
 
@@ -48,7 +50,9 @@ public class TransactionTracingUtils {
      */
     public record TransactionInfo(
             TransactionId transactionId,
-            Set<RptId> rptIds
+            Set<RptId> rptIds,
+            String requestMethod,
+            String requestUri
     ) {
     }
 
@@ -73,6 +77,13 @@ public class TransactionTracingUtils {
                     .collect(Collectors.joining(","));
             context = putInReactorContextIfSetToDefault(TracingEntry.RPT_IDS, stringifiedRptIdList, context);
         }
+
+        context = putInReactorContextIfSetToDefault(
+                TracingEntry.API_ID,
+                String.join("-", "API-ID", transactionInfo.requestMethod, transactionInfo.requestUri),
+                context
+        );
+
         return context;
     }
 
