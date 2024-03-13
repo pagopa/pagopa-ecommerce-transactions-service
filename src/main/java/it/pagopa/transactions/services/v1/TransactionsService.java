@@ -724,7 +724,8 @@ public class TransactionsService {
                                 .equals(TransactionEventCode.TRANSACTION_AUTHORIZATION_REQUESTED_EVENT.toString())
                 )
                 .next()
-                .map(authRequestedEvent -> ZonedDateTime.parse(authRequestedEvent.getCreationDate()));
+                .map(authRequestedEvent -> ZonedDateTime.parse(authRequestedEvent.getCreationDate()))
+                .switchIfEmpty(Mono.error(new AlreadyProcessedException(transactionId)));
 
         Mono<Tuple2<it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction, ZonedDateTime>> transactionV1 = transactionsUtils
                 .reduceEvents(
