@@ -79,6 +79,8 @@ public record UpdateAuthorizationStatusData(
 
                 String pspId = redirectGatewayDto.getPspId();
                 String expectedPspId = txWithRequestedAuth.getTransactionAuthorizationRequestData().getPspId();
+                String pspTransactionId = redirectGatewayDto.getPspTransactionId();
+                String expectedPspTransactionId = ((BaseTransactionWithRequestedAuthorization) tx).getTransactionAuthorizationRequestData().getAuthorizationRequestId();
                 long timeout = authRequestedData.getTransactionOutcomeTimeoutMillis();
                 if (!pspId.equals(expectedPspId)) {
                     logger.error(
@@ -90,7 +92,16 @@ public record UpdateAuthorizationStatusData(
                             requestValidationErrorHeader.formatted("psp id mismatch")
                     );
                 }
-
+                if (!pspTransactionId.equals(expectedPspTransactionId)) {
+                    logger.error(
+                            "Invalid redirect authorization outcome psp transaction id received. Expected: [{}], received: [{}]",
+                            expectedPspTransactionId,
+                            pspTransactionId
+                    );
+                    throw new InvalidRequestException(
+                            requestValidationErrorHeader.formatted("psp transaction id mismatch")
+                    );
+                }
                 Instant authRequestedInstant = authRequestedTime.toInstant();
                 Instant authCompletedThreshold = authRequestedInstant.plus(Duration.ofMillis(timeout));
                 Instant now = Instant.now();

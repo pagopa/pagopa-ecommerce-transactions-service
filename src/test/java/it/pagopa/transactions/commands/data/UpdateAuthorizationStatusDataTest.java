@@ -65,6 +65,48 @@ class UpdateAuthorizationStatusDataTest {
     }
 
     @Test
+    void shouldReturnErrorHandlingRedirectAuthUpdateRequestWithMismatchPspTransactionId() {
+        TransactionActivatedEvent activatedEvent = TransactionTestUtils.transactionActivateEvent();
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
+                .transactionAuthorizationRequestedEvent(
+                        TransactionAuthorizationRequestData.PaymentGateway.REDIRECT,
+                        TransactionTestUtils.redirectTransactionGatewayAuthorizationRequestedData()
+                );
+        String errorCode = "errorCode";
+
+        BaseTransaction transaction = TransactionTestUtils.reduceEvents(activatedEvent, authorizationRequestedEvent);
+
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .outcomeGateway(
+                        new OutcomeRedirectGatewayDto()
+                                .outcome(AuthorizationOutcomeDto.OK)
+                                .paymentGatewayType("REDIRECT")
+                                .errorCode(errorCode)
+                                .authorizationCode(TransactionTestUtils.AUTHORIZATION_CODE)
+                                .pspTransactionId("Invalid")
+                                .pspId(TransactionTestUtils.PSP_ID)
+                )
+                .timestampOperation(OffsetDateTime.now());
+
+        /* preconditions */
+        InvalidRequestException exception = assertThrows(
+                InvalidRequestException.class,
+                () -> new UpdateAuthorizationStatusData(
+                        transaction.getTransactionId(),
+                        transaction.getStatus().toString(),
+                        updateAuthorizationRequest,
+                        ZonedDateTime.now(),
+                        Optional.of(transaction)
+                )
+        );
+
+        assertEquals(
+                "Invalid update auth redirect request received! Validation error: psp transaction id mismatch",
+                exception.getMessage()
+        );
+    }
+
+    @Test
     void shouldReturnErrorHandlingRedirectAuthUpdateRequestReceivedAfterTimeout() {
         int authorizationTimeoutMillis = 600000;
         TransactionActivatedEvent activatedEvent = TransactionTestUtils.transactionActivateEvent();
