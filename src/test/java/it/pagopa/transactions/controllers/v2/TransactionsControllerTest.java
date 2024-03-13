@@ -39,6 +39,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
+import java.net.URI;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -120,8 +121,26 @@ class TransactionsControllerTest {
                     )
                     .thenReturn(Mono.just(response));
 
+            Mockito.when(mockExchange.getRequest())
+                    .thenReturn(mockRequest);
+
+            Mockito.when(mockExchange.getRequest().getMethodValue())
+                    .thenReturn("POST");
+
+            Mockito.when(mockExchange.getRequest().getURI())
+                    .thenReturn(
+                            URI.create(
+                                    String.join(
+                                            "/",
+                                            "https://localhost/transactions",
+                                            transactionId.value()
+                                    )
+                            )
+                    );
+
             ResponseEntity<NewTransactionResponseDto> responseEntity = transactionsController
-                    .newTransaction(clientIdDto, UUID.randomUUID(), Mono.just(newTransactionRequestDto), null).block();
+                    .newTransaction(clientIdDto, UUID.randomUUID(), Mono.just(newTransactionRequestDto), mockExchange)
+                    .block();
 
             // Verify mock
             Mockito.verify(transactionsService, Mockito.times(1))
