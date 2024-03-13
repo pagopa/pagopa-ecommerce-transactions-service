@@ -87,7 +87,7 @@ public class TransactionsController implements V2Api {
                                         transactionId,
                                         new HashSet<>(),
                                         exchange.getRequest().getMethodValue(),
-                                        exchange.getRequest().getURI().toString()
+                                        exchange.getRequest().getURI().getPath()
                                 ),
                                 context
                         )

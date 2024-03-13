@@ -52,7 +52,7 @@ public class TransactionTracingUtils {
             TransactionId transactionId,
             Set<RptId> rptIds,
             String requestMethod,
-            String requestUri
+            String requestUriPath
     ) {
     }
 
@@ -80,7 +80,7 @@ public class TransactionTracingUtils {
 
         context = putInReactorContextIfSetToDefault(
                 TracingEntry.API_ID,
-                String.join("-", "API-ID", transactionInfo.requestMethod, transactionInfo.requestUri),
+                String.join("-", "API-ID", transactionInfo.requestMethod, transactionInfo.requestUriPath),
                 context
         );
 

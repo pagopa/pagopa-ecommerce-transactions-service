@@ -94,7 +94,7 @@ public class TransactionsController implements TransactionsApi {
                                         transactionId,
                                         new HashSet<>(),
                                         exchange.getRequest().getMethodValue(),
-                                        exchange.getRequest().getURI().toString()
+                                        exchange.getRequest().getURI().getPath()
                                 ),
                                 context
                         )
@@ -115,7 +115,7 @@ public class TransactionsController implements TransactionsApi {
                                         new TransactionId(transactionId),
                                         new HashSet<>(),
                                         exchange.getRequest().getMethodValue(),
-                                        exchange.getRequest().getURI().toString()
+                                        exchange.getRequest().getURI().getPath()
                                 ),
                                 context
                         )
@@ -142,7 +142,7 @@ public class TransactionsController implements TransactionsApi {
                                         new TransactionId(transactionId),
                                         new HashSet<>(),
                                         exchange.getRequest().getMethodValue(),
-                                        exchange.getRequest().getURI().toString()
+                                        exchange.getRequest().getURI().getPath()
                                 ),
                                 context
                         )
@@ -215,7 +215,7 @@ public class TransactionsController implements TransactionsApi {
                                                 new TransactionId(transactionIdDecoded),
                                                 new HashSet<>(),
                                                 exchange.getRequest().getMethodValue(),
-                                                exchange.getRequest().getURI().toString()                                        ),
+                                                exchange.getRequest().getURI().getPath()                                      ),
                                         context
                                 )
                         )
@@ -262,7 +262,7 @@ public class TransactionsController implements TransactionsApi {
                                         new TransactionId(transactionId),
                                         new HashSet<>(),
                                         exchange.getRequest().getMethodValue(),
-                                        exchange.getRequest().getURI().toString()
+                                        exchange.getRequest().getURI().getPath()
                                 ),
                                 context
                         )
@@ -301,7 +301,7 @@ public class TransactionsController implements TransactionsApi {
                                         new TransactionId(transactionId),
                                         new HashSet<>(),
                                         exchange.getRequest().getMethodValue(),
-                                        exchange.getRequest().getURI().toString()
+                                        exchange.getRequest().getURI().getPath()
                                 ),
                                 context
                         )
