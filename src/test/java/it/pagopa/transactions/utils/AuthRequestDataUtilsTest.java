@@ -165,7 +165,7 @@ class AuthRequestDataUtilsTest {
     @EnumSource(AuthorizationOutcomeDto.class)
     void shouldExtractRedirectInformation(AuthorizationOutcomeDto authorizationOutcomeDto) {
         // pre-condition
-        String pspTransactionId = TransactionTestUtils.REDIRECT_PSP_TRANSACTION_ID;
+        String pspTransactionId = TransactionTestUtils.AUTHORIZATION_REQUEST_ID;
         String pspId = TransactionTestUtils.PSP_ID;
         TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
         String expectedOutcome = authorizationOutcomeDto == AuthorizationOutcomeDto.OK ? "OK" : "KO";

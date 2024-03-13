@@ -2697,7 +2697,7 @@ class TransactionRequestAuthorizationHandlerTest {
         RedirectUrlResponseDto redirectUrlResponseDto = new RedirectUrlResponseDto()
                 .url("http://redirectUrl")
                 .idTransaction(transactionId.value())
-                .idPSPTransaction(TransactionTestUtils.REDIRECT_PSP_TRANSACTION_ID)
+                .idPSPTransaction(TransactionTestUtils.AUTHORIZATION_REQUEST_ID)
                 .amount(authorizationRequest.getAmount() + authorizationRequest.getFee())
                 .timeout(TransactionTestUtils.REDIRECT_AUTHORIZATION_TIMEOUT);
 
@@ -2733,14 +2733,6 @@ class TransactionRequestAuthorizationHandlerTest {
         RedirectTransactionGatewayAuthorizationRequestedData redirectionAuthRequestedData = (RedirectTransactionGatewayAuthorizationRequestedData) authRequestedData
                 .getTransactionGatewayAuthorizationRequestedData();
         assertEquals(expectedLogo, redirectionAuthRequestedData.getLogo().toString());
-        assertEquals(
-                TransactionTestUtils.REDIRECT_PSP_TRANSACTION_ID,
-                redirectionAuthRequestedData.getPspTransactionId()
-        );
-        assertEquals(
-                RedirectTransactionGatewayAuthorizationRequestedData.PaymentMethodType.BANK_ACCOUNT,
-                redirectionAuthRequestedData.getPaymentMethodType()
-        );
         assertEquals(
                 redirectUrlResponseDto.getTimeout(),
                 redirectionAuthRequestedData.getTransactionOutcomeTimeoutMillis()

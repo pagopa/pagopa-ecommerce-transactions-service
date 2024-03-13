@@ -218,9 +218,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                         );
                                         case REDIRECT -> new RedirectTransactionGatewayAuthorizationRequestedData(
                                                 logo,
-                                                authorizationOutput.authorizationId(),
-                                                authorizationOutput.authorizationTimeoutMillis().orElse(600000),
-                                                RedirectTransactionGatewayAuthorizationRequestedData.PaymentMethodType.BANK_ACCOUNT
+                                                authorizationOutput.authorizationTimeoutMillis().orElse(600000)
                                         );
                                     };
                                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
