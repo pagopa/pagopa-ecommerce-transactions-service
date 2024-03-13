@@ -80,7 +80,8 @@ public record UpdateAuthorizationStatusData(
                 String pspId = redirectGatewayDto.getPspId();
                 String expectedPspId = txWithRequestedAuth.getTransactionAuthorizationRequestData().getPspId();
                 String pspTransactionId = redirectGatewayDto.getPspTransactionId();
-                String expectedPspTransactionId = ((BaseTransactionWithRequestedAuthorization) tx).getTransactionAuthorizationRequestData().getAuthorizationRequestId();
+                String expectedPspTransactionId = ((BaseTransactionWithRequestedAuthorization) tx)
+                        .getTransactionAuthorizationRequestData().getAuthorizationRequestId();
                 long timeout = authRequestedData.getTransactionOutcomeTimeoutMillis();
                 if (!pspId.equals(expectedPspId)) {
                     logger.error(
