@@ -905,7 +905,7 @@ public class TransactionsService {
                                                         .doOnError(
                                                                 AlreadyProcessedException.class,
                                                                 exception -> log.error(
-                                                                        "UpdateTransactionAuthorization Error: requesting authorization update for transaction in state {}",
+                                                                        "UpdateTransactionAuthorization Error: requesting authorization update for transaction in state [{}]",
                                                                         t.getStatus()
                                                                 )
                                                         )
