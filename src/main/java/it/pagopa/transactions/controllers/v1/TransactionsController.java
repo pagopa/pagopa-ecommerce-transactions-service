@@ -155,7 +155,7 @@ public class TransactionsController implements TransactionsApi {
                 transactionIdDecoded -> updateAuthorizationRequestDto
                         .doOnNext(
                                 t -> log.info(
-                                        "UpdateTransactionAuthorization for transactionId: {}, decoded transaction id: {} ",
+                                        "UpdateTransactionAuthorization for transactionId: [{}], decoded transaction id: [{}]",
                                         transactionId,
                                         transactionIdDecoded
                                 )
