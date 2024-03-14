@@ -1161,7 +1161,7 @@ public class TransactionsService {
                                     .handle(el._2)
                                     .doOnNext(
                                             transactionUserReceiptRequestedEvent -> log.info(
-                                                    "AddUserReceipt {} for transactionId: {}",
+                                                    "AddUserReceipt [{}] for transactionId: [{}]",
                                                     TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT,
                                                     transactionUserReceiptRequestedEvent.getTransactionId()
                                             )
