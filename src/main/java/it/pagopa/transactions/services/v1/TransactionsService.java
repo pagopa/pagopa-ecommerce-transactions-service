@@ -800,7 +800,7 @@ public class TransactionsService {
                         return baseTransaction.map(
                                 trx -> {
                                     log.info(
-                                            "UpdateTransactionAuthorization Transaction authorization outcome already received. Transaction status: {}",
+                                            "UpdateTransactionAuthorization Transaction authorization outcome already received. Transaction status: [{}]",
                                             trx.getStatus()
                                     );
                                     return buildTransactionInfoDtoV1(trx);
