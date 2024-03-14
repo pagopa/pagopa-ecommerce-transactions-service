@@ -1170,7 +1170,7 @@ public class TransactionsService {
                                             .handle((it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptRequestedEvent) event))
                                     .doOnNext(
                                             transaction -> log.info(
-                                                    "AddUserReceipt transaction status updated {} for transactionId: {}",
+                                                    "AddUserReceipt transaction status updated [{}] for transactionId: [{}]",
                                                     transaction.getStatus(),
                                                     transaction.getTransactionId()
                                             )
