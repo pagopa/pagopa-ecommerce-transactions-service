@@ -1150,7 +1150,7 @@ public class TransactionsService {
                                                     .handle((TransactionUserReceiptRequestedEvent) event))
                                             .doOnNext(
                                                     transaction -> log.info(
-                                                            "AddUserReceipt transaction status updated {} for transactionId: {}",
+                                                            "AddUserReceipt transaction status updated [{}] for transactionId: [{}]",
                                                             transaction.getStatus(),
                                                             transaction.getTransactionId()
                                                     )
