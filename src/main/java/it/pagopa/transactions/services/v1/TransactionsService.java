@@ -712,7 +712,7 @@ public class TransactionsService {
     ) {
 
         TransactionId transactionId = new TransactionId(decodedTransactionId);
-        log.info("UpdateTransactionAuthorization decoded transaction id: {}", transactionId.value());
+        log.info("UpdateTransactionAuthorization decoded transaction id: [{}]", transactionId.value());
 
         Flux<BaseTransactionEvent<Object>> events = eventsRepository
                 .findByTransactionIdOrderByCreationDateAsc(transactionId.value())
