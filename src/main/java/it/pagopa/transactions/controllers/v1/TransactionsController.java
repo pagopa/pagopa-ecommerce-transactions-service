@@ -93,7 +93,9 @@ public class TransactionsController implements TransactionsApi {
                         context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
                                 new TransactionTracingUtils.TransactionInfo(
                                         transactionId,
-                                        new HashSet<>()
+                                        new HashSet<>(),
+                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getURI().getPath()
                                 ),
                                 context
                         )
@@ -112,7 +114,9 @@ public class TransactionsController implements TransactionsApi {
                         context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
                                 new TransactionTracingUtils.TransactionInfo(
                                         new TransactionId(transactionId),
-                                        new HashSet<>()
+                                        new HashSet<>(),
+                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getURI().getPath()
                                 ),
                                 context
                         )
@@ -137,7 +141,9 @@ public class TransactionsController implements TransactionsApi {
                         context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
                                 new TransactionTracingUtils.TransactionInfo(
                                         new TransactionId(transactionId),
-                                        new HashSet<>()
+                                        new HashSet<>(),
+                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getURI().getPath()
                                 ),
                                 context
                         )
@@ -208,8 +214,9 @@ public class TransactionsController implements TransactionsApi {
                                 context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
                                         new TransactionTracingUtils.TransactionInfo(
                                                 new TransactionId(transactionIdDecoded),
-                                                new HashSet<>()
-                                        ),
+                                                new HashSet<>(),
+                                                exchange.getRequest().getMethodValue(),
+                                                exchange.getRequest().getURI().getPath()                                      ),
                                         context
                                 )
                         )
@@ -254,7 +261,9 @@ public class TransactionsController implements TransactionsApi {
                         context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
                                 new TransactionTracingUtils.TransactionInfo(
                                         new TransactionId(transactionId),
-                                        new HashSet<>()
+                                        new HashSet<>(),
+                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getURI().getPath()
                                 ),
                                 context
                         )
@@ -291,7 +300,9 @@ public class TransactionsController implements TransactionsApi {
                         context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
                                 new TransactionTracingUtils.TransactionInfo(
                                         new TransactionId(transactionId),
-                                        new HashSet<>()
+                                        new HashSet<>(),
+                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getURI().getPath()
                                 ),
                                 context
                         )

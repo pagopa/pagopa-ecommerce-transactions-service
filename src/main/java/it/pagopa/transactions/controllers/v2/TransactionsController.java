@@ -85,7 +85,9 @@ public class TransactionsController implements V2Api {
                         context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
                                 new TransactionTracingUtils.TransactionInfo(
                                         transactionId,
-                                        new HashSet<>()
+                                        new HashSet<>(),
+                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getURI().getPath()
                                 ),
                                 context
                         )
