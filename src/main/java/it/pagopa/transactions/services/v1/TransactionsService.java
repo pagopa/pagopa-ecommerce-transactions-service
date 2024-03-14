@@ -712,7 +712,7 @@ public class TransactionsService {
     ) {
 
         TransactionId transactionId = new TransactionId(decodedTransactionId);
-        log.info("decoded transaction id: {}", transactionId.value());
+        log.debug("UpdateTransactionAuthorization decoded transaction id: {}", transactionId.value());
 
         Flux<BaseTransactionEvent<Object>> events = eventsRepository
                 .findByTransactionIdOrderByCreationDateAsc(transactionId.value())
@@ -800,7 +800,7 @@ public class TransactionsService {
                         return baseTransaction.map(
                                 trx -> {
                                     log.info(
-                                            "Transaction authorization outcome already received. Transaction status: {}",
+                                            "UpdateTransactionAuthorization Transaction authorization outcome already received. Transaction status: {}",
                                             trx.getStatus()
                                     );
                                     return buildTransactionInfoDtoV1(trx);
@@ -817,14 +817,14 @@ public class TransactionsService {
                                                         .handle(transactionUpdateAuthorizationCommand)
                                                         .doOnNext(
                                                                 authorizationStatusUpdatedEvent -> log.info(
-                                                                        "Requested authorization update for rptId: {}",
+                                                                        "UpdateTransactionAuthorization Requested authorization update for rptId: {}",
                                                                         transaction.getPaymentNotices().get(0).rptId()
                                                                 )
                                                         )
                                                         .doOnError(
                                                                 AlreadyProcessedException.class,
                                                                 exception -> log.error(
-                                                                        "Error: requesting authorization update for transaction in state {}",
+                                                                        "UpdateTransactionAuthorization Error: requesting authorization update for transaction in state {}",
                                                                         t.getStatus()
                                                                 )
                                                         )
@@ -880,7 +880,7 @@ public class TransactionsService {
                         return baseTransaction.map(
                                 trx -> {
                                     log.info(
-                                            "Transaction authorization outcome already received. Transaction status: {}",
+                                            "UpdateTransactionAuthorization outcome already received. Transaction status: {}",
                                             trx.getStatus()
                                     );
                                     return buildTransactionInfoDtoV2(trx);
@@ -898,14 +898,14 @@ public class TransactionsService {
                                                         .handle(transactionUpdateAuthorizationCommand)
                                                         .doOnNext(
                                                                 authorizationStatusUpdatedEvent -> log.info(
-                                                                        "Requested authorization update for rptId: {}",
+                                                                        "UpdateTransactionAuthorization requested for rptId: {}",
                                                                         transaction.getPaymentNotices().get(0).rptId()
                                                                 )
                                                         )
                                                         .doOnError(
                                                                 AlreadyProcessedException.class,
                                                                 exception -> log.error(
-                                                                        "Error: requesting authorization update for transaction in state {}",
+                                                                        "UpdateTransactionAuthorization Error: requesting authorization update for transaction in state {}",
                                                                         t.getStatus()
                                                                 )
                                                         )
