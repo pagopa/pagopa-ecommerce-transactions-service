@@ -1141,7 +1141,7 @@ public class TransactionsService {
                                             .handle(el._2)
                                             .doOnNext(
                                                     transactionUserReceiptRequestedEvent -> log.info(
-                                                            "{} for transactionId: {}",
+                                                            "AddUserReceipt {} for transactionId: {}",
                                                             TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT,
                                                             transactionUserReceiptRequestedEvent.getTransactionId()
                                                     )
@@ -1150,7 +1150,7 @@ public class TransactionsService {
                                                     .handle((TransactionUserReceiptRequestedEvent) event))
                                             .doOnNext(
                                                     transaction -> log.info(
-                                                            "Transaction status updated {} for transactionId: {}",
+                                                            "AddUserReceipt transaction status updated {} for transactionId: {}",
                                                             transaction.getStatus(),
                                                             transaction.getTransactionId()
                                                     )
@@ -1161,7 +1161,7 @@ public class TransactionsService {
                                     .handle(el._2)
                                     .doOnNext(
                                             transactionUserReceiptRequestedEvent -> log.info(
-                                                    "{} for transactionId: {}",
+                                                    "AddUserReceipt {} for transactionId: {}",
                                                     TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT,
                                                     transactionUserReceiptRequestedEvent.getTransactionId()
                                             )
@@ -1170,7 +1170,7 @@ public class TransactionsService {
                                             .handle((it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptRequestedEvent) event))
                                     .doOnNext(
                                             transaction -> log.info(
-                                                    "Transaction status updated {} for transactionId: {}",
+                                                    "AddUserReceipt transaction status updated {} for transactionId: {}",
                                                     transaction.getStatus(),
                                                     transaction.getTransactionId()
                                             )

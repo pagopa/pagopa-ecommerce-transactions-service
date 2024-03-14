@@ -223,7 +223,7 @@ public class TransactionsController implements TransactionsApi {
                                                                           ServerWebExchange exchange
     ) {
         return addUserReceiptRequestDto
-                .doOnNext(t -> log.info("addUserReceipt for transactionId: {} ", transactionId))
+                .doOnNext(t -> log.info("AddUserReceipt for transactionId: {} ", transactionId))
                 .flatMap(
                         addUserReceiptRequest -> transactionsService
                                 .addUserReceipt(transactionId, addUserReceiptRequest)
