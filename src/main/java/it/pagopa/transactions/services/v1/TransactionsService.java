@@ -251,7 +251,7 @@ public class TransactionsService {
                         .map(ClientIdDto::toString)
                         .orElse(null)
         );
-        log.info(
+        log.debug(
                 "Initializing transaction for rptId: {}. ClientId: {}",
                 newTransactionRequestDto.getPaymentNotices().get(0).getRptId(),
                 clientId
@@ -283,7 +283,7 @@ public class TransactionsService {
             case V1 -> transactionActivateHandlerV1.handle(transactionActivateCommand)
                     .doOnNext(
                             args -> log.info(
-                                    "Transaction initialized for rptId: {}",
+                                    "Transaction initialized for rptId: [{}]",
                                     newTransactionRequestDto.getPaymentNotices().get(0).getRptId()
                             )
                     )
@@ -305,7 +305,7 @@ public class TransactionsService {
             case V2 -> transactionActivateHandlerV2.handle(transactionActivateCommand)
                     .doOnNext(
                             args -> log.info(
-                                    "Transaction initialized for rptId: {}",
+                                    "Transaction initialized for rptId: [{}]",
                                     newTransactionRequestDto.getPaymentNotices().get(0).getRptId()
                             )
                     )

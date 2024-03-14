@@ -90,7 +90,7 @@ public class TransactionsService {
         return transactionActivateHandlerV2.handle(transactionActivateCommand)
                 .doOnNext(
                         args -> log.info(
-                                "Transaction initialized for rptId: {}",
+                                "Transaction initialized for rptId [{}]",
                                 newTransactionRequestDto.getPaymentNotices().get(0).getRptId()
                         )
                 )

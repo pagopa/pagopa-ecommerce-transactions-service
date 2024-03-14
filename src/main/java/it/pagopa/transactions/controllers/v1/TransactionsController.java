@@ -78,25 +78,19 @@ public class TransactionsController implements TransactionsApi {
         return newTransactionRequest
                 .flatMap(ntr -> {
                     log.info(
-                            "newTransaction rptIDs {} ",
+                            "Create new Transaction for rptId: {}. ClientId: {} ",
                             String.join(
                                     ",",
                                     ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).toList()
-                            )
+                            ),
+                            xClientId.getValue()
 
                     );
                     return transactionsService.newTransaction(ntr, xClientId, transactionId);
                 })
                 .map(ResponseEntity::ok)
-                .contextWrite(
-                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
-                                new TransactionTracingUtils.TransactionInfo(
-                                        transactionId,
-                                        new HashSet<>()
-                                ),
-                                context
-                        )
-                );
+
+        ;
     }
 
     @Override
