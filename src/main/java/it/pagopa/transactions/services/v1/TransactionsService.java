@@ -898,7 +898,7 @@ public class TransactionsService {
                                                         .handle(transactionUpdateAuthorizationCommand)
                                                         .doOnNext(
                                                                 authorizationStatusUpdatedEvent -> log.info(
-                                                                        "UpdateTransactionAuthorization requested for rptId: {}",
+                                                                        "UpdateTransactionAuthorization requested for rptId: [{}]",
                                                                         transaction.getPaymentNotices().get(0).rptId()
                                                                 )
                                                         )
