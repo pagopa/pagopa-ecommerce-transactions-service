@@ -81,7 +81,7 @@ public class NodeForPspClient {
                 .bodyToMono(ActivatePaymentNoticeV2Response.class)
                 .doOnSuccess(
                         activateResponse -> log.info(
-                                "ActivatePaymentNoticeV2 completed for noticeNumber {} ; paymentToken {} ",
+                                "ActivatePaymentNoticeV2 completed for noticeNumber [{}], paymentToken [{}]",
                                 request.getValue().getQrCode().getNoticeNumber(),
                                 activateResponse.getPaymentToken()
 
