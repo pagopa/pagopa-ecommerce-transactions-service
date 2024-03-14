@@ -880,7 +880,7 @@ public class TransactionsService {
                         return baseTransaction.map(
                                 trx -> {
                                     log.info(
-                                            "UpdateTransactionAuthorization outcome already received. Transaction status: {}",
+                                            "UpdateTransactionAuthorization outcome already received. Transaction status: [{}]",
                                             trx.getStatus()
                                     );
                                     return buildTransactionInfoDtoV2(trx);
