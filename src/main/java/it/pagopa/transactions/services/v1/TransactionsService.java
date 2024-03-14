@@ -330,7 +330,7 @@ public class TransactionsService {
     @CircuitBreaker(name = "ecommerce-db")
     @Retry(name = "getTransactionInfo")
     public Mono<TransactionInfoDto> getTransactionInfo(String transactionId) {
-        log.info("Get Transaction Invoked with id {} ", transactionId);
+        log.debug("Get Transaction Invoked with id {} ", transactionId);
         return transactionsViewRepository
                 .findById(transactionId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
@@ -470,7 +470,7 @@ public class TransactionsService {
                             Integer amountTotal = transactionsUtils.getTransactionTotalAmount(transaction);
 
                             Boolean isAllCCP = transactionsUtils.isAllCcp(transaction, 0);
-                            log.info(
+                            log.debug(
                                     "Authorization request amount validation for transactionId: {}",
                                     transactionId
                             );

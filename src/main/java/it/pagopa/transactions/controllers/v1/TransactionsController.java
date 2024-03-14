@@ -106,7 +106,7 @@ public class TransactionsController implements TransactionsApi {
                                                                        ServerWebExchange exchange
     ) {
         return transactionsService.getTransactionInfo(transactionId)
-                .doOnNext(t -> log.info("getTransactionInfo for transactionId: {} ", transactionId))
+                .doOnNext(t -> log.info("GetTransactionInfo for transactionId completed: {} ", transactionId))
                 .map(ResponseEntity::ok)
                 .contextWrite(
                         context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
@@ -127,7 +127,7 @@ public class TransactionsController implements TransactionsApi {
                                                                                                  ServerWebExchange exchange
     ) {
         return requestAuthorizationRequestDto
-                .doOnNext(t -> log.info("requestTransactionAuthorization for transactionId: {} ", transactionId))
+                .doOnNext(t -> log.info("RequestTransactionAuthorization for transactionId: {} ", transactionId))
                 .flatMap(
                         requestAuthorizationRequest -> transactionsService
                                 .requestTransactionAuthorization(transactionId, xPgsId, requestAuthorizationRequest)
