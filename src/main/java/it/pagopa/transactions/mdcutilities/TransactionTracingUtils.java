@@ -6,7 +6,6 @@ import reactor.util.context.Context;
 
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Tracing utility class that contains helper methods to set transaction
