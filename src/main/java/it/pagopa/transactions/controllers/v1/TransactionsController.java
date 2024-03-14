@@ -89,8 +89,15 @@ public class TransactionsController implements TransactionsApi {
                     return transactionsService.newTransaction(ntr, xClientId, transactionId);
                 })
                 .map(ResponseEntity::ok)
-
-        ;
+                .contextWrite(
+                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
+                                new TransactionTracingUtils.TransactionInfo(
+                                        transactionId,
+                                        new HashSet<>()
+                                ),
+                                context
+                        )
+                );
     }
 
     @Override
