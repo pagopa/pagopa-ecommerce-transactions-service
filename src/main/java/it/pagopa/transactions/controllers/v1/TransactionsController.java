@@ -106,7 +106,7 @@ public class TransactionsController implements TransactionsApi {
                                                                        ServerWebExchange exchange
     ) {
         return transactionsService.getTransactionInfo(transactionId)
-                .doOnNext(t -> log.info("GetTransactionInfo for transactionId completed: {} ", transactionId))
+                .doOnNext(t -> log.info("GetTransactionInfo for transactionId completed: [{}]", transactionId))
                 .map(ResponseEntity::ok)
                 .contextWrite(
                         context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
