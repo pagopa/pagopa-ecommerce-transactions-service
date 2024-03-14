@@ -54,7 +54,7 @@ public class NodeForPspClient {
     public Mono<ActivatePaymentNoticeV2Response> activatePaymentNoticeV2(
                                                                          JAXBElement<ActivatePaymentNoticeV2Request> request
     ) {
-        log.debug(
+        log.info(
                 "ActivatePaymentNoticeV2 init for noticeNumber [{}]; idPSP: [{}], IdemPK: [{}]",
                 request.getValue().getQrCode().getNoticeNumber(),
                 request.getValue().getIdPSP(),

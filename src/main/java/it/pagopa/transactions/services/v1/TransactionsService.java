@@ -251,7 +251,7 @@ public class TransactionsService {
                         .map(ClientIdDto::toString)
                         .orElse(null)
         );
-        log.debug(
+        log.info(
                 "Initializing transaction for rptId: {}. ClientId: {}",
                 newTransactionRequestDto.getPaymentNotices().get(0).getRptId(),
                 clientId
@@ -330,7 +330,7 @@ public class TransactionsService {
     @CircuitBreaker(name = "ecommerce-db")
     @Retry(name = "getTransactionInfo")
     public Mono<TransactionInfoDto> getTransactionInfo(String transactionId) {
-        log.debug("Get Transaction Invoked with id {} ", transactionId);
+        log.info("Get Transaction Invoked with id {} ", transactionId);
         return transactionsViewRepository
                 .findById(transactionId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
@@ -470,7 +470,7 @@ public class TransactionsService {
                             Integer amountTotal = transactionsUtils.getTransactionTotalAmount(transaction);
 
                             Boolean isAllCCP = transactionsUtils.isAllCcp(transaction, 0);
-                            log.debug(
+                            log.info(
                                     "Authorization request amount validation for transactionId: {}",
                                     transactionId
                             );
@@ -712,7 +712,7 @@ public class TransactionsService {
     ) {
 
         TransactionId transactionId = new TransactionId(decodedTransactionId);
-        log.debug("UpdateTransactionAuthorization decoded transaction id: {}", transactionId.value());
+        log.info("UpdateTransactionAuthorization decoded transaction id: {}", transactionId.value());
 
         Flux<BaseTransactionEvent<Object>> events = eventsRepository
                 .findByTransactionIdOrderByCreationDateAsc(transactionId.value())
