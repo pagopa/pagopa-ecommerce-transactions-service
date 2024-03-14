@@ -127,7 +127,7 @@ public class TransactionsController implements TransactionsApi {
                                                                                                  ServerWebExchange exchange
     ) {
         return requestAuthorizationRequestDto
-                .doOnNext(t -> log.info("RequestTransactionAuthorization for transactionId: {} ", transactionId))
+                .doOnNext(t -> log.info("RequestTransactionAuthorization for transactionId: [{}]", transactionId))
                 .flatMap(
                         requestAuthorizationRequest -> transactionsService
                                 .requestTransactionAuthorization(transactionId, xPgsId, requestAuthorizationRequest)
