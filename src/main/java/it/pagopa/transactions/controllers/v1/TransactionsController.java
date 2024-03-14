@@ -78,11 +78,12 @@ public class TransactionsController implements TransactionsApi {
         return newTransactionRequest
                 .flatMap(ntr -> {
                     log.info(
-                            "newTransaction rptIDs {} ",
+                            "Create new Transaction for rptId: [{}]. ClientId: [{}]",
                             String.join(
                                     ",",
                                     ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).toList()
-                            )
+                            ),
+                            xClientId.getValue()
 
                     );
                     return transactionsService.newTransaction(ntr, xClientId, transactionId);
@@ -107,7 +108,7 @@ public class TransactionsController implements TransactionsApi {
                                                                        ServerWebExchange exchange
     ) {
         return transactionsService.getTransactionInfo(transactionId)
-                .doOnNext(t -> log.info("getTransactionInfo for transactionId: {} ", transactionId))
+                .doOnNext(t -> log.info("GetTransactionInfo for transactionId completed: [{}]", transactionId))
                 .map(ResponseEntity::ok)
                 .contextWrite(
                         context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
@@ -130,7 +131,7 @@ public class TransactionsController implements TransactionsApi {
                                                                                                  ServerWebExchange exchange
     ) {
         return requestAuthorizationRequestDto
-                .doOnNext(t -> log.info("requestTransactionAuthorization for transactionId: {} ", transactionId))
+                .doOnNext(t -> log.info("RequestTransactionAuthorization for transactionId: [{}]", transactionId))
                 .flatMap(
                         requestAuthorizationRequest -> transactionsService
                                 .requestTransactionAuthorization(transactionId, xPgsId, requestAuthorizationRequest)
@@ -160,7 +161,7 @@ public class TransactionsController implements TransactionsApi {
                 transactionIdDecoded -> updateAuthorizationRequestDto
                         .doOnNext(
                                 t -> log.info(
-                                        "updateTransactionAuthorization for transactionId: {}, decoded transaction id: {} ",
+                                        "UpdateTransactionAuthorization for transactionId: [{}], decoded transaction id: [{}]",
                                         transactionId,
                                         transactionIdDecoded
                                 )
@@ -229,7 +230,7 @@ public class TransactionsController implements TransactionsApi {
                                                                           ServerWebExchange exchange
     ) {
         return addUserReceiptRequestDto
-                .doOnNext(t -> log.info("addUserReceipt for transactionId: {} ", transactionId))
+                .doOnNext(t -> log.info("AddUserReceipt for transactionId: [{}]", transactionId))
                 .flatMap(
                         addUserReceiptRequest -> transactionsService
                                 .addUserReceipt(transactionId, addUserReceiptRequest)

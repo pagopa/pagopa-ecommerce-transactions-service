@@ -96,7 +96,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                 .paymentNoticeList();
         final boolean multiplePaymentNotices = paymentNotices.size() > 1;
         log.info(
-                "Nodo parallel processed requests : [{}]. Multiple payment notices: [{}]. Id cart: [{}]",
+                "Parallel processed Nodo activation requests : [{}]. Multiple payment notices: [{}]. Id cart: [{}]",
                 nodoParallelRequests,
                 multiplePaymentNotices,
                 Optional.ofNullable(newTransactionRequestDto.idCard()).orElse("id cart not found")
@@ -201,7 +201,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                             .doOnSuccess(
                                                                     p -> {
                                                                         log.info(
-                                                                                "Nodo activation for {} with paymentToken {}",
+                                                                                "PaymentRequestInfo cache update for [{}] with paymentToken [{}]",
                                                                                 p.id(),
                                                                                 p.paymentToken()
                                                                         );

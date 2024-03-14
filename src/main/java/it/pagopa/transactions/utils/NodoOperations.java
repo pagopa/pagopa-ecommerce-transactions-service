@@ -112,7 +112,7 @@ public class NodoOperations {
                                     .map(CtFaultBean::getFaultCode)
                                     .orElse("No faultCode received");
                             log.info(
-                                    "Nodo activation for NM3 payment. Transaction id: [{}] RPT id: [{}] idCart: [{}] response outcome: [{}] faultCode: [{}]",
+                                    "Nodo activation for  transaction id: [{}] RPT id: [{}] idCart: [{}] response outcome: [{}] faultCode: [{}]",
                                     transactionId,
                                     rptId,
                                     Optional.ofNullable(idCart).orElse("idCart not present"),

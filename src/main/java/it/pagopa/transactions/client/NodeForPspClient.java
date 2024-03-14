@@ -54,8 +54,12 @@ public class NodeForPspClient {
     public Mono<ActivatePaymentNoticeV2Response> activatePaymentNoticeV2(
                                                                          JAXBElement<ActivatePaymentNoticeV2Request> request
     ) {
-        log.info("activatePaymentNotice idPSP: {} ", request.getValue().getIdPSP());
-        log.info("activatePaymentNotice IdemPK: {} ", request.getValue().getIdempotencyKey());
+        log.info(
+                "ActivatePaymentNoticeV2 init for noticeNumber [{}]; idPSP: [{}], IdemPK: [{}]",
+                request.getValue().getQrCode().getNoticeNumber(),
+                request.getValue().getIdPSP(),
+                request.getValue().getIdempotencyKey()
+        );
         return nodoWebClient.post()
                 .uri(nodoPerPspUri)
                 .header("Content-Type", MediaType.TEXT_XML_VALUE)
@@ -77,7 +81,8 @@ public class NodeForPspClient {
                 .bodyToMono(ActivatePaymentNoticeV2Response.class)
                 .doOnSuccess(
                         activateResponse -> log.info(
-                                "Payment activated with paymentToken {} ",
+                                "ActivatePaymentNoticeV2 completed for noticeNumber [{}], paymentToken [{}]",
+                                request.getValue().getQrCode().getNoticeNumber(),
                                 activateResponse.getPaymentToken()
 
                         )
@@ -85,16 +90,16 @@ public class NodeForPspClient {
                 .onErrorMap(
                         ResponseStatusException.class,
                         error -> {
-                            log.error("ResponseStatus Error:", error);
+                            log.error("ActivatePaymentNoticeV2 ResponseStatus Error:", error);
                             return new BadGatewayException(error.getReason(), error.getStatus());
                         }
                 )
-                .doOnError(Exception.class, error -> log.error("Generic Error:", error));
+                .doOnError(Exception.class, error -> log.error("ActivatePaymentNoticeV2 Generic Error:", error));
     }
 
     public Mono<ClosePaymentResponseDto> closePaymentV2(ClosePaymentRequestV2Dto request) {
         log.info(
-                "Requested closePaymentV2 for transactionId [{}]: paymentTokens {} - outcome: {}",
+                "ClosePaymentV2 init for transactionId [{}]: paymentTokens [{}] - outcome: [{}]",
                 request.getTransactionId(),
                 request.getPaymentTokens(),
                 request.getOutcome().getValue()
@@ -126,7 +131,7 @@ public class NodeForPspClient {
                 .doOnSuccess(
                         closePaymentResponse -> log
                                 .info(
-                                        "Received closePaymentV2 response for transactionId [{}]: paymentTokens {} - outcome: {}",
+                                        "ClosePaymentV2 completed for transactionId [{}]: paymentTokens {} - outcome: {}",
                                         request.getTransactionId(),
                                         request.getPaymentTokens(),
                                         closePaymentResponse.getOutcome()
@@ -137,7 +142,7 @@ public class NodeForPspClient {
                         error -> {
 
                             log.error(
-                                    "Received closePaymentV2 Response Status Error for transactionId [{}]: {}",
+                                    "ClosePaymentV2 Response Status Error for transactionId [{}]: {}",
                                     request.getTransactionId(),
                                     error
                             );
@@ -155,6 +160,6 @@ public class NodeForPspClient {
 
                         }
                 )
-                .doOnError(Exception.class, error -> log.error("Generic Error:", error));
+                .doOnError(Exception.class, error -> log.error("ClosePaymentV2 Generic Error:", error));
     }
 }
