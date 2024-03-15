@@ -391,8 +391,8 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
         } else {
             logo = asset;
         }
-        log.info(
-                "Payment method with payment type code: {}, brand: {}. Received asset: {}, brandAssets: {} mapped to logo ->{}",
+        log.debug(
+                "Payment method with payment type code: [{}], brand: [{}]. Received asset: [{}], brandAssets: [{}] mapped to logo -> [{}]",
                 paymentTypeCode,
                 brand,
                 asset,
