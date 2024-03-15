@@ -70,11 +70,12 @@ public class TransactionsController implements V2Api {
         return newTransactionRequest
                 .flatMap(ntr -> {
                     log.info(
-                            "newTransaction rptIDs {} ",
+                            "Create new Transaction for rptId: [{}]. ClientId: [{}] ",
                             String.join(
                                     ",",
                                     ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).toList()
-                            )
+                            ),
+                            xClientId.getValue()
 
                     );
                     return transactionsService.newTransaction(ntr, xClientId, correlationId, transactionId);
@@ -84,7 +85,9 @@ public class TransactionsController implements V2Api {
                         context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
                                 new TransactionTracingUtils.TransactionInfo(
                                         transactionId,
-                                        new HashSet<>()
+                                        new HashSet<>(),
+                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getURI().getPath()
                                 ),
                                 context
                         )

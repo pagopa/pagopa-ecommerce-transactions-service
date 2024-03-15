@@ -280,7 +280,7 @@ public class TransactionsService {
             case V1 -> transactionActivateHandlerV1.handle(transactionActivateCommand)
                     .doOnNext(
                             args -> log.info(
-                                    "Transaction initialized for rptId: {}",
+                                    "Transaction initialized for rptId: [{}]",
                                     newTransactionRequestDto.getPaymentNotices().get(0).getRptId()
                             )
                     )
@@ -302,7 +302,7 @@ public class TransactionsService {
             case V2 -> transactionActivateHandlerV2.handle(transactionActivateCommand)
                     .doOnNext(
                             args -> log.info(
-                                    "Transaction initialized for rptId: {}",
+                                    "Transaction initialized for rptId: [{}]",
                                     newTransactionRequestDto.getPaymentNotices().get(0).getRptId()
                             )
                     )
@@ -715,7 +715,7 @@ public class TransactionsService {
     ) {
 
         TransactionId transactionId = new TransactionId(decodedTransactionId);
-        log.info("decoded transaction id: {}", transactionId.value());
+        log.info("UpdateTransactionAuthorization decoded transaction id: [{}]", transactionId.value());
 
         Flux<BaseTransactionEvent<Object>> events = eventsRepository
                 .findByTransactionIdOrderByCreationDateAsc(transactionId.value())
@@ -803,7 +803,7 @@ public class TransactionsService {
                         return baseTransaction.map(
                                 trx -> {
                                     log.info(
-                                            "Transaction authorization outcome already received. Transaction status: {}",
+                                            "UpdateTransactionAuthorization Transaction authorization outcome already received. Transaction status: [{}]",
                                             trx.getStatus()
                                     );
                                     return buildTransactionInfoDtoV1(trx);
@@ -820,14 +820,14 @@ public class TransactionsService {
                                                         .handle(transactionUpdateAuthorizationCommand)
                                                         .doOnNext(
                                                                 authorizationStatusUpdatedEvent -> log.info(
-                                                                        "Requested authorization update for rptId: {}",
+                                                                        "UpdateTransactionAuthorization Requested authorization update for rptId: [{}]",
                                                                         transaction.getPaymentNotices().get(0).rptId()
                                                                 )
                                                         )
                                                         .doOnError(
                                                                 AlreadyProcessedException.class,
                                                                 exception -> log.error(
-                                                                        "Error: requesting authorization update for transaction in state {}",
+                                                                        "UpdateTransactionAuthorization Error: requesting authorization update for transaction in state [{}]",
                                                                         t.getStatus()
                                                                 )
                                                         )
@@ -883,7 +883,7 @@ public class TransactionsService {
                         return baseTransaction.map(
                                 trx -> {
                                     log.info(
-                                            "Transaction authorization outcome already received. Transaction status: {}",
+                                            "UpdateTransactionAuthorization outcome already received. Transaction status: [{}]",
                                             trx.getStatus()
                                     );
                                     return buildTransactionInfoDtoV2(trx);
@@ -901,14 +901,14 @@ public class TransactionsService {
                                                         .handle(transactionUpdateAuthorizationCommand)
                                                         .doOnNext(
                                                                 authorizationStatusUpdatedEvent -> log.info(
-                                                                        "Requested authorization update for rptId: {}",
+                                                                        "UpdateTransactionAuthorization requested for rptId: [{}]",
                                                                         transaction.getPaymentNotices().get(0).rptId()
                                                                 )
                                                         )
                                                         .doOnError(
                                                                 AlreadyProcessedException.class,
                                                                 exception -> log.error(
-                                                                        "Error: requesting authorization update for transaction in state {}",
+                                                                        "UpdateTransactionAuthorization Error: requesting authorization update for transaction in state [{}]",
                                                                         t.getStatus()
                                                                 )
                                                         )
@@ -1144,7 +1144,7 @@ public class TransactionsService {
                                             .handle(el._2)
                                             .doOnNext(
                                                     transactionUserReceiptRequestedEvent -> log.info(
-                                                            "{} for transactionId: {}",
+                                                            "AddUserReceipt [{}] for transactionId: [{}]",
                                                             TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT,
                                                             transactionUserReceiptRequestedEvent.getTransactionId()
                                                     )
@@ -1153,7 +1153,7 @@ public class TransactionsService {
                                                     .handle((TransactionUserReceiptRequestedEvent) event))
                                             .doOnNext(
                                                     transaction -> log.info(
-                                                            "Transaction status updated {} for transactionId: {}",
+                                                            "AddUserReceipt transaction status updated [{}] for transactionId: [{}]",
                                                             transaction.getStatus(),
                                                             transaction.getTransactionId()
                                                     )
@@ -1164,7 +1164,7 @@ public class TransactionsService {
                                     .handle(el._2)
                                     .doOnNext(
                                             transactionUserReceiptRequestedEvent -> log.info(
-                                                    "{} for transactionId: {}",
+                                                    "AddUserReceipt [{}] for transactionId: [{}]",
                                                     TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT,
                                                     transactionUserReceiptRequestedEvent.getTransactionId()
                                             )
@@ -1173,7 +1173,7 @@ public class TransactionsService {
                                             .handle((it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptRequestedEvent) event))
                                     .doOnNext(
                                             transaction -> log.info(
-                                                    "Transaction status updated {} for transactionId: {}",
+                                                    "AddUserReceipt transaction status updated [{}] for transactionId: [{}]",
                                                     transaction.getStatus(),
                                                     transaction.getTransactionId()
                                             )
