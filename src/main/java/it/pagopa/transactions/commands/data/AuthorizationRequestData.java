@@ -7,6 +7,7 @@ import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDetailsDto;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public record AuthorizationRequestData(
@@ -30,6 +31,10 @@ public record AuthorizationRequestData(
         Optional<String> sessionId,
         Optional<String> contractId,
         String brand,
-        RequestAuthorizationRequestDetailsDto authDetails
+        RequestAuthorizationRequestDetailsDto authDetails,
+
+        String asset,
+
+        Optional<Map<String, String>> brandAssets
 ) {
 }

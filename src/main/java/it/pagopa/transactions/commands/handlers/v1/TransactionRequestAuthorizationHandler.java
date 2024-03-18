@@ -18,7 +18,6 @@ import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationH
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
-import it.pagopa.transactions.utils.LogoMappingUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,13 +47,11 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             TransactionsUtils transactionsUtils,
             @Value("${checkout.basePath}") String checkoutBasePath,
             EcommercePaymentMethodsClient paymentMethodsClient,
-            LogoMappingUtils logoMappingUtils,
             TransactionTemplateWrapper transactionTemplateWrapper
     ) {
         super(
                 paymentGatewayClient,
                 checkoutBasePath,
-                logoMappingUtils,
                 transactionTemplateWrapper
         );
         this.transactionEventStoreRepository = transactionEventStoreRepository;

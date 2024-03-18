@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -107,7 +108,9 @@ class LogMaskTests {
                 Optional.empty(),
                 Optional.empty(),
                 "VISA",
-                cardDetails
+                cardDetails,
+                "http://asset",
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
 
         log.info(authorizationData.toString());

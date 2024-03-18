@@ -41,10 +41,7 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service(TransactionsService.QUALIFIER_NAME)
 @Slf4j
@@ -580,7 +577,9 @@ public class TransactionsService {
                                                                 ).findFirst(),
                                                         paymentSessionData.brand(),
                                                         Optional.ofNullable(paymentSessionData.sessionId()),
-                                                        Optional.ofNullable(paymentSessionData.contractId())
+                                                        Optional.ofNullable(paymentSessionData.contractId()),
+                                                        calculateFeeResponse.getAsset(),
+                                                        calculateFeeResponse.getBrandAssets()
                                                 );
                                             }
                                     )
@@ -614,6 +613,8 @@ public class TransactionsService {
                             Optional<String> sessionId = authorizationRequestSessionData.npgSessionId();
                             String brand = authorizationRequestSessionData.brand();
                             Optional<String> contractId = authorizationRequestSessionData.npgContractId();
+                            String asset = authorizationRequestSessionData.asset();
+                            Map<String, String> brandAssets = authorizationRequestSessionData.brandAssets();
                             log.info(
                                     "Requesting authorization for transactionId: {}",
                                     transactionDocument.getTransactionId()
@@ -659,7 +660,9 @@ public class TransactionsService {
                                     sessionId,
                                     contractId,
                                     brand,
-                                    requestAuthorizationRequestDto.getDetails()
+                                    requestAuthorizationRequestDto.getDetails(),
+                                    asset,
+                                    Optional.ofNullable(brandAssets)
                             );
 
                             // FIXME Handle multiple rtpId
@@ -1326,4 +1329,5 @@ public class TransactionsService {
             default -> Mono.just(new PaymentSessionData(null, null, null, null));
         };
     }
+
 }

@@ -18,14 +18,6 @@ class RedirectConfigurationsBuilderTest {
 
     private Set<String> pspToHandle = Set.of("psp1", "psp2", "psp3");
 
-    private final String pspConfigurationApiKeyJson = """
-            {
-                "psp1" : "key-psp1",
-                "psp2" : "key-psp2",
-                "psp3" : "key-psp3"
-            }
-            """;
-
     private final Map<String, String> pspUriMap = Map.of(
             "psp1",
             "http://localhost/psp1/redirectionUrl",
@@ -33,15 +25,6 @@ class RedirectConfigurationsBuilderTest {
             "http://localhost/psp2/redirectionUrl",
             "psp3",
             "http://localhost/psp3/redirectionUrl"
-    );
-
-    private final Map<String, String> pspLogoMap = Map.of(
-            "psp1",
-            "http://localhost/psp1/logo",
-            "psp2",
-            "http://localhost/psp2/logo",
-            "psp3",
-            "http://localhost/psp3/logo"
     );
 
     @ParameterizedTest
@@ -84,47 +67,6 @@ class RedirectConfigurationsBuilderTest {
                 IllegalArgumentException.class,
                 () -> checkoutRedirectConfigurationsBuilder
                         .redirectBeApiCallUriMap(pspToHandle, missingKeyPspMap)
-        );
-    }
-
-    @ParameterizedTest
-    @ValueSource(
-            strings = {
-                    "psp1",
-                    "psp2",
-                    "psp3"
-            }
-    )
-    void shouldBuildPspLogoUriMapSuccessfully(String pspId) {
-        Map<String, URI> mapping = assertDoesNotThrow(
-                () -> checkoutRedirectConfigurationsBuilder.redirectLogoMap(pspToHandle, pspLogoMap)
-        );
-        assertEquals("http://localhost/%s/logo".formatted(pspId), mapping.get(pspId).toString());
-
-    }
-
-    @Test
-    void shouldThrowExceptionBuildingLogoUriMapForMissingApiKey() {
-        Map<String, String> missingKeyPspMap = new HashMap<>(pspLogoMap);
-        missingKeyPspMap.remove("psp1");
-        RedirectConfigurationException e = assertThrows(
-                RedirectConfigurationException.class,
-                () -> checkoutRedirectConfigurationsBuilder.redirectLogoMap(pspToHandle, missingKeyPspMap)
-        );
-        assertEquals(
-                "Error parsing Redirect PSP LOGOS configuration, cause: Misconfigured redirect.pspLogoMapping, the following PSP logos are not configured: [psp1]",
-                e.getMessage()
-        );
-
-    }
-
-    @Test
-    void shouldThrowExceptionBuildingLogoUriMapForWrongUri() {
-        Map<String, String> missingKeyPspMap = new HashMap<>(pspLogoMap);
-        missingKeyPspMap.put("psp1", "http:\\\\localhost");
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> checkoutRedirectConfigurationsBuilder.redirectLogoMap(pspToHandle, missingKeyPspMap)
         );
     }
 

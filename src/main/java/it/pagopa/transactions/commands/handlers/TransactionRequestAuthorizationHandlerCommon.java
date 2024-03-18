@@ -4,7 +4,6 @@ import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
-import it.pagopa.generated.transactions.server.model.ApmAuthRequestDetailsDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.PaymentGatewayClient;
@@ -15,7 +14,6 @@ import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionCacheInfo;
 import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
 import it.pagopa.transactions.repositories.WalletPaymentInfo;
-import it.pagopa.transactions.utils.LogoMappingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.http.HttpStatus;
@@ -23,6 +21,7 @@ import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
@@ -36,19 +35,15 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
 
     private final String checkoutBasePath;
 
-    private final LogoMappingUtils logoMappingUtils;
-
     private final TransactionTemplateWrapper transactionTemplateWrapper;
 
     protected TransactionRequestAuthorizationHandlerCommon(
             PaymentGatewayClient paymentGatewayClient,
             String checkoutBasePath,
-            LogoMappingUtils logoMappingUtils,
             TransactionTemplateWrapper transactionTemplateWrapper
     ) {
         this.paymentGatewayClient = paymentGatewayClient;
         this.checkoutBasePath = checkoutBasePath;
-        this.logoMappingUtils = logoMappingUtils;
         this.transactionTemplateWrapper = transactionTemplateWrapper;
     }
 
@@ -172,7 +167,9 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                         Optional.of(orderIdAndFieldsDto.getT2().getSessionId()),
                                         authorizationData.contractId(),
                                         authorizationData.brand(),
-                                        authorizationData.authDetails()
+                                        authorizationData.authDetails(),
+                                        authorizationData.asset(),
+                                        authorizationData.brandAssets()
                                 ),
                                 orderIdAndFieldsDto.getT1(),
                                 correlationId,
@@ -384,7 +381,25 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     }
 
     protected URI getLogo(AuthorizationRequestData authorizationRequestData) {
-        return logoMappingUtils.getLogo(authorizationRequestData);
+        String paymentTypeCode = authorizationRequestData.paymentTypeCode();
+        String brand = authorizationRequestData.brand();
+        String asset = authorizationRequestData.asset();
+        Optional<Map<String, String>> brandAssets = authorizationRequestData.brandAssets();
+        String logo;
+        if (paymentTypeCode.equals("CP") && brand != null) {
+            logo = brandAssets.map(brandLogos -> brandLogos.get(brand)).orElse(asset);
+        } else {
+            logo = asset;
+        }
+        log.debug(
+                "Payment method with payment type code: [{}], brand: [{}]. Received asset: [{}], brandAssets: [{}] mapped to logo -> [{}]",
+                paymentTypeCode,
+                brand,
+                asset,
+                brandAssets,
+                logo
+        );
+        return URI.create(logo);
     }
 
     /**

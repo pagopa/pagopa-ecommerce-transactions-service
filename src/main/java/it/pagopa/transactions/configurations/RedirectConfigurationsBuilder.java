@@ -64,45 +64,4 @@ public class RedirectConfigurationsBuilder {
 
     }
 
-    /**
-     * Create a Map &lt String,URI &gt that will associate, to every handled PSP,
-     * the logo to be used for user notification email
-     *
-     * @param pspToHandle   - set of all PSPs to be handled for Redirect payment
-     *                      flow
-     * @param pspUrlMapping - configuration parameter that contains PSP to URI
-     *                      mapping
-     * @return a configuration map for every PSPs
-     */
-    @Bean
-    public Map<String, URI> redirectLogoMap(
-                                            @Value("${redirect.pspList}") Set<String> pspToHandle,
-                                            @Value(
-                                                "#{${redirect.pspLogoMapping}}"
-                                            ) Map<String, String> pspUrlMapping
-    ) {
-        Map<String, URI> redirectUriMap = new HashMap<>();
-        // URI.create throws IllegalArgumentException that will prevent module load for
-        // invalid PSP URI configuration
-        pspUrlMapping.forEach(
-                (
-                 pspId,
-                 uri
-                ) -> redirectUriMap.put(pspId, URI.create(uri))
-        );
-        Set<String> missingKeys = pspToHandle
-                .stream()
-                .filter(Predicate.not(redirectUriMap::containsKey))
-                .collect(Collectors.toSet());
-        if (!missingKeys.isEmpty()) {
-            throw new RedirectConfigurationException(
-                    "Misconfigured redirect.pspLogoMapping, the following PSP logos are not configured: %s"
-                            .formatted(missingKeys),
-                    RedirectConfigurationType.LOGOS
-            );
-        }
-        return redirectUriMap;
-
-    }
-
 }

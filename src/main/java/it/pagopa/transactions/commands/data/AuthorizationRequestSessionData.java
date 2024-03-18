@@ -2,6 +2,7 @@ package it.pagopa.transactions.commands.data;
 
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.BundleDto;
 
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -22,6 +23,10 @@ public record AuthorizationRequestSessionData(
         Optional<BundleDto> bundle,
         String brand,
         Optional<String> npgSessionId,
-        Optional<String> npgContractId
+        Optional<String> npgContractId,
+
+        String asset,
+
+        Map<String, String> brandAssets
 ) {
 }
