@@ -110,7 +110,7 @@ class LogMaskTests {
                 "VISA",
                 cardDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
 
         log.info(authorizationData.toString());

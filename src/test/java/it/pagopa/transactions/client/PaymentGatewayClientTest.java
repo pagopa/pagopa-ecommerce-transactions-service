@@ -197,7 +197,7 @@ class PaymentGatewayClientTest {
                 "VISA",
                 Mockito.mock(RequestAuthorizationRequestDetailsDto.class),
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
 
         /* test */
@@ -265,7 +265,7 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
 
         XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
@@ -357,7 +357,7 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
 
         VposAuthRequestDto vposAuthRequestDto = new VposAuthRequestDto()
@@ -452,7 +452,7 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
         StateResponseDto ngpStateResponse = new StateResponseDto().url("https://example.com");
         /* preconditions */
@@ -519,7 +519,7 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
 
         /* preconditions */
@@ -596,7 +596,7 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
 
         /* preconditions */
@@ -670,7 +670,7 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
 
         /* preconditions */
@@ -749,7 +749,7 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
 
         XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
@@ -852,7 +852,7 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
 
         XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
@@ -949,7 +949,7 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
 
         VposAuthRequestDto vposAuthRequestDto = new VposAuthRequestDto()
@@ -1054,7 +1054,7 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
 
         XPayAuthRequestDto xPayAuthRequestDto = new XPayAuthRequestDto()
@@ -1145,7 +1145,7 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
 
         VposAuthRequestDto vposAuthRequestDto = new VposAuthRequestDto()
@@ -1239,7 +1239,7 @@ class PaymentGatewayClientTest {
                 "VISA",
                 null,
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
 
         /* test */
@@ -1298,7 +1298,7 @@ class PaymentGatewayClientTest {
                 "VISA",
                 null,
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
 
         /* preconditions */
@@ -1366,7 +1366,7 @@ class PaymentGatewayClientTest {
                 "VISA",
                 walletDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
@@ -1504,7 +1504,7 @@ class PaymentGatewayClientTest {
                 "VISA",
                 walletDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         /* preconditions */
@@ -1598,7 +1598,7 @@ class PaymentGatewayClientTest {
                 "VISA",
                 walletDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         /* preconditions */
@@ -1689,7 +1689,7 @@ class PaymentGatewayClientTest {
                 "VISA",
                 walletDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         /* preconditions */
@@ -1781,7 +1781,7 @@ class PaymentGatewayClientTest {
                 "VISA",
                 walletDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         /* preconditions */
@@ -1938,7 +1938,7 @@ class PaymentGatewayClientTest {
                 "VISA",
                 walletDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
         int totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
@@ -2084,7 +2084,7 @@ class PaymentGatewayClientTest {
                 "VISA",
                 walletDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
         int totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
@@ -2214,7 +2214,7 @@ class PaymentGatewayClientTest {
                 "VISA",
                 apmDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
         int totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
@@ -2346,7 +2346,7 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
@@ -2461,7 +2461,7 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
         PaymentGatewayClient.RedirectPaymentMethodId idPaymentMethod = PaymentGatewayClient.RedirectPaymentMethodId.RBPS;
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
@@ -2567,7 +2567,7 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
         PaymentGatewayClient.RedirectPaymentMethodId idPaymentMethod = PaymentGatewayClient.RedirectPaymentMethodId.RBPS;
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
@@ -2666,7 +2666,7 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
 
         Hooks.onOperatorDebug();
@@ -2703,7 +2703,7 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "htto://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset"))
         );
 
         Hooks.onOperatorDebug();
