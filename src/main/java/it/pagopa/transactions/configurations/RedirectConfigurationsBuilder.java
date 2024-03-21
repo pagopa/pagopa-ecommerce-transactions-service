@@ -25,17 +25,17 @@ public class RedirectConfigurationsBuilder {
      * Create a Map &lt String,URI &gt that will associate, to every handled PSP,
      * the backend URI to be used to perform Redirect payment flow api call
      *
-     * @param pspToHandle   - set of all PSPs to be handled for Redirect payment
-     *                      flow
-     * @param pspUrlMapping - configuration parameter that contains PSP to URI
-     *                      mapping
+     * @param paymentTypeCodeList - set of all redirect payment type codes to be
+     *                            handled flow
+     * @param pspUrlMapping       - configuration parameter that contains PSP to URI
+     *                            mapping
      * @return a configuration map for every PSPs
      */
     @Bean
     public Map<String, URI> redirectBeApiCallUriMap(
                                                     @Value(
-                                                        "${redirect.pspList}"
-                                                    ) Set<String> pspToHandle,
+                                                        "${redirect.paymentTypeCodeList}"
+                                                    ) Set<String> paymentTypeCodeList,
                                                     @Value(
                                                         "#{${redirect.pspUrlMapping}}"
                                                     ) Map<String, String> pspUrlMapping
@@ -49,13 +49,13 @@ public class RedirectConfigurationsBuilder {
                  uri
                 ) -> redirectUriMap.put(pspId, URI.create(uri))
         );
-        Set<String> missingKeys = pspToHandle
+        Set<String> missingKeys = paymentTypeCodeList
                 .stream()
                 .filter(Predicate.not(redirectUriMap::containsKey))
                 .collect(Collectors.toSet());
         if (!missingKeys.isEmpty()) {
             throw new RedirectConfigurationException(
-                    "Misconfigured redirect.pspUrlMapping, the following PSP b.e. URIs are not configured: %s"
+                    "Misconfigured redirect.pspUrlMapping, the following redirect payment type code b.e. URIs are not configured: %s"
                             .formatted(missingKeys),
                     RedirectConfigurationType.BACKEND_URLS
             );

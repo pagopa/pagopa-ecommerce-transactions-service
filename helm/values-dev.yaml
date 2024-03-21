@@ -141,7 +141,7 @@ microservice-chart:
     SESSION_URL_CANCEL_SUFFIX: "/ecommerce-fe/cancel"
     SESSION_URL_NOTIFICATION_URL: "https://api.dev.platform.pagopa.it/ecommerce/npg/notifications/v1/sessions/{orderId}/outcomes?sessionToken={sessionToken}"
     JWT_NPG_NOTIFICATION_VALIDITY_TIME: "900"
-    REDIRECT_PSP_LIST: "BCITITMM"
+    REDIRECT_PAYMENT_TYPE_CODE_LIST: "BCITITMM"
     NODE_FORWARDER_URL: "https://api.uat.platform.pagopa.it/pagopa-node-forwarder/api/v1"
     NODE_FORWARDER_READ_TIMEOUT: "10000"
     NODE_FORWARDER_CONNECTION_TIMEOUT: "10000"
