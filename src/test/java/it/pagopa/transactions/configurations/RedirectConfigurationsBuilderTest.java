@@ -16,23 +16,23 @@ class RedirectConfigurationsBuilderTest {
 
     private final RedirectConfigurationsBuilder checkoutRedirectConfigurationsBuilder = new RedirectConfigurationsBuilder();
 
-    private Set<String> pspToHandle = Set.of("psp1", "psp2", "psp3");
+    private Set<String> pspToHandle = Set.of("key1", "key2", "key3");
 
     private final Map<String, String> pspUriMap = Map.of(
-            "psp1",
-            "http://localhost/psp1/redirectionUrl",
-            "psp2",
-            "http://localhost/psp2/redirectionUrl",
-            "psp3",
-            "http://localhost/psp3/redirectionUrl"
+            "key1",
+            "http://localhost/key1/redirectionUrl",
+            "key2",
+            "http://localhost/key2/redirectionUrl",
+            "key3",
+            "http://localhost/key3/redirectionUrl"
     );
 
     @ParameterizedTest
     @ValueSource(
             strings = {
-                    "psp1",
-                    "psp2",
-                    "psp3"
+                    "key1",
+                    "key2",
+                    "key3"
             }
     )
     void shouldBuildPspBackendUriMapSuccessfully(String pspId) {
@@ -46,14 +46,14 @@ class RedirectConfigurationsBuilderTest {
     @Test
     void shouldThrowExceptionBuildingBackendUriMapForMissingApiKey() {
         Map<String, String> missingKeyPspMap = new HashMap<>(pspUriMap);
-        missingKeyPspMap.remove("psp1");
+        missingKeyPspMap.remove("key1");
         RedirectConfigurationException e = assertThrows(
                 RedirectConfigurationException.class,
                 () -> checkoutRedirectConfigurationsBuilder
                         .redirectBeApiCallUriMap(pspToHandle, missingKeyPspMap)
         );
         assertEquals(
-                "Error parsing Redirect PSP BACKEND_URLS configuration, cause: Misconfigured redirect.pspUrlMapping, the following PSP b.e. URIs are not configured: [psp1]",
+                "Error parsing Redirect PSP BACKEND_URLS configuration, cause: Misconfigured redirect.pspUrlMapping, the following redirect payment type code b.e. URIs are not configured: [key1]",
                 e.getMessage()
         );
 
@@ -62,7 +62,7 @@ class RedirectConfigurationsBuilderTest {
     @Test
     void shouldThrowExceptionBuildingBackendUriMapForWrongUri() {
         Map<String, String> missingKeyPspMap = new HashMap<>(pspUriMap);
-        missingKeyPspMap.put("psp1", "http:\\\\localhost");
+        missingKeyPspMap.put("key1", "http:\\\\localhost");
         assertThrows(
                 IllegalArgumentException.class,
                 () -> checkoutRedirectConfigurationsBuilder

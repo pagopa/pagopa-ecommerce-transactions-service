@@ -61,6 +61,8 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL;
@@ -127,8 +129,12 @@ class PaymentGatewayClientTest {
     private final NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderClient = Mockito
             .mock(NodeForwarderClient.class);
 
-    private final Map<String, URI> checkoutRedirectBeApiCallUriMap = Map
-            .of("pspId", URI.create("http://redirect/pspId"), "malformedUrlPspId", URI.create("malformedUrl"));
+    private final Map<String, URI> redirectBeApiCallUriMap = Arrays
+            .stream(PaymentGatewayClient.RedirectPaymentMethodId.values())
+            .map(PaymentGatewayClient.RedirectPaymentMethodId::toString)
+            .collect(
+                    Collectors.toMap(Function.identity(), p -> URI.create("http://redirect/%s".formatted(p)))
+            );
 
     @BeforeEach
     private void init() {
@@ -148,7 +154,7 @@ class PaymentGatewayClientTest {
                 jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
-                checkoutRedirectBeApiCallUriMap
+                redirectBeApiCallUriMap
         );
 
         Hooks.onOperatorDebug();
@@ -2418,7 +2424,7 @@ class PaymentGatewayClientTest {
                     );
                     return true;
                 }),
-                eq(URI.create("http://redirect/pspId")),
+                eq(URI.create("http://redirect/%s".formatted(paymentTypeCode))),
                 eq(authorizationData.transactionId().value()),
                 eq(RedirectUrlResponseDto.class)
         );
@@ -2537,7 +2543,7 @@ class PaymentGatewayClientTest {
                     );
                     return true;
                 }),
-                eq(URI.create("http://redirect/pspId")),
+                eq(URI.create("http://redirect/RBPS")),
                 eq(authorizationData.transactionId().value()),
                 eq(RedirectUrlResponseDto.class)
         );
@@ -2636,7 +2642,7 @@ class PaymentGatewayClientTest {
                     );
                     return true;
                 }),
-                eq(URI.create("http://redirect/pspId")),
+                eq(URI.create("http://redirect/RBPS")),
                 eq(authorizationData.transactionId().value()),
                 eq(RedirectUrlResponseDto.class)
         );
@@ -2644,7 +2650,6 @@ class PaymentGatewayClientTest {
 
     @Test
     void shouldReturnErrorDuringRedirectPaymentTransactionForInvalidPspURL() {
-        String pspId = "unknownPspId";
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
@@ -2652,7 +2657,7 @@ class PaymentGatewayClientTest {
                 transaction.getEmail(),
                 10,
                 "paymentInstrumentId",
-                pspId,
+                "pspId",
                 "RBPS",
                 "brokerName",
                 "pspChannelCode",
@@ -2670,6 +2675,26 @@ class PaymentGatewayClientTest {
         );
 
         Hooks.onOperatorDebug();
+        Map<String, URI> redirectUrlMapping = new HashMap<>(redirectBeApiCallUriMap);
+        redirectUrlMapping.remove("RBPS");
+        PaymentGatewayClient client = new PaymentGatewayClient(
+                xPayInternalApi,
+                creditCardInternalApi,
+                objectMapper,
+                mockUuidUtils,
+                confidentialMailUtils,
+                npgClient,
+                npgPspApiKeysConfig,
+                sessionUrlConfig,
+                uniqueIdUtils,
+                npgDefaultApiKey,
+                jwtSecretKey,
+                TOKEN_VALIDITY_TIME_SECONDS,
+                jwtSecretKey,
+                TOKEN_VALIDITY_TIME_SECONDS,
+                nodeForwarderClient,
+                redirectUrlMapping
+        );
         /* test */
         StepVerifier.create(
                 client.requestRedirectUrlAuthorization(authorizationData, RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
