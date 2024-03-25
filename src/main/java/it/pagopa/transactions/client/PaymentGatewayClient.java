@@ -589,6 +589,7 @@ public class PaymentGatewayClient {
                                     .idPaymentMethod(idPaymentMethod.toString())
                                     .paName(null);// optional
                             Either<RedirectConfigurationException, URI> pspConfiguredUrl = getRedirectUrlForPsp(
+                                    authorizationData.pspId(),
                                     authorizationData.paymentTypeCode()
                             );
 
@@ -661,13 +662,17 @@ public class PaymentGatewayClient {
         return Base64.getEncoder().encodeToString(mdcData.getBytes(StandardCharsets.UTF_8));
     }
 
-    private Either<RedirectConfigurationException, URI> getRedirectUrlForPsp(String paymentTypeCode) {
-        if (redirectBeApiCallUriMap.containsKey(paymentTypeCode)) {
-            return Either.right(redirectBeApiCallUriMap.get(paymentTypeCode));
+    private Either<RedirectConfigurationException, URI> getRedirectUrlForPsp(
+                                                                             String pspId,
+                                                                             String paymentTypeCode
+    ) {
+        String urlKey = "%s-%s".formatted(pspId, paymentTypeCode);
+        if (redirectBeApiCallUriMap.containsKey(urlKey)) {
+            return Either.right(redirectBeApiCallUriMap.get(urlKey));
         } else {
             return Either.left(
                     new RedirectConfigurationException(
-                            "Missing key for payment type code: [%s]".formatted(paymentTypeCode),
+                            "Missing key for redirect return url [%s]".formatted(urlKey),
                             RedirectConfigurationType.BACKEND_URLS
                     )
             );
