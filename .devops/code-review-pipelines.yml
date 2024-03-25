@@ -12,7 +12,7 @@ resources:
     - repository: pagopaEcommerceLocal
       type: github
       name: pagopa/pagopa-ecommerce-local 
-      ref: main
+      ref: CHK-2598-handle-url-for-psp-and-type-code
       endpoint: 'io-azure-devops-github-ro'
 
 stages:
