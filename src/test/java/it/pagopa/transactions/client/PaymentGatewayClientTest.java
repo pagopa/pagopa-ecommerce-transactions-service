@@ -61,7 +61,6 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -133,7 +132,7 @@ class PaymentGatewayClientTest {
             .stream(PaymentGatewayClient.RedirectPaymentMethodId.values())
             .map(PaymentGatewayClient.RedirectPaymentMethodId::toString)
             .collect(
-                    Collectors.toMap(Function.identity(), p -> URI.create("http://redirect/%s".formatted(p)))
+                    Collectors.toMap("pspId-%s"::formatted, p -> URI.create("http://redirect/%s".formatted(p)))
             );
 
     @BeforeEach
@@ -2676,7 +2675,7 @@ class PaymentGatewayClientTest {
 
         Hooks.onOperatorDebug();
         Map<String, URI> redirectUrlMapping = new HashMap<>(redirectBeApiCallUriMap);
-        redirectUrlMapping.remove("RBPS");
+        redirectUrlMapping.remove("pspId-RBPS");
         PaymentGatewayClient client = new PaymentGatewayClient(
                 xPayInternalApi,
                 creditCardInternalApi,
