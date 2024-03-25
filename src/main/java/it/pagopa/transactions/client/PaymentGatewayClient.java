@@ -672,7 +672,7 @@ public class PaymentGatewayClient {
         } else {
             return Either.left(
                     new RedirectConfigurationException(
-                            "Missing key for redirect return url [%s]".formatted(urlKey),
+                            "Missing key for redirect return url with key: [%s]".formatted(urlKey),
                             RedirectConfigurationType.BACKEND_URLS
                     )
             );
