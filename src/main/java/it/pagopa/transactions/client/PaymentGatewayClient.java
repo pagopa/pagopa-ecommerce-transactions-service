@@ -337,7 +337,7 @@ public class PaymentGatewayClient {
                             /*
                              * FIXME: here we are using the same api key used for CARDS but they have to
                              * been differentiated for each payment methods. This issue is tracked with Jira
-                             * task CHK-2265
+                             * task CHK-2265 and will be fixed in CHK-2686 implementation
                              */
                             Either<NpgApiKeyConfigurationException, String> buildApiKey = isApmPayment
                                     ? npgApiKeyHandler.getApiKeyForPaymentMethod(
