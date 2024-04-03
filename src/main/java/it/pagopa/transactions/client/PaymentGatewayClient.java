@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NodeForwarderClient;
 import it.pagopa.ecommerce.commons.client.NpgClient;
-import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.domain.Claims;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
@@ -290,25 +289,28 @@ public class PaymentGatewayClient {
     public Mono<Tuple2<String, FieldsDto>> requestNpgBuildSession(
                                                                   AuthorizationRequestData authorizationData,
                                                                   String correlationId,
-                                                                  boolean isWalletPayment
+                                                                  boolean isWalletPayment,
+                                                                  it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
 
     ) {
-        return requestNpgBuildSession(authorizationData, correlationId, false, isWalletPayment);
+        return requestNpgBuildSession(authorizationData, correlationId, false, isWalletPayment, clientId);
     }
 
     public Mono<Tuple2<String, FieldsDto>> requestNpgBuildApmPayment(
                                                                      AuthorizationRequestData authorizationData,
                                                                      String correlationId,
-                                                                     boolean isWalletPayment
+                                                                     boolean isWalletPayment,
+                                                                     it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
     ) {
-        return requestNpgBuildSession(authorizationData, correlationId, true, isWalletPayment);
+        return requestNpgBuildSession(authorizationData, correlationId, true, isWalletPayment, clientId);
     }
 
     private Mono<Tuple2<String, FieldsDto>> requestNpgBuildSession(
                                                                    AuthorizationRequestData authorizationData,
                                                                    String correlationId,
                                                                    boolean isApmPayment,
-                                                                   boolean isWalletPayment
+                                                                   boolean isWalletPayment,
+                                                                   it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
     ) {
         WorkflowStateDto expectedResponseState = isApmPayment ? WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN
                 : WorkflowStateDto.READY_FOR_PAYMENT;
@@ -320,7 +322,7 @@ public class PaymentGatewayClient {
                             String outcomeJwtToken = npgBuildData.outcomeJwtToken();
                             URI returnUrlBasePath = URI.create(npgSessionUrlConfig.basePath());
                             URI outcomeResultUrl = generateOutcomeUrl(
-                                    Transaction.ClientId.IO.name(),
+                                    clientId.name(),
                                     authorizationData.transactionId(),
                                     outcomeJwtToken
                             );

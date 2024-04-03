@@ -85,7 +85,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 .map(authorizationOutput -> Tuples.of(authorizationOutput, PaymentGateway.VPOS));
         Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoNpgCards = npgAuthRequestPipeline(
                 authorizationRequestData,
-                null
+                null,
+                null // PASSED NULL BECAUSE THIS IS V1 AUTH FLOW
         )
                 .map(authorizationOutput -> Tuples.of(authorizationOutput, PaymentGateway.NPG));
         List<Mono<Tuple2<AuthorizationOutput, PaymentGateway>>> gatewayRequests = List

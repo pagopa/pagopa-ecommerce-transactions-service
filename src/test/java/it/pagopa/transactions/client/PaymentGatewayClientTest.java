@@ -1394,7 +1394,15 @@ class PaymentGatewayClientTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData, correlationId, true))
+        StepVerifier
+                .create(
+                        client.requestNpgBuildSession(
+                                authorizationData,
+                                correlationId,
+                                true,
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO
+                        )
+                )
                 .expectNext(responseRequestNpgBuildSession)
                 .verifyComplete();
 
@@ -1546,7 +1554,15 @@ class PaymentGatewayClientTest {
                 );
         /* test */
 
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData, correlationId, true))
+        StepVerifier
+                .create(
+                        client.requestNpgBuildSession(
+                                authorizationData,
+                                correlationId,
+                                true,
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO
+                        )
+                )
                 .expectErrorMatches(
                         error -> error instanceof AlreadyProcessedException &&
                                 ((AlreadyProcessedException) error).getTransactionId()
@@ -1639,7 +1655,15 @@ class PaymentGatewayClientTest {
                         )
                 );
         /* test */
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData, correlationId, true))
+        StepVerifier
+                .create(
+                        client.requestNpgBuildSession(
+                                authorizationData,
+                                correlationId,
+                                true,
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO
+                        )
+                )
                 .expectErrorMatches(
                         error -> error instanceof BadGatewayException
                 )
@@ -1730,7 +1754,15 @@ class PaymentGatewayClientTest {
                         )
                 );
         /* test */
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData, correlationId, true))
+        StepVerifier
+                .create(
+                        client.requestNpgBuildSession(
+                                authorizationData,
+                                correlationId,
+                                true,
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO
+                        )
+                )
                 .expectErrorMatches(
                         error -> error instanceof BadGatewayException
                 )
@@ -1805,7 +1837,15 @@ class PaymentGatewayClientTest {
                 )
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData, correlationId, true))
+        StepVerifier
+                .create(
+                        client.requestNpgBuildSession(
+                                authorizationData,
+                                correlationId,
+                                true,
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO
+                        )
+                )
                 .expectErrorMatches(error -> error instanceof BadGatewayException)
                 .verify();
 
@@ -1972,7 +2012,15 @@ class PaymentGatewayClientTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
-        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData, correlationId, true))
+        StepVerifier
+                .create(
+                        client.requestNpgBuildApmPayment(
+                                authorizationData,
+                                correlationId,
+                                true,
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO
+                        )
+                )
                 .expectNext(responseRequestNpgBuildSession)
                 .verifyComplete();
 
@@ -2162,7 +2210,15 @@ class PaymentGatewayClientTest {
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
         /* test */
-        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData, correlationId, true))
+        StepVerifier
+                .create(
+                        client.requestNpgBuildApmPayment(
+                                authorizationData,
+                                correlationId,
+                                true,
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO
+                        )
+                )
                 .expectError(NpgApiKeyMissingPspRequestedException.class)
                 .verify();
 
@@ -2248,7 +2304,15 @@ class PaymentGatewayClientTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
-        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData, correlationId, false))
+        StepVerifier
+                .create(
+                        client.requestNpgBuildApmPayment(
+                                authorizationData,
+                                correlationId,
+                                false,
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT
+                        )
+                )
                 .expectNext(responseRequestNpgBuildSession)
                 .verifyComplete();
 

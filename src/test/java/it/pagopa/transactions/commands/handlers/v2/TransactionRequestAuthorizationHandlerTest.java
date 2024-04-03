@@ -2,6 +2,7 @@ package it.pagopa.transactions.commands.handlers.v2;
 
 import com.azure.cosmos.implementation.BadRequestException;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
@@ -2163,7 +2164,10 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestNpgBuildSession(authorizationData, correlationId, true))
+        Mockito.when(
+                paymentGatewayClient
+                        .requestNpgBuildSession(authorizationData, correlationId, true, Transaction.ClientId.IO)
+        )
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(
                 paymentGatewayClient.requestNpgCardsAuthorization(authorizationDataAfterBuildSession, correlationId)
@@ -2302,7 +2306,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 .expectErrorMatches(error -> error instanceof BadRequestException)
                 .verify();
 
-        Mockito.verify(paymentGatewayClient, Mockito.times(0)).requestNpgBuildSession(any(), any(), eq(true));
+        Mockito.verify(paymentGatewayClient, Mockito.times(0))
+                .requestNpgBuildSession(any(), any(), eq(true), eq(Transaction.ClientId.IO));
         Mockito.verify(paymentGatewayClient, Mockito.times(0)).requestNpgCardsAuthorization(any(), any());
         Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(any());
         Mockito.verify(transactionTemplateWrapper, Mockito.times(0)).save(any());
@@ -2393,7 +2398,10 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestNpgBuildApmPayment(authorizationData, correlationId, true))
+        Mockito.when(
+                paymentGatewayClient
+                        .requestNpgBuildApmPayment(authorizationData, correlationId, true, Transaction.ClientId.IO)
+        )
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(
@@ -2519,7 +2527,14 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestNpgBuildApmPayment(authorizationData, correlationId, false))
+        Mockito.when(
+                paymentGatewayClient.requestNpgBuildApmPayment(
+                        authorizationData,
+                        correlationId,
+                        false,
+                        Transaction.ClientId.CHECKOUT
+                )
+        )
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(
@@ -2648,7 +2663,10 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestNpgBuildApmPayment(authorizationData, correlationId, true))
+        Mockito.when(
+                paymentGatewayClient
+                        .requestNpgBuildApmPayment(authorizationData, correlationId, true, Transaction.ClientId.IO)
+        )
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(

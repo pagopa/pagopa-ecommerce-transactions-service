@@ -100,7 +100,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
      * @return the authorization output data containing authorization id, redirect URL, session id, confirm payment session id (if present)
      */
     protected Mono<AuthorizationOutput> npgAuthRequestPipeline(
-            AuthorizationRequestData authorizationData, String correlationId
+            AuthorizationRequestData authorizationData, String correlationId, it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
     ) {
         return Mono.just(authorizationData).flatMap(authData -> switch (authData.authDetails()) {
             case CardsAuthRequestDetailsDto cards -> invokeNpgConfirmPayment(authorizationData, cards
@@ -109,12 +109,12 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
             case WalletAuthRequestDetailsDto ignored -> {
                 NpgClient.PaymentMethod npgPaymentMethod = NpgClient.PaymentMethod.fromServiceName(authorizationData.paymentMethodName());
                 if (npgPaymentMethod.equals(NpgClient.PaymentMethod.CARDS)) {
-                    yield walletNpgCardsPaymentFlow(authorizationData, correlationId);
+                    yield walletNpgCardsPaymentFlow(authorizationData, correlationId, clientId);
                 } else {
-                    yield walletNpgApmPaymentFlow(authorizationData, correlationId, true);
+                    yield npgApmPaymentFlow(authorizationData, correlationId, true, clientId);
                 }
             }
-            case ApmAuthRequestDetailsDto ignored -> walletNpgApmPaymentFlow(authorizationData, correlationId, false);
+            case ApmAuthRequestDetailsDto ignored -> npgApmPaymentFlow(authorizationData, correlationId, false, clientId);
             default -> Mono.empty();
         });
 
@@ -130,9 +130,10 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
      */
     private Mono<AuthorizationOutput> walletNpgCardsPaymentFlow(
                                                                 AuthorizationRequestData authorizationData,
-                                                                String correlationId
+                                                                String correlationId,
+                                                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
     ) {
-        return paymentGatewayClient.requestNpgBuildSession(authorizationData, correlationId, true)
+        return paymentGatewayClient.requestNpgBuildSession(authorizationData, correlationId, true, clientId)
                 .map(orderIdAndFieldsDto -> {
                     transactionTemplateWrapper.save(
                             new TransactionCacheInfo(
@@ -188,20 +189,22 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     }
 
     /**
-     * Perform NPG payment flow with an apm wallet (PayPal etx). Payment flow is
-     * composed of one request made to NPG: 1) order/build (with PSP selected api
-     * key)
+     * Perform NPG payment flow with an apm (PayPal etx) both saved in wallet or
+     * not. Payment flow is composed of one request made to NPG: 1) order/build
+     * (with PSP selected api key)
      *
      * @param authorizationData the authorization requested data
      * @return the authorization output data with confirm payment response session
      *         id (empty) and order/build session id
      */
-    private Mono<AuthorizationOutput> walletNpgApmPaymentFlow(
-                                                              AuthorizationRequestData authorizationData,
-                                                              String correlationId,
-                                                              boolean isWalletPayment
+    private Mono<AuthorizationOutput> npgApmPaymentFlow(
+                                                        AuthorizationRequestData authorizationData,
+                                                        String correlationId,
+                                                        boolean isWalletPayment,
+                                                        it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
     ) {
-        return paymentGatewayClient.requestNpgBuildApmPayment(authorizationData, correlationId, isWalletPayment)
+        return paymentGatewayClient
+                .requestNpgBuildApmPayment(authorizationData, correlationId, isWalletPayment, clientId)
                 .filter(orderIdAndFieldsDto -> {
                     String returnUrl = orderIdAndFieldsDto.getT2().getUrl();
                     boolean isReturnUrlValued = returnUrl != null && !returnUrl.isEmpty();
