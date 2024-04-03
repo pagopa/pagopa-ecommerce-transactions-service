@@ -155,6 +155,9 @@ microservice-chart:
     NPG_READ_TIMEOUT: "10000"
     NPG_CONNECTION_TIMEOUT: "10000"
     NPG_CARDS_PSP_LIST: "BCITITMM,CIPBITMM,BIC36019,UNCRITMM,BPPIITRRXXX,PPAYITR1XXX"
+    NPG_PAYPAL_PSP_LIST: "BCITITMM"
+    NPG_MYBANK_PSP_LIST: "BCITITMM"
+    NPG_BANCOMATPAY_PSP_LIST: "BCITITMM"
     NPG_AUTHORIZATION_REQUEST_TIMEOUT_SECONDS: "60"
     TRANSACTION_DOCUMENT_TTL: "600"
     CHECKOUT_BASE_PATH: "https://checkout.pagopa.it"
@@ -186,6 +189,9 @@ microservice-chart:
     JWT_NPG_NOTIFICATION_SECRET: npg-notification-signing-key
     NODE_FORWARDER_API_KEY: node-forwarder-api-key
     REDIRECT_URL_MAPPING: redirect-url-mapping
+    NPG_PAYPAL_PSP_KEYS: npg-paypal-psp-keys
+    NPG_BANCOMATPAY_PSP_KEYS: npg-bancomatpay-psp-keys
+    NPG_MYBANK_PSP_KEYS: npg-mybank-psp-keys
   keyvault:
     name: "pagopa-p-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"

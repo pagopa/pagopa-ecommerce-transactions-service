@@ -80,6 +80,12 @@ These are all environment variables needed by the application:
 | NODE_FORWARDER_CONNECTION_TIMEOUT               |     | Node forwarder request connection timeout                                                                                                                                       | number  |         |
 | TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME |     | Name of the queue for transaction payment gateway polling for authorization requested transactions                                                                              | string  |         |
 | NPG_AUTHORIZATION_REQUEST_TIMEOUT_SECONDS       |     | Timeout for npg authorization state query                                                                                                                                       | number  |         |
+| NPG_PAYPAL_PSP_KEYS                             |     | Secret structure that holds psp - api keys association for authorization request used for APM PAYPAL payment method                                                             | string  |         |
+| NPG_PAYPAL_PSP_LIST                             |     | List of all psp ids that are expected to be found into the NPG_PAYPAL_PSP_KEYS configuration (used for configuration cross validation)                                          | string  |         |
+| NPG_BANCOMATPAY_PSP_KEYS                        |     | Secret structure that holds psp - api keys association for authorization request used for APM Bancomat pay payment method                                                       | string  |         |
+| NPG_BANCOMATPAY_PSP_LIST                        |     | List of all psp ids that are expected to be found into the NPG_BANCOMATPAY_PSP_KEYS configuration (used for configuration cross validation)                                     | string  |         |
+| NPG_MYBANK_PSP_KEYS                             |     | Secret structure that holds psp - api keys association for authorization request used for APM My bank payment method                                                            | string  |         |
+| NPG_MYBANK_PSP_LIST                             |     | List of all psp ids that are expected to be found into the NPG_MYBANK_PSP_LIST configuration (used for configuration cross validation)                                          | string  |         |
 
 An example configuration of these environment variables is in the `.env.example` file.
 
