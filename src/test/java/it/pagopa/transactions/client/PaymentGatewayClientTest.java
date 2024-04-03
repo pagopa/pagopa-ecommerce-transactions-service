@@ -15,7 +15,7 @@ import it.pagopa.ecommerce.commons.exceptions.RedirectConfigurationException;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
-import it.pagopa.ecommerce.commons.utils.NpgApiKeyHandler;
+import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
 import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -137,7 +137,7 @@ class PaymentGatewayClientTest {
                     Collectors.toMap("pspId-%s"::formatted, p -> URI.create("http://redirect/%s".formatted(p)))
             );
 
-    private final NpgApiKeyHandler npgApiKeyHandler = Mockito.mock(NpgApiKeyHandler.class);
+    private final NpgApiKeyConfiguration npgApiKeyHandler = Mockito.mock(NpgApiKeyConfiguration.class);
 
     @BeforeEach
     private void init() {

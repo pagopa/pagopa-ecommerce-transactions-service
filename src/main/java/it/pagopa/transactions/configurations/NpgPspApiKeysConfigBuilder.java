@@ -2,7 +2,7 @@ package it.pagopa.transactions.configurations;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.ecommerce.commons.client.NpgClient;
-import it.pagopa.ecommerce.commons.utils.NpgApiKeyHandler;
+import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
 import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -113,19 +113,19 @@ public class NpgPspApiKeysConfigBuilder {
     }
 
     @Bean
-    public NpgApiKeyHandler npgApiKeyHandler(
-                                             NpgPspApiKeysConfig npgCardsApiKeys,
-                                             NpgPspApiKeysConfig npgBancomatpayApiKeys,
-                                             NpgPspApiKeysConfig npgMyBankApiKeys,
-                                             NpgPspApiKeysConfig npgPaypalApiKeys,
-                                             @Value("${npg.client.apiKey}") String defaultApiKey
+    public NpgApiKeyConfiguration npgApiKeyHandler(
+                                                   NpgPspApiKeysConfig npgCardsApiKeys,
+                                                   NpgPspApiKeysConfig npgBancomatpayApiKeys,
+                                                   NpgPspApiKeysConfig npgMyBankApiKeys,
+                                                   NpgPspApiKeysConfig npgPaypalApiKeys,
+                                                   @Value("${npg.client.apiKey}") String defaultApiKey
     ) {
-        return new NpgApiKeyHandler.NpgApiKeyHandlerBuilder()
+        return new NpgApiKeyConfiguration.Builder()
                 .setDefaultApiKey(defaultApiKey)
-                .addMethodPspMapping(NpgClient.PaymentMethod.CARDS, npgCardsApiKeys)
-                .addMethodPspMapping(NpgClient.PaymentMethod.BANCOMATPAY, npgBancomatpayApiKeys)
-                .addMethodPspMapping(NpgClient.PaymentMethod.MYBANK, npgMyBankApiKeys)
-                .addMethodPspMapping(NpgClient.PaymentMethod.PAYPAL, npgPaypalApiKeys)
+                .withMethodPspMapping(NpgClient.PaymentMethod.CARDS, npgCardsApiKeys)
+                .withMethodPspMapping(NpgClient.PaymentMethod.BANCOMATPAY, npgBancomatpayApiKeys)
+                .withMethodPspMapping(NpgClient.PaymentMethod.MYBANK, npgMyBankApiKeys)
+                .withMethodPspMapping(NpgClient.PaymentMethod.PAYPAL, npgPaypalApiKeys)
                 .build();
     }
 

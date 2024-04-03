@@ -3,7 +3,7 @@ package it.pagopa.transactions.configurations;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.exceptions.NpgApiKeyConfigurationException;
-import it.pagopa.ecommerce.commons.utils.NpgApiKeyHandler;
+import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -118,7 +118,7 @@ class NpgPspApiKeysConfigTest {
                 """;
         String expectedDefaultApiKey = "defaultApiKey";
         String expectedPspApiKey = "%s-key-%s".formatted(paymentMethod, pspId);
-        NpgApiKeyHandler npgApiKeyHandler = npgPspApiKeysConfig.npgApiKeyHandler(
+        NpgApiKeyConfiguration npgApiKeyHandler = npgPspApiKeysConfig.npgApiKeyHandler(
                 npgPspApiKeysConfig.npgCardsApiKeys(
                         pspConfigurationJson.formatted(NpgClient.PaymentMethod.CARDS),
                         pspToHandle
@@ -158,7 +158,7 @@ class NpgPspApiKeysConfigTest {
                     "psp3" : "%1$s-key-psp3"
                 }
                 """;
-        NpgApiKeyHandler npgApiKeyHandler = npgPspApiKeysConfig.npgApiKeyHandler(
+        NpgApiKeyConfiguration npgApiKeyHandler = npgPspApiKeysConfig.npgApiKeyHandler(
                 npgPspApiKeysConfig.npgCardsApiKeys(
                         pspConfigurationJson.formatted(NpgClient.PaymentMethod.CARDS),
                         pspToHandle

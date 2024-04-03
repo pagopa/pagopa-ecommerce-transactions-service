@@ -15,7 +15,7 @@ import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
-import it.pagopa.ecommerce.commons.utils.NpgApiKeyHandler;
+import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
@@ -94,7 +94,7 @@ public class PaymentGatewayClient {
             RedirectPaymentMethodId.RBPS,
             "SCRIGNO Internet Banking"
     );
-    private final NpgApiKeyHandler npgApiKeyHandler;
+    private final NpgApiKeyConfiguration npgApiKeyConfiguration;
 
     public enum RedirectPaymentMethodId {
         RBPR,
@@ -134,7 +134,7 @@ public class PaymentGatewayClient {
             @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds,
             NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient,
             Map<String, URI> redirectBeApiCallUriMap,
-            NpgApiKeyHandler npgApiKeyHandler
+            NpgApiKeyConfiguration npgApiKeyConfiguration
     ) {
         this.paymentTransactionGatewayXPayWebClient = paymentTransactionGatewayXPayWebClient;
         this.creditCardInternalApiClient = creditCardInternalApiClient;
@@ -150,7 +150,7 @@ public class PaymentGatewayClient {
         this.redirectBeApiCallUriMap = redirectBeApiCallUriMap;
         this.ecommerceSigningKey = ecommerceSigningKey;
         this.jwtEcommerceValidityTimeInSeconds = jwtEcommerceValidityTimeInSeconds;
-        this.npgApiKeyHandler = npgApiKeyHandler;
+        this.npgApiKeyConfiguration = npgApiKeyConfiguration;
     }
 
     public Mono<XPayAuthResponseEntityDto> requestXPayAuthorization(AuthorizationRequestData authorizationData) {
@@ -340,11 +340,11 @@ public class PaymentGatewayClient {
                              * task CHK-2265 and will be fixed in CHK-2686 implementation
                              */
                             Either<NpgApiKeyConfigurationException, String> buildApiKey = isApmPayment
-                                    ? npgApiKeyHandler.getApiKeyForPaymentMethod(
+                                    ? npgApiKeyConfiguration.getApiKeyForPaymentMethod(
                                             NpgClient.PaymentMethod.CARDS,
                                             authorizationData.pspId()
                                     )
-                                    : Either.right(npgApiKeyHandler.getDefaultApiKey());
+                                    : Either.right(npgApiKeyConfiguration.getDefaultApiKey());
                             return buildApiKey.fold(
                                     Mono::error,
                                     apiKey -> {
@@ -488,7 +488,7 @@ public class PaymentGatewayClient {
                                 )
                         );
                     }
-                    final var pspNpgApiKey = npgApiKeyHandler
+                    final var pspNpgApiKey = npgApiKeyConfiguration
                             .getApiKeyForPaymentMethod(NpgClient.PaymentMethod.CARDS, authorizationData.pspId());
                     return pspNpgApiKey.fold(
                             Mono::error,
