@@ -15,7 +15,7 @@ import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
-import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
+import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
@@ -74,9 +74,7 @@ public class PaymentGatewayClient {
 
     private final NpgSessionUrlConfig npgSessionUrlConfig;
 
-    private final NpgPspApiKeysConfig npgPspApiKeysConfig;
     private final UniqueIdUtils uniqueIdUtils;
-    private final String npgDefaultApiKey;
     private final SecretKey npgNotificationSigningKey;
     private final int npgJwtKeyValidityTime;
     private final SecretKey ecommerceSigningKey;
@@ -96,6 +94,7 @@ public class PaymentGatewayClient {
             RedirectPaymentMethodId.RBPS,
             "SCRIGNO Internet Banking"
     );
+    private final NpgApiKeyConfiguration npgApiKeyConfiguration;
 
     public enum RedirectPaymentMethodId {
         RBPR,
@@ -127,16 +126,15 @@ public class PaymentGatewayClient {
             UUIDUtils uuidUtils,
             ConfidentialMailUtils confidentialMailUtils,
             NpgClient npgClient,
-            NpgPspApiKeysConfig npgPspApiKeysConfig,
             NpgSessionUrlConfig npgSessionUrlConfig,
             UniqueIdUtils uniqueIdUtils,
-            @Value("${npg.client.apiKey}") String npgDefaultApiKey,
             SecretKey npgNotificationSigningKey,
             @Value("${npg.notification.jwt.validity.time}") int npgJwtKeyValidityTime,
             SecretKey ecommerceSigningKey,
             @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds,
             NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient,
-            Map<String, URI> redirectBeApiCallUriMap
+            Map<String, URI> redirectBeApiCallUriMap,
+            NpgApiKeyConfiguration npgApiKeyConfiguration
     ) {
         this.paymentTransactionGatewayXPayWebClient = paymentTransactionGatewayXPayWebClient;
         this.creditCardInternalApiClient = creditCardInternalApiClient;
@@ -144,16 +142,15 @@ public class PaymentGatewayClient {
         this.uuidUtils = uuidUtils;
         this.confidentialMailUtils = confidentialMailUtils;
         this.npgClient = npgClient;
-        this.npgPspApiKeysConfig = npgPspApiKeysConfig;
         this.npgSessionUrlConfig = npgSessionUrlConfig;
         this.uniqueIdUtils = uniqueIdUtils;
-        this.npgDefaultApiKey = npgDefaultApiKey;
         this.npgNotificationSigningKey = npgNotificationSigningKey;
         this.npgJwtKeyValidityTime = npgJwtKeyValidityTime;
         this.nodeForwarderRedirectApiClient = nodeForwarderRedirectApiClient;
         this.redirectBeApiCallUriMap = redirectBeApiCallUriMap;
         this.ecommerceSigningKey = ecommerceSigningKey;
         this.jwtEcommerceValidityTimeInSeconds = jwtEcommerceValidityTimeInSeconds;
+        this.npgApiKeyConfiguration = npgApiKeyConfiguration;
     }
 
     public Mono<XPayAuthResponseEntityDto> requestXPayAuthorization(AuthorizationRequestData authorizationData) {
@@ -340,11 +337,14 @@ public class PaymentGatewayClient {
                             /*
                              * FIXME: here we are using the same api key used for CARDS but they have to
                              * been differentiated for each payment methods. This issue is tracked with Jira
-                             * task CHK-2265
+                             * task CHK-2265 and will be fixed in CHK-2686 implementation
                              */
-                            Either<NpgApiKeyMissingPspRequestedException, String> buildApiKey = isApmPayment
-                                    ? npgPspApiKeysConfig.get(authorizationData.pspId())
-                                    : Either.right(npgDefaultApiKey);
+                            Either<NpgApiKeyConfigurationException, String> buildApiKey = isApmPayment
+                                    ? npgApiKeyConfiguration.getApiKeyForPaymentMethod(
+                                            NpgClient.PaymentMethod.CARDS,
+                                            authorizationData.pspId()
+                                    )
+                                    : Either.right(npgApiKeyConfiguration.getDefaultApiKey());
                             return buildApiKey.fold(
                                     Mono::error,
                                     apiKey -> {
@@ -488,7 +488,8 @@ public class PaymentGatewayClient {
                                 )
                         );
                     }
-                    final var pspNpgApiKey = npgPspApiKeysConfig.get(authorizationData.pspId());
+                    final var pspNpgApiKey = npgApiKeyConfiguration
+                            .getApiKeyForPaymentMethod(NpgClient.PaymentMethod.CARDS, authorizationData.pspId());
                     return pspNpgApiKey.fold(
                             Mono::error,
                             apiKey -> npgClient.confirmPayment(
