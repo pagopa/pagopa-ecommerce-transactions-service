@@ -267,7 +267,7 @@ class TransactionsControllerTest {
     @ParameterizedTest
     @EnumSource(ValidationFaultPaymentUnknownDto.class)
     void shouldReturnResponseEntityWithValidationFaultPaymentUnknown(
-                                                                            ValidationFaultPaymentUnknownDto nodoErrorCode
+                                                                     ValidationFaultPaymentUnknownDto nodoErrorCode
     ) {
         String rptId = "77777777777302000100000009424";
         CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
@@ -305,7 +305,7 @@ class TransactionsControllerTest {
     @ParameterizedTest
     @EnumSource(ValidationFaultPaymentDataErrorDto.class)
     void shouldReturnResponseEntityWithValidationFaultPaymentDataError(
-                                                                              ValidationFaultPaymentDataErrorDto nodoErrorCode
+                                                                       ValidationFaultPaymentDataErrorDto nodoErrorCode
     ) {
         String rptId = "77777777777302000100000009424";
         CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
@@ -343,7 +343,7 @@ class TransactionsControllerTest {
     @ParameterizedTest
     @EnumSource(ValidationFaultPaymentUnavailableDto.class)
     void shouldReturnResponseEntityWithValidationFaultPaymentUnavailable(
-                                                                                ValidationFaultPaymentUnavailableDto nodoErrorCode
+                                                                         ValidationFaultPaymentUnavailableDto nodoErrorCode
     ) {
         String rptId = "77777777777302000100000009424";
         CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
@@ -485,7 +485,7 @@ class TransactionsControllerTest {
     @ParameterizedTest
     @EnumSource(PaymentDuplicatedStatusFaultDto.class)
     void shouldReturnResponseEntityWithPaymentDuplicatedStatusFault(
-                                                                           PaymentDuplicatedStatusFaultDto nodoErrorCode
+                                                                    PaymentDuplicatedStatusFaultDto nodoErrorCode
     ) {
         String rptId = "77777777777302000100000009424";
         CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
