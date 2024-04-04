@@ -118,7 +118,7 @@ class NpgPspApiKeysConfigTest {
                 """;
         String expectedDefaultApiKey = "defaultApiKey";
         String expectedPspApiKey = "%s-key-%s".formatted(paymentMethod, pspId);
-        NpgApiKeyConfiguration npgApiKeyHandler = npgPspApiKeysConfig.npgApiKeyHandler(
+        NpgApiKeyConfiguration npgApiKeyHandler = npgPspApiKeysConfig.npgApiKeyConfiguration(
                 npgPspApiKeysConfig.npgCardsApiKeys(
                         pspConfigurationJson.formatted(NpgClient.PaymentMethod.CARDS),
                         pspToHandle
@@ -158,7 +158,7 @@ class NpgPspApiKeysConfigTest {
                     "psp3" : "%1$s-key-psp3"
                 }
                 """;
-        NpgApiKeyConfiguration npgApiKeyHandler = npgPspApiKeysConfig.npgApiKeyHandler(
+        NpgApiKeyConfiguration npgApiKeyHandler = npgPspApiKeysConfig.npgApiKeyConfiguration(
                 npgPspApiKeysConfig.npgCardsApiKeys(
                         pspConfigurationJson.formatted(NpgClient.PaymentMethod.CARDS),
                         pspToHandle

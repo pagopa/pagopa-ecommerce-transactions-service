@@ -113,12 +113,12 @@ public class NpgPspApiKeysConfigBuilder {
     }
 
     @Bean
-    public NpgApiKeyConfiguration npgApiKeyHandler(
-                                                   NpgPspApiKeysConfig npgCardsApiKeys,
-                                                   NpgPspApiKeysConfig npgBancomatpayApiKeys,
-                                                   NpgPspApiKeysConfig npgMyBankApiKeys,
-                                                   NpgPspApiKeysConfig npgPaypalApiKeys,
-                                                   @Value("${npg.client.apiKey}") String defaultApiKey
+    public NpgApiKeyConfiguration npgApiKeyConfiguration(
+                                                         NpgPspApiKeysConfig npgCardsApiKeys,
+                                                         NpgPspApiKeysConfig npgBancomatpayApiKeys,
+                                                         NpgPspApiKeysConfig npgMyBankApiKeys,
+                                                         NpgPspApiKeysConfig npgPaypalApiKeys,
+                                                         @Value("${npg.client.apiKey}") String defaultApiKey
     ) {
         return new NpgApiKeyConfiguration.Builder()
                 .setDefaultApiKey(defaultApiKey)
