@@ -290,7 +290,7 @@ public class PaymentGatewayClient {
                                                                   AuthorizationRequestData authorizationData,
                                                                   String correlationId,
                                                                   boolean isWalletPayment,
-                                                                  it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
+                                                                  String clientId
 
     ) {
         return requestNpgBuildSession(authorizationData, correlationId, false, isWalletPayment, clientId);
@@ -300,7 +300,7 @@ public class PaymentGatewayClient {
                                                                      AuthorizationRequestData authorizationData,
                                                                      String correlationId,
                                                                      boolean isWalletPayment,
-                                                                     it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
+                                                                     String clientId
     ) {
         return requestNpgBuildSession(authorizationData, correlationId, true, isWalletPayment, clientId);
     }
@@ -310,7 +310,7 @@ public class PaymentGatewayClient {
                                                                    String correlationId,
                                                                    boolean isApmPayment,
                                                                    boolean isWalletPayment,
-                                                                   it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
+                                                                   String clientId
     ) {
         WorkflowStateDto expectedResponseState = isApmPayment ? WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN
                 : WorkflowStateDto.READY_FOR_PAYMENT;
@@ -322,7 +322,7 @@ public class PaymentGatewayClient {
                             String outcomeJwtToken = npgBuildData.outcomeJwtToken();
                             URI returnUrlBasePath = URI.create(npgSessionUrlConfig.basePath());
                             URI outcomeResultUrl = generateOutcomeUrl(
-                                    clientId.name(),
+                                    clientId,
                                     authorizationData.transactionId(),
                                     outcomeJwtToken
                             );

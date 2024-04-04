@@ -1400,7 +1400,7 @@ class PaymentGatewayClientTest {
                                 authorizationData,
                                 correlationId,
                                 true,
-                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name()
                         )
                 )
                 .expectNext(responseRequestNpgBuildSession)
@@ -1560,7 +1560,7 @@ class PaymentGatewayClientTest {
                                 authorizationData,
                                 correlationId,
                                 true,
-                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name()
                         )
                 )
                 .expectErrorMatches(
@@ -1661,7 +1661,7 @@ class PaymentGatewayClientTest {
                                 authorizationData,
                                 correlationId,
                                 true,
-                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name()
                         )
                 )
                 .expectErrorMatches(
@@ -1760,7 +1760,7 @@ class PaymentGatewayClientTest {
                                 authorizationData,
                                 correlationId,
                                 true,
-                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name()
                         )
                 )
                 .expectErrorMatches(
@@ -1843,7 +1843,7 @@ class PaymentGatewayClientTest {
                                 authorizationData,
                                 correlationId,
                                 true,
-                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name()
                         )
                 )
                 .expectErrorMatches(error -> error instanceof BadGatewayException)
@@ -2018,7 +2018,7 @@ class PaymentGatewayClientTest {
                                 authorizationData,
                                 correlationId,
                                 true,
-                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name()
                         )
                 )
                 .expectNext(responseRequestNpgBuildSession)
@@ -2216,7 +2216,7 @@ class PaymentGatewayClientTest {
                                 authorizationData,
                                 correlationId,
                                 true,
-                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name()
                         )
                 )
                 .expectError(NpgApiKeyMissingPspRequestedException.class)
@@ -2234,6 +2234,7 @@ class PaymentGatewayClientTest {
         String orderId = "orderIdGenerated";
         String sessionId = "sessionId";
         String correlationId = UUID.randomUUID().toString();
+        Transaction.ClientId clientId = it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.IO;
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -2250,7 +2251,7 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.IO,
+                clientId,
                 "idCart",
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
@@ -2310,7 +2311,7 @@ class PaymentGatewayClientTest {
                                 authorizationData,
                                 correlationId,
                                 false,
-                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT
+                                clientId.name()
                         )
                 )
                 .expectNext(responseRequestNpgBuildSession)

@@ -1,9 +1,9 @@
 package it.pagopa.transactions.commands.handlers.v1;
 
 import com.azure.cosmos.implementation.BadRequestException;
+import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionEvent;
-import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldDto;
@@ -901,6 +901,7 @@ class TransactionRequestAuthorizationHandlerTest {
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
+        Transaction.ClientId clientId = it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT;
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -919,7 +920,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 email,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                clientId,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
@@ -998,7 +999,7 @@ class TransactionRequestAuthorizationHandlerTest {
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(
-                paymentGatewayClient.requestNpgBuildSession(authorizationData, null, true, Transaction.ClientId.IO)
+                paymentGatewayClient.requestNpgBuildSession(authorizationData, null, true, clientId.name())
         )
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(

@@ -100,7 +100,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
      * @return the authorization output data containing authorization id, redirect URL, session id, confirm payment session id (if present)
      */
     protected Mono<AuthorizationOutput> npgAuthRequestPipeline(
-            AuthorizationRequestData authorizationData, String correlationId, it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
+            AuthorizationRequestData authorizationData, String correlationId, String clientId
     ) {
         return Mono.just(authorizationData).flatMap(authData -> switch (authData.authDetails()) {
             case CardsAuthRequestDetailsDto cards -> invokeNpgConfirmPayment(authorizationData, cards
@@ -131,7 +131,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     private Mono<AuthorizationOutput> walletNpgCardsPaymentFlow(
                                                                 AuthorizationRequestData authorizationData,
                                                                 String correlationId,
-                                                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
+                                                                String clientId
     ) {
         return paymentGatewayClient.requestNpgBuildSession(authorizationData, correlationId, true, clientId)
                 .map(orderIdAndFieldsDto -> {
@@ -201,7 +201,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                         AuthorizationRequestData authorizationData,
                                                         String correlationId,
                                                         boolean isWalletPayment,
-                                                        it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
+                                                        String clientId
     ) {
         return paymentGatewayClient
                 .requestNpgBuildApmPayment(authorizationData, correlationId, isWalletPayment, clientId)
