@@ -230,7 +230,7 @@ class TransactionsControllerTest {
 
     @ParameterizedTest
     @EnumSource(PartyConfigurationFaultDto.class)
-    public void shouldReturnResponseEntityWithPartyConfigurationFault(PartyConfigurationFaultDto nodoErrorCode) {
+    void shouldReturnResponseEntityWithPartyConfigurationFault(PartyConfigurationFaultDto nodoErrorCode) {
         String rptId = "77777777777302000100000009424";
         CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
@@ -266,7 +266,7 @@ class TransactionsControllerTest {
 
     @ParameterizedTest
     @EnumSource(ValidationFaultPaymentUnknownDto.class)
-    public void shouldReturnResponseEntityWithValidationFaultPaymentUnknown(
+    void shouldReturnResponseEntityWithValidationFaultPaymentUnknown(
                                                                             ValidationFaultPaymentUnknownDto nodoErrorCode
     ) {
         String rptId = "77777777777302000100000009424";
@@ -304,7 +304,7 @@ class TransactionsControllerTest {
 
     @ParameterizedTest
     @EnumSource(ValidationFaultPaymentDataErrorDto.class)
-    public void shouldReturnResponseEntityWithValidationFaultPaymentDataError(
+    void shouldReturnResponseEntityWithValidationFaultPaymentDataError(
                                                                               ValidationFaultPaymentDataErrorDto nodoErrorCode
     ) {
         String rptId = "77777777777302000100000009424";
@@ -342,7 +342,7 @@ class TransactionsControllerTest {
 
     @ParameterizedTest
     @EnumSource(ValidationFaultPaymentUnavailableDto.class)
-    public void shouldReturnResponseEntityWithValidationFaultPaymentUnavailable(
+    void shouldReturnResponseEntityWithValidationFaultPaymentUnavailable(
                                                                                 ValidationFaultPaymentUnavailableDto nodoErrorCode
     ) {
         String rptId = "77777777777302000100000009424";
@@ -379,7 +379,7 @@ class TransactionsControllerTest {
 
     @ParameterizedTest
     @EnumSource(PaymentOngoingStatusFaultDto.class)
-    public void shouldReturnResponseEntityWithPaymentOngoingStatusFault(PaymentOngoingStatusFaultDto nodoErrorCode) {
+    void shouldReturnResponseEntityWithPaymentOngoingStatusFault(PaymentOngoingStatusFaultDto nodoErrorCode) {
         String rptId = "77777777777302000100000009424";
         CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
@@ -414,7 +414,7 @@ class TransactionsControllerTest {
 
     @ParameterizedTest
     @EnumSource(PaymentExpiredStatusFaultDto.class)
-    public void shouldReturnResponseEntityWithPaymentExpiredStatusFault(PaymentExpiredStatusFaultDto nodoErrorCode) {
+    void shouldReturnResponseEntityWithPaymentExpiredStatusFault(PaymentExpiredStatusFaultDto nodoErrorCode) {
         String rptId = "77777777777302000100000009424";
         CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
@@ -449,7 +449,7 @@ class TransactionsControllerTest {
 
     @ParameterizedTest
     @EnumSource(PaymentCanceledStatusFaultDto.class)
-    public void shouldReturnResponseEntityWithPaymentCanceledStatusFault(PaymentCanceledStatusFaultDto nodoErrorCode) {
+    void shouldReturnResponseEntityWithPaymentCanceledStatusFault(PaymentCanceledStatusFaultDto nodoErrorCode) {
         String rptId = "77777777777302000100000009424";
         CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
@@ -484,7 +484,7 @@ class TransactionsControllerTest {
 
     @ParameterizedTest
     @EnumSource(PaymentDuplicatedStatusFaultDto.class)
-    public void shouldReturnResponseEntityWithPaymentDuplicatedStatusFault(
+    void shouldReturnResponseEntityWithPaymentDuplicatedStatusFault(
                                                                            PaymentDuplicatedStatusFaultDto nodoErrorCode
     ) {
         String rptId = "77777777777302000100000009424";
@@ -520,7 +520,7 @@ class TransactionsControllerTest {
     }
 
     @Test
-    public void shouldReturnResponseEntityWithGenericFault() {
+    void shouldReturnResponseEntityWithGenericFault() {
         String rptId = "77777777777302000100000009424";
         CtFaultBean faultBean = faultBeanWithCode("UNKNOWN_ERROR");
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
