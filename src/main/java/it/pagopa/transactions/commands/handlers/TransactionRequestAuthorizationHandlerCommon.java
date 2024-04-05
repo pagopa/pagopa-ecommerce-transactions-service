@@ -189,7 +189,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     }
 
     /**
-     * Perform NPG payment flow with an apm (PayPal etx) both saved in wallet or
+     * Perform NPG payment flow with an apm (PayPal etc) both saved in wallet or
      * not. Payment flow is composed of one request made to NPG: 1) order/build
      * (with PSP selected api key)
      *
