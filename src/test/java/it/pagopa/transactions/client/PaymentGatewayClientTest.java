@@ -1857,7 +1857,15 @@ class PaymentGatewayClientTest {
 
         Mockito.when(npgApiKeyHandler.getDefaultApiKey()).thenReturn(npgDefaultApiKey);
 
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData, correlationId, true, it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name()))
+        StepVerifier
+                .create(
+                        client.requestNpgBuildSession(
+                                authorizationData,
+                                correlationId,
+                                true,
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name()
+                        )
+                )
                 .expectErrorMatches(error -> error instanceof BadGatewayException)
                 .verify();
 
