@@ -2109,7 +2109,7 @@ class PaymentGatewayClientTest {
                 );
         verify(npgClient, times(0))
                 .buildForm(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
-        verify(npgApiKeyHandler, times(1)).getApiKeyForPaymentMethod(NpgClient.PaymentMethod.CARDS, "pspId1");
+        verify(npgApiKeyHandler, times(1)).getApiKeyForPaymentMethod(NpgClient.PaymentMethod.PAYPAL, "pspId1");
     }
 
     @Test
@@ -2252,7 +2252,7 @@ class PaymentGatewayClientTest {
                 .buildFormForPayment(any(), any(), any(), any(), any(), eq(orderId), any(), any(), any(), any(), any());
         verify(npgClient, times(0))
                 .buildForm(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
-        verify(npgApiKeyHandler, times(1)).getApiKeyForPaymentMethod(NpgClient.PaymentMethod.CARDS, "pspId2");
+        verify(npgApiKeyHandler, times(1)).getApiKeyForPaymentMethod(NpgClient.PaymentMethod.PAYPAL, "pspId2");
     }
 
     @Test
@@ -2404,7 +2404,7 @@ class PaymentGatewayClientTest {
                 );
         verify(npgClient, times(0))
                 .buildForm(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
-        verify(npgApiKeyHandler, times(1)).getApiKeyForPaymentMethod(NpgClient.PaymentMethod.CARDS, "pspId1");
+        verify(npgApiKeyHandler, times(1)).getApiKeyForPaymentMethod(NpgClient.PaymentMethod.BANCOMATPAY, "pspId1");
     }
 
     private static Stream<Arguments> redirectRetrieveUrlPaymentMethodsTestMethodSource() {
