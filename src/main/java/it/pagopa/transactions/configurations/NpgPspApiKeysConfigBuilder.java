@@ -2,8 +2,9 @@ package it.pagopa.transactions.configurations;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.pagopa.ecommerce.commons.client.NpgClient;
+import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
+import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,7 +30,6 @@ public class NpgPspApiKeysConfigBuilder {
      * @param apiKeys - the secret api keys configuration json
      * @return the parsed map
      */
-    @Qualifier("npgCardsApiKeys")
     @Bean
     public it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig npgCardsApiKeys(
                                                                                  @Value(
@@ -39,10 +39,113 @@ public class NpgPspApiKeysConfigBuilder {
                                                                                      "${npg.authorization.cards.pspList}"
                                                                                  ) Set<String> pspToHandle
     ) {
+        return parseApiKeysMap(
+                apiKeys,
+                pspToHandle,
+                NpgClient.PaymentMethod.CARDS
+        );
+    }
+
+    /**
+     * Return a map where valued with each psp id - api keys entries
+     *
+     * @param apiKeys - the secret api keys configuration json
+     * @return the parsed map
+     */
+    @Bean
+    public it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig npgPaypalApiKeys(
+                                                                                  @Value(
+                                                                                      "${npg.authorization.paypal.keys}"
+                                                                                  ) String apiKeys,
+                                                                                  @Value(
+                                                                                      "${npg.authorization.paypal.pspList}"
+                                                                                  ) Set<String> pspToHandle
+    ) {
+        return parseApiKeysMap(
+                apiKeys,
+                pspToHandle,
+                NpgClient.PaymentMethod.PAYPAL
+        );
+    }
+
+    /**
+     * Return a map where valued with each psp id - api keys entries
+     *
+     * @param apiKeys - the secret api keys configuration json
+     * @return the parsed map
+     */
+    @Bean
+    public it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig npgMyBankApiKeys(
+                                                                                  @Value(
+                                                                                      "${npg.authorization.mybank.keys}"
+                                                                                  ) String apiKeys,
+                                                                                  @Value(
+                                                                                      "${npg.authorization.mybank.pspList}"
+                                                                                  ) Set<String> pspToHandle
+    ) {
+        return parseApiKeysMap(
+                apiKeys,
+                pspToHandle,
+                NpgClient.PaymentMethod.MYBANK
+        );
+    }
+
+    /**
+     * Return a map where valued with each psp id - api keys entries
+     *
+     * @param apiKeys - the secret api keys configuration json
+     * @return the parsed map
+     */
+    @Bean
+    public it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig npgBancomatpayApiKeys(
+                                                                                       @Value(
+                                                                                           "${npg.authorization.bancomatpay.keys}"
+                                                                                       ) String apiKeys,
+                                                                                       @Value(
+                                                                                           "${npg.authorization.bancomatpay.pspList}"
+                                                                                       ) Set<String> pspToHandle
+    ) {
+        return parseApiKeysMap(
+                apiKeys,
+                pspToHandle,
+                NpgClient.PaymentMethod.BANCOMATPAY
+        );
+    }
+
+    @Bean
+    public NpgApiKeyConfiguration npgApiKeyConfiguration(
+                                                         NpgPspApiKeysConfig npgCardsApiKeys,
+                                                         NpgPspApiKeysConfig npgBancomatpayApiKeys,
+                                                         NpgPspApiKeysConfig npgMyBankApiKeys,
+                                                         NpgPspApiKeysConfig npgPaypalApiKeys,
+                                                         @Value("${npg.client.apiKey}") String defaultApiKey
+    ) {
+        return new NpgApiKeyConfiguration.Builder()
+                .setDefaultApiKey(defaultApiKey)
+                .withMethodPspMapping(NpgClient.PaymentMethod.CARDS, npgCardsApiKeys)
+                .withMethodPspMapping(NpgClient.PaymentMethod.BANCOMATPAY, npgBancomatpayApiKeys)
+                .withMethodPspMapping(NpgClient.PaymentMethod.MYBANK, npgMyBankApiKeys)
+                .withMethodPspMapping(NpgClient.PaymentMethod.PAYPAL, npgPaypalApiKeys)
+                .build();
+    }
+
+    /**
+     * Return a map where valued with each psp id - api keys entries
+     *
+     * @param apiKeys - the secret api keys configuration json
+     * @return the parsed map
+     */
+    private it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig parseApiKeysMap(
+
+                                                                                  String apiKeys,
+                                                                                  Set<String> pspToHandle,
+                                                                                  NpgClient.PaymentMethod paymentMethod
+
+    ) {
         return it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig.parseApiKeyConfiguration(
                 apiKeys,
                 pspToHandle,
-                NpgClient.PaymentMethod.CARDS,
+                paymentMethod,
                 objectMapper
         )
                 .fold(exception -> {
