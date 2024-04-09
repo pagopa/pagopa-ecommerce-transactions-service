@@ -176,14 +176,15 @@ public class AzureStorageConfig {
             ) String storageConnectionString,
             @Value(
                     "${azurestorage.queues.walletusage.name}"
-            ) String queueName
+            ) String queueName,
+            JsonSerializer jsonSerializerV2
     ) {
       final var queueAsyncClient = new QueueClientBuilder()
               .connectionString(storageConnectionString)
               .queueName(queueName)
               .buildAsyncClient();
       queueAsyncClient.createIfNotExists().block();
-      return new WalletAsyncQueueClient(queueAsyncClient);
+      return new WalletAsyncQueueClient(queueAsyncClient, jsonSerializerV2);
     }
 
     private QueueAsyncClient buildQueueAsyncClient(

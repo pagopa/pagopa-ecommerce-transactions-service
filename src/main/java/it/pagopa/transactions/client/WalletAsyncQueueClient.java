@@ -2,9 +2,10 @@ package it.pagopa.transactions.client;
 
 import com.azure.core.http.rest.Response;
 import com.azure.core.util.BinaryData;
+import com.azure.core.util.serializer.JsonSerializer;
 import com.azure.storage.queue.QueueAsyncClient;
 import com.azure.storage.queue.models.SendMessageResult;
-import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.queues.TracingInfo;
 import reactor.core.publisher.Mono;
@@ -16,12 +17,17 @@ import java.util.UUID;
 
 public class WalletAsyncQueueClient {
 
-  private static final String WALLET_USED_KIND = "WalletUsed";
+  public static final String WALLET_USED_TYPE = "WalletUsed";
 
   private final QueueAsyncClient walletUsageQueueAsyncClient;
+  private final JsonSerializer jsonSerializer;
 
-  public WalletAsyncQueueClient(QueueAsyncClient walletUsageQueueAsyncClient) {
+  public WalletAsyncQueueClient(
+          QueueAsyncClient walletUsageQueueAsyncClient,
+          JsonSerializer jsonSerializer
+  ) {
     this.walletUsageQueueAsyncClient = walletUsageQueueAsyncClient;
+    this.jsonSerializer = jsonSerializer;
   }
 
   public Mono<Response<SendMessageResult>> fireWalletLastUsageEvent(
@@ -31,12 +37,12 @@ public class WalletAsyncQueueClient {
   ) {
     final var event = new WalletUsedEvent(
             UUID.randomUUID().toString(),
-            Instant.now(),
+            Instant.now().toString(),
             walletId,
             clientId.name()
     );
 
-    return BinaryData.fromObjectAsync(new QueueEvent(event, tracingInfo))
+    return BinaryData.fromObjectAsync(new QueueEvent(event, tracingInfo), jsonSerializer)
             .flatMap(it -> walletUsageQueueAsyncClient.sendMessageWithResponse(it, Duration.ZERO, Duration.ZERO));
   }
 
@@ -46,11 +52,11 @@ public class WalletAsyncQueueClient {
   ) {}
 
   public record WalletUsedEvent(
-          String eventId, Instant createdAt, String walletId, String clientId
+          String eventId, String creationDate, String walletId, String clientId
   ) {
-    @JsonGetter
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getType() {
-      return WALLET_USED_KIND;
+      return WALLET_USED_TYPE;
     }
   }
 }
