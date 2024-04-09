@@ -172,7 +172,7 @@ public class AzureStorageConfig {
     @Bean("walletAsyncQueueClient")
     public WalletAsyncQueueClient walletUsageQueueAsyncClient(
             @Value(
-                    "${azurestorage.queues.walletusage.connectionstring}"
+                    "${azurestorage.wallet.connectionstring}"
             ) String storageConnectionString,
             @Value(
                     "${azurestorage.queues.walletusage.name}"

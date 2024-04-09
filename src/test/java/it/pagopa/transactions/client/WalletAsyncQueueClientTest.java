@@ -60,9 +60,9 @@ class WalletAsyncQueueClientTest {
 
     final var queueEvent = argumentCaptor.getValue().toObject(WalletAsyncQueueClient.QueueEvent.class, jsonSerializer);
 
-    assertEquals(queueEvent.data().getType(), WALLET_USED_TYPE);
-    assertEquals(queueEvent.data().clientId(), Transaction.ClientId.CHECKOUT.name());
-    assertEquals(queueEvent.data().walletId(), walletId);
+    assertEquals(WALLET_USED_TYPE, queueEvent.data().getType());
+    assertEquals(Transaction.ClientId.CHECKOUT.name(), queueEvent.data().clientId());
+    assertEquals(walletId, queueEvent.data().walletId());
     assertNotNull(queueEvent.tracingInfo());
   }
 
