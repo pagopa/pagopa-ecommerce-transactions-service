@@ -39,7 +39,7 @@ paths:
         - in: header
           name: x-user-id
           required: false
-          description: User id (valued for registered payments)
+          description: User id (valued for authenticated payments)
           schema:
             $ref: '#/components/schemas/UserId'
 
