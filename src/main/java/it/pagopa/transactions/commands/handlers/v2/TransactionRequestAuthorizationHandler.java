@@ -24,6 +24,7 @@ import it.pagopa.generated.transactions.server.model.RequestAuthorizationRespons
 import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
+import it.pagopa.transactions.client.WalletAsyncQueueClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationOutput;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
@@ -41,6 +42,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
@@ -60,6 +62,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
     protected final TracingUtils tracingUtils;
     protected final OpenTelemetryUtils openTelemetryUtils;
     private final QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClientV2;
+    private final WalletAsyncQueueClient walletAsyncQueueClient;
 
     protected final Integer npgAuthRequestTimeout;
     protected final Integer transientQueuesTTLSeconds;
@@ -75,6 +78,9 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             @Qualifier(
                 "transactionAuthorizationRequestedQueueAsyncClientV2"
             ) QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClientV2,
+            @Qualifier(
+                    "walletAsyncQueueClient"
+            ) WalletAsyncQueueClient walletAsyncQueueClient,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") Integer transientQueuesTTLSeconds,
             @Value("${npg.authorization.request.timeout.seconds}") Integer npgAuthRequestTimeout,
             TracingUtils tracingUtils,
@@ -93,7 +99,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         this.transactionAuthorizationRequestedQueueAsyncClientV2 = transactionAuthorizationRequestedQueueAsyncClientV2;
         this.npgAuthRequestTimeout = npgAuthRequestTimeout;
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
-
+        this.walletAsyncQueueClient = walletAsyncQueueClient;
     }
 
     @Override
@@ -175,6 +181,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 ).orElse(Mono.empty());
 
         return transactionActivated
+                .doOnNext(t -> this.fireWalletLastUsageEvent(command, t))
                 .flatMap(
                         t -> gatewayAttempts.switchIfEmpty(Mono.error(new BadRequestException("No gateway matched")))
                                 .flatMap(authorizationOutputAndPaymentGateway -> {
@@ -321,5 +328,48 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 .valueOf(effectiveClient.name());
 
         return redirectionAuthRequestPipeline(authorizationData, touchpoint);
+    }
+
+  /**
+   * Emit Wallet Used event on wallet queue. The semantic
+   * of this method is fire-and-forget, so any action performed by this
+   * method is executed asynchronously.
+   * e.g. doOnNext(_ -> fireWalletLastUsageEvent(...))
+   */
+    private void fireWalletLastUsageEvent(
+            TransactionRequestAuthorizationCommand command,
+            TransactionActivated transactionActivated
+    ) {
+      final var wallet = switch (command.getData().authDetails()) {
+        case WalletAuthRequestDetailsDto walletData -> Mono.just(walletData);
+        default -> Mono.<WalletAuthRequestDetailsDto>empty();
+      };
+
+      wallet.flatMap(walletData -> tracingUtils.traceMono(
+                              this.getClass().getSimpleName(),
+                              (tracingInfo) -> walletAsyncQueueClient.fireWalletLastUsageEvent(
+                                      walletData.getWalletId(),
+                                      transactionActivated.getClientId(),
+                                      tracingInfo
+                              )
+                      ).doOnError(
+                              exception -> log.error(
+                                      "Failed to send event WALLET_USED for transactionId {}, wallet {}, clientId {} - error {}",
+                                      transactionActivated.getTransactionId(),
+                                      walletData.getWalletId(),
+                                      transactionActivated.getClientId(),
+                                      exception.getMessage()
+                              )
+                      )
+                      .doOnNext(
+                              ignored -> log.info(
+                                      "Send event WALLET_USED for transactionId {}, wallet {}, clientId {}",
+                                      transactionActivated.getTransactionId(),
+                                      walletData.getWalletId(),
+                                      transactionActivated.getClientId()
+                              )
+                      ).then())
+              .subscribeOn(Schedulers.boundedElastic())
+              .subscribe();
     }
 }

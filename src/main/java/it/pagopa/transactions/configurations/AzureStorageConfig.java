@@ -7,6 +7,7 @@ import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.StrictJsonSerializerProvider;
 import it.pagopa.ecommerce.commons.queues.mixin.serialization.v1.QueueEventMixInEventCodeFieldDiscriminator;
 import it.pagopa.ecommerce.commons.queues.mixin.serialization.v2.QueueEventMixInClassFieldDiscriminator;
+import it.pagopa.transactions.client.WalletAsyncQueueClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -166,6 +167,23 @@ public class AzureStorageConfig {
                                                                                 JsonSerializer jsonSerializerV2
     ) {
         return buildQueueAsyncClient(storageConnectionString, queueName, jsonSerializerV2);
+    }
+
+    @Bean("walletAsyncQueueClient")
+    public WalletAsyncQueueClient walletUsageQueueAsyncClient(
+            @Value(
+                    "${azurestorage.queues.walletusage.connectionstring}"
+            ) String storageConnectionString,
+            @Value(
+                    "${azurestorage.queues.walletusage.name}"
+            ) String queueName
+    ) {
+      final var queueAsyncClient = new QueueClientBuilder()
+              .connectionString(storageConnectionString)
+              .queueName(queueName)
+              .buildAsyncClient();
+      queueAsyncClient.createIfNotExists().block();
+      return new WalletAsyncQueueClient(queueAsyncClient);
     }
 
     private QueueAsyncClient buildQueueAsyncClient(
