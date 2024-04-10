@@ -24,46 +24,50 @@ import static org.mockito.Mockito.*;
 
 class WalletAsyncQueueClientTest {
 
-  private WalletAsyncQueueClient walletClient;
+    private WalletAsyncQueueClient walletClient;
 
-  private final JsonSerializer jsonSerializer = new AzureStorageConfig().jsonSerializerV2();
-  private final QueueAsyncClient walletUsageQueueAsyncClient = Mockito.mock(QueueAsyncClient.class);
-  private final TracingUtils tracingUtils = TracingUtilsTests.getMock();
+    private final JsonSerializer jsonSerializer = new AzureStorageConfig().jsonSerializerV2();
+    private final QueueAsyncClient walletUsageQueueAsyncClient = Mockito.mock(QueueAsyncClient.class);
+    private final TracingUtils tracingUtils = TracingUtilsTests.getMock();
 
-  @BeforeEach
-  void setup() {
-    walletClient = new WalletAsyncQueueClient(walletUsageQueueAsyncClient, jsonSerializer);
-    reset(walletUsageQueueAsyncClient);
-  }
+    @BeforeEach
+    void setup() {
+        walletClient = new WalletAsyncQueueClient(walletUsageQueueAsyncClient, jsonSerializer);
+        reset(walletUsageQueueAsyncClient);
+    }
 
-  @Test
-  void shouldEmitWalletUsedEventWithTracingInfo() {
-    final var walletId = UUID.randomUUID().toString();
-    final var argumentCaptor = ArgumentCaptor.forClass(BinaryData.class);
+    @Test
+    void shouldEmitWalletUsedEventWithTracingInfo() {
+        final var walletId = UUID.randomUUID().toString();
+        final var argumentCaptor = ArgumentCaptor.forClass(BinaryData.class);
 
-    when(walletUsageQueueAsyncClient.sendMessageWithResponse(any(BinaryData.class), any(), any()))
-            .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
+        when(walletUsageQueueAsyncClient.sendMessageWithResponse(any(BinaryData.class), any(), any()))
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
 
-    StepVerifier.create(
-            tracingUtils.traceMono("span", info -> walletClient.fireWalletLastUsageEvent(
-                    walletId,
-                    Transaction.ClientId.CHECKOUT,
-                    info
-            ))
-    ).assertNext(it -> assertEquals(200, it.getStatusCode())).verifyComplete();
+        StepVerifier.create(
+                tracingUtils.traceMono(
+                        "span",
+                        info -> walletClient.fireWalletLastUsageEvent(
+                                walletId,
+                                Transaction.ClientId.CHECKOUT,
+                                info
+                        )
+                )
+        ).assertNext(it -> assertEquals(200, it.getStatusCode())).verifyComplete();
 
-    verify(walletUsageQueueAsyncClient, times(1)).sendMessageWithResponse(
-            argumentCaptor.capture(),
-            any(),
-            any()
-    );
+        verify(walletUsageQueueAsyncClient, times(1)).sendMessageWithResponse(
+                argumentCaptor.capture(),
+                any(),
+                any()
+        );
 
-    final var queueEvent = argumentCaptor.getValue().toObject(WalletAsyncQueueClient.QueueEvent.class, jsonSerializer);
+        final var queueEvent = argumentCaptor.getValue()
+                .toObject(WalletAsyncQueueClient.QueueEvent.class, jsonSerializer);
 
-    assertEquals(WALLET_USED_TYPE, queueEvent.data().getType());
-    assertEquals(Transaction.ClientId.CHECKOUT.name(), queueEvent.data().clientId());
-    assertEquals(walletId, queueEvent.data().walletId());
-    assertNotNull(queueEvent.tracingInfo());
-  }
+        assertEquals(WALLET_USED_TYPE, queueEvent.data().getType());
+        assertEquals(Transaction.ClientId.CHECKOUT.name(), queueEvent.data().clientId());
+        assertEquals(walletId, queueEvent.data().walletId());
+        assertNotNull(queueEvent.tracingInfo());
+    }
 
 }

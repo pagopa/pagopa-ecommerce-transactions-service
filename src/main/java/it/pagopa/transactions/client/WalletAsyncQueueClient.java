@@ -17,46 +17,50 @@ import java.util.UUID;
 
 public class WalletAsyncQueueClient {
 
-  public static final String WALLET_USED_TYPE = "WalletUsed";
+    public static final String WALLET_USED_TYPE = "WalletUsed";
 
-  private final QueueAsyncClient walletUsageQueueAsyncClient;
-  private final JsonSerializer jsonSerializer;
+    private final QueueAsyncClient walletUsageQueueAsyncClient;
+    private final JsonSerializer jsonSerializer;
 
-  public WalletAsyncQueueClient(
-          QueueAsyncClient walletUsageQueueAsyncClient,
-          JsonSerializer jsonSerializer
-  ) {
-    this.walletUsageQueueAsyncClient = walletUsageQueueAsyncClient;
-    this.jsonSerializer = jsonSerializer;
-  }
-
-  public Mono<Response<SendMessageResult>> fireWalletLastUsageEvent(
-          String walletId,
-          Transaction.ClientId clientId,
-          @Nullable TracingInfo tracingInfo
-  ) {
-    final var event = new WalletUsedEvent(
-            UUID.randomUUID().toString(),
-            Instant.now().toString(),
-            walletId,
-            clientId.name()
-    );
-
-    return BinaryData.fromObjectAsync(new QueueEvent(event, tracingInfo), jsonSerializer)
-            .flatMap(it -> walletUsageQueueAsyncClient.sendMessageWithResponse(it, Duration.ZERO, Duration.ZERO));
-  }
-
-  public record QueueEvent(
-          WalletUsedEvent data,
-          TracingInfo tracingInfo
-  ) {}
-
-  public record WalletUsedEvent(
-          String eventId, String creationDate, String walletId, String clientId
-  ) {
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    public String getType() {
-      return WALLET_USED_TYPE;
+    public WalletAsyncQueueClient(
+            QueueAsyncClient walletUsageQueueAsyncClient,
+            JsonSerializer jsonSerializer
+    ) {
+        this.walletUsageQueueAsyncClient = walletUsageQueueAsyncClient;
+        this.jsonSerializer = jsonSerializer;
     }
-  }
+
+    public Mono<Response<SendMessageResult>> fireWalletLastUsageEvent(
+                                                                      String walletId,
+                                                                      Transaction.ClientId clientId,
+                                                                      @Nullable TracingInfo tracingInfo
+    ) {
+        final var event = new WalletUsedEvent(
+                UUID.randomUUID().toString(),
+                Instant.now().toString(),
+                walletId,
+                clientId.name()
+        );
+
+        return BinaryData.fromObjectAsync(new QueueEvent(event, tracingInfo), jsonSerializer)
+                .flatMap(it -> walletUsageQueueAsyncClient.sendMessageWithResponse(it, Duration.ZERO, Duration.ZERO));
+    }
+
+    public record QueueEvent(
+            WalletUsedEvent data,
+            TracingInfo tracingInfo
+    ) {
+    }
+
+    public record WalletUsedEvent(
+            String eventId,
+            String creationDate,
+            String walletId,
+            String clientId
+    ) {
+        @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+        public String getType() {
+            return WALLET_USED_TYPE;
+        }
+    }
 }

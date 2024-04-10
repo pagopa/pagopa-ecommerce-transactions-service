@@ -24,6 +24,7 @@ microservice-chart:
         TRANSACTION_REFUND_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-refund-queue-b
         TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-notifications-queue-b
         TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-auth-requested-queue-b
+        FEATURE_WALLETUSAGE_ENABLED: true
         WALLET_USAGE_QUEUE_NAME: pagopa-u-weu-wallet-usage-update-queue-b
         OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-blue,deployment.environment=uat"
         ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
@@ -129,6 +130,7 @@ microservice-chart:
     TRANSACTION_REFUND_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-refund-queue
     TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-notifications-queue
     TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-auth-requested-queue
+    FEATURE_WALLETUSAGE_ENABLED: true
     WALLET_USAGE_QUEUE_NAME: pagopa-u-weu-wallet-usage-update-queue
     PAYMENT_TOKEN_VALIDITY_TIME: "900"
     TRANSACTIONS_RETRY_OFFSET: "60"

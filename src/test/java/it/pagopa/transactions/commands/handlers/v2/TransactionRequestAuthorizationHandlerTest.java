@@ -153,7 +153,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 paymentMethodsClient,
                 transactionTemplateWrapper,
                 transactionAuthorizationRequestedQueueAsyncClient,
-                walletAsyncQueueClient,
+                Optional.of(walletAsyncQueueClient),
                 transientQueueEventsTtlSeconds,
                 npgAuthRequestTimeout,
                 tracingUtils,
@@ -3342,8 +3342,8 @@ class TransactionRequestAuthorizationHandlerTest {
                                 false
                         )
                 ), // TODO
-                // TRANSFER
-                // LIST
+                   // TRANSFER
+                   // LIST
                 email,
                 null,
                 null,
@@ -3430,8 +3430,8 @@ class TransactionRequestAuthorizationHandlerTest {
         Mockito.when(paymentGatewayClient.requestNpgBuildSession(authorizationData, correlationId, true))
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(
-                        paymentGatewayClient.requestNpgCardsAuthorization(authorizationDataAfterBuildSession, correlationId)
-                )
+                paymentGatewayClient.requestNpgCardsAuthorization(authorizationDataAfterBuildSession, correlationId)
+        )
                 .thenReturn(Mono.just(stateResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(
@@ -3445,15 +3445,16 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
 
         Mockito.when(
-                        transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
-                                any(QueueEvent.class),
-                                any(),
-                                durationArgumentCaptor.capture()
-                        )
+                transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
+                        any(QueueEvent.class),
+                        any(),
+                        durationArgumentCaptor.capture()
                 )
+        )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
 
-        Mockito.when(walletAsyncQueueClient.fireWalletLastUsageEvent(any(), any(), any())).thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
+        Mockito.when(walletAsyncQueueClient.fireWalletLastUsageEvent(any(), any(), any()))
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(orderId)
@@ -3511,8 +3512,8 @@ class TransactionRequestAuthorizationHandlerTest {
                                 false
                         )
                 ), // TODO
-                // TRANSFER
-                // LIST
+                   // TRANSFER
+                   // LIST
                 email,
                 null,
                 null,

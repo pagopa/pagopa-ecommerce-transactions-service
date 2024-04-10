@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -170,21 +171,22 @@ public class AzureStorageConfig {
     }
 
     @Bean("walletAsyncQueueClient")
+    @ConditionalOnExpression("${feature.walletusage.enabled:false}")
     public WalletAsyncQueueClient walletUsageQueueAsyncClient(
-            @Value(
-                    "${azurestorage.wallet.connectionstring}"
-            ) String storageConnectionString,
-            @Value(
-                    "${azurestorage.queues.walletusage.name}"
-            ) String queueName,
-            JsonSerializer jsonSerializerV2
+                                                              @Value(
+                                                                  "${azurestorage.wallet.connectionstring}"
+                                                              ) String storageConnectionString,
+                                                              @Value(
+                                                                  "${azurestorage.queues.walletusage.name}"
+                                                              ) String queueName,
+                                                              JsonSerializer jsonSerializerV2
     ) {
-      final var queueAsyncClient = new QueueClientBuilder()
-              .connectionString(storageConnectionString)
-              .queueName(queueName)
-              .buildAsyncClient();
-      queueAsyncClient.createIfNotExists().block();
-      return new WalletAsyncQueueClient(queueAsyncClient, jsonSerializerV2);
+        final var queueAsyncClient = new QueueClientBuilder()
+                .connectionString(storageConnectionString)
+                .queueName(queueName)
+                .buildAsyncClient();
+        queueAsyncClient.createIfNotExists().block();
+        return new WalletAsyncQueueClient(queueAsyncClient, jsonSerializerV2);
     }
 
     private QueueAsyncClient buildQueueAsyncClient(

@@ -49,6 +49,7 @@ import reactor.util.function.Tuples;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 
 @Component("TransactionRequestAuthorizationHandlerV2")
 @Slf4j
@@ -62,7 +63,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
     protected final TracingUtils tracingUtils;
     protected final OpenTelemetryUtils openTelemetryUtils;
     private final QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClientV2;
-    private final WalletAsyncQueueClient walletAsyncQueueClient;
+
+    private final Optional<WalletAsyncQueueClient> walletAsyncQueueClient;
 
     protected final Integer npgAuthRequestTimeout;
     protected final Integer transientQueuesTTLSeconds;
@@ -79,8 +81,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 "transactionAuthorizationRequestedQueueAsyncClientV2"
             ) QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClientV2,
             @Qualifier(
-                    "walletAsyncQueueClient"
-            ) WalletAsyncQueueClient walletAsyncQueueClient,
+                "walletAsyncQueueClient"
+            ) Optional<WalletAsyncQueueClient> walletAsyncQueueClient,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") Integer transientQueuesTTLSeconds,
             @Value("${npg.authorization.request.timeout.seconds}") Integer npgAuthRequestTimeout,
             TracingUtils tracingUtils,
@@ -345,9 +347,10 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         default -> Mono.<WalletAuthRequestDetailsDto>empty();
       };
 
-      wallet.flatMap(walletData -> tracingUtils.traceMono(
+      walletAsyncQueueClient.ifPresent(
+              queueClient -> wallet.flatMap(walletData -> tracingUtils.traceMono(
                               this.getClass().getSimpleName(),
-                              (tracingInfo) -> walletAsyncQueueClient.fireWalletLastUsageEvent(
+                              (tracingInfo) -> queueClient.fireWalletLastUsageEvent(
                                       walletData.getWalletId(),
                                       transactionActivated.getClientId(),
                                       tracingInfo
@@ -370,6 +373,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                               )
                       ).then())
               .subscribeOn(Schedulers.boundedElastic())
-              .subscribe();
+              .subscribe());
     }
 }

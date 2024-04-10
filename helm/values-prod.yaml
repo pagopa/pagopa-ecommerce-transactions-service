@@ -24,6 +24,7 @@ microservice-chart:
         TRANSACTION_REFUND_QUEUE_NAME: pagopa-p-weu-ecommerce-transactions-refund-queue-b
         TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-p-weu-ecommerce-transaction-notifications-queue-b
         TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-p-weu-ecommerce-transaction-auth-requested-queue-b
+        FEATURE_WALLETUSAGE_ENABLED: false
         WALLET_USAGE_QUEUE_NAME: pagopa-p-weu-wallet-usage-update-queue-b
         OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-blue,deployment.environment=prod"
         ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
@@ -173,6 +174,7 @@ microservice-chart:
     NODE_FORWARDER_URL: "https://api.platform.pagopa.it/pagopa-node-forwarder/api/v1"
     NODE_FORWARDER_READ_TIMEOUT: "10000"
     NODE_FORWARDER_CONNECTION_TIMEOUT: "10000"
+    FEATURE_WALLETUSAGE_ENABLED: false
     WALLET_USAGE_QUEUE_NAME: pagopa-p-weu-wallet-usage-update-queue
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
