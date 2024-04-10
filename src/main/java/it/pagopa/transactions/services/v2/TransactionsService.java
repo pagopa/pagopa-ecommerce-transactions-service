@@ -4,12 +4,15 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
-import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.domain.PaymentNotice;
+import it.pagopa.ecommerce.commons.domain.RptId;
+import it.pagopa.ecommerce.commons.domain.TransactionAmount;
+import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.generated.transactions.v2.server.model.*;
-import it.pagopa.transactions.commands.*;
+import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
 import it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler;
-import it.pagopa.transactions.exceptions.*;
+import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +21,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.util.*;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service(TransactionsService.QUALIFIER_NAME)
 @Slf4j
@@ -52,7 +57,8 @@ public class TransactionsService {
                                                           NewTransactionRequestDto newTransactionRequestDto,
                                                           ClientIdDto clientIdDto,
                                                           UUID correlationId,
-                                                          TransactionId transactionId
+                                                          TransactionId transactionId,
+                                                          UUID userId
     ) {
         Transaction.ClientId clientId = Transaction.ClientId.fromString(
                 Optional.ofNullable(clientIdDto)
@@ -84,7 +90,8 @@ public class TransactionsService {
                         ).toList()
                 ),
                 clientId.name(),
-                transactionId
+                transactionId,
+                userId
         );
 
         return transactionActivateHandlerV2.handle(transactionActivateCommand)

@@ -59,7 +59,8 @@ class AuthorizationUpdateProjectionHandlerTest {
                 Transaction.ClientId.CHECKOUT,
                 transaction.getCreationDate().toString(),
                 transaction.getTransactionActivatedData().getIdCart(),
-                null
+                null,
+                TransactionTestUtils.USER_ID
         );
 
         expectedDocument.setPaymentGateway(null);
@@ -98,7 +99,8 @@ class AuthorizationUpdateProjectionHandlerTest {
                 Transaction.ClientId.CHECKOUT,
                 transaction.getTransactionActivatedData().getIdCart(),
                 paymentTokenValidity,
-                new EmptyTransactionGatewayActivationData()
+                new EmptyTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         /*
@@ -148,7 +150,8 @@ class AuthorizationUpdateProjectionHandlerTest {
                 Transaction.ClientId.CHECKOUT,
                 transaction.getCreationDate().toString(),
                 transaction.getTransactionActivatedData().getIdCart(),
-                "rrn"
+                "rrn",
+                TransactionTestUtils.USER_ID
         );
 
         expectedDocument.setPaymentGateway(null);
@@ -187,7 +190,8 @@ class AuthorizationUpdateProjectionHandlerTest {
                 Transaction.ClientId.CHECKOUT,
                 transaction.getTransactionActivatedData().getIdCart(),
                 paymentTokenValidity,
-                new EmptyTransactionGatewayActivationData()
+                new EmptyTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         /*
@@ -230,7 +234,8 @@ class AuthorizationUpdateProjectionHandlerTest {
                 Transaction.ClientId.CHECKOUT,
                 transaction.getCreationDate().toString(),
                 transaction.getTransactionActivatedData().getIdCart(),
-                "rrn"
+                "rrn",
+                TransactionTestUtils.USER_ID
         );
 
         expectedDocument.setPaymentGateway(null);
@@ -266,7 +271,8 @@ class AuthorizationUpdateProjectionHandlerTest {
                 Transaction.ClientId.CHECKOUT,
                 transaction.getTransactionActivatedData().getIdCart(),
                 paymentTokenValidity,
-                new EmptyTransactionGatewayActivationData()
+                new EmptyTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         /*
@@ -309,7 +315,8 @@ class AuthorizationUpdateProjectionHandlerTest {
                 Transaction.ClientId.CHECKOUT,
                 transaction.getCreationDate().toString(),
                 transaction.getTransactionActivatedData().getIdCart(),
-                "rrn"
+                "rrn",
+                TransactionTestUtils.USER_ID
         );
         String authorizationErrorCode = "authorization error code";
 
@@ -344,7 +351,8 @@ class AuthorizationUpdateProjectionHandlerTest {
                 Transaction.ClientId.CHECKOUT,
                 transaction.getTransactionActivatedData().getIdCart(),
                 paymentTokenValidity,
-                new EmptyTransactionGatewayActivationData()
+                new EmptyTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         /*
@@ -387,7 +395,8 @@ class AuthorizationUpdateProjectionHandlerTest {
                 Transaction.ClientId.CHECKOUT,
                 transaction.getCreationDate().toString(),
                 transaction.getTransactionActivatedData().getIdCart(),
-                "rrn"
+                "rrn",
+                TransactionTestUtils.USER_ID
         );
 
         expectedDocument.setPaymentGateway(null);
@@ -423,7 +432,8 @@ class AuthorizationUpdateProjectionHandlerTest {
                 Transaction.ClientId.CHECKOUT,
                 transaction.getTransactionActivatedData().getIdCart(),
                 paymentTokenValidity,
-                new EmptyTransactionGatewayActivationData()
+                new EmptyTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         /*

@@ -606,7 +606,8 @@ class TransactionServiceTests {
                 Transaction.ClientId.CHECKOUT,
                 transactionDocument.getIdCart(),
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                new EmptyTransactionGatewayActivationData()
+                new EmptyTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
@@ -662,7 +663,8 @@ class TransactionServiceTests {
                 Transaction.ClientId.CHECKOUT,
                 ZonedDateTime.now().toString(),
                 transactionDocument.getIdCart(),
-                transactionDocument.getRrn()
+                transactionDocument.getRrn(),
+                transactionDocument.getUserId()
         );
 
         /* preconditions */

@@ -105,7 +105,8 @@ public class AuthorizationUpdateProjectionHandler
                                 transactionDocument.getClientId(),
                                 transactionDocument.getIdCart(),
                                 paymentTokenValidity,
-                                new EmptyTransactionGatewayActivationData() // FIXME
+                                new EmptyTransactionGatewayActivationData(), // FIXME
+                                transactionDocument.getUserId()
                         )
                 );
     }

@@ -367,7 +367,8 @@ class TransactionServiceTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                new EmptyTransactionGatewayActivationData()
+                new EmptyTransactionGatewayActivationData(),
+                null
         );
 
         /*

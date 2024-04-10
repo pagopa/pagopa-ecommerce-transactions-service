@@ -273,7 +273,8 @@ public class TransactionsService {
                         ).toList()
                 ),
                 clientId.name(),
-                transactionId
+                transactionId,
+                null
         );
 
         return switch (eventVersion) {
