@@ -358,16 +358,16 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                               )
                       ).doOnError(
                               exception -> log.error(
-                                      "Failed to send event WALLET_USED for transactionId {}, wallet {}, clientId {} - error {}",
+                                      "Failed to send event WALLET_USED for transactionId: [{}], wallet: [{}], clientId: [{}]",
                                       transactionActivated.getTransactionId(),
                                       walletData.getWalletId(),
                                       transactionActivated.getClientId(),
-                                      exception.getMessage()
+                                      exception
                               )
                       )
                       .doOnNext(
                               ignored -> log.info(
-                                      "Send event WALLET_USED for transactionId {}, wallet {}, clientId {}",
+                                      "Send event WALLET_USED for transactionId: [{}], wallet: [{}], clientId: [{}]",
                                       transactionActivated.getTransactionId(),
                                       walletData.getWalletId(),
                                       transactionActivated.getClientId()

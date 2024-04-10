@@ -4,9 +4,9 @@ import com.azure.core.util.BinaryData;
 import com.azure.core.util.serializer.JsonSerializer;
 import com.azure.storage.queue.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
+import it.pagopa.ecommerce.commons.queues.StrictJsonSerializerProvider;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
-import it.pagopa.transactions.configurations.AzureStorageConfig;
 import it.pagopa.transactions.utils.Queues;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ class WalletAsyncQueueClientTest {
 
     private WalletAsyncQueueClient walletClient;
 
-    private final JsonSerializer jsonSerializer = new AzureStorageConfig().jsonSerializerV2();
+    private final JsonSerializer jsonSerializer = new StrictJsonSerializerProvider().createInstance();
     private final QueueAsyncClient walletUsageQueueAsyncClient = Mockito.mock(QueueAsyncClient.class);
     private final TracingUtils tracingUtils = TracingUtilsTests.getMock();
 
