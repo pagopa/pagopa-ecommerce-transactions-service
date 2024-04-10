@@ -14,6 +14,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import reactor.test.StepVerifier;
 
+import java.time.Duration;
 import java.util.UUID;
 
 import static it.pagopa.transactions.client.WalletAsyncQueueClient.WALLET_USED_TYPE;
@@ -32,7 +33,7 @@ class WalletAsyncQueueClientTest {
 
     @BeforeEach
     void setup() {
-        walletClient = new WalletAsyncQueueClient(walletUsageQueueAsyncClient, jsonSerializer);
+        walletClient = new WalletAsyncQueueClient(walletUsageQueueAsyncClient, 3600, jsonSerializer);
         reset(walletUsageQueueAsyncClient);
     }
 
@@ -57,8 +58,8 @@ class WalletAsyncQueueClientTest {
 
         verify(walletUsageQueueAsyncClient, times(1)).sendMessageWithResponse(
                 argumentCaptor.capture(),
-                any(),
-                any()
+                eq(Duration.ZERO),
+                eq(Duration.ofSeconds(3600))
         );
 
         final var queueEvent = argumentCaptor.getValue()

@@ -20,13 +20,16 @@ public class WalletAsyncQueueClient {
     public static final String WALLET_USED_TYPE = "WalletUsed";
 
     private final QueueAsyncClient walletUsageQueueAsyncClient;
+    private final int secondsTtl;
     private final JsonSerializer jsonSerializer;
 
     public WalletAsyncQueueClient(
             QueueAsyncClient walletUsageQueueAsyncClient,
+            int secondsTtl,
             JsonSerializer jsonSerializer
     ) {
         this.walletUsageQueueAsyncClient = walletUsageQueueAsyncClient;
+        this.secondsTtl = secondsTtl;
         this.jsonSerializer = jsonSerializer;
     }
 
@@ -43,7 +46,10 @@ public class WalletAsyncQueueClient {
         );
 
         return BinaryData.fromObjectAsync(new QueueEvent(event, tracingInfo), jsonSerializer)
-                .flatMap(it -> walletUsageQueueAsyncClient.sendMessageWithResponse(it, Duration.ZERO, Duration.ZERO));
+                .flatMap(
+                        it -> walletUsageQueueAsyncClient
+                                .sendMessageWithResponse(it, Duration.ZERO, Duration.ofSeconds(secondsTtl))
+                );
     }
 
     public record QueueEvent(

@@ -177,6 +177,9 @@ public class AzureStorageConfig {
                                                                   "${azurestorage.wallet.connectionstring}"
                                                               ) String storageConnectionString,
                                                               @Value(
+                                                                  "${azurestorage.queues.walletusage.ttlSeconds}"
+                                                              ) int secondsTtl,
+                                                              @Value(
                                                                   "${azurestorage.queues.walletusage.name}"
                                                               ) String queueName,
                                                               JsonSerializer jsonSerializerV2
@@ -186,7 +189,7 @@ public class AzureStorageConfig {
                 .queueName(queueName)
                 .buildAsyncClient();
         queueAsyncClient.createIfNotExists().block();
-        return new WalletAsyncQueueClient(queueAsyncClient, jsonSerializerV2);
+        return new WalletAsyncQueueClient(queueAsyncClient, secondsTtl, jsonSerializerV2);
     }
 
     private QueueAsyncClient buildQueueAsyncClient(
