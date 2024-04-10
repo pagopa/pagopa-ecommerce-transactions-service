@@ -330,11 +330,10 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                         ? new NpgTransactionGatewayActivationData(
                                                 newTransactionRequestData.orderId(),
                                                 newTransactionRequestData.correlationId().toString()
-                                        )
-                                        : new EmptyTransactionGatewayActivationData() // this logic will be eliminated
-                                                                                      // with task CHK-2286 by handling
-                                                                                      // the saving of correlationId
-                                                                                      // only
+                                        )// this logic will be eliminated with task CHK-2286 by handling the saving of
+                                         // correlationId only
+                                        : new EmptyTransactionGatewayActivationData(),
+                                Optional.ofNullable(command.getUserId()).map(UUID::toString).orElse(null)
                         )
                 );
 

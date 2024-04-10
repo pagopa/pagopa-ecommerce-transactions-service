@@ -193,7 +193,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -285,7 +286,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -380,7 +382,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -511,7 +514,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -647,7 +651,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -789,7 +794,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -886,7 +892,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -972,7 +979,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -1063,7 +1071,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -1164,7 +1173,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -1265,7 +1275,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -1369,7 +1380,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -1474,7 +1486,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -1579,7 +1592,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -1683,7 +1697,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -1814,7 +1829,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -1950,7 +1966,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -2069,6 +2086,7 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionDescription description = new TransactionDescription("description");
         TransactionAmount amount = new TransactionAmount(100);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
+        Transaction.ClientId clientId = Transaction.ClientId.CHECKOUT;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
         String correlationId = UUID.randomUUID().toString();
@@ -2090,10 +2108,11 @@ class TransactionRequestAuthorizationHandlerTest {
                 email,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
+                clientId,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -2170,7 +2189,10 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestNpgBuildSession(authorizationData, correlationId, true))
+        Mockito.when(
+                paymentGatewayClient
+                        .requestNpgBuildSession(authorizationData, correlationId, true, clientId.name())
+        )
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(
                 paymentGatewayClient.requestNpgCardsAuthorization(authorizationDataAfterBuildSession, correlationId)
@@ -2256,7 +2278,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -2309,7 +2332,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 .expectErrorMatches(error -> error instanceof BadRequestException)
                 .verify();
 
-        Mockito.verify(paymentGatewayClient, Mockito.times(0)).requestNpgBuildSession(any(), any(), eq(true));
+        Mockito.verify(paymentGatewayClient, Mockito.times(0))
+                .requestNpgBuildSession(any(), any(), eq(true), eq(Transaction.ClientId.IO.name()));
         Mockito.verify(paymentGatewayClient, Mockito.times(0)).requestNpgCardsAuthorization(any(), any());
         Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(any());
         Mockito.verify(transactionTemplateWrapper, Mockito.times(0)).save(any());
@@ -2331,6 +2355,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
         String correlationId = UUID.randomUUID().toString();
+        Transaction.ClientId clientId = it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT;
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -2347,10 +2372,11 @@ class TransactionRequestAuthorizationHandlerTest {
                 email,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
+                clientId,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                new NpgTransactionGatewayActivationData("orderId", correlationId)
+                new NpgTransactionGatewayActivationData("orderId", correlationId),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -2400,7 +2426,10 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestNpgBuildApmPayment(authorizationData, correlationId, true))
+        Mockito.when(
+                paymentGatewayClient
+                        .requestNpgBuildApmPayment(authorizationData, correlationId, true, clientId.name())
+        )
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(
@@ -2475,7 +2504,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -2525,7 +2555,14 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestNpgBuildApmPayment(authorizationData, correlationId, false))
+        Mockito.when(
+                paymentGatewayClient.requestNpgBuildApmPayment(
+                        authorizationData,
+                        correlationId,
+                        false,
+                        Transaction.ClientId.CHECKOUT.name()
+                )
+        )
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(
@@ -2585,6 +2622,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
         String correlationId = UUID.randomUUID().toString();
+        Transaction.ClientId clientId = Transaction.ClientId.CHECKOUT;
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -2601,10 +2639,11 @@ class TransactionRequestAuthorizationHandlerTest {
                 email,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
+                clientId,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -2654,7 +2693,10 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestNpgBuildApmPayment(authorizationData, correlationId, true))
+        Mockito.when(
+                paymentGatewayClient
+                        .requestNpgBuildApmPayment(authorizationData, correlationId, true, clientId.name())
+        )
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(
@@ -2704,7 +2746,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -2819,7 +2862,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -2951,7 +2995,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -3083,7 +3128,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
@@ -3215,7 +3261,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData()
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()

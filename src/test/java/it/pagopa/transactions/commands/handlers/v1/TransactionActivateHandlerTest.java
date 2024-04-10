@@ -17,6 +17,7 @@ import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
+import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.generated.transactions.server.model.PaymentInfoDto;
@@ -46,6 +47,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -91,6 +93,8 @@ class TransactionActivateHandlerTest {
     private static final int tokenValidityTimeInSeconds = 900;
 
     private final SecretKey jwtSecretKey = new SecretsConfigurations().ecommerceSigningKey(STRONG_KEY);
+
+    private static final UUID userId = UUID.fromString(TransactionTestUtils.USER_ID);
 
     private final it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler handler = new TransactionActivateHandler(
             paymentRequestInfoRedisTemplateWrapper,
@@ -144,7 +148,8 @@ class TransactionActivateHandlerTest {
                         ).toList()
                 ),
                 Transaction.ClientId.CHECKOUT.name(),
-                transactionId
+                transactionId,
+                userId
         );
 
         PaymentRequestInfo paymentRequestInfoCached = new PaymentRequestInfo(
@@ -274,7 +279,8 @@ class TransactionActivateHandlerTest {
                         ).toList()
                 ),
                 Transaction.ClientId.CHECKOUT.name(),
-                transactionId
+                transactionId,
+                userId
         );
 
         PaymentRequestInfo paymentRequestInfoCached = new PaymentRequestInfo(
@@ -388,7 +394,8 @@ class TransactionActivateHandlerTest {
                         ).toList()
                 ),
                 Transaction.ClientId.CHECKOUT.name(),
-                transactionId
+                transactionId,
+                userId
         );
 
         /* preconditions */
@@ -478,7 +485,8 @@ class TransactionActivateHandlerTest {
                         ).toList()
                 ),
                 Transaction.ClientId.CHECKOUT.name(),
-                transactionId
+                transactionId,
+                userId
         );
 
         PaymentRequestInfo paymentRequestInfoCached = new PaymentRequestInfo(
@@ -548,7 +556,8 @@ class TransactionActivateHandlerTest {
                         ).toList()
                 ),
                 Transaction.ClientId.CHECKOUT.name(),
-                transactionId
+                transactionId,
+                userId
         );
 
         PaymentRequestInfo paymentRequestInfoBeforeActivation = new PaymentRequestInfo(
@@ -662,7 +671,8 @@ class TransactionActivateHandlerTest {
                         ).toList()
                 ),
                 Transaction.ClientId.CHECKOUT.name(),
-                transactionId
+                transactionId,
+                userId
         );
 
         PaymentRequestInfo paymentRequestInfoBeforeActivation = new PaymentRequestInfo(
@@ -776,7 +786,8 @@ class TransactionActivateHandlerTest {
                         ).toList()
                 ),
                 Transaction.ClientId.CHECKOUT.name(),
-                transactionId
+                transactionId,
+                userId
         );
 
         PaymentRequestInfo paymentRequestInfoActivation = new PaymentRequestInfo(

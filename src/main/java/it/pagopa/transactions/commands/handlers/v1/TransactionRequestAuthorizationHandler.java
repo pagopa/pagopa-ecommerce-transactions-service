@@ -83,10 +83,14 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 .map(authorizationOutput -> Tuples.of(authorizationOutput, PaymentGateway.XPAY));
         Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoVPOS = vposAuthRequestPipeline(authorizationRequestData)
                 .map(authorizationOutput -> Tuples.of(authorizationOutput, PaymentGateway.VPOS));
-        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoNpgCards = npgAuthRequestPipeline(
-                authorizationRequestData,
-                null
-        )
+        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoNpgCards = transactionActivated
+                .flatMap(
+                        tx -> npgAuthRequestPipeline(
+                                authorizationRequestData,
+                                null,
+                                tx.getClientId().name()
+                        )
+                )
                 .map(authorizationOutput -> Tuples.of(authorizationOutput, PaymentGateway.NPG));
         List<Mono<Tuple2<AuthorizationOutput, PaymentGateway>>> gatewayRequests = List
                 .of(monoXPay, monoVPOS, monoNpgCards);

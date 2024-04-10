@@ -107,7 +107,8 @@ class TransactionsActivationProjectionHandlerTest {
                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 idCart,
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                new NpgTransactionGatewayActivationData(orderId, null)
+                new NpgTransactionGatewayActivationData(orderId, null),
+                TransactionTestUtils.USER_ID
         );
 
         it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.v2.Transaction
