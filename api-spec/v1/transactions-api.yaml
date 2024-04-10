@@ -1184,6 +1184,10 @@ components:
           description: Circuit unique transaction ID
           type: string
         rrn:
+          description: Transaction rrn
+          type: string
+        validationServiceId:
+          description: Validation service id
           type: string
       required:
         - paymentGatewayType
