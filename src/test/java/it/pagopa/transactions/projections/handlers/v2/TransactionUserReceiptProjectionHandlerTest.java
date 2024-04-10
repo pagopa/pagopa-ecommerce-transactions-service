@@ -43,7 +43,8 @@ class TransactionUserReceiptProjectionHandlerTest {
                 Transaction.ClientId.CHECKOUT,
                 transaction.getCreationDate(),
                 transaction.getIdCart(),
-                "rrn"
+                "rrn",
+                TransactionTestUtils.USER_ID
         );
         expectedDocument.setSendPaymentResultOutcome(TransactionUserReceiptData.Outcome.OK);
 
@@ -92,7 +93,8 @@ class TransactionUserReceiptProjectionHandlerTest {
                 transaction.getClientId(),
                 transaction.getCreationDate().toString(),
                 transaction.getTransactionActivatedData().getIdCart(),
-                null
+                null,
+                TransactionTestUtils.USER_ID
         );
         expectedDocument.setSendPaymentResultOutcome(TransactionUserReceiptData.Outcome.KO);
 

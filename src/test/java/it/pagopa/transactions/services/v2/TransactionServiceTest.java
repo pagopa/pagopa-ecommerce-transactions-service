@@ -12,9 +12,9 @@ import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.transactions.v2.server.model.*;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import it.pagopa.transactions.utils.*;
+import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.redis.AutoConfigureDataRedis;
 import reactor.core.publisher.Hooks;
@@ -106,7 +106,8 @@ class TransactionServiceTest {
                 Transaction.ClientId.CHECKOUT,
                 "idCart",
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                new EmptyTransactionGatewayActivationData()
+                new EmptyTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
         );
 
         /*
@@ -125,7 +126,8 @@ class TransactionServiceTest {
                                 transactionRequestDto,
                                 clientIdDto,
                                 UUID.randomUUID(),
-                                new TransactionId(transactionActivatedEvent.getTransactionId())
+                                new TransactionId(transactionActivatedEvent.getTransactionId()),
+                                UUID.randomUUID()
                         )
                 )
                 .expectNextMatches(

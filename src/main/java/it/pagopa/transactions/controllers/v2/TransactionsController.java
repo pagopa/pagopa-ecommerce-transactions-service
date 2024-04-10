@@ -64,6 +64,7 @@ public class TransactionsController implements V2Api {
                                                                           ClientIdDto xClientId,
                                                                           UUID correlationId,
                                                                           Mono<NewTransactionRequestDto> newTransactionRequest,
+                                                                          UUID xUserId,
                                                                           ServerWebExchange exchange
     ) {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
@@ -78,7 +79,7 @@ public class TransactionsController implements V2Api {
                             xClientId.getValue()
 
                     );
-                    return transactionsService.newTransaction(ntr, xClientId, correlationId, transactionId);
+                    return transactionsService.newTransaction(ntr, xClientId, correlationId, transactionId, xUserId);
                 })
                 .map(ResponseEntity::ok)
                 .contextWrite(
