@@ -1411,7 +1411,15 @@ class PaymentGatewayClientTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData, correlationId, true))
+        StepVerifier
+                .create(
+                        client.requestNpgBuildSession(
+                                authorizationData,
+                                correlationId,
+                                true,
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name()
+                        )
+                )
                 .expectNext(responseRequestNpgBuildSession)
                 .verifyComplete();
 
@@ -1564,7 +1572,15 @@ class PaymentGatewayClientTest {
                 );
         /* test */
 
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData, correlationId, true))
+        StepVerifier
+                .create(
+                        client.requestNpgBuildSession(
+                                authorizationData,
+                                correlationId,
+                                true,
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name()
+                        )
+                )
                 .expectErrorMatches(
                         error -> error instanceof AlreadyProcessedException &&
                                 ((AlreadyProcessedException) error).getTransactionId()
@@ -1657,7 +1673,15 @@ class PaymentGatewayClientTest {
                         )
                 );
         /* test */
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData, correlationId, true))
+        StepVerifier
+                .create(
+                        client.requestNpgBuildSession(
+                                authorizationData,
+                                correlationId,
+                                true,
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name()
+                        )
+                )
                 .expectErrorMatches(
                         error -> error instanceof BadGatewayException
                 )
@@ -1748,7 +1772,15 @@ class PaymentGatewayClientTest {
                         )
                 );
         /* test */
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData, correlationId, true))
+        StepVerifier
+                .create(
+                        client.requestNpgBuildSession(
+                                authorizationData,
+                                correlationId,
+                                true,
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name()
+                        )
+                )
                 .expectErrorMatches(
                         error -> error instanceof BadGatewayException
                 )
@@ -1825,7 +1857,15 @@ class PaymentGatewayClientTest {
 
         Mockito.when(npgApiKeyHandler.getDefaultApiKey()).thenReturn(npgDefaultApiKey);
 
-        StepVerifier.create(client.requestNpgBuildSession(authorizationData, correlationId, true))
+        StepVerifier
+                .create(
+                        client.requestNpgBuildSession(
+                                authorizationData,
+                                correlationId,
+                                true,
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name()
+                        )
+                )
                 .expectErrorMatches(error -> error instanceof BadGatewayException)
                 .verify();
 
@@ -1995,7 +2035,15 @@ class PaymentGatewayClientTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
-        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData, correlationId, true))
+        StepVerifier
+                .create(
+                        client.requestNpgBuildApmPayment(
+                                authorizationData,
+                                correlationId,
+                                true,
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name()
+                        )
+                )
                 .expectNext(responseRequestNpgBuildSession)
                 .verifyComplete();
 
@@ -2061,7 +2109,7 @@ class PaymentGatewayClientTest {
                 );
         verify(npgClient, times(0))
                 .buildForm(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
-        verify(npgApiKeyHandler, times(1)).getApiKeyForPaymentMethod(NpgClient.PaymentMethod.CARDS, "pspId1");
+        verify(npgApiKeyHandler, times(1)).getApiKeyForPaymentMethod(NpgClient.PaymentMethod.PAYPAL, "pspId1");
     }
 
     @Test
@@ -2188,7 +2236,15 @@ class PaymentGatewayClientTest {
         Mockito.when(npgApiKeyHandler.getApiKeyForPaymentMethod(any(), any()))
                 .thenReturn(Either.left(new NpgApiKeyMissingPspRequestedException("pspId2", Set.of())));
         /* test */
-        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData, correlationId, true))
+        StepVerifier
+                .create(
+                        client.requestNpgBuildApmPayment(
+                                authorizationData,
+                                correlationId,
+                                true,
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name()
+                        )
+                )
                 .expectError(NpgApiKeyMissingPspRequestedException.class)
                 .verify();
 
@@ -2196,7 +2252,7 @@ class PaymentGatewayClientTest {
                 .buildFormForPayment(any(), any(), any(), any(), any(), eq(orderId), any(), any(), any(), any(), any());
         verify(npgClient, times(0))
                 .buildForm(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
-        verify(npgApiKeyHandler, times(1)).getApiKeyForPaymentMethod(NpgClient.PaymentMethod.CARDS, "pspId2");
+        verify(npgApiKeyHandler, times(1)).getApiKeyForPaymentMethod(NpgClient.PaymentMethod.PAYPAL, "pspId2");
     }
 
     @Test
@@ -2205,6 +2261,7 @@ class PaymentGatewayClientTest {
         String orderId = "orderIdGenerated";
         String sessionId = "sessionId";
         String correlationId = UUID.randomUUID().toString();
+        Transaction.ClientId clientId = it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.IO;
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -2221,7 +2278,7 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.IO,
+                clientId,
                 "idCart",
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
@@ -2276,7 +2333,15 @@ class PaymentGatewayClientTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
-        StepVerifier.create(client.requestNpgBuildApmPayment(authorizationData, correlationId, false))
+        StepVerifier
+                .create(
+                        client.requestNpgBuildApmPayment(
+                                authorizationData,
+                                correlationId,
+                                false,
+                                clientId.name()
+                        )
+                )
                 .expectNext(responseRequestNpgBuildSession)
                 .verifyComplete();
 
@@ -2339,7 +2404,7 @@ class PaymentGatewayClientTest {
                 );
         verify(npgClient, times(0))
                 .buildForm(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
-        verify(npgApiKeyHandler, times(1)).getApiKeyForPaymentMethod(NpgClient.PaymentMethod.CARDS, "pspId1");
+        verify(npgApiKeyHandler, times(1)).getApiKeyForPaymentMethod(NpgClient.PaymentMethod.BANCOMATPAY, "pspId1");
     }
 
     private static Stream<Arguments> redirectRetrieveUrlPaymentMethodsTestMethodSource() {

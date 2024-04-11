@@ -99,6 +99,8 @@ class TransactionActivateHandlerTest {
 
     private final SecretKey jwtSecretKey = new SecretsConfigurations().ecommerceSigningKey(STRONG_KEY);
 
+    private final UUID userId = UUID.randomUUID();
+
     private final TransactionActivateHandler handler = new TransactionActivateHandler(
             paymentRequestInfoRedisTemplateWrapper,
             transactionEventActivatedStoreRepository,
@@ -152,7 +154,8 @@ class TransactionActivateHandlerTest {
                         ).toList()
                 ),
                 Transaction.ClientId.CHECKOUT.name(),
-                transactionId
+                transactionId,
+                userId
         );
 
         PaymentRequestInfo paymentRequestInfoCached = new PaymentRequestInfo(
@@ -302,7 +305,8 @@ class TransactionActivateHandlerTest {
                         ).toList()
                 ),
                 Transaction.ClientId.CHECKOUT.name(),
-                transactionId
+                transactionId,
+                userId
         );
 
         PaymentRequestInfo paymentRequestInfoCached = new PaymentRequestInfo(
@@ -437,7 +441,8 @@ class TransactionActivateHandlerTest {
                         ).toList()
                 ),
                 Transaction.ClientId.CHECKOUT.name(),
-                transactionId
+                transactionId,
+                userId
         );
 
         PaymentRequestInfo paymentRequestInfoCached = new PaymentRequestInfo(
@@ -551,7 +556,8 @@ class TransactionActivateHandlerTest {
                         ).toList()
                 ),
                 Transaction.ClientId.CHECKOUT.name(),
-                transactionId
+                transactionId,
+                userId
         );
 
         /* preconditions */
@@ -641,7 +647,8 @@ class TransactionActivateHandlerTest {
                         ).toList()
                 ),
                 Transaction.ClientId.CHECKOUT.name(),
-                transactionId
+                transactionId,
+                userId
         );
 
         PaymentRequestInfo paymentRequestInfoCached = new PaymentRequestInfo(
@@ -711,7 +718,8 @@ class TransactionActivateHandlerTest {
                         ).toList()
                 ),
                 Transaction.ClientId.CHECKOUT.name(),
-                transactionId
+                transactionId,
+                userId
         );
 
         PaymentRequestInfo paymentRequestInfoBeforeActivation = new PaymentRequestInfo(
@@ -825,7 +833,8 @@ class TransactionActivateHandlerTest {
                         ).toList()
                 ),
                 Transaction.ClientId.CHECKOUT.name(),
-                transactionId
+                transactionId,
+                userId
         );
 
         PaymentRequestInfo paymentRequestInfoBeforeActivation = new PaymentRequestInfo(
@@ -939,7 +948,8 @@ class TransactionActivateHandlerTest {
                         ).toList()
                 ),
                 Transaction.ClientId.CHECKOUT.name(),
-                transactionId
+                transactionId,
+                userId
         );
 
         PaymentRequestInfo paymentRequestInfoActivation = new PaymentRequestInfo(

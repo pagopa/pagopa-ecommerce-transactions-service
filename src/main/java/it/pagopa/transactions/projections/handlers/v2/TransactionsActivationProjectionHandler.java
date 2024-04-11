@@ -59,7 +59,8 @@ public class TransactionsActivationProjectionHandler
                 clientId,
                 idCart,
                 paymentTokenValiditySeconds,
-                event.getData().getTransactionGatewayActivationData()
+                event.getData().getTransactionGatewayActivationData(),
+                event.getData().getUserId()
         );
 
         it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.v2.Transaction

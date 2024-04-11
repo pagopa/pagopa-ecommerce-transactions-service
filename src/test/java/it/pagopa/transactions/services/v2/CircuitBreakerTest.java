@@ -182,7 +182,8 @@ class CircuitBreakerTest {
                                 transactionRequestDto,
                                 clientIdDto,
                                 UUID.randomUUID(),
-                                new TransactionId(transactionActivatedEvent.getTransactionId())
+                                new TransactionId(transactionActivatedEvent.getTransactionId()),
+                                UUID.randomUUID()
                         )
                 )
                 .expectError(thrownException.getClass())
@@ -241,7 +242,8 @@ class CircuitBreakerTest {
                                 transactionRequestDto,
                                 clientIdDto,
                                 UUID.randomUUID(),
-                                new TransactionId(transactionActivatedEvent.getTransactionId())
+                                new TransactionId(transactionActivatedEvent.getTransactionId()),
+                                UUID.randomUUID()
                         )
                 )
                 .expectError(NodoErrorException.class)
@@ -296,7 +298,8 @@ class CircuitBreakerTest {
                                 transactionRequestDto,
                                 clientIdDto,
                                 UUID.randomUUID(),
-                                new TransactionId(transactionActivatedEvent.getTransactionId())
+                                new TransactionId(transactionActivatedEvent.getTransactionId()),
+                                UUID.randomUUID()
                         )
                 )
                 .expectError(CallNotPermittedException.class)

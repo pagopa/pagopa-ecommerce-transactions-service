@@ -44,7 +44,8 @@ import javax.crypto.SecretKey;
 import java.net.URI;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -118,7 +119,8 @@ class TransactionsControllerTest {
                                             newTransactionRequestDto,
                                             clientIdDto,
                                             UUID.randomUUID(),
-                                            transactionId
+                                            transactionId,
+                                            UUID.randomUUID()
                                     )
                     )
                     .thenReturn(Mono.just(response));
@@ -141,12 +143,24 @@ class TransactionsControllerTest {
                     );
 
             ResponseEntity<NewTransactionResponseDto> responseEntity = transactionsController
-                    .newTransaction(clientIdDto, UUID.randomUUID(), Mono.just(newTransactionRequestDto), mockExchange)
+                    .newTransaction(
+                            clientIdDto,
+                            UUID.randomUUID(),
+                            Mono.just(newTransactionRequestDto),
+                            UUID.randomUUID(),
+                            mockExchange
+                    )
                     .block();
 
             // Verify mock
             Mockito.verify(transactionsService, Mockito.times(1))
-                    .newTransaction(newTransactionRequestDto, clientIdDto, UUID.randomUUID(), transactionId);
+                    .newTransaction(
+                            newTransactionRequestDto,
+                            clientIdDto,
+                            UUID.randomUUID(),
+                            transactionId,
+                            UUID.randomUUID()
+                    );
 
             // Verify status code and response
             assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -611,7 +625,7 @@ class TransactionsControllerTest {
     void shouldHandleTransactionCreatedWithMailCaseInsensitive(String email) {
         Mockito.when(jwtTokenUtils.generateToken(any(SecretKey.class), anyInt(), any(Claims.class)))
                 .thenReturn(Either.right(""));
-        Mockito.when(transactionsService.newTransaction(any(), any(), any(), any()))
+        Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
                 .thenReturn(Mono.just(new NewTransactionResponseDto()));
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
                 .addPaymentNoticesItem(
@@ -637,7 +651,7 @@ class TransactionsControllerTest {
     void shouldReturnBadRequestForInvalidMail() {
         Mockito.when(jwtTokenUtils.generateToken(any(SecretKey.class), anyInt(), any(Claims.class)))
                 .thenReturn(Either.right(""));
-        Mockito.when(transactionsService.newTransaction(any(), any(), any(), any()))
+        Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
                 .thenReturn(Mono.just(new NewTransactionResponseDto()));
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
                 .addPaymentNoticesItem(
