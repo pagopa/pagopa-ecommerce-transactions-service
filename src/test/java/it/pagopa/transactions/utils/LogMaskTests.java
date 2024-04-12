@@ -90,6 +90,11 @@ class LogMaskTests {
                 );
         TransactionActivated transactionActivated = TransactionTestUtils
                 .transactionActivated(ZonedDateTime.now().toString());
+        PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
+                "VISA",
+                pan.substring(0, 6),
+                pan.substring(pan.length() - 4)
+        );
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transactionActivated.getTransactionId(),
                 transactionActivated.getPaymentNotices(),
@@ -105,9 +110,7 @@ class LogMaskTests {
                 "pspBusinessName",
                 false,
                 "XPAY",
-                Optional.empty(),
-                Optional.empty(),
-                "VISA",
+                paymentSessionData,
                 cardDetails,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
