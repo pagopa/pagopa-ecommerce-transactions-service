@@ -5,6 +5,7 @@ import it.pagopa.ecommerce.commons.domain.Email;
 import it.pagopa.ecommerce.commons.domain.PaymentNotice;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDetailsDto;
+import it.pagopa.transactions.utils.PaymentSessionData;
 
 import java.util.List;
 import java.util.Map;
@@ -28,9 +29,7 @@ public record AuthorizationRequestData(
         String pspBusinessName,
         Boolean pspOnUs,
         String paymentGatewayId,
-        Optional<String> sessionId,
-        Optional<String> contractId,
-        String brand,
+        PaymentSessionData paymentSessionData,
         RequestAuthorizationRequestDetailsDto authDetails,
 
         String asset,

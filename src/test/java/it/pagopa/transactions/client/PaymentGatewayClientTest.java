@@ -36,11 +36,7 @@ import it.pagopa.transactions.configurations.SecretsConfigurations;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
-import it.pagopa.transactions.exceptions.NpgNotRetryableErrorException;
-import it.pagopa.transactions.utils.ConfidentialMailUtils;
-import it.pagopa.transactions.utils.NpgNotificationUrlMatcher;
-import it.pagopa.transactions.utils.NpgOutcomeUrlMatcher;
-import it.pagopa.transactions.utils.UUIDUtils;
+import it.pagopa.transactions.utils.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -203,6 +199,13 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
+        PaymentSessionData.CardSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
+                "VISA",
+                UUID.randomUUID().toString(),
+                "0000",
+                "1234"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -218,9 +221,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "GID",
-                Optional.empty(),
-                Optional.empty(),
-                "VISA",
+                paymentSessionData,
                 Mockito.mock(RequestAuthorizationRequestDetailsDto.class),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -272,6 +273,12 @@ class PaymentGatewayClientTest {
                 .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
 
+        PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
+                "VISA",
+                "1658",
+                "4852"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -287,9 +294,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "XPAY",
-                Optional.empty(),
-                Optional.empty(),
-                "VISA",
+                paymentSessionData,
                 cardDetails,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -365,6 +370,13 @@ class PaymentGatewayClientTest {
                 .holderName("John Doe")
                 .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
+
+        PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
+                "VISA",
+                "1658",
+                "4852"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -380,9 +392,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "VPOS",
-                Optional.empty(),
-                Optional.empty(),
-                "VISA",
+                paymentSessionData,
                 cardDetails,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -461,6 +471,14 @@ class PaymentGatewayClientTest {
         );
         CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
                 .orderId(UUID.randomUUID().toString());
+
+        PaymentSessionData.CardSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
+                "VISA",
+                UUID.randomUUID().toString(),
+                "0000",
+                "1234"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -476,9 +494,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "NPG",
-                Optional.of(UUID.randomUUID().toString()),
-                Optional.empty(),
-                "VISA",
+                paymentSessionData,
                 cardDetails,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -493,7 +509,7 @@ class PaymentGatewayClientTest {
                 .expectNext(ngpStateResponse)
                 .verifyComplete();
         String expectedApiKey = npgPspApiKeysConfig.get(authorizationData.pspId()).get();
-        String expectedSessionId = authorizationData.sessionId().get();
+        String expectedSessionId = paymentSessionData.sessionId();
         BigDecimal expectedGranTotalAmount = BigDecimal.valueOf(
                 transaction
                         .getPaymentNotices()
@@ -538,6 +554,14 @@ class PaymentGatewayClientTest {
         );
         CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
                 .orderId(UUID.randomUUID().toString());
+
+        PaymentSessionData.CardSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
+                "VISA",
+                UUID.randomUUID().toString(),
+                "0000",
+                "1234"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -553,9 +577,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "NPG",
-                Optional.of(UUID.randomUUID().toString()),
-                Optional.empty(),
-                "VISA",
+                paymentSessionData,
                 cardDetails,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -627,6 +649,14 @@ class PaymentGatewayClientTest {
         );
         CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
                 .orderId(UUID.randomUUID().toString());
+
+        PaymentSessionData.CardSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
+                "VISA",
+                UUID.randomUUID().toString(),
+                "0000",
+                "1234"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -642,9 +672,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "NPG",
-                Optional.of(UUID.randomUUID().toString()),
-                Optional.empty(),
-                "VISA",
+                paymentSessionData,
                 cardDetails,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -705,6 +733,14 @@ class PaymentGatewayClientTest {
         );
         CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
                 .orderId(UUID.randomUUID().toString());
+
+        PaymentSessionData.CardSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
+                "VISA",
+                UUID.randomUUID().toString(),
+                "0000",
+                "1234"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -720,9 +756,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "NPG",
-                Optional.of(UUID.randomUUID().toString()),
-                Optional.empty(),
-                "VISA",
+                paymentSessionData,
                 cardDetails,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -788,6 +822,13 @@ class PaymentGatewayClientTest {
                 .expiryDate("203012")
                 .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
+
+        PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
+                "VISA",
+                "1658",
+                "4852"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -803,9 +844,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "XPAY",
-                Optional.empty(),
-                Optional.empty(),
-                "VISA",
+                paymentSessionData,
                 cardDetails,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -892,6 +931,13 @@ class PaymentGatewayClientTest {
                 .expiryDate("203012")
                 .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
+
+        PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
+                "VISA",
+                "1658",
+                "4852"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -907,9 +953,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "XPAY",
-                Optional.empty(),
-                Optional.empty(),
-                "VISA",
+                paymentSessionData,
                 cardDetails,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -990,6 +1034,13 @@ class PaymentGatewayClientTest {
                 .expiryDate("203012")
                 .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
+
+        PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
+                "VISA",
+                "1658",
+                "4852"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -1005,9 +1056,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "VPOS",
-                Optional.empty(),
-                Optional.empty(),
-                "VISA",
+                paymentSessionData,
                 cardDetails,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -1096,6 +1145,13 @@ class PaymentGatewayClientTest {
                 .expiryDate("203012")
                 .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
+
+        PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
+                "VISA",
+                "1658",
+                "4852"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -1111,9 +1167,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "XPAY",
-                Optional.empty(),
-                Optional.empty(),
-                "VISA",
+                paymentSessionData,
                 cardDetails,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -1188,6 +1242,13 @@ class PaymentGatewayClientTest {
                 .expiryDate("203012")
                 .brand(CardAuthRequestDetailsDto.BrandEnum.VISA)
                 .threeDsData("threeDsData");
+
+        PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
+                "VISA",
+                "1658",
+                "4852"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -1203,9 +1264,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "VPOS",
-                Optional.empty(),
-                Optional.empty(),
-                "VISA",
+                paymentSessionData,
                 cardDetails,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -1283,6 +1342,12 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
+        PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
+                "VISA",
+                "1658",
+                "4852"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -1298,9 +1363,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "XPAY",
-                Optional.empty(),
-                Optional.empty(),
-                "VISA",
+                paymentSessionData,
                 null,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -1343,6 +1406,12 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
 
+        PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
+                "VISA",
+                "1658",
+                "4852"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -1358,9 +1427,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "VPOS",
-                Optional.empty(),
-                Optional.empty(),
-                "VISA",
+                paymentSessionData,
                 null,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -1413,6 +1480,15 @@ class PaymentGatewayClientTest {
         );
         WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
                 .walletId(walletId);
+
+        PaymentSessionData paymentSessionData = new PaymentSessionData.WalletCardSessionData(
+                "VISA",
+                Optional.empty(),
+                "0000",
+                "1234",
+                contractId
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -1428,9 +1504,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "NPG",
-                Optional.empty(),
-                Optional.of(contractId),
-                "VISA",
+                paymentSessionData,
                 walletDetails,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -1577,6 +1651,15 @@ class PaymentGatewayClientTest {
         );
         WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
                 .walletId(walletId);
+
+        PaymentSessionData paymentSessionData = new PaymentSessionData.WalletCardSessionData(
+                "VISA",
+                Optional.empty(),
+                "0000",
+                "1234",
+                contractId
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -1592,9 +1675,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "NPG",
-                Optional.empty(),
-                Optional.of(contractId),
-                "VISA",
+                paymentSessionData,
                 walletDetails,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -1690,6 +1771,15 @@ class PaymentGatewayClientTest {
         );
         WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
                 .walletId(walletId);
+
+        PaymentSessionData paymentSessionData = new PaymentSessionData.WalletCardSessionData(
+                "VISA",
+                Optional.empty(),
+                "0000",
+                "1234",
+                contractId
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -1705,9 +1795,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "NPG",
-                Optional.empty(),
-                Optional.of(contractId),
-                "VISA",
+                paymentSessionData,
                 walletDetails,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -1792,6 +1880,15 @@ class PaymentGatewayClientTest {
         );
         WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
                 .walletId(walletId);
+
+        PaymentSessionData paymentSessionData = new PaymentSessionData.WalletCardSessionData(
+                "VISA",
+                Optional.empty(),
+                "0000",
+                "1234",
+                contractId
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -1807,9 +1904,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "NPG",
-                Optional.empty(),
-                Optional.of(contractId),
-                "VISA",
+                paymentSessionData,
                 walletDetails,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -1895,6 +1990,15 @@ class PaymentGatewayClientTest {
         );
         WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
                 .walletId(walletId);
+
+        PaymentSessionData paymentSessionData = new PaymentSessionData.WalletCardSessionData(
+                "VISA",
+                Optional.empty(),
+                "0000",
+                "1234",
+                contractId
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -1910,9 +2014,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "NPG",
-                Optional.empty(),
-                Optional.of(contractId),
-                "VISA",
+                paymentSessionData,
                 walletDetails,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -2041,7 +2143,7 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldReturnBuildSessionResponseForWalletWithNpgForWalletApmMethod() {
+    void shouldReturnBuildSessionResponseForWalletWithNpgForWalletPayPalMethod() {
         String walletId = UUID.randomUUID().toString();
         String orderId = "orderIdGenerated";
         String sessionId = "sessionId";
@@ -2071,6 +2173,12 @@ class PaymentGatewayClientTest {
         );
         WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
                 .walletId(walletId);
+
+        PaymentSessionData paymentSessionData = new PaymentSessionData.WalletPayPalSessionData(
+                contractId,
+                "maskedEmail"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -2086,9 +2194,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "NPG",
-                Optional.empty(),
-                Optional.of(contractId),
-                "VISA",
+                paymentSessionData,
                 walletDetails,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -2206,7 +2312,7 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldThrowErrorForWalletWithNpgForGenericApmMethodAndMissingKey() {
+    void shouldThrowErrorForWalletWithNpgForPayPalAndMissingKey() {
         String walletId = UUID.randomUUID().toString();
         String orderId = "orderIdGenerated";
         String sessionId = "sessionId";
@@ -2236,6 +2342,12 @@ class PaymentGatewayClientTest {
         );
         WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
                 .walletId(walletId);
+
+        PaymentSessionData paymentSessionData = new PaymentSessionData.WalletPayPalSessionData(
+                contractId,
+                "maskedEmail"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -2251,9 +2363,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "NPG",
-                Optional.empty(),
-                Optional.of(contractId),
-                "VISA",
+                paymentSessionData,
                 walletDetails,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -2379,6 +2489,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
         );
         ApmAuthRequestDetailsDto apmDetails = new ApmAuthRequestDetailsDto();
+
+        PaymentSessionData paymentSessionData = new PaymentSessionData.ApmSessionData(
+                "BANCOMATPAY"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -2394,9 +2509,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "NPG",
-                Optional.empty(),
-                Optional.empty(),
-                "VISA",
+                paymentSessionData,
                 apmDetails,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -2528,6 +2641,9 @@ class PaymentGatewayClientTest {
         String pspId = "pspId";
         it.pagopa.ecommerce.commons.domain.v2.TransactionActivated transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
                 .transactionActivated(ZonedDateTime.now().toString());
+
+        PaymentSessionData paymentSessionData = new PaymentSessionData.RedirectSessionData();
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -2543,9 +2659,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "REDIRECT",
-                Optional.empty(),
-                Optional.empty(),
-                "N/A",
+                paymentSessionData,
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -2683,6 +2797,9 @@ class PaymentGatewayClientTest {
                 new EmptyTransactionGatewayActivationData(),
                 USER_ID
         );
+
+        PaymentSessionData paymentSessionData = new PaymentSessionData.RedirectSessionData();
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -2698,9 +2815,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "REDIRECT",
-                Optional.empty(),
-                Optional.empty(),
-                "N/A",
+                paymentSessionData,
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -2800,6 +2915,9 @@ class PaymentGatewayClientTest {
     ) {
         String pspId = "pspId";
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
+
+        PaymentSessionData paymentSessionData = new PaymentSessionData.RedirectSessionData();
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -2815,9 +2933,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "REDIRECT",
-                Optional.empty(),
-                Optional.empty(),
-                "N/A",
+                paymentSessionData,
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -2906,6 +3022,9 @@ class PaymentGatewayClientTest {
     void shouldHandleErrorRetrievingRedirectionUrlWithGenericException() {
         String pspId = "pspId";
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
+
+        PaymentSessionData paymentSessionData = new PaymentSessionData.RedirectSessionData();
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -2921,9 +3040,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "REDIRECT",
-                Optional.empty(),
-                Optional.empty(),
-                "N/A",
+                paymentSessionData,
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -3004,6 +3121,9 @@ class PaymentGatewayClientTest {
     @Test
     void shouldReturnErrorDuringRedirectPaymentTransactionForInvalidPspURL() {
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
+
+        PaymentSessionData paymentSessionData = new PaymentSessionData.RedirectSessionData();
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -3019,9 +3139,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "REDIRECT",
-                Optional.empty(),
-                Optional.empty(),
-                "N/A",
+                paymentSessionData,
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -3066,6 +3184,9 @@ class PaymentGatewayClientTest {
     void shouldReturnErrorDuringRedirectPaymentTransactionForUnmanagedPaymentTypeCode() {
         String pspId = "pspId";
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
+
+        PaymentSessionData paymentSessionData = new PaymentSessionData.RedirectSessionData();
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -3081,9 +3202,7 @@ class PaymentGatewayClientTest {
                 "pspBusinessName",
                 false,
                 "REDIRECT",
-                Optional.empty(),
-                Optional.empty(),
-                "N/A",
+                paymentSessionData,
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))

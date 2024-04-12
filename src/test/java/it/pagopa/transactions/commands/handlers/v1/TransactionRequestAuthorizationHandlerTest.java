@@ -24,6 +24,7 @@ import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import it.pagopa.transactions.utils.PaymentSessionData;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.apache.commons.codec.binary.Base64;
 import org.junit.jupiter.api.AfterAll;
@@ -168,6 +169,12 @@ class TransactionRequestAuthorizationHandlerTest {
                 .pspId("PSP_CODE")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
+        PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
+                "VISA",
+                "0000",
+                "1234"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -183,9 +190,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 "pspBusinessName",
                 false,
                 "XPAY",
-                Optional.empty(),
-                Optional.empty(),
-                "VISA",
+                paymentSessionData,
                 new CardAuthRequestDetailsDto().brand(CardAuthRequestDetailsDto.BrandEnum.VISA),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -255,6 +260,13 @@ class TransactionRequestAuthorizationHandlerTest {
                 .pspId("PSP_CODE")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
+        PaymentSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
+                "VISA",
+                UUID.randomUUID().toString(),
+                "0000",
+                "1234"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -270,10 +282,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 "pspBusinessName",
                 false,
                 "NPG",
-                Optional.of(UUID.randomUUID().toString()),
-                Optional.empty(),
-
-                "VISA",
+                paymentSessionData,
                 new CardsAuthRequestDetailsDto().orderId("orderId"),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -361,6 +370,13 @@ class TransactionRequestAuthorizationHandlerTest {
                 .pspId("PSP_CODE")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
+        PaymentSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
+                "VISA",
+                UUID.randomUUID().toString(),
+                "0000",
+                "1234"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -376,9 +392,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 "pspBusinessName",
                 false,
                 "NPG",
-                Optional.of(UUID.randomUUID().toString()),
-                Optional.empty(),
-                "VISA",
+                paymentSessionData,
                 new CardsAuthRequestDetailsDto().orderId("orderId"),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -466,6 +480,13 @@ class TransactionRequestAuthorizationHandlerTest {
                 .pspId("PSP_CODE")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
+        PaymentSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
+                "VISA",
+                UUID.randomUUID().toString(),
+                "0000",
+                "1234"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -481,9 +502,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 "pspBusinessName",
                 false,
                 "NPG",
-                Optional.of(UUID.randomUUID().toString()),
-                Optional.empty(),
-                "VISA",
+                paymentSessionData,
                 new CardsAuthRequestDetailsDto().orderId("orderId"),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -576,6 +595,13 @@ class TransactionRequestAuthorizationHandlerTest {
                 .pspId("PSP_CODE")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
+        PaymentSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
+                "VISA",
+                UUID.randomUUID().toString(),
+                "0000",
+                "1234"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -591,9 +617,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 "pspBusinessName",
                 false,
                 "NPG",
-                Optional.of(UUID.randomUUID().toString()),
-                Optional.empty(),
-                "VISA",
+                paymentSessionData,
                 new CardsAuthRequestDetailsDto().orderId("orderId"),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -674,6 +698,13 @@ class TransactionRequestAuthorizationHandlerTest {
                 .pspId("PSP_CODE")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
+        PaymentSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
+                "VISA",
+                UUID.randomUUID().toString(),
+                "0000",
+                "1234"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -689,9 +720,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 "pspBusinessName",
                 false,
                 null,
-                Optional.empty(),
-                Optional.empty(),
-                "VISA",
+                paymentSessionData,
                 null,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -760,6 +789,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 .pspId("VPOS")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
+        PaymentSessionData paymentSessionData = new PaymentSessionData.RedirectSessionData();
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -774,10 +805,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "paymentMethodDescription",
                 "pspBusinessName",
                 false,
-                "GPAY",
-                Optional.empty(),
-                Optional.empty(),
-                "VISA",
+                "BAD_PAY",
+                paymentSessionData,
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -850,6 +879,13 @@ class TransactionRequestAuthorizationHandlerTest {
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
+
+        PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
+                "VISA",
+                "0000",
+                "1234"
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -865,12 +901,10 @@ class TransactionRequestAuthorizationHandlerTest {
                 "pspBusinessName",
                 false,
                 "VPOS",
-                Optional.empty(),
-                Optional.empty(),
-                "VISA",
+                paymentSessionData,
                 new CardAuthRequestDetailsDto()
                         .cvv("000")
-                        .pan("123")
+                        .pan("00001234")
                         .threeDsData("threeDsData")
                         .expiryDate("209912")
                         .brand(CardAuthRequestDetailsDto.BrandEnum.fromValue(brand))
@@ -953,6 +987,14 @@ class TransactionRequestAuthorizationHandlerTest {
                 .pspId("PSP_CODE")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
+        PaymentSessionData paymentSessionData = new PaymentSessionData.WalletCardSessionData(
+                "VISA",
+                Optional.empty(),
+                "0000",
+                "1234",
+                contractId
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -968,12 +1010,18 @@ class TransactionRequestAuthorizationHandlerTest {
                 "pspBusinessName",
                 false,
                 "NPG",
-                Optional.empty(),
-                Optional.of(contractId),
-                "VISA",
+                paymentSessionData,
                 new WalletAuthRequestDetailsDto().detailType("wallet").walletId(walletId),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
+        );
+
+        PaymentSessionData paymentSessionDataAfterBuildSession = new PaymentSessionData.WalletCardSessionData(
+                "VISA",
+                Optional.of(sessionId),
+                "0000",
+                "1234",
+                contractId
         );
 
         AuthorizationRequestData authorizationDataAfterBuildSession = new AuthorizationRequestData(
@@ -991,9 +1039,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 "pspBusinessName",
                 false,
                 "NPG",
-                Optional.of(sessionId),
-                Optional.of(contractId),
-                "VISA",
+                paymentSessionDataAfterBuildSession,
                 new WalletAuthRequestDetailsDto().detailType("wallet").walletId(walletId),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
