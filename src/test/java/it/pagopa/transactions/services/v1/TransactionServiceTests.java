@@ -33,10 +33,7 @@ import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import it.pagopa.transactions.utils.AuthRequestDataUtils;
-import it.pagopa.transactions.utils.TransactionsUtils;
-import it.pagopa.transactions.utils.UUIDUtils;
-import it.pagopa.transactions.utils.UpdateTransactionStatusTracerUtils;
+import it.pagopa.transactions.utils.*;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -2098,9 +2095,13 @@ class TransactionServiceTests {
                 walletClient.getWalletInfo(walletId)
         ).thenReturn(
                 Mono.just(
-                        new WalletAuthDataDto().walletId(UUID.fromString(walletId)).brand("VISA")
+                        new WalletAuthDataDto()
+                                .walletId(UUID.fromString(walletId))
+                                .brand("VISA")
                                 .contractId(contractId)
-                                .paymentMethodData(new WalletAuthCardDataDto().bin("bin"))
+                                .paymentMethodData(
+                                        new WalletAuthCardDataDto().bin("bin").lastFourDigits("lastFourDigits")
+                                )
                 )
         );
 
@@ -2129,8 +2130,10 @@ class TransactionServiceTests {
                 .verifyComplete();
 
         AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
-        assertEquals(Optional.empty(), captureData.sessionId());
-        assertEquals(contractId, captureData.contractId().get());
+        PaymentSessionData.WalletCardSessionData walletCardSessionData = (PaymentSessionData.WalletCardSessionData) captureData
+                .paymentSessionData();
+        assertEquals(Optional.empty(), walletCardSessionData.sessionId());
+        assertEquals(contractId, walletCardSessionData.contractId());
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
         assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
         // verify that cache delete is called for each payment notice
@@ -2223,9 +2226,9 @@ class TransactionServiceTests {
                 .verifyComplete();
 
         AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
-        assertEquals(Optional.empty(), captureData.sessionId());
-        assertEquals(Optional.empty(), captureData.contractId());
-        assertEquals(paymentMethod.getName(), captureData.brand());
+        PaymentSessionData.ApmSessionData apmSessionData = (PaymentSessionData.ApmSessionData) captureData
+                .paymentSessionData();
+        assertEquals(paymentMethod.getName(), apmSessionData.brand());
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
         assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
         // verify that cache delete is called for each payment notice
@@ -2327,9 +2330,9 @@ class TransactionServiceTests {
                 .verifyComplete();
 
         AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
-        assertEquals(Optional.empty(), captureData.sessionId());
-        assertEquals(Optional.empty(), captureData.contractId());
-        assertEquals("N/A", captureData.brand());
+        PaymentSessionData.RedirectSessionData redirectSessionData = (PaymentSessionData.RedirectSessionData) captureData
+                .paymentSessionData();
+        assertEquals("N/A", redirectSessionData.brand());
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
         assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
         // verify that cache delete is called for each payment notice

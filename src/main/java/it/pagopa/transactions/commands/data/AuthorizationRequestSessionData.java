@@ -1,6 +1,7 @@
 package it.pagopa.transactions.commands.data;
 
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.BundleDto;
+import it.pagopa.transactions.utils.PaymentSessionData;
 
 import java.util.Map;
 import java.util.Optional;
@@ -13,20 +14,15 @@ import java.util.Optional;
  * @param paymentMethodDescription the payment method description string
  * @param bundle                   the gec bundle matching the authorization
  *                                 request psp
- * @param npgSessionId             the NPG session id
- * @param brand                    the brand associated to the payment method
- * @param npgContractId            the NPG contract id
+ * @param paymentSessionData       data about the specific payment method and
+ *                                 authorization (e.g. wallet, card, apm)
  */
 public record AuthorizationRequestSessionData(
         String paymentMethodName,
         String paymentMethodDescription,
         Optional<BundleDto> bundle,
-        String brand,
-        Optional<String> npgSessionId,
-        Optional<String> npgContractId,
-
+        PaymentSessionData paymentSessionData,
         String asset,
-
         Map<String, String> brandAssets
 ) {
 }

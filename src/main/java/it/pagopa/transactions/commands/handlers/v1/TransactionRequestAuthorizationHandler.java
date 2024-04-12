@@ -111,7 +111,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                     AuthorizationOutput authorizationOutput = authorizationOutputAndGateway.getT1();
                                     PaymentGateway paymentGateway = authorizationOutputAndGateway.getT2();
                                     TransactionAuthorizationRequestData.CardBrand cardBrand = TransactionAuthorizationRequestData.CardBrand
-                                            .valueOf(authorizationRequestData.brand());
+                                            .valueOf(authorizationRequestData.paymentSessionData().brand());
                                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                                             t.getTransactionId().value(),
                                             new it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData(
