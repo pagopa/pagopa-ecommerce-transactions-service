@@ -14,6 +14,7 @@ import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedi
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.*;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.generated.wallet.v1.dto.WalletAuthCardDataDto;
+import it.pagopa.generated.wallet.v1.dto.WalletAuthPayPalDataDto;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.WalletClient;
 import it.pagopa.transactions.commands.*;
@@ -1302,31 +1303,47 @@ public class TransactionsService {
     private Mono<PaymentSessionData> retrieveInformationFromAuthorizationRequest(RequestAuthorizationRequestDto requestAuthorizationRequestDto, String clientId) {
         return switch (requestAuthorizationRequestDto.getDetails()) {
             case CardAuthRequestDetailsDto cardData ->
-                    Mono.just(new PaymentSessionData(cardData.getPan().substring(0, 6), null, Optional.of(cardData.getBrand()).map(Enum::toString).orElse(null), null));
+                    Mono.just(new PaymentSessionData(cardData.getPan().substring(0, 6), cardData.getPan().substring(cardData.getPan().length() - 4), null, Optional.of(cardData.getBrand()).map(Enum::toString).orElse(null), null, null));
             case CardsAuthRequestDetailsDto cards ->
-                    ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId()).map(response -> new PaymentSessionData(response.getBin(), response.getSessionId(), response.getBrand(), null));
+                    ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId()).map(response -> new PaymentSessionData(response.getBin(), null, response.getSessionId(), response.getBrand(), null, null));
             case WalletAuthRequestDetailsDto wallet -> walletClient
                     .getWalletInfo(wallet.getWalletId())
                     .map(walletAuthDataDto -> {
                         String bin = null;
-                        if (walletAuthDataDto.getPaymentMethodData() instanceof WalletAuthCardDataDto cardsData) {
-                            bin = cardsData.getBin();
+                        String lastFourDigits = null;
+                        String paypalMaskedEmail = null;
+
+                        switch (walletAuthDataDto.getPaymentMethodData()) {
+                            case WalletAuthCardDataDto cardsData -> {
+                                bin = cardsData.getBin();
+                                lastFourDigits = cardsData.getLastFourDigits();
+                            }
+                            case WalletAuthPayPalDataDto payPalData -> {
+                                paypalMaskedEmail = payPalData.getMaskedEmail();
+                            }
+                            default ->
+                                    throw new InvalidRequestException("Illegal value for wallet payment method data! " + walletAuthDataDto.getClass());
                         }
                         return new PaymentSessionData(
                                 bin,
+                                lastFourDigits,
                                 null,
                                 walletAuthDataDto.getBrand(),
-                                walletAuthDataDto.getContractId());
+                                walletAuthDataDto.getContractId(),
+                                paypalMaskedEmail
+                        );
                     });
             case ApmAuthRequestDetailsDto ignore ->
                     ecommercePaymentMethodsClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(response -> new PaymentSessionData(null, null, response.getName(), null));
             case RedirectionAuthRequestDetailsDto ignored -> Mono.just(new PaymentSessionData(
                     null,
                     null,
+                    null,
                     "N/A",//TODO handle this value for Nodo close payment
+                    null,
                     null
             ));
-            default -> Mono.just(new PaymentSessionData(null, null, null, null));
+            default -> Mono.just(new PaymentSessionData(null, null, null, null, null, null));
         };
     }
 
