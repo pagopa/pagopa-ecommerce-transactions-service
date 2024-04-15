@@ -433,6 +433,8 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
 
                                     Optional<String> sessionId = switch (authorizationData.paymentSessionData()) {
                                         case PaymentSessionData.CardSessionData cardSessionData -> Optional.of(cardSessionData.sessionId());
+                                        case PaymentSessionData.WalletCardSessionData walletCardSessionData -> walletCardSessionData.sessionId();
+
                                         default -> Optional.empty();
                                     };
 
