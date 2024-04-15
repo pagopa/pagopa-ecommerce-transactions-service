@@ -519,7 +519,7 @@ class TransactionServiceTests {
                 ecommercePaymentMethodsClient.retrieveCardData(authorizationRequest.getPaymentInstrumentId(), orderId)
         ).thenReturn(
                 Mono.just(
-                        new SessionPaymentMethodResponseDto().bin("bin").brand("VISA").sessionId("sessionId")
+                        new SessionPaymentMethodResponseDto().bin("0000").brand("VISA").sessionId("sessionId")
                                 .expiringDate("0226").lastFourDigits("1234")
                 )
         );
@@ -2100,7 +2100,7 @@ class TransactionServiceTests {
                                 .brand("VISA")
                                 .contractId(contractId)
                                 .paymentMethodData(
-                                        new WalletAuthCardDataDto().bin("bin").lastFourDigits("lastFourDigits")
+                                        new WalletAuthCardDataDto().bin("0000").lastFourDigits("1234")
                                 )
                 )
         );
@@ -2243,7 +2243,8 @@ class TransactionServiceTests {
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
                 .amount(100)
                 .paymentInstrumentId("paymentInstrumentId")
-                .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT)
+                .fee(200)
                 .pspId("PSP_CODE")
                 .isAllCCP(false)
                 .details(

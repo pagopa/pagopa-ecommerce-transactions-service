@@ -1,5 +1,8 @@
 package it.pagopa.transactions.utils;
 
+import it.pagopa.ecommerce.commons.domain.BIN;
+import it.pagopa.ecommerce.commons.domain.CardLastFourDigits;
+
 import javax.annotation.Nonnull;
 import java.util.Objects;
 import java.util.Optional;
@@ -11,8 +14,8 @@ public sealed interface PaymentSessionData permits PaymentSessionData.ApmSession
 
     record PgsCardSessionData(
             @Nonnull String brand,
-            @Nonnull String cardBin,
-            @Nonnull String lastFourDigits
+            @Nonnull BIN cardBin,
+            @Nonnull CardLastFourDigits lastFourDigits
     )
             implements
             PaymentSessionData {
@@ -20,17 +23,14 @@ public sealed interface PaymentSessionData permits PaymentSessionData.ApmSession
             Objects.requireNonNull(brand);
             Objects.requireNonNull(cardBin);
             Objects.requireNonNull(lastFourDigits);
-
-            validateCardBin(cardBin);
-            validateLastFourDigits(lastFourDigits);
         }
     }
 
     record CardSessionData(
             @Nonnull String brand,
             @Nonnull String sessionId,
-            @Nonnull String cardBin,
-            @Nonnull String lastFourDigits
+            @Nonnull BIN cardBin,
+            @Nonnull CardLastFourDigits lastFourDigits
     )
             implements
             PaymentSessionData {
@@ -39,9 +39,6 @@ public sealed interface PaymentSessionData permits PaymentSessionData.ApmSession
             Objects.requireNonNull(sessionId);
             Objects.requireNonNull(cardBin);
             Objects.requireNonNull(lastFourDigits);
-
-            validateCardBin(cardBin);
-            validateLastFourDigits(lastFourDigits);
         }
     }
 
@@ -58,8 +55,8 @@ public sealed interface PaymentSessionData permits PaymentSessionData.ApmSession
     record WalletCardSessionData(
             @Nonnull String brand,
             @Nonnull Optional<String> sessionId,
-            @Nonnull String cardBin,
-            @Nonnull String lastFourDigits,
+            @Nonnull BIN cardBin,
+            @Nonnull CardLastFourDigits lastFourDigits,
             @Nonnull String contractId
     )
             implements
@@ -70,9 +67,6 @@ public sealed interface PaymentSessionData permits PaymentSessionData.ApmSession
             Objects.requireNonNull(cardBin);
             Objects.requireNonNull(lastFourDigits);
             Objects.requireNonNull(contractId);
-
-            validateCardBin(cardBin);
-            validateLastFourDigits(lastFourDigits);
         }
     }
 
@@ -101,18 +95,6 @@ public sealed interface PaymentSessionData permits PaymentSessionData.ApmSession
         @Override
         public String brand() {
             return "N/A";
-        }
-    }
-
-    static void validateCardBin(String cardBin) {
-        if (cardBin.length() > 8 || cardBin.length() < 6) {
-            throw new IllegalArgumentException("Invalid card bin of length " + cardBin.length());
-        }
-    }
-
-    static void validateLastFourDigits(String lastFourDigits) {
-        if (lastFourDigits.length() != 4) {
-            throw new IllegalArgumentException("Invalid last four digits of length " + lastFourDigits.length());
         }
     }
 }

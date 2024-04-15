@@ -186,8 +186,8 @@ class PaymentGatewayClientTest {
         PaymentSessionData.CardSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "VISA",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -258,8 +258,8 @@ class PaymentGatewayClientTest {
 
         PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
                 "VISA",
-                "1658",
-                "4852"
+                new BIN("1658"),
+                new CardLastFourDigits("4852")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -355,8 +355,8 @@ class PaymentGatewayClientTest {
 
         PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
                 "VISA",
-                "1658",
-                "4852"
+                new BIN("1658"),
+                new CardLastFourDigits("4852")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -456,8 +456,8 @@ class PaymentGatewayClientTest {
         PaymentSessionData.CardSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "VISA",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -531,8 +531,8 @@ class PaymentGatewayClientTest {
         PaymentSessionData.CardSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "VISA",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -617,8 +617,8 @@ class PaymentGatewayClientTest {
         PaymentSessionData.CardSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "VISA",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -700,8 +700,8 @@ class PaymentGatewayClientTest {
         PaymentSessionData.CardSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "VISA",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -787,8 +787,8 @@ class PaymentGatewayClientTest {
 
         PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
                 "VISA",
-                "1658",
-                "4852"
+                new BIN("1658"),
+                new CardLastFourDigits("4852")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -895,8 +895,8 @@ class PaymentGatewayClientTest {
 
         PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
                 "VISA",
-                "1658",
-                "4852"
+                new BIN("1658"),
+                new CardLastFourDigits("4852")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -997,8 +997,8 @@ class PaymentGatewayClientTest {
 
         PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
                 "VISA",
-                "1658",
-                "4852"
+                new BIN("1658"),
+                new CardLastFourDigits("4852")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -1107,8 +1107,8 @@ class PaymentGatewayClientTest {
 
         PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
                 "VISA",
-                "1658",
-                "4852"
+                new BIN("1658"),
+                new CardLastFourDigits("4852")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -1203,8 +1203,8 @@ class PaymentGatewayClientTest {
 
         PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
                 "VISA",
-                "1658",
-                "4852"
+                new BIN("1658"),
+                new CardLastFourDigits("4852")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -1301,8 +1301,8 @@ class PaymentGatewayClientTest {
 
         PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
                 "VISA",
-                "1658",
-                "4852"
+                new BIN("1658"),
+                new CardLastFourDigits("4852")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -1364,8 +1364,8 @@ class PaymentGatewayClientTest {
 
         PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
                 "VISA",
-                "1658",
-                "4852"
+                new BIN("1658"),
+                new CardLastFourDigits("4852")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -1438,8 +1438,8 @@ class PaymentGatewayClientTest {
         PaymentSessionData paymentSessionData = new PaymentSessionData.WalletCardSessionData(
                 "VISA",
                 Optional.empty(),
-                "0000",
-                "1234",
+                new BIN("0000"),
+                new CardLastFourDigits("1234"),
                 contractId
         );
 
@@ -1594,8 +1594,8 @@ class PaymentGatewayClientTest {
         PaymentSessionData paymentSessionData = new PaymentSessionData.WalletCardSessionData(
                 "VISA",
                 Optional.empty(),
-                "0000",
-                "1234",
+                new BIN("0000"),
+                new CardLastFourDigits("1234"),
                 contractId
         );
 
@@ -1703,8 +1703,8 @@ class PaymentGatewayClientTest {
         PaymentSessionData paymentSessionData = new PaymentSessionData.WalletCardSessionData(
                 "VISA",
                 Optional.empty(),
-                "0000",
-                "1234",
+                new BIN("0000"),
+                new CardLastFourDigits("1234"),
                 contractId
         );
 
@@ -1809,8 +1809,8 @@ class PaymentGatewayClientTest {
         PaymentSessionData paymentSessionData = new PaymentSessionData.WalletCardSessionData(
                 "VISA",
                 Optional.empty(),
-                "0000",
-                "1234",
+                new BIN("0000"),
+                new CardLastFourDigits("1234"),
                 contractId
         );
 
@@ -1916,8 +1916,8 @@ class PaymentGatewayClientTest {
         PaymentSessionData paymentSessionData = new PaymentSessionData.WalletCardSessionData(
                 "VISA",
                 Optional.empty(),
-                "0000",
-                "1234",
+                new BIN("0000"),
+                new CardLastFourDigits("1234"),
                 contractId
         );
 
