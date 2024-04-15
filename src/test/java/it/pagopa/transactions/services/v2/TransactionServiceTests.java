@@ -599,7 +599,7 @@ class TransactionServiceTests {
                 ecommercePaymentMethodsClient.retrieveCardData(authorizationRequest.getPaymentInstrumentId(), orderId)
         ).thenReturn(
                 Mono.just(
-                        new SessionPaymentMethodResponseDto().bin("bin").brand("VISA").sessionId("sessionId")
+                        new SessionPaymentMethodResponseDto().bin("0000").brand("VISA").sessionId("sessionId")
                                 .expiringDate("0226").lastFourDigits("1234")
                 )
         );

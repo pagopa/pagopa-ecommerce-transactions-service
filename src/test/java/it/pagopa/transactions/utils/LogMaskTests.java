@@ -1,5 +1,7 @@
 package it.pagopa.transactions.utils;
 
+import it.pagopa.ecommerce.commons.domain.BIN;
+import it.pagopa.ecommerce.commons.domain.CardLastFourDigits;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
@@ -92,8 +94,8 @@ class LogMaskTests {
                 .transactionActivated(ZonedDateTime.now().toString());
         PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
                 "VISA",
-                pan.substring(0, 6),
-                pan.substring(pan.length() - 4)
+                new BIN(pan.substring(0, 6)),
+                new CardLastFourDigits(pan.substring(pan.length() - 4))
         );
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transactionActivated.getTransactionId(),

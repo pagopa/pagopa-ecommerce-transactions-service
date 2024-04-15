@@ -505,10 +505,10 @@ public class TransactionsService {
                                             paymentSessionData -> {
                                                 String cardBin = switch (paymentSessionData) {
                                                     case PaymentSessionData.CardSessionData cardSessionData ->
-                                                            cardSessionData.cardBin();
-                                                    case PaymentSessionData.PgsCardSessionData cardSessionData -> cardSessionData.cardBin();
+                                                            cardSessionData.cardBin().value();
+                                                    case PaymentSessionData.PgsCardSessionData cardSessionData -> cardSessionData.cardBin().value();
                                                     case PaymentSessionData.WalletCardSessionData cardSessionData ->
-                                                            cardSessionData.cardBin();
+                                                            cardSessionData.cardBin().value();
                                                     default -> null;
                                                 };
 
@@ -1318,18 +1318,35 @@ public class TransactionsService {
 
     private Mono<PaymentSessionData> retrieveInformationFromAuthorizationRequest(RequestAuthorizationRequestDto requestAuthorizationRequestDto, String clientId) {
         return switch (requestAuthorizationRequestDto.getDetails()) {
-            case CardAuthRequestDetailsDto cardData ->
-                    Mono.just(new PaymentSessionData.PgsCardSessionData(Optional.of(cardData.getBrand()).map(Enum::toString).orElse(null), cardData.getPan().substring(0, 6), cardData.getPan().substring(cardData.getPan().length() - 4)));
+            case CardAuthRequestDetailsDto cardData -> {
+                BIN bin = new BIN(cardData.getPan().substring(0, 6));
+                CardLastFourDigits lastFourDigits = new CardLastFourDigits(cardData.getPan().substring(cardData.getPan().length() - 4));
+                yield Mono.just(
+                        new PaymentSessionData.PgsCardSessionData(
+                                Optional.of(cardData.getBrand()).map(Enum::toString).orElse(null),
+                                bin,
+                                lastFourDigits
+                        )
+                );
+            }
             case CardsAuthRequestDetailsDto cards ->
-                    ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId()).map(response -> new PaymentSessionData.CardSessionData(response.getBrand(), response.getSessionId(), response.getBin(), response.getLastFourDigits()));
+                    ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId())
+                            .map(response ->
+                                    new PaymentSessionData.CardSessionData(
+                                            response.getBrand(),
+                                            response.getSessionId(),
+                                            new BIN(response.getBin()),
+                                            new CardLastFourDigits(response.getLastFourDigits())
+                                    )
+                            );
             case WalletAuthRequestDetailsDto wallet -> walletClient
                     .getWalletInfo(wallet.getWalletId())
                     .map(walletAuthDataDto -> switch (walletAuthDataDto.getPaymentMethodData()) {
                         case WalletAuthCardDataDto cardsData -> new PaymentSessionData.WalletCardSessionData(
                                 walletAuthDataDto.getBrand(),
                                 Optional.empty(),
-                                cardsData.getBin(),
-                                cardsData.getLastFourDigits(),
+                                new BIN(cardsData.getBin()),
+                                new CardLastFourDigits(cardsData.getLastFourDigits()),
                                 walletAuthDataDto.getContractId()
                         );
                         case WalletAuthPayPalDataDto payPalData ->

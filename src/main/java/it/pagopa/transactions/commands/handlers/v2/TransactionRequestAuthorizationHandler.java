@@ -228,8 +228,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                 case WalletAuthRequestDetailsDto walletDetails -> {
                                                     WalletInfo.WalletDetails walletInfoDetails = switch (command.getData().paymentSessionData()) {
                                                         case PaymentSessionData.WalletCardSessionData walletCardSessionData -> new WalletInfo.CardWalletDetails(
-                                                                walletCardSessionData.cardBin(),
-                                                                walletCardSessionData.lastFourDigits()
+                                                                walletCardSessionData.cardBin().value(),
+                                                                walletCardSessionData.lastFourDigits().value()
                                                         );
                                                         case PaymentSessionData.WalletPayPalSessionData walletPayPalSessionData -> new WalletInfo.PaypalWalletDetails(
                                                                 walletPayPalSessionData.maskedEmail()

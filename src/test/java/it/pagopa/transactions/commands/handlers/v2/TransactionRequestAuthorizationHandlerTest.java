@@ -219,8 +219,8 @@ class TransactionRequestAuthorizationHandlerTest {
 
         PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
                 "VISA",
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -317,8 +317,8 @@ class TransactionRequestAuthorizationHandlerTest {
 
         PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
                 "VISA",
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -419,8 +419,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData.CardSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "VISA",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -557,8 +557,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData.CardSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "VISA",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -646,7 +646,7 @@ class TransactionRequestAuthorizationHandlerTest {
         NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = (NpgTransactionGatewayAuthorizationRequestedData) savedEvent
                 .getData().getTransactionGatewayAuthorizationRequestedData();
         assertEquals(
-                authorizationData.sessionId().get(),
+                paymentSessionData.sessionId(),
                 npgTransactionGatewayAuthorizationRequestedData.getSessionId()
         );
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
@@ -697,6 +697,13 @@ class TransactionRequestAuthorizationHandlerTest {
                 .pspId("PSP_CODE")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
+        PaymentSessionData.CardSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
+                "VISA",
+                UUID.randomUUID().toString(),
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
+        );
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -712,9 +719,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 "pspBusinessName",
                 false,
                 "NPG",
-                Optional.of(UUID.randomUUID().toString()),
-                Optional.empty(),
-                "VISA",
+                paymentSessionData,
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
@@ -847,8 +852,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData.CardSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "VISA",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -996,8 +1001,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "VISA",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -1107,8 +1112,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "VISA",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -1200,8 +1205,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "VISA",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -1297,8 +1302,8 @@ class TransactionRequestAuthorizationHandlerTest {
 
         PaymentSessionData paymentSessionData = new PaymentSessionData.PgsCardSessionData(
                 "VISA",
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -1405,8 +1410,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "VISA",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -1520,8 +1525,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "VISA",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -1638,8 +1643,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "VISA",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -1757,8 +1762,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "VISA",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -1876,8 +1881,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "VISA",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -1994,8 +1999,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData.CardSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "VISA",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -2132,8 +2137,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData.CardSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "VISA",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -2275,8 +2280,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData.CardSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "VISA",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -2426,8 +2431,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData paymentSessionData = new PaymentSessionData.WalletCardSessionData(
                 "VISA",
                 Optional.empty(),
-                "0000",
-                "1234",
+                new BIN("0000"),
+                new CardLastFourDigits("1234"),
                 contractId
         );
 
@@ -2455,8 +2460,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData paymentSessionDataAfterBuildSession = new PaymentSessionData.WalletCardSessionData(
                 "VISA",
                 Optional.of(sessionId),
-                "0000",
-                "1234",
+                new BIN("0000"),
+                new CardLastFourDigits("1234"),
                 contractId
         );
 
@@ -2619,8 +2624,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData paymentSessionData = new PaymentSessionData.WalletCardSessionData(
                 "VISA",
                 Optional.empty(),
-                "0000",
-                "1234",
+                new BIN("0000"),
+                new CardLastFourDigits("1234"),
                 contractId
         );
 
@@ -3245,8 +3250,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData.CardSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "UNMATCHED",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -3385,8 +3390,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData.CardSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "VISA",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -3525,8 +3530,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData.CardSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "VISA",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -3665,8 +3670,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData.CardSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "VISA",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -3808,8 +3813,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData paymentSessionData = new PaymentSessionData.WalletCardSessionData(
                 "VISA",
                 Optional.empty(),
-                "0000",
-                "1234",
+                new BIN("0000"),
+                new CardLastFourDigits("1234"),
                 contractId
         );
 
@@ -3837,8 +3842,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData paymentSessionDataAfterBuildSession = new PaymentSessionData.WalletCardSessionData(
                 "VISA",
                 Optional.of(sessionId),
-                "0000",
-                "1234",
+                new BIN("0000"),
+                new CardLastFourDigits("1234"),
                 contractId
         );
 
@@ -4010,8 +4015,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData paymentSessionData = new PaymentSessionData.CardSessionData(
                 "VISA",
                 UUID.randomUUID().toString(),
-                "0000",
-                "1234"
+                new BIN("0000"),
+                new CardLastFourDigits("1234")
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -4117,8 +4122,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData paymentSessionData = new PaymentSessionData.WalletCardSessionData(
                 "VISA",
                 Optional.empty(),
-                "0000",
-                "1234",
+                new BIN("0000"),
+                new CardLastFourDigits("1234"),
                 contractId
         );
 
@@ -4146,8 +4151,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentSessionData paymentSessionDataAfterBuildSession = new PaymentSessionData.WalletCardSessionData(
                 "VISA",
                 Optional.of(sessionId),
-                "0000",
-                "1234",
+                new BIN("0000"),
+                new CardLastFourDigits("1234"),
                 contractId
         );
 
