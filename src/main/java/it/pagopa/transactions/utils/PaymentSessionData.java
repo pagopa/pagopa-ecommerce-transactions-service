@@ -20,6 +20,9 @@ public sealed interface PaymentSessionData permits PaymentSessionData.ApmSession
             Objects.requireNonNull(brand);
             Objects.requireNonNull(cardBin);
             Objects.requireNonNull(lastFourDigits);
+
+            validateCardBin(cardBin);
+            validateLastFourDigits(lastFourDigits);
         }
     }
 
@@ -36,6 +39,9 @@ public sealed interface PaymentSessionData permits PaymentSessionData.ApmSession
             Objects.requireNonNull(sessionId);
             Objects.requireNonNull(cardBin);
             Objects.requireNonNull(lastFourDigits);
+
+            validateCardBin(cardBin);
+            validateLastFourDigits(lastFourDigits);
         }
     }
 
@@ -64,6 +70,9 @@ public sealed interface PaymentSessionData permits PaymentSessionData.ApmSession
             Objects.requireNonNull(cardBin);
             Objects.requireNonNull(lastFourDigits);
             Objects.requireNonNull(contractId);
+
+            validateCardBin(cardBin);
+            validateLastFourDigits(lastFourDigits);
         }
     }
 
@@ -92,6 +101,18 @@ public sealed interface PaymentSessionData permits PaymentSessionData.ApmSession
         @Override
         public String brand() {
             return "N/A";
+        }
+    }
+
+    static void validateCardBin(String cardBin) {
+        if (cardBin.length() > 8 || cardBin.length() < 6) {
+            throw new IllegalArgumentException("Invalid card bin of length " + cardBin.length());
+        }
+    }
+
+    static void validateLastFourDigits(String lastFourDigits) {
+        if (lastFourDigits.length() != 4) {
+            throw new IllegalArgumentException("Invalid last four digits of length " + lastFourDigits.length());
         }
     }
 }
