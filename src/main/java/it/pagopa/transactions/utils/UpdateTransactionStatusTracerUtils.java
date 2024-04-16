@@ -53,6 +53,18 @@ public class UpdateTransactionStatusTracerUtils {
             .stringKey("updateTransactionStatus.pspId");
 
     /**
+     * Span attribute used to trace gateway received authorization outcome
+     */
+    static final AttributeKey<String> UPDATE_TRANSACTION_STATUS_GATEWAY_OUTCOME_ATTRIBUTE_KEY = AttributeKey
+            .stringKey("updateTransactionStatus.gateway.outcome");
+
+    /**
+     * Span attribute used to trace gateway received authorization error code
+     */
+    static final AttributeKey<String> UPDATE_TRANSACTION_STATUS_GATEWAY_ERROR_CODE_ATTRIBUTE_KEY = AttributeKey
+            .stringKey("updateTransactionStatus.gateway.errorCode");
+
+    /**
      * Enumeration of all operation that update transaction status performed by
      * external entities
      */
@@ -136,6 +148,8 @@ public class UpdateTransactionStatusTracerUtils {
 
     static final String UPDATE_TRANSACTION_STATUS_SPAN_NAME = "Transaction status updated";
 
+    static final String FIELD_NOT_AVAILABLE = "N/A";
+
     @Autowired
     public UpdateTransactionStatusTracerUtils(OpenTelemetryUtils openTelemetryUtils) {
         this.openTelemetryUtils = openTelemetryUtils;
@@ -155,7 +169,13 @@ public class UpdateTransactionStatusTracerUtils {
                 UPDATE_TRANSACTION_STATUS_TRIGGER_ATTRIBUTE_KEY,
                 statusUpdateInfo.trigger().toString(),
                 UPDATE_TRANSACTION_STATUS_PSP_ID_ATTRIBUTE_KEY,
-                statusUpdateInfo.pspId().orElse("N/A")
+                statusUpdateInfo.pspId().orElse(FIELD_NOT_AVAILABLE),
+                UPDATE_TRANSACTION_STATUS_GATEWAY_OUTCOME_ATTRIBUTE_KEY,
+                statusUpdateInfo.gatewayAuthorizationOutcomeResult()
+                        .map(GatewayAuthorizationOutcomeResult::gatewayAuthorizationStatus).orElse(FIELD_NOT_AVAILABLE),
+                UPDATE_TRANSACTION_STATUS_GATEWAY_ERROR_CODE_ATTRIBUTE_KEY,
+                statusUpdateInfo.gatewayAuthorizationOutcomeResult()
+                        .flatMap(GatewayAuthorizationOutcomeResult::errorCode).orElse(FIELD_NOT_AVAILABLE)
         );
         openTelemetryUtils.addSpanWithAttributes(UPDATE_TRANSACTION_STATUS_SPAN_NAME, spanAttributes);
     }
@@ -187,21 +207,33 @@ public class UpdateTransactionStatusTracerUtils {
             return Optional.empty();
         }
 
+        @Override
+        public Optional<GatewayAuthorizationOutcomeResult> gatewayAuthorizationOutcomeResult() {
+            return Optional.empty();
+        }
+
     }
 
     /**
      * Transaction status update record for payment transaction gateway update
      * trigger
      *
-     * @param outcome - the transaction update status outcome
-     * @param trigger - the gateway trigger that initiate the request
-     * @param pspId   - the psp id chosen for the current transaction
+     * @param outcome                           - the transaction update status
+     *                                          outcome
+     * @param trigger                           - the gateway trigger that initiate
+     *                                          the request
+     * @param pspId                             - the psp id chosen for the current
+     *                                          transaction
+     * @param gatewayAuthorizationOutcomeResult - the gateway authorization outcome
+     *                                          result
      */
     public record PaymentGatewayStatusUpdate(
             UpdateTransactionStatusOutcome outcome,
             UpdateTransactionTrigger trigger,
 
-            Optional<String> pspId
+            Optional<String> pspId,
+
+            Optional<GatewayAuthorizationOutcomeResult> gatewayAuthorizationOutcomeResult
     )
             implements
             StatusUpdateInfo {
@@ -210,6 +242,7 @@ public class UpdateTransactionStatusTracerUtils {
             Objects.requireNonNull(outcome);
             Objects.requireNonNull(trigger);
             Objects.requireNonNull(pspId);
+            Objects.requireNonNull(gatewayAuthorizationOutcomeResult);
             if (!Set.of(
                     UpdateTransactionTrigger.NPG,
                     UpdateTransactionTrigger.PGS_XPAY,
@@ -258,6 +291,25 @@ public class UpdateTransactionStatusTracerUtils {
          * @return the id of the PSP
          */
         Optional<String> pspId();
+
+        /**
+         * The gateway authorization outcome
+         *
+         * @return the authorization outcome information
+         */
+        Optional<GatewayAuthorizationOutcomeResult> gatewayAuthorizationOutcomeResult();
+    }
+
+    /**
+     * The gateway authorization outcome result
+     *
+     * @param gatewayAuthorizationStatus the received gateway authorization outcome
+     * @param errorCode                  the optional authorization error code
+     */
+    public record GatewayAuthorizationOutcomeResult(
+            String gatewayAuthorizationStatus,
+            Optional<String> errorCode
+    ) {
     }
 
 }
