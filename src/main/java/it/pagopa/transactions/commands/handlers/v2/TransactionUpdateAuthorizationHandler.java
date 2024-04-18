@@ -66,7 +66,8 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                 OperationResultDto.valueOf(outcomeNpgGateway.getOperationResult().toString()),
                                 outcomeNpgGateway.getOperationId(),
                                 outcomeNpgGateway.getPaymentEndToEndId(),
-                                authRequestDataExtracted.errorCode()
+                                authRequestDataExtracted.errorCode(),
+                                outcomeNpgGateway.getValidationServiceId()
                         );
                         case OutcomeXpayGatewayDto ignored -> new PgsTransactionGatewayAuthorizationData(
                                 authRequestDataExtracted.errorCode(),
