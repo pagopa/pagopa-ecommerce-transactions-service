@@ -86,6 +86,7 @@ class UpdateTransactionStatusTracerUtilsTest {
         UpdateTransactionStatusTracerUtils.StatusUpdateInfo statusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                 UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
                 trigger,
+                Optional.empty(),
                 Optional.empty()
         );
         // pre-conditions
@@ -129,7 +130,8 @@ class UpdateTransactionStatusTracerUtilsTest {
         UpdateTransactionStatusTracerUtils.StatusUpdateInfo statusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                 UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
                 UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT,
-                Optional.ofNullable(pspId)
+                Optional.ofNullable(pspId),
+                Optional.empty()
         );
         // pre-conditions
         doNothing().when(openTelemetryUtils).addSpanWithAttributes(
@@ -168,6 +170,7 @@ class UpdateTransactionStatusTracerUtilsTest {
                 () -> new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                         null,
                         null,
+                        null,
                         null
                 )
         );
@@ -180,6 +183,7 @@ class UpdateTransactionStatusTracerUtilsTest {
                 () -> new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                         UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
                         UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NODO,
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
