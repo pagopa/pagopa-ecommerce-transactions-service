@@ -1184,11 +1184,12 @@ class TransactionServiceTests {
 
         /* test */
 
-        assertThrows(
-                PaymentMethodNotFoundException.class,
-                () -> transactionsServiceV1
-                        .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest).block()
-        );
+         StepVerifier.create(
+                transactionsServiceV1
+                        .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest)
+        )
+                .expectError(PaymentMethodNotFoundException.class)
+                .verify();
     }
 
     @Test
