@@ -514,6 +514,17 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
+    @ExceptionHandler(PaymentMethodNotFoundException.class)
+    ResponseEntity<ProblemJsonDto> paymentMethodNotFoundException(PaymentMethodNotFoundException exception) {
+        return new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(404)
+                        .title("Payment method not found")
+                        .detail(exception.getMessage()),
+                HttpStatus.NOT_FOUND
+        );
+    }
+
     @ExceptionHandler(TransactionAmountMismatchException.class)
     ResponseEntity<ProblemJsonDto> amountMismatchErrorHandler(TransactionAmountMismatchException exception) {
         log.warn(
