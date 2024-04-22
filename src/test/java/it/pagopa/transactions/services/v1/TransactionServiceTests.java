@@ -1184,7 +1184,7 @@ class TransactionServiceTests {
 
         /* test */
 
-         StepVerifier.create(
+        StepVerifier.create(
                 transactionsServiceV1
                         .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest)
         )
