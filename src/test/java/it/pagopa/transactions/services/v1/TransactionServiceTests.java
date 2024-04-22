@@ -1155,6 +1155,44 @@ class TransactionServiceTests {
     }
 
     @Test
+    void shouldThrowPaymentMethodNotFoundExceptionForPaymentMethodNotFound() {
+        Transaction transaction = TransactionTestUtils.transactionDocument(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
+                ZonedDateTime.now()
+        );
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(0)
+                .paymentInstrumentId("paymentInstrumentId")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT)
+                .fee(0)
+                .pspId("PSP_CODE")
+                .isAllCCP(false)
+                .details(new ApmAuthRequestDetailsDto().detailType("apm"));
+
+        /* preconditions */
+
+        PaymentMethodNotFoundException exception = new PaymentMethodNotFoundException(
+                UUID.randomUUID().toString(),
+                "CHECKOUT"
+        );
+
+        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.error(exception));
+
+        Mockito.when(repository.findById(TRANSACTION_ID))
+                .thenReturn(Mono.just(transaction));
+
+        /* test */
+
+        StepVerifier.create(
+                transactionsServiceV1
+                        .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest)
+        )
+                .expectError(PaymentMethodNotFoundException.class)
+                .verify();
+    }
+
+    @Test
     void shouldExecuteTransactionUserCancelOk() {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
         final Transaction transaction = TransactionTestUtils.transactionDocument(

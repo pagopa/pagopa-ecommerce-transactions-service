@@ -3,6 +3,7 @@ package it.pagopa.transactions.client;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.api.PaymentMethodsApi;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.*;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.exceptions.PaymentMethodNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -40,7 +41,20 @@ public class EcommercePaymentMethodsClient {
                                                            String paymentMethodId,
                                                            String xClientId
     ) {
-        return ecommercePaymentInstrumentsWebClient.getPaymentMethod(paymentMethodId, xClientId);
+        return ecommercePaymentInstrumentsWebClient.getPaymentMethod(paymentMethodId, xClientId)
+                .doOnError(
+                        WebClientResponseException.class,
+                        EcommercePaymentMethodsClient::logWebClientException
+                )
+                .onErrorMap(
+                        err -> {
+                            if (err instanceof WebClientResponseException.NotFound) {
+                                return new PaymentMethodNotFoundException(paymentMethodId, xClientId);
+                            } else {
+                                return new InvalidRequestException("Error while invoke method retrieve card data");
+                            }
+                        }
+                );
     }
 
     public Mono<SessionPaymentMethodResponseDto> retrieveCardData(

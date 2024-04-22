@@ -4,18 +4,21 @@ import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.api.PaymentMethodsApi;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.*;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.exceptions.PaymentMethodNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.UUID;
 
@@ -235,6 +238,66 @@ class EcommercePaymentMethodsClientTest {
         /* test */
         StepVerifier.create(ecommercePaymentMethodsClient.updateSession(paymentMethodId, sessionId, transactionId))
                 .expectError(InvalidRequestException.class)
+                .verify();
+    }
+
+    @Test
+    void shouldThrowInvalidRequestExceptionOnGetPaymentMethodErroring() {
+        String TEST_ID = UUID.randomUUID().toString();
+        String CLIENT_ID = "CHECKOUT";
+
+        /**
+         * preconditions
+         */
+        when(ecommercePaymentInstrumentsWebClient.getPaymentMethod(TEST_ID, CLIENT_ID))
+                .thenReturn(
+                        Mono.error(
+                                WebClientResponseException.create(
+                                        500,
+                                        "Internal Server Error",
+                                        HttpHeaders.EMPTY,
+                                        null,
+                                        Charset.defaultCharset(),
+                                        null
+                                )
+                        )
+                );
+
+        /**
+         * test
+         */
+        StepVerifier.create(ecommercePaymentMethodsClient.getPaymentMethod(TEST_ID, CLIENT_ID))
+                .expectError(InvalidRequestException.class)
+                .verify();
+    }
+
+    @Test
+    void shouldThrowPaymentMethodNotFoundExceptionOnGetPaymentMethodWhenReturning404() {
+        String TEST_ID = UUID.randomUUID().toString();
+        String CLIENT_ID = "CHECKOUT";
+
+        /**
+         * preconditions
+         */
+        when(ecommercePaymentInstrumentsWebClient.getPaymentMethod(TEST_ID, CLIENT_ID))
+                .thenReturn(
+                        Mono.error(
+                                WebClientResponseException.create(
+                                        404,
+                                        "Not Found",
+                                        HttpHeaders.EMPTY,
+                                        null,
+                                        Charset.defaultCharset(),
+                                        null
+                                )
+                        )
+                );
+
+        /**
+         * test
+         */
+        StepVerifier.create(ecommercePaymentMethodsClient.getPaymentMethod(TEST_ID, CLIENT_ID))
+                .expectError(PaymentMethodNotFoundException.class)
                 .verify();
     }
 }
