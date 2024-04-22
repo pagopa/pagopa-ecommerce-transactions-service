@@ -42,6 +42,7 @@ resilience4j.retry:
         - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
         - it.pagopa.transactions.exceptions.NodoErrorException
         - it.pagopa.transactions.exceptions.InvalidNodoResponseException
+        - it.pagopa.transactions.exceptions.PaymentMethodNotFoundException
     updateTransactionAuthorization:
       maxAttempts: 3
       waitDuration: 2s
