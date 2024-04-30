@@ -16,8 +16,8 @@ import reactor.core.publisher.Mono;
 public class EcommercePaymentMethodsClient {
 
     @Autowired
-    @Qualifier("ecommercePaymentInstrumentsWebClient")
-    private PaymentMethodsApi ecommercePaymentInstrumentsWebClient;
+    @Qualifier("ecommercePaymentMethodWebClientV1")
+    private PaymentMethodsApi ecommercePaymentMethodWebClientV1;
 
     public Mono<CalculateFeeResponseDto> calculateFee(
                                                       String paymentMethodId,
@@ -26,7 +26,7 @@ public class EcommercePaymentMethodsClient {
                                                       Integer maxOccurrences
 
     ) {
-        return ecommercePaymentInstrumentsWebClient
+        return ecommercePaymentMethodWebClientV1
                 .calculateFees(paymentMethodId, transactionId, calculateFeeRequestDto, maxOccurrences)
                 .doOnError(
                         WebClientResponseException.class,
@@ -41,7 +41,7 @@ public class EcommercePaymentMethodsClient {
                                                            String paymentMethodId,
                                                            String xClientId
     ) {
-        return ecommercePaymentInstrumentsWebClient.getPaymentMethod(paymentMethodId, xClientId)
+        return ecommercePaymentMethodWebClientV1.getPaymentMethod(paymentMethodId, xClientId)
                 .doOnError(
                         WebClientResponseException.class,
                         EcommercePaymentMethodsClient::logWebClientException
@@ -62,7 +62,7 @@ public class EcommercePaymentMethodsClient {
                                                                   String orderId
 
     ) {
-        return ecommercePaymentInstrumentsWebClient
+        return ecommercePaymentMethodWebClientV1
                 .getSessionPaymentMethod(paymentMethodId, orderId)
                 .doOnError(
                         WebClientResponseException.class,
@@ -78,7 +78,7 @@ public class EcommercePaymentMethodsClient {
                                     String orderId,
                                     String transactionId
     ) {
-        return ecommercePaymentInstrumentsWebClient
+        return ecommercePaymentMethodWebClientV1
                 .updateSession(paymentMethodId, orderId, new PatchSessionRequestDto().transactionId(transactionId))
                 .doOnError(
                         WebClientResponseException.class,

@@ -113,6 +113,7 @@ microservice-chart:
     ECOMMERCE_PAYMENT_METHODS_URI: https://api.uat.platform.pagopa.it/ecommerce/payment-methods-service/v1
     ECOMMERCE_PAYMENT_METHODS_READ_TIMEOUT: "10000"
     ECOMMERCE_PAYMENT_METHODS_CONNECTION_TIMEOUT: "10000"
+    ECOMMERCE_PAYMENT_METHODS_URI_V2: https://api.uat.platform.pagopa.it/ecommerce/payment-methods-service/v2
     WALLET_URI: https://api.uat.platform.pagopa.it/payment-wallet-for-ecommerce/v1
     WALLET_READ_TIMEOUT: "10000"
     WALLET_CONNECTION_TIMEOUT: "10000"

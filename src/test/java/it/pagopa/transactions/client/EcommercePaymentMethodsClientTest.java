@@ -33,7 +33,7 @@ class EcommercePaymentMethodsClientTest {
     private EcommercePaymentMethodsClient ecommercePaymentMethodsClient;
 
     @Mock
-    private PaymentMethodsApi ecommercePaymentInstrumentsWebClient;
+    private PaymentMethodsApi ecommercePaymentMethodWebClientV1;
 
     @Test
     void shouldReturnBundleList() {
@@ -65,7 +65,7 @@ class EcommercePaymentMethodsClientTest {
          * preconditions
          */
         when(
-                ecommercePaymentInstrumentsWebClient
+                ecommercePaymentMethodWebClientV1
                         .calculateFees(
                                 paymentMethodId,
                                 TransactionTestUtils.TRANSACTION_ID,
@@ -109,7 +109,7 @@ class EcommercePaymentMethodsClientTest {
         /**
          * preconditions
          */
-        when(ecommercePaymentInstrumentsWebClient.getPaymentMethod(TEST_ID, CLIENT_ID))
+        when(ecommercePaymentMethodWebClientV1.getPaymentMethod(TEST_ID, CLIENT_ID))
                 .thenReturn(Mono.just(testPaymentMethodResponseDto));
 
         /**
@@ -136,7 +136,7 @@ class EcommercePaymentMethodsClientTest {
          * preconditions
          */
         Mockito.when(
-                ecommercePaymentInstrumentsWebClient
+                ecommercePaymentMethodWebClientV1
                         .getSessionPaymentMethod(
                                 any(),
                                 any()
@@ -168,7 +168,7 @@ class EcommercePaymentMethodsClientTest {
          * preconditions
          */
         Mockito.when(
-                ecommercePaymentInstrumentsWebClient
+                ecommercePaymentMethodWebClientV1
                         .getSessionPaymentMethod(
                                 any(),
                                 any()
@@ -206,7 +206,7 @@ class EcommercePaymentMethodsClientTest {
 
         /* preconditions */
         Mockito.when(
-                ecommercePaymentInstrumentsWebClient.updateSession(
+                ecommercePaymentMethodWebClientV1.updateSession(
                         paymentMethodId,
                         sessionId,
                         new PatchSessionRequestDto().transactionId(transactionId)
@@ -227,7 +227,7 @@ class EcommercePaymentMethodsClientTest {
 
         /* preconditions */
         Mockito.when(
-                ecommercePaymentInstrumentsWebClient.updateSession(
+                ecommercePaymentMethodWebClientV1.updateSession(
                         paymentMethodId,
                         sessionId,
                         new PatchSessionRequestDto().transactionId(transactionId)
@@ -249,7 +249,7 @@ class EcommercePaymentMethodsClientTest {
         /**
          * preconditions
          */
-        when(ecommercePaymentInstrumentsWebClient.getPaymentMethod(TEST_ID, CLIENT_ID))
+        when(ecommercePaymentMethodWebClientV1.getPaymentMethod(TEST_ID, CLIENT_ID))
                 .thenReturn(
                         Mono.error(
                                 WebClientResponseException.create(
@@ -279,7 +279,7 @@ class EcommercePaymentMethodsClientTest {
         /**
          * preconditions
          */
-        when(ecommercePaymentInstrumentsWebClient.getPaymentMethod(TEST_ID, CLIENT_ID))
+        when(ecommercePaymentMethodWebClientV1.getPaymentMethod(TEST_ID, CLIENT_ID))
                 .thenReturn(
                         Mono.error(
                                 WebClientResponseException.create(
