@@ -14,6 +14,8 @@ import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.*;
+import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.BundleDto;
+import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.CalculateFeeResponseDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.generated.wallet.v1.dto.WalletAuthCardDataDto;
@@ -390,7 +392,7 @@ class TransactionServiceTests {
                 .belowThreshold(true)
                 .paymentMethodName("PaymentMethodName")
                 .paymentMethodDescription("PaymentMethodDescription")
-                .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
+                .paymentMethodStatus(it.pagopa.generated.ecommerce.paymentmethods.v2.dto.PaymentMethodStatusDto.ENABLED)
                 .bundles(
                         List.of(
                                 new BundleDto()
@@ -475,7 +477,7 @@ class TransactionServiceTests {
                 .belowThreshold(true)
                 .paymentMethodName("PaymentMethodName")
                 .paymentMethodDescription("PaymentMethodDescription")
-                .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
+                .paymentMethodStatus(it.pagopa.generated.ecommerce.paymentmethods.v2.dto.PaymentMethodStatusDto.ENABLED)
                 .bundles(
                         List.of(
                                 new BundleDto()
@@ -927,7 +929,9 @@ class TransactionServiceTests {
         /* preconditions */
         CalculateFeeResponseDto calculateFeeResponseDto = new CalculateFeeResponseDto()
                 .belowThreshold(true)
-                .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
+                .paymentMethodStatus(
+                        it.pagopa.generated.ecommerce.paymentmethods.v2.dto.PaymentMethodStatusDto.ENABLED
+                )
                 .paymentMethodName("paymentMethodName")
                 .paymentMethodDescription("paymentMethodDescription")
                 .bundles(
@@ -1081,7 +1085,9 @@ class TransactionServiceTests {
                 .belowThreshold(true)
                 .paymentMethodDescription("PaymentMethodDescription")
                 .paymentMethodName("PaymentMethodName")
-                .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
+                .paymentMethodStatus(
+                        it.pagopa.generated.ecommerce.paymentmethods.v2.dto.PaymentMethodStatusDto.ENABLED
+                )
                 .bundles(
                         List.of(
                                 new BundleDto()
@@ -2045,7 +2051,9 @@ class TransactionServiceTests {
                 .belowThreshold(true)
                 .paymentMethodName("PaymentMethodName")
                 .paymentMethodDescription("PaymentMethodDescription")
-                .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
+                .paymentMethodStatus(
+                        it.pagopa.generated.ecommerce.paymentmethods.v2.dto.PaymentMethodStatusDto.ENABLED
+                )
                 .bundles(
                         List.of(
                                 new BundleDto()
@@ -2154,7 +2162,9 @@ class TransactionServiceTests {
                 .belowThreshold(true)
                 .paymentMethodName("PaymentMethodName")
                 .paymentMethodDescription("PaymentMethodDescription")
-                .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
+                .paymentMethodStatus(
+                        it.pagopa.generated.ecommerce.paymentmethods.v2.dto.PaymentMethodStatusDto.ENABLED
+                )
                 .bundles(
                         List.of(
                                 new BundleDto()
@@ -2247,7 +2257,9 @@ class TransactionServiceTests {
                 .belowThreshold(true)
                 .paymentMethodName("PaymentMethodName")
                 .paymentMethodDescription("PaymentMethodDescription")
-                .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
+                .paymentMethodStatus(
+                        it.pagopa.generated.ecommerce.paymentmethods.v2.dto.PaymentMethodStatusDto.ENABLED
+                )
                 .bundles(
                         List.of(
                                 new BundleDto()

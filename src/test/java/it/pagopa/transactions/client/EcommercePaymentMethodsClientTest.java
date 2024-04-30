@@ -1,16 +1,15 @@
 package it.pagopa.transactions.client;
 
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
-import it.pagopa.generated.ecommerce.paymentmethods.v1.api.PaymentMethodsApi;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.*;
+import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.BundleDto;
+import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.CalculateFeeRequestDto;
+import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.CalculateFeeResponseDto;
+import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.PaymentNoticeDto;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentMethodNotFoundException;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -26,22 +25,29 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
 class EcommercePaymentMethodsClientTest {
 
-    @InjectMocks
-    private EcommercePaymentMethodsClient ecommercePaymentMethodsClient;
+    private final it.pagopa.generated.ecommerce.paymentmethods.v1.api.PaymentMethodsApi ecommercePaymentMethodsWebClientV1 = Mockito
+            .mock(it.pagopa.generated.ecommerce.paymentmethods.v1.api.PaymentMethodsApi.class);
+    private final it.pagopa.generated.ecommerce.paymentmethods.v2.api.PaymentMethodsApi ecommercePaymentMethodsWebClientV2 = Mockito
+            .mock(it.pagopa.generated.ecommerce.paymentmethods.v2.api.PaymentMethodsApi.class);
 
-    @Mock
-    private PaymentMethodsApi ecommercePaymentMethodWebClientV1;
+    private final EcommercePaymentMethodsClient ecommercePaymentMethodsClient = new EcommercePaymentMethodsClient(
+            ecommercePaymentMethodsWebClientV1,
+            ecommercePaymentMethodsWebClientV2
+    );
 
     @Test
     void shouldReturnBundleList() {
         String paymentMethodId = UUID.randomUUID().toString();
         Integer TEST_MAX_OCCURRERNCES = 10;
         CalculateFeeRequestDto calculateFeeRequestDto = new CalculateFeeRequestDto()
-                .paymentAmount(BigInteger.TEN.longValue()).bin("57497554")
-                .touchpoint("CHECKOUT").primaryCreditorInstitution("7777777777").idPspList(List.of("pspId"));
+                .addPaymentNoticesItem(
+                        new PaymentNoticeDto().paymentAmount(BigInteger.TEN.longValue())
+                                .primaryCreditorInstitution("7777777777")
+                )
+                .bin("57497554")
+                .touchpoint("CHECKOUT").idPspList(List.of("pspId"));
 
         CalculateFeeResponseDto bundleOptionDto = new CalculateFeeResponseDto().belowThreshold(true).bundles(
                 List.of(
@@ -65,7 +71,7 @@ class EcommercePaymentMethodsClientTest {
          * preconditions
          */
         when(
-                ecommercePaymentMethodWebClientV1
+                ecommercePaymentMethodsWebClientV2
                         .calculateFees(
                                 paymentMethodId,
                                 TransactionTestUtils.TRANSACTION_ID,
@@ -109,7 +115,7 @@ class EcommercePaymentMethodsClientTest {
         /**
          * preconditions
          */
-        when(ecommercePaymentMethodWebClientV1.getPaymentMethod(TEST_ID, CLIENT_ID))
+        when(ecommercePaymentMethodsWebClientV1.getPaymentMethod(TEST_ID, CLIENT_ID))
                 .thenReturn(Mono.just(testPaymentMethodResponseDto));
 
         /**
@@ -136,7 +142,7 @@ class EcommercePaymentMethodsClientTest {
          * preconditions
          */
         Mockito.when(
-                ecommercePaymentMethodWebClientV1
+                ecommercePaymentMethodsWebClientV1
                         .getSessionPaymentMethod(
                                 any(),
                                 any()
@@ -168,7 +174,7 @@ class EcommercePaymentMethodsClientTest {
          * preconditions
          */
         Mockito.when(
-                ecommercePaymentMethodWebClientV1
+                ecommercePaymentMethodsWebClientV1
                         .getSessionPaymentMethod(
                                 any(),
                                 any()
@@ -206,7 +212,7 @@ class EcommercePaymentMethodsClientTest {
 
         /* preconditions */
         Mockito.when(
-                ecommercePaymentMethodWebClientV1.updateSession(
+                ecommercePaymentMethodsWebClientV1.updateSession(
                         paymentMethodId,
                         sessionId,
                         new PatchSessionRequestDto().transactionId(transactionId)
@@ -227,7 +233,7 @@ class EcommercePaymentMethodsClientTest {
 
         /* preconditions */
         Mockito.when(
-                ecommercePaymentMethodWebClientV1.updateSession(
+                ecommercePaymentMethodsWebClientV1.updateSession(
                         paymentMethodId,
                         sessionId,
                         new PatchSessionRequestDto().transactionId(transactionId)
@@ -249,7 +255,7 @@ class EcommercePaymentMethodsClientTest {
         /**
          * preconditions
          */
-        when(ecommercePaymentMethodWebClientV1.getPaymentMethod(TEST_ID, CLIENT_ID))
+        when(ecommercePaymentMethodsWebClientV1.getPaymentMethod(TEST_ID, CLIENT_ID))
                 .thenReturn(
                         Mono.error(
                                 WebClientResponseException.create(
@@ -279,7 +285,7 @@ class EcommercePaymentMethodsClientTest {
         /**
          * preconditions
          */
-        when(ecommercePaymentMethodWebClientV1.getPaymentMethod(TEST_ID, CLIENT_ID))
+        when(ecommercePaymentMethodsWebClientV1.getPaymentMethod(TEST_ID, CLIENT_ID))
                 .thenReturn(
                         Mono.error(
                                 WebClientResponseException.create(
