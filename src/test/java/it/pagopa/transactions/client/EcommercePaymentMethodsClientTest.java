@@ -43,7 +43,8 @@ class EcommercePaymentMethodsClientTest {
         Integer TEST_MAX_OCCURRERNCES = 10;
         CalculateFeeRequestDto calculateFeeRequestDto = new CalculateFeeRequestDto()
                 .addPaymentNoticesItem(
-                        new PaymentNoticeDto().paymentAmount(BigInteger.TEN.longValue())
+                        new PaymentNoticeDto()
+                                .paymentAmount(10L)
                                 .primaryCreditorInstitution("7777777777")
                 )
                 .bin("57497554")
