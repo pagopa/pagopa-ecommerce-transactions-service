@@ -6,6 +6,7 @@ import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionClosureData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionRefundedData;
+import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionAuthorizationCompleted;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
@@ -195,9 +196,10 @@ public class TransactionSendClosureHandler extends TransactionSendClosureHandler
                      * error: save TransactionClosureErrorEvent to event store, enqueue and return
                      * error event
                      */
-                    // FIXME: Refactor to handle multiple notices
-                    it.pagopa.ecommerce.commons.domain.PaymentNotice paymentNotice = tx.getPaymentNotices().get(0);
-                    log.info("Invoking closePaymentV2 for RptId: {}", paymentNotice.rptId().value());
+                    log.info(
+                            "Invoking closePaymentV2 for rptIds: {}",
+                            command.getRptIds().stream().map(RptId::value).toList()
+                    );
                     return nodeForPspClient.closePaymentV2(closePaymentRequest)
                             .flatMap(
                                     response -> buildAndSaveClosureEvent(

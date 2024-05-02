@@ -65,13 +65,9 @@ public class TransactionsService {
                         .map(ClientIdDto::toString)
                         .orElse(null)
         );
-        log.info(
-                "Initializing transaction for rptId: {}. ClientId: {}",
-                newTransactionRequestDto.getPaymentNotices().get(0).getRptId(),
-                clientId
-        );
+
         TransactionActivateCommand transactionActivateCommand = new TransactionActivateCommand(
-                new RptId(newTransactionRequestDto.getPaymentNotices().get(0).getRptId()),
+                newTransactionRequestDto.getPaymentNotices().stream().map(p -> new RptId(p.getRptId())).toList(),
                 new NewTransactionRequestData(
                         newTransactionRequestDto.getIdCart(),
                         newTransactionRequestDto.getEmail(),
@@ -92,6 +88,11 @@ public class TransactionsService {
                 clientId.name(),
                 transactionId,
                 userId
+        );
+        log.info(
+                "Initializing transaction for rptIds: {}. ClientId: {}",
+                transactionActivateCommand.getRptIds().stream().map(RptId::value).toList(),
+                clientId
         );
 
         return transactionActivateHandlerV2.handle(transactionActivateCommand)
