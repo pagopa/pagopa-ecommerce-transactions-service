@@ -59,7 +59,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
             NodoOperations nodoOperations,
             JwtTokenUtils jwtTokenUtils,
             @Qualifier(
-                "transactionActivatedQueueAsyncClientV2"
+                    "transactionActivatedQueueAsyncClientV2"
             ) QueueAsyncClient transactionActivatedQueueAsyncClientV2,
             @Value("${payment.token.validity}") Integer paymentTokenTimeout,
             ConfidentialMailUtils confidentialMailUtils,
@@ -88,7 +88,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
     }
 
     public Mono<Tuple2<Mono<BaseTransactionEvent<?>>, String>> handle(
-                                                                      TransactionActivateCommand command
+            TransactionActivateCommand command
     ) {
         final TransactionId transactionId = command.getTransactionId();
         final NewTransactionRequestData newTransactionRequestDto = command.getData();
@@ -308,9 +308,9 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
     }
 
     private Mono<BaseTransactionEvent<?>> newTransactionActivatedEvent(
-                                                                       TransactionActivateCommand command,
-                                                                       List<PaymentRequestInfo> paymentRequestsInfo,
-                                                                       Integer paymentTokenTimeout
+            TransactionActivateCommand command,
+            List<PaymentRequestInfo> paymentRequestsInfo,
+            Integer paymentTokenTimeout
     ) {
         NewTransactionRequestData newTransactionRequestData = command.getData();
         TransactionId transactionId = command.getTransactionId();
@@ -328,10 +328,10 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                 paymentTokenTimeout,
                                 newTransactionRequestData.orderId() != null
                                         ? new NpgTransactionGatewayActivationData(
-                                                newTransactionRequestData.orderId(),
-                                                newTransactionRequestData.correlationId().toString()
-                                        )// this logic will be eliminated with task CHK-2286 by handling the saving of
-                                         // correlationId only
+                                        newTransactionRequestData.orderId(),
+                                        newTransactionRequestData.correlationId().toString()
+                                )// this logic will be eliminated with task CHK-2286 by handling the saving of
+                                        // correlationId only
                                         : new EmptyTransactionGatewayActivationData(),
                                 Optional.ofNullable(command.getUserId()).map(UUID::toString).orElse(null)
                         )
@@ -347,19 +347,19 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
         return transactionActivatedEvent.flatMap(transactionEventActivatedStoreRepository::save)
                 .flatMap(
                         e -> tracingUtils.traceMono(
-                                this.getClass().getSimpleName(),
-                                tracingInfo -> transactionActivatedQueueAsyncClientV2.sendMessageWithResponse(
-                                        new QueueEvent<>(e, tracingInfo),
-                                        Duration.ofSeconds(paymentTokenTimeout),
-                                        Duration.ofSeconds(transientQueuesTTLSeconds)
+                                        this.getClass().getSimpleName(),
+                                        tracingInfo -> transactionActivatedQueueAsyncClientV2.sendMessageWithResponse(
+                                                new QueueEvent<>(e, tracingInfo),
+                                                Duration.ofSeconds(paymentTokenTimeout),
+                                                Duration.ofSeconds(transientQueuesTTLSeconds)
+                                        )
+                                ).doOnError(
+                                        exception -> log.error(
+                                                "Error to generate event TRANSACTION_ACTIVATED_EVENT for transactionId {} - error {}",
+                                                transactionId.value(),
+                                                exception.getMessage()
+                                        )
                                 )
-                        ).doOnError(
-                                exception -> log.error(
-                                        "Error to generate event TRANSACTION_ACTIVATED_EVENT for transactionId {} - error {}",
-                                        transactionId.value(),
-                                        exception.getMessage()
-                                )
-                        )
                                 .doOnNext(
                                         event -> log.info(
                                                 "Generated event TRANSACTION_ACTIVATED_EVENT for transactionId {}",
@@ -386,7 +386,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                         transfer.transferCategory()
                                 )
                         ).toList(),
-                        paymentRequestInfo.isAllCCP()
+                        paymentRequestInfo.isAllCCP(),
+                        paymentRequestInfo.paName()
                 )
         ).toList();
     }

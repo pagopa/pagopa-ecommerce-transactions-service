@@ -142,11 +142,12 @@ class TransactionRequestAuthorizationHandlerTest {
                                 description,
                                 nullPaymentContextCode,
                                 new ArrayList<>(),
-                                false
+                                false,
+                                null
                         )
                 ), // TODO
-                   // TRANSFER
-                   // LIST
+                // TRANSFER
+                // LIST
                 email,
                 null,
                 null,
@@ -228,11 +229,12 @@ class TransactionRequestAuthorizationHandlerTest {
                                 description,
                                 nullPaymentContextCode,
                                 new ArrayList<>(),
-                                false
+                                false,
+                                null
                         )
                 ), // TODO
-                   // TRANSFER
-                   // LIST
+                // TRANSFER
+                // LIST
                 email,
                 null,
                 null,
@@ -333,11 +335,12 @@ class TransactionRequestAuthorizationHandlerTest {
                                 description,
                                 nullPaymentContextCode,
                                 new ArrayList<>(),
-                                false
+                                false,
+                                null
                         )
                 ), // TODO
-                   // TRANSFER
-                   // LIST
+                // TRANSFER
+                // LIST
                 email,
                 null,
                 null,
@@ -437,11 +440,12 @@ class TransactionRequestAuthorizationHandlerTest {
                                 description,
                                 nullPaymentContextCode,
                                 new ArrayList<>(),
-                                false
+                                false,
+                                null
                         )
                 ), // TODO
-                   // TRANSFER
-                   // LIST
+                // TRANSFER
+                // LIST
                 email,
                 null,
                 null,
@@ -546,11 +550,12 @@ class TransactionRequestAuthorizationHandlerTest {
                                 description,
                                 nullPaymentContextCode,
                                 new ArrayList<>(),
-                                false
+                                false,
+                                null
                         )
                 ), // TODO
-                   // TRANSFER
-                   // LIST
+                // TRANSFER
+                // LIST
                 email,
                 null,
                 null,
@@ -636,11 +641,12 @@ class TransactionRequestAuthorizationHandlerTest {
                                 description,
                                 nullPaymentContextCode,
                                 new ArrayList<>(),
-                                false
+                                false,
+                                null
                         )
                 ), // TODO
-                   // TRANSFER
-                   // LIST
+                // TRANSFER
+                // LIST
                 email,
                 faultCode,
                 faultCodeString,
@@ -721,11 +727,12 @@ class TransactionRequestAuthorizationHandlerTest {
                                 description,
                                 nullPaymentContextCode,
                                 new ArrayList<>(),
-                                false
+                                false,
+                                null
                         )
                 ), // TODO
-                   // TRANSFER
-                   // LIST
+                // TRANSFER
+                // LIST
                 email,
                 faultCode,
                 faultCodeString,
@@ -811,11 +818,12 @@ class TransactionRequestAuthorizationHandlerTest {
                                 description,
                                 nullPaymentContextCode,
                                 new ArrayList<>(),
-                                false
+                                false,
+                                null
                         )
                 ), // TODO
-                   // TRANSFER
-                   // LIST
+                // TRANSFER
+                // LIST
                 email,
                 null,
                 null,
@@ -912,11 +920,12 @@ class TransactionRequestAuthorizationHandlerTest {
                                 description,
                                 nullPaymentContextCode,
                                 new ArrayList<>(),
-                                false
+                                false,
+                                null
                         )
                 ), // TODO
-                   // TRANSFER
-                   // LIST
+                // TRANSFER
+                // LIST
                 email,
                 null,
                 null,
@@ -999,12 +1008,12 @@ class TransactionRequestAuthorizationHandlerTest {
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(
-                paymentGatewayClient.requestNpgBuildSession(authorizationData, null, true, clientId.name())
-        )
+                        paymentGatewayClient.requestNpgBuildSession(authorizationData, null, true, clientId.name())
+                )
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(
-                paymentGatewayClient.requestNpgCardsAuthorization(authorizationDataAfterBuildSession, null)
-        )
+                        paymentGatewayClient.requestNpgCardsAuthorization(authorizationDataAfterBuildSession, null)
+                )
                 .thenReturn(Mono.just(stateResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));

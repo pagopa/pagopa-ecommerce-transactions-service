@@ -136,7 +136,8 @@ class TransactionSendClosureHandlerTest {
                         amount.value(),
                         null,
                         List.of(new PaymentTransferInformation("77777777777", false, 100, null)),
-                        false
+                        false,
+                        null
                 )
         );
 
@@ -146,23 +147,24 @@ class TransactionSendClosureHandlerTest {
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 paymentNotices.stream().map(
-                        paymentNotice -> new PaymentNotice(
-                                new PaymentToken(paymentNotice.getPaymentToken()),
-                                new RptId(paymentNotice.getRptId()),
-                                new TransactionAmount(paymentNotice.getAmount()),
-                                new TransactionDescription(paymentNotice.getDescription()),
-                                new PaymentContextCode(paymentNotice.getPaymentContextCode()),
-                                List.of(
-                                        new PaymentTransferInfo(
-                                                paymentNotice.getRptId().substring(0, 11),
-                                                false,
-                                                100,
-                                                null
-                                        )
-                                ),
-                                paymentNotice.isAllCCP()
+                                paymentNotice -> new PaymentNotice(
+                                        new PaymentToken(paymentNotice.getPaymentToken()),
+                                        new RptId(paymentNotice.getRptId()),
+                                        new TransactionAmount(paymentNotice.getAmount()),
+                                        new TransactionDescription(paymentNotice.getDescription()),
+                                        new PaymentContextCode(paymentNotice.getPaymentContextCode()),
+                                        List.of(
+                                                new PaymentTransferInfo(
+                                                        paymentNotice.getRptId().substring(0, 11),
+                                                        false,
+                                                        100,
+                                                        null
+                                                )
+                                        ),
+                                        paymentNotice.isAllCCP(),
+                                        new CompanyName(paymentNotice.getCompanyName())
+                                )
                         )
-                )
                         .toList(),
                 email,
                 faultCode,
@@ -281,7 +283,8 @@ class TransactionSendClosureHandlerTest {
                                         null
                                 )
                         ),
-                        false
+                        false,
+                        null
                 )
         );
 
@@ -506,7 +509,8 @@ class TransactionSendClosureHandlerTest {
                                         null
                                 )
                         ),
-                        false
+                        false,
+                        null
                 )
         );
 
@@ -721,8 +725,8 @@ class TransactionSendClosureHandlerTest {
     @ParameterizedTest
     @MethodSource("closePaymentDateFormat")
     void shoulGenerateClosedEventOnAuthorizationOKAndOkNodoClosePayment(
-                                                                        String expectedOperationTimestamp,
-                                                                        String expectedLocalTime
+            String expectedOperationTimestamp,
+            String expectedLocalTime
     ) {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
@@ -740,7 +744,8 @@ class TransactionSendClosureHandlerTest {
                         transactionAmount.value(),
                         null,
                         List.of(new PaymentTransferInformation("77777777777", false, 100, null)),
-                        false
+                        false,
+                        null
                 )
         );
 
@@ -1006,7 +1011,8 @@ class TransactionSendClosureHandlerTest {
                                         null
                                 )
                         ),
-                        false
+                        false,
+                        null
                 )
         );
 
@@ -1277,7 +1283,8 @@ class TransactionSendClosureHandlerTest {
                                         null
                                 )
                         ),
-                        false
+                        false,
+                        null
                 )
         );
 
@@ -1563,7 +1570,8 @@ class TransactionSendClosureHandlerTest {
                                         null
                                 )
                         ),
-                        false
+                        false,
+                        null
                 )
         );
 
@@ -1801,7 +1809,8 @@ class TransactionSendClosureHandlerTest {
                                         null
                                 )
                         ),
-                        false
+                        false,
+                        null
                 )
         );
 
@@ -1960,8 +1969,8 @@ class TransactionSendClosureHandlerTest {
                                                                 .getPaymentTypeCode()
                                                 ).brandLogo(
                                                         Stream.ofNullable(
-                                                                authorizationRequestedEvent.getData().getLogo()
-                                                        )
+                                                                        authorizationRequestedEvent.getData().getLogo()
+                                                                )
                                                                 .filter(logo -> logo != null)
                                                                 .map(l -> l.toString())
                                                                 .findFirst()
@@ -2020,7 +2029,8 @@ class TransactionSendClosureHandlerTest {
                                         null
                                 )
                         ),
-                        false
+                        false,
+                        null
                 )
         );
 
@@ -2182,8 +2192,8 @@ class TransactionSendClosureHandlerTest {
                                                                 .getPaymentTypeCode()
                                                 ).brandLogo(
                                                         Stream.ofNullable(
-                                                                authorizationRequestedEvent.getData().getLogo()
-                                                        )
+                                                                        authorizationRequestedEvent.getData().getLogo()
+                                                                )
                                                                 .filter(logo -> logo != null)
                                                                 .map(l -> l.toString())
                                                                 .findFirst()
@@ -2284,7 +2294,8 @@ class TransactionSendClosureHandlerTest {
                                         null
                                 )
                         ),
-                        false
+                        false,
+                        null
                 )
         );
 
@@ -2562,7 +2573,8 @@ class TransactionSendClosureHandlerTest {
                                         null
                                 )
                         ),
-                        false
+                        false,
+                        null
                 )
         );
 
@@ -2710,7 +2722,7 @@ class TransactionSendClosureHandlerTest {
                                                 .authorizationCode(
                                                         ((OutcomeXpayGatewayDto) updateAuthorizationRequest
                                                                 .getOutcomeGateway())
-                                                                        .getAuthorizationCode()
+                                                                .getAuthorizationCode()
                                                 )
                                                 .creationDate(
                                                         ((BaseTransactionWithPaymentToken) transaction)
@@ -3018,7 +3030,7 @@ class TransactionSendClosureHandlerTest {
                 .sendMessageWithResponse(
                         argThat(
                                 (
-                                 QueueEvent<TransactionRefundRequestedEvent> e
+                                        QueueEvent<TransactionRefundRequestedEvent> e
                                 ) -> e.event().getTransactionId().equals(transactionId.value()) && e.event().getData()
                                         .getStatusBeforeRefunded().equals(TransactionStatusDto.CLOSED)
                         ),
@@ -3707,7 +3719,7 @@ class TransactionSendClosureHandlerTest {
                 .sendMessageWithResponse(
                         argThat(
                                 (
-                                 QueueEvent<TransactionRefundRequestedEvent> e
+                                        QueueEvent<TransactionRefundRequestedEvent> e
                                 ) -> e.event().getTransactionId().equals(transactionId.value()) && e.event().getData()
                                         .getStatusBeforeRefunded().equals(TransactionStatusDto.CLOSURE_ERROR)
                         ),

@@ -103,7 +103,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                                 eventArg -> TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
                                         .equals(eventArg.getEventCode())
                                         && eventArg.getData().getAuthorizationResultDto()
-                                                .equals(AuthorizationResultDto.OK)
+                                        .equals(AuthorizationResultDto.OK)
                         )
                 );
     }
@@ -130,7 +130,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                                 description,
                                 nullPaymentContextCode,
                                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, amount.value(), null)),
-                                false
+                                false,
+                                null
                         )
                 ),
                 email,

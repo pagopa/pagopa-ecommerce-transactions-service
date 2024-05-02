@@ -119,75 +119,75 @@ public class TransactionsService {
     @Autowired
     public TransactionsService(
             @Qualifier(
-                it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler.QUALIFIER_NAME
+                    it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler transactionActivateHandlerV1,
             @Qualifier(
-                it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler.QUALIFIER_NAME
+                    it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler transactionActivateHandlerV2,
             it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler requestAuthHandlerV1,
             it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler requestAuthHandlerV2,
             @Qualifier(
-                it.pagopa.transactions.commands.handlers.v1.TransactionUpdateAuthorizationHandler.QUALIFIER_NAME
+                    it.pagopa.transactions.commands.handlers.v1.TransactionUpdateAuthorizationHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v1.TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV1,
             @Qualifier(
-                it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler.QUALIFIER_NAME
+                    it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV2,
             @Qualifier(
-                it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler.QUALIFIER_NAME
+                    it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler transactionSendClosureHandlerV1,
             it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureRequestHandler transactionSendClosureRequestHandler,
             @Qualifier(
-                it.pagopa.transactions.commands.handlers.v1.TransactionRequestUserReceiptHandler.QUALIFIER_NAME
+                    it.pagopa.transactions.commands.handlers.v1.TransactionRequestUserReceiptHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v1.TransactionRequestUserReceiptHandler transactionRequestUserReceiptHandlerV1,
             @Qualifier(
-                it.pagopa.transactions.commands.handlers.v2.TransactionRequestUserReceiptHandler.QUALIFIER_NAME
+                    it.pagopa.transactions.commands.handlers.v2.TransactionRequestUserReceiptHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v2.TransactionRequestUserReceiptHandler transactionRequestUserReceiptHandlerV2,
             @Qualifier(
-                it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler.QUALIFIER_NAME
+                    it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler transactionCancelHandlerV1,
             @Qualifier(
-                it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler.QUALIFIER_NAME
+                    it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler transactionCancelHandlerV2,
 
             @Qualifier(
-                it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler.QUALIFIER_NAME
+                    it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler authorizationProjectionHandlerV1,
             @Qualifier(
-                it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler.QUALIFIER_NAME
+                    it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler authorizationProjectionHandlerV2,
             @Qualifier(
-                it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler.QUALIFIER_NAME
+                    it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV1,
             @Qualifier(
-                it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler.QUALIFIER_NAME
+                    it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV2,
             @Qualifier(
-                it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler.QUALIFIER_NAME
+                    it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler refundRequestProjectionHandlerV1,
             @Qualifier(
-                it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler.QUALIFIER_NAME
+                    it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler closureSendProjectionHandlerV1,
             it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler closureRequestedProjectionHandler,
             @Qualifier(
-                it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler.QUALIFIER_NAME
+                    it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler closureErrorProjectionHandlerV1,
             @Qualifier(
-                it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler.QUALIFIER_NAME
+                    it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV1,
             @Qualifier(
-                it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler.QUALIFIER_NAME
+                    it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV2,
             @Qualifier(
-                it.pagopa.transactions.projections.handlers.v1.TransactionUserReceiptProjectionHandler.QUALIFIER_NAME
+                    it.pagopa.transactions.projections.handlers.v1.TransactionUserReceiptProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v1.TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV1,
             @Qualifier(
-                it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler.QUALIFIER_NAME
+                    it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV2,
             @Qualifier(
-                it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler.QUALIFIER_NAME
+                    it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV1,
             @Qualifier(
-                it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler.QUALIFIER_NAME
+                    it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2,
             TransactionsViewRepository transactionsViewRepository,
             EcommercePaymentMethodsClient ecommercePaymentMethodsClient,
@@ -239,9 +239,9 @@ public class TransactionsService {
     @CircuitBreaker(name = "node-backend")
     @Retry(name = "newTransaction")
     public Mono<NewTransactionResponseDto> newTransaction(
-                                                          NewTransactionRequestDto newTransactionRequestDto,
-                                                          ClientIdDto clientIdDto,
-                                                          TransactionId transactionId
+            NewTransactionRequestDto newTransactionRequestDto,
+            ClientIdDto clientIdDto,
+            TransactionId transactionId
     ) {
         Transaction.ClientId clientId = Transaction.ClientId.fromString(
                 Optional.ofNullable(clientIdDto)
@@ -268,7 +268,8 @@ public class TransactionsService {
                                         null,
                                         null,
                                         null,
-                                        false
+                                        false,
+                                        null
                                 )
                         ).toList()
                 ),
@@ -643,7 +644,8 @@ public class TransactionsService {
                                                                             transfer.getTransferCategory()
                                                                     )
                                                             ).toList(),
-                                                    paymentNotice.isAllCCP()
+                                                    paymentNotice.isAllCCP(),
+                                                    new CompanyName(paymentNotice.getCompanyName())
                                             )
                                     ).toList(),
                                     transactionsUtils.getEmail(transactionDocument),
@@ -711,8 +713,8 @@ public class TransactionsService {
 
     @Retry(name = "updateTransactionAuthorization")
     public Mono<TransactionInfoDto> updateTransactionAuthorization(
-                                                                   UUID decodedTransactionId,
-                                                                   UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+            UUID decodedTransactionId,
+            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
 
         TransactionId transactionId = new TransactionId(decodedTransactionId);
@@ -777,9 +779,9 @@ public class TransactionsService {
     }
 
     private Mono<TransactionInfoDto> updateTransactionAuthorizationStatusV1(
-                                                                            it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction transaction,
-                                                                            UpdateAuthorizationRequestDto updateAuthorizationRequestDto,
-                                                                            ZonedDateTime authorizationRequestedTime
+            it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction transaction,
+            UpdateAuthorizationRequestDto updateAuthorizationRequestDto,
+            ZonedDateTime authorizationRequestedTime
     ) {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction.getTransactionId(),
@@ -855,9 +857,9 @@ public class TransactionsService {
     }
 
     private Mono<TransactionInfoDto> updateTransactionAuthorizationStatusV2(
-                                                                            it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction,
-                                                                            UpdateAuthorizationRequestDto updateAuthorizationRequestDto,
-                                                                            ZonedDateTime authorizationRequestedTime
+            it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction,
+            UpdateAuthorizationRequestDto updateAuthorizationRequestDto,
+            ZonedDateTime authorizationRequestedTime
     ) {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction.getTransactionId(),
@@ -877,22 +879,22 @@ public class TransactionsService {
         return wasTransactionAuthorized(
                 transaction.getTransactionId()
         ).<Either<TransactionInfoDto, Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction>>>flatMap(
-                alreadyAuthorized -> {
-                    if (Boolean.FALSE.equals(alreadyAuthorized)) {
-                        return Mono.just(baseTransaction).map(Either::right);
-                    } else {
-                        return baseTransaction.map(
-                                trx -> {
-                                    log.info(
-                                            "UpdateTransactionAuthorization outcome already received. Transaction status: [{}]",
-                                            trx.getStatus()
-                                    );
-                                    return buildTransactionInfoDtoV2(trx);
-                                }
-                        ).map(Either::left);
-                    }
-                }
-        )
+                        alreadyAuthorized -> {
+                            if (Boolean.FALSE.equals(alreadyAuthorized)) {
+                                return Mono.just(baseTransaction).map(Either::right);
+                            } else {
+                                return baseTransaction.map(
+                                        trx -> {
+                                            log.info(
+                                                    "UpdateTransactionAuthorization outcome already received. Transaction status: [{}]",
+                                                    trx.getStatus()
+                                            );
+                                            return buildTransactionInfoDtoV2(trx);
+                                        }
+                                ).map(Either::left);
+                            }
+                        }
+                )
                 .flatMap(
                         either -> either.fold(
                                 Mono::just,
@@ -933,8 +935,8 @@ public class TransactionsService {
     }
 
     private Mono<it.pagopa.ecommerce.commons.documents.v1.Transaction> closePaymentV1(
-                                                                                      it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken transaction,
-                                                                                      UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+            it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithPaymentToken transaction,
+            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
         ClosureSendData closureSendData = new ClosureSendData(
                 transaction.getTransactionId(),
@@ -949,11 +951,11 @@ public class TransactionsService {
         return transactionSendClosureHandlerV1
                 .handle(transactionClosureSendCommand)
                 .doOnNext(closureSentEvent ->
-                // FIXME Handle multiple rtpId
-                log.info(
-                        "Requested transaction closure for rptId: {}",
-                        transaction.getPaymentNotices().get(0).rptId().value()
-                )
+                        // FIXME Handle multiple rtpId
+                        log.info(
+                                "Requested transaction closure for rptId: {}",
+                                transaction.getPaymentNotices().get(0).rptId().value()
+                        )
                 )
                 .flatMap(
                         el -> el.getT1().map(
@@ -976,7 +978,7 @@ public class TransactionsService {
     }
 
     private Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> closePaymentV2(
-                                                                                      it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithPaymentToken transaction
+            it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithPaymentToken transaction
     ) {
 
         TransactionClosureRequestCommand transactionClosureRequestCommand = new TransactionClosureRequestCommand(
@@ -987,11 +989,11 @@ public class TransactionsService {
         return transactionSendClosureRequestHandler
                 .handle(transactionClosureRequestCommand)
                 .doOnNext(closureSentRequestedEvent ->
-                // FIXME Handle multiple rtpId
-                log.info(
-                        "Requested async transaction closure for rptId: {}",
-                        transaction.getPaymentNotices().get(0).rptId().value()
-                )
+                        // FIXME Handle multiple rtpId
+                        log.info(
+                                "Requested async transaction closure for rptId: {}",
+                                transaction.getPaymentNotices().get(0).rptId().value()
+                        )
                 )
                 .flatMap(
                         closureRequestedEvent -> closureRequestedProjectionHandler.handle(
@@ -1003,7 +1005,7 @@ public class TransactionsService {
     }
 
     private TransactionInfoDto buildTransactionInfoDtoV1(
-                                                         it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument
+            it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument
     ) {
         return new TransactionInfoDto()
                 .transactionId(
@@ -1028,7 +1030,7 @@ public class TransactionsService {
     }
 
     private TransactionInfoDto buildTransactionInfoDtoV2(
-                                                         it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument
+            it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument
     ) {
         return new TransactionInfoDto()
                 .transactionId(
@@ -1053,7 +1055,7 @@ public class TransactionsService {
     }
 
     private TransactionInfoDto buildTransactionInfoDtoV1(
-                                                         it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction baseTransaction
+            it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction baseTransaction
     ) {
         return new TransactionInfoDto()
                 .transactionId(baseTransaction.getTransactionId().value())
@@ -1071,7 +1073,7 @@ public class TransactionsService {
     }
 
     private TransactionInfoDto buildTransactionInfoDtoV2(
-                                                         it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction baseTransaction
+            it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction baseTransaction
     ) {
         return new TransactionInfoDto()
                 .transactionId(baseTransaction.getTransactionId().value())
@@ -1090,7 +1092,7 @@ public class TransactionsService {
     }
 
     private Mono<Boolean> wasTransactionAuthorized(
-                                                   TransactionId transactionId
+            TransactionId transactionId
     ) {
         /*
          * @formatter:off
@@ -1189,8 +1191,8 @@ public class TransactionsService {
     }
 
     private Mono<NewTransactionResponseDto> projectActivatedEventV1(
-                                                                    it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent transactionActivatedEvent,
-                                                                    String authToken
+            it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent transactionActivatedEvent,
+            String authToken
     ) {
         return transactionsActivationProjectionHandlerV1
                 .handle(transactionActivatedEvent)
@@ -1237,8 +1239,8 @@ public class TransactionsService {
     }
 
     private Mono<NewTransactionResponseDto> projectActivatedEventV2(
-                                                                    it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent transactionActivatedEvent,
-                                                                    String authToken
+            it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent transactionActivatedEvent,
+            String authToken
     ) {
         return transactionsActivationProjectionHandlerV2
                 .handle(transactionActivatedEvent)
@@ -1285,7 +1287,7 @@ public class TransactionsService {
     }
 
     public NewTransactionResponseDto.ClientIdEnum convertClientId(
-                                                                  String clientId
+            String clientId
     ) {
         return Optional.ofNullable(clientId).filter(Objects::nonNull)
                 .map(
