@@ -257,6 +257,11 @@ public class TransactionsUtils {
         return paymentNotices.get(idx).getRptId();
     }
 
+    public List<String> getRptIds(BaseTransactionView baseTransactionView) {
+        List<PaymentNotice> paymentNotices = getPaymentNotices(baseTransactionView);
+        return paymentNotices.stream().map(PaymentNotice::getRptId).toList();
+    }
+
     public List<it.pagopa.ecommerce.commons.documents.PaymentNotice> getPaymentNotices(BaseTransactionView baseTransactionView) {
         return switch (baseTransactionView) {
             case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getPaymentNotices();

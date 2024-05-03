@@ -2,7 +2,6 @@ package it.pagopa.transactions.services.v1;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
-import io.vavr.Tuple;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
@@ -248,13 +247,9 @@ public class TransactionsService {
                         .map(ClientIdDto::toString)
                         .orElse(null)
         );
-        log.info(
-                "Initializing transaction for rptId: {}. ClientId: {}",
-                newTransactionRequestDto.getPaymentNotices().get(0).getRptId(),
-                clientId
-        );
+
         TransactionActivateCommand transactionActivateCommand = new TransactionActivateCommand(
-                new RptId(newTransactionRequestDto.getPaymentNotices().get(0).getRptId()),
+                newTransactionRequestDto.getPaymentNotices().stream().map(p -> new RptId(p.getRptId())).toList(),
                 new NewTransactionRequestData(
                         newTransactionRequestDto.getIdCart(),
                         newTransactionRequestDto.getEmail(),
@@ -277,13 +272,17 @@ public class TransactionsService {
                 transactionId,
                 null
         );
-
+        log.info(
+                "Initializing transaction for rptIds: {}. ClientId: {}",
+                transactionActivateCommand.getRptIds().stream().map(RptId::value).toList(),
+                clientId
+        );
         return switch (eventVersion) {
             case V1 -> transactionActivateHandlerV1.handle(transactionActivateCommand)
                     .doOnNext(
                             args -> log.info(
-                                    "Transaction initialized for rptId: [{}]",
-                                    newTransactionRequestDto.getPaymentNotices().get(0).getRptId()
+                                    "Transaction initialized for rptIds: {}",
+                                    transactionActivateCommand.getRptIds().stream().map(RptId::value).toList()
                             )
                     )
                     .flatMap(
@@ -304,8 +303,8 @@ public class TransactionsService {
             case V2 -> transactionActivateHandlerV2.handle(transactionActivateCommand)
                     .doOnNext(
                             args -> log.info(
-                                    "Transaction initialized for rptId: [{}]",
-                                    newTransactionRequestDto.getPaymentNotices().get(0).getRptId()
+                                    "Transaction initialized for rptIds: {}",
+                                    transactionActivateCommand.getRptIds().stream().map(RptId::value).toList()
                             )
                     )
                     .flatMap(
@@ -668,9 +667,8 @@ public class TransactionsService {
                                     Optional.ofNullable(brandAssets)
                             );
 
-                            // FIXME Handle multiple rtpId
                             TransactionRequestAuthorizationCommand transactionRequestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                                    new RptId(transactionsUtils.getRptId(transactionDocument, 0)),
+                                    transactionsUtils.getRptIds(transactionDocument).stream().map(RptId::new).toList(),
                                     authorizationData
                             );
                             Mono<RequestAuthorizationResponseDto> authPipeline = switch (transactionDocument) {
@@ -791,9 +789,8 @@ public class TransactionsService {
                 Optional.empty()
         );
 
-        // FIXME Handle multiple rtpId
         TransactionUpdateAuthorizationCommand transactionUpdateAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 updateAuthorizationStatusData
         );
 
@@ -823,8 +820,10 @@ public class TransactionsService {
                                                         .handle(transactionUpdateAuthorizationCommand)
                                                         .doOnNext(
                                                                 authorizationStatusUpdatedEvent -> log.info(
-                                                                        "UpdateTransactionAuthorization Requested authorization update for rptId: [{}]",
-                                                                        transaction.getPaymentNotices().get(0).rptId()
+                                                                        "UpdateTransactionAuthorization Requested authorization update for rptIds: {}",
+                                                                        transactionUpdateAuthorizationCommand
+                                                                                .getRptIds().stream().map(RptId::value)
+                                                                                .toList()
                                                                 )
                                                         )
                                                         .doOnError(
@@ -869,9 +868,8 @@ public class TransactionsService {
                 Optional.of(transaction)
         );
 
-        // FIXME Handle multiple rtpId
         TransactionUpdateAuthorizationCommand transactionUpdateAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 updateAuthorizationStatusData
         );
 
@@ -904,8 +902,10 @@ public class TransactionsService {
                                                         .handle(transactionUpdateAuthorizationCommand)
                                                         .doOnNext(
                                                                 authorizationStatusUpdatedEvent -> log.info(
-                                                                        "UpdateTransactionAuthorization requested for rptId: [{}]",
-                                                                        transaction.getPaymentNotices().get(0).rptId()
+                                                                        "UpdateTransactionAuthorization requested for rptIds: {}",
+                                                                        transactionUpdateAuthorizationCommand
+                                                                                .getRptIds().stream().map(RptId::value)
+                                                                                .toList()
                                                                 )
                                                         )
                                                         .doOnError(
@@ -944,18 +944,17 @@ public class TransactionsService {
         );
 
         TransactionClosureSendCommand transactionClosureSendCommand = new TransactionClosureSendCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 closureSendData
         );
 
         return transactionSendClosureHandlerV1
                 .handle(transactionClosureSendCommand)
-                .doOnNext(closureSentEvent ->
-                // FIXME Handle multiple rtpId
-                log.info(
-                        "Requested transaction closure for rptId: {}",
-                        transaction.getPaymentNotices().get(0).rptId().value()
-                )
+                .doOnNext(
+                        closureSentEvent -> log.info(
+                                "Requested transaction closure for rptIds: {}",
+                                transactionClosureSendCommand.getRptIds().stream().map(RptId::value).toList()
+                        )
                 )
                 .flatMap(
                         el -> el.getT1().map(
@@ -982,18 +981,17 @@ public class TransactionsService {
     ) {
 
         TransactionClosureRequestCommand transactionClosureRequestCommand = new TransactionClosureRequestCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 transaction.getTransactionId()
         );
 
         return transactionSendClosureRequestHandler
                 .handle(transactionClosureRequestCommand)
-                .doOnNext(closureSentRequestedEvent ->
-                // FIXME Handle multiple rtpId
-                log.info(
-                        "Requested async transaction closure for rptId: {}",
-                        transaction.getPaymentNotices().get(0).rptId().value()
-                )
+                .doOnNext(
+                        closureSentRequestedEvent -> log.info(
+                                "Requested async transaction closure for rptIds: {}",
+                                transactionClosureRequestCommand.getRptIds().stream().map(RptId::value).toList()
+                        )
                 )
                 .flatMap(
                         closureRequestedEvent -> closureRequestedProjectionHandler.handle(
@@ -1127,24 +1125,17 @@ public class TransactionsService {
         return transactionsViewRepository
                 .findById(transactionId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
-                .map(
-                        transactionDocument -> {
-                            AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
-                                    new TransactionId(transactionId),
-                                    addUserReceiptRequest
-                            );
-                            // FIXME Handle multiple rtpId
-                            return Tuple.of(transactionDocument, new TransactionAddUserReceiptCommand(
-                                    null,
-                                    addUserReceiptData
-                            ));
-                        }
-                )
                 .flatMap(
-                        el -> switch (el._1) {
+                        transactionView -> switch (transactionView) {
                             case it.pagopa.ecommerce.commons.documents.v1.Transaction t ->
                                     transactionRequestUserReceiptHandlerV1
-                                            .handle(el._2)
+                                            .handle(new TransactionAddUserReceiptCommand(
+                                                    t.getPaymentNotices().stream().map(p -> new RptId(p.getRptId())).toList(),
+                                                    new AddUserReceiptData(
+                                                            new TransactionId(transactionId),
+                                                            addUserReceiptRequest
+                                                    )
+                                            ))
                                             .doOnNext(
                                                     transactionUserReceiptRequestedEvent -> log.info(
                                                             "AddUserReceipt [{}] for transactionId: [{}]",
@@ -1164,7 +1155,13 @@ public class TransactionsService {
                                             .map(this::buildTransactionInfoDtoV1);
 
                             case Transaction t -> transactionRequestUserReceiptHandlerV2
-                                    .handle(el._2)
+                                    .handle(new TransactionAddUserReceiptCommand(
+                                            t.getPaymentNotices().stream().map(p -> new RptId(p.getRptId())).toList(),
+                                            new AddUserReceiptData(
+                                                    new TransactionId(transactionId),
+                                                    addUserReceiptRequest
+                                            )
+                                    ))
                                     .doOnNext(
                                             transactionUserReceiptRequestedEvent -> log.info(
                                                     "AddUserReceipt [{}] for transactionId: [{}]",

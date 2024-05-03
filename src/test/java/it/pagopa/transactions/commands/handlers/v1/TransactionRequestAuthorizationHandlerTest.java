@@ -187,7 +187,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                List.of(transaction.getPaymentNotices().get(0).rptId()),
                 authorizationData
         );
 
@@ -275,7 +275,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                List.of(transaction.getPaymentNotices().get(0).rptId()),
                 authorizationData
         );
 
@@ -380,7 +380,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                List.of(transaction.getPaymentNotices().get(0).rptId()),
                 authorizationData
         );
 
@@ -485,7 +485,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                List.of(transaction.getPaymentNotices().get(0).rptId()),
                 authorizationData
         );
 
@@ -595,7 +595,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                List.of(transaction.getPaymentNotices().get(0).rptId()),
                 authorizationData
         );
 
@@ -686,7 +686,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                List.of(transaction.getPaymentNotices().get(0).rptId()),
                 authorizationData
         );
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
@@ -772,7 +772,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                List.of(transaction.getPaymentNotices().get(0).rptId()),
                 authorizationData
         );
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
@@ -869,7 +869,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                List.of(transaction.getPaymentNotices().get(0).rptId()),
                 authorizationData
         );
 
@@ -988,7 +988,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                List.of(transaction.getPaymentNotices().get(0).rptId()),
                 authorizationData
         );
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)

@@ -14,7 +14,6 @@ import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestPaymentsInnerDto;
 import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.data.AddUserReceiptData;
-import it.pagopa.transactions.commands.handlers.v1.TransactionRequestUserReceiptHandler;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -32,9 +31,9 @@ import reactor.test.StepVerifier;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.*;
-import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.transactionAuthorizationCompletedEvent;
 import static it.pagopa.transactions.utils.Queues.QUEUE_SUCCESSFUL_RESPONSE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -114,7 +113,7 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                List.of(transaction.getPaymentNotices().get(0).rptId()),
                 addUserReceiptData
         );
 
@@ -194,7 +193,7 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         TransactionAddUserReceiptCommand transactionAddUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                List.of(transaction.getPaymentNotices().get(0).rptId()),
                 addUserReceiptData
         );
 
@@ -274,7 +273,7 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         TransactionAddUserReceiptCommand transactionAddUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                List.of(transaction.getPaymentNotices().get(0).rptId()),
                 addUserReceiptData
         );
 
@@ -351,7 +350,7 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         TransactionAddUserReceiptCommand requestStatusCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                List.of(transaction.getPaymentNotices().get(0).rptId()),
                 addUserReceiptData
         );
 
@@ -404,7 +403,7 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         TransactionAddUserReceiptCommand requestStatusCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                List.of(transaction.getPaymentNotices().get(0).rptId()),
                 addUserReceiptData
         );
 
@@ -464,7 +463,7 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                List.of(transaction.getPaymentNotices().get(0).rptId()),
                 addUserReceiptData
         );
 
@@ -538,7 +537,7 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         TransactionAddUserReceiptCommand requestStatusCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                List.of(transaction.getPaymentNotices().get(0).rptId()),
                 addUserReceiptData
         );
 

@@ -129,7 +129,7 @@ class TransactionActivateHandlerTest {
         requestDto.setEmail(EMAIL_STRING);
         paymentNoticeInfoDto.setAmount(1200);
         TransactionActivateCommand command = new TransactionActivateCommand(
-                rptId,
+                List.of(rptId),
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
                         requestDto.getEmail(),
@@ -262,7 +262,7 @@ class TransactionActivateHandlerTest {
         requestDto.setEmail(EMAIL_STRING);
         paymentNoticeInfoDto.setAmount(1200);
         TransactionActivateCommand command = new TransactionActivateCommand(
-                rptId,
+                List.of(rptId),
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
                         requestDto.getEmail(),
@@ -379,7 +379,7 @@ class TransactionActivateHandlerTest {
         requestDto.setEmail("jhon.doe@email.com");
         paymentNoticeInfoDto.setAmount(1200);
         TransactionActivateCommand command = new TransactionActivateCommand(
-                rptId,
+                List.of(rptId),
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
                         requestDto.getEmail(),
@@ -471,7 +471,7 @@ class TransactionActivateHandlerTest {
         requestDto.setEmail("jhon.doe@email.com");
         paymentNoticeInfoDto.setAmount(1200);
         TransactionActivateCommand command = new TransactionActivateCommand(
-                rptId,
+                List.of(rptId),
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
                         requestDto.getEmail(),
@@ -543,7 +543,7 @@ class TransactionActivateHandlerTest {
                 .email(EMAIL_STRING);
 
         TransactionActivateCommand command = new TransactionActivateCommand(
-                rptId,
+                List.of(rptId),
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
                         requestDto.getEmail(),
@@ -659,7 +659,7 @@ class TransactionActivateHandlerTest {
                 .email(EMAIL_STRING);
 
         TransactionActivateCommand command = new TransactionActivateCommand(
-                rptId,
+                List.of(rptId),
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
                         requestDto.getEmail(),
@@ -775,7 +775,7 @@ class TransactionActivateHandlerTest {
                 .email(EMAIL_STRING);
 
         TransactionActivateCommand command = new TransactionActivateCommand(
-                rptId,
+                List.of(rptId),
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
                         requestDto.getEmail(),
