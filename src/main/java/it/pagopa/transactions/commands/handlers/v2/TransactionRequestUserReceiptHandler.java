@@ -6,9 +6,11 @@ import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
+import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestPaymentsInnerDto;
 import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.handlers.TransactionRequestUserReceiptHandlerCommon;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +21,8 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component(TransactionRequestUserReceiptHandler.QUALIFIER_NAME)
 @Slf4j
@@ -85,6 +89,34 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                         )
                 )
                 .switchIfEmpty(alreadyProcessedError)
+                .filterWhen(tx -> {
+                    Set<String> transactionPaymentNotices = tx.getPaymentNotices().stream()
+                            .map(p -> p.paymentToken().value()).collect(Collectors.toSet());
+                    Set<String> sendPaymentResultPaymentNotices = command.getData().addUserReceiptRequest()
+                            .getPayments().stream().map(AddUserReceiptRequestPaymentsInnerDto::getPaymentToken)
+                            .collect(Collectors.toSet());
+                    boolean isOk = transactionPaymentNotices.size() == sendPaymentResultPaymentNotices.size()
+                            && transactionPaymentNotices.containsAll(sendPaymentResultPaymentNotices);
+                    log.debug(
+                            "eCommerce transaction payment tokens: {}, send payment result payment tokens: {} -> isOk: [{}]",
+                            transactionPaymentNotices,
+                            sendPaymentResultPaymentNotices,
+                            isOk
+                    );
+                    if (!isOk) {
+                        return Mono.error(
+                                new InvalidRequestException(
+                                        "eCommerce and Nodo payment tokens mismatch detected!%ntransactionId: %s,%neCommerce payment tokens: %s%nNodo send paymnt result payment tokens: %s"
+                                                .formatted(
+                                                        tx.getTransactionId().value(),
+                                                        transactionPaymentNotices,
+                                                        sendPaymentResultPaymentNotices
+                                                )
+                                )
+                        );
+                    }
+                    return Mono.just(true);
+                })
                 .cast(it.pagopa.ecommerce.commons.domain.v2.TransactionClosed.class)
                 .flatMap(tx -> {
                     AddUserReceiptRequestDto addUserReceiptRequestDto = command.getData().addUserReceiptRequest();
