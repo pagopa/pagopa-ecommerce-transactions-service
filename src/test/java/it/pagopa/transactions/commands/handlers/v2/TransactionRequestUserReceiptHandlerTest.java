@@ -4,6 +4,7 @@ import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.*;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
+import it.pagopa.ecommerce.commons.domain.PaymentNotice;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
@@ -116,7 +117,7 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 addUserReceiptData
         );
 
@@ -200,7 +201,7 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         TransactionAddUserReceiptCommand transactionAddUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 addUserReceiptData
         );
 
@@ -284,7 +285,7 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         TransactionAddUserReceiptCommand transactionAddUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 addUserReceiptData
         );
 
@@ -362,7 +363,7 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         TransactionAddUserReceiptCommand requestStatusCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 addUserReceiptData
         );
 
@@ -415,7 +416,7 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         TransactionAddUserReceiptCommand requestStatusCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 addUserReceiptData
         );
 
@@ -478,7 +479,7 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 addUserReceiptData
         );
 
@@ -565,7 +566,7 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 addUserReceiptData
         );
 
