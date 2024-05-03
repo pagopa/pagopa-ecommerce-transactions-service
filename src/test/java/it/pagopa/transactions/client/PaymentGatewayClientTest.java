@@ -1556,19 +1556,19 @@ class PaymentGatewayClientTest {
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         /* preconditions */
         Mockito.when(
-                        npgClient.buildForm(
-                                eq(UUID.fromString(correlationId)),
-                                any(),
-                                any(),
-                                any(),
-                                any(),
-                                eq(orderId),
-                                eq(null),
-                                any(),
-                                any(),
-                                eq(contractId)
-                        )
+                npgClient.buildForm(
+                        eq(UUID.fromString(correlationId)),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        eq(orderId),
+                        eq(null),
+                        any(),
+                        any(),
+                        eq(contractId)
                 )
+        )
                 .thenReturn(
                         Mono.error(
                                 new NpgResponseException(
@@ -1659,19 +1659,19 @@ class PaymentGatewayClientTest {
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         /* preconditions */
         Mockito.when(
-                        npgClient.buildForm(
-                                eq(UUID.fromString(correlationId)),
-                                any(),
-                                any(),
-                                any(),
-                                any(),
-                                eq(orderId),
-                                eq(null),
-                                any(),
-                                any(),
-                                eq(contractId)
-                        )
+                npgClient.buildForm(
+                        eq(UUID.fromString(correlationId)),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        eq(orderId),
+                        eq(null),
+                        any(),
+                        any(),
+                        eq(contractId)
                 )
+        )
                 .thenReturn(
                         Mono.error(
                                 new NpgResponseException(
@@ -1759,19 +1759,19 @@ class PaymentGatewayClientTest {
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         /* preconditions */
         Mockito.when(
-                        npgClient.buildForm(
-                                eq(UUID.fromString(correlationId)),
-                                any(),
-                                any(),
-                                any(),
-                                any(),
-                                eq(orderId),
-                                eq(null),
-                                any(),
-                                any(),
-                                eq(contractId)
-                        )
+                npgClient.buildForm(
+                        eq(UUID.fromString(correlationId)),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        eq(orderId),
+                        eq(null),
+                        any(),
+                        any(),
+                        eq(contractId)
                 )
+        )
                 .thenReturn(
                         Mono.error(
                                 new NpgResponseException(
@@ -2442,8 +2442,8 @@ class PaymentGatewayClientTest {
     @ParameterizedTest
     @MethodSource("redirectRetrieveUrlPaymentMethodsTestMethodSource")
     void shouldPerformAuthorizationRequestRetrievingRedirectionUrl(
-            PaymentGatewayClient.RedirectPaymentMethodId paymentTypeCode,
-            String mappedPaymentMethodDescription
+                                                                   PaymentGatewayClient.RedirectPaymentMethodId paymentTypeCode,
+                                                                   String mappedPaymentMethodDescription
     ) {
         String pspId = "pspId";
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
@@ -2511,8 +2511,8 @@ class PaymentGatewayClientTest {
         Hooks.onOperatorDebug();
         /* test */
         StepVerifier.create(
-                        client.requestRedirectUrlAuthorization(authorizationData, RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
-                )
+                client.requestRedirectUrlAuthorization(authorizationData, RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
+        )
                 .expectNext(redirectUrlResponseDto)
                 .verifyComplete();
         verify(nodeForwarderClient, times(1)).proxyRequest(
@@ -2557,8 +2557,8 @@ class PaymentGatewayClientTest {
     @ParameterizedTest
     @MethodSource("errorRetrievingRedirectionUrl")
     void shouldHandleErrorRetrievingRedirectionUrl(
-            HttpStatus httpResponseStatusCode,
-            Class<? extends Exception> expectedMappedException
+                                                   HttpStatus httpResponseStatusCode,
+                                                   Class<? extends Exception> expectedMappedException
     ) {
         String pspId = "pspId";
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
@@ -2630,8 +2630,8 @@ class PaymentGatewayClientTest {
         Hooks.onOperatorDebug();
         /* test */
         StepVerifier.create(
-                        client.requestRedirectUrlAuthorization(authorizationData, RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
-                )
+                client.requestRedirectUrlAuthorization(authorizationData, RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
+        )
                 .expectError(expectedMappedException)
                 .verify();
         verify(nodeForwarderClient, times(1)).proxyRequest(
@@ -2729,8 +2729,8 @@ class PaymentGatewayClientTest {
         Hooks.onOperatorDebug();
         /* test */
         StepVerifier.create(
-                        client.requestRedirectUrlAuthorization(authorizationData, RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
-                )
+                client.requestRedirectUrlAuthorization(authorizationData, RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
+        )
                 .expectError(BadGatewayException.class)
                 .verify();
         verify(nodeForwarderClient, times(1)).proxyRequest(
@@ -2811,8 +2811,8 @@ class PaymentGatewayClientTest {
         );
         /* test */
         StepVerifier.create(
-                        client.requestRedirectUrlAuthorization(authorizationData, RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
-                )
+                client.requestRedirectUrlAuthorization(authorizationData, RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
+        )
                 .expectError(RedirectConfigurationException.class)
                 .verify();
         verify(nodeForwarderClient, times(0)).proxyRequest(any(), any(), any(), any());

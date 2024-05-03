@@ -195,12 +195,12 @@ class TransactionActivateHandlerTest {
         Mockito.doNothing().when(paymentRequestInfoRedisTemplateWrapper)
                 .save(paymentRequestInfoArgumentCaptor.capture());
         Mockito.when(
-                        transactionActivatedQueueAsyncClient.sendMessageWithResponse(
-                                any(QueueEvent.class),
-                                any(),
-                                durationArgumentCaptor.capture()
-                        )
+                transactionActivatedQueueAsyncClient.sendMessageWithResponse(
+                        any(QueueEvent.class),
+                        any(),
+                        durationArgumentCaptor.capture()
                 )
+        )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
         Mockito.when(
                 jwtTokenUtils.generateToken(
@@ -326,20 +326,20 @@ class TransactionActivateHandlerTest {
         Mockito.when(transactionEventActivatedStoreRepository.save(any()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
         Mockito.when(
-                        transactionActivatedQueueAsyncClient.sendMessageWithResponse(
-                                any(QueueEvent.class),
-                                any(),
-                                durationArgumentCaptor.capture()
-                        )
+                transactionActivatedQueueAsyncClient.sendMessageWithResponse(
+                        any(QueueEvent.class),
+                        any(),
+                        durationArgumentCaptor.capture()
                 )
+        )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
         Mockito.when(
-                        jwtTokenUtils.generateToken(
-                                eq(jwtSecretKey),
-                                eq(tokenValidityTimeInSeconds),
-                                eq(new Claims(transactionId, null, null))
-                        )
+                jwtTokenUtils.generateToken(
+                        eq(jwtSecretKey),
+                        eq(tokenValidityTimeInSeconds),
+                        eq(new Claims(transactionId, null, null))
                 )
+        )
                 .thenReturn(Either.right("authToken"));
 
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
@@ -603,24 +603,24 @@ class TransactionActivateHandlerTest {
         Mockito.doNothing().when(paymentRequestInfoRedisTemplateWrapper)
                 .save(paymentRequestInfoArgumentCaptor.capture());
         Mockito.when(
-                        nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(dueDate))
-                )
+                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(dueDate))
+        )
                 .thenReturn(Mono.just(paymentRequestInfoAfterActivation));
         Mockito.when(
-                        jwtTokenUtils.generateToken(
-                                eq(jwtSecretKey),
-                                eq(tokenValidityTimeInSeconds),
-                                eq(new Claims(transactionId, null, null))
-                        )
+                jwtTokenUtils.generateToken(
+                        eq(jwtSecretKey),
+                        eq(tokenValidityTimeInSeconds),
+                        eq(new Claims(transactionId, null, null))
                 )
+        )
                 .thenReturn(Either.right("authToken"));
         Mockito.when(
-                        transactionActivatedQueueAsyncClient.sendMessageWithResponse(
-                                any(),
-                                any(),
-                                durationArgumentCaptor.capture()
-                        )
+                transactionActivatedQueueAsyncClient.sendMessageWithResponse(
+                        any(),
+                        any(),
+                        durationArgumentCaptor.capture()
                 )
+        )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
 
@@ -719,24 +719,24 @@ class TransactionActivateHandlerTest {
         Mockito.doNothing().when(paymentRequestInfoRedisTemplateWrapper)
                 .save(paymentRequestInfoArgumentCaptor.capture());
         Mockito.when(
-                        nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(null))
-                )
+                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(null))
+        )
                 .thenReturn(Mono.just(paymentRequestInfoAfterActivation));
         Mockito.when(
-                        jwtTokenUtils.generateToken(
-                                eq(jwtSecretKey),
-                                eq(tokenValidityTimeInSeconds),
-                                eq(new Claims(transactionId, null, null))
-                        )
+                jwtTokenUtils.generateToken(
+                        eq(jwtSecretKey),
+                        eq(tokenValidityTimeInSeconds),
+                        eq(new Claims(transactionId, null, null))
                 )
+        )
                 .thenReturn(Either.right("authToken"));
         Mockito.when(
-                        transactionActivatedQueueAsyncClient.sendMessageWithResponse(
-                                any(QueueEvent.class),
-                                any(),
-                                durationArgumentCaptor.capture()
-                        )
+                transactionActivatedQueueAsyncClient.sendMessageWithResponse(
+                        any(QueueEvent.class),
+                        any(),
+                        durationArgumentCaptor.capture()
                 )
+        )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
 
@@ -821,32 +821,32 @@ class TransactionActivateHandlerTest {
         Mockito.doNothing().when(paymentRequestInfoRedisTemplateWrapper)
                 .save(paymentRequestInfoArgumentCaptor.capture());
         Mockito.when(
-                        nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(null))
-                )
+                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(null))
+        )
                 .thenReturn(Mono.just(paymentRequestInfoActivation));
         Mockito.when(
-                        nodoOperations.getEcommerceFiscalCode()
-                )
+                nodoOperations.getEcommerceFiscalCode()
+        )
                 .thenReturn("77700000000");
         Mockito.when(
-                        nodoOperations.generateRandomStringToIdempotencyKey()
-                )
+                nodoOperations.generateRandomStringToIdempotencyKey()
+        )
                 .thenReturn("aabbccddee");
         Mockito.when(
-                        jwtTokenUtils.generateToken(
-                                eq(jwtSecretKey),
-                                eq(tokenValidityTimeInSeconds),
-                                eq(new Claims(transactionId, null, null))
-                        )
+                jwtTokenUtils.generateToken(
+                        eq(jwtSecretKey),
+                        eq(tokenValidityTimeInSeconds),
+                        eq(new Claims(transactionId, null, null))
                 )
+        )
                 .thenReturn(Either.right("authToken"));
         Mockito.when(
-                        transactionActivatedQueueAsyncClient.sendMessageWithResponse(
-                                any(QueueEvent.class),
-                                any(),
-                                durationArgumentCaptor.capture()
-                        )
+                transactionActivatedQueueAsyncClient.sendMessageWithResponse(
+                        any(QueueEvent.class),
+                        any(),
+                        durationArgumentCaptor.capture()
                 )
+        )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
 
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));

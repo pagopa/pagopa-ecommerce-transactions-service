@@ -59,7 +59,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
             NodoOperations nodoOperations,
             JwtTokenUtils jwtTokenUtils,
             @Qualifier(
-                    "transactionActivatedQueueAsyncClientV1"
+                "transactionActivatedQueueAsyncClientV1"
             ) QueueAsyncClient transactionActivatedQueueAsyncClientV1,
             @Value("${payment.token.validity}") Integer paymentTokenTimeout,
             ConfidentialMailUtils confidentialMailUtils,
@@ -88,7 +88,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
     }
 
     public Mono<Tuple2<Mono<BaseTransactionEvent<?>>, String>> handle(
-            TransactionActivateCommand command
+                                                                      TransactionActivateCommand command
     ) {
         final TransactionId transactionId = command.getTransactionId();
         final NewTransactionRequestData newTransactionRequestDto = command.getData();
@@ -309,12 +309,12 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
     }
 
     private Mono<BaseTransactionEvent<?>> newTransactionActivatedEvent(
-            List<PaymentRequestInfo> paymentRequestsInfo,
-            String transactionId,
-            String email,
-            String clientId,
-            String idCart,
-            Integer paymentTokenTimeout
+                                                                       List<PaymentRequestInfo> paymentRequestsInfo,
+                                                                       String transactionId,
+                                                                       String email,
+                                                                       String clientId,
+                                                                       String idCart,
+                                                                       Integer paymentTokenTimeout
     ) {
         List<PaymentNotice> paymentNotices = toPaymentNoticeList(paymentRequestsInfo);
         Mono<it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData> data = confidentialMailUtils
@@ -339,19 +339,19 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
         return transactionActivatedEvent.flatMap(transactionEventActivatedStoreRepository::save)
                 .flatMap(
                         e -> tracingUtils.traceMono(
-                                        this.getClass().getSimpleName(),
-                                        tracingInfo -> transactionActivatedQueueAsyncClientV1.sendMessageWithResponse(
-                                                new QueueEvent<>(e, tracingInfo),
-                                                Duration.ofSeconds(paymentTokenTimeout),
-                                                Duration.ofSeconds(transientQueuesTTLSeconds)
-                                        )
-                                ).doOnError(
-                                        exception -> log.error(
-                                                "Error to generate event TRANSACTION_ACTIVATED_EVENT for transactionId {} - error {}",
-                                                transactionId,
-                                                exception.getMessage()
-                                        )
+                                this.getClass().getSimpleName(),
+                                tracingInfo -> transactionActivatedQueueAsyncClientV1.sendMessageWithResponse(
+                                        new QueueEvent<>(e, tracingInfo),
+                                        Duration.ofSeconds(paymentTokenTimeout),
+                                        Duration.ofSeconds(transientQueuesTTLSeconds)
                                 )
+                        ).doOnError(
+                                exception -> log.error(
+                                        "Error to generate event TRANSACTION_ACTIVATED_EVENT for transactionId {} - error {}",
+                                        transactionId,
+                                        exception.getMessage()
+                                )
+                        )
                                 .doOnNext(
                                         event -> log.info(
                                                 "Generated event TRANSACTION_ACTIVATED_EVENT for transactionId {}",

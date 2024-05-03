@@ -33,12 +33,12 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
             TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData> userReceiptAddedEventRepository,
             TransactionsUtils transactionsUtils,
             @Qualifier(
-                    "transactionNotificationRequestedQueueAsyncClientV2"
+                "transactionNotificationRequestedQueueAsyncClientV2"
             ) QueueAsyncClient transactionNotificationRequestedQueueAsyncClient,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
             TracingUtils tracingUtils,
             @Value(
-                    "${ecommerce.send-payment-result-for-tx-expired.enabled}"
+                "${ecommerce.send-payment-result-for-tx-expired.enabled}"
             ) boolean sendPaymentResultForTxExpiredEnabled
     ) {
         super(
@@ -103,21 +103,21 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                     return userReceiptAddedEventRepository.save(event)
                             .flatMap(
                                     userReceiptEvent -> tracingUtils.traceMono(
-                                                    this.getClass().getSimpleName(),
-                                                    tracingInfo -> transactionNotificationRequestedQueueAsyncClient
-                                                            .sendMessageWithResponse(
-                                                                    new QueueEvent<>(userReceiptEvent, tracingInfo),
-                                                                    Duration.ZERO,
-                                                                    Duration.ofSeconds(transientQueuesTTLSeconds)
-                                                            )
-                                            ).doOnError(
-                                                    exception -> log.error(
-                                                            "Error to generate event {} for transactionId {} - error {}",
-                                                            event.getEventCode(),
-                                                            event.getTransactionId(),
-                                                            exception.getMessage()
+                                            this.getClass().getSimpleName(),
+                                            tracingInfo -> transactionNotificationRequestedQueueAsyncClient
+                                                    .sendMessageWithResponse(
+                                                            new QueueEvent<>(userReceiptEvent, tracingInfo),
+                                                            Duration.ZERO,
+                                                            Duration.ofSeconds(transientQueuesTTLSeconds)
                                                     )
+                                    ).doOnError(
+                                            exception -> log.error(
+                                                    "Error to generate event {} for transactionId {} - error {}",
+                                                    event.getEventCode(),
+                                                    event.getTransactionId(),
+                                                    exception.getMessage()
                                             )
+                                    )
                                             .doOnNext(
                                                     queueResponse -> log.info(
                                                             "Generated event {} for transactionId {}",
@@ -131,7 +131,7 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
     }
 
     private static it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome requestOutcomeToReceiptOutcome(
-            AddUserReceiptRequestDto.OutcomeEnum requestOutcome
+                                                                                                                              AddUserReceiptRequestDto.OutcomeEnum requestOutcome
     ) {
         return switch (requestOutcome) {
             case OK -> it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.OK;

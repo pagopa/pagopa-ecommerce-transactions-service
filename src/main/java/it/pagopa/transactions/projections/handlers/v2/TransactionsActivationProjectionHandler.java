@@ -22,7 +22,7 @@ public class TransactionsActivationProjectionHandler
 
     @Override
     public Mono<it.pagopa.ecommerce.commons.domain.v2.TransactionActivated> handle(
-            it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent event
+                                                                                   it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent event
     ) {
         it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData data = event.getData();
         TransactionId transactionId = new TransactionId(event.getTransactionId());

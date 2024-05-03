@@ -613,7 +613,8 @@ class TransactionServiceTests {
                                                 null
                                         )
                                 ),
-                                paymentNotice.isAllCCP()
+                                paymentNotice.isAllCCP(),
+                                new CompanyName(paymentNotice.getCompanyName())
                         )
                 ).toList(),
                 transactionDocument.getEmail(),
@@ -1496,7 +1497,8 @@ class TransactionServiceTests {
                                                 null
                                         )
                                 ),
-                                paymentNotice.isAllCCP()
+                                paymentNotice.isAllCCP(),
+                                new CompanyName(paymentNotice.getCompanyName())
                         )
                 ).toList(),
                 transactionDocument.getEmail(),
@@ -1635,7 +1637,8 @@ class TransactionServiceTests {
                                                 null
                                         )
                                 ),
-                                paymentNotice.isAllCCP()
+                                paymentNotice.isAllCCP(),
+                                new CompanyName(paymentNotice.getCompanyName())
                         )
                 ).toList(),
                 transactionDocument.getEmail(),
@@ -1772,7 +1775,8 @@ class TransactionServiceTests {
                                                 null
                                         )
                                 ),
-                                paymentNotice.isAllCCP()
+                                paymentNotice.isAllCCP(),
+                                new CompanyName(paymentNotice.getCompanyName())
                         )
                 ).toList(),
                 transactionDocument.getEmail(),
@@ -1912,7 +1916,8 @@ class TransactionServiceTests {
                                                 null
                                         )
                                 ),
-                                paymentNotice.isAllCCP()
+                                paymentNotice.isAllCCP(),
+                                new CompanyName(paymentNotice.getCompanyName())
                         )
                 ).toList(),
                 transactionDocument.getEmail(),
@@ -2355,7 +2360,8 @@ class TransactionServiceTests {
                                                 null
                                         )
                                 ),
-                                paymentNotice.isAllCCP()
+                                paymentNotice.isAllCCP(),
+                                new CompanyName(paymentNotice.getCompanyName())
                         )
                 ).toList(),
                 transactionDocument.getEmail(),

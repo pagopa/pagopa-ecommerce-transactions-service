@@ -39,10 +39,10 @@ public class TransactionsService {
     @Autowired
     public TransactionsService(
             @Qualifier(
-                    TransactionActivateHandler.QUALIFIER_NAME
+                TransactionActivateHandler.QUALIFIER_NAME
             ) TransactionActivateHandler transactionActivateHandlerV2,
             @Qualifier(
-                    TransactionsActivationProjectionHandler.QUALIFIER_NAME
+                TransactionsActivationProjectionHandler.QUALIFIER_NAME
             ) TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2,
             TransactionsUtils transactionsUtils
     ) {
@@ -54,11 +54,11 @@ public class TransactionsService {
     @CircuitBreaker(name = "node-backend")
     @Retry(name = "newTransaction")
     public Mono<NewTransactionResponseDto> newTransaction(
-            NewTransactionRequestDto newTransactionRequestDto,
-            ClientIdDto clientIdDto,
-            UUID correlationId,
-            TransactionId transactionId,
-            UUID userId
+                                                          NewTransactionRequestDto newTransactionRequestDto,
+                                                          ClientIdDto clientIdDto,
+                                                          UUID correlationId,
+                                                          TransactionId transactionId,
+                                                          UUID userId
     ) {
         Transaction.ClientId clientId = Transaction.ClientId.fromString(
                 Optional.ofNullable(clientIdDto)
@@ -120,8 +120,8 @@ public class TransactionsService {
     }
 
     private Mono<NewTransactionResponseDto> projectActivatedEvent(
-            it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent transactionActivatedEvent,
-            String authToken
+                                                                  it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent transactionActivatedEvent,
+                                                                  String authToken
     ) {
         return transactionsActivationProjectionHandlerV2
                 .handle(transactionActivatedEvent)
@@ -168,7 +168,7 @@ public class TransactionsService {
     }
 
     public NewTransactionResponseDto.ClientIdEnum convertClientId(
-            String clientId
+                                                                  String clientId
     ) {
         return Optional.ofNullable(clientId).filter(Objects::nonNull)
                 .map(

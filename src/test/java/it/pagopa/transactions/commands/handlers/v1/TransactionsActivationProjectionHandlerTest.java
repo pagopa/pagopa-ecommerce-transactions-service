@@ -96,7 +96,7 @@ class TransactionsActivationProjectionHandlerTest {
                                         )
                                 ),
                                 false,
-                                null
+                                new CompanyName(null)
                         )
                 ),
                 email,

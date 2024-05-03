@@ -78,10 +78,10 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             EcommercePaymentMethodsClient paymentMethodsClient,
             TransactionTemplateWrapper transactionTemplateWrapper,
             @Qualifier(
-                    "transactionAuthorizationRequestedQueueAsyncClientV2"
+                "transactionAuthorizationRequestedQueueAsyncClientV2"
             ) QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClientV2,
             @Qualifier(
-                    "walletAsyncQueueClient"
+                "walletAsyncQueueClient"
             ) Optional<WalletAsyncQueueClient> walletAsyncQueueClient,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") Integer transientQueuesTTLSeconds,
             @Value("${npg.authorization.request.timeout.seconds}") Integer npgAuthRequestTimeout,
@@ -148,9 +148,9 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                         tx -> npgAuthRequestPipeline(
                                 authorizationRequestData,
                                 tx.getTransactionActivatedData()
-                                        .getTransactionGatewayActivationData() instanceof NpgTransactionGatewayActivationData transactionGatewayActivationData
-                                        ? transactionGatewayActivationData.getCorrelationId()
-                                        : null,
+                                        .getTransactionGatewayActivationData()instanceof NpgTransactionGatewayActivationData transactionGatewayActivationData
+                                                ? transactionGatewayActivationData.getCorrelationId()
+                                                : null,
                                 tx.getClientId().name()
                         )
 
@@ -207,22 +207,22 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                 authorizationRequestData
                                                         .authDetails() instanceof WalletAuthRequestDetailsDto
                                                         || authorizationRequestData
-                                                        .authDetails() instanceof ApmAuthRequestDetailsDto
-                                                        ? authorizationOutput.npgSessionId()
-                                                        .orElseThrow(
-                                                                () -> new InternalServerErrorException(
-                                                                        "Cannot retrieve session id for transaction"
-                                                                )
-                                                        ) // build session id
-                                                        : authorizationRequestData.sessionId()
-                                                        .orElseThrow(
-                                                                () -> new BadGatewayException(
-                                                                        "Cannot retrieve session id for transaction",
-                                                                        HttpStatus.INTERNAL_SERVER_ERROR
-                                                                )
-                                                        ),
+                                                                .authDetails() instanceof ApmAuthRequestDetailsDto
+                                                                        ? authorizationOutput.npgSessionId()
+                                                                                .orElseThrow(
+                                                                                        () -> new InternalServerErrorException(
+                                                                                                "Cannot retrieve session id for transaction"
+                                                                                        )
+                                                                                ) // build session id
+                                                                        : authorizationRequestData.sessionId()
+                                                                                .orElseThrow(
+                                                                                        () -> new BadGatewayException(
+                                                                                                "Cannot retrieve session id for transaction",
+                                                                                                HttpStatus.INTERNAL_SERVER_ERROR
+                                                                                        )
+                                                                                ),
                                                 authorizationOutput.npgConfirmSessionId().orElse(null),
-                                                null //TODO modification performed just to make code compile
+                                                null // TODO modification performed just to make code compile
                                         );
                                         case REDIRECT -> new RedirectTransactionGatewayAuthorizationRequestedData(
                                                 logo,
@@ -316,11 +316,11 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
      * @param authorizationData authorization data
      * @param clientId          client that initiated the transaction
      * @return a tuple of redirection url, psp authorization id and authorization
-     * timeout
+     *         timeout
      */
     protected Mono<AuthorizationOutput> redirectionAuthRequestPipeline(
-            AuthorizationRequestData authorizationData,
-            Transaction.ClientId clientId
+                                                                       AuthorizationRequestData authorizationData,
+                                                                       Transaction.ClientId clientId
 
     ) {
         Transaction.ClientId effectiveClient = switch (clientId) {
