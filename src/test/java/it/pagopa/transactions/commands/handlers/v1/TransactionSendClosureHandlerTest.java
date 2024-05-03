@@ -186,7 +186,7 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                List.of(transaction.getPaymentNotices().get(0).rptId()),
                 closureSendData
         );
 
@@ -360,7 +360,8 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(
-                new RptId(transactionActivatedEvent.getData().getPaymentNotices().get(0).getRptId()),
+                transactionActivatedEvent.getData().getPaymentNotices().stream().map(p -> new RptId(p.getRptId()))
+                        .toList(),
                 closureSendData
         );
 
@@ -575,7 +576,8 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(
-                new RptId(transactionActivatedEvent.getData().getPaymentNotices().get(0).getRptId()),
+                transactionActivatedEvent.getData().getPaymentNotices().stream().map(p -> new RptId(p.getRptId()))
+                        .toList(),
                 closureSendData
         );
 
@@ -810,7 +812,8 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(
-                new RptId(transactionActivatedEvent.getData().getPaymentNotices().get(0).getRptId()),
+                transactionActivatedEvent.getData().getPaymentNotices().stream().map(p -> new RptId(p.getRptId()))
+                        .toList(),
                 closureSendData
         );
 
@@ -1075,7 +1078,8 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(
-                new RptId(transactionActivatedEvent.getData().getPaymentNotices().get(0).getRptId()),
+                transactionActivatedEvent.getData().getPaymentNotices().stream().map(p -> new RptId(p.getRptId()))
+                        .toList(),
                 closureSendData
         );
 
@@ -1347,7 +1351,8 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(
-                new RptId(transactionActivatedEvent.getData().getPaymentNotices().get(0).getRptId()),
+                transactionActivatedEvent.getData().getPaymentNotices().stream().map(p -> new RptId(p.getRptId()))
+                        .toList(),
                 closureSendData
         );
 
@@ -1632,7 +1637,8 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(
-                new RptId(transactionActivatedEvent.getData().getPaymentNotices().get(0).getRptId()),
+                transactionActivatedEvent.getData().getPaymentNotices().stream().map(p -> new RptId(p.getRptId()))
+                        .toList(),
                 closureSendData
         );
 
@@ -1869,7 +1875,8 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(
-                new RptId(transactionActivatedEvent.getData().getPaymentNotices().get(0).getRptId()),
+                transactionActivatedEvent.getData().getPaymentNotices().stream().map(p -> new RptId(p.getRptId()))
+                        .toList(),
                 closureSendData
         );
 
@@ -2088,7 +2095,8 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(
-                new RptId(transactionActivatedEvent.getData().getPaymentNotices().get(0).getRptId()),
+                transactionActivatedEvent.getData().getPaymentNotices().stream().map(p -> new RptId(p.getRptId()))
+                        .toList(),
                 closureSendData
         );
 
@@ -2354,7 +2362,8 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(
-                new RptId(transactionActivatedEvent.getData().getPaymentNotices().get(0).getRptId()),
+                transactionActivatedEvent.getData().getPaymentNotices().stream().map(p -> new RptId(p.getRptId()))
+                        .toList(),
                 closureSendData
         );
 
@@ -2631,7 +2640,8 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(
-                new RptId(transactionActivatedEvent.getData().getPaymentNotices().get(0).getRptId()),
+                transactionActivatedEvent.getData().getPaymentNotices().stream().map(p -> new RptId(p.getRptId()))
+                        .toList(),
                 closureSendData
         );
 
@@ -2842,7 +2852,8 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(
-                new RptId(transactionActivatedEvent.getData().getPaymentNotices().get(0).getRptId()),
+                transactionActivatedEvent.getData().getPaymentNotices().stream().map(p -> new RptId(p.getRptId()))
+                        .toList(),
                 closureSendData
         );
 
@@ -3060,7 +3071,8 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(
-                new RptId(transactionActivatedEvent.getData().getPaymentNotices().get(0).getRptId()),
+                transactionActivatedEvent.getData().getPaymentNotices().stream().map(p -> new RptId(p.getRptId()))
+                        .toList(),
                 closureSendData
         );
 
@@ -3236,7 +3248,8 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(
-                new RptId(transactionActivatedEvent.getData().getPaymentNotices().get(0).getRptId()),
+                transactionActivatedEvent.getData().getPaymentNotices().stream().map(p -> new RptId(p.getRptId()))
+                        .toList(),
                 closureSendData
         );
 
@@ -3398,7 +3411,8 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(
-                new RptId(transactionActivatedEvent.getData().getPaymentNotices().get(0).getRptId()),
+                transactionActivatedEvent.getData().getPaymentNotices().stream().map(p -> new RptId(p.getRptId()))
+                        .toList(),
                 closureSendData
         );
 
@@ -3533,7 +3547,8 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(
-                new RptId(transactionActivatedEvent.getData().getPaymentNotices().get(0).getRptId()),
+                transactionActivatedEvent.getData().getPaymentNotices().stream().map(p -> new RptId(p.getRptId()))
+                        .toList(),
                 closureSendData
         );
 
@@ -3758,7 +3773,8 @@ class TransactionSendClosureHandlerTest {
         );
 
         TransactionClosureSendCommand closureSendCommand = new TransactionClosureSendCommand(
-                new RptId(transactionActivatedEvent.getData().getPaymentNotices().get(0).getRptId()),
+                transactionActivatedEvent.getData().getPaymentNotices().stream().map(p -> new RptId(p.getRptId()))
+                        .toList(),
                 closureSendData
         );
 

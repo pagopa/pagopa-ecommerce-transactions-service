@@ -272,14 +272,14 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
             );
             log.info(
                     "PaymentRequestInfo cache hit for {} with valid paymentToken {}. Validity left time: {}",
-                    paymentRequestInfo.id(),
+                    paymentRequestInfo.id().value(),
                     paymentRequestInfo.paymentToken(),
                     paymentTokenValidityTimeLeft
             );
         } else {
             log.error(
                     "Cannot trace repeated transaction activation for {} with payment token: {}, missing transaction activation date",
-                    paymentRequestInfo.id(),
+                    paymentRequestInfo.id().value(),
                     paymentRequestInfo.paymentToken()
             );
             openTelemetryUtils.addErrorSpanWithException(

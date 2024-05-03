@@ -3,11 +3,13 @@ package it.pagopa.transactions.commands;
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 
+import java.util.List;
+
 public final class TransactionRequestAuthorizationCommand extends TransactionsCommand<AuthorizationRequestData> {
     public TransactionRequestAuthorizationCommand(
-            RptId rptId,
+            List<RptId> rptIds,
             AuthorizationRequestData data
     ) {
-        super(rptId, TransactionsCommandCode.REQUEST_AUTHORIZATION, data);
+        super(rptIds, TransactionsCommandCode.REQUEST_AUTHORIZATION, data);
     }
 }
