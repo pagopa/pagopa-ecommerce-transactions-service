@@ -90,17 +90,17 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                 )
                 .switchIfEmpty(alreadyProcessedError)
                 .filterWhen(tx -> {
-                    Set<String> transactionPaymentNotices = tx.getPaymentNotices().stream()
+                    Set<String> eCommercePaymentTokens = tx.getPaymentNotices().stream()
                             .map(p -> p.paymentToken().value()).collect(Collectors.toSet());
-                    Set<String> sendPaymentResultPaymentNotices = command.getData().addUserReceiptRequest()
+                    Set<String> addUserReceiptRequestPaymentTokens = command.getData().addUserReceiptRequest()
                             .getPayments().stream().map(AddUserReceiptRequestPaymentsInnerDto::getPaymentToken)
                             .collect(Collectors.toSet());
-                    boolean isOk = transactionPaymentNotices.size() == sendPaymentResultPaymentNotices.size()
-                            && transactionPaymentNotices.containsAll(sendPaymentResultPaymentNotices);
+                    boolean isOk = eCommercePaymentTokens.size() == addUserReceiptRequestPaymentTokens.size()
+                            && eCommercePaymentTokens.containsAll(addUserReceiptRequestPaymentTokens);
                     log.debug(
                             "eCommerce transaction payment tokens: {}, send payment result payment tokens: {} -> isOk: [{}]",
-                            transactionPaymentNotices,
-                            sendPaymentResultPaymentNotices,
+                            eCommercePaymentTokens,
+                            addUserReceiptRequestPaymentTokens,
                             isOk
                     );
                     if (!isOk) {
@@ -109,8 +109,8 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                         "eCommerce and Nodo payment tokens mismatch detected!%ntransactionId: %s,%neCommerce payment tokens: %s%nNodo send paymnt result payment tokens: %s"
                                                 .formatted(
                                                         tx.getTransactionId().value(),
-                                                        transactionPaymentNotices,
-                                                        sendPaymentResultPaymentNotices
+                                                        eCommercePaymentTokens,
+                                                        addUserReceiptRequestPaymentTokens
                                                 )
                                 )
                         );
